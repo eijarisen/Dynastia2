@@ -10,6 +10,7 @@ public sealed class FamilyMemberCardViewModel
         IHealthService? health,
         ICareerService? career,
         IJusticeService? justice,
+        IStatsService? stats,
         bool isSelected,
         bool isActiveHouseholdHead,
         Action<Guid> selectPerson)
@@ -39,19 +40,14 @@ public sealed class FamilyMemberCardViewModel
         IsActiveHouseholdHead =
             isActiveHouseholdHead;
 
-        var sex =
-            family?.GetSex(person);
-
         AvatarText =
-            person.Tags.Has("state.dead")
-                ? "✝"
-                : person.Age < 18
-                    ? sex == Sex.Female
-                        ? "👧"
-                        : "👦"
-                    : sex == Sex.Female
-                        ? "👩"
-                        : "👨";
+            PersonEmojiResolver.GetPersonEmoji(
+                person,
+                family,
+                health,
+                career,
+                justice,
+                stats);
 
         if (health is not null
             && !person.Tags.Has("state.dead"))

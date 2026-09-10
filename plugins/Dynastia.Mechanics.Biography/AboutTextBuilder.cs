@@ -147,7 +147,7 @@ public sealed class AboutTextBuilder
         if (mod100 is 11 or 12 or 13)
             return $"{value}th";
 
-        return value % 10 switch
+        return (value % 10) switch
         {
             1 => $"{value}st",
             2 => $"{value}nd",

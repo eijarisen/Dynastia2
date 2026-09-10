@@ -1,6 +1,7 @@
 using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
+using Dynastia.App.Persistence;
 using Dynastia.App.ViewModels;
 using Dynastia.App.Views;
 using Dynastia.Contracts;
@@ -160,6 +161,15 @@ public partial class App : Application
             var biographyService =
                 pluginContext.GetService<IBiographyService>();
 
+            var saveService =
+                new GameSaveService(
+                    gameState,
+                    selectionService,
+                    successionService,
+                    eventBus,
+                    actionRegistry,
+                    biographyService);
+
             desktop.MainWindow =
                 new MainWindow
                 {
@@ -180,7 +190,8 @@ public partial class App : Application
                             biographyService,
                             successionService,
                             eventBus,
-                            actionRegistry)
+                            actionRegistry,
+                            saveService)
                 };
         }
 

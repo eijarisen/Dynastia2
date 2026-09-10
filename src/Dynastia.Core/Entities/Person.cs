@@ -4,29 +4,41 @@ namespace Dynastia.Core.Entities;
 
 public sealed class Person : IPerson
 {
-    public Person(string name, string surname, int age)
+    public Person(
+        string name,
+        string surname,
+        int age,
+        Guid? id = null)
     {
-        Id = Guid.NewGuid();
+        Id =
+            id ?? Guid.NewGuid();
 
         Name = name;
         Surname = surname;
         Age = age;
 
-        Tags = new TagSet();
-        Components = new ComponentContainer();
+        Tags =
+            new TagSet();
+
+        Components =
+            new ComponentContainer();
     }
 
     public Guid Id { get; }
 
     public string Name { get; set; }
+
     public string Surname { get; set; }
+
     public string? MaidenName { get; set; }
 
     public int Age { get; set; }
 
     public GameDate? BirthDate { get; set; }
+
     public GameDate? DeathDate { get; set; }
 
     public ITagSet Tags { get; }
+
     public IComponentContainer Components { get; }
 }

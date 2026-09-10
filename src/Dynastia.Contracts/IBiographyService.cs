@@ -7,4 +7,10 @@ public interface IBiographyService
 
     IReadOnlyList<BiographyEntry> GetBiography(
         IPerson person);
+
+    IReadOnlyDictionary<Guid, IReadOnlyList<BiographyEntry>>
+        ExportBiographyState();
+
+    void RestoreBiographyState(
+        IReadOnlyDictionary<Guid, IReadOnlyList<BiographyEntry>> entries);
 }

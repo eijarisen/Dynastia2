@@ -180,6 +180,31 @@ public sealed class ActionRegistry : IActionRegistry
             .ToList();
     }
 
+    public IReadOnlyList<QueuedActionInfo>
+        GetAllQueuedActions()
+    {
+        return _queued
+            .Select(
+                queued =>
+                {
+                    var label =
+                        _actions.TryGetValue(
+                            queued.ActionId,
+                            out var action)
+                            ? action.Label
+                            : queued.ActionId;
+
+                    return new QueuedActionInfo(
+                        queued.ActionId,
+                        label,
+                        queued.Phase,
+                        queued.ActorId,
+                        queued.TargetId);
+                })
+            .ToList();
+    }
+
+
     public void CancelQueuedActions(
         IPerson actor)
     {
@@ -187,6 +212,68 @@ public sealed class ActionRegistry : IActionRegistry
             queued =>
                 queued.ActorId
                 == actor.Id);
+    }
+
+    public void RestoreQueuedActions(
+        IReadOnlyList<QueuedActionInfo> queuedActions)
+    {
+        ArgumentNullException.ThrowIfNull(
+            queuedActions);
+
+        var restored =
+            new List<QueuedAction>();
+
+        var actors =
+            new HashSet<Guid>();
+
+        foreach (var saved in
+            queuedActions)
+        {
+            if (!_actions.TryGetValue(
+                saved.ActionId,
+                out var definition))
+            {
+                throw new InvalidDataException(
+                    $"Save file references unknown action " +
+                    $"'{saved.ActionId}'.");
+            }
+
+            if (!actors.Add(
+                saved.ActorId))
+            {
+                throw new InvalidDataException(
+                    "Save file contains more than one queued " +
+                    $"action for actor {saved.ActorId}.");
+            }
+
+            if (!_gameState.People.Any(
+                    person =>
+                        person.Id
+                        == saved.ActorId)
+                || !_gameState.People.Any(
+                    person =>
+                        person.Id
+                        == saved.TargetId))
+            {
+                throw new InvalidDataException(
+                    $"Queued action '{saved.ActionId}' " +
+                    "references a missing person.");
+            }
+
+            // Queue phase is owned by the current action definition.
+            // This keeps old save files compatible if only display
+            // metadata changed, while rejecting removed action IDs.
+            restored.Add(
+                new QueuedAction(
+                    definition.Id,
+                    saved.ActorId,
+                    saved.TargetId,
+                    definition.QueuePhase));
+        }
+
+        _queued.Clear();
+        _queued.AddRange(
+            restored);
     }
 
     public void ExecuteQueued(

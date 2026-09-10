@@ -17,11 +17,16 @@ public interface IActionRegistry
     IReadOnlyList<QueuedActionInfo> GetQueuedActions(
         IPerson actor);
 
+    IReadOnlyList<QueuedActionInfo> GetAllQueuedActions();
+
     void CancelQueuedActions(
         IPerson actor);
 
     void ExecuteQueued(
         YearPhase phase);
+
+    void RestoreQueuedActions(
+        IReadOnlyList<QueuedActionInfo> queuedActions);
 
     string? GetBlockedReason(
         IPerson actor);

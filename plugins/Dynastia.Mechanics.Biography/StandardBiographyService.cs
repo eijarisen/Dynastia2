@@ -71,6 +71,38 @@ public sealed class StandardBiographyService :
             .ToList();
     }
 
+    public IReadOnlyDictionary<
+        Guid,
+        IReadOnlyList<BiographyEntry>>
+        ExportBiographyState()
+    {
+        return _entries.ToDictionary(
+            pair =>
+                pair.Key,
+            pair =>
+                (IReadOnlyList<BiographyEntry>)
+                    pair.Value.ToList());
+    }
+
+    public void RestoreBiographyState(
+        IReadOnlyDictionary<
+            Guid,
+            IReadOnlyList<BiographyEntry>>
+            entries)
+    {
+        ArgumentNullException.ThrowIfNull(
+            entries);
+
+        _entries.Clear();
+
+        foreach (var pair in
+            entries)
+        {
+            _entries[pair.Key] =
+                pair.Value.ToList();
+        }
+    }
+
     private void OnEventPublished(
         object? sender,
         GameEvent gameEvent)
@@ -573,37 +605,42 @@ public sealed class StandardBiographyService :
     {
         return type switch
         {
+            // Structured-event aliases of Dynasty 4's const emojiMap.
             "wellbeing.heal" => "❤️‍🩹 ",
-            "wellbeing.recover" => "",
+            "wellbeing.recover" => " ",
             "education.success" => "🎓 ",
             "education.failure" => "🧱 ",
             "wellbeing.therapy_success" => "😊 ",
             "wellbeing.therapy_failure" => "😒 ",
             "wellbeing.drink" => "🍺 ",
             "life.adult" => "🧑 ",
-            "inheritance.received" => "💰 ",
+
             "inheritance.received_at_adulthood" => "💰 ",
+            "inheritance.received" => "💸 ",
             "inheritance.pending_minor" => "⏳ ",
             "inheritance.claimable" => "⏳ ",
             "inheritance.unclaimed" => "💨 ",
             "inheritance.estate_settled" => "🏦 ",
             "inheritance.houses" => "🏡 ",
             "inheritance.promised_houses_received" => "🏡 ",
+
             "career.retirement" => "🕊️ ",
             "justice.released" => "✅ ",
             "health.illness" => "🤧 ",
             "health.serious_illness" => "😣 ",
-            "birth.condition" => "🧩 ",
             "life.death" => "💀 ",
             "career.quit" => "🚶 ",
             "relationship.divorce" => "💔 ",
             "relationship.prison_divorce" => "💔 ",
-            "relationship.affair" => "🤫 ",
             "career.employment" => "✅ ",
             "family_support.parents_success" => "🙏 ",
             "family_support.parents_failure" => "🚫 ",
-            "family_support.child_success" => "🙏 ",
-            "family_support.child_failure" => "🚫 ",
+
+            // Dynasty 4's original const map does not define
+            // askChildForMoneySuccess/Fail, so these use default.
+            "family_support.child_success" => "🔹 ",
+            "family_support.child_failure" => "🔹 ",
+
             "career.ask_quit_success" => "✅ ",
             "career.ask_quit_failure" => "🚫 ",
             "career.ask_recover_success" => "✅ ",
@@ -611,17 +648,24 @@ public sealed class StandardBiographyService :
             "justice.crime" => "⛓️ ",
             "career.fired" => "💥 ",
             "career.promotion" => "✨ ",
+            "relationship.partnered" => "👩‍❤️‍👩 ",
             "relationship.married" => "💍 ",
-            "relationship.partnered" => "💍 ",
-            "relationship.remarried" => "💍 ",
+            "relationship.affair" => "🤫 ",
+            "birth.condition" => "🧩 ",
             "life.birth" => "👶 ",
+            "relationship.remarried" => "💍 ",
+
             "household.house_bought" => "🏠 ",
             "household.house_sold" => "💵 ",
             "household.house_rented" => "🏘️ ",
             "household.house_given" => "🎁 ",
-            "household.house_promised" => "🎁 ",
+
+            // Dynasty 4's original const map has no promiseHouse key.
+            "household.house_promised" => "🔹 ",
+
             "household.nanny_hired" => "🧑‍🍼 ",
             "household.nanny_fired" => "👋 ",
+
             _ => "🔹 "
         };
     }

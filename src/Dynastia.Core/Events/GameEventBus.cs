@@ -2,26 +2,50 @@ using Dynastia.Contracts;
 
 namespace Dynastia.Core.Events;
 
-public sealed class GameEventBus : IGameEventBus
+public sealed class GameEventBus :
+    IGameEventBus
 {
-    private readonly List<GameEvent> _events = [];
+    private readonly List<GameEvent>
+        _events = [];
 
-    public event EventHandler<GameEvent>? EventPublished;
+    public event EventHandler<GameEvent>?
+        EventPublished;
 
-    public IReadOnlyList<GameEvent> AllEvents => _events;
+    public IReadOnlyList<GameEvent> AllEvents =>
+        _events;
 
-    public void Publish(GameEvent gameEvent)
+    public void Publish(
+        GameEvent gameEvent)
     {
-        ArgumentNullException.ThrowIfNull(gameEvent);
+        ArgumentNullException.ThrowIfNull(
+            gameEvent);
 
-        _events.Add(gameEvent);
-        EventPublished?.Invoke(this, gameEvent);
+        _events.Add(
+            gameEvent);
+
+        EventPublished?.Invoke(
+            this,
+            gameEvent);
     }
 
-    public IReadOnlyList<GameEvent> GetEventsForYear(int year)
+    public IReadOnlyList<GameEvent> GetEventsForYear(
+        int year)
     {
         return _events
-            .Where(e => e.Year == year)
+            .Where(
+                gameEvent =>
+                    gameEvent.Year == year)
             .ToList();
+    }
+
+    public void RestoreEvents(
+        IReadOnlyList<GameEvent> events)
+    {
+        ArgumentNullException.ThrowIfNull(
+            events);
+
+        _events.Clear();
+        _events.AddRange(
+            events);
     }
 }

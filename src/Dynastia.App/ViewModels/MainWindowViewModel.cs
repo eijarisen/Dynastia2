@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using Dynastia.App.Persistence;
 using Dynastia.Contracts;
 using Dynastia.Core.Simulation;
 
@@ -22,6 +23,7 @@ public sealed class MainWindowViewModel : ViewModelBase
     private readonly ISuccessionService _succession;
     private readonly IGameEventBus _eventBus;
     private readonly IActionRegistry _actionRegistry;
+    private readonly GameSaveService _saveService;
 
     private PersonRowViewModel? _selectedPerson;
     private FamilyDetailsViewModel? _selectedFamily;
@@ -40,6 +42,8 @@ public sealed class MainWindowViewModel : ViewModelBase
     private bool _hasQueuedAction;
     private bool _isGameOverOverlayVisible;
     private bool _isLivingFamilyView = true;
+    private int _detailsTabIndex;
+    private string _persistenceStatusText = string.Empty;
 
     public MainWindowViewModel(
         IGameState gameState,
@@ -57,7 +61,8 @@ public sealed class MainWindowViewModel : ViewModelBase
         IBiographyService? biographyService,
         ISuccessionService succession,
         IGameEventBus eventBus,
-        IActionRegistry actionRegistry)
+        IActionRegistry actionRegistry,
+        GameSaveService saveService)
     {
         _gameState = gameState;
         _newGameService = newGameService;
@@ -75,6 +80,7 @@ public sealed class MainWindowViewModel : ViewModelBase
         _succession = succession;
         _eventBus = eventBus;
         _actionRegistry = actionRegistry;
+        _saveService = saveService;
 
         _albumYear = 1900;
 
@@ -567,6 +573,49 @@ public sealed class MainWindowViewModel : ViewModelBase
             ? "No significant events recorded."
             : string.Empty;
 
+    public int DetailsTabIndex
+    {
+        get => _detailsTabIndex;
+
+        set
+        {
+            var clamped =
+                Math.Clamp(
+                    value,
+                    0,
+                    2);
+
+            if (_detailsTabIndex == clamped)
+                return;
+
+            _detailsTabIndex =
+                clamped;
+
+            OnPropertyChanged();
+        }
+    }
+
+    public string PersistenceStatusText
+    {
+        get => _persistenceStatusText;
+
+        private set
+        {
+            if (_persistenceStatusText == value)
+                return;
+
+            _persistenceStatusText = value;
+
+            OnPropertyChanged();
+            OnPropertyChanged(
+                nameof(HasPersistenceStatus));
+        }
+    }
+
+    public bool HasPersistenceStatus =>
+        !string.IsNullOrWhiteSpace(
+            PersistenceStatusText);
+
     public RelayCommand StartGameCommand { get; }
     public RelayCommand NextYearCommand { get; }
     public RelayCommand CancelQueuedActionCommand { get; }
@@ -576,8 +625,83 @@ public sealed class MainWindowViewModel : ViewModelBase
     public RelayCommand PreviousAlbumYearCommand { get; }
     public RelayCommand NextAlbumYearCommand { get; }
 
+    public string GetSuggestedSaveFileName()
+    {
+        return _saveService
+            .GetSuggestedFileName();
+    }
+
+    public void SaveGame(
+        Stream stream)
+    {
+        if (!IsGameStarted)
+        {
+            throw new InvalidOperationException(
+                "There is no active dynasty to save.");
+        }
+
+        _saveService.Save(
+            stream,
+            CaptureUiSaveState());
+    }
+
+    public void LoadGame(
+        Stream stream)
+    {
+        var loadedUiState =
+            _saveService.Load(
+                stream,
+                CaptureUiSaveState());
+
+        SurnameInput =
+            _gameState.DynastySurname;
+
+        IsLivingFamilyView =
+            loadedUiState.IsLivingFamilyView;
+
+        DetailsTabIndex =
+            loadedUiState.DetailsTabIndex;
+
+        IsGameStarted =
+            true;
+
+        AlbumYear =
+            Math.Clamp(
+                loadedUiState.AlbumYear,
+                1900,
+                _gameState.Year);
+
+        IsGameOverOverlayVisible =
+            _succession.IsGameOver;
+
+        RefreshPeople();
+        RefreshAlbum();
+
+        NotifyGameStateChanged();
+    }
+
+    public void ReportPersistenceStatus(
+        string message)
+    {
+        PersistenceStatusText =
+            message;
+    }
+
+    private GameUiSaveState CaptureUiSaveState()
+    {
+        return new GameUiSaveState(
+            _selectionService.SelectedPersonId,
+            _succession.ActiveControllerId,
+            AlbumYear,
+            IsLivingFamilyView,
+            DetailsTabIndex);
+    }
+
     private void StartGame()
     {
+        PersistenceStatusText =
+            string.Empty;
+
         _newGameService.StartNewGame(
             SurnameInput);
 
@@ -898,6 +1022,7 @@ public sealed class MainWindowViewModel : ViewModelBase
             _healthService,
             _careerService,
             _justiceService,
+            _statsService,
             selectedId == person.Id,
             activeHeadId == person.Id,
             SelectFamilyMember);

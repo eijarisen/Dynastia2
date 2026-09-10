@@ -5,844 +5,1013 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:vm="using:Dynastia.App.ViewModels"
     xmlns:contracts="using:Dynastia.Contracts"
+    xmlns:ui="using:Dynastia.App.Controls"
+    xmlns:conv="using:Dynastia.App.Converters"
     x:Class="Dynastia.App.Views.MainWindow"
     x:DataType="vm:MainWindowViewModel"
     mc:Ignorable="d"
-    Width="1180"
-    Height="860"
+    Width="1672"
+    Height="941"
     WindowState="Maximized"
-    MinWidth="850"
-    MinHeight="650"
+    MinWidth="1180"
+    MinHeight="700"
+    Background="#020809"
     Title="Dynastia">
 
+    <Window.Resources>
+        <conv:StatValueBrushConverter
+            x:Key="StatValueBrushConverter" />
+
+        <conv:HealthBrushConverter
+            x:Key="HealthBrushConverter" />
+
+        <DataTemplate
+            x:Key="FamilyCardTemplate"
+            x:DataType="vm:FamilyMemberCardViewModel">
+
+            <Button
+                Classes="familyCard"
+                Classes.selected="{Binding IsSelected}"
+                Classes.head="{Binding IsActiveHouseholdHead}"
+                Command="{Binding SelectCommand}"
+                ToolTip.Tip="{Binding FullName}">
+
+                <StackPanel
+                    Width="98"
+                    HorizontalAlignment="Center"
+                    Spacing="2">
+
+                    <TextBlock
+                        HorizontalAlignment="Center"
+                        FontSize="31"
+                        Text="{Binding AvatarText}" />
+
+                    <ProgressBar
+                        Classes="healthBar"
+                        IsVisible="{Binding ShowHealth}"
+                        Width="50"
+                        Height="5"
+                        Minimum="0"
+                        Maximum="100"
+                        HorizontalAlignment="Center"
+                        Foreground="{Binding HealthValue,
+                                             Converter={StaticResource HealthBrushConverter}}"
+                        Value="{Binding HealthValue}" />
+
+                    <TextBlock
+                        HorizontalAlignment="Center"
+                        TextAlignment="Center"
+                        TextWrapping="Wrap"
+                        FontSize="11.5"
+                        FontWeight="SemiBold"
+                        Text="{Binding FullName}" />
+
+                    <TextBlock
+                        HorizontalAlignment="Center"
+                        TextAlignment="Center"
+                        FontSize="9.5"
+                        Opacity="0.78"
+                        Text="{Binding SubtitleText}" />
+
+                    <TextBlock
+                        HorizontalAlignment="Center"
+                        TextAlignment="Center"
+                        TextWrapping="Wrap"
+                        FontSize="9"
+                        Opacity="0.72"
+                        Text="{Binding OccupationText}" />
+
+                    <TextBlock
+                        HorizontalAlignment="Center"
+                        TextAlignment="Center"
+                        TextWrapping="Wrap"
+                        FontSize="7.5"
+                        Opacity="0.7"
+                        Text="{Binding ResidenceText}" />
+                </StackPanel>
+            </Button>
+        </DataTemplate>
+
+        <DataTemplate
+            x:Key="CompactStatTemplate"
+            x:DataType="contracts:StatValue">
+
+            <StackPanel
+                Width="78"
+                HorizontalAlignment="Center"
+                Spacing="1">
+
+                <TextBlock
+                    HorizontalAlignment="Center"
+                    TextAlignment="Center"
+                    FontSize="9.5"
+                    FontWeight="SemiBold"
+                    Foreground="{Binding Value,
+                                         Converter={StaticResource StatValueBrushConverter}}"
+                    Text="{Binding Name}" />
+
+                <TextBlock
+                    HorizontalAlignment="Center"
+                    FontFamily="Georgia"
+                    FontSize="20"
+                    FontWeight="Bold"
+                    Foreground="{Binding Value,
+                                         Converter={StaticResource StatValueBrushConverter}}"
+                    Text="{Binding Value}" />
+            </StackPanel>
+        </DataTemplate>
+    </Window.Resources>
 
     <Window.Styles>
+        <Style Selector="TextBlock">
+            <Setter Property="FontFamily" Value="Georgia" />
+            <Setter Property="Foreground" Value="#F2E6CB" />
+        </Style>
+
+        <Style Selector="Button">
+            <Setter Property="FontFamily" Value="Georgia" />
+        </Style>
+
+        <Style Selector="Button.gameAction">
+            <Setter Property="Margin" Value="0,0,8,8" />
+            <Setter Property="Padding" Value="13,7" />
+            <Setter Property="Background" Value="#E00A1C1A" />
+            <Setter Property="Foreground" Value="#F8E9C8" />
+            <Setter Property="BorderBrush" Value="#B98A34" />
+            <Setter Property="BorderThickness" Value="1.2" />
+            <Setter Property="CornerRadius" Value="4" />
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="Opacity" Value="1" />
+        </Style>
+
+        <Style Selector="Button.gameAction:pointerover">
+            <Setter Property="Background" Value="#F01A332D" />
+            <Setter Property="Foreground" Value="#FFF2CE" />
+            <Setter Property="BorderBrush" Value="#E7BC55" />
+            <Setter Property="Opacity" Value="1" />
+        </Style>
+
+        <Style Selector="Button.gameAction:pressed">
+            <Setter Property="Background" Value="#F02D1A0B" />
+            <Setter Property="Foreground" Value="#FFF1CB" />
+            <Setter Property="BorderBrush" Value="#F0CE72" />
+            <Setter Property="Opacity" Value="1" />
+        </Style>
+
         <Style Selector="Button.playableTab">
-            <Setter Property="Padding" Value="12,6" />
-            <Setter Property="Margin" Value="0,0,10,6" />
+            <Setter Property="Padding" Value="10,5" />
+            <Setter Property="Margin" Value="0,0,6,5" />
+            <Setter Property="Background" Value="#D00B1C1B" />
+            <Setter Property="Foreground" Value="#F4E8CB" />
+            <Setter Property="BorderBrush" Value="#715722" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="FontSize" Value="10.5" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+        </Style>
+
+        <Style Selector="Button.playableTab:pointerover">
+            <Setter Property="Foreground" Value="#FFF1CB" />
+            <Setter Property="Background" Value="#E31A332D" />
+            <Setter Property="BorderBrush" Value="#D4A747" />
         </Style>
 
         <Style Selector="Button.playableTab.active">
-            <Setter Property="BorderBrush" Value="#FACC15" />
+            <Setter Property="BorderBrush" Value="#E2BD63" />
             <Setter Property="BorderThickness" Value="2" />
         </Style>
 
         <Style Selector="Button.playableTab.queued">
-            <Setter Property="Background" Value="#16A34A" />
+            <Setter Property="Background" Value="#D0175C3A" />
             <Setter Property="Foreground" Value="White" />
         </Style>
 
         <Style Selector="Button.familyToggle">
-            <Setter Property="Padding" Value="16,7" />
+            <Setter Property="Padding" Value="12,6" />
+            <Setter Property="Background" Value="#C00B1C1B" />
+            <Setter Property="Foreground" Value="#F1E3C4" />
+            <Setter Property="BorderBrush" Value="#8A6728" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="FontSize" Value="10.5" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+        </Style>
+
+        <Style Selector="Button.familyToggle:pointerover">
+            <Setter Property="Foreground" Value="#FFF1CB" />
+            <Setter Property="Background" Value="#D21A332D" />
+            <Setter Property="BorderBrush" Value="#D4A747" />
         </Style>
 
         <Style Selector="Button.familyToggle.active">
-            <Setter Property="Background" Value="#475569" />
-            <Setter Property="Foreground" Value="White" />
+            <Setter Property="Background" Value="#B66A4A16" />
+            <Setter Property="Foreground" Value="#F1CF78" />
+            <Setter Property="BorderBrush" Value="#D5A841" />
         </Style>
 
         <Style Selector="Button.familyCard">
-            <Setter Property="Padding" Value="8" />
-            <Setter Property="Margin" Value="4" />
-            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="Padding" Value="5" />
+            <Setter Property="Margin" Value="2" />
+            <Setter Property="Background" Value="#79071413" />
+            <Setter Property="Foreground" Value="#F2E6CB" />
+            <Setter Property="BorderBrush" Value="#5D4B2D" />
+            <Setter Property="BorderThickness" Value="1" />
             <Setter Property="HorizontalContentAlignment" Value="Stretch" />
         </Style>
 
+        <Style Selector="Button.familyCard:pointerover">
+            <Setter Property="Foreground" Value="#FFF1CB" />
+            <Setter Property="Background" Value="#A51A332D" />
+            <Setter Property="BorderBrush" Value="#C99B39" />
+        </Style>
+
         <Style Selector="Button.familyCard.selected">
-            <Setter Property="Background" Value="#334155" />
+            <Setter Property="Background" Value="#A7203A32" />
+            <Setter Property="BorderBrush" Value="#D9B04A" />
         </Style>
 
         <Style Selector="Button.familyCard.head">
-            <Setter Property="BorderBrush" Value="#FACC15" />
+            <Setter Property="BorderBrush" Value="#F2C94C" />
             <Setter Property="BorderThickness" Value="2" />
+        </Style>
+
+        <Style Selector="ProgressBar.healthBar">
+            <Setter Property="Foreground" Value="#4DAA69" />
+            <Setter Property="Background" Value="#48231B1B" />
+        </Style>
+
+        <Style Selector="TabItem">
+            <Setter Property="FontFamily" Value="Georgia" />
+            <Setter Property="FontSize" Value="11.5" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="Foreground" Value="#E4D3AE" />
+            <Setter Property="Background" Value="#85081312" />
+            <Setter Property="Padding" Value="11,7" />
+        </Style>
+
+        <Style Selector="TabItem:selected">
+            <Setter Property="Foreground" Value="#F1CE70" />
+            <Setter Property="Background" Value="#A0503213" />
         </Style>
     </Window.Styles>
 
     <Grid>
+        <!-- Always fills the physical window. -->
+        <Image
+            Source="/Assets/UI/bg.png"
+            Stretch="UniformToFill" />
 
-        <Border
-            IsVisible="{Binding IsStartScreenVisible}"
+        <!-- All interface artwork shares one uncropped 16:9 design surface. -->
+        <Viewbox
+            Stretch="Uniform"
             HorizontalAlignment="Center"
-            VerticalAlignment="Center"
-            Padding="28"
-            MinWidth="380">
+            VerticalAlignment="Center">
 
-            <StackPanel Spacing="14">
-                <TextBlock
-                    HorizontalAlignment="Center"
-                    FontSize="34"
-                    FontWeight="Bold"
-                    Text="Dynastia" />
+            <Grid
+                Width="1672"
+                Height="941"
+                ClipToBounds="True">
 
-                <TextBlock
-                    HorizontalAlignment="Center"
-                    TextWrapping="Wrap"
-                    Text="Enter your family's surname, or leave it blank for a random surname." />
+                <!-- START SCREEN -->
+                <Grid
+                    IsVisible="{Binding IsStartScreenVisible}">
 
-                <TextBox
-                    Watermark="e.g. Nowak"
-                    Text="{Binding SurnameInput, Mode=TwoWay}" />
-
-                <Button
-                    HorizontalAlignment="Stretch"
-                    HorizontalContentAlignment="Center"
-                    Padding="12"
-                    Content="Start Dynasty"
-                    Command="{Binding StartGameCommand}" />
-
-                <Button
-                    HorizontalAlignment="Stretch"
-                    HorizontalContentAlignment="Center"
-                    Padding="12"
-                    Content="Load Game"
-                    Click="OnLoadGameClick" />
-
-                <TextBlock
-                    IsVisible="{Binding HasPersistenceStatus}"
-                    TextWrapping="Wrap"
-                    TextAlignment="Center"
-                    Opacity="0.8"
-                    Text="{Binding PersistenceStatusText}" />
-            </StackPanel>
-        </Border>
-
-        <Grid
-            IsVisible="{Binding IsGameStarted}"
-            RowDefinitions="Auto,Auto,Auto,*"
-            Margin="16"
-            RowSpacing="12">
-
-            <Border Padding="16">
-                <Grid ColumnDefinitions="*,Auto,Auto,Auto,Auto"
-                      ColumnSpacing="10">
-
-                    <StackPanel Spacing="2">
-                        <TextBlock
-                            FontSize="26"
-                            FontWeight="Bold"
-                            Text="{Binding DynastyTitle}" />
-
-                        <TextBlock
-                            FontSize="12"
-                            Opacity="0.65"
-                            Text="{Binding ActiveHouseholdText}" />
-
-                        <TextBlock
-                            IsVisible="{Binding HasPersistenceStatus}"
-                            FontSize="11"
-                            Opacity="0.75"
-                            Text="{Binding PersistenceStatusText}" />
-                    </StackPanel>
-
-                    <Button
-                        Grid.Column="1"
-                        Padding="14,9"
-                        VerticalAlignment="Center"
-                        Content="Save"
-                        Click="OnSaveGameClick" />
-
-                    <Button
-                        Grid.Column="2"
-                        Padding="14,9"
-                        VerticalAlignment="Center"
-                        Content="Load"
-                        Click="OnLoadGameClick" />
+                    <Image
+                        Width="190"
+                        Height="190"
+                        Margin="28,18,0,0"
+                        HorizontalAlignment="Left"
+                        VerticalAlignment="Top"
+                        Source="/Assets/UI/coat_of_arms.png"
+                        Stretch="Uniform" />
 
                     <TextBlock
-                        Grid.Column="3"
-                        VerticalAlignment="Center"
-                        FontSize="24"
-                        FontWeight="SemiBold"
-                        Text="{Binding Year}" />
-
-                    <Button
-                        Grid.Column="4"
-                        Padding="18,10"
-                        VerticalAlignment="Center"
-                        Content="Next Year"
-                        Command="{Binding NextYearCommand}" />
-                </Grid>
-            </Border>
-
-            <Border Grid.Row="1"
-                    Padding="12">
-
-                <Grid RowDefinitions="Auto,Auto"
-                      RowSpacing="8">
-
-                    <Grid ColumnDefinitions="*,Auto,Auto,Auto"
-                          ColumnSpacing="8">
-
-                        <TextBlock
-                            VerticalAlignment="Center"
-                            FontSize="18"
-                            FontWeight="Bold"
-                            Text="Family Album" />
-
-                        <Button
-                            Grid.Column="1"
-                            Content="&lt;"
-                            Command="{Binding PreviousAlbumYearCommand}" />
-
-                        <TextBlock
-                            Grid.Column="2"
-                            VerticalAlignment="Center"
-                            FontWeight="SemiBold"
-                            Text="{Binding AlbumYear}" />
-
-                        <Button
-                            Grid.Column="3"
-                            Content="&gt;"
-                            Command="{Binding NextAlbumYearCommand}" />
-                    </Grid>
-
-                    <Grid Grid.Row="1">
-                        <TextBlock
-                            Opacity="0.65"
-                            Text="{Binding AlbumEmptyText}" />
-
-                        <ItemsControl ItemsSource="{Binding AlbumEvents}">
-                            <ItemsControl.ItemTemplate>
-                                <DataTemplate x:DataType="vm:AlbumEventViewModel">
-                                    <TextBlock
-                                        Margin="0,2"
-                                        TextWrapping="Wrap"
-                                        Text="{Binding Text}" />
-                                </DataTemplate>
-                            </ItemsControl.ItemTemplate>
-                        </ItemsControl>
-                    </Grid>
-                </Grid>
-            </Border>
-
-            <Border Grid.Row="2"
-                    Padding="12">
-
-                <Grid RowDefinitions="Auto,Auto,Auto"
-                      RowSpacing="8">
-
-                    <TextBlock
-                        FontSize="18"
-                        FontWeight="Bold"
-                        Text="Actions" />
+                        Margin="252,70,0,0"
+                        HorizontalAlignment="Left"
+                        VerticalAlignment="Top"
+                        FontFamily="avares://Dynastia.App/Assets/Fonts#UnifrakturCook"
+                        FontSize="56"
+                        Foreground="#DDB64E"
+                        Text="Dynastia" />
 
                     <Grid
-                        Grid.Row="1"
-                        ColumnDefinitions="*,Auto"
-                        ColumnSpacing="8"
-                        IsVisible="{Binding HasQueuedAction}">
+                        Width="760"
+                        Height="325"
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Center">
 
-                        <TextBlock
+                        <Image
+                            Source="/Assets/UI/year_paper.png"
+                            Stretch="Fill" />
+
+                        <StackPanel
+                            Width="555"
+                            HorizontalAlignment="Center"
                             VerticalAlignment="Center"
-                            FontWeight="SemiBold"
-                            Text="{Binding QueuedActionText}" />
-
-                        <Button
-                            Grid.Column="1"
-                            Content="Cancel Action"
-                            Command="{Binding CancelQueuedActionCommand}" />
-                    </Grid>
-
-                    <Grid Grid.Row="2">
-                        <TextBlock
-                            Opacity="0.65"
-                            Text="{Binding ActionsEmptyText}" />
-
-                        <ItemsControl ItemsSource="{Binding AvailableActions}">
-                            <ItemsControl.ItemsPanel>
-                                <ItemsPanelTemplate>
-                                    <WrapPanel />
-                                </ItemsPanelTemplate>
-                            </ItemsControl.ItemsPanel>
-
-                            <ItemsControl.ItemTemplate>
-                                <DataTemplate x:DataType="vm:AvailableActionViewModel">
-                                    <Button
-                                        Margin="0,0,8,6"
-                                        Padding="12,7"
-                                        Command="{Binding ExecuteCommand}"
-                                        ToolTip.Tip="{Binding Description}">
-                                        <StackPanel>
-                                            <TextBlock Text="{Binding Label}" />
-                                            <TextBlock
-                                                FontSize="10"
-                                                Opacity="0.6"
-                                                Text="{Binding ModeText}" />
-                                        </StackPanel>
-                                    </Button>
-                                </DataTemplate>
-                            </ItemsControl.ItemTemplate>
-                        </ItemsControl>
-                    </Grid>
-                </Grid>
-            </Border>
-
-            <Grid Grid.Row="3"
-                  ColumnDefinitions="3*,2*"
-                  ColumnSpacing="16">
-
-
-                <Border Padding="16">
-                    <Grid
-                        RowDefinitions="Auto,Auto,*"
-                        RowSpacing="10">
-
-                        <Grid
-                            ColumnDefinitions="Auto,Auto,*,Auto,Auto"
-                            ColumnSpacing="8">
+                            Spacing="12">
 
                             <TextBlock
-                                VerticalAlignment="Center"
-                                FontSize="24"
+                                HorizontalAlignment="Center"
+                                FontFamily="avares://Dynastia.App/Assets/Fonts#UnifrakturCook"
+                                FontSize="37"
+                                Foreground="#1F160D"
+                                Text="Begin a Dynasty" />
+
+                            <TextBlock
+                                HorizontalAlignment="Center"
+                                Foreground="#49341C"
+                                Text="Enter a family surname, or leave it blank for a random one." />
+
+                            <TextBox
+                                Height="38"
+                                Background="#D9F0E2C4"
+                                Foreground="#20150B"
+                                BorderBrush="#7B5220"
+                                BorderThickness="1"
+                                PlaceholderText="e.g. Nowak"
+                                Text="{Binding SurnameInput, Mode=TwoWay}" />
+
+                            <StackPanel
+                                HorizontalAlignment="Center"
+                                Orientation="Horizontal"
+                                Spacing="15">
+
+                                <ui:ImageStateButton
+                                    Width="205"
+                                    Height="71"
+                                    IdleSource="avares://Dynastia.App/Assets/UI/start_idle.png"
+                                    HoverSource="avares://Dynastia.App/Assets/UI/start_hover.png"
+                                    PressedSource="avares://Dynastia.App/Assets/UI/start_clicked.png"
+                                    Command="{Binding StartGameCommand}" />
+
+                                <ui:ImageStateButton
+                                    Width="205"
+                                    Height="71"
+                                    IdleSource="avares://Dynastia.App/Assets/UI/load_idle.png"
+                                    HoverSource="avares://Dynastia.App/Assets/UI/load_hover.png"
+                                    PressedSource="avares://Dynastia.App/Assets/UI/load_clicked.png"
+                                    Click="OnLoadGameClick" />
+                            </StackPanel>
+
+                            <TextBlock
+                                IsVisible="{Binding HasPersistenceStatus}"
+                                HorizontalAlignment="Center"
+                                TextAlignment="Center"
+                                TextWrapping="Wrap"
+                                Foreground="#6E1D17"
+                                Text="{Binding PersistenceStatusText}" />
+                        </StackPanel>
+                    </Grid>
+                </Grid>
+
+                <!-- MAIN GAME -->
+                <Canvas
+                    IsVisible="{Binding IsGameStarted}">
+
+                    <!-- Year parchment is deliberately UNDER the Chronicle artwork.
+                         Its lower edge is therefore hidden by the Chronicle frame. -->
+                    <Image
+                        Canvas.Left="1110"
+                        Canvas.Top="-62"
+                        Width="562"
+                        Height="241"
+                        IsHitTestVisible="False"
+                        Source="/Assets/UI/year_paper.png"
+                        Stretch="Fill" />
+
+                    <!-- TOP LEFT — ACTIONS, exact 8:3 -->
+                    <Grid
+                        Canvas.Left="8"
+                        Canvas.Top="118"
+                        Width="820"
+                        Height="307.5">
+
+                        <Image
+                            IsHitTestVisible="False"
+                            Source="/Assets/UI/actions.png"
+                            Stretch="Fill" />
+
+                        <Grid
+                            Margin="50,88,48,34"
+                            RowDefinitions="Auto,Auto,*"
+                            RowSpacing="9">
+
+                            <TextBlock
+                                FontSize="29"
                                 FontWeight="Bold"
-                                Text="Family" />
+                                Text="Actions" />
 
-                            <Button
-                                Grid.Column="1"
-                                Content="View Tree"
-                                IsEnabled="False"
-                                ToolTip.Tip="Family tree will be added later." />
+                            <Grid
+                                Grid.Row="1"
+                                ColumnDefinitions="*,Auto"
+                                ColumnSpacing="8"
+                                IsVisible="{Binding HasQueuedAction}">
 
-                            <Button
-                                Grid.Column="3"
-                                Classes="familyToggle"
-                                Classes.active="{Binding IsLivingFamilyView}"
-                                Content="Living"
-                                Command="{Binding ShowLivingFamilyCommand}" />
+                                <TextBlock
+                                    VerticalAlignment="Center"
+                                    FontSize="10.5"
+                                    FontWeight="SemiBold"
+                                    Foreground="#E8C96E"
+                                    Text="{Binding QueuedActionText}" />
 
-                            <Button
-                                Grid.Column="4"
-                                Classes="familyToggle"
-                                Classes.active="{Binding IsDeceasedFamilyView}"
-                                Content="Deceased"
-                                Command="{Binding ShowDeceasedFamilyCommand}" />
+                                <Button
+                                    Grid.Column="1"
+                                    Classes="gameAction"
+                                    Command="{Binding CancelQueuedActionCommand}">
+
+                                    <TextBlock
+                                        Foreground="#F8E9C8"
+                                        Text="Cancel" />
+                                </Button>
+                            </Grid>
+
+                            <ScrollViewer
+                                Grid.Row="2"
+                                HorizontalScrollBarVisibility="Disabled"
+                                VerticalScrollBarVisibility="Auto">
+
+                                <Grid>
+                                    <TextBlock
+                                        Opacity="0.72"
+                                        TextWrapping="Wrap"
+                                        FontSize="10.5"
+                                        Text="{Binding ActionsEmptyText}" />
+
+                                    <ItemsControl
+                                        ItemsSource="{Binding AvailableActions}">
+
+                                        <ItemsControl.ItemsPanel>
+                                            <ItemsPanelTemplate>
+                                                <WrapPanel />
+                                            </ItemsPanelTemplate>
+                                        </ItemsControl.ItemsPanel>
+
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate
+                                                x:DataType="vm:AvailableActionViewModel">
+
+                                                <Button
+                                                    Classes="gameAction"
+                                                    Command="{Binding ExecuteCommand}">
+
+                                                    <TextBlock
+                                                        Foreground="#F8E9C8"
+                                                        Text="{Binding Label}" />
+
+                                                    <ToolTip.Tip>
+                                                        <Border
+                                                            MaxWidth="390"
+                                                            Padding="10,7"
+                                                            Background="#F20A1514"
+                                                            BorderBrush="#B88934"
+                                                            BorderThickness="1"
+                                                            CornerRadius="4">
+
+                                                            <TextBlock
+                                                                FontSize="10.5"
+                                                                Foreground="#F5E6C6"
+                                                                TextWrapping="Wrap"
+                                                                Text="{Binding Description}" />
+                                                        </Border>
+                                                    </ToolTip.Tip>
+                                                </Button>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                </Grid>
+                            </ScrollViewer>
                         </Grid>
+                    </Grid>
 
-                        <ItemsControl
-                            Grid.Row="1"
-                            IsVisible="{Binding IsLivingFamilyView}"
-                            ItemsSource="{Binding PlayableTabs}">
+                    <!-- TOP RIGHT — CHRONICLE, exact same 8:3 size -->
+                    <Grid
+                        Canvas.Left="844"
+                        Canvas.Top="118"
+                        Width="820"
+                        Height="307.5">
 
-                            <ItemsControl.ItemsPanel>
-                                <ItemsPanelTemplate>
-                                    <WrapPanel
-                                        Orientation="Horizontal" />
-                                </ItemsPanelTemplate>
-                            </ItemsControl.ItemsPanel>
+                        <Image
+                            IsHitTestVisible="False"
+                            Source="/Assets/UI/chronicle.png"
+                            Stretch="Fill" />
 
-                            <ItemsControl.ItemTemplate>
-                                <DataTemplate x:DataType="vm:PlayablePersonTabViewModel">
+                        <Grid
+                            Margin="50,57,48,34"
+                            RowDefinitions="Auto,*"
+                            RowSpacing="9">
+
+                            <Grid
+                                ColumnDefinitions="*,Auto,Auto,Auto"
+                                ColumnSpacing="7">
+
+                                <TextBlock
+                                    FontSize="28"
+                                    FontWeight="Bold"
+                                    Text="Family Chronicle" />
+
+                                <Button
+                                    Grid.Column="1"
+                                    Classes="gameAction"
+                                    Command="{Binding PreviousAlbumYearCommand}">
+
+                                    <TextBlock
+                                        Foreground="#F8E9C8"
+                                        Text="‹" />
+                                </Button>
+
+                                <TextBlock
+                                    Grid.Column="2"
+                                    VerticalAlignment="Center"
+                                    FontSize="14"
+                                    FontWeight="Bold"
+                                    Foreground="#DDB64E"
+                                    Text="{Binding AlbumYear}" />
+
+                                <Button
+                                    Grid.Column="3"
+                                    Classes="gameAction"
+                                    Command="{Binding NextAlbumYearCommand}">
+
+                                    <TextBlock
+                                        Foreground="#F8E9C8"
+                                        Text="›" />
+                                </Button>
+                            </Grid>
+
+                            <ScrollViewer
+                                Grid.Row="1"
+                                HorizontalScrollBarVisibility="Disabled"
+                                VerticalScrollBarVisibility="Auto">
+
+                                <Grid>
+                                    <TextBlock
+                                        Opacity="0.67"
+                                        FontStyle="Italic"
+                                        FontSize="10"
+                                        Text="{Binding AlbumEmptyText}" />
+
+                                    <ItemsControl
+                                        ItemsSource="{Binding AlbumEvents}">
+
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate
+                                                x:DataType="vm:AlbumEventViewModel">
+
+                                                <TextBlock
+                                                    Margin="0,3,0,6"
+                                                    FontSize="14.5"
+                                                    LineHeight="21"
+                                                    TextWrapping="Wrap"
+                                                    Text="{Binding Text}" />
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                </Grid>
+                            </ScrollViewer>
+                        </Grid>
+                    </Grid>
+
+                    <!-- BOTTOM LEFT — HOUSEHOLDS, exact 8:5 -->
+                    <Grid
+                        Canvas.Left="8"
+                        Canvas.Top="420"
+                        Width="820"
+                        Height="512.5"
+                        ClipToBounds="True">
+
+                        <Image
+                            IsHitTestVisible="False"
+                            Source="/Assets/UI/households.png"
+                            Stretch="Fill" />
+
+                        <Grid
+                            Margin="54,58,49,45"
+                            RowDefinitions="Auto,Auto,Auto,*"
+                            RowSpacing="8">
+
+                            <Grid
+                                ColumnDefinitions="Auto,Auto,*,Auto,Auto"
+                                ColumnSpacing="7">
+
+                                <TextBlock
+                                    Margin="7,4,0,0"
+                                    VerticalAlignment="Center"
+                                    FontSize="28"
+                                    FontWeight="Bold"
+                                    Text="Households" />
+
+                                <Button
+                                    Grid.Column="1"
+                                    Margin="16,7,8,0"
+                                    Padding="12,6"
+                                    MinWidth="82"
+                                    FontSize="10.5"
+                                    Classes="gameAction"
+                                    Click="OnViewTreeClick"
+                                    ToolTip.Tip="Open the full genealogy tree.">
+
+                                    <TextBlock
+                                        Foreground="#F8E9C8"
+                                        Text="View Tree" />
+                                </Button>
+
+                                <Button
+                                    Grid.Column="3"
+                                    Margin="0,8,7,0"
+                                    Classes="familyToggle"
+                                    Classes.active="{Binding IsLivingFamilyView}"
+                                    Command="{Binding ShowLivingFamilyCommand}">
+
+                                    <TextBlock
+                                        Foreground="#F1E3C4"
+                                        Text="Living" />
+                                </Button>
+
+                                <Button
+                                    Grid.Column="4"
+                                    Margin="0,8,18,0"
+                                    Classes="familyToggle"
+                                    Classes.active="{Binding IsDeceasedFamilyView}"
+                                    Command="{Binding ShowDeceasedFamilyCommand}">
+
+                                    <TextBlock
+                                        Foreground="#F1E3C4"
+                                        Text="Deceased" />
+                                </Button>
+                            </Grid>
+
+                            <ItemsControl
+                                Grid.Row="1"
+                                IsVisible="{Binding IsLivingFamilyView}"
+                                ItemsSource="{Binding PlayableTabs}">
+
+                                <ItemsControl.ItemsPanel>
+                                    <ItemsPanelTemplate>
+                                        <WrapPanel Orientation="Horizontal" />
+                                    </ItemsPanelTemplate>
+                                </ItemsControl.ItemsPanel>
+
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate
+                                        x:DataType="vm:PlayablePersonTabViewModel">
+
+                                        <StackPanel
+                                            Orientation="Horizontal"
+                                            Spacing="3">
+
+                                            <TextBlock
+                                                VerticalAlignment="Center"
+                                                FontSize="8.5"
+                                                FontWeight="Bold"
+                                                Foreground="#B79A5D"
+                                                Text="{Binding GenerationText}" />
+
+                                            <Button
+                                                Classes="playableTab"
+                                                Classes.active="{Binding IsActive}"
+                                                Classes.queued="{Binding HasQueuedAction}"
+                                                Command="{Binding SwitchCommand}"
+                                                ToolTip.Tip="{Binding FullName}">
+
+                                                <TextBlock
+                                                    Foreground="#F4E8CB"
+                                                    Text="{Binding Label}" />
+                                            </Button>
+                                        </StackPanel>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+
+                            <StackPanel
+                                Grid.Row="2"
+                                IsVisible="{Binding IsLivingFamilyView}"
+                                HorizontalAlignment="Center"
+                                Orientation="Horizontal"
+                                Spacing="11">
+
+                                <TextBlock
+                                    FontSize="10.5"
+                                    Foreground="#DEC77E"
+                                    Text="{Binding HouseholdBudgetText}" />
+
+                                <TextBlock
+                                    FontSize="10.5"
+                                    FontWeight="Bold"
+                                    Text="{Binding HouseholdHousesText}" />
+
+                                <TextBlock
+                                    FontSize="10.5"
+                                    Opacity="0.78"
+                                    Text="{Binding HouseholdIncomeExpensesText}" />
+                            </StackPanel>
+
+                            <ScrollViewer
+                                Grid.Row="3"
+                                HorizontalScrollBarVisibility="Disabled"
+                                VerticalScrollBarVisibility="Auto">
+
+                                <Grid>
                                     <StackPanel
-                                        Orientation="Horizontal"
-                                        Spacing="6">
-
-                                        <TextBlock
-                                            VerticalAlignment="Center"
-                                            FontWeight="SemiBold"
-                                            Opacity="0.75"
-                                            Text="{Binding GenerationText}" />
-
-                                        <Button
-                                            Classes="playableTab"
-                                            Classes.active="{Binding IsActive}"
-                                            Classes.queued="{Binding HasQueuedAction}"
-                                            Content="{Binding Label}"
-                                            Command="{Binding SwitchCommand}"
-                                            ToolTip.Tip="{Binding FullName}" />
-                                    </StackPanel>
-                                </DataTemplate>
-                            </ItemsControl.ItemTemplate>
-                        </ItemsControl>
-
-                        <ScrollViewer
-                            Grid.Row="2"
-                            HorizontalScrollBarVisibility="Disabled"
-                            VerticalScrollBarVisibility="Auto">
-
-                            <Grid>
-
-                                <StackPanel
-                                    IsVisible="{Binding IsLivingFamilyView}"
-                                    Spacing="10">
-
-                                    <StackPanel
-                                        HorizontalAlignment="Center"
-                                        Spacing="2"
-                                        Margin="0,2,0,6">
-
-                                        <TextBlock
-                                            HorizontalAlignment="Center"
-                                            FontSize="17"
-                                            Text="{Binding HouseholdBudgetText}" />
-
-                                        <TextBlock
-                                            HorizontalAlignment="Center"
-                                            FontSize="16"
-                                            FontWeight="SemiBold"
-                                            Text="{Binding HouseholdHousesText}" />
-
-                                        <TextBlock
-                                            HorizontalAlignment="Center"
-                                            Opacity="0.75"
-                                            Text="{Binding HouseholdIncomeExpensesText}" />
+                                        IsVisible="{Binding IsLivingFamilyView}"
+                                        Spacing="4">
 
                                         <TextBlock
                                             HorizontalAlignment="Center"
                                             TextAlignment="Center"
                                             TextWrapping="Wrap"
-                                            FontWeight="SemiBold"
-                                            Foreground="#F59E0B"
+                                            FontSize="8.5"
+                                            Foreground="#E1B546"
                                             Text="{Binding HouseholdWarningText}" />
+
+                                        <ItemsControl
+                                            HorizontalAlignment="Center"
+                                            ItemsSource="{Binding HouseholdMembers}"
+                                            ItemTemplate="{StaticResource FamilyCardTemplate}">
+
+                                            <ItemsControl.ItemsPanel>
+                                                <ItemsPanelTemplate>
+                                                    <WrapPanel
+                                                        Orientation="Horizontal"
+                                                        HorizontalAlignment="Center" />
+                                                </ItemsPanelTemplate>
+                                            </ItemsControl.ItemsPanel>
+                                        </ItemsControl>
+
+                                        <TextBlock
+                                            HorizontalAlignment="Center"
+                                            Margin="0,3,0,0"
+                                            FontSize="10.5"
+                                            FontWeight="Bold"
+                                            Foreground="#C6AA69"
+                                            Text="Extended Family" />
+
+                                        <ItemsControl
+                                            HorizontalAlignment="Center"
+                                            ItemsSource="{Binding ExtendedFamilyMembers}"
+                                            ItemTemplate="{StaticResource FamilyCardTemplate}">
+
+                                            <ItemsControl.ItemsPanel>
+                                                <ItemsPanelTemplate>
+                                                    <WrapPanel
+                                                        Orientation="Horizontal"
+                                                        HorizontalAlignment="Center" />
+                                                </ItemsPanelTemplate>
+                                            </ItemsControl.ItemsPanel>
+                                        </ItemsControl>
+
+                                        <TextBlock
+                                            HorizontalAlignment="Center"
+                                            FontSize="8.5"
+                                            Opacity="0.55"
+                                            Text="{Binding ExtendedFamilyEmptyText}" />
                                     </StackPanel>
 
-                                    <ItemsControl
-                                        HorizontalAlignment="Center"
-                                        ItemsSource="{Binding HouseholdMembers}">
+                                    <StackPanel
+                                        IsVisible="{Binding IsDeceasedFamilyView}"
+                                        Spacing="6">
 
-                                        <ItemsControl.ItemsPanel>
-                                            <ItemsPanelTemplate>
-                                                <WrapPanel
-                                                    Orientation="Horizontal"
-                                                    HorizontalAlignment="Center" />
-                                            </ItemsPanelTemplate>
-                                        </ItemsControl.ItemsPanel>
-
-                            <ItemsControl.ItemTemplate>
-                                <DataTemplate x:DataType="vm:FamilyMemberCardViewModel">
-                                    <Button
-                                        Classes="familyCard"
-                                        Classes.selected="{Binding IsSelected}"
-                                        Classes.head="{Binding IsActiveHouseholdHead}"
-                                        Command="{Binding SelectCommand}"
-                                        ToolTip.Tip="{Binding FullName}">
-
-                                        <StackPanel
-                                            Width="116"
+                                        <TextBlock
                                             HorizontalAlignment="Center"
-                                            Spacing="4">
+                                            FontSize="11"
+                                            FontWeight="Bold"
+                                            Foreground="#C6AA69"
+                                            Text="Deceased Family" />
 
-                                            <Border
-                                                Width="54"
-                                                Height="54"
-                                                HorizontalAlignment="Center"
-                                                CornerRadius="27"
-                                                BorderThickness="1"
-                                                BorderBrush="#64748B">
-
-                                                <TextBlock
-                                                    HorizontalAlignment="Center"
-                                                    VerticalAlignment="Center"
-                                                    FontSize="28"
-                                                    Text="{Binding AvatarText}" />
-                                            </Border>
-
-                                            <ProgressBar
-                                                IsVisible="{Binding ShowHealth}"
-                                                Width="82"
-                                                Height="6"
-                                                Minimum="0"
-                                                Maximum="100"
-                                                HorizontalAlignment="Center"
-                                                Value="{Binding HealthValue}" />
-
-                                            <TextBlock
-                                                HorizontalAlignment="Center"
-                                                TextAlignment="Center"
-                                                TextWrapping="Wrap"
-                                                FontWeight="SemiBold"
-                                                Text="{Binding FullName}" />
-
-                                            <TextBlock
-                                                HorizontalAlignment="Center"
-                                                TextAlignment="Center"
-                                                FontSize="11"
-                                                Opacity="0.75"
-                                                Text="{Binding SubtitleText}" />
-
-                                            <TextBlock
-                                                HorizontalAlignment="Center"
-                                                TextAlignment="Center"
-                                                TextWrapping="Wrap"
-                                                FontSize="10"
-                                                Opacity="0.65"
-                                                Text="{Binding OccupationText}" />
-                                        </StackPanel>
-                                    </Button>
-                                </DataTemplate>
-                            </ItemsControl.ItemTemplate>
-
-                                    </ItemsControl>
-
-                                    <Border
-                                        Height="1"
-                                        Margin="0,4"
-                                        Background="#475569" />
-
-                                    <TextBlock
-                                        HorizontalAlignment="Center"
-                                        FontSize="17"
-                                        FontWeight="SemiBold"
-                                        Text="Extended Family" />
-
-                                    <ItemsControl
-                                        HorizontalAlignment="Center"
-                                        ItemsSource="{Binding ExtendedFamilyMembers}">
-
-                                        <ItemsControl.ItemsPanel>
-                                            <ItemsPanelTemplate>
-                                                <WrapPanel
-                                                    Orientation="Horizontal"
-                                                    HorizontalAlignment="Center" />
-                                            </ItemsPanelTemplate>
-                                        </ItemsControl.ItemsPanel>
-
-                            <ItemsControl.ItemTemplate>
-                                <DataTemplate x:DataType="vm:FamilyMemberCardViewModel">
-                                    <Button
-                                        Classes="familyCard"
-                                        Classes.selected="{Binding IsSelected}"
-                                        Classes.head="{Binding IsActiveHouseholdHead}"
-                                        Command="{Binding SelectCommand}"
-                                        ToolTip.Tip="{Binding FullName}">
-
-                                        <StackPanel
-                                            Width="116"
+                                        <ItemsControl
                                             HorizontalAlignment="Center"
-                                            Spacing="4">
+                                            ItemsSource="{Binding DeceasedFamilyMembers}"
+                                            ItemTemplate="{StaticResource FamilyCardTemplate}">
 
-                                            <Border
-                                                Width="54"
-                                                Height="54"
-                                                HorizontalAlignment="Center"
-                                                CornerRadius="27"
-                                                BorderThickness="1"
-                                                BorderBrush="#64748B">
+                                            <ItemsControl.ItemsPanel>
+                                                <ItemsPanelTemplate>
+                                                    <WrapPanel
+                                                        Orientation="Horizontal"
+                                                        HorizontalAlignment="Center" />
+                                                </ItemsPanelTemplate>
+                                            </ItemsControl.ItemsPanel>
+                                        </ItemsControl>
 
-                                                <TextBlock
-                                                    HorizontalAlignment="Center"
-                                                    VerticalAlignment="Center"
-                                                    FontSize="28"
-                                                    Text="{Binding AvatarText}" />
-                                            </Border>
-
-                                            <ProgressBar
-                                                IsVisible="{Binding ShowHealth}"
-                                                Width="82"
-                                                Height="6"
-                                                Minimum="0"
-                                                Maximum="100"
-                                                HorizontalAlignment="Center"
-                                                Value="{Binding HealthValue}" />
-
-                                            <TextBlock
-                                                HorizontalAlignment="Center"
-                                                TextAlignment="Center"
-                                                TextWrapping="Wrap"
-                                                FontWeight="SemiBold"
-                                                Text="{Binding FullName}" />
-
-                                            <TextBlock
-                                                HorizontalAlignment="Center"
-                                                TextAlignment="Center"
-                                                FontSize="11"
-                                                Opacity="0.75"
-                                                Text="{Binding SubtitleText}" />
-
-                                            <TextBlock
-                                                HorizontalAlignment="Center"
-                                                TextAlignment="Center"
-                                                TextWrapping="Wrap"
-                                                FontSize="10"
-                                                Opacity="0.65"
-                                                Text="{Binding OccupationText}" />
-                                        </StackPanel>
-                                    </Button>
-                                </DataTemplate>
-                            </ItemsControl.ItemTemplate>
-
-                                    </ItemsControl>
-
-                                    <TextBlock
-                                        HorizontalAlignment="Center"
-                                        Opacity="0.6"
-                                        Text="{Binding ExtendedFamilyEmptyText}" />
-                                </StackPanel>
-
-                                <StackPanel
-                                    IsVisible="{Binding IsDeceasedFamilyView}"
-                                    Spacing="10">
-
-                                    <TextBlock
-                                        HorizontalAlignment="Center"
-                                        FontSize="17"
-                                        FontWeight="SemiBold"
-                                        Text="Deceased Family" />
-
-                                    <ItemsControl
-                                        HorizontalAlignment="Center"
-                                        ItemsSource="{Binding DeceasedFamilyMembers}">
-
-                                        <ItemsControl.ItemsPanel>
-                                            <ItemsPanelTemplate>
-                                                <WrapPanel
-                                                    Orientation="Horizontal"
-                                                    HorizontalAlignment="Center" />
-                                            </ItemsPanelTemplate>
-                                        </ItemsControl.ItemsPanel>
-
-                            <ItemsControl.ItemTemplate>
-                                <DataTemplate x:DataType="vm:FamilyMemberCardViewModel">
-                                    <Button
-                                        Classes="familyCard"
-                                        Classes.selected="{Binding IsSelected}"
-                                        Classes.head="{Binding IsActiveHouseholdHead}"
-                                        Command="{Binding SelectCommand}"
-                                        ToolTip.Tip="{Binding FullName}">
-
-                                        <StackPanel
-                                            Width="116"
+                                        <TextBlock
                                             HorizontalAlignment="Center"
-                                            Spacing="4">
-
-                                            <Border
-                                                Width="54"
-                                                Height="54"
-                                                HorizontalAlignment="Center"
-                                                CornerRadius="27"
-                                                BorderThickness="1"
-                                                BorderBrush="#64748B">
-
-                                                <TextBlock
-                                                    HorizontalAlignment="Center"
-                                                    VerticalAlignment="Center"
-                                                    FontSize="28"
-                                                    Text="{Binding AvatarText}" />
-                                            </Border>
-
-                                            <ProgressBar
-                                                IsVisible="{Binding ShowHealth}"
-                                                Width="82"
-                                                Height="6"
-                                                Minimum="0"
-                                                Maximum="100"
-                                                HorizontalAlignment="Center"
-                                                Value="{Binding HealthValue}" />
-
-                                            <TextBlock
-                                                HorizontalAlignment="Center"
-                                                TextAlignment="Center"
-                                                TextWrapping="Wrap"
-                                                FontWeight="SemiBold"
-                                                Text="{Binding FullName}" />
-
-                                            <TextBlock
-                                                HorizontalAlignment="Center"
-                                                TextAlignment="Center"
-                                                FontSize="11"
-                                                Opacity="0.75"
-                                                Text="{Binding SubtitleText}" />
-
-                                            <TextBlock
-                                                HorizontalAlignment="Center"
-                                                TextAlignment="Center"
-                                                TextWrapping="Wrap"
-                                                FontSize="10"
-                                                Opacity="0.65"
-                                                Text="{Binding OccupationText}" />
-                                        </StackPanel>
-                                    </Button>
-                                </DataTemplate>
-                            </ItemsControl.ItemTemplate>
-
-                                    </ItemsControl>
-
-                                    <TextBlock
-                                        HorizontalAlignment="Center"
-                                        Opacity="0.6"
-                                        Text="{Binding DeceasedFamilyEmptyText}" />
-                                </StackPanel>
-                            </Grid>
-                        </ScrollViewer>
+                                            FontSize="8.5"
+                                            Opacity="0.55"
+                                            Text="{Binding DeceasedFamilyEmptyText}" />
+                                    </StackPanel>
+                                </Grid>
+                            </ScrollViewer>
+                        </Grid>
                     </Grid>
-                </Border>
 
-                <Border Grid.Column="1"
-                        Padding="16">
+                    <!-- BOTTOM RIGHT — PERSONAL, exact same 8:5 size -->
+                    <Grid
+                        Canvas.Left="844"
+                        Canvas.Top="420"
+                        Width="820"
+                        Height="512.5"
+                        ClipToBounds="True">
 
-                    <Grid RowDefinitions="Auto,Auto,Auto,*"
-                          RowSpacing="14">
+                        <Image
+                            IsHitTestVisible="False"
+                            Source="/Assets/UI/personal.png"
+                            Stretch="Fill" />
 
-                        <StackPanel Spacing="4">
+                        <!-- Portrait -->
+                        <Border
+                            Margin="49,83,0,0"
+                            Width="135"
+                            Height="202"
+                            HorizontalAlignment="Left"
+                            VerticalAlignment="Top"
+                            Background="#77071212"
+                            BorderBrush="#9D772E"
+                            BorderThickness="1.5"
+                            CornerRadius="4">
+
                             <TextBlock
-                                FontSize="24"
-                                FontWeight="Bold"
-                                Text="{Binding SelectedPerson.FullName,
-                                               FallbackValue='Select a person'}" />
+                                HorizontalAlignment="Center"
+                                VerticalAlignment="Center"
+                                FontSize="70"
+                                Text="{Binding SelectedPersonEmoji}" />
+                        </Border>
 
-                            <TextBlock
-                                Opacity="0.75"
-                                Text="{Binding SelectedPerson.StatusText}" />
-                        </StackPanel>
+                        <!-- Name sits directly above the portrait frame. -->
+                        <TextBlock
+                            Margin="30,43,0,0"
+                            Width="172"
+                            Height="34"
+                            HorizontalAlignment="Left"
+                            VerticalAlignment="Top"
+                            TextAlignment="Center"
+                            FontSize="21"
+                            FontWeight="Bold"
+                            TextWrapping="Wrap"
+                            Text="{Binding SelectedPerson.FullName,
+                                       FallbackValue='Select a person'}" />
 
+                        <!-- Six larger, color-coded skills. -->
                         <ItemsControl
-                            Grid.Row="1"
-                            ItemsSource="{Binding SelectedStats}">
+                            Margin="214,43,30,0"
+                            Height="54"
+                            VerticalAlignment="Top"
+                            HorizontalAlignment="Stretch"
+                            ItemsSource="{Binding SelectedStats}"
+                            ItemTemplate="{StaticResource CompactStatTemplate}">
 
                             <ItemsControl.ItemsPanel>
                                 <ItemsPanelTemplate>
-                                    <WrapPanel />
+                                    <WrapPanel
+                                        Orientation="Horizontal"
+                                        HorizontalAlignment="Right" />
                                 </ItemsPanelTemplate>
                             </ItemsControl.ItemsPanel>
-
-                            <ItemsControl.ItemTemplate>
-                                <DataTemplate x:DataType="contracts:StatValue">
-                                    <Border
-                                        Margin="0,0,8,8"
-                                        Padding="10"
-                                        MinWidth="92">
-
-                                        <StackPanel HorizontalAlignment="Center">
-                                            <TextBlock
-                                                HorizontalAlignment="Center"
-                                                FontWeight="SemiBold"
-                                                Text="{Binding Name}" />
-
-                                            <TextBlock
-                                                HorizontalAlignment="Center"
-                                                FontSize="20"
-                                                FontWeight="Bold"
-                                                Text="{Binding Value}" />
-                                        </StackPanel>
-                                    </Border>
-                                </DataTemplate>
-                            </ItemsControl.ItemTemplate>
                         </ItemsControl>
 
+                        <!-- Health -->
                         <StackPanel
-                            Grid.Row="2"
-                            Spacing="5"
+                            Margin="214,101,38,0"
+                            Height="48"
+                            VerticalAlignment="Top"
+                            Spacing="4"
                             IsVisible="{Binding SelectedPerson.ShowHealth}">
 
-                            <TextBlock
-                                FontWeight="SemiBold"
-                                Text="{Binding SelectedHealth.HealthText}" />
+                            <Grid ColumnDefinitions="Auto,*"
+                                  ColumnSpacing="8">
+
+                                <TextBlock
+                                    VerticalAlignment="Center"
+                                    FontSize="11.5"
+                                    FontWeight="Bold"
+                                    Text="{Binding SelectedHealth.HealthText}" />
+
+                                <TextBlock
+                                    Grid.Column="1"
+                                    HorizontalAlignment="Right"
+                                    VerticalAlignment="Center"
+                                    FontSize="8.5"
+                                    Opacity="0.68"
+                                    Text="{Binding SelectedHealth.ConditionsText}" />
+                            </Grid>
 
                             <ProgressBar
+                                Classes="healthBar"
+                                Height="10"
                                 Minimum="0"
                                 Maximum="100"
-                                Height="10"
+                                Foreground="{Binding SelectedHealth.Percentage,
+                                                     Converter={StaticResource HealthBrushConverter}}"
                                 Value="{Binding SelectedHealth.Percentage}" />
-
-                            <TextBlock
-                                FontSize="12"
-                                Opacity="0.75"
-                                Text="{Binding SelectedHealth.ConditionsText}" />
                         </StackPanel>
 
+                        <!-- Personal tabs are explicitly clipped to the frame. -->
                         <TabControl
-                            Grid.Row="3"
+                            Margin="202,157,40,42"
+                            ClipToBounds="True"
                             SelectedIndex="{Binding DetailsTabIndex, Mode=TwoWay}">
 
                             <TabItem Header="General">
-                                <ScrollViewer>
-                                    <StackPanel Margin="12"
-                                                Spacing="8">
+                                <ScrollViewer
+                                    HorizontalScrollBarVisibility="Disabled"
+                                    VerticalScrollBarVisibility="Auto">
 
-                                        <TextBlock Text="{Binding SelectedPerson.AgeText}" />
-                                        <TextBlock Text="{Binding SelectedFamily.Sex, StringFormat='Sex: {0}'}" />
-
-                                        <TextBlock Text="{Binding SelectedEducation.EducationText}" />
-                                        <TextBlock Text="{Binding SelectedCareer.OccupationText}" />
-                                        <TextBlock Text="{Binding SelectedCareer.SatisfactionText}" />
-                                        <TextBlock Text="{Binding SelectedCareer.IncomeText}" />
-                                        <TextBlock Text="{Binding SelectedJustice.StatusText}" />
-                                        <TextBlock Text="{Binding SelectedJustice.CrimeText}" />
-
-                                        <TextBlock Text="{Binding SelectedPerson.BirthDateText}" />
-                                        <TextBlock Text="{Binding SelectedPerson.DeathDateText}" />
-                                        <TextBlock Text="{Binding SelectedPerson.MaidenNameText}" />
-                                        <TextBlock Text="{Binding SelectedPerson.PlayableText}" />
-                                        <TextBlock Text="{Binding SelectedFamily.Generation, StringFormat='Generation: {0}'}" />
-                                        <TextBlock Text="{Binding SelectedFamily.Bloodline, StringFormat='Bloodline: {0}'}" />
-                                        <TextBlock Text="{Binding SelectedFamily.MaleLineage, StringFormat='Male lineage: {0}'}" />
+                                    <Grid
+                                        Margin="9"
+                                        ColumnDefinitions="*,*"
+                                        ColumnSpacing="18">
 
                                         <StackPanel
-                                            IsVisible="{Binding HasSelectedEconomy}"
-                                            Spacing="5"
-                                            Margin="0,8,0,0">
+                                            Grid.Column="0"
+                                            Spacing="4">
 
-                                            <TextBlock
-                                                FontWeight="Bold"
-                                                Text="Household" />
-
-                                            <TextBlock Text="{Binding SelectedEconomy.WealthText}" />
-                                            <TextBlock Text="{Binding SelectedEconomy.HousesText}" />
-                                            <TextBlock Text="{Binding SelectedEconomy.RentedHousesText}" />
-                                            <TextBlock Text="{Binding SelectedEconomy.IncomeText}" />
-                                            <TextBlock Text="{Binding SelectedEconomy.ExpensesText}" />
-                                            <TextBlock Text="{Binding SelectedEconomy.NetText}" />
-                                            <TextBlock Text="{Binding SelectedEconomy.PendingInheritanceText}" />
-                                            <TextBlock Text="{Binding SelectedEconomy.PendingHousesText}" />
-                                            <TextBlock Text="{Binding SelectedEconomy.NannyText}" />
-
-                                            <TextBlock
-                                                TextWrapping="Wrap"
-                                                FontWeight="SemiBold"
-                                                Text="{Binding SelectedEconomy.WarningText}" />
+                                            <TextBlock FontSize="12" Text="{Binding SelectedPerson.AgeText}" />
+                                            <TextBlock FontSize="12" Text="{Binding SelectedFamily.Sex, StringFormat='Sex: {0}'}" />
+                                            <TextBlock FontSize="12" Text="{Binding SelectedEducation.EducationText}" />
+                                            <TextBlock FontSize="12" Text="{Binding SelectedCareer.OccupationText}" />
+                                            <TextBlock FontSize="12" Text="{Binding SelectedCareer.SatisfactionText}" />
+                                            <TextBlock FontSize="12" Text="{Binding SelectedCareer.IncomeText}" />
+                                            <TextBlock FontSize="12" Text="{Binding SelectedJustice.StatusText}" />
+                                            <TextBlock FontSize="12" Text="{Binding SelectedJustice.CrimeText}" />
                                         </StackPanel>
 
-                                        <TextBlock
-                                            Margin="0,8,0,0"
-                                            FontWeight="SemiBold"
-                                            Text="Tags" />
+                                        <StackPanel
+                                            Grid.Column="1"
+                                            Spacing="4">
 
-                                        <TextBlock
-                                            TextWrapping="Wrap"
-                                            Text="{Binding SelectedPerson.TagsText}" />
-                                    </StackPanel>
+                                            <TextBlock FontSize="12" Text="{Binding SelectedPerson.BirthDateText}" />
+                                            <TextBlock FontSize="12" Text="{Binding SelectedPerson.DeathDateText}" />
+                                            <TextBlock FontSize="12" Text="{Binding SelectedPerson.MaidenNameText}" />
+                                            <TextBlock FontSize="12" Text="{Binding SelectedPerson.OrphanTraitText}" />
+                                            <TextBlock FontSize="12" Text="{Binding SelectedFamily.Generation, StringFormat='Generation: {0}'}" />
+                                            <TextBlock FontSize="12" Text="{Binding SelectedFamily.Bloodline, StringFormat='Bloodline: {0}'}" />
+                                            <TextBlock FontSize="12" Text="{Binding SelectedFamily.MaleLineage, StringFormat='Male lineage: {0}'}" />
+
+                                        </StackPanel>
+                                    </Grid>
                                 </ScrollViewer>
                             </TabItem>
 
                             <TabItem Header="About">
-                                <ScrollViewer>
+                                <ScrollViewer
+                                    HorizontalScrollBarVisibility="Disabled"
+                                    VerticalScrollBarVisibility="Auto">
+
                                     <TextBlock
-                                        Margin="12"
+                                        Margin="9"
+                                        FontSize="12"
+                                        LineHeight="18"
                                         TextWrapping="Wrap"
-                                        LineHeight="22"
                                         Text="{Binding SelectedAboutText}" />
                                 </ScrollViewer>
                             </TabItem>
 
                             <TabItem Header="Relationships">
-                                <ScrollViewer>
-                                    <StackPanel Margin="12"
-                                                Spacing="8">
+                                <ScrollViewer
+                                    HorizontalScrollBarVisibility="Disabled"
+                                    VerticalScrollBarVisibility="Auto">
 
-                                        <TextBlock Text="{Binding SelectedFamily.Father, StringFormat='Father: {0}'}" />
-                                        <TextBlock Text="{Binding SelectedFamily.Mother, StringFormat='Mother: {0}'}" />
-                                        <TextBlock TextWrapping="Wrap"
-                                                   Text="{Binding SelectedFamily.Siblings, StringFormat='Siblings: {0}'}" />
-                                        <TextBlock Text="{Binding SelectedFamily.Spouse, StringFormat='Current spouse: {0}'}" />
-                                        <TextBlock TextWrapping="Wrap"
-                                                   Text="{Binding SelectedFamily.Children, StringFormat='Children: {0}'}" />
+                                    <Grid
+                                        Margin="9"
+                                        ColumnDefinitions="*,*"
+                                        ColumnSpacing="18">
 
-                                        <TextBlock
-                                            Margin="0,8,0,0"
-                                            FontWeight="SemiBold"
-                                            Text="Relationship history" />
+                                        <StackPanel
+                                            Grid.Column="0"
+                                            Spacing="4">
 
-                                        <TextBlock
-                                            TextWrapping="Wrap"
-                                            Text="{Binding SelectedFamily.RelationshipHistory}" />
-                                    </StackPanel>
+                                            <TextBlock FontSize="12" Text="{Binding SelectedFamily.Father, StringFormat='Father: {0}'}" />
+                                            <TextBlock FontSize="12" Text="{Binding SelectedFamily.Mother, StringFormat='Mother: {0}'}" />
+                                            <TextBlock FontSize="12" TextWrapping="Wrap" Text="{Binding SelectedFamily.Siblings, StringFormat='Siblings: {0}'}" />
+                                            <TextBlock FontSize="12" Text="{Binding SelectedFamily.Spouse, StringFormat='Current spouse: {0}'}" />
+                                            <TextBlock FontSize="12" TextWrapping="Wrap" Text="{Binding SelectedFamily.Children, StringFormat='Children: {0}'}" />
+                                        </StackPanel>
+
+                                        <StackPanel
+                                            Grid.Column="1"
+                                            Spacing="4">
+
+                                            <TextBlock
+                                                FontSize="12"
+                                                FontWeight="Bold"
+                                                Foreground="#D7B65B"
+                                                Text="Relationship history" />
+
+                                            <TextBlock
+                                                FontSize="11.5"
+                                                LineHeight="17"
+                                                TextWrapping="Wrap"
+                                                Text="{Binding SelectedFamily.RelationshipHistory}" />
+                                        </StackPanel>
+                                    </Grid>
                                 </ScrollViewer>
                             </TabItem>
 
                             <TabItem Header="Biography">
-                                <ScrollViewer>
-                                    <Grid Margin="12">
+                                <ScrollViewer
+                                    HorizontalScrollBarVisibility="Disabled"
+                                    VerticalScrollBarVisibility="Auto">
+
+                                    <Grid Margin="9">
 
                                         <TextBlock
+                                            FontSize="11.5"
                                             Opacity="0.6"
                                             Text="{Binding BiographyEmptyText}" />
 
@@ -854,16 +1023,20 @@
                                                     x:DataType="vm:BiographyEntryViewModel">
 
                                                     <Grid
-                                                        Margin="0,0,0,7"
-                                                        ColumnDefinitions="58,*"
-                                                        ColumnSpacing="8">
+                                                        Margin="0,0,0,5"
+                                                        ColumnDefinitions="42,*"
+                                                        ColumnSpacing="6">
 
                                                         <TextBlock
+                                                            FontSize="11.5"
                                                             FontWeight="Bold"
+                                                            Foreground="#D7B65B"
                                                             Text="{Binding Year}" />
 
                                                         <TextBlock
                                                             Grid.Column="1"
+                                                            FontSize="11.5"
+                                                            LineHeight="17"
                                                             TextWrapping="Wrap"
                                                             Text="{Binding Message}" />
                                                     </Grid>
@@ -875,48 +1048,158 @@
                             </TabItem>
                         </TabControl>
                     </Grid>
-                </Border>
+
+                    <!-- HEADER -->
+                    <Image
+                        Canvas.Left="18"
+                        Canvas.Top="5"
+                        Width="185"
+                        Height="185"
+                        IsHitTestVisible="False"
+                        Source="/Assets/UI/coat_of_arms.png"
+                        Stretch="Uniform" />
+
+                    <TextBlock
+                        Canvas.Left="218"
+                        Canvas.Top="39"
+                        Width="480"
+                        FontFamily="avares://Dynastia.App/Assets/Fonts#UnifrakturCook"
+                        FontSize="46"
+                        Foreground="#DDB64E"
+                        Text="{Binding DynastyTitle}" />
+
+                    <TextBlock
+                        Canvas.Left="220"
+                        Canvas.Top="91"
+                        Width="435"
+                        FontSize="8.5"
+                        Opacity="0.72"
+                        Text="{Binding PersistenceStatusText}" />
+
+                    <ui:ImageStateButton
+                        Canvas.Left="700"
+                        Canvas.Top="45"
+                        Width="122"
+                        Height="42"
+                        IdleSource="avares://Dynastia.App/Assets/UI/instructions_idle.png"
+                        HoverSource="avares://Dynastia.App/Assets/UI/instructions_hover.png"
+                        PressedSource="avares://Dynastia.App/Assets/UI/instructions_clicked.png"
+                        Click="OnInstructionsClick" />
+
+                    <ui:ImageStateButton
+                        Canvas.Left="826"
+                        Canvas.Top="45"
+                        Width="122"
+                        Height="42"
+                        IdleSource="avares://Dynastia.App/Assets/UI/load_idle.png"
+                        HoverSource="avares://Dynastia.App/Assets/UI/load_hover.png"
+                        PressedSource="avares://Dynastia.App/Assets/UI/load_clicked.png"
+                        Click="OnLoadGameClick" />
+
+                    <ui:ImageStateButton
+                        Canvas.Left="952"
+                        Canvas.Top="45"
+                        Width="122"
+                        Height="42"
+                        IdleSource="avares://Dynastia.App/Assets/UI/export_idle.png"
+                        HoverSource="avares://Dynastia.App/Assets/UI/export_hover.png"
+                        PressedSource="avares://Dynastia.App/Assets/UI/export_clicked.png"
+                        Click="OnSaveGameClick" />
+
+                    <TextBlock
+                        Canvas.Left="1160"
+                        Canvas.Top="23"
+                        Width="150"
+                        TextAlignment="Center"
+                        FontFamily="avares://Dynastia.App/Assets/Fonts#UnifrakturCook"
+                        FontSize="52"
+                        Foreground="#17110C"
+                        Text="{Binding Year}" />
+
+                    <ui:ImageStateButton
+                        Canvas.Left="1322"
+                        Canvas.Top="15"
+                        Width="314"
+                        Height="105"
+                        IdleSource="avares://Dynastia.App/Assets/UI/next_year_idle.png"
+                        HoverSource="avares://Dynastia.App/Assets/UI/next_year_hover.png"
+                        PressedSource="avares://Dynastia.App/Assets/UI/next_year_clicked.png"
+                        Command="{Binding NextYearCommand}" />
+                </Canvas>
+
+                <!-- GAME OVER -->
+                <Grid
+                    IsVisible="{Binding IsGameOverOverlayVisible}"
+                    Background="#A8000000">
+
+                    <Grid
+                        Width="720"
+                        Height="330"
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Center">
+
+                        <Image
+                            Source="/Assets/UI/year_paper.png"
+                            Stretch="Fill" />
+
+                        <StackPanel
+                            Width="480"
+                            HorizontalAlignment="Center"
+                            VerticalAlignment="Center"
+                            Spacing="12">
+
+                            <TextBlock
+                                HorizontalAlignment="Center"
+                                FontFamily="avares://Dynastia.App/Assets/Fonts#UnifrakturCook"
+                                FontSize="40"
+                                Foreground="#301E0E"
+                                Text="{Binding GameOverTitle}" />
+
+                            <TextBlock
+                                HorizontalAlignment="Center"
+                                TextAlignment="Center"
+                                TextWrapping="Wrap"
+                                FontSize="15"
+                                Foreground="#362616"
+                                Text="{Binding GameOverText}" />
+
+                            <StackPanel
+                                HorizontalAlignment="Center"
+                                Orientation="Horizontal"
+                                Spacing="12">
+
+                                <Button
+                                    MinWidth="120"
+                                    Height="42"
+                                    Background="#0A3228"
+                                    Foreground="#F0D38C"
+                                    BorderBrush="#A67A28"
+                                    BorderThickness="2"
+                                    Command="{Binding GoBackFromGameOverCommand}">
+
+                                    <TextBlock
+                                        Foreground="#F0D38C"
+                                        Text="Go Back" />
+                                </Button>
+
+                                <Button
+                                    MinWidth="140"
+                                    Height="42"
+                                    Background="#0A3228"
+                                    Foreground="#F0D38C"
+                                    BorderBrush="#A67A28"
+                                    BorderThickness="2"
+                                    Command="{Binding ReturnToMainMenuCommand}">
+
+                                    <TextBlock
+                                        Foreground="#F0D38C"
+                                        Text="Main Menu" />
+                                </Button>
+                            </StackPanel>
+                        </StackPanel>
+                    </Grid>
+                </Grid>
             </Grid>
-        </Grid>
-
-        <Border
-            IsVisible="{Binding IsGameOverOverlayVisible}"
-            HorizontalAlignment="Center"
-            VerticalAlignment="Center"
-            Padding="32"
-            MinWidth="430"
-            MaxWidth="560"
-            ZIndex="100">
-
-            <StackPanel Spacing="16">
-
-                <TextBlock
-                    HorizontalAlignment="Center"
-                    FontSize="30"
-                    FontWeight="Bold"
-                    Text="{Binding GameOverTitle}" />
-
-                <TextBlock
-                    HorizontalAlignment="Center"
-                    TextAlignment="Center"
-                    TextWrapping="Wrap"
-                    FontSize="16"
-                    Text="{Binding GameOverText}" />
-
-                <TextBlock
-                    HorizontalAlignment="Center"
-                    TextAlignment="Center"
-                    TextWrapping="Wrap"
-                    Opacity="0.7"
-                    Text="There are no living males remaining in the direct male lineage." />
-
-                <Button
-                    HorizontalAlignment="Stretch"
-                    HorizontalContentAlignment="Center"
-                    Padding="12"
-                    Content="Go Back"
-                    Command="{Binding GoBackFromGameOverCommand}" />
-            </StackPanel>
-        </Border>
+        </Viewbox>
     </Grid>
 </Window>

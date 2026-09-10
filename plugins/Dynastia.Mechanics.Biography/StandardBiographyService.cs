@@ -610,6 +610,8 @@ public sealed class StandardBiographyService :
             "wellbeing.recover" => " ",
             "education.success" => "🎓 ",
             "education.failure" => "🧱 ",
+            "education.help_learning_success" => "📚 ",
+            "education.help_learning_failure" => "📖 ",
             "wellbeing.therapy_success" => "😊 ",
             "wellbeing.therapy_failure" => "😒 ",
             "wellbeing.drink" => "🍺 ",
@@ -636,10 +638,8 @@ public sealed class StandardBiographyService :
             "family_support.parents_success" => "🙏 ",
             "family_support.parents_failure" => "🚫 ",
 
-            // Dynasty 4's original const map does not define
-            // askChildForMoneySuccess/Fail, so these use default.
-            "family_support.child_success" => "🔹 ",
-            "family_support.child_failure" => "🔹 ",
+            "family_support.child_success" => "🙏 ",
+            "family_support.child_failure" => "🚫 ",
 
             "career.ask_quit_success" => "✅ ",
             "career.ask_quit_failure" => "🚫 ",
@@ -660,11 +660,16 @@ public sealed class StandardBiographyService :
             "household.house_rented" => "🏘️ ",
             "household.house_given" => "🎁 ",
 
-            // Dynasty 4's original const map has no promiseHouse key.
-            "household.house_promised" => "🔹 ",
+            "household.house_promised" => "🎁 ",
 
             "household.nanny_hired" => "🧑‍🍼 ",
             "household.nanny_fired" => "👋 ",
+
+            "adoption.with_mother" => "👩‍👧 ",
+            "adoption.orphaned" => "🕯️ ",
+            "adoption.placed" => "🏠 ",
+            "adoption.orphanage" => "🏚️ ",
+            "adoption.left_orphanage" => "🧳 ",
 
             _ => "🔹 "
         };

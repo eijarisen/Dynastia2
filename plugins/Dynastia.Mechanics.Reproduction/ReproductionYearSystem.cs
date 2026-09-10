@@ -22,6 +22,12 @@ public sealed class ReproductionYearSystem : IYearSystem
     private const double MinimumAgeFactor =
         0.1;
 
+    private const int LateFertilityStartAge =
+        40;
+
+    private const double LateFertilityAnnualMultiplier =
+        0.5;
+
     private const double TryForBabyMultiplier =
         5.0;
 
@@ -259,6 +265,22 @@ public sealed class ReproductionYearSystem : IYearSystem
 
             chance *=
                 ageFactor;
+        }
+
+        // Pregnancy remains possible through age 45, but after 40
+        // the already-declining chance is halved again for every
+        // additional year of age.
+        if (mother.Age
+            > LateFertilityStartAge)
+        {
+            var yearsAfterForty =
+                mother.Age
+                - LateFertilityStartAge;
+
+            chance *=
+                Math.Pow(
+                    LateFertilityAnnualMultiplier,
+                    yearsAfterForty);
         }
 
         return chance;

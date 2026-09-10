@@ -25,20 +25,59 @@ public sealed class StandardHouseholdService :
     public IPerson? ResolveHouseholdHead(
         IPerson person)
     {
-        // Preserve Dynasty 4's exact lookup order:
-        // self -> father -> current husband.
-        if (_family.GetSex(person) == Sex.Male
-            && _family.IsMaleLineage(person)
-            && person.Age >= 18)
+        // An adult male-lineage person owns his own dynasty household.
+        if (person.Age >= 18
+            && !person.Tags.Has(
+                "residence.orphanage")
+            && (
+                (
+                    _family.GetSex(person)
+                        == Sex.Male
+                    && _family.IsMaleLineage(
+                        person)
+                )
+                || person.Tags.Has(
+                    "household.independent_orphan"))
+            && _economy.HasHousehold(
+                person))
         {
             return person;
+        }
+
+        // Adopted/hosted wards belong to the host household for
+        // expenses, poverty and large-family strain.
+        foreach (var candidate in
+            _gameState.People)
+        {
+            if (!candidate.Tags.Has(
+                    "state.alive")
+                || !_economy.HasHousehold(
+                    candidate))
+            {
+                continue;
+            }
+
+            if (_economy
+                .GetHostedDependentIds(
+                    candidate)
+                .Contains(
+                    person.Id))
+            {
+                return candidate;
+            }
         }
 
         var father =
             _family.GetFather(person);
 
+        // A child who has lost both parents must not keep inheriting
+        // the dead father's household-health state.
         if (father is not null
-            && _family.IsMaleLineage(father))
+            && _family.IsMaleLineage(father)
+            && (!person.Tags.Has(
+                    "trait.orphan")
+                || father.Tags.Has(
+                    "state.alive")))
         {
             return father;
         }
@@ -74,11 +113,45 @@ public sealed class StandardHouseholdService :
             spouse = null;
         }
 
-        var underageChildren =
+        var biologicalMinorIds =
             _family.GetChildren(head)
-                .Count(child =>
-                    child.Tags.Has("state.alive")
-                    && child.Age < 18);
+                .Where(
+                    child =>
+                        child.Tags.Has(
+                            "state.alive")
+                        && !child.Tags.Has(
+                            "role.nanny")
+                        && child.Age < 18)
+                .Select(
+                    child =>
+                        child.Id)
+                .ToHashSet();
+
+        foreach (var dependentId in
+            _economy.GetHostedDependentIds(
+                head))
+        {
+            var dependent =
+                _gameState.People
+                    .FirstOrDefault(
+                        person =>
+                            person.Id
+                            == dependentId);
+
+            if (dependent is not null
+                && dependent.Tags.Has(
+                    "state.alive")
+                && !dependent.Tags.Has(
+                    "role.nanny")
+                && dependent.Age < 18)
+            {
+                biologicalMinorIds.Add(
+                    dependent.Id);
+            }
+        }
+
+        var underageChildren =
+            biologicalMinorIds.Count;
 
         var isHousewife =
             spouse is not null

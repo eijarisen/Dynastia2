@@ -105,7 +105,8 @@ public sealed class ReproductionPlugin : IGamePlugin
             Description =
                 "Attempt to have a child with your spouse. " +
                 "Success depends on both partners' Fertility " +
-                "and the woman's age.",
+                "and the woman's age. Pregnancy remains possible " +
+                "through age 45, but becomes rare after 40.",
 
             Mode =
                 ActionExecutionMode.Queued,

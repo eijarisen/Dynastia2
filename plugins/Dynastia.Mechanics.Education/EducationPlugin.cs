@@ -8,6 +8,11 @@ public sealed class EducationPlugin : IGamePlugin
     private const double BaseSuccessChance = 0.30;
     private const double IntellectMultiplier = 0.15;
 
+    private const int HelpLearningMinimumAge = 6;
+    private const int HelpLearningAdultAge = 18;
+    private const double HelpLearningBaseChance = 0.10;
+    private const double HelpLearningEducationStep = 0.15;
+
     public void Initialize(IGamePluginContext context)
     {
         var gameState = context.GetService<IGameState>()
@@ -53,6 +58,13 @@ public sealed class EducationPlugin : IGamePlugin
                 family,
                 stats,
                 economy,
+                random,
+                events));
+
+        actions.Register(
+            CreateHelpLearningAction(
+                education,
+                family,
                 random,
                 events));
 
@@ -265,6 +277,191 @@ public sealed class EducationPlugin : IGamePlugin
 
                 return new GameActionResult(true);
             }
+        };
+    }
+
+    private static GameActionDefinition CreateHelpLearningAction(
+        IEducationService education,
+        IFamilyService family,
+        IGameRandom random,
+        IGameEventBus events)
+    {
+        return new GameActionDefinition
+        {
+            Id =
+                "education.help_learning",
+
+            Label =
+                "Help in Learning",
+
+            Description =
+                "Spend the year helping the selected child study. " +
+                "Available from age 6 through 17. Success depends on " +
+                "the father's Education level: 10%, 25%, 40%, 55%, " +
+                "70% or 85% at levels 0-5.",
+
+            Mode =
+                ActionExecutionMode.Queued,
+
+            QueuePhase =
+                YearPhase.QueuedActionsEarly,
+
+            IsAvailable =
+                actionContext =>
+                {
+                    var father =
+                        actionContext.Actor;
+
+                    var child =
+                        actionContext.Target;
+
+                    if (!father.Tags.Has(
+                            "state.alive")
+                        || !father.Tags.Has(
+                            "control.playable")
+                        || !child.Tags.Has(
+                            "state.alive")
+                        || child.Id == father.Id
+                        || child.Age < HelpLearningMinimumAge
+                        || child.Age >= HelpLearningAdultAge
+                        || education.GetEducationLevel(
+                            child) >= 5)
+                    {
+                        return false;
+                    }
+
+                    return family
+                        .GetChildren(
+                            father)
+                        .Any(
+                            candidate =>
+                                candidate.Id
+                                == child.Id);
+                },
+
+            Execute =
+                actionContext =>
+                {
+                    var father =
+                        actionContext.Actor;
+
+                    var child =
+                        actionContext.Target;
+
+                    if (!father.Tags.Has(
+                            "state.alive")
+                        || !child.Tags.Has(
+                            "state.alive")
+                        || child.Age < HelpLearningMinimumAge
+                        || child.Age >= HelpLearningAdultAge
+                        || education.GetEducationLevel(
+                            child) >= 5
+                        || !family
+                            .GetChildren(
+                                father)
+                            .Any(
+                                candidate =>
+                                    candidate.Id
+                                    == child.Id))
+                    {
+                        return new GameActionResult(
+                            false,
+                            "Help in Learning is no longer available.");
+                    }
+
+                    var fatherEducation =
+                        education.GetEducationLevel(
+                            father);
+
+                    var successChance =
+                        HelpLearningBaseChance
+                        + fatherEducation
+                            * HelpLearningEducationStep;
+
+                    var success =
+                        random.NextDouble()
+                        < successChance;
+
+                    if (success)
+                    {
+                        education.IncreaseEducation(
+                            child);
+
+                        events.Publish(
+                            new GameEvent
+                            {
+                                Type =
+                                    "education.help_learning_success",
+
+                                Year =
+                                    actionContext.GameState.Year,
+
+                                SubjectId =
+                                    child.Id,
+
+                                RelatedPersonIds =
+                                    [father.Id],
+
+                                Data =
+                                    new Dictionary<string, string>
+                                    {
+                                        ["level"] =
+                                            education
+                                                .GetEducationLevel(
+                                                    child)
+                                                .ToString(),
+
+                                        ["chance"] =
+                                            successChance
+                                                .ToString(
+                                                    "0.00"),
+
+                                        ["text"] =
+                                            $"{family.GetDisplayName(father)} " +
+                                            $"helped {family.GetDisplayName(child)} " +
+                                            "with their studies, raising the child's " +
+                                            $"Education to level " +
+                                            $"{education.GetEducationLevel(child)}."
+                                    }
+                            });
+                    }
+                    else
+                    {
+                        events.Publish(
+                            new GameEvent
+                            {
+                                Type =
+                                    "education.help_learning_failure",
+
+                                Year =
+                                    actionContext.GameState.Year,
+
+                                SubjectId =
+                                    child.Id,
+
+                                RelatedPersonIds =
+                                    [father.Id],
+
+                                Data =
+                                    new Dictionary<string, string>
+                                    {
+                                        ["chance"] =
+                                            successChance
+                                                .ToString(
+                                                    "0.00"),
+
+                                        ["text"] =
+                                            $"{family.GetDisplayName(father)} " +
+                                            $"spent time helping " +
+                                            $"{family.GetDisplayName(child)} study, " +
+                                            "but the child's Education did not improve."
+                                    }
+                            });
+                    }
+
+                    return new GameActionResult(
+                        true);
+                }
         };
     }
 

@@ -1,0 +1,5 @@
+Expected file:
+UnifrakturCook-Bold.ttf
+
+Use build\install-ornate-ui-assets.ps1 -GraphicsZip <path-to-your-original-graphics.zip>
+to extract your copy into this folder before building.

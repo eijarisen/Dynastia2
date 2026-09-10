@@ -1,6 +1,8 @@
 using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
+using Dynastia.App.Audio;
+using Dynastia.App.Genealogy.Host;
 using Dynastia.App.Persistence;
 using Dynastia.App.ViewModels;
 using Dynastia.App.Views;
@@ -149,6 +151,9 @@ public partial class App : Application
             var householdService =
                 pluginContext.GetService<IHouseholdService>();
 
+            var adoptionService =
+                pluginContext.GetService<IAdoptionService>();
+
             var educationService =
                 pluginContext.GetService<IEducationService>();
 
@@ -170,9 +175,30 @@ public partial class App : Application
                     actionRegistry,
                     biographyService);
 
-            desktop.MainWindow =
+            var genealogyDataSource =
+                familyService is null
+                    ? null
+                    : new GameGenealogyDataSource(
+                        gameState,
+                        familyService,
+                        eventBus);
+
+            var genealogySelection =
+                new SelectionServiceGenealogyAdapter(
+                    selectionService);
+
+            var musicService =
+                new BackgroundMusicService();
+
+            var mainWindow =
                 new MainWindow
                 {
+                    GenealogyDataSource =
+                        genealogyDataSource,
+
+                    GenealogySelection =
+                        genealogySelection,
+
                     DataContext =
                         new MainWindowViewModel(
                             gameState,
@@ -184,6 +210,7 @@ public partial class App : Application
                             healthService,
                             economyService,
                             householdService,
+                            adoptionService,
                             educationService,
                             careerService,
                             justiceService,
@@ -193,6 +220,17 @@ public partial class App : Application
                             actionRegistry,
                             saveService)
                 };
+
+            mainWindow.Opened +=
+                (_, _) =>
+                    musicService.Start();
+
+            desktop.Exit +=
+                (_, _) =>
+                    musicService.Dispose();
+
+            desktop.MainWindow =
+                mainWindow;
         }
 
         base.OnFrameworkInitializationCompleted();

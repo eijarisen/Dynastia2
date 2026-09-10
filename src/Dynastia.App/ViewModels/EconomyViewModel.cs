@@ -44,7 +44,11 @@ public sealed class EconomyViewModel
         $"Houses: {HousesOwned}";
 
     public string RentedHousesText =>
-        $"Rented: {RentedHouses}";
+        HousesOwned == 0
+            ? "Residence: Renting"
+            : RentedHouses > 0
+                ? $"Rented out: {RentedHouses}"
+                : "Rented out: 0";
 
     public string IncomeText =>
         $"Income: ${LastIncome:N0}";

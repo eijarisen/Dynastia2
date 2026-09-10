@@ -1,0 +1,13 @@
+{
+  "id": "dynastia.adoption",
+  "name": "Standard Adoption and Orphan Care",
+  "version": "0.1.0",
+  "apiVersion": 1,
+  "assembly": "Dynastia.Mechanics.Adoption.dll",
+  "entryType": "Dynastia.Mechanics.Adoption.AdoptionPlugin",
+  "dependencies": [
+    "dynastia.family",
+    "dynastia.economy",
+    "dynastia.health"
+  ]
+}

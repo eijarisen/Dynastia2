@@ -2,7 +2,10 @@ using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Platform.Storage;
+using Dynastia.App.Genealogy.Host;
 using Dynastia.App.ViewModels;
+using Dynastia.StandardUI.Genealogy.Contracts;
+using Dynastia.StandardUI.Genealogy.Views;
 
 namespace Dynastia.App.Views;
 
@@ -17,6 +20,20 @@ public partial class MainWindow : Window
             };
 
     private bool _persistenceDialogOpen;
+    private bool _genealogyDialogOpen;
+    private bool _instructionsDialogOpen;
+
+    public GameGenealogyDataSource? GenealogyDataSource
+    {
+        get;
+        set;
+    }
+
+    public IGlobalSelectionService? GenealogySelection
+    {
+        get;
+        set;
+    }
 
     public MainWindow()
     {
@@ -34,6 +51,8 @@ public partial class MainWindow : Window
         KeyEventArgs e)
     {
         if (_persistenceDialogOpen
+            || _genealogyDialogOpen
+            || _instructionsDialogOpen
             || e.Key != Key.Enter)
         {
             return;
@@ -77,7 +96,7 @@ public partial class MainWindow : Window
                         new FilePickerSaveOptions
                         {
                             Title =
-                                "Save Dynastia Game",
+                                "Export Dynastia Game",
 
                             SuggestedFileName =
                                 viewModel
@@ -109,7 +128,7 @@ public partial class MainWindow : Window
                 stream);
 
             viewModel.ReportPersistenceStatus(
-                $"Saved {file.Name}.");
+                $"Exported {file.Name}.");
         }
         catch (Exception exception)
         {
@@ -117,7 +136,7 @@ public partial class MainWindow : Window
                 exception);
 
             viewModel.ReportPersistenceStatus(
-                $"Save failed: {exception.Message}");
+                $"Export failed: {exception.Message}");
         }
         finally
         {
@@ -168,6 +187,9 @@ public partial class MainWindow : Window
             viewModel.LoadGame(
                 stream);
 
+            GenealogyDataSource?
+                .NotifyHostReset();
+
             viewModel.ReportPersistenceStatus(
                 $"Loaded {file.Name}.");
         }
@@ -182,6 +204,89 @@ public partial class MainWindow : Window
         finally
         {
             _persistenceDialogOpen =
+                false;
+        }
+    }
+
+    private async void OnInstructionsClick(
+        object? sender,
+        RoutedEventArgs e)
+    {
+        _instructionsDialogOpen =
+            true;
+
+        try
+        {
+            var window =
+                new InstructionsWindow();
+
+            await window.ShowDialog(
+                this);
+        }
+        catch (Exception exception)
+        {
+            Console.Error.WriteLine(
+                exception);
+
+            if (DataContext
+                is MainWindowViewModel viewModel)
+            {
+                viewModel.ReportPersistenceStatus(
+                    $"Instructions failed: {exception.Message}");
+            }
+        }
+        finally
+        {
+            _instructionsDialogOpen =
+                false;
+        }
+    }
+
+    private async void OnViewTreeClick(
+        object? sender,
+        RoutedEventArgs e)
+    {
+        if (GenealogyDataSource is null
+            || GenealogySelection is null)
+        {
+            if (DataContext
+                is MainWindowViewModel viewModel)
+            {
+                viewModel.ReportPersistenceStatus(
+                    "Genealogy is unavailable because the Family service did not initialize.");
+            }
+
+            return;
+        }
+
+        _genealogyDialogOpen =
+            true;
+
+        try
+        {
+            var window =
+                new GenealogyWindow(
+                    GenealogyDataSource,
+                    GenealogySelection);
+
+            await window.ShowDialog(
+                this);
+        }
+        catch (Exception exception)
+        {
+            Console.Error.WriteLine(
+                exception);
+
+            if (DataContext
+                is MainWindowViewModel viewModel)
+            {
+                viewModel.ReportPersistenceStatus(
+                    $"Genealogy failed: {exception.Message}");
+            }
+        }
+        finally
+        {
+            _genealogyDialogOpen =
                 false;
         }
     }

@@ -62,6 +62,8 @@ public static class EventEmojiMap
                 ["wellbeing.recover"] = " ",
                 ["education.success"] = "🎓",
                 ["education.failure"] = "🧱",
+                ["education.help_learning_success"] = "📚",
+                ["education.help_learning_failure"] = "📖",
                 ["wellbeing.therapy_success"] = "😊",
                 ["wellbeing.therapy_failure"] = "😒",
                 ["wellbeing.drink"] = "🍺",
@@ -88,9 +90,9 @@ public static class EventEmojiMap
                 ["family_support.parents_success"] = "🙏",
                 ["family_support.parents_failure"] = "🚫",
 
-                // Dynasty 4's const map has no askChildForMoney keys.
-                ["family_support.child_success"] = "🔹",
-                ["family_support.child_failure"] = "🔹",
+                // Filled missing family-support event emojis.
+                ["family_support.child_success"] = "🙏",
+                ["family_support.child_failure"] = "🚫",
 
                 ["career.ask_quit_success"] = "✅",
                 ["career.ask_quit_failure"] = "🚫",
@@ -111,11 +113,17 @@ public static class EventEmojiMap
                 ["household.house_rented"] = "🏘️",
                 ["household.house_given"] = "🎁",
 
-                // Original emojiMap does not contain promiseHouse.
-                ["household.house_promised"] = "🔹",
+                // Filled the other missing action-family event emoji.
+                ["household.house_promised"] = "🎁",
 
                 ["household.nanny_hired"] = "🧑‍🍼",
-                ["household.nanny_fired"] = "👋"
+                ["household.nanny_fired"] = "👋",
+
+                ["adoption.with_mother"] = "👩‍👧",
+                ["adoption.orphaned"] = "🕯️",
+                ["adoption.placed"] = "🏠",
+                ["adoption.orphanage"] = "🏚️",
+                ["adoption.left_orphanage"] = "🧳"
             };
 
     public static string GetEmoji(

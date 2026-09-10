@@ -114,6 +114,12 @@ public sealed class PersonRowViewModel
             ? "Playable: Yes"
             : "Playable: No";
 
+    public string OrphanTraitText =>
+        _person.Tags.Has(
+            "trait.orphan")
+                ? "Trait: Orphan (-1 Health/year)"
+                : string.Empty;
+
     public string OccupationText { get; } = string.Empty;
 
     public double HealthValue { get; }

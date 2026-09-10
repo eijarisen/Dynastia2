@@ -13,4 +13,10 @@ public sealed class HouseholdEconomyComponent
     public decimal LastIncome { get; set; }
 
     public decimal LastExpenses { get; set; }
+
+    /// <summary>
+    /// Minor wards/adopted children whose biological parents are no
+    /// longer their active household. This does not alter genealogy.
+    /// </summary>
+    public List<Guid> HostedDependentIds { get; } = [];
 }

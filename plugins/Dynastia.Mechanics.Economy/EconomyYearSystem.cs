@@ -58,6 +58,7 @@ public sealed class EconomyYearSystem : IYearSystem
             }
 
             ProcessLivingHousehold(
+                gameState,
                 head);
         }
 
@@ -85,16 +86,31 @@ public sealed class EconomyYearSystem : IYearSystem
     private bool IsLivingAdultHead(
         IPerson person)
     {
-        return person.Tags.Has(
-                "state.alive")
-            && _family.GetSex(person)
+        var dynastyHead =
+            _family.GetSex(person)
                 == Sex.Male
             && _family.IsMaleLineage(
-                person)
-            && person.Age >= 18;
+                person);
+
+        var independentOrphanHead =
+            person.Tags.Has(
+                "household.independent_orphan")
+            && _economy.HasHousehold(
+                person);
+
+        return person.Tags.Has(
+                "state.alive")
+            && person.Age >= 18
+            && !person.Tags.Has(
+                "residence.orphanage")
+            && (
+                dynastyHead
+                || independentOrphanHead);
+
     }
 
     private void ProcessLivingHousehold(
+        IGameState gameState,
         IPerson head)
     {
         var household =
@@ -126,6 +142,12 @@ public sealed class EconomyYearSystem : IYearSystem
         var adultUnmarriedDaughters =
             new List<IPerson>();
 
+        var memberIds =
+            members
+                .Select(
+                    member => member.Id)
+                .ToHashSet();
+
         foreach (var child in children)
         {
             if (!child.Tags.Has(
@@ -136,8 +158,12 @@ public sealed class EconomyYearSystem : IYearSystem
 
             if (child.Age < 18)
             {
-                members.Add(
-                    child);
+                if (memberIds.Add(
+                    child.Id))
+                {
+                    members.Add(
+                        child);
+                }
 
                 continue;
             }
@@ -147,12 +173,43 @@ public sealed class EconomyYearSystem : IYearSystem
                 && _family.GetSpouse(
                     child) is null)
             {
-                members.Add(
-                    child);
+                if (memberIds.Add(
+                    child.Id))
+                {
+                    members.Add(
+                        child);
+                }
 
                 adultUnmarriedDaughters.Add(
                     child);
             }
+        }
+
+        foreach (var dependentId in
+            _economy.GetHostedDependentIds(
+                head))
+        {
+            var dependent =
+                gameState.People
+                    .FirstOrDefault(
+                        person =>
+                            person.Id
+                            == dependentId);
+
+            if (dependent is null
+                || !dependent.Tags.Has(
+                    "state.alive")
+                || dependent.Tags.Has(
+                    "role.nanny")
+                || dependent.Age >= 18
+                || !memberIds.Add(
+                    dependent.Id))
+            {
+                continue;
+            }
+
+            members.Add(
+                dependent);
         }
 
         var income =

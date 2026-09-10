@@ -10,9 +10,6 @@ public sealed class HouseholdHealthModifierProvider :
     private const double BrokeBase = 5;
     private const double BrokeModifier = 10;
 
-    private const double OrphanBase = 3;
-    private const double OrphanModifier = 6;
-
     private readonly IHouseholdService _households;
     private readonly IFamilyService _family;
     private readonly IStatsService _stats;
@@ -33,13 +30,6 @@ public sealed class HouseholdHealthModifierProvider :
     public double GetAnnualHealthChange(
         IPerson person)
     {
-        var isOrphan =
-            person.Age < 18
-            && !IsAlive(
-                _family.GetFather(person))
-            && !IsAlive(
-                _family.GetMother(person));
-
         var head =
             _households.ResolveHouseholdHead(
                 person);
@@ -84,16 +74,6 @@ public sealed class HouseholdHealthModifierProvider :
             return change;
         }
 
-        if (isOrphan)
-        {
-            var immunity =
-                GetImmunity(person);
-
-            return -(
-                OrphanBase
-                + (OrphanModifier - immunity));
-        }
-
         return 0;
     }
 
@@ -108,10 +88,4 @@ public sealed class HouseholdHealthModifierProvider :
             .Value;
     }
 
-    private static bool IsAlive(
-        IPerson? person)
-    {
-        return person is not null
-            && person.Tags.Has("state.alive");
-    }
 }

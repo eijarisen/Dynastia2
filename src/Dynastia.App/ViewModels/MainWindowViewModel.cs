@@ -16,6 +16,7 @@ public sealed class MainWindowViewModel : ViewModelBase
     private readonly IHealthService? _healthService;
     private readonly IEconomyService? _economyService;
     private readonly IHouseholdService? _householdService;
+    private readonly IAdoptionService? _adoptionService;
     private readonly IEducationService? _educationService;
     private readonly ICareerService? _careerService;
     private readonly IJusticeService? _justiceService;
@@ -55,6 +56,7 @@ public sealed class MainWindowViewModel : ViewModelBase
         IHealthService? healthService,
         IEconomyService? economyService,
         IHouseholdService? householdService,
+        IAdoptionService? adoptionService,
         IEducationService? educationService,
         ICareerService? careerService,
         IJusticeService? justiceService,
@@ -73,6 +75,7 @@ public sealed class MainWindowViewModel : ViewModelBase
         _healthService = healthService;
         _economyService = economyService;
         _householdService = householdService;
+        _adoptionService = adoptionService;
         _educationService = educationService;
         _careerService = careerService;
         _justiceService = justiceService;
@@ -102,6 +105,10 @@ public sealed class MainWindowViewModel : ViewModelBase
             new RelayCommand(
                 HideGameOver);
 
+        ReturnToMainMenuCommand =
+            new RelayCommand(
+                ReturnToMainMenu);
+
         ShowLivingFamilyCommand =
             new RelayCommand(
                 ShowLivingFamily);
@@ -126,6 +133,9 @@ public sealed class MainWindowViewModel : ViewModelBase
 
         _eventBus.EventPublished +=
             OnEventPublished;
+
+        _selectionService.SelectionChanged +=
+            OnSelectionChanged;
 
         _succession.StateChanged +=
             OnSuccessionStateChanged;
@@ -169,6 +179,25 @@ public sealed class MainWindowViewModel : ViewModelBase
         IsGameStarted
             ? $"The {_gameState.DynastySurname} Dynasty"
             : "Dynastia";
+
+    public string SelectedPersonEmoji
+    {
+        get
+        {
+            var person =
+                FindSelectedPerson();
+
+            return person is null
+                ? string.Empty
+                : PersonEmojiResolver.GetPersonEmoji(
+                    person,
+                    _familyService,
+                    _healthService,
+                    _careerService,
+                    _justiceService,
+                    _statsService);
+        }
+    }
 
     public int Year =>
         _gameState.Year;
@@ -266,9 +295,27 @@ public sealed class MainWindowViewModel : ViewModelBase
                     : _economyService?.GetHousehold(
                         head);
 
-            return finance is null
-                ? "No active adult household."
-                : $"Family Budget: ${finance.Wealth:N0}";
+            if (finance is null)
+            {
+                return
+                    "No active adult household.";
+            }
+
+            var status =
+                head is null
+                    ? null
+                    : _householdService?
+                        .GetStatus(
+                            head);
+
+            var nannyExpense =
+                status?.HasNannyReference == true
+                    ? " · Nanny: $250/year"
+                    : string.Empty;
+
+            return
+                $"Family Budget: ${finance.Wealth:N0}" +
+                nannyExpense;
         }
     }
 
@@ -288,9 +335,15 @@ public sealed class MainWindowViewModel : ViewModelBase
             if (finance is null)
                 return string.Empty;
 
+            if (finance.HousesOwned == 0)
+            {
+                return
+                    "Houses: 0 (renting home)";
+            }
+
             return finance.RentedHouses > 0
                 ? $"Houses: {finance.HousesOwned} " +
-                  $"({finance.RentedHouses} rented)"
+                  $"({finance.RentedHouses} rented out)"
                 : $"Houses: {finance.HousesOwned}";
         }
     }
@@ -485,6 +538,8 @@ public sealed class MainWindowViewModel : ViewModelBase
             RefreshFamilySection();
 
             OnPropertyChanged();
+            OnPropertyChanged(
+                nameof(SelectedPersonEmoji));
         }
     }
 
@@ -620,6 +675,7 @@ public sealed class MainWindowViewModel : ViewModelBase
     public RelayCommand NextYearCommand { get; }
     public RelayCommand CancelQueuedActionCommand { get; }
     public RelayCommand GoBackFromGameOverCommand { get; }
+    public RelayCommand ReturnToMainMenuCommand { get; }
     public RelayCommand ShowLivingFamilyCommand { get; }
     public RelayCommand ShowDeceasedFamilyCommand { get; }
     public RelayCommand PreviousAlbumYearCommand { get; }
@@ -761,6 +817,21 @@ public sealed class MainWindowViewModel : ViewModelBase
             false;
     }
 
+    private void ReturnToMainMenu()
+    {
+        IsGameOverOverlayVisible =
+            false;
+
+        IsGameStarted =
+            false;
+
+        PersistenceStatusText =
+            string.Empty;
+
+        OnPropertyChanged(
+            nameof(DynastyTitle));
+    }
+
     private void ShowLivingFamily()
     {
         IsLivingFamilyView = true;
@@ -836,16 +907,32 @@ public sealed class MainWindowViewModel : ViewModelBase
             SelectedPerson?.Id;
 
         foreach (var person in
-            _gameState.People)
+            _gameState.People
+                .Where(
+                    person =>
+                        person.Tags.Has(
+                            "state.alive")
+                        && _succession.IsControllable(
+                            person))
+                .OrderBy(
+                    person =>
+                        _familyService?
+                            .GetGeneration(person)
+                        ?? int.MaxValue)
+                .ThenBy(
+                    GetBirthSortYear)
+                .ThenBy(
+                    person =>
+                        person.BirthDate?.Month
+                        ?? 1)
+                .ThenBy(
+                    person =>
+                        person.BirthDate?.Day
+                        ?? 1)
+                .ThenBy(
+                    person =>
+                        person.Id))
         {
-            if (!person.Tags.Has(
-                    "state.alive")
-                || !_succession.IsControllable(
-                    person))
-            {
-                continue;
-            }
-
             var generation =
                 _familyService?
                     .GetGeneration(person);
@@ -932,6 +1019,99 @@ public sealed class MainWindowViewModel : ViewModelBase
                             active.Id);
                     }
                 }
+
+                if (_adoptionService is not null)
+                {
+                    foreach (var ward in
+                        _adoptionService
+                            .GetHostedChildren(
+                                active)
+                            .OrderBy(
+                                GetBirthSortYear)
+                            .ThenBy(
+                                person =>
+                                    person.Id))
+                    {
+                        if (HouseholdMembers.Any(
+                            member =>
+                                member.PersonId
+                                == ward.Id))
+                        {
+                            continue;
+                        }
+
+                        AddHouseholdCard(
+                            ward,
+                            selectedId,
+                            active.Id);
+                    }
+
+                    foreach (var relative in
+                        _gameState.People
+                            .Where(
+                                person =>
+                                    person.Tags.Has(
+                                        "state.alive")
+                                    && !person.Tags.Has(
+                                        "role.nanny")
+                                    && _familyService.IsBloodline(
+                                        person)
+                                    && (
+                                        person.Tags.Has(
+                                            "residence.with_mother")
+                                        || person.Tags.Has(
+                                            "residence.orphanage")))
+                            .OrderBy(
+                                person =>
+                                    _familyService.GetGeneration(
+                                        person)
+                                    ?? int.MaxValue)
+                            .ThenBy(
+                                GetBirthSortYear))
+                    {
+                        if (HouseholdMembers.Any(
+                                member =>
+                                    member.PersonId
+                                    == relative.Id)
+                            || ExtendedFamilyMembers.Any(
+                                member =>
+                                    member.PersonId
+                                    == relative.Id))
+                        {
+                            continue;
+                        }
+
+                        ExtendedFamilyMembers.Add(
+                            CreateFamilyCard(
+                                relative,
+                                selectedId,
+                                active.Id));
+
+                        if (relative.Tags.Has(
+                                "residence.with_mother")
+                            && _familyService.GetMother(
+                                relative) is IPerson mother
+                            && mother.Tags.Has(
+                                "state.alive")
+                            && !mother.Tags.Has(
+                                "role.nanny")
+                            && !HouseholdMembers.Any(
+                                member =>
+                                    member.PersonId
+                                    == mother.Id)
+                            && !ExtendedFamilyMembers.Any(
+                                member =>
+                                    member.PersonId
+                                    == mother.Id))
+                        {
+                            ExtendedFamilyMembers.Add(
+                                CreateFamilyCard(
+                                    mother,
+                                    selectedId,
+                                    active.Id));
+                        }
+                    }
+                }
             }
         }
         else
@@ -956,16 +1136,28 @@ public sealed class MainWindowViewModel : ViewModelBase
         }
 
         foreach (var person in
-            _gameState.People)
+            _gameState.People
+                .Where(
+                    person =>
+                        person.Tags.Has(
+                            "state.dead")
+                        && !person.Tags.Has(
+                            "role.nanny"))
+                .OrderByDescending(
+                    person =>
+                        person.DeathDate?.Year
+                        ?? int.MinValue)
+                .ThenByDescending(
+                    person =>
+                        person.DeathDate?.Month
+                        ?? 1)
+                .ThenByDescending(
+                    person =>
+                        person.DeathDate?.Day
+                        ?? 1)
+                .ThenByDescending(
+                    GetBirthSortYear))
         {
-            if (!person.Tags.Has(
-                    "state.dead")
-                || person.Tags.Has(
-                    "role.nanny"))
-            {
-                continue;
-            }
-
             DeceasedFamilyMembers.Add(
                 CreateFamilyCard(
                     person,
@@ -1003,6 +1195,12 @@ public sealed class MainWindowViewModel : ViewModelBase
         Guid? selectedId,
         Guid activeHeadId)
     {
+        if (person.Tags.Has(
+            "role.nanny"))
+        {
+            return;
+        }
+
         HouseholdMembers.Add(
             CreateFamilyCard(
                 person,
@@ -1023,9 +1221,18 @@ public sealed class MainWindowViewModel : ViewModelBase
             _careerService,
             _justiceService,
             _statsService,
+            _adoptionService,
             selectedId == person.Id,
             activeHeadId == person.Id,
             SelectFamilyMember);
+    }
+
+    private int GetBirthSortYear(
+        IPerson person)
+    {
+        return person.BirthDate?.Year
+            ?? _gameState.Year
+               - person.Age;
     }
 
     private void SelectFamilyMember(
@@ -1379,7 +1586,9 @@ public sealed class MainWindowViewModel : ViewModelBase
 
                 QueuedActionText =
                     $"Queued: " +
-                    $"{queued[0].Label}";
+                    ActionEmojiMap.Format(
+                        queued[0].ActionId,
+                        queued[0].Label);
             }
             else
             {
@@ -1480,6 +1689,32 @@ public sealed class MainWindowViewModel : ViewModelBase
         RefreshNarrative();
     }
 
+    private void OnSelectionChanged(
+        object? sender,
+        EventArgs e)
+    {
+        var selectedId =
+            _selectionService
+                .SelectedPersonId;
+
+        var row =
+            selectedId is Guid id
+                ? People.FirstOrDefault(
+                    person =>
+                        person.Id == id)
+                : null;
+
+        if (ReferenceEquals(
+            row,
+            SelectedPerson))
+        {
+            return;
+        }
+
+        SelectedPerson =
+            row;
+    }
+
     private void OnSuccessionStateChanged(
         object? sender,
         EventArgs e)
@@ -1502,6 +1737,9 @@ public sealed class MainWindowViewModel : ViewModelBase
         OnPropertyChanged(
             nameof(ActiveHouseholdText));
 
+        OnPropertyChanged(
+            nameof(SelectedPersonEmoji));
+
         RefreshFamilySection();
     }
 
@@ -1521,6 +1759,9 @@ public sealed class MainWindowViewModel : ViewModelBase
 
         OnPropertyChanged(
             nameof(ActiveHouseholdText));
+
+        OnPropertyChanged(
+            nameof(SelectedPersonEmoji));
 
         PreviousAlbumYearCommand
             .RaiseCanExecuteChanged();

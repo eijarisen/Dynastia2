@@ -6,6 +6,9 @@ public interface IEconomyService
 
     void EnsureHousehold(IPerson person);
 
+    void EnsureIndependentHousehold(
+        IPerson person);
+
     HouseholdFinanceSnapshot? GetHousehold(
         IPerson person);
 
@@ -50,4 +53,15 @@ public interface IEconomyService
     void SetNanny(
         IPerson person,
         Guid? nannyId);
+
+    IReadOnlyList<Guid> GetHostedDependentIds(
+        IPerson householdHead);
+
+    void AddHostedDependent(
+        IPerson householdHead,
+        IPerson dependent);
+
+    void RemoveHostedDependent(
+        IPerson householdHead,
+        IPerson dependent);
 }

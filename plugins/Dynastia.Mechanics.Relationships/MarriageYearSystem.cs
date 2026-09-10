@@ -131,26 +131,39 @@ public sealed class MarriageYearSystem : IYearSystem
             RandomWeightedFrom(
                 SurnamesPath);
 
-        var lowerAge =
-            Math.Max(
-                18,
-                person.Age - 20);
+        int spouseAge;
 
-        var upperAge =
-            Math.Min(
-                40,
-                person.Age + 10);
+        if (spouseSex == Sex.Female)
+        {
+            // New gameplay rule:
+            // a male-lineage husband can find an adult wife of
+            // childbearing age regardless of his own age.
+            spouseAge =
+                _random.NextInt(
+                    18,
+                    35);
+        }
+        else
+        {
+            // Preserve the previous age-range behavior for male partners.
+            var lowerAge =
+                Math.Max(
+                    18,
+                    person.Age - 20);
 
-        // The source can form an inverted range for very old
-        // unmarried heads. Keep the intended max-spouse-age rule
-        // while avoiding an invalid RNG request.
-        if (lowerAge > upperAge)
-            lowerAge = upperAge;
+            var upperAge =
+                Math.Min(
+                    40,
+                    person.Age + 10);
 
-        var spouseAge =
-            _random.NextInt(
-                lowerAge,
-                upperAge);
+            if (lowerAge > upperAge)
+                lowerAge = upperAge;
+
+            spouseAge =
+                _random.NextInt(
+                    lowerAge,
+                    upperAge);
+        }
 
         var spouse =
             gameState.CreatePerson(

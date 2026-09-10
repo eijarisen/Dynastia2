@@ -11,6 +11,7 @@ public sealed class FamilyMemberCardViewModel
         ICareerService? career,
         IJusticeService? justice,
         IStatsService? stats,
+        IAdoptionService? adoption,
         bool isSelected,
         bool isActiveHouseholdHead,
         Action<Guid> selectPerson)
@@ -84,6 +85,23 @@ public sealed class FamilyMemberCardViewModel
             }
         }
 
+        if (adoption is not null
+            && (
+                person.Tags.Has(
+                    "trait.orphan")
+                || person.Tags.Has(
+                    "residence.with_mother")
+                || person.Tags.Has(
+                    "residence.adopted")
+                || person.Tags.Has(
+                    "residence.orphanage")))
+        {
+            ResidenceText =
+                adoption
+                    .GetPlacement(person)
+                    .Description;
+        }
+
         SelectCommand =
             new RelayCommand(
                 () => selectPerson(PersonId));
@@ -98,6 +116,9 @@ public sealed class FamilyMemberCardViewModel
     public string AvatarText { get; }
 
     public string OccupationText { get; } =
+        string.Empty;
+
+    public string ResidenceText { get; } =
         string.Empty;
 
     public bool ShowHealth { get; }

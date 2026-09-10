@@ -38,6 +38,19 @@ public sealed class StandardEconomyService :
             new HouseholdEconomyComponent());
     }
 
+    public void EnsureIndependentHousehold(
+        IPerson person)
+    {
+        if (HasHousehold(
+            person))
+        {
+            return;
+        }
+
+        person.Components.Set(
+            new HouseholdEconomyComponent());
+    }
+
     public HouseholdFinanceSnapshot?
         GetHousehold(
             IPerson person)
@@ -51,6 +64,18 @@ public sealed class StandardEconomyService :
 
         if (household is null)
             return null;
+
+        // Normalize old/loaded state as well as live state.
+        // A household must always keep one owned home for itself,
+        // so no owned property can be rented out when only 0 or 1
+        // house is owned.
+        household.RentedHouses =
+            Math.Clamp(
+                household.RentedHouses,
+                0,
+                Math.Max(
+                    0,
+                    household.HousesOwned - 1));
 
         var claim =
             GetClaim(
@@ -204,6 +229,51 @@ public sealed class StandardEconomyService :
             person)
             .NannyId =
                 nannyId;
+    }
+
+    public IReadOnlyList<Guid> GetHostedDependentIds(
+        IPerson householdHead)
+    {
+        var household =
+            GetRequiredHousehold(
+                householdHead);
+
+        return household
+            .HostedDependentIds
+            .ToList();
+    }
+
+    public void AddHostedDependent(
+        IPerson householdHead,
+        IPerson dependent)
+    {
+        var household =
+            GetRequiredHousehold(
+                householdHead);
+
+        if (!household.HostedDependentIds.Contains(
+            dependent.Id))
+        {
+            household.HostedDependentIds.Add(
+                dependent.Id);
+        }
+    }
+
+    public void RemoveHostedDependent(
+        IPerson householdHead,
+        IPerson dependent)
+    {
+        if (!HasHousehold(
+            householdHead))
+        {
+            return;
+        }
+
+        GetRequiredHousehold(
+            householdHead)
+            .HostedDependentIds
+            .Remove(
+                dependent.Id);
     }
 
     internal HouseholdEconomyComponent

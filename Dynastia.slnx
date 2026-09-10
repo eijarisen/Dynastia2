@@ -1,11 +1,14 @@
 <Solution>
   <Folder Name="/plugins/">
     <Project Path="plugins/Dynastia.Mechanics.Aging/Dynastia.Mechanics.Aging.csproj" />
+    <Project Path="plugins/Dynastia.Mechanics.Economy/Dynastia.Mechanics.Economy.csproj" />
     <Project Path="plugins/Dynastia.Mechanics.Family/Dynastia.Mechanics.Family.csproj" />
     <Project Path="plugins/Dynastia.Mechanics.Health/Dynastia.Mechanics.Health.csproj" />
     <Project Path="plugins/Dynastia.Mechanics.Mortality/Dynastia.Mechanics.Mortality.csproj" />
     <Project Path="plugins/Dynastia.Mechanics.Relationships/Dynastia.Mechanics.Relationships.csproj" />
+    <Project Path="plugins/Dynastia.Mechanics.Reproduction/Dynastia.Mechanics.Reproduction.csproj" />
     <Project Path="plugins/Dynastia.Mechanics.Stats/Dynastia.Mechanics.Stats.csproj" />
+    <Project Path="plugins/Dynastia.Mechanics.Succession/Dynastia.Mechanics.Succession.csproj" />
     <Project Path="plugins/Dynastia.Plugin.Sample/Dynastia.Plugin.Sample.csproj" />
   </Folder>
   <Folder Name="/src/">

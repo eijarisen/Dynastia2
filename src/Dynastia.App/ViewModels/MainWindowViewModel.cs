@@ -13,6 +13,7 @@ public sealed class MainWindowViewModel : ViewModelBase
     private readonly IStatsService? _statsService;
     private readonly IFamilyService? _familyService;
     private readonly IHealthService? _healthService;
+    private readonly ISuccessionService _succession;
     private readonly IGameEventBus _eventBus;
     private readonly IActionRegistry _actionRegistry;
 
@@ -28,6 +29,7 @@ public sealed class MainWindowViewModel : ViewModelBase
         string.Empty;
 
     private bool _hasQueuedAction;
+    private bool _isGameOverOverlayVisible;
 
     public MainWindowViewModel(
         IGameState gameState,
@@ -37,6 +39,7 @@ public sealed class MainWindowViewModel : ViewModelBase
         IStatsService? statsService,
         IFamilyService? familyService,
         IHealthService? healthService,
+        ISuccessionService succession,
         IGameEventBus eventBus,
         IActionRegistry actionRegistry)
     {
@@ -47,6 +50,7 @@ public sealed class MainWindowViewModel : ViewModelBase
         _statsService = statsService;
         _familyService = familyService;
         _healthService = healthService;
+        _succession = succession;
         _eventBus = eventBus;
         _actionRegistry = actionRegistry;
 
@@ -58,11 +62,18 @@ public sealed class MainWindowViewModel : ViewModelBase
 
         NextYearCommand =
             new RelayCommand(
-                AdvanceYear);
+                AdvanceYear,
+                () =>
+                    IsGameStarted
+                    && !_succession.IsGameOver);
 
         CancelQueuedActionCommand =
             new RelayCommand(
                 CancelQueuedAction);
+
+        GoBackFromGameOverCommand =
+            new RelayCommand(
+                HideGameOver);
 
         PreviousAlbumYearCommand =
             new RelayCommand(
@@ -80,6 +91,9 @@ public sealed class MainWindowViewModel : ViewModelBase
 
         _eventBus.EventPublished +=
             OnEventPublished;
+
+        _succession.StateChanged +=
+            OnSuccessionStateChanged;
     }
 
     public string SurnameInput
@@ -110,6 +124,9 @@ public sealed class MainWindowViewModel : ViewModelBase
             OnPropertyChanged();
             OnPropertyChanged(
                 nameof(IsStartScreenVisible));
+
+            NextYearCommand
+                .RaiseCanExecuteChanged();
         }
     }
 
@@ -123,6 +140,47 @@ public sealed class MainWindowViewModel : ViewModelBase
 
     public int Year =>
         _gameState.Year;
+
+    public bool IsGameOver =>
+        _succession.IsGameOver;
+
+    public bool IsGameOverOverlayVisible
+    {
+        get =>
+            _isGameOverOverlayVisible;
+
+        private set
+        {
+            if (_isGameOverOverlayVisible
+                == value)
+            {
+                return;
+            }
+
+            _isGameOverOverlayVisible =
+                value;
+
+            OnPropertyChanged();
+        }
+    }
+
+    public string GameOverTitle =>
+        "Dynasty collapsed";
+
+    public string GameOverText
+    {
+        get
+        {
+            var year =
+                _succession.MaleLineEndedYear
+                ?? _gameState.Year;
+
+            return
+                $"The male line of the " +
+                $"{_gameState.DynastySurname} dynasty " +
+                $"ended in {year}.";
+        }
+    }
 
     public int AlbumYear
     {
@@ -250,6 +308,7 @@ public sealed class MainWindowViewModel : ViewModelBase
     public RelayCommand StartGameCommand { get; }
     public RelayCommand NextYearCommand { get; }
     public RelayCommand CancelQueuedActionCommand { get; }
+    public RelayCommand GoBackFromGameOverCommand { get; }
 
     public RelayCommand PreviousAlbumYearCommand { get; }
     public RelayCommand NextAlbumYearCommand { get; }
@@ -259,29 +318,27 @@ public sealed class MainWindowViewModel : ViewModelBase
         _newGameService.StartNewGame(
             SurnameInput);
 
+        _succession.Refresh();
+
+        IsGameOverOverlayVisible =
+            false;
+
         IsGameStarted = true;
         AlbumYear = _gameState.Year;
 
         RefreshPeople();
         RefreshAlbum();
 
-        OnPropertyChanged(
-            nameof(Year));
-
-        OnPropertyChanged(
-            nameof(DynastyTitle));
-
-        PreviousAlbumYearCommand
-            .RaiseCanExecuteChanged();
-
-        NextAlbumYearCommand
-            .RaiseCanExecuteChanged();
+        NotifyGameStateChanged();
     }
 
     private void AdvanceYear()
     {
-        if (!IsGameStarted)
+        if (!IsGameStarted
+            || _succession.IsGameOver)
+        {
             return;
+        }
 
         _yearProcessor.AdvanceYear();
 
@@ -290,17 +347,7 @@ public sealed class MainWindowViewModel : ViewModelBase
 
         RefreshPeople();
 
-        OnPropertyChanged(
-            nameof(Year));
-
-        OnPropertyChanged(
-            nameof(DynastyTitle));
-
-        PreviousAlbumYearCommand
-            .RaiseCanExecuteChanged();
-
-        NextAlbumYearCommand
-            .RaiseCanExecuteChanged();
+        NotifyGameStateChanged();
     }
 
     private void CancelQueuedAction()
@@ -316,6 +363,12 @@ public sealed class MainWindowViewModel : ViewModelBase
                 person);
 
         RefreshActions();
+    }
+
+    private void HideGameOver()
+    {
+        IsGameOverOverlayVisible =
+            false;
     }
 
     private void PreviousAlbumYear()
@@ -337,7 +390,8 @@ public sealed class MainWindowViewModel : ViewModelBase
 
         People.Clear();
 
-        foreach (var person in _gameState.People)
+        foreach (var person in
+            _gameState.People)
         {
             People.Add(
                 new PersonRowViewModel(
@@ -373,9 +427,11 @@ public sealed class MainWindowViewModel : ViewModelBase
             return;
 
         foreach (var stat in
-            _statsService.GetStats(person))
+            _statsService.GetStats(
+                person))
         {
-            SelectedStats.Add(stat);
+            SelectedStats.Add(
+                stat);
         }
     }
 
@@ -430,12 +486,12 @@ public sealed class MainWindowViewModel : ViewModelBase
             _familyService.GetChildren(
                 person);
 
-        IReadOnlyList<IPerson> siblings =
+        var siblings =
             generatedBackground is null
                 ? GetSimulatedSiblings(
                     person,
                     father)
-                : Array.Empty<IPerson>();
+                : [];
 
         var relationshipHistory =
             _familyService
@@ -528,18 +584,22 @@ public sealed class MainWindowViewModel : ViewModelBase
         QueuedActionText =
             string.Empty;
 
-        if (person is not null)
+        if (person is not null
+            && !_succession.IsGameOver)
         {
             var queued =
                 _actionRegistry
-                    .GetQueuedActions(person);
+                    .GetQueuedActions(
+                        person);
 
             if (queued.Count > 0)
             {
-                HasQueuedAction = true;
+                HasQueuedAction =
+                    true;
 
                 QueuedActionText =
-                    $"Queued: {queued[0].Label}";
+                    $"Queued: " +
+                    $"{queued[0].Label}";
             }
             else
             {
@@ -572,8 +632,11 @@ public sealed class MainWindowViewModel : ViewModelBase
         var person =
             FindSelectedPerson();
 
-        if (person is null)
+        if (person is null
+            || _succession.IsGameOver)
+        {
             return;
+        }
 
         _actionRegistry.Execute(
             actionId,
@@ -626,6 +689,50 @@ public sealed class MainWindowViewModel : ViewModelBase
         }
     }
 
+    private void OnSuccessionStateChanged(
+        object? sender,
+        EventArgs e)
+    {
+        if (_succession.IsGameOver)
+        {
+            IsGameOverOverlayVisible =
+                true;
+        }
+
+        NextYearCommand
+            .RaiseCanExecuteChanged();
+
+        OnPropertyChanged(
+            nameof(IsGameOver));
+
+        OnPropertyChanged(
+            nameof(GameOverText));
+    }
+
+    private void NotifyGameStateChanged()
+    {
+        OnPropertyChanged(
+            nameof(Year));
+
+        OnPropertyChanged(
+            nameof(DynastyTitle));
+
+        OnPropertyChanged(
+            nameof(IsGameOver));
+
+        OnPropertyChanged(
+            nameof(GameOverText));
+
+        PreviousAlbumYearCommand
+            .RaiseCanExecuteChanged();
+
+        NextAlbumYearCommand
+            .RaiseCanExecuteChanged();
+
+        NextYearCommand
+            .RaiseCanExecuteChanged();
+    }
+
     private string PersonName(
         IPerson? person)
     {
@@ -633,9 +740,11 @@ public sealed class MainWindowViewModel : ViewModelBase
             return "None";
 
         return _familyService is null
-            ? $"{person.Name} {person.Surname}"
-            : _familyService.GetDisplayName(
-                person);
+            ? $"{person.Name} " +
+              $"{person.Surname}"
+            : _familyService
+                .GetDisplayName(
+                    person);
     }
 
     private string FormatPeople(
@@ -660,7 +769,9 @@ public sealed class MainWindowViewModel : ViewModelBase
     }
 
     private string FormatRelationshipHistory(
-        IReadOnlyList<RelationshipHistoryInfo> history)
+        IReadOnlyList<
+            RelationshipHistoryInfo>
+            history)
     {
         if (history.Count == 0)
             return "None";
@@ -680,12 +791,14 @@ public sealed class MainWindowViewModel : ViewModelBase
                             == relationship.SpouseId);
 
             var spouseName =
-                PersonName(spouse);
+                PersonName(
+                    spouse);
 
             var end =
-                relationship.EndYear is int endYear
-                    ? endYear.ToString()
-                    : "present";
+                relationship.EndYear
+                    is int endYear
+                        ? endYear.ToString()
+                        : "present";
 
             var reason =
                 string.IsNullOrWhiteSpace(

@@ -18,7 +18,8 @@ public sealed class PersonRowViewModel
         if (healthService is not null)
         {
             var health =
-                healthService.GetHealth(person);
+                healthService.GetHealth(
+                    person);
 
             HealthValue =
                 health.Percentage;
@@ -72,10 +73,34 @@ public sealed class PersonRowViewModel
         }
     }
 
-    public string StatusText =>
-        _person.Tags.Has("state.dead")
-            ? "Deceased"
-            : "Living";
+    public string StatusText
+    {
+        get
+        {
+            if (_person.Tags.Has(
+                "state.dead"))
+            {
+                return "Deceased";
+            }
+
+            if (_person.Tags.Has(
+                "control.playable"))
+            {
+                return "Living · Playable";
+            }
+
+            return "Living";
+        }
+    }
+
+    public bool IsPlayable =>
+        _person.Tags.Has(
+            "control.playable");
+
+    public string PlayableText =>
+        IsPlayable
+            ? "Playable: Yes"
+            : "Playable: No";
 
     public double HealthValue { get; }
 
@@ -83,7 +108,8 @@ public sealed class PersonRowViewModel
         string.Empty;
 
     public bool ShowHealth =>
-        !_person.Tags.Has("state.dead");
+        !_person.Tags.Has(
+            "state.dead");
 
     public string GenerationText
     {

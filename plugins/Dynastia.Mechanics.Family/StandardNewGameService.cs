@@ -5,9 +5,14 @@ namespace Dynastia.Mechanics.Family;
 
 public sealed class StandardNewGameService : INewGameService
 {
-    private const string MaleNamesPath = "Names/polish_male.csv";
-    private const string FemaleNamesPath = "Names/polish_female.csv";
-    private const string SurnamesPath = "Names/polish_surnames.csv";
+    private const string MaleNamesPath =
+        "Names/polish_male.csv";
+
+    private const string FemaleNamesPath =
+        "Names/polish_female.csv";
+
+    private const string SurnamesPath =
+        "Names/polish_surnames.csv";
 
     private readonly IGameState _gameState;
     private readonly IFamilyService _family;
@@ -32,23 +37,29 @@ public sealed class StandardNewGameService : INewGameService
         _calendar = calendar;
     }
 
-    public IPerson StartNewGame(string dynastySurname)
+    public IPerson StartNewGame(
+        string dynastySurname)
     {
-        var surname = NormalizeOrGenerateSurname(dynastySurname);
+        var surname =
+            NormalizeOrGenerateSurname(
+                dynastySurname);
 
         _gameState.ClearPeople();
         _gameState.Year = 1900;
-        _gameState.DynastySurname = surname;
+        _gameState.DynastySurname =
+            surname;
 
         var father =
             _gameState.CreatePerson(
-                RandomWeightedFrom(MaleNamesPath),
+                RandomWeightedFrom(
+                    MaleNamesPath),
                 surname,
                 45);
 
         father.BirthDate =
             RandomDateInYear(
-                _gameState.Year - father.Age);
+                _gameState.Year
+                - father.Age);
 
         father.DeathDate =
             new GameDate(1899);
@@ -58,21 +69,29 @@ public sealed class StandardNewGameService : INewGameService
             Sex.Male,
             generation: 0);
 
-        father.Tags.Add("state.dead");
-        father.Tags.Add("family.bloodline");
-        father.Tags.Add("sexuality.heterosexual");
+        father.Tags.Add(
+            "state.dead");
+
+        father.Tags.Add(
+            "family.bloodline");
+
+        father.Tags.Add(
+            "sexuality.heterosexual");
 
         var mother =
             _gameState.CreatePerson(
-                RandomWeightedFrom(FemaleNamesPath),
+                RandomWeightedFrom(
+                    FemaleNamesPath),
                 surname,
                 42);
 
-        mother.MaidenName = surname;
+        mother.MaidenName =
+            surname;
 
         mother.BirthDate =
             RandomDateInYear(
-                _gameState.Year - mother.Age);
+                _gameState.Year
+                - mother.Age);
 
         mother.DeathDate =
             new GameDate(1899);
@@ -81,8 +100,11 @@ public sealed class StandardNewGameService : INewGameService
             mother,
             Sex.Female);
 
-        mother.Tags.Add("state.dead");
-        mother.Tags.Add("sexuality.heterosexual");
+        mother.Tags.Add(
+            "state.dead");
+
+        mother.Tags.Add(
+            "sexuality.heterosexual");
 
         _family.SetSpouses(
             father,
@@ -99,26 +121,38 @@ public sealed class StandardNewGameService : INewGameService
 
         var founder =
             _gameState.CreatePerson(
-                RandomWeightedFrom(MaleNamesPath),
+                RandomWeightedFrom(
+                    MaleNamesPath),
                 surname,
                 18);
 
         founder.BirthDate =
             RandomDateInYear(
-                _gameState.Year - founder.Age);
+                _gameState.Year
+                - founder.Age);
 
         _family.InitializePerson(
             founder,
             Sex.Male,
             generation: 1);
 
-        founder.Tags.Add("state.alive");
-        founder.Tags.Add("age.adult");
-        founder.Tags.Add("family.bloodline");
-        founder.Tags.Add("lineage.male");
-        founder.Tags.Add("control.playable");
-        founder.Tags.Add("relationship.single");
-        founder.Tags.Add("sexuality.heterosexual");
+        founder.Tags.Add(
+            "state.alive");
+
+        founder.Tags.Add(
+            "age.adult");
+
+        founder.Tags.Add(
+            "family.bloodline");
+
+        founder.Tags.Add(
+            "lineage.male");
+
+        founder.Tags.Add(
+            "relationship.single");
+
+        founder.Tags.Add(
+            "sexuality.heterosexual");
 
         _family.SetParents(
             founder,
@@ -131,10 +165,13 @@ public sealed class StandardNewGameService : INewGameService
         return founder;
     }
 
-    private GameDate RandomDateInYear(int year)
+    private GameDate RandomDateInYear(
+        int year)
     {
         var month =
-            _random.NextInt(1, 12);
+            _random.NextInt(
+                1,
+                12);
 
         var day =
             _random.NextInt(
@@ -149,18 +186,27 @@ public sealed class StandardNewGameService : INewGameService
             Day: day);
     }
 
-    private string NormalizeOrGenerateSurname(string? input)
+    private string NormalizeOrGenerateSurname(
+        string? input)
     {
-        var cleaned = Regex.Replace(
-            input ?? string.Empty,
-            @"[^a-zA-ZąćęłńóśźżĄĆĘŁŃÓŚŹŻ\s]",
-            string.Empty);
+        var cleaned =
+            Regex.Replace(
+                input
+                    ?? string.Empty,
+                @"[^a-zA-ZąćęłńóśźżĄĆĘŁŃÓŚŹŻ\s]",
+                string.Empty);
 
         if (cleaned.Length < 2)
-            cleaned = RandomWeightedFrom(SurnamesPath);
+        {
+            cleaned =
+                RandomWeightedFrom(
+                    SurnamesPath);
+        }
 
-        return char.ToUpperInvariant(cleaned[0])
-            + cleaned[1..].ToLowerInvariant();
+        return char.ToUpperInvariant(
+                cleaned[0])
+            + cleaned[1..]
+                .ToLowerInvariant();
     }
 
     private string RandomWeightedFrom(
@@ -172,7 +218,8 @@ public sealed class StandardNewGameService : INewGameService
 
         var totalWeight =
             entries.Sum(
-                x => (double)x.Weight);
+                entry =>
+                    (double)entry.Weight);
 
         var roll =
             _random.NextDouble()
@@ -183,7 +230,8 @@ public sealed class StandardNewGameService : INewGameService
             if (roll < entry.Weight)
                 return entry.Value;
 
-            roll -= entry.Weight;
+            roll -=
+                entry.Weight;
         }
 
         return entries[^1].Value;

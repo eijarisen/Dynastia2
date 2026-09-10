@@ -1,0 +1,11 @@
+{
+  "id": "dynastia.succession",
+  "name": "Standard Succession",
+  "version": "0.1.0",
+  "apiVersion": 1,
+  "assembly": "Dynastia.Mechanics.Succession.dll",
+  "entryType": "Dynastia.Mechanics.Succession.SuccessionPlugin",
+  "dependencies": [
+    "dynastia.family"
+  ]
+}

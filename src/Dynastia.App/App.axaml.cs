@@ -115,6 +115,12 @@ public partial class App : Application
                     "No New Game service was registered. " +
                     "Is dynastia.family installed?");
 
+            var successionService =
+                pluginContext.GetService<ISuccessionService>()
+                ?? throw new InvalidOperationException(
+                    "No Succession service was registered. " +
+                    "Is dynastia.succession installed?");
+
             var yearProcessor =
                 new YearProcessor(
                     gameState,
@@ -141,6 +147,7 @@ public partial class App : Application
                             statsService,
                             familyService,
                             healthService,
+                            successionService,
                             eventBus,
                             actionRegistry)
                 };

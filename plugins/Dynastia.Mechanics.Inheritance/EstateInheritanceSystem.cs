@@ -96,13 +96,24 @@ public sealed class EstateInheritanceSystem :
         if (livingSons.Count == 0)
             return;
 
+        var houses =
+            _economy.TakeAllHouses(
+                deceased)
+            .ToList();
+
+        if (houses.Count == 0)
+            return;
+
         var housesPerSon =
-            household.HousesOwned
+            houses.Count
             / livingSons.Count;
 
         var remainder =
-            household.HousesOwned
+            houses.Count
             % livingSons.Count;
+
+        var houseIndex =
+            0;
 
         foreach (var son in
             livingSons)
@@ -122,17 +133,24 @@ public sealed class EstateInheritanceSystem :
             _economy.EnsureHousehold(
                 son);
 
-            var sonHousehold =
-                _economy.GetHousehold(
-                    son)
-                ?? throw new InvalidOperationException(
-                    "Living son of male-lineage father " +
-                    "has no household state.");
+            var inheritedTowns =
+                new List<string>();
 
-            _economy.SetHousesOwned(
-                son,
-                sonHousehold.HousesOwned
-                + inherited);
+            for (var index = 0;
+                index < inherited;
+                index++)
+            {
+                var house =
+                    houses[
+                        houseIndex++];
+
+                _economy.AddExistingHouse(
+                    son,
+                    house);
+
+                inheritedTowns.Add(
+                    house.Town.Town);
+            }
 
             _events.Publish(
                 new GameEvent
@@ -158,6 +176,11 @@ public sealed class EstateInheritanceSystem :
                             ["fatherId"] =
                                 deceased.Id.ToString(),
 
+                            ["towns"] =
+                                string.Join(
+                                    ", ",
+                                    inheritedTowns),
+
                             ["text"] =
                                 $"{_family.GetDisplayName(son)} " +
                                 $"inherited {inherited} " +
@@ -166,11 +189,6 @@ public sealed class EstateInheritanceSystem :
                         }
                 });
         }
-
-        // Intentional source-faithful behavior:
-        // the deceased man's stored house count is NOT cleared.
-        // This system only processes deaths from the current year,
-        // so those houses are not distributed again later.
     }
 
     private void SettleRecordedUnions(

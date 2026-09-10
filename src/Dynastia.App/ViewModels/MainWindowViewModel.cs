@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using Avalonia.Threading;
 using Dynastia.App.Persistence;
 using Dynastia.Contracts;
 using Dynastia.Core.Simulation;
@@ -17,6 +18,7 @@ public sealed class MainWindowViewModel : ViewModelBase
     private readonly IEconomyService? _economyService;
     private readonly IHouseholdService? _householdService;
     private readonly IAdoptionService? _adoptionService;
+    private readonly ILocationService? _locationService;
     private readonly IEducationService? _educationService;
     private readonly ICareerService? _careerService;
     private readonly IJusticeService? _justiceService;
@@ -45,6 +47,7 @@ public sealed class MainWindowViewModel : ViewModelBase
     private bool _isLivingFamilyView = true;
     private int _detailsTabIndex;
     private string _persistenceStatusText = string.Empty;
+    private CancellationTokenSource? _loadedStatusCancellation;
 
     public MainWindowViewModel(
         IGameState gameState,
@@ -57,6 +60,7 @@ public sealed class MainWindowViewModel : ViewModelBase
         IEconomyService? economyService,
         IHouseholdService? householdService,
         IAdoptionService? adoptionService,
+        ILocationService? locationService,
         IEducationService? educationService,
         ICareerService? careerService,
         IJusticeService? justiceService,
@@ -76,6 +80,7 @@ public sealed class MainWindowViewModel : ViewModelBase
         _economyService = economyService;
         _householdService = householdService;
         _adoptionService = adoptionService;
+        _locationService = locationService;
         _educationService = educationService;
         _careerService = careerService;
         _justiceService = justiceService;
@@ -286,36 +291,73 @@ public sealed class MainWindowViewModel : ViewModelBase
     {
         get
         {
-            var head =
-                _succession.ActiveController;
-
             var finance =
-                head is null
-                    ? null
-                    : _economyService?.GetHousehold(
-                        head);
+                GetActiveHouseholdFinance();
+
+            return finance is null
+                ? "No active adult household."
+                : $"Family Budget: " +
+                  $"{finance.Wealth:N0} zł";
+        }
+    }
+
+    public string HouseholdIncomeText
+    {
+        get
+        {
+            var finance =
+                GetActiveHouseholdFinance();
+
+            return finance is null
+                ? string.Empty
+                : $"Income: " +
+                  $"{finance.LastIncome:N0} zł";
+        }
+    }
+
+    public string HouseholdIncomeDetailsText
+    {
+        get
+        {
+            var finance =
+                GetActiveHouseholdFinance();
 
             if (finance is null)
-            {
-                return
-                    "No active adult household.";
-            }
+                return string.Empty;
 
-            var status =
-                head is null
-                    ? null
-                    : _householdService?
-                        .GetStatus(
-                            head);
+            return FormatFinanceBreakdown(
+                finance.LastIncomeBreakdown,
+                "No income was recorded in the last annual finance pass.");
+        }
+    }
 
-            var nannyExpense =
-                status?.HasNannyReference == true
-                    ? " · Nanny: $250/year"
-                    : string.Empty;
+    public string HouseholdExpensesText
+    {
+        get
+        {
+            var finance =
+                GetActiveHouseholdFinance();
 
-            return
-                $"Family Budget: ${finance.Wealth:N0}" +
-                nannyExpense;
+            return finance is null
+                ? string.Empty
+                : $"Expenses: " +
+                  $"{finance.LastExpenses:N0} zł";
+        }
+    }
+
+    public string HouseholdExpenseDetailsText
+    {
+        get
+        {
+            var finance =
+                GetActiveHouseholdFinance();
+
+            if (finance is null)
+                return string.Empty;
+
+            return FormatFinanceBreakdown(
+                finance.LastExpenseBreakdown,
+                "No expenses were recorded in the last annual finance pass.");
         }
     }
 
@@ -323,32 +365,16 @@ public sealed class MainWindowViewModel : ViewModelBase
     {
         get
         {
-            var head =
-                _succession.ActiveController;
-
             var finance =
-                head is null
-                    ? null
-                    : _economyService?.GetHousehold(
-                        head);
+                GetActiveHouseholdFinance();
 
-            if (finance is null)
-                return string.Empty;
-
-            if (finance.HousesOwned == 0)
-            {
-                return
-                    "Houses: 0 (renting home)";
-            }
-
-            return finance.RentedHouses > 0
-                ? $"Houses: {finance.HousesOwned} " +
-                  $"({finance.RentedHouses} rented out)"
-                : $"Houses: {finance.HousesOwned}";
+            return finance is null
+                ? string.Empty
+                : $"Houses: {finance.Houses.Count}";
         }
     }
 
-    public string HouseholdIncomeExpensesText
+    public string HouseholdHousesDetailsText
     {
         get
         {
@@ -356,16 +382,77 @@ public sealed class MainWindowViewModel : ViewModelBase
                 _succession.ActiveController;
 
             var finance =
-                head is null
-                    ? null
-                    : _economyService?.GetHousehold(
-                        head);
+                GetActiveHouseholdFinance();
 
-            return finance is null
-                ? string.Empty
-                : $"(Income: ${finance.LastIncome:N0}, " +
-                  $"Expenses: ${finance.LastExpenses:N0})";
+            if (head is null
+                || finance is null)
+            {
+                return string.Empty;
+            }
+
+            if (finance.Houses.Count == 0)
+            {
+                var homeTown =
+                    _locationService?
+                        .GetLocation(
+                            head)
+                        .HomeTown
+                        .Town;
+
+                return string.IsNullOrWhiteSpace(
+                    homeTown)
+                        ? "No owned houses. The household rents its residence."
+                        : $"{homeTown} — Renting";
+            }
+
+            return string.Join(
+                Environment.NewLine,
+                finance.Houses.Select(
+                    house =>
+                        $"{house.Town.Town} — " +
+                        $"{house.Status}"));
         }
+    }
+
+    // Retained for compatibility with older bindings/packages.
+    public string HouseholdIncomeExpensesText =>
+        string.Join(
+            " | ",
+            new[]
+            {
+                HouseholdIncomeText,
+                HouseholdExpensesText
+            }
+            .Where(
+                value =>
+                    !string.IsNullOrWhiteSpace(
+                        value)));
+
+    private HouseholdFinanceSnapshot?
+        GetActiveHouseholdFinance()
+    {
+        var head =
+            _succession.ActiveController;
+
+        return head is null
+            ? null
+            : _economyService?.GetHousehold(
+                head);
+    }
+
+    private static string FormatFinanceBreakdown(
+        IReadOnlyList<FinanceBreakdownItem> items,
+        string emptyText)
+    {
+        if (items.Count == 0)
+            return emptyText;
+
+        return string.Join(
+            Environment.NewLine,
+            items.Select(
+                item =>
+                    $"{item.Amount:N0} zł — " +
+                    $"{item.Label}"));
     }
 
     public string HouseholdWarningText
@@ -638,7 +725,7 @@ public sealed class MainWindowViewModel : ViewModelBase
                 Math.Clamp(
                     value,
                     0,
-                    2);
+                    3);
 
             if (_detailsTabIndex == clamped)
                 return;
@@ -739,8 +826,72 @@ public sealed class MainWindowViewModel : ViewModelBase
     public void ReportPersistenceStatus(
         string message)
     {
+        _loadedStatusCancellation?
+            .Cancel();
+
+        _loadedStatusCancellation?
+            .Dispose();
+
+        _loadedStatusCancellation =
+            null;
+
         PersistenceStatusText =
             message;
+
+        if (!message.StartsWith(
+            "Loaded ",
+            StringComparison.OrdinalIgnoreCase))
+        {
+            return;
+        }
+
+        var cancellation =
+            new CancellationTokenSource();
+
+        _loadedStatusCancellation =
+            cancellation;
+
+        _ =
+            ClearLoadedStatusAfterDelayAsync(
+                message,
+                cancellation);
+    }
+
+    private async Task ClearLoadedStatusAfterDelayAsync(
+        string expectedMessage,
+        CancellationTokenSource cancellation)
+    {
+        try
+        {
+            await Task.Delay(
+                TimeSpan.FromSeconds(15),
+                cancellation.Token);
+        }
+        catch (OperationCanceledException)
+        {
+            return;
+        }
+
+        await Dispatcher.UIThread.InvokeAsync(
+            () =>
+            {
+                if (ReferenceEquals(
+                        _loadedStatusCancellation,
+                        cancellation)
+                    && PersistenceStatusText.Equals(
+                        expectedMessage,
+                        StringComparison.Ordinal))
+                {
+                    PersistenceStatusText =
+                        string.Empty;
+
+                    _loadedStatusCancellation?
+                        .Dispose();
+
+                    _loadedStatusCancellation =
+                        null;
+                }
+            });
     }
 
     private GameUiSaveState CaptureUiSaveState()
@@ -871,7 +1022,8 @@ public sealed class MainWindowViewModel : ViewModelBase
                     _healthService,
                     _economyService,
                     _careerService,
-                    _householdService));
+                    _householdService,
+                    _locationService));
         }
 
         SelectedPerson =
@@ -1173,6 +1325,21 @@ public sealed class MainWindowViewModel : ViewModelBase
 
         OnPropertyChanged(
             nameof(HouseholdHousesText));
+
+        OnPropertyChanged(
+            nameof(HouseholdHousesDetailsText));
+
+        OnPropertyChanged(
+            nameof(HouseholdIncomeText));
+
+        OnPropertyChanged(
+            nameof(HouseholdIncomeDetailsText));
+
+        OnPropertyChanged(
+            nameof(HouseholdExpensesText));
+
+        OnPropertyChanged(
+            nameof(HouseholdExpenseDetailsText));
 
         OnPropertyChanged(
             nameof(HouseholdIncomeExpensesText));

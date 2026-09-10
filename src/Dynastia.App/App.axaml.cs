@@ -154,6 +154,9 @@ public partial class App : Application
             var adoptionService =
                 pluginContext.GetService<IAdoptionService>();
 
+            var locationService =
+                pluginContext.GetService<ILocationService>();
+
             var educationService =
                 pluginContext.GetService<IEducationService>();
 
@@ -211,6 +214,7 @@ public partial class App : Application
                             economyService,
                             householdService,
                             adoptionService,
+                            locationService,
                             educationService,
                             careerService,
                             justiceService,

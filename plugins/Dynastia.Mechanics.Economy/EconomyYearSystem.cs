@@ -106,7 +106,6 @@ public sealed class EconomyYearSystem : IYearSystem
             && (
                 dynastyHead
                 || independentOrphanHead);
-
     }
 
     private void ProcessLivingHousehold(
@@ -116,6 +115,10 @@ public sealed class EconomyYearSystem : IYearSystem
         var household =
             _economy.GetRequiredHousehold(
                 head);
+
+        _economy.SynchronizeForFinance(
+            head,
+            household);
 
         var spouse =
             _family.GetSpouse(
@@ -145,10 +148,12 @@ public sealed class EconomyYearSystem : IYearSystem
         var memberIds =
             members
                 .Select(
-                    member => member.Id)
+                    member =>
+                        member.Id)
                 .ToHashSet();
 
-        foreach (var child in children)
+        foreach (var child in
+            children)
         {
             if (!child.Tags.Has(
                 "state.alive"))
@@ -212,8 +217,11 @@ public sealed class EconomyYearSystem : IYearSystem
                 dependent);
         }
 
+        household.LastIncomeBreakdown.Clear();
+
         var income =
-            _income.GetAnnualIncome(
+            AddPersonIncome(
+                household,
                 head);
 
         if (spouse is not null
@@ -221,7 +229,8 @@ public sealed class EconomyYearSystem : IYearSystem
                 "state.alive"))
         {
             income +=
-                _income.GetAnnualIncome(
+                AddPersonIncome(
+                    household,
                     spouse);
         }
 
@@ -229,28 +238,89 @@ public sealed class EconomyYearSystem : IYearSystem
             adultUnmarriedDaughters)
         {
             income +=
-                _income.GetAnnualIncome(
+                AddPersonIncome(
+                    household,
                     daughter);
         }
 
-        income +=
-            household.RentedHouses
+        var rentalHouses =
+            Math.Max(
+                0,
+                household.HousesOwned
+                - 1);
+
+        var rentalIncome =
+            rentalHouses
             * RentalIncomePerHouse;
 
-        var expenses =
+        if (rentalIncome > 0)
+        {
+            household.LastIncomeBreakdown.Add(
+                new LedgerLineState
+                {
+                    Label =
+                        "houses",
+
+                    Amount =
+                        rentalIncome
+                });
+        }
+
+        income +=
+            rentalIncome;
+
+        household.LastExpenseBreakdown.Clear();
+
+        var livingCosts =
             members.Count
             * LivingExpense;
+
+        if (livingCosts > 0)
+        {
+            household.LastExpenseBreakdown.Add(
+                new LedgerLineState
+                {
+                    Label =
+                        "living costs",
+
+                    Amount =
+                        livingCosts
+                });
+        }
+
+        var expenses =
+            livingCosts;
 
         if (household.HousesOwned == 0)
         {
             expenses +=
                 RentExpense;
+
+            household.LastExpenseBreakdown.Add(
+                new LedgerLineState
+                {
+                    Label =
+                        "rented home",
+
+                    Amount =
+                        RentExpense
+                });
         }
 
         if (household.NannyId.HasValue)
         {
             expenses +=
                 NannyExpense;
+
+            household.LastExpenseBreakdown.Add(
+                new LedgerLineState
+                {
+                    Label =
+                        "nanny",
+
+                    Amount =
+                        NannyExpense
+                });
         }
 
         household.LastIncome =
@@ -265,6 +335,30 @@ public sealed class EconomyYearSystem : IYearSystem
                 household.Wealth
                 + income
                 - expenses);
+    }
+
+    private decimal AddPersonIncome(
+        HouseholdEconomyComponent household,
+        IPerson person)
+    {
+        var amount =
+            _income.GetAnnualIncome(
+                person);
+
+        if (amount != 0)
+        {
+            household.LastIncomeBreakdown.Add(
+                new LedgerLineState
+                {
+                    Label =
+                        person.Name,
+
+                    Amount =
+                        amount
+                });
+        }
+
+        return amount;
     }
 
     private void ProcessDeceasedEstates(
@@ -302,9 +396,16 @@ public sealed class EconomyYearSystem : IYearSystem
                 _economy.GetRequiredHousehold(
                     head);
 
+            _economy.SynchronizeForFinance(
+                head,
+                household);
+
             var spouse =
                 _family.GetSpouse(
                     head);
+
+            household.LastIncomeBreakdown.Clear();
+            household.LastExpenseBreakdown.Clear();
 
             decimal income =
                 0;
@@ -315,18 +416,27 @@ public sealed class EconomyYearSystem : IYearSystem
                 && spouse.Tags.Has(
                     "state.alive"))
             {
-                income +=
-                    _income.GetAnnualIncome(
+                income =
+                    AddPersonIncome(
+                        household,
                         spouse);
 
                 expenses =
                     (1 + children.Count)
                     * LivingExpense;
+
+                household.LastExpenseBreakdown.Add(
+                    new LedgerLineState
+                    {
+                        Label =
+                            "living costs",
+
+                        Amount =
+                            expenses
+                    });
             }
             else
             {
-                // Source behavior for orphaned estates:
-                // no normal living expenses are deducted.
                 expenses =
                     0;
             }
@@ -335,6 +445,16 @@ public sealed class EconomyYearSystem : IYearSystem
             {
                 expenses +=
                     NannyExpense;
+
+                household.LastExpenseBreakdown.Add(
+                    new LedgerLineState
+                    {
+                        Label =
+                            "nanny",
+
+                        Amount =
+                            NannyExpense
+                    });
             }
 
             household.LastIncome =
@@ -345,7 +465,8 @@ public sealed class EconomyYearSystem : IYearSystem
 
             _economy.ChangePendingInheritance(
                 head,
-                income - expenses);
+                income
+                - expenses);
         }
     }
 }

@@ -110,27 +110,23 @@ public sealed class AdulthoodInheritanceSystem :
         IGameState gameState,
         IPerson person)
     {
-        var count =
-            _economy.GetPendingHouses(
+        var houses =
+            _economy.TakePendingHouses(
                 person);
 
-        if (count <= 0)
+        if (houses.Count == 0)
             return;
 
-        var household =
-            _economy.GetHousehold(
-                person)
-            ?? throw new InvalidOperationException(
-                "Adult male-lineage heir has no household.");
+        _economy.EnsureHousehold(
+            person);
 
-        _economy.SetHousesOwned(
-            person,
-            household.HousesOwned
-            + count);
-
-        _economy.SetPendingHouses(
-            person,
-            0);
+        foreach (var house in
+            houses)
+        {
+            _economy.AddExistingHouse(
+                person,
+                house);
+        }
 
         var father =
             _family.GetFather(
@@ -157,13 +153,21 @@ public sealed class AdulthoodInheritanceSystem :
                     new Dictionary<string, string>
                     {
                         ["count"] =
-                            count.ToString(),
+                            houses.Count.ToString(),
+
+                        ["towns"] =
+                            string.Join(
+                                ", ",
+                                houses.Select(
+                                    house =>
+                                        house.Town.Town)),
 
                         ["text"] =
                             $"{_family.GetDisplayName(person)} " +
-                            $"received {count} promised " +
-                            $"house{(count == 1 ? "" : "s")}."
+                            $"received {houses.Count} promised " +
+                            $"house{(houses.Count == 1 ? "" : "s")}."
                     }
             });
     }
+
 }

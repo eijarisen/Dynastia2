@@ -641,11 +641,13 @@ public sealed class ReproductionYearSystem : IYearSystem
         IPerson father,
         IPerson mother)
     {
-        var fatherCount =
+        var fatherChildren =
             _family
                 .GetChildren(
-                    father)
-                .Count;
+                    father);
+
+        var fatherCount =
+            fatherChildren.Count;
 
         var motherCount =
             _family
@@ -653,9 +655,22 @@ public sealed class ReproductionYearSystem : IYearSystem
                     mother)
                 .Count;
 
-        var fatherOrder =
+        // "Their nth child" must mean children of THIS couple,
+        // not the father's total across all marriages.
+        var sharedCount =
+            fatherChildren
+                .Count(
+                    candidate =>
+                        _family.GetFather(
+                            candidate)?.Id
+                            == father.Id
+                        && _family.GetMother(
+                            candidate)?.Id
+                            == mother.Id);
+
+        var sharedOrder =
             ToOrdinalWord(
-                fatherCount);
+                sharedCount);
 
         _events.Publish(
             new GameEvent
@@ -690,12 +705,15 @@ public sealed class ReproductionYearSystem : IYearSystem
                         ["motherCount"] =
                             motherCount.ToString(),
 
+                        ["sharedCount"] =
+                            sharedCount.ToString(),
+
                         ["text"] =
                             $"{_family.GetDisplayName(child)} " +
                             $"was born to " +
                             $"{_family.GetDisplayName(father)} and " +
                             $"{_family.GetDisplayName(mother)}. " +
-                            $"This is their {fatherOrder} child."
+                            $"This is their {sharedOrder} child."
                     }
             });
     }

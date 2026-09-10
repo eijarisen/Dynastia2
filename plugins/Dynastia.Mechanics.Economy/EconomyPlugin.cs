@@ -7,9 +7,6 @@ public sealed class EconomyPlugin : IGamePlugin
     private const decimal FounderStartingWealth =
         1000m;
 
-    private const int FounderStartingHouses =
-        1;
-
     public void Initialize(
         IGamePluginContext context)
     {
@@ -22,6 +19,11 @@ public sealed class EconomyPlugin : IGamePlugin
             context.GetService<IFamilyService>()
             ?? throw new InvalidOperationException(
                 "Family service is unavailable.");
+
+        var locations =
+            context.GetService<ILocationService>()
+            ?? throw new InvalidOperationException(
+                "Location service is unavailable.");
 
         var events =
             context.GetService<IGameEventBus>()
@@ -38,7 +40,8 @@ public sealed class EconomyPlugin : IGamePlugin
 
         var economy =
             new StandardEconomyService(
-                family);
+                family,
+                locations);
 
         context.AddService<IIncomeProviderRegistry>(
             incomeRegistry);
@@ -85,9 +88,14 @@ public sealed class EconomyPlugin : IGamePlugin
                     founder,
                     FounderStartingWealth);
 
-                economy.SetHousesOwned(
+                // The starting residence is located in the founder's
+                // already-generated household town.
+                economy.AddHouse(
                     founder,
-                    FounderStartingHouses);
+                    locations
+                        .GetLocation(
+                            founder)
+                        .HomeTown);
             };
 
         context.Log(

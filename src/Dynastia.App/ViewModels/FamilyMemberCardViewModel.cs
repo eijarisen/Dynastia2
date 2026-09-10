@@ -18,9 +18,19 @@ public sealed class FamilyMemberCardViewModel
     {
         PersonId = person.Id;
 
+        FirstName =
+            person.Name;
+
+        Surname =
+            family is null
+                ? person.Surname
+                : family.FormatSurname(
+                    person.Surname,
+                    family.GetSex(person));
+
         FullName =
             family is null
-                ? $"{person.Name} {person.Surname}"
+                ? $"{FirstName} {Surname}"
                 : family.GetDisplayName(person);
 
         var generation =
@@ -108,6 +118,10 @@ public sealed class FamilyMemberCardViewModel
     }
 
     public Guid PersonId { get; }
+
+    public string FirstName { get; }
+
+    public string Surname { get; }
 
     public string FullName { get; }
 

@@ -61,10 +61,16 @@
                     <TextBlock
                         HorizontalAlignment="Center"
                         TextAlignment="Center"
-                        TextWrapping="Wrap"
                         FontSize="11.5"
                         FontWeight="SemiBold"
-                        Text="{Binding FullName}" />
+                        Text="{Binding FirstName}" />
+
+                    <TextBlock
+                        HorizontalAlignment="Center"
+                        TextAlignment="Center"
+                        FontSize="11.5"
+                        FontWeight="SemiBold"
+                        Text="{Binding Surname}" />
 
                     <TextBlock
                         HorizontalAlignment="Center"
@@ -391,12 +397,12 @@
                             Stretch="Fill" />
 
                         <Grid
-                            Margin="50,88,48,34"
+                            Margin="50,80,48,34"
                             RowDefinitions="Auto,Auto,*"
                             RowSpacing="9">
 
                             <TextBlock
-                                FontSize="29"
+                                FontSize="25"
                                 FontWeight="Bold"
                                 Text="Actions" />
 
@@ -495,7 +501,7 @@
                             Stretch="Fill" />
 
                         <Grid
-                            Margin="50,57,48,34"
+                            Margin="50,65,48,31"
                             RowDefinitions="Auto,*"
                             RowSpacing="9">
 
@@ -504,7 +510,7 @@
                                 ColumnSpacing="7">
 
                                 <TextBlock
-                                    FontSize="28"
+                                    FontSize="24"
                                     FontWeight="Bold"
                                     Text="Family Chronicle" />
 
@@ -558,8 +564,8 @@
 
                                                 <TextBlock
                                                     Margin="0,3,0,6"
-                                                    FontSize="14.5"
-                                                    LineHeight="21"
+                                                    FontSize="16"
+                                                    LineHeight="23"
                                                     TextWrapping="Wrap"
                                                     Text="{Binding Text}" />
                                             </DataTemplate>
@@ -685,23 +691,96 @@
                                 Grid.Row="2"
                                 IsVisible="{Binding IsLivingFamilyView}"
                                 HorizontalAlignment="Center"
-                                Orientation="Horizontal"
-                                Spacing="11">
+                                Spacing="4">
 
                                 <TextBlock
-                                    FontSize="10.5"
-                                    Foreground="#DEC77E"
+                                    HorizontalAlignment="Center"
+                                    FontSize="16"
+                                    FontWeight="Bold"
+                                    Foreground="#E3C36D"
                                     Text="{Binding HouseholdBudgetText}" />
 
-                                <TextBlock
-                                    FontSize="10.5"
-                                    FontWeight="Bold"
-                                    Text="{Binding HouseholdHousesText}" />
+                                <StackPanel
+                                    HorizontalAlignment="Center"
+                                    Orientation="Horizontal"
+                                    Spacing="18">
+
+                                    <TextBlock
+                                        FontSize="11.5"
+                                        FontWeight="SemiBold"
+                                        Foreground="#E8DDC2"
+                                        Text="{Binding HouseholdIncomeText}">
+
+                                        <ToolTip.Tip>
+                                            <Border
+                                                MaxWidth="360"
+                                                Padding="10,7"
+                                                Background="#F20A1514"
+                                                BorderBrush="#B88934"
+                                                BorderThickness="1"
+                                                CornerRadius="4">
+
+                                                <TextBlock
+                                                    FontSize="11"
+                                                    LineHeight="17"
+                                                    Foreground="#F5E6C6"
+                                                    TextWrapping="Wrap"
+                                                    Text="{Binding HouseholdIncomeDetailsText}" />
+                                            </Border>
+                                        </ToolTip.Tip>
+                                    </TextBlock>
+
+                                    <TextBlock
+                                        FontSize="11.5"
+                                        FontWeight="SemiBold"
+                                        Foreground="#E8DDC2"
+                                        Text="{Binding HouseholdExpensesText}">
+
+                                        <ToolTip.Tip>
+                                            <Border
+                                                MaxWidth="360"
+                                                Padding="10,7"
+                                                Background="#F20A1514"
+                                                BorderBrush="#B88934"
+                                                BorderThickness="1"
+                                                CornerRadius="4">
+
+                                                <TextBlock
+                                                    FontSize="11"
+                                                    LineHeight="17"
+                                                    Foreground="#F5E6C6"
+                                                    TextWrapping="Wrap"
+                                                    Text="{Binding HouseholdExpenseDetailsText}" />
+                                            </Border>
+                                        </ToolTip.Tip>
+                                    </TextBlock>
+                                </StackPanel>
 
                                 <TextBlock
-                                    FontSize="10.5"
-                                    Opacity="0.78"
-                                    Text="{Binding HouseholdIncomeExpensesText}" />
+                                    HorizontalAlignment="Center"
+                                    FontSize="12.5"
+                                    FontWeight="Bold"
+                                    Foreground="#D5B45D"
+                                    Text="{Binding HouseholdHousesText}">
+
+                                    <ToolTip.Tip>
+                                        <Border
+                                            MaxWidth="360"
+                                            Padding="10,7"
+                                            Background="#F20A1514"
+                                            BorderBrush="#B88934"
+                                            BorderThickness="1"
+                                            CornerRadius="4">
+
+                                            <TextBlock
+                                                FontSize="11"
+                                                LineHeight="17"
+                                                Foreground="#F5E6C6"
+                                                TextWrapping="Wrap"
+                                                Text="{Binding HouseholdHousesDetailsText}" />
+                                        </Border>
+                                    </ToolTip.Tip>
+                                </TextBlock>
                             </StackPanel>
 
                             <ScrollViewer
@@ -835,21 +914,22 @@
 
                         <!-- Name sits directly above the portrait frame. -->
                         <TextBlock
-                            Margin="30,43,0,0"
-                            Width="172"
-                            Height="34"
+                            Margin="49,48,0,0"
+                            Width="310"
+                            Height="30"
                             HorizontalAlignment="Left"
                             VerticalAlignment="Top"
-                            TextAlignment="Center"
+                            TextAlignment="Left"
                             FontSize="21"
                             FontWeight="Bold"
-                            TextWrapping="Wrap"
+                            TextWrapping="NoWrap"
+                            TextTrimming="CharacterEllipsis"
                             Text="{Binding SelectedPerson.FullName,
                                        FallbackValue='Select a person'}" />
 
                         <!-- Six larger, color-coded skills. -->
                         <ItemsControl
-                            Margin="214,43,30,0"
+                            Margin="196,43,30,0"
                             Height="54"
                             VerticalAlignment="Top"
                             HorizontalAlignment="Stretch"
@@ -867,7 +947,7 @@
 
                         <!-- Health -->
                         <StackPanel
-                            Margin="214,101,38,0"
+                            Margin="196,101,38,0"
                             Height="48"
                             VerticalAlignment="Top"
                             Spacing="4"
@@ -907,7 +987,12 @@
                             ClipToBounds="True"
                             SelectedIndex="{Binding DetailsTabIndex, Mode=TwoWay}">
 
-                            <TabItem Header="General">
+                            <TabItem>
+                                <TabItem.Header>
+                                    <TextBlock
+                                        Foreground="#E9D8B3"
+                                        Text="General" />
+                                </TabItem.Header>
                                 <ScrollViewer
                                     HorizontalScrollBarVisibility="Disabled"
                                     VerticalScrollBarVisibility="Auto">
@@ -933,22 +1018,55 @@
 
                                         <StackPanel
                                             Grid.Column="1"
-                                            Spacing="4">
+                                            Spacing="2">
 
-                                            <TextBlock FontSize="12" Text="{Binding SelectedPerson.BirthDateText}" />
-                                            <TextBlock FontSize="12" Text="{Binding SelectedPerson.DeathDateText}" />
-                                            <TextBlock FontSize="12" Text="{Binding SelectedPerson.MaidenNameText}" />
-                                            <TextBlock FontSize="12" Text="{Binding SelectedPerson.OrphanTraitText}" />
-                                            <TextBlock FontSize="12" Text="{Binding SelectedFamily.Generation, StringFormat='Generation: {0}'}" />
-                                            <TextBlock FontSize="12" Text="{Binding SelectedFamily.Bloodline, StringFormat='Bloodline: {0}'}" />
-                                            <TextBlock FontSize="12" Text="{Binding SelectedFamily.MaleLineage, StringFormat='Male lineage: {0}'}" />
+                                            <TextBlock
+                                                FontSize="12"
+                                                Text="{Binding SelectedPerson.BirthDateText}" />
+
+                                            <TextBlock
+                                                FontSize="12"
+                                                TextWrapping="Wrap"
+                                                Text="{Binding SelectedPerson.BirthplaceText}" />
+
+                                            <TextBlock
+                                                IsVisible="{Binding SelectedPerson.HasDeathDate}"
+                                                FontSize="12"
+                                                Text="{Binding SelectedPerson.DeathDateText}" />
+
+                                            <TextBlock
+                                                IsVisible="{Binding SelectedPerson.HasMaidenName}"
+                                                FontSize="12"
+                                                Text="{Binding SelectedPerson.MaidenNameText}" />
+
+                                            <TextBlock
+                                                IsVisible="{Binding SelectedPerson.HasOrphanTrait}"
+                                                FontSize="12"
+                                                Text="{Binding SelectedPerson.OrphanTraitText}" />
+
+                                            <TextBlock
+                                                FontSize="12"
+                                                Text="{Binding SelectedFamily.Generation, StringFormat='Generation: {0}'}" />
+
+                                            <TextBlock
+                                                FontSize="12"
+                                                Text="{Binding SelectedFamily.Bloodline, StringFormat='Bloodline: {0}'}" />
+
+                                            <TextBlock
+                                                FontSize="12"
+                                                Text="{Binding SelectedFamily.MaleLineage, StringFormat='Male lineage: {0}'}" />
 
                                         </StackPanel>
                                     </Grid>
                                 </ScrollViewer>
                             </TabItem>
 
-                            <TabItem Header="About">
+                            <TabItem>
+                                <TabItem.Header>
+                                    <TextBlock
+                                        Foreground="#E9D8B3"
+                                        Text="About" />
+                                </TabItem.Header>
                                 <ScrollViewer
                                     HorizontalScrollBarVisibility="Disabled"
                                     VerticalScrollBarVisibility="Auto">
@@ -962,7 +1080,12 @@
                                 </ScrollViewer>
                             </TabItem>
 
-                            <TabItem Header="Relationships">
+                            <TabItem>
+                                <TabItem.Header>
+                                    <TextBlock
+                                        Foreground="#E9D8B3"
+                                        Text="Relationships" />
+                                </TabItem.Header>
                                 <ScrollViewer
                                     HorizontalScrollBarVisibility="Disabled"
                                     VerticalScrollBarVisibility="Auto">
@@ -1003,7 +1126,12 @@
                                 </ScrollViewer>
                             </TabItem>
 
-                            <TabItem Header="Biography">
+                            <TabItem>
+                                <TabItem.Header>
+                                    <TextBlock
+                                        Foreground="#E9D8B3"
+                                        Text="Biography" />
+                                </TabItem.Header>
                                 <ScrollViewer
                                     HorizontalScrollBarVisibility="Disabled"
                                     VerticalScrollBarVisibility="Auto">
@@ -1107,8 +1235,8 @@
                         Click="OnSaveGameClick" />
 
                     <TextBlock
-                        Canvas.Left="1160"
-                        Canvas.Top="23"
+                        Canvas.Left="1182"
+                        Canvas.Top="35"
                         Width="150"
                         TextAlignment="Center"
                         FontFamily="avares://Dynastia.App/Assets/Fonts#UnifrakturCook"

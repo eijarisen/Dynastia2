@@ -4,9 +4,15 @@ public sealed class HouseholdEconomyComponent
 {
     public decimal Wealth { get; set; }
 
+    // Retained for backward save compatibility. The Houses collection
+    // becomes authoritative once it exists.
     public int HousesOwned { get; set; }
 
+    // Retained for backward save compatibility. This is always derived
+    // as max(0, HousesOwned - 1).
     public int RentedHouses { get; set; }
+
+    public List<HousePropertyState> Houses { get; } = [];
 
     public Guid? NannyId { get; set; }
 
@@ -14,9 +20,9 @@ public sealed class HouseholdEconomyComponent
 
     public decimal LastExpenses { get; set; }
 
-    /// <summary>
-    /// Minor wards/adopted children whose biological parents are no
-    /// longer their active household. This does not alter genealogy.
-    /// </summary>
+    public List<LedgerLineState> LastIncomeBreakdown { get; } = [];
+
+    public List<LedgerLineState> LastExpenseBreakdown { get; } = [];
+
     public List<Guid> HostedDependentIds { get; } = [];
 }

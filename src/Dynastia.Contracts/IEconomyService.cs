@@ -28,6 +28,23 @@ public interface IEconomyService
         IPerson person,
         int rentedHouses);
 
+    IReadOnlyList<HousePropertyInfo> GetHouses(
+        IPerson person);
+
+    HousePropertyInfo AddHouse(
+        IPerson person,
+        TownInfo? town = null);
+
+    void AddExistingHouse(
+        IPerson person,
+        HousePropertyInfo house);
+
+    HousePropertyInfo? TakeAdditionalHouse(
+        IPerson person);
+
+    IReadOnlyList<HousePropertyInfo> TakeAllHouses(
+        IPerson person);
+
     decimal GetPendingInheritance(
         IPerson person);
 
@@ -49,6 +66,13 @@ public interface IEconomyService
     void ChangePendingHouses(
         IPerson person,
         int houses);
+
+    void AddPendingHouse(
+        IPerson person,
+        HousePropertyInfo house);
+
+    IReadOnlyList<HousePropertyInfo> TakePendingHouses(
+        IPerson person);
 
     void SetNanny(
         IPerson person,

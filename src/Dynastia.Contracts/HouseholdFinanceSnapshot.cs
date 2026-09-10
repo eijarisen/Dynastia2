@@ -8,7 +8,10 @@ public sealed record HouseholdFinanceSnapshot(
     int PendingHouses,
     Guid? NannyId,
     decimal LastIncome,
-    decimal LastExpenses)
+    decimal LastExpenses,
+    IReadOnlyList<FinanceBreakdownItem> LastIncomeBreakdown,
+    IReadOnlyList<FinanceBreakdownItem> LastExpenseBreakdown,
+    IReadOnlyList<HousePropertyInfo> Houses)
 {
     public decimal LastNet =>
         LastIncome - LastExpenses;

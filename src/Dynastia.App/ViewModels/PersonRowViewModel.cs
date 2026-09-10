@@ -13,7 +13,8 @@ public sealed class PersonRowViewModel
         IHealthService? healthService,
         IEconomyService? economyService,
         ICareerService? careerService,
-        IHouseholdService? householdService)
+        IHouseholdService? householdService,
+        ILocationService? locationService)
     {
         _person = person;
         _familyService = familyService;
@@ -53,6 +54,17 @@ public sealed class PersonRowViewModel
             OccupationText =
                 careerService.GetCareer(person).JobTitle;
         }
+
+        if (locationService is not null)
+        {
+            var location =
+                locationService.GetLocation(
+                    person);
+
+            BirthplaceText =
+                $"Birthplace: " +
+                $"{location.Birthplace.DisplayName}";
+        }
     }
 
     public Guid Id => _person.Id;
@@ -74,6 +86,12 @@ public sealed class PersonRowViewModel
             ? $"Died: {date}"
             : string.Empty;
 
+    public bool HasDeathDate =>
+        _person.DeathDate is not null;
+
+    public string BirthplaceText { get; } =
+        string.Empty;
+
     public string MaidenNameText
     {
         get
@@ -91,6 +109,10 @@ public sealed class PersonRowViewModel
             return $"Maiden name: {maidenName}";
         }
     }
+
+    public bool HasMaidenName =>
+        !string.IsNullOrWhiteSpace(
+            _person.MaidenName);
 
     public string StatusText
     {
@@ -119,6 +141,10 @@ public sealed class PersonRowViewModel
             "trait.orphan")
                 ? "Trait: Orphan (-1 Health/year)"
                 : string.Empty;
+
+    public bool HasOrphanTrait =>
+        _person.Tags.Has(
+            "trait.orphan");
 
     public string OccupationText { get; } = string.Empty;
 

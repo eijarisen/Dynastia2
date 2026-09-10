@@ -4,8 +4,8 @@ namespace Dynastia.Mechanics.Households;
 
 public sealed class HouseholdsPlugin : IGamePlugin
 {
-    private const decimal HouseCost = 10000m;
-    private const decimal RentIncome = 250m;
+    private const decimal HousePurchasePrice = 10000m;
+    private const decimal HouseSalePrice = 8000m;
     private const decimal NannyCost = 250m;
 
     private const string FemaleNamesPath =
@@ -132,313 +132,356 @@ public sealed class HouseholdsPlugin : IGamePlugin
         actions.Register(
             new GameActionDefinition
             {
-                Id = "household.buy_house",
-                Label = "Buy a House ($10,000)",
+                Id =
+                    "household.buy_house",
+
+                Label =
+                    "Buy a House (10,000 zł)",
+
                 Description =
-                    "Purchase one additional house immediately.",
-                Mode = ActionExecutionMode.Immediate,
+                    "Purchase one house immediately. If this is the " +
+                    "household's first owned house, it becomes the residence. " +
+                    "Every additional house is rented automatically.",
 
-                IsAvailable = actionContext =>
-                {
-                    if (!CanActOnSelf(actionContext))
-                        return false;
+                Mode =
+                    ActionExecutionMode.Immediate,
 
-                    var household =
-                        economy.GetHousehold(
-                            actionContext.Actor);
-
-                    return household is not null
-                        && household.Wealth >= HouseCost;
-                },
-
-                Execute = actionContext =>
-                {
-                    var actor =
-                        actionContext.Actor;
-
-                    var household =
-                        economy.GetHousehold(actor);
-
-                    if (household is null
-                        || household.Wealth < HouseCost)
+                IsAvailable =
+                    actionContext =>
                     {
-                        return new GameActionResult(false);
-                    }
-
-                    economy.ChangeWealth(
-                        actor,
-                        -HouseCost);
-
-                    economy.SetHousesOwned(
-                        actor,
-                        household.HousesOwned + 1);
-
-                    events.Publish(
-                        new GameEvent
+                        if (!CanActOnSelf(
+                            actionContext))
                         {
-                            Type = "household.house_bought",
-                            Year = actionContext.GameState.Year,
-                            SubjectId = actor.Id,
-                            Data = new Dictionary<string, string>
-                            {
-                                ["amount"] = HouseCost.ToString(),
-                                ["text"] =
-                                    $"{family.GetDisplayName(actor)} " +
-                                    $"bought a new house for ${HouseCost:N0}."
-                            }
-                        });
+                            return false;
+                        }
 
-                    return new GameActionResult(true);
-                }
-            });
+                        var household =
+                            economy.GetHousehold(
+                                actionContext.Actor);
 
-        actions.Register(
-            new GameActionDefinition
-            {
-                Id = "household.sell_house",
-                Label = "Sell a House ($10,000)",
-                Description =
-                    "Sell one additional house immediately. " +
-                    "The final residence cannot be sold.",
-                Mode = ActionExecutionMode.Immediate,
+                        return household is not null
+                            && household.Wealth
+                                >= HousePurchasePrice;
+                    },
 
-                IsAvailable = actionContext =>
-                {
-                    if (!CanActOnSelf(actionContext))
-                        return false;
-
-                    var household =
-                        economy.GetHousehold(
-                            actionContext.Actor);
-
-                    return household is not null
-                        && household.HousesOwned > 1;
-                },
-
-                Execute = actionContext =>
-                {
-                    var actor =
-                        actionContext.Actor;
-
-                    var household =
-                        economy.GetHousehold(actor);
-
-                    if (household is null
-                        || household.HousesOwned <= 1)
+                Execute =
+                    actionContext =>
                     {
-                        return new GameActionResult(false);
-                    }
+                        var actor =
+                            actionContext.Actor;
 
-                    economy.ChangeWealth(
-                        actor,
-                        HouseCost);
+                        var household =
+                            economy.GetHousehold(
+                                actor);
 
-                    // Economy clamps RentedHouses to the new legal maximum.
-                    economy.SetHousesOwned(
-                        actor,
-                        household.HousesOwned - 1);
-
-                    events.Publish(
-                        new GameEvent
+                        if (household is null
+                            || household.Wealth
+                                < HousePurchasePrice)
                         {
-                            Type = "household.house_sold",
-                            Year = actionContext.GameState.Year,
-                            SubjectId = actor.Id,
-                            Data = new Dictionary<string, string>
-                            {
-                                ["amount"] = HouseCost.ToString(),
-                                ["text"] =
-                                    $"{family.GetDisplayName(actor)} " +
-                                    $"sold a house for ${HouseCost:N0}."
-                            }
-                        });
+                            return new GameActionResult(
+                                false);
+                        }
 
-                    return new GameActionResult(true);
-                }
-            });
+                        economy.ChangeWealth(
+                            actor,
+                            -HousePurchasePrice);
 
-        actions.Register(
-            new GameActionDefinition
-            {
-                Id = "household.rent_house",
-                Label = "Rent Out a House ($250/year)",
-                Description =
-                    "Rent out one spare house. At least one owned " +
-                    "house remains reserved for the household.",
-                Mode = ActionExecutionMode.Immediate,
-
-                IsAvailable = actionContext =>
-                {
-                    if (!CanActOnSelf(actionContext))
-                        return false;
-
-                    var household =
-                        economy.GetHousehold(
-                            actionContext.Actor);
-
-                    return household is not null
-                        && household.HousesOwned
-                            > household.RentedHouses + 1;
-                },
-
-                Execute = actionContext =>
-                {
-                    var actor =
-                        actionContext.Actor;
-
-                    var household =
-                        economy.GetHousehold(actor);
-
-                    if (household is null
-                        || household.HousesOwned
-                            <= household.RentedHouses + 1)
-                    {
-                        return new GameActionResult(false);
-                    }
-
-                    economy.SetRentedHouses(
-                        actor,
-                        household.RentedHouses + 1);
-
-                    events.Publish(
-                        new GameEvent
-                        {
-                            Type = "household.house_rented",
-                            Year = actionContext.GameState.Year,
-                            SubjectId = actor.Id,
-                            Data = new Dictionary<string, string>
-                            {
-                                ["annualIncome"] = RentIncome.ToString(),
-                                ["text"] =
-                                    $"{family.GetDisplayName(actor)} " +
-                                    "started renting out one of their houses."
-                            }
-                        });
-
-                    return new GameActionResult(true);
-                }
-            });
-
-        actions.Register(
-            new GameActionDefinition
-            {
-                Id = "household.give_house_to_son",
-                Label = "Give House to Son",
-                Description =
-                    "Give one spare house to the selected living son. " +
-                    "A minor receives it when he reaches adulthood.",
-                Mode = ActionExecutionMode.Immediate,
-
-                IsAvailable = actionContext =>
-                {
-                    var actor =
-                        actionContext.Actor;
-
-                    var target =
-                        actionContext.Target;
-
-                    if (!actor.Tags.Has("state.alive")
-                        || !actor.Tags.Has("control.playable")
-                        || !target.Tags.Has("state.alive")
-                        || target.Id == actor.Id
-                        || family.GetSex(target) != Sex.Male)
-                    {
-                        return false;
-                    }
-
-                    if (!family.GetChildren(actor)
-                        .Any(child => child.Id == target.Id))
-                    {
-                        return false;
-                    }
-
-                    var household =
-                        economy.GetHousehold(actor);
-
-                    return household is not null
-                        && household.HousesOwned > 1;
-                },
-
-                Execute = actionContext =>
-                {
-                    var actor =
-                        actionContext.Actor;
-
-                    var son =
-                        actionContext.Target;
-
-                    var household =
-                        economy.GetHousehold(actor);
-
-                    if (household is null
-                        || household.HousesOwned <= 1
-                        || !son.Tags.Has("state.alive")
-                        || family.GetSex(son) != Sex.Male
-                        || !family.GetChildren(actor)
-                            .Any(child => child.Id == son.Id))
-                    {
-                        return new GameActionResult(false);
-                    }
-
-                    economy.SetHousesOwned(
-                        actor,
-                        household.HousesOwned - 1);
-
-                    if (son.Age >= 18)
-                    {
-                        economy.EnsureHousehold(son);
-
-                        var sonHousehold =
-                            economy.GetHousehold(son)
-                            ?? throw new InvalidOperationException(
-                                "Adult son has no household state.");
-
-                        economy.SetHousesOwned(
-                            son,
-                            sonHousehold.HousesOwned + 1);
+                        var house =
+                            economy.AddHouse(
+                                actor);
 
                         events.Publish(
                             new GameEvent
                             {
-                                Type = "household.house_given",
-                                Year = actionContext.GameState.Year,
-                                SubjectId = actor.Id,
-                                RelatedPersonIds = [son.Id],
-                                Data = new Dictionary<string, string>
-                                {
-                                    ["text"] =
-                                        $"{family.GetDisplayName(actor)} " +
-                                        $"gave a house to their son, " +
-                                        $"{family.GetDisplayName(son)}."
-                                }
+                                Type =
+                                    "household.house_bought",
+
+                                Year =
+                                    actionContext.GameState.Year,
+
+                                SubjectId =
+                                    actor.Id,
+
+                                Data =
+                                    new Dictionary<string, string>
+                                    {
+                                        ["amount"] =
+                                            HousePurchasePrice.ToString(),
+
+                                        ["town"] =
+                                            house.Town.Town,
+
+                                        ["text"] =
+                                            $"{family.GetDisplayName(actor)} " +
+                                            $"bought a house in " +
+                                            $"{house.Town.Town} for " +
+                                            $"{HousePurchasePrice:N0} zł."
+                                    }
                             });
+
+                        return new GameActionResult(
+                            true);
                     }
-                    else
+            });
+
+        actions.Register(
+            new GameActionDefinition
+            {
+                Id =
+                    "household.sell_house",
+
+                Label =
+                    "Sell a House (8,000 zł)",
+
+                Description =
+                    "Sell one rented investment house immediately for " +
+                    "8,000 zł. The household's residence cannot be sold.",
+
+                Mode =
+                    ActionExecutionMode.Immediate,
+
+                IsAvailable =
+                    actionContext =>
                     {
-                        economy.ChangePendingHouses(
-                            son,
-                            1);
+                        if (!CanActOnSelf(
+                            actionContext))
+                        {
+                            return false;
+                        }
+
+                        var household =
+                            economy.GetHousehold(
+                                actionContext.Actor);
+
+                        return household is not null
+                            && household.HousesOwned > 1;
+                    },
+
+                Execute =
+                    actionContext =>
+                    {
+                        var actor =
+                            actionContext.Actor;
+
+                        var sold =
+                            economy.TakeAdditionalHouse(
+                                actor);
+
+                        if (sold is null)
+                        {
+                            return new GameActionResult(
+                                false);
+                        }
+
+                        economy.ChangeWealth(
+                            actor,
+                            HouseSalePrice);
 
                         events.Publish(
                             new GameEvent
                             {
-                                Type = "household.house_promised",
-                                Year = actionContext.GameState.Year,
-                                SubjectId = actor.Id,
-                                RelatedPersonIds = [son.Id],
-                                Data = new Dictionary<string, string>
-                                {
-                                    ["text"] =
-                                        $"{family.GetDisplayName(actor)} " +
-                                        $"promised a house to their son, " +
-                                        $"{family.GetDisplayName(son)}, " +
-                                        "upon adulthood."
-                                }
-                            });
-                    }
+                                Type =
+                                    "household.house_sold",
 
-                    return new GameActionResult(true);
-                }
+                                Year =
+                                    actionContext.GameState.Year,
+
+                                SubjectId =
+                                    actor.Id,
+
+                                Data =
+                                    new Dictionary<string, string>
+                                    {
+                                        ["amount"] =
+                                            HouseSalePrice.ToString(),
+
+                                        ["town"] =
+                                            sold.Town.Town,
+
+                                        ["text"] =
+                                            $"{family.GetDisplayName(actor)} " +
+                                            $"sold the house in " +
+                                            $"{sold.Town.Town} for " +
+                                            $"{HouseSalePrice:N0} zł."
+                                    }
+                            });
+
+                        return new GameActionResult(
+                            true);
+                    }
+            });
+
+        actions.Register(
+            new GameActionDefinition
+            {
+                Id =
+                    "household.give_house_to_son",
+
+                Label =
+                    "Give House to Son",
+
+                Description =
+                    "Give one rented investment house to the selected living " +
+                    "son. The house keeps its town. A minor receives the " +
+                    "exact same property when he reaches adulthood.",
+
+                Mode =
+                    ActionExecutionMode.Immediate,
+
+                IsAvailable =
+                    actionContext =>
+                    {
+                        var actor =
+                            actionContext.Actor;
+
+                        var target =
+                            actionContext.Target;
+
+                        if (!actor.Tags.Has(
+                                "state.alive")
+                            || !actor.Tags.Has(
+                                "control.playable")
+                            || !target.Tags.Has(
+                                "state.alive")
+                            || target.Id == actor.Id
+                            || family.GetSex(
+                                target) != Sex.Male)
+                        {
+                            return false;
+                        }
+
+                        if (!family
+                            .GetChildren(
+                                actor)
+                            .Any(
+                                child =>
+                                    child.Id
+                                    == target.Id))
+                        {
+                            return false;
+                        }
+
+                        var household =
+                            economy.GetHousehold(
+                                actor);
+
+                        return household is not null
+                            && household.HousesOwned > 1;
+                    },
+
+                Execute =
+                    actionContext =>
+                    {
+                        var actor =
+                            actionContext.Actor;
+
+                        var son =
+                            actionContext.Target;
+
+                        if (!son.Tags.Has(
+                                "state.alive")
+                            || family.GetSex(
+                                son) != Sex.Male
+                            || !family
+                                .GetChildren(
+                                    actor)
+                                .Any(
+                                    child =>
+                                        child.Id
+                                        == son.Id))
+                        {
+                            return new GameActionResult(
+                                false);
+                        }
+
+                        var gifted =
+                            economy.TakeAdditionalHouse(
+                                actor);
+
+                        if (gifted is null)
+                        {
+                            return new GameActionResult(
+                                false);
+                        }
+
+                        if (son.Age >= 18)
+                        {
+                            economy.EnsureHousehold(
+                                son);
+
+                            economy.AddExistingHouse(
+                                son,
+                                gifted);
+
+                            events.Publish(
+                                new GameEvent
+                                {
+                                    Type =
+                                        "household.house_given",
+
+                                    Year =
+                                        actionContext.GameState.Year,
+
+                                    SubjectId =
+                                        actor.Id,
+
+                                    RelatedPersonIds =
+                                        [son.Id],
+
+                                    Data =
+                                        new Dictionary<string, string>
+                                        {
+                                            ["town"] =
+                                                gifted.Town.Town,
+
+                                            ["text"] =
+                                                $"{family.GetDisplayName(actor)} " +
+                                                $"gave the house in " +
+                                                $"{gifted.Town.Town} to their son, " +
+                                                $"{family.GetDisplayName(son)}."
+                                        }
+                                });
+                        }
+                        else
+                        {
+                            economy.AddPendingHouse(
+                                son,
+                                gifted);
+
+                            events.Publish(
+                                new GameEvent
+                                {
+                                    Type =
+                                        "household.house_promised",
+
+                                    Year =
+                                        actionContext.GameState.Year,
+
+                                    SubjectId =
+                                        actor.Id,
+
+                                    RelatedPersonIds =
+                                        [son.Id],
+
+                                    Data =
+                                        new Dictionary<string, string>
+                                        {
+                                            ["town"] =
+                                                gifted.Town.Town,
+
+                                            ["text"] =
+                                                $"{family.GetDisplayName(actor)} " +
+                                                $"promised the house in " +
+                                                $"{gifted.Town.Town} to their son, " +
+                                                $"{family.GetDisplayName(son)}, " +
+                                                "upon adulthood."
+                                        }
+                                });
+                        }
+
+                        return new GameActionResult(
+                            true);
+                    }
             });
     }
 

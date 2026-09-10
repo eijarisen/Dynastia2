@@ -28,7 +28,6 @@ public static class ActionEmojiMap
 
                 ["household.buy_house"] = "🏠",
                 ["household.sell_house"] = "💵",
-                ["household.rent_house"] = "🏘️",
                 ["household.give_house_to_son"] = "🎁",
                 ["household.hire_nanny"] = "🧑‍🍼",
                 ["household.fire_nanny"] = "👋",

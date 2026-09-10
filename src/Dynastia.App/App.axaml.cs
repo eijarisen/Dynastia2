@@ -4,6 +4,7 @@ using Avalonia.Markup.Xaml;
 using Dynastia.App.ViewModels;
 using Dynastia.App.Views;
 using Dynastia.Contracts;
+using Dynastia.Core.Actions;
 using Dynastia.Core.Events;
 using Dynastia.Core.Plugins;
 using Dynastia.Core.Simulation;
@@ -51,6 +52,11 @@ public partial class App : Application
             var gameRandom = new GameRandom();
             var eventBus = new GameEventBus();
 
+            var actionRegistry = new ActionRegistry(
+                gameState,
+                eventBus,
+                gameRandom);
+
             var pluginContext = new GamePluginContext();
 
             pluginContext.AddService<IGameState>(gameState);
@@ -58,6 +64,7 @@ public partial class App : Application
             pluginContext.AddService<ISelectionService>(selectionService);
             pluginContext.AddService<IGameRandom>(gameRandom);
             pluginContext.AddService<IGameEventBus>(eventBus);
+            pluginContext.AddService<IActionRegistry>(actionRegistry);
 
             var pluginsDirectory = Path.Combine(
                 AppContext.BaseDirectory,
@@ -82,7 +89,8 @@ public partial class App : Application
                     yearProcessor,
                     selectionService,
                     statsService,
-                    eventBus)
+                    eventBus,
+                    actionRegistry)
             };
         }
 

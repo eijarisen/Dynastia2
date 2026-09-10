@@ -9,12 +9,12 @@
     x:DataType="vm:MainWindowViewModel"
     mc:Ignorable="d"
     Width="1100"
-    Height="780"
+    Height="820"
     MinWidth="800"
-    MinHeight="600"
+    MinHeight="650"
     Title="Dynastia">
 
-    <Grid RowDefinitions="Auto,Auto,*"
+    <Grid RowDefinitions="Auto,Auto,Auto,*"
           Margin="16"
           RowSpacing="12">
 
@@ -97,8 +97,54 @@
             </Grid>
         </Border>
 
+        <!-- Actions -->
+        <Border Grid.Row="2"
+                Padding="12">
+
+            <Grid RowDefinitions="Auto,Auto"
+                  RowSpacing="8">
+
+                <TextBlock
+                    FontSize="18"
+                    FontWeight="Bold"
+                    Text="Actions" />
+
+                <Grid Grid.Row="1">
+                    <TextBlock
+                        Opacity="0.65"
+                        Text="{Binding ActionsEmptyText}" />
+
+                    <ItemsControl ItemsSource="{Binding AvailableActions}">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <WrapPanel />
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate x:DataType="vm:AvailableActionViewModel">
+                                <Button
+                                    Margin="0,0,8,6"
+                                    Padding="12,7"
+                                    Command="{Binding ExecuteCommand}"
+                                    ToolTip.Tip="{Binding Description}">
+                                    <StackPanel>
+                                        <TextBlock Text="{Binding Label}" />
+                                        <TextBlock
+                                            FontSize="10"
+                                            Opacity="0.6"
+                                            Text="{Binding ModeText}" />
+                                    </StackPanel>
+                                </Button>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </Grid>
+            </Grid>
+        </Border>
+
         <!-- Main content -->
-        <Grid Grid.Row="2"
+        <Grid Grid.Row="3"
               ColumnDefinitions="2*,3*"
               ColumnSpacing="16">
 
@@ -232,7 +278,7 @@
                             <TextBlock
                                 Margin="12"
                                 TextWrapping="Wrap"
-                                Text="Biography events will appear after the event system is implemented." />
+                                Text="Biography events will appear here." />
                         </TabItem>
                     </TabControl>
                 </Grid>

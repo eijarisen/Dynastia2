@@ -11,6 +11,7 @@ public sealed class MainWindowViewModel : ViewModelBase
     private readonly ISelectionService _selectionService;
     private readonly IStatsService? _statsService;
     private readonly IGameEventBus _eventBus;
+    private readonly IActionRegistry _actionRegistry;
 
     private PersonRowViewModel? _selectedPerson;
     private int _albumYear;
@@ -20,13 +21,15 @@ public sealed class MainWindowViewModel : ViewModelBase
         YearProcessor yearProcessor,
         ISelectionService selectionService,
         IStatsService? statsService,
-        IGameEventBus eventBus)
+        IGameEventBus eventBus,
+        IActionRegistry actionRegistry)
     {
         _gameState = gameState;
         _yearProcessor = yearProcessor;
         _selectionService = selectionService;
         _statsService = statsService;
         _eventBus = eventBus;
+        _actionRegistry = actionRegistry;
 
         _albumYear = gameState.Year;
 
@@ -72,9 +75,15 @@ public sealed class MainWindowViewModel : ViewModelBase
             ? "Nothing of note happened this year."
             : string.Empty;
 
+    public string ActionsEmptyText =>
+        AvailableActions.Count == 0
+            ? "No actions available for the selected person."
+            : string.Empty;
+
     public ObservableCollection<AlbumEventViewModel> AlbumEvents { get; } = [];
     public ObservableCollection<PersonRowViewModel> People { get; } = [];
     public ObservableCollection<StatValue> SelectedStats { get; } = [];
+    public ObservableCollection<AvailableActionViewModel> AvailableActions { get; } = [];
 
     public PersonRowViewModel? SelectedPerson
     {
@@ -88,6 +97,7 @@ public sealed class MainWindowViewModel : ViewModelBase
             _selectionService.SelectedPersonId = value?.Id;
 
             RefreshSelectedStats();
+            RefreshActions();
 
             OnPropertyChanged();
             OnPropertyChanged(nameof(HasSelectedPerson));
@@ -145,6 +155,7 @@ public sealed class MainWindowViewModel : ViewModelBase
                     ?? People.FirstOrDefault();
 
         RefreshSelectedStats();
+        RefreshActions();
     }
 
     private void RefreshSelectedStats()
@@ -154,8 +165,7 @@ public sealed class MainWindowViewModel : ViewModelBase
         if (_statsService is null || SelectedPerson is null)
             return;
 
-        var person = _gameState.People.FirstOrDefault(
-            x => x.Id == SelectedPerson.Id);
+        var person = FindSelectedPerson();
 
         if (person is null)
             return;
@@ -164,6 +174,56 @@ public sealed class MainWindowViewModel : ViewModelBase
         {
             SelectedStats.Add(stat);
         }
+    }
+
+    private void RefreshActions()
+    {
+        AvailableActions.Clear();
+
+        var person = FindSelectedPerson();
+
+        if (person is not null)
+        {
+            foreach (var action in _actionRegistry.GetAvailableActions(
+                person,
+                person))
+            {
+                var actionId = action.Id;
+
+                AvailableActions.Add(
+                    new AvailableActionViewModel(
+                        action,
+                        () => ExecuteAction(actionId)));
+            }
+        }
+
+        OnPropertyChanged(nameof(ActionsEmptyText));
+    }
+
+    private void ExecuteAction(string actionId)
+    {
+        var person = FindSelectedPerson();
+
+        if (person is null)
+            return;
+
+        _actionRegistry.Execute(
+            actionId,
+            person,
+            person);
+
+        RefreshPeople();
+        RefreshAlbum();
+        RefreshActions();
+    }
+
+    private IPerson? FindSelectedPerson()
+    {
+        if (SelectedPerson is null)
+            return null;
+
+        return _gameState.People.FirstOrDefault(
+            x => x.Id == SelectedPerson.Id);
     }
 
     private void RefreshAlbum()
@@ -180,9 +240,7 @@ public sealed class MainWindowViewModel : ViewModelBase
 
     private void OnEventPublished(object? sender, GameEvent gameEvent)
     {
-        if (gameEvent.Year != AlbumYear)
-            return;
-
-        RefreshAlbum();
+        if (gameEvent.Year == AlbumYear)
+            RefreshAlbum();
     }
 }

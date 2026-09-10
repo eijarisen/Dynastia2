@@ -11,7 +11,8 @@ public sealed class AlbumEventViewModel
 
     public GameEvent Event { get; }
 
-    // Temporary fallback display.
-    // Later a text/localization service will format event types + data.
-    public string Text => Event.Type;
+    public string Text =>
+        Event.Data.TryGetValue("text", out var text)
+            ? text
+            : Event.Type;
 }

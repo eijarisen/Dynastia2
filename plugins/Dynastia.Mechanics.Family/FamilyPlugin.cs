@@ -4,7 +4,8 @@ namespace Dynastia.Mechanics.Family;
 
 public sealed class FamilyPlugin : IGamePlugin
 {
-    public void Initialize(IGamePluginContext context)
+    public void Initialize(
+        IGamePluginContext context)
     {
         var gameState =
             context.GetService<IGameState>()
@@ -31,8 +32,14 @@ public sealed class FamilyPlugin : IGamePlugin
             ?? throw new InvalidOperationException(
                 "Game calendar service is unavailable.");
 
+        var events =
+            context.GetService<IGameEventBus>()
+            ?? throw new InvalidOperationException(
+                "Game event bus is unavailable.");
+
         var familyService =
-            new StandardFamilyService(gameState);
+            new StandardFamilyService(
+                gameState);
 
         var newGameService =
             new StandardNewGameService(
@@ -41,7 +48,8 @@ public sealed class FamilyPlugin : IGamePlugin
                 selection,
                 data,
                 random,
-                calendar);
+                calendar,
+                events);
 
         context.AddService<IFamilyService>(
             familyService);
@@ -49,6 +57,7 @@ public sealed class FamilyPlugin : IGamePlugin
         context.AddService<INewGameService>(
             newGameService);
 
-        context.Log("Family mechanics registered.");
+        context.Log(
+            "Family mechanics registered.");
     }
 }

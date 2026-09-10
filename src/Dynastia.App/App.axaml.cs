@@ -135,6 +135,9 @@ public partial class App : Application
             var healthService =
                 pluginContext.GetService<IHealthService>();
 
+            var economyService =
+                pluginContext.GetService<IEconomyService>();
+
             desktop.MainWindow =
                 new MainWindow
                 {
@@ -147,6 +150,7 @@ public partial class App : Application
                             statsService,
                             familyService,
                             healthService,
+                            economyService,
                             successionService,
                             eventBus,
                             actionRegistry)

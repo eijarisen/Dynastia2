@@ -1,0 +1,11 @@
+{
+  "id": "dynastia.economy",
+  "name": "Standard Economy",
+  "version": "0.1.0",
+  "apiVersion": 1,
+  "assembly": "Dynastia.Mechanics.Economy.dll",
+  "entryType": "Dynastia.Mechanics.Economy.EconomyPlugin",
+  "dependencies": [
+    "dynastia.family"
+  ]
+}

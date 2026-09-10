@@ -10,7 +10,8 @@ public sealed class PersonRowViewModel
     public PersonRowViewModel(
         IPerson person,
         IFamilyService? familyService,
-        IHealthService? healthService)
+        IHealthService? healthService,
+        IEconomyService? economyService)
     {
         _person = person;
         _familyService = familyService;
@@ -27,6 +28,26 @@ public sealed class PersonRowViewModel
             HealthText =
                 $"{Math.Round(health.Current)}/" +
                 $"{Math.Round(health.Maximum)}";
+        }
+
+        var economy =
+            economyService?.GetHousehold(
+                person);
+
+        if (economy is not null)
+        {
+            ShowHousehold =
+                true;
+
+            BudgetText =
+                $"${economy.Wealth:N0}";
+
+            HousesText =
+                $"🏠 {economy.HousesOwned}";
+
+            IncomeExpensesText =
+                $"+${economy.LastIncome:N0} / " +
+                $"-${economy.LastExpenses:N0}";
         }
     }
 
@@ -110,6 +131,17 @@ public sealed class PersonRowViewModel
     public bool ShowHealth =>
         !_person.Tags.Has(
             "state.dead");
+
+    public bool ShowHousehold { get; }
+
+    public string BudgetText { get; } =
+        string.Empty;
+
+    public string HousesText { get; } =
+        string.Empty;
+
+    public string IncomeExpensesText { get; } =
+        string.Empty;
 
     public string GenerationText
     {

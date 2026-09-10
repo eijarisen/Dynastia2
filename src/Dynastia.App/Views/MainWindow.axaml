@@ -8,9 +8,9 @@
     x:Class="Dynastia.App.Views.MainWindow"
     x:DataType="vm:MainWindowViewModel"
     mc:Ignorable="d"
-    Width="1100"
-    Height="840"
-    MinWidth="800"
+    Width="1180"
+    Height="860"
+    MinWidth="850"
     MinHeight="650"
     Title="Dynastia">
 
@@ -24,7 +24,6 @@
             MinWidth="380">
 
             <StackPanel Spacing="14">
-
                 <TextBlock
                     HorizontalAlignment="Center"
                     FontSize="34"
@@ -56,10 +55,8 @@
             RowSpacing="12">
 
             <Border Padding="16">
-
-                <Grid
-                    ColumnDefinitions="*,Auto,Auto"
-                    ColumnSpacing="16">
+                <Grid ColumnDefinitions="*,Auto,Auto"
+                      ColumnSpacing="16">
 
                     <TextBlock
                         VerticalAlignment="Center"
@@ -83,17 +80,14 @@
                 </Grid>
             </Border>
 
-            <Border
-                Grid.Row="1"
-                Padding="12">
+            <Border Grid.Row="1"
+                    Padding="12">
 
-                <Grid
-                    RowDefinitions="Auto,Auto"
-                    RowSpacing="8">
+                <Grid RowDefinitions="Auto,Auto"
+                      RowSpacing="8">
 
-                    <Grid
-                        ColumnDefinitions="*,Auto,Auto,Auto"
-                        ColumnSpacing="8">
+                    <Grid ColumnDefinitions="*,Auto,Auto,Auto"
+                          ColumnSpacing="8">
 
                         <TextBlock
                             VerticalAlignment="Center"
@@ -119,19 +113,13 @@
                     </Grid>
 
                     <Grid Grid.Row="1">
-
                         <TextBlock
                             Opacity="0.65"
                             Text="{Binding AlbumEmptyText}" />
 
-                        <ItemsControl
-                            ItemsSource="{Binding AlbumEvents}">
-
+                        <ItemsControl ItemsSource="{Binding AlbumEvents}">
                             <ItemsControl.ItemTemplate>
-
-                                <DataTemplate
-                                    x:DataType="vm:AlbumEventViewModel">
-
+                                <DataTemplate x:DataType="vm:AlbumEventViewModel">
                                     <TextBlock
                                         Margin="0,2"
                                         TextWrapping="Wrap"
@@ -143,13 +131,11 @@
                 </Grid>
             </Border>
 
-            <Border
-                Grid.Row="2"
-                Padding="12">
+            <Border Grid.Row="2"
+                    Padding="12">
 
-                <Grid
-                    RowDefinitions="Auto,Auto,Auto"
-                    RowSpacing="8">
+                <Grid RowDefinitions="Auto,Auto,Auto"
+                      RowSpacing="8">
 
                     <TextBlock
                         FontSize="18"
@@ -174,14 +160,11 @@
                     </Grid>
 
                     <Grid Grid.Row="2">
-
                         <TextBlock
                             Opacity="0.65"
                             Text="{Binding ActionsEmptyText}" />
 
-                        <ItemsControl
-                            ItemsSource="{Binding AvailableActions}">
-
+                        <ItemsControl ItemsSource="{Binding AvailableActions}">
                             <ItemsControl.ItemsPanel>
                                 <ItemsPanelTemplate>
                                     <WrapPanel />
@@ -189,21 +172,14 @@
                             </ItemsControl.ItemsPanel>
 
                             <ItemsControl.ItemTemplate>
-
-                                <DataTemplate
-                                    x:DataType="vm:AvailableActionViewModel">
-
+                                <DataTemplate x:DataType="vm:AvailableActionViewModel">
                                     <Button
                                         Margin="0,0,8,6"
                                         Padding="12,7"
                                         Command="{Binding ExecuteCommand}"
                                         ToolTip.Tip="{Binding Description}">
-
                                         <StackPanel>
-
-                                            <TextBlock
-                                                Text="{Binding Label}" />
-
+                                            <TextBlock Text="{Binding Label}" />
                                             <TextBlock
                                                 FontSize="10"
                                                 Opacity="0.6"
@@ -217,16 +193,13 @@
                 </Grid>
             </Border>
 
-            <Grid
-                Grid.Row="3"
-                ColumnDefinitions="2*,3*"
-                ColumnSpacing="16">
+            <Grid Grid.Row="3"
+                  ColumnDefinitions="2*,3*"
+                  ColumnSpacing="16">
 
                 <Border Padding="16">
-
-                    <Grid
-                        RowDefinitions="Auto,*"
-                        RowSpacing="12">
+                    <Grid RowDefinitions="Auto,*"
+                          RowSpacing="12">
 
                         <TextBlock
                             FontSize="20"
@@ -240,13 +213,10 @@
                             SelectionMode="Single">
 
                             <ListBox.ItemTemplate>
-
-                                <DataTemplate
-                                    x:DataType="vm:PersonRowViewModel">
-
+                                <DataTemplate x:DataType="vm:PersonRowViewModel">
                                     <Grid
                                         Margin="6"
-                                        RowDefinitions="Auto,Auto"
+                                        RowDefinitions="Auto,Auto,Auto"
                                         ColumnDefinitions="Auto,*,Auto"
                                         ColumnSpacing="10">
 
@@ -296,6 +266,32 @@
                                                 Opacity="0.65"
                                                 Text="{Binding HealthText}" />
                                         </Grid>
+
+                                        <Grid
+                                            Grid.Row="2"
+                                            Grid.Column="1"
+                                            Grid.ColumnSpan="2"
+                                            IsVisible="{Binding ShowHousehold}"
+                                            ColumnDefinitions="Auto,Auto,*"
+                                            ColumnSpacing="10"
+                                            Margin="0,4,0,0">
+
+                                            <TextBlock
+                                                FontSize="11"
+                                                FontWeight="SemiBold"
+                                                Text="{Binding BudgetText}" />
+
+                                            <TextBlock
+                                                Grid.Column="1"
+                                                FontSize="11"
+                                                Text="{Binding HousesText}" />
+
+                                            <TextBlock
+                                                Grid.Column="2"
+                                                FontSize="11"
+                                                Opacity="0.65"
+                                                Text="{Binding IncomeExpensesText}" />
+                                        </Grid>
                                     </Grid>
                                 </DataTemplate>
                             </ListBox.ItemTemplate>
@@ -303,16 +299,13 @@
                     </Grid>
                 </Border>
 
-                <Border
-                    Grid.Column="1"
-                    Padding="16">
+                <Border Grid.Column="1"
+                        Padding="16">
 
-                    <Grid
-                        RowDefinitions="Auto,Auto,Auto,*"
-                        RowSpacing="14">
+                    <Grid RowDefinitions="Auto,Auto,Auto,*"
+                          RowSpacing="14">
 
                         <StackPanel Spacing="4">
-
                             <TextBlock
                                 FontSize="24"
                                 FontWeight="Bold"
@@ -335,18 +328,13 @@
                             </ItemsControl.ItemsPanel>
 
                             <ItemsControl.ItemTemplate>
-
-                                <DataTemplate
-                                    x:DataType="contracts:StatValue">
-
+                                <DataTemplate x:DataType="contracts:StatValue">
                                     <Border
                                         Margin="0,0,8,8"
                                         Padding="10"
                                         MinWidth="92">
 
-                                        <StackPanel
-                                            HorizontalAlignment="Center">
-
+                                        <StackPanel HorizontalAlignment="Center">
                                             <TextBlock
                                                 HorizontalAlignment="Center"
                                                 FontWeight="SemiBold"
@@ -387,43 +375,39 @@
                         <TabControl Grid.Row="3">
 
                             <TabItem Header="General">
-
                                 <ScrollViewer>
+                                    <StackPanel Margin="12"
+                                                Spacing="8">
 
-                                    <StackPanel
-                                        Margin="12"
-                                        Spacing="8">
+                                        <TextBlock Text="{Binding SelectedPerson.AgeText}" />
+                                        <TextBlock Text="{Binding SelectedPerson.BirthDateText}" />
+                                        <TextBlock Text="{Binding SelectedPerson.DeathDateText}" />
+                                        <TextBlock Text="{Binding SelectedPerson.MaidenNameText}" />
+                                        <TextBlock Text="{Binding SelectedPerson.PlayableText}" />
 
-                                        <TextBlock
-                                            Text="{Binding SelectedPerson.AgeText}" />
+                                        <TextBlock Text="{Binding SelectedFamily.Sex, StringFormat='Sex: {0}'}" />
+                                        <TextBlock Text="{Binding SelectedFamily.Generation, StringFormat='Generation: {0}'}" />
+                                        <TextBlock Text="{Binding SelectedFamily.Bloodline, StringFormat='Bloodline: {0}'}" />
+                                        <TextBlock Text="{Binding SelectedFamily.MaleLineage, StringFormat='Male lineage: {0}'}" />
 
-                                        <TextBlock
-                                            Text="{Binding SelectedPerson.BirthDateText}" />
+                                        <StackPanel
+                                            IsVisible="{Binding HasSelectedEconomy}"
+                                            Spacing="5"
+                                            Margin="0,8,0,0">
 
-                                        <TextBlock
-                                            Text="{Binding SelectedPerson.DeathDateText}" />
+                                            <TextBlock
+                                                FontWeight="Bold"
+                                                Text="Household" />
 
-                                        <TextBlock
-                                            Text="{Binding SelectedPerson.MaidenNameText}" />
-
-                                        <TextBlock
-                                            Text="{Binding SelectedPerson.PlayableText}" />
-
-                                        <TextBlock
-                                            Text="{Binding SelectedFamily.Sex,
-                                                         StringFormat='Sex: {0}'}" />
-
-                                        <TextBlock
-                                            Text="{Binding SelectedFamily.Generation,
-                                                         StringFormat='Generation: {0}'}" />
-
-                                        <TextBlock
-                                            Text="{Binding SelectedFamily.Bloodline,
-                                                         StringFormat='Bloodline: {0}'}" />
-
-                                        <TextBlock
-                                            Text="{Binding SelectedFamily.MaleLineage,
-                                                         StringFormat='Male lineage: {0}'}" />
+                                            <TextBlock Text="{Binding SelectedEconomy.WealthText}" />
+                                            <TextBlock Text="{Binding SelectedEconomy.HousesText}" />
+                                            <TextBlock Text="{Binding SelectedEconomy.RentedHousesText}" />
+                                            <TextBlock Text="{Binding SelectedEconomy.IncomeText}" />
+                                            <TextBlock Text="{Binding SelectedEconomy.ExpensesText}" />
+                                            <TextBlock Text="{Binding SelectedEconomy.NetText}" />
+                                            <TextBlock Text="{Binding SelectedEconomy.PendingInheritanceText}" />
+                                            <TextBlock Text="{Binding SelectedEconomy.PendingHousesText}" />
+                                        </StackPanel>
 
                                         <TextBlock
                                             Margin="0,8,0,0"
@@ -438,7 +422,6 @@
                             </TabItem>
 
                             <TabItem Header="About">
-
                                 <TextBlock
                                     Margin="12"
                                     TextWrapping="Wrap"
@@ -446,34 +429,17 @@
                             </TabItem>
 
                             <TabItem Header="Relationships">
-
                                 <ScrollViewer>
+                                    <StackPanel Margin="12"
+                                                Spacing="8">
 
-                                    <StackPanel
-                                        Margin="12"
-                                        Spacing="8">
-
-                                        <TextBlock
-                                            Text="{Binding SelectedFamily.Father,
-                                                         StringFormat='Father: {0}'}" />
-
-                                        <TextBlock
-                                            Text="{Binding SelectedFamily.Mother,
-                                                         StringFormat='Mother: {0}'}" />
-
-                                        <TextBlock
-                                            TextWrapping="Wrap"
-                                            Text="{Binding SelectedFamily.Siblings,
-                                                         StringFormat='Siblings: {0}'}" />
-
-                                        <TextBlock
-                                            Text="{Binding SelectedFamily.Spouse,
-                                                         StringFormat='Current spouse: {0}'}" />
-
-                                        <TextBlock
-                                            TextWrapping="Wrap"
-                                            Text="{Binding SelectedFamily.Children,
-                                                         StringFormat='Children: {0}'}" />
+                                        <TextBlock Text="{Binding SelectedFamily.Father, StringFormat='Father: {0}'}" />
+                                        <TextBlock Text="{Binding SelectedFamily.Mother, StringFormat='Mother: {0}'}" />
+                                        <TextBlock TextWrapping="Wrap"
+                                                   Text="{Binding SelectedFamily.Siblings, StringFormat='Siblings: {0}'}" />
+                                        <TextBlock Text="{Binding SelectedFamily.Spouse, StringFormat='Current spouse: {0}'}" />
+                                        <TextBlock TextWrapping="Wrap"
+                                                   Text="{Binding SelectedFamily.Children, StringFormat='Children: {0}'}" />
 
                                         <TextBlock
                                             Margin="0,8,0,0"
@@ -488,7 +454,6 @@
                             </TabItem>
 
                             <TabItem Header="Biography">
-
                                 <TextBlock
                                     Margin="12"
                                     TextWrapping="Wrap"
@@ -500,7 +465,6 @@
             </Grid>
         </Grid>
 
-        <!-- Game-over overlay. Go Back hides this only; it never re-enables time. -->
         <Border
             IsVisible="{Binding IsGameOverOverlayVisible}"
             HorizontalAlignment="Center"

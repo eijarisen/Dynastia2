@@ -1,0 +1,96 @@
+using Dynastia.Contracts;
+
+namespace Dynastia.Mechanics.Economy;
+
+public sealed class EconomyPlugin : IGamePlugin
+{
+    private const decimal FounderStartingWealth =
+        1000m;
+
+    private const int FounderStartingHouses =
+        1;
+
+    public void Initialize(
+        IGamePluginContext context)
+    {
+        var gameState =
+            context.GetService<IGameState>()
+            ?? throw new InvalidOperationException(
+                "Game state is unavailable.");
+
+        var family =
+            context.GetService<IFamilyService>()
+            ?? throw new InvalidOperationException(
+                "Family service is unavailable.");
+
+        var events =
+            context.GetService<IGameEventBus>()
+            ?? throw new InvalidOperationException(
+                "Game event bus is unavailable.");
+
+        var systems =
+            context.GetService<IYearSystemRegistry>()
+            ?? throw new InvalidOperationException(
+                "Year system registry is unavailable.");
+
+        var incomeRegistry =
+            new IncomeProviderRegistry();
+
+        var economy =
+            new StandardEconomyService(
+                family);
+
+        context.AddService<IIncomeProviderRegistry>(
+            incomeRegistry);
+
+        context.AddService<IEconomyService>(
+            economy);
+
+        systems.Register(
+            new EconomyYearSystem(
+                economy,
+                family,
+                incomeRegistry));
+
+        events.EventPublished +=
+            (_, gameEvent) =>
+            {
+                if (!gameEvent.Type.Equals(
+                    "game.started",
+                    StringComparison.OrdinalIgnoreCase))
+                {
+                    return;
+                }
+
+                if (gameEvent.SubjectId
+                    is not Guid founderId)
+                {
+                    return;
+                }
+
+                var founder =
+                    gameState.People
+                        .FirstOrDefault(
+                            person =>
+                                person.Id
+                                == founderId);
+
+                if (founder is null)
+                    return;
+
+                economy.EnsureHousehold(
+                    founder);
+
+                economy.SetWealth(
+                    founder,
+                    FounderStartingWealth);
+
+                economy.SetHousesOwned(
+                    founder,
+                    FounderStartingHouses);
+            };
+
+        context.Log(
+            "Economy mechanics registered.");
+    }
+}

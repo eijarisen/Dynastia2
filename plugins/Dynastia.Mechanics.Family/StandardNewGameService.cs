@@ -20,6 +20,7 @@ public sealed class StandardNewGameService : INewGameService
     private readonly IGameDataService _data;
     private readonly IGameRandom _random;
     private readonly IGameCalendar _calendar;
+    private readonly IGameEventBus _events;
 
     public StandardNewGameService(
         IGameState gameState,
@@ -27,7 +28,8 @@ public sealed class StandardNewGameService : INewGameService
         ISelectionService selection,
         IGameDataService data,
         IGameRandom random,
-        IGameCalendar calendar)
+        IGameCalendar calendar,
+        IGameEventBus events)
     {
         _gameState = gameState;
         _family = family;
@@ -35,6 +37,7 @@ public sealed class StandardNewGameService : INewGameService
         _data = data;
         _random = random;
         _calendar = calendar;
+        _events = events;
     }
 
     public IPerson StartNewGame(
@@ -161,6 +164,28 @@ public sealed class StandardNewGameService : INewGameService
 
         _selection.SelectedPersonId =
             founder.Id;
+
+        _events.Publish(
+            new GameEvent
+            {
+                Type = "game.started",
+                Year = _gameState.Year,
+                SubjectId = founder.Id,
+
+                RelatedPersonIds =
+                    [
+                        father.Id,
+                        mother.Id
+                    ],
+
+                Data =
+                    new Dictionary<string, string>
+                    {
+                        ["surname"] = surname,
+                        ["text"] =
+                            $"The {surname} dynasty began."
+                    }
+            });
 
         return founder;
     }

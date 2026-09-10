@@ -13,6 +13,7 @@ public sealed class MainWindowViewModel : ViewModelBase
     private readonly IStatsService? _statsService;
     private readonly IFamilyService? _familyService;
     private readonly IHealthService? _healthService;
+    private readonly IEconomyService? _economyService;
     private readonly ISuccessionService _succession;
     private readonly IGameEventBus _eventBus;
     private readonly IActionRegistry _actionRegistry;
@@ -20,14 +21,12 @@ public sealed class MainWindowViewModel : ViewModelBase
     private PersonRowViewModel? _selectedPerson;
     private FamilyDetailsViewModel? _selectedFamily;
     private HealthViewModel? _selectedHealth;
+    private EconomyViewModel? _selectedEconomy;
 
     private int _albumYear;
     private string _surnameInput = string.Empty;
     private bool _isGameStarted;
-
-    private string _queuedActionText =
-        string.Empty;
-
+    private string _queuedActionText = string.Empty;
     private bool _hasQueuedAction;
     private bool _isGameOverOverlayVisible;
 
@@ -39,6 +38,7 @@ public sealed class MainWindowViewModel : ViewModelBase
         IStatsService? statsService,
         IFamilyService? familyService,
         IHealthService? healthService,
+        IEconomyService? economyService,
         ISuccessionService succession,
         IGameEventBus eventBus,
         IActionRegistry actionRegistry)
@@ -50,6 +50,7 @@ public sealed class MainWindowViewModel : ViewModelBase
         _statsService = statsService;
         _familyService = familyService;
         _healthService = healthService;
+        _economyService = economyService;
         _succession = succession;
         _eventBus = eventBus;
         _actionRegistry = actionRegistry;
@@ -57,8 +58,7 @@ public sealed class MainWindowViewModel : ViewModelBase
         _albumYear = 1900;
 
         StartGameCommand =
-            new RelayCommand(
-                StartGame);
+            new RelayCommand(StartGame);
 
         NextYearCommand =
             new RelayCommand(
@@ -99,7 +99,6 @@ public sealed class MainWindowViewModel : ViewModelBase
     public string SurnameInput
     {
         get => _surnameInput;
-
         set
         {
             if (_surnameInput == value)
@@ -113,14 +112,12 @@ public sealed class MainWindowViewModel : ViewModelBase
     public bool IsGameStarted
     {
         get => _isGameStarted;
-
         private set
         {
             if (_isGameStarted == value)
                 return;
 
             _isGameStarted = value;
-
             OnPropertyChanged();
             OnPropertyChanged(
                 nameof(IsStartScreenVisible));
@@ -185,14 +182,12 @@ public sealed class MainWindowViewModel : ViewModelBase
     public int AlbumYear
     {
         get => _albumYear;
-
         private set
         {
             if (_albumYear == value)
                 return;
 
             _albumYear = value;
-
             OnPropertyChanged();
 
             PreviousAlbumYearCommand
@@ -219,7 +214,6 @@ public sealed class MainWindowViewModel : ViewModelBase
     public string QueuedActionText
     {
         get => _queuedActionText;
-
         private set
         {
             if (_queuedActionText == value)
@@ -233,7 +227,6 @@ public sealed class MainWindowViewModel : ViewModelBase
     public bool HasQueuedAction
     {
         get => _hasQueuedAction;
-
         private set
         {
             if (_hasQueuedAction == value)
@@ -259,7 +252,6 @@ public sealed class MainWindowViewModel : ViewModelBase
     public PersonRowViewModel? SelectedPerson
     {
         get => _selectedPerson;
-
         set
         {
             if (ReferenceEquals(
@@ -277,6 +269,7 @@ public sealed class MainWindowViewModel : ViewModelBase
             RefreshSelectedStats();
             RefreshFamilyDetails();
             RefreshHealth();
+            RefreshEconomy();
             RefreshActions();
 
             OnPropertyChanged();
@@ -286,7 +279,6 @@ public sealed class MainWindowViewModel : ViewModelBase
     public FamilyDetailsViewModel? SelectedFamily
     {
         get => _selectedFamily;
-
         private set
         {
             _selectedFamily = value;
@@ -297,7 +289,6 @@ public sealed class MainWindowViewModel : ViewModelBase
     public HealthViewModel? SelectedHealth
     {
         get => _selectedHealth;
-
         private set
         {
             _selectedHealth = value;
@@ -305,11 +296,25 @@ public sealed class MainWindowViewModel : ViewModelBase
         }
     }
 
+    public EconomyViewModel? SelectedEconomy
+    {
+        get => _selectedEconomy;
+        private set
+        {
+            _selectedEconomy = value;
+            OnPropertyChanged();
+            OnPropertyChanged(
+                nameof(HasSelectedEconomy));
+        }
+    }
+
+    public bool HasSelectedEconomy =>
+        SelectedEconomy is not null;
+
     public RelayCommand StartGameCommand { get; }
     public RelayCommand NextYearCommand { get; }
     public RelayCommand CancelQueuedActionCommand { get; }
     public RelayCommand GoBackFromGameOverCommand { get; }
-
     public RelayCommand PreviousAlbumYearCommand { get; }
     public RelayCommand NextAlbumYearCommand { get; }
 
@@ -397,7 +402,8 @@ public sealed class MainWindowViewModel : ViewModelBase
                 new PersonRowViewModel(
                     person,
                     _familyService,
-                    _healthService));
+                    _healthService,
+                    _economyService));
         }
 
         SelectedPerson =
@@ -410,6 +416,7 @@ public sealed class MainWindowViewModel : ViewModelBase
         RefreshSelectedStats();
         RefreshFamilyDetails();
         RefreshHealth();
+        RefreshEconomy();
         RefreshActions();
     }
 
@@ -451,6 +458,29 @@ public sealed class MainWindowViewModel : ViewModelBase
             new HealthViewModel(
                 _healthService.GetHealth(
                     person));
+    }
+
+    private void RefreshEconomy()
+    {
+        var person =
+            FindSelectedPerson();
+
+        if (person is null
+            || _economyService is null)
+        {
+            SelectedEconomy = null;
+            return;
+        }
+
+        var snapshot =
+            _economyService.GetHousehold(
+                person);
+
+        SelectedEconomy =
+            snapshot is null
+                ? null
+                : new EconomyViewModel(
+                    snapshot);
     }
 
     private void RefreshFamilyDetails()
@@ -646,6 +676,7 @@ public sealed class MainWindowViewModel : ViewModelBase
         RefreshPeople();
         RefreshAlbum();
         RefreshHealth();
+        RefreshEconomy();
         RefreshActions();
     }
 

@@ -1,0 +1,13 @@
+{
+  "id": "dynastia.justice",
+  "name": "Standard Justice",
+  "version": "0.1.0",
+  "apiVersion": 1,
+  "assembly": "Dynastia.Mechanics.Justice.dll",
+  "entryType": "Dynastia.Mechanics.Justice.JusticePlugin",
+  "dependencies": [
+    "dynastia.family",
+    "dynastia.health",
+    "dynastia.career"
+  ]
+}

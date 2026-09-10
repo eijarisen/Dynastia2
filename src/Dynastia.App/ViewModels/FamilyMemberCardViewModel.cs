@@ -9,6 +9,7 @@ public sealed class FamilyMemberCardViewModel
         IFamilyService? family,
         IHealthService? health,
         ICareerService? career,
+        IJusticeService? justice,
         bool isSelected,
         bool isActiveHouseholdHead,
         Action<Guid> selectPerson)
@@ -69,6 +70,22 @@ public sealed class FamilyMemberCardViewModel
         {
             OccupationText =
                 career.GetCareer(person).JobTitle;
+        }
+
+        if (justice is not null)
+        {
+            var justiceStatus =
+                justice.GetStatus(person);
+
+            if (justiceStatus.IsImprisoned)
+            {
+                OccupationText =
+                    justiceStatus.IsLifeSentence
+                        ? "Imprisoned · Life"
+                        : justiceStatus.RemainingYears == 1
+                            ? "Imprisoned · 1 year left"
+                            : $"Imprisoned · {justiceStatus.RemainingYears} years left";
+            }
         }
 
         SelectCommand =

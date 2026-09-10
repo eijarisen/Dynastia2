@@ -719,6 +719,8 @@
                                         <TextBlock Text="{Binding SelectedCareer.OccupationText}" />
                                         <TextBlock Text="{Binding SelectedCareer.SatisfactionText}" />
                                         <TextBlock Text="{Binding SelectedCareer.IncomeText}" />
+                                        <TextBlock Text="{Binding SelectedJustice.StatusText}" />
+                                        <TextBlock Text="{Binding SelectedJustice.CrimeText}" />
 
                                         <TextBlock Text="{Binding SelectedPerson.BirthDateText}" />
                                         <TextBlock Text="{Binding SelectedPerson.DeathDateText}" />

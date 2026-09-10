@@ -52,11 +52,15 @@ public partial class App : Application
                 new JsonGameDataService(
                     dataDirectory);
 
+            var actionGuardRegistry =
+                new ActionGuardRegistry();
+
             var actionRegistry =
                 new ActionRegistry(
                     gameState,
                     eventBus,
-                    gameRandom);
+                    gameRandom,
+                    actionGuardRegistry);
 
             registry.Register(
                 new QueuedActionYearSystem(
@@ -93,6 +97,9 @@ public partial class App : Application
 
             pluginContext.AddService<IGameDataService>(
                 dataService);
+
+            pluginContext.AddService<IActionGuardRegistry>(
+                actionGuardRegistry);
 
             pluginContext.AddService<IActionRegistry>(
                 actionRegistry);
@@ -147,6 +154,9 @@ public partial class App : Application
             var careerService =
                 pluginContext.GetService<ICareerService>();
 
+            var justiceService =
+                pluginContext.GetService<IJusticeService>();
+
             desktop.MainWindow =
                 new MainWindow
                 {
@@ -163,6 +173,7 @@ public partial class App : Application
                             householdService,
                             educationService,
                             careerService,
+                            justiceService,
                             successionService,
                             eventBus,
                             actionRegistry)

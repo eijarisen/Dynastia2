@@ -2,7 +2,8 @@ namespace Dynastia.Contracts;
 
 public interface IActionRegistry
 {
-    void Register(GameActionDefinition action);
+    void Register(
+        GameActionDefinition action);
 
     IReadOnlyList<GameActionDefinition> GetAvailableActions(
         IPerson actor,
@@ -21,4 +22,7 @@ public interface IActionRegistry
 
     void ExecuteQueued(
         YearPhase phase);
+
+    string? GetBlockedReason(
+        IPerson actor);
 }

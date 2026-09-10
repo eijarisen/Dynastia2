@@ -4,48 +4,82 @@ namespace Dynastia.Core.Actions;
 
 public sealed class ActionRegistry : IActionRegistry
 {
-    private readonly Dictionary<string, GameActionDefinition> _actions =
-        new(StringComparer.OrdinalIgnoreCase);
+    private readonly Dictionary<
+        string,
+        GameActionDefinition>
+        _actions =
+            new(
+                StringComparer.OrdinalIgnoreCase);
 
-    private readonly List<QueuedAction> _queued = [];
+    private readonly List<QueuedAction>
+        _queued = [];
 
     private readonly IGameState _gameState;
     private readonly IGameEventBus _eventBus;
     private readonly IGameRandom _random;
+    private readonly IActionGuardRegistry _guards;
 
     public ActionRegistry(
         IGameState gameState,
         IGameEventBus eventBus,
-        IGameRandom random)
+        IGameRandom random,
+        IActionGuardRegistry guards)
     {
         _gameState = gameState;
         _eventBus = eventBus;
         _random = random;
+        _guards = guards;
     }
 
-    public void Register(GameActionDefinition action)
+    public void Register(
+        GameActionDefinition action)
     {
-        ArgumentNullException.ThrowIfNull(action);
+        ArgumentNullException.ThrowIfNull(
+            action);
 
-        if (!_actions.TryAdd(action.Id, action))
+        if (!_actions.TryAdd(
+            action.Id,
+            action))
         {
             throw new InvalidOperationException(
-                $"An action with ID '{action.Id}' is already registered.");
+                $"An action with ID " +
+                $"'{action.Id}' is already registered.");
         }
     }
 
-    public IReadOnlyList<GameActionDefinition> GetAvailableActions(
-        IPerson actor,
-        IPerson target)
+    public IReadOnlyList<GameActionDefinition>
+        GetAvailableActions(
+            IPerson actor,
+            IPerson target)
     {
-        if (_queued.Any(x => x.ActorId == actor.Id))
+        var guardResult =
+            _guards.Evaluate(
+                actor);
+
+        if (!guardResult.Allowed)
             return [];
 
-        var context = CreateContext(actor, target);
+        if (_queued.Any(
+            queued =>
+                queued.ActorId
+                == actor.Id))
+        {
+            return [];
+        }
+
+        var context =
+            CreateContext(
+                actor,
+                target);
 
         return _actions.Values
-            .Where(action => action.IsAvailable(context))
-            .OrderBy(action => action.Label)
+            .Where(
+                action =>
+                    action.IsAvailable(
+                        context))
+            .OrderBy(
+                action =>
+                    action.Label)
             .ToList();
     }
 
@@ -54,25 +88,47 @@ public sealed class ActionRegistry : IActionRegistry
         IPerson actor,
         IPerson target)
     {
-        if (!_actions.TryGetValue(actionId, out var action))
+        var guardResult =
+            _guards.Evaluate(
+                actor);
+
+        if (!guardResult.Allowed)
+        {
+            return new GameActionResult(
+                false,
+                guardResult.Reason
+                    ?? "This character cannot perform actions.");
+        }
+
+        if (!_actions.TryGetValue(
+            actionId,
+            out var action))
         {
             return new GameActionResult(
                 false,
                 $"Unknown action '{actionId}'.");
         }
 
-        var context = CreateContext(actor, target);
+        var context =
+            CreateContext(
+                actor,
+                target);
 
-        if (!action.IsAvailable(context))
+        if (!action.IsAvailable(
+            context))
         {
             return new GameActionResult(
                 false,
                 "This action is no longer available.");
         }
 
-        if (action.Mode == ActionExecutionMode.Queued)
+        if (action.Mode
+            == ActionExecutionMode.Queued)
         {
-            if (_queued.Any(x => x.ActorId == actor.Id))
+            if (_queued.Any(
+                queued =>
+                    queued.ActorId
+                    == actor.Id))
             {
                 return new GameActionResult(
                     false,
@@ -91,28 +147,36 @@ public sealed class ActionRegistry : IActionRegistry
                 $"{action.Label} queued.");
         }
 
-        return action.Execute(context);
+        return action.Execute(
+            context);
     }
 
-    public IReadOnlyList<QueuedActionInfo> GetQueuedActions(
-        IPerson actor)
+    public IReadOnlyList<QueuedActionInfo>
+        GetQueuedActions(
+            IPerson actor)
     {
         return _queued
-            .Where(x => x.ActorId == actor.Id)
-            .Select(x =>
-            {
-                var label =
-                    _actions.TryGetValue(x.ActionId, out var action)
-                        ? action.Label
-                        : x.ActionId;
+            .Where(
+                queued =>
+                    queued.ActorId
+                    == actor.Id)
+            .Select(
+                queued =>
+                {
+                    var label =
+                        _actions.TryGetValue(
+                            queued.ActionId,
+                            out var action)
+                            ? action.Label
+                            : queued.ActionId;
 
-                return new QueuedActionInfo(
-                    x.ActionId,
-                    label,
-                    x.Phase,
-                    x.ActorId,
-                    x.TargetId);
-            })
+                    return new QueuedActionInfo(
+                        queued.ActionId,
+                        label,
+                        queued.Phase,
+                        queued.ActorId,
+                        queued.TargetId);
+                })
             .ToList();
     }
 
@@ -120,7 +184,9 @@ public sealed class ActionRegistry : IActionRegistry
         IPerson actor)
     {
         _queued.RemoveAll(
-            x => x.ActorId == actor.Id);
+            queued =>
+                queued.ActorId
+                == actor.Id);
     }
 
     public void ExecuteQueued(
@@ -128,13 +194,19 @@ public sealed class ActionRegistry : IActionRegistry
     {
         var pending =
             _queued
-                .Where(x => x.Phase == phase)
+                .Where(
+                    queued =>
+                        queued.Phase
+                        == phase)
                 .ToList();
 
         _queued.RemoveAll(
-            x => x.Phase == phase);
+            queued =>
+                queued.Phase
+                == phase);
 
-        foreach (var queued in pending)
+        foreach (var queued in
+            pending)
         {
             if (!_actions.TryGetValue(
                 queued.ActionId,
@@ -144,24 +216,58 @@ public sealed class ActionRegistry : IActionRegistry
             }
 
             var actor =
-                _gameState.People.FirstOrDefault(
-                    x => x.Id == queued.ActorId);
+                _gameState.People
+                    .FirstOrDefault(
+                        person =>
+                            person.Id
+                            == queued.ActorId);
 
             var target =
-                _gameState.People.FirstOrDefault(
-                    x => x.Id == queued.TargetId);
+                _gameState.People
+                    .FirstOrDefault(
+                        person =>
+                            person.Id
+                            == queued.TargetId);
 
-            if (actor is null || target is null)
+            if (actor is null
+                || target is null)
+            {
+                continue;
+            }
+
+            var guardResult =
+                _guards.Evaluate(
+                    actor);
+
+            if (!guardResult.Allowed)
                 continue;
 
             var context =
-                CreateContext(actor, target);
+                CreateContext(
+                    actor,
+                    target);
 
-            if (!action.IsAvailable(context))
+            if (!action.IsAvailable(
+                context))
+            {
                 continue;
+            }
 
-            action.Execute(context);
+            action.Execute(
+                context);
         }
+    }
+
+    public string? GetBlockedReason(
+        IPerson actor)
+    {
+        var result =
+            _guards.Evaluate(
+                actor);
+
+        return result.Allowed
+            ? null
+            : result.Reason;
     }
 
     private GameActionContext CreateContext(

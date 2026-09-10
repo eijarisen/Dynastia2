@@ -34,8 +34,14 @@ public sealed class CareerAdvancementYearSystem : IYearSystem
 
     public string Id => "career.employment";
     public YearPhase Phase => YearPhase.LifeEvents;
-    public IReadOnlyCollection<string> Before => Array.Empty<string>();
-    public IReadOnlyCollection<string> After => ["actions.queued.life_events"];
+    public IReadOnlyCollection<string> Before =>
+        ["relationships.marriage"];
+
+    public IReadOnlyCollection<string> After =>
+        [
+            "actions.queued.life_events",
+            "justice.crime_and_prison_divorce"
+        ];
 
     public void Execute(IGameState gameState)
     {

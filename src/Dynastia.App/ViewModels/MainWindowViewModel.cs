@@ -17,6 +17,7 @@ public sealed class MainWindowViewModel : ViewModelBase
     private readonly IHouseholdService? _householdService;
     private readonly IEducationService? _educationService;
     private readonly ICareerService? _careerService;
+    private readonly IJusticeService? _justiceService;
     private readonly ISuccessionService _succession;
     private readonly IGameEventBus _eventBus;
     private readonly IActionRegistry _actionRegistry;
@@ -27,6 +28,7 @@ public sealed class MainWindowViewModel : ViewModelBase
     private EconomyViewModel? _selectedEconomy;
     private EducationViewModel? _selectedEducation;
     private CareerViewModel? _selectedCareer;
+    private JusticeViewModel? _selectedJustice;
 
     private int _albumYear;
     private string _surnameInput = string.Empty;
@@ -48,6 +50,7 @@ public sealed class MainWindowViewModel : ViewModelBase
         IHouseholdService? householdService,
         IEducationService? educationService,
         ICareerService? careerService,
+        IJusticeService? justiceService,
         ISuccessionService succession,
         IGameEventBus eventBus,
         IActionRegistry actionRegistry)
@@ -63,6 +66,7 @@ public sealed class MainWindowViewModel : ViewModelBase
         _householdService = householdService;
         _educationService = educationService;
         _careerService = careerService;
+        _justiceService = justiceService;
         _succession = succession;
         _eventBus = eventBus;
         _actionRegistry = actionRegistry;
@@ -357,11 +361,36 @@ public sealed class MainWindowViewModel : ViewModelBase
             ? "Nothing of note happened this year."
             : string.Empty;
 
-    public string ActionsEmptyText =>
-        AvailableActions.Count == 0
-        && !HasQueuedAction
-            ? "No actions available for the selected person."
-            : string.Empty;
+    public string ActionsEmptyText
+    {
+        get
+        {
+            if (AvailableActions.Count > 0
+                || HasQueuedAction)
+            {
+                return string.Empty;
+            }
+
+            var actor =
+                _succession.ActiveController;
+
+            if (actor is not null)
+            {
+                var blockedReason =
+                    _actionRegistry.GetBlockedReason(
+                        actor);
+
+                if (!string.IsNullOrWhiteSpace(
+                    blockedReason))
+                {
+                    return blockedReason;
+                }
+            }
+
+            return
+                "No actions available for the selected person.";
+        }
+    }
 
     public string QueuedActionText
     {
@@ -436,6 +465,7 @@ public sealed class MainWindowViewModel : ViewModelBase
             RefreshEconomy();
             RefreshEducation();
             RefreshCareer();
+            RefreshJustice();
             RefreshActions();
             RefreshFamilySection();
 
@@ -491,6 +521,17 @@ public sealed class MainWindowViewModel : ViewModelBase
         private set
         {
             _selectedCareer = value;
+            OnPropertyChanged();
+        }
+    }
+
+    public JusticeViewModel? SelectedJustice
+    {
+        get => _selectedJustice;
+
+        private set
+        {
+            _selectedJustice = value;
             OnPropertyChanged();
         }
     }
@@ -623,6 +664,7 @@ public sealed class MainWindowViewModel : ViewModelBase
         RefreshEconomy();
         RefreshEducation();
         RefreshCareer();
+        RefreshJustice();
         RefreshActions();
         RefreshFamilySection();
     }
@@ -826,6 +868,7 @@ public sealed class MainWindowViewModel : ViewModelBase
             _familyService,
             _healthService,
             _careerService,
+            _justiceService,
             selectedId == person.Id,
             activeHeadId == person.Id,
             SelectFamilyMember);
@@ -976,6 +1019,24 @@ public sealed class MainWindowViewModel : ViewModelBase
             new CareerViewModel(
                 _careerService.GetCareer(person),
                 person.Tags.Has("state.alive"));
+    }
+
+    private void RefreshJustice()
+    {
+        var person =
+            FindSelectedPerson();
+
+        if (person is null
+            || _justiceService is null)
+        {
+            SelectedJustice = null;
+            return;
+        }
+
+        SelectedJustice =
+            new JusticeViewModel(
+                _justiceService.GetStatus(
+                    person));
     }
 
     private void RefreshFamilyDetails()
@@ -1182,6 +1243,7 @@ public sealed class MainWindowViewModel : ViewModelBase
         RefreshEconomy();
         RefreshEducation();
         RefreshCareer();
+        RefreshJustice();
         RefreshActions();
     }
 

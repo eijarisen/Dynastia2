@@ -1,0 +1,98 @@
+[
+  {
+    "id": "vandalism",
+    "name": "vandalism",
+    "sentenceMin": 1,
+    "sentenceMax": 1,
+    "description": "was caught defacing public property.",
+    "weight": 30
+  },
+  {
+    "id": "petty_theft",
+    "name": "petty theft",
+    "sentenceMin": 1,
+    "sentenceMax": 2,
+    "description": "was caught stealing bread.",
+    "weight": 25
+  },
+  {
+    "id": "brawling",
+    "name": "brawling",
+    "sentenceMin": 1,
+    "sentenceMax": 2,
+    "description": "was arrested after a public brawl.",
+    "weight": 20
+  },
+  {
+    "id": "smuggling",
+    "name": "smuggling",
+    "sentenceMin": 2,
+    "sentenceMax": 4,
+    "description": "was convicted of smuggling illicit goods.",
+    "weight": 10
+  },
+  {
+    "id": "fraud",
+    "name": "fraud",
+    "sentenceMin": 3,
+    "sentenceMax": 6,
+    "description": "was found guilty of a major financial fraud.",
+    "weight": 8
+  },
+  {
+    "id": "arson",
+    "name": "arson",
+    "sentenceMin": 5,
+    "sentenceMax": 10,
+    "description": "was convicted of arson.",
+    "weight": 4
+  },
+  {
+    "id": "manslaughter",
+    "name": "manslaughter",
+    "sentenceMin": 8,
+    "sentenceMax": 15,
+    "description": "was found guilty of manslaughter.",
+    "weight": 3
+  },
+  {
+    "id": "espionage",
+    "name": "espionage",
+    "sentenceMin": 10,
+    "sentenceMax": 20,
+    "description": "was convicted of spying for a foreign power.",
+    "weight": 2
+  },
+  {
+    "id": "kidnapping",
+    "name": "kidnapping",
+    "sentenceMin": 15,
+    "sentenceMax": 25,
+    "description": "was convicted of kidnapping.",
+    "weight": 1
+  },
+  {
+    "id": "treason",
+    "name": "treason",
+    "sentenceMin": 10,
+    "sentenceMax": 25,
+    "description": "was found guilty of treason against the state.",
+    "weight": 1
+  },
+  {
+    "id": "murder",
+    "name": "murder",
+    "sentenceMin": 25,
+    "sentenceMax": 50,
+    "description": "was convicted of a heinous murder.",
+    "weight": 1
+  },
+  {
+    "id": "serial_killing",
+    "name": "serial killing",
+    "sentenceMin": 99,
+    "sentenceMax": 99,
+    "description": "was unmasked as a notorious serial killer.",
+    "weight": 0.5
+  }
+]

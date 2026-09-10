@@ -49,7 +49,10 @@ public sealed class MarriageYearSystem : IYearSystem
         Array.Empty<string>();
 
     public IReadOnlyCollection<string> After =>
-        ["actions.queued.life_events"];
+        [
+            "actions.queued.life_events",
+            "career.employment"
+        ];
 
     public void Execute(IGameState gameState)
     {

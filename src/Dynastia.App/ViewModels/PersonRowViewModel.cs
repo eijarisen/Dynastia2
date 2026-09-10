@@ -17,17 +17,26 @@ public sealed class PersonRowViewModel
 
         if (healthService is not null)
         {
-            var health = healthService.GetHealth(person);
-            HealthValue = health.Percentage;
+            var health =
+                healthService.GetHealth(person);
+
+            HealthValue =
+                health.Percentage;
+
             HealthText =
-                $"{Math.Round(health.Current)}/{Math.Round(health.Maximum)}";
+                $"{Math.Round(health.Current)}/" +
+                $"{Math.Round(health.Maximum)}";
         }
     }
 
-    public Guid Id => _person.Id;
+    public Guid Id =>
+        _person.Id;
 
     public string FullName =>
-        $"{_person.Name} {_person.Surname}";
+        _familyService is null
+            ? $"{_person.Name} {_person.Surname}"
+            : _familyService.GetDisplayName(
+                _person);
 
     public string AgeText =>
         $"Age: {_person.Age}";
@@ -42,10 +51,26 @@ public sealed class PersonRowViewModel
             ? $"Died: {date}"
             : string.Empty;
 
-    public string MaidenNameText =>
-        string.IsNullOrWhiteSpace(_person.MaidenName)
-            ? string.Empty
-            : $"Maiden name: {_person.MaidenName}";
+    public string MaidenNameText
+    {
+        get
+        {
+            if (string.IsNullOrWhiteSpace(
+                _person.MaidenName))
+            {
+                return string.Empty;
+            }
+
+            var maidenName =
+                _familyService is null
+                    ? _person.MaidenName
+                    : _familyService.FormatSurname(
+                        _person.MaidenName,
+                        Sex.Female);
+
+            return $"Maiden name: {maidenName}";
+        }
+    }
 
     public string StatusText =>
         _person.Tags.Has("state.dead")
@@ -54,7 +79,8 @@ public sealed class PersonRowViewModel
 
     public double HealthValue { get; }
 
-    public string HealthText { get; } = string.Empty;
+    public string HealthText { get; } =
+        string.Empty;
 
     public bool ShowHealth =>
         !_person.Tags.Has("state.dead");
@@ -67,7 +93,8 @@ public sealed class PersonRowViewModel
                 return string.Empty;
 
             var generation =
-                _familyService.GetGeneration(_person);
+                _familyService.GetGeneration(
+                    _person);
 
             return generation is null
                 ? string.Empty
@@ -80,5 +107,6 @@ public sealed class PersonRowViewModel
             ? "No tags"
             : string.Join(
                 ", ",
-                _person.Tags.All.OrderBy(x => x));
+                _person.Tags.All.OrderBy(
+                    x => x));
 }

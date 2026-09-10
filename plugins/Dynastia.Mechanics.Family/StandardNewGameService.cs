@@ -46,10 +46,12 @@ public sealed class StandardNewGameService : INewGameService
                 surname,
                 45);
 
-        father.BirthDate = RandomDateInYear(
-            _gameState.Year - father.Age);
+        father.BirthDate =
+            RandomDateInYear(
+                _gameState.Year - father.Age);
 
-        father.DeathDate = new GameDate(1899);
+        father.DeathDate =
+            new GameDate(1899);
 
         _family.InitializePerson(
             father,
@@ -58,6 +60,7 @@ public sealed class StandardNewGameService : INewGameService
 
         father.Tags.Add("state.dead");
         father.Tags.Add("family.bloodline");
+        father.Tags.Add("sexuality.heterosexual");
 
         var mother =
             _gameState.CreatePerson(
@@ -67,18 +70,32 @@ public sealed class StandardNewGameService : INewGameService
 
         mother.MaidenName = surname;
 
-        mother.BirthDate = RandomDateInYear(
-            _gameState.Year - mother.Age);
+        mother.BirthDate =
+            RandomDateInYear(
+                _gameState.Year - mother.Age);
 
-        mother.DeathDate = new GameDate(1899);
+        mother.DeathDate =
+            new GameDate(1899);
 
         _family.InitializePerson(
             mother,
             Sex.Female);
 
         mother.Tags.Add("state.dead");
+        mother.Tags.Add("sexuality.heterosexual");
 
-        _family.SetSpouses(father, mother);
+        _family.SetSpouses(
+            father,
+            mother,
+            startYear: 1880);
+
+        _family.EndRelationship(
+            father,
+            mother,
+            endYear: 1899,
+            endReason: "death",
+            clearFirst: false,
+            clearSecond: false);
 
         var founder =
             _gameState.CreatePerson(
@@ -86,8 +103,9 @@ public sealed class StandardNewGameService : INewGameService
                 surname,
                 18);
 
-        founder.BirthDate = RandomDateInYear(
-            _gameState.Year - founder.Age);
+        founder.BirthDate =
+            RandomDateInYear(
+                _gameState.Year - founder.Age);
 
         _family.InitializePerson(
             founder,
@@ -100,24 +118,30 @@ public sealed class StandardNewGameService : INewGameService
         founder.Tags.Add("lineage.male");
         founder.Tags.Add("control.playable");
         founder.Tags.Add("relationship.single");
+        founder.Tags.Add("sexuality.heterosexual");
 
         _family.SetParents(
             founder,
             father,
             mother);
 
-        _selection.SelectedPersonId = founder.Id;
+        _selection.SelectedPersonId =
+            founder.Id;
 
         return founder;
     }
 
     private GameDate RandomDateInYear(int year)
     {
-        var month = _random.NextInt(1, 12);
+        var month =
+            _random.NextInt(1, 12);
 
-        var day = _random.NextInt(
-            1,
-            _calendar.GetDaysInMonth(year, month));
+        var day =
+            _random.NextInt(
+                1,
+                _calendar.GetDaysInMonth(
+                    year,
+                    month));
 
         return new GameDate(
             Year: year,
@@ -139,16 +163,20 @@ public sealed class StandardNewGameService : INewGameService
             + cleaned[1..].ToLowerInvariant();
     }
 
-    private string RandomWeightedFrom(string relativePath)
+    private string RandomWeightedFrom(
+        string relativePath)
     {
         var entries =
-            _data.GetWeightedStringList(relativePath);
+            _data.GetWeightedStringList(
+                relativePath);
 
         var totalWeight =
-            entries.Sum(entry => (double)entry.Weight);
+            entries.Sum(
+                x => (double)x.Weight);
 
         var roll =
-            _random.NextDouble() * totalWeight;
+            _random.NextDouble()
+            * totalWeight;
 
         foreach (var entry in entries)
         {
@@ -158,7 +186,6 @@ public sealed class StandardNewGameService : INewGameService
             roll -= entry.Weight;
         }
 
-        // Floating-point fallback.
         return entries[^1].Value;
     }
 }

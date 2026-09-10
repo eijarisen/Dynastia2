@@ -23,9 +23,33 @@ public interface IFamilyService
 
     void SetSpouses(
         IPerson first,
-        IPerson second);
+        IPerson second,
+        int startYear);
 
-    void ClearCurrentSpouse(IPerson person);
+    void EndRelationship(
+        IPerson first,
+        IPerson second,
+        int endYear,
+        string endReason,
+        bool clearFirst = true,
+        bool clearSecond = true);
+
+    IReadOnlyList<RelationshipHistoryInfo> GetRelationshipHistory(
+        IPerson person);
+
+    void SetGeneratedFamilyBackground(
+        IPerson person,
+        GeneratedFamilyBackgroundInfo background);
+
+    GeneratedFamilyBackgroundInfo? GetGeneratedFamilyBackground(
+        IPerson person);
+
+    string FormatSurname(
+        string surname,
+        Sex sex);
+
+    string GetDisplayName(
+        IPerson person);
 
     bool IsBloodline(IPerson person);
     bool IsMaleLineage(IPerson person);

@@ -43,9 +43,11 @@ public sealed class MortalityYearSystem : IYearSystem
         _events = events;
     }
 
-    public string Id => "mortality.natural_death";
+    public string Id =>
+        "mortality.natural_death";
 
-    public YearPhase Phase => YearPhase.Death;
+    public YearPhase Phase =>
+        YearPhase.Death;
 
     public IReadOnlyCollection<string> Before =>
         Array.Empty<string>();
@@ -55,14 +57,14 @@ public sealed class MortalityYearSystem : IYearSystem
 
     public void Execute(IGameState gameState)
     {
-        // Keep family-array order. Immediate grief damage can therefore
-        // affect a relative who has not received their death check yet.
         foreach (var person in gameState.People)
         {
             if (person.Tags.Has("state.dead"))
                 continue;
 
-            ProcessPerson(gameState, person);
+            ProcessPerson(
+                gameState,
+                person);
         }
     }
 
@@ -80,10 +82,12 @@ public sealed class MortalityYearSystem : IYearSystem
                     StringComparison.OrdinalIgnoreCase));
 
         var deathChance =
-            terminalCount * TerminalConditionDeathChance;
+            terminalCount
+            * TerminalConditionDeathChance;
 
         var accident =
-            _random.NextDouble() < AccidentChance;
+            _random.NextDouble()
+            < AccidentChance;
 
         if (accident)
             _health.SetHealth(person, 0);
@@ -118,8 +122,6 @@ public sealed class MortalityYearSystem : IYearSystem
         var currentHealth =
             _health.GetHealth(person).Current;
 
-        // Preserve short-circuit behavior:
-        // health <= 0 dies without consuming the final death roll.
         var died =
             currentHealth <= 0
             || _random.NextDouble() < deathChance;
@@ -175,7 +177,8 @@ public sealed class MortalityYearSystem : IYearSystem
             related.Add(spouse.Id);
 
         related.AddRange(
-            children.Select(child => child.Id));
+            children.Select(
+                child => child.Id));
 
         if (father is not null)
             related.Add(father.Id);
@@ -191,12 +194,16 @@ public sealed class MortalityYearSystem : IYearSystem
         ApplyGrief(father);
         ApplyGrief(mother);
 
-        // Dynasty 4 clears the surviving spouse's current link,
-        // while retaining the deceased person's own spouse reference.
-        if (spouse is not null
-            && !spouse.Tags.Has("state.dead"))
+        if (spouse is not null)
         {
-            _family.ClearCurrentSpouse(spouse);
+            _family.EndRelationship(
+                person,
+                spouse,
+                gameState.Year,
+                "death",
+                clearFirst: false,
+                clearSecond:
+                    !spouse.Tags.Has("state.dead"));
         }
 
         _events.Publish(
@@ -205,17 +212,22 @@ public sealed class MortalityYearSystem : IYearSystem
                 Type = "life.death",
                 Year = gameState.Year,
                 SubjectId = person.Id,
-                RelatedPersonIds =
-                    related.Distinct().ToList(),
 
-                Data = new Dictionary<string, string>
-                {
-                    ["cause"] = cause,
-                    ["age"] = person.Age.ToString(),
-                    ["text"] =
-                        $"{person.Name} {person.Surname} " +
-                        $"died at age {person.Age}."
-                }
+                RelatedPersonIds =
+                    related
+                        .Distinct()
+                        .ToList(),
+
+                Data =
+                    new Dictionary<string, string>
+                    {
+                        ["cause"] = cause,
+                        ["age"] =
+                            person.Age.ToString(),
+                        ["text"] =
+                            $"{_family.GetDisplayName(person)} " +
+                            $"died at age {person.Age}."
+                    }
             });
     }
 
@@ -232,7 +244,8 @@ public sealed class MortalityYearSystem : IYearSystem
             -GriefHealthPenalty);
     }
 
-    private GameDate RandomDateInYear(int year)
+    private GameDate RandomDateInYear(
+        int year)
     {
         var month =
             _random.NextInt(1, 12);

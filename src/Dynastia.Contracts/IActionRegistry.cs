@@ -12,4 +12,13 @@ public interface IActionRegistry
         string actionId,
         IPerson actor,
         IPerson target);
+
+    IReadOnlyList<QueuedActionInfo> GetQueuedActions(
+        IPerson actor);
+
+    void CancelQueuedActions(
+        IPerson actor);
+
+    void ExecuteQueued(
+        YearPhase phase);
 }

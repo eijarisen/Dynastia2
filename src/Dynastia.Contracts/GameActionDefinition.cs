@@ -9,6 +9,9 @@ public sealed class GameActionDefinition
     public ActionExecutionMode Mode { get; init; } =
         ActionExecutionMode.Immediate;
 
+    public YearPhase QueuePhase { get; init; } =
+        YearPhase.LifeEvents;
+
     public required Func<GameActionContext, bool> IsAvailable { get; init; }
 
     public required Func<GameActionContext, GameActionResult> Execute { get; init; }

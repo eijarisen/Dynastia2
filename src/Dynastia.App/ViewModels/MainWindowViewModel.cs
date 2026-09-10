@@ -19,9 +19,15 @@ public sealed class MainWindowViewModel : ViewModelBase
     private PersonRowViewModel? _selectedPerson;
     private FamilyDetailsViewModel? _selectedFamily;
     private HealthViewModel? _selectedHealth;
+
     private int _albumYear;
     private string _surnameInput = string.Empty;
     private bool _isGameStarted;
+
+    private string _queuedActionText =
+        string.Empty;
+
+    private bool _hasQueuedAction;
 
     public MainWindowViewModel(
         IGameState gameState,
@@ -46,23 +52,40 @@ public sealed class MainWindowViewModel : ViewModelBase
 
         _albumYear = 1900;
 
-        StartGameCommand = new RelayCommand(StartGame);
-        NextYearCommand = new RelayCommand(AdvanceYear);
+        StartGameCommand =
+            new RelayCommand(
+                StartGame);
 
-        PreviousAlbumYearCommand = new RelayCommand(
-            PreviousAlbumYear,
-            () => IsGameStarted && AlbumYear > 1900);
+        NextYearCommand =
+            new RelayCommand(
+                AdvanceYear);
 
-        NextAlbumYearCommand = new RelayCommand(
-            NextAlbumYear,
-            () => IsGameStarted && AlbumYear < Year);
+        CancelQueuedActionCommand =
+            new RelayCommand(
+                CancelQueuedAction);
 
-        _eventBus.EventPublished += OnEventPublished;
+        PreviousAlbumYearCommand =
+            new RelayCommand(
+                PreviousAlbumYear,
+                () =>
+                    IsGameStarted
+                    && AlbumYear > 1900);
+
+        NextAlbumYearCommand =
+            new RelayCommand(
+                NextAlbumYear,
+                () =>
+                    IsGameStarted
+                    && AlbumYear < Year);
+
+        _eventBus.EventPublished +=
+            OnEventPublished;
     }
 
     public string SurnameInput
     {
         get => _surnameInput;
+
         set
         {
             if (_surnameInput == value)
@@ -76,39 +99,49 @@ public sealed class MainWindowViewModel : ViewModelBase
     public bool IsGameStarted
     {
         get => _isGameStarted;
+
         private set
         {
             if (_isGameStarted == value)
                 return;
 
             _isGameStarted = value;
+
             OnPropertyChanged();
-            OnPropertyChanged(nameof(IsStartScreenVisible));
+            OnPropertyChanged(
+                nameof(IsStartScreenVisible));
         }
     }
 
-    public bool IsStartScreenVisible => !IsGameStarted;
+    public bool IsStartScreenVisible =>
+        !IsGameStarted;
 
     public string DynastyTitle =>
         IsGameStarted
             ? $"The {_gameState.DynastySurname} Dynasty"
             : "Dynastia";
 
-    public int Year => _gameState.Year;
+    public int Year =>
+        _gameState.Year;
 
     public int AlbumYear
     {
         get => _albumYear;
+
         private set
         {
             if (_albumYear == value)
                 return;
 
             _albumYear = value;
+
             OnPropertyChanged();
 
-            PreviousAlbumYearCommand.RaiseCanExecuteChanged();
-            NextAlbumYearCommand.RaiseCanExecuteChanged();
+            PreviousAlbumYearCommand
+                .RaiseCanExecuteChanged();
+
+            NextAlbumYearCommand
+                .RaiseCanExecuteChanged();
 
             RefreshAlbum();
         }
@@ -121,24 +154,67 @@ public sealed class MainWindowViewModel : ViewModelBase
 
     public string ActionsEmptyText =>
         AvailableActions.Count == 0
+        && !HasQueuedAction
             ? "No actions available for the selected person."
             : string.Empty;
 
-    public ObservableCollection<AlbumEventViewModel> AlbumEvents { get; } = [];
-    public ObservableCollection<PersonRowViewModel> People { get; } = [];
-    public ObservableCollection<StatValue> SelectedStats { get; } = [];
-    public ObservableCollection<AvailableActionViewModel> AvailableActions { get; } = [];
+    public string QueuedActionText
+    {
+        get => _queuedActionText;
+
+        private set
+        {
+            if (_queuedActionText == value)
+                return;
+
+            _queuedActionText = value;
+            OnPropertyChanged();
+        }
+    }
+
+    public bool HasQueuedAction
+    {
+        get => _hasQueuedAction;
+
+        private set
+        {
+            if (_hasQueuedAction == value)
+                return;
+
+            _hasQueuedAction = value;
+            OnPropertyChanged();
+        }
+    }
+
+    public ObservableCollection<AlbumEventViewModel>
+        AlbumEvents { get; } = [];
+
+    public ObservableCollection<PersonRowViewModel>
+        People { get; } = [];
+
+    public ObservableCollection<StatValue>
+        SelectedStats { get; } = [];
+
+    public ObservableCollection<AvailableActionViewModel>
+        AvailableActions { get; } = [];
 
     public PersonRowViewModel? SelectedPerson
     {
         get => _selectedPerson;
+
         set
         {
-            if (ReferenceEquals(_selectedPerson, value))
+            if (ReferenceEquals(
+                _selectedPerson,
+                value))
+            {
                 return;
+            }
 
             _selectedPerson = value;
-            _selectionService.SelectedPersonId = value?.Id;
+
+            _selectionService.SelectedPersonId =
+                value?.Id;
 
             RefreshSelectedStats();
             RefreshFamilyDetails();
@@ -152,6 +228,7 @@ public sealed class MainWindowViewModel : ViewModelBase
     public FamilyDetailsViewModel? SelectedFamily
     {
         get => _selectedFamily;
+
         private set
         {
             _selectedFamily = value;
@@ -162,6 +239,7 @@ public sealed class MainWindowViewModel : ViewModelBase
     public HealthViewModel? SelectedHealth
     {
         get => _selectedHealth;
+
         private set
         {
             _selectedHealth = value;
@@ -171,12 +249,15 @@ public sealed class MainWindowViewModel : ViewModelBase
 
     public RelayCommand StartGameCommand { get; }
     public RelayCommand NextYearCommand { get; }
+    public RelayCommand CancelQueuedActionCommand { get; }
+
     public RelayCommand PreviousAlbumYearCommand { get; }
     public RelayCommand NextAlbumYearCommand { get; }
 
     private void StartGame()
     {
-        _newGameService.StartNewGame(SurnameInput);
+        _newGameService.StartNewGame(
+            SurnameInput);
 
         IsGameStarted = true;
         AlbumYear = _gameState.Year;
@@ -184,11 +265,17 @@ public sealed class MainWindowViewModel : ViewModelBase
         RefreshPeople();
         RefreshAlbum();
 
-        OnPropertyChanged(nameof(Year));
-        OnPropertyChanged(nameof(DynastyTitle));
+        OnPropertyChanged(
+            nameof(Year));
 
-        PreviousAlbumYearCommand.RaiseCanExecuteChanged();
-        NextAlbumYearCommand.RaiseCanExecuteChanged();
+        OnPropertyChanged(
+            nameof(DynastyTitle));
+
+        PreviousAlbumYearCommand
+            .RaiseCanExecuteChanged();
+
+        NextAlbumYearCommand
+            .RaiseCanExecuteChanged();
     }
 
     private void AdvanceYear()
@@ -198,15 +285,37 @@ public sealed class MainWindowViewModel : ViewModelBase
 
         _yearProcessor.AdvanceYear();
 
-        AlbumYear = _gameState.Year;
+        AlbumYear =
+            _gameState.Year;
 
         RefreshPeople();
 
-        OnPropertyChanged(nameof(Year));
-        OnPropertyChanged(nameof(DynastyTitle));
+        OnPropertyChanged(
+            nameof(Year));
 
-        PreviousAlbumYearCommand.RaiseCanExecuteChanged();
-        NextAlbumYearCommand.RaiseCanExecuteChanged();
+        OnPropertyChanged(
+            nameof(DynastyTitle));
+
+        PreviousAlbumYearCommand
+            .RaiseCanExecuteChanged();
+
+        NextAlbumYearCommand
+            .RaiseCanExecuteChanged();
+    }
+
+    private void CancelQueuedAction()
+    {
+        var person =
+            FindSelectedPerson();
+
+        if (person is null)
+            return;
+
+        _actionRegistry
+            .CancelQueuedActions(
+                person);
+
+        RefreshActions();
     }
 
     private void PreviousAlbumYear()
@@ -223,7 +332,8 @@ public sealed class MainWindowViewModel : ViewModelBase
 
     private void RefreshPeople()
     {
-        var selectedId = _selectionService.SelectedPersonId;
+        var selectedId =
+            _selectionService.SelectedPersonId;
 
         People.Clear();
 
@@ -239,7 +349,8 @@ public sealed class MainWindowViewModel : ViewModelBase
         SelectedPerson =
             selectedId is null
                 ? People.FirstOrDefault()
-                : People.FirstOrDefault(x => x.Id == selectedId)
+                : People.FirstOrDefault(
+                    x => x.Id == selectedId)
                     ?? People.FirstOrDefault();
 
         RefreshSelectedStats();
@@ -255,12 +366,14 @@ public sealed class MainWindowViewModel : ViewModelBase
         if (_statsService is null)
             return;
 
-        var person = FindSelectedPerson();
+        var person =
+            FindSelectedPerson();
 
         if (person is null)
             return;
 
-        foreach (var stat in _statsService.GetStats(person))
+        foreach (var stat in
+            _statsService.GetStats(person))
         {
             SelectedStats.Add(stat);
         }
@@ -268,9 +381,11 @@ public sealed class MainWindowViewModel : ViewModelBase
 
     private void RefreshHealth()
     {
-        var person = FindSelectedPerson();
+        var person =
+            FindSelectedPerson();
 
-        if (person is null || _healthService is null)
+        if (person is null
+            || _healthService is null)
         {
             SelectedHealth = null;
             return;
@@ -278,82 +393,184 @@ public sealed class MainWindowViewModel : ViewModelBase
 
         SelectedHealth =
             new HealthViewModel(
-                _healthService.GetHealth(person));
+                _healthService.GetHealth(
+                    person));
     }
 
     private void RefreshFamilyDetails()
     {
-        var person = FindSelectedPerson();
+        var person =
+            FindSelectedPerson();
 
-        if (person is null || _familyService is null)
+        if (person is null
+            || _familyService is null)
         {
             SelectedFamily = null;
             return;
         }
 
-        var father = _familyService.GetFather(person);
-        var mother = _familyService.GetMother(person);
-        var spouse = _familyService.GetSpouse(person);
-        var children = _familyService.GetChildren(person);
+        var generatedBackground =
+            _familyService
+                .GetGeneratedFamilyBackground(
+                    person);
 
-        SelectedFamily = new FamilyDetailsViewModel
+        var father =
+            _familyService.GetFather(
+                person);
+
+        var mother =
+            _familyService.GetMother(
+                person);
+
+        var spouse =
+            _familyService.GetSpouse(
+                person);
+
+        var children =
+            _familyService.GetChildren(
+                person);
+
+        IReadOnlyList<IPerson> siblings =
+            generatedBackground is null
+                ? GetSimulatedSiblings(
+                    person,
+                    father)
+                : Array.Empty<IPerson>();
+
+        var relationshipHistory =
+            _familyService
+                .GetRelationshipHistory(
+                    person);
+
+        SelectedFamily =
+            new FamilyDetailsViewModel
+            {
+                Sex =
+                    _familyService
+                        .GetSex(person)
+                        .ToString(),
+
+                Generation =
+                    _familyService
+                        .GetGeneration(person)
+                        is int generation
+                            ? $"G{generation}"
+                            : "N/A",
+
+                Father =
+                    generatedBackground?.FatherName
+                    ?? PersonName(father),
+
+                Mother =
+                    generatedBackground?.MotherName
+                    ?? PersonName(mother),
+
+                Siblings =
+                    generatedBackground is not null
+                        ? FormatNames(
+                            generatedBackground.Siblings)
+                        : FormatPeople(
+                            siblings),
+
+                Spouse =
+                    PersonName(spouse),
+
+                Children =
+                    FormatPeople(
+                        children),
+
+                RelationshipHistory =
+                    FormatRelationshipHistory(
+                        relationshipHistory),
+
+                Bloodline =
+                    _familyService
+                        .IsBloodline(person)
+                            ? "Yes"
+                            : "No",
+
+                MaleLineage =
+                    _familyService
+                        .IsMaleLineage(person)
+                            ? "Yes"
+                            : "No"
+            };
+    }
+
+    private IReadOnlyList<IPerson>
+        GetSimulatedSiblings(
+            IPerson person,
+            IPerson? father)
+    {
+        if (father is null
+            || _familyService is null)
         {
-            Sex = _familyService.GetSex(person).ToString(),
+            return [];
+        }
 
-            Generation =
-                _familyService.GetGeneration(person) is int generation
-                    ? $"G{generation}"
-                    : "N/A",
-
-            Father = PersonName(father),
-            Mother = PersonName(mother),
-            Spouse = PersonName(spouse),
-
-            Children =
-                children.Count == 0
-                    ? "None"
-                    : string.Join(", ", children.Select(PersonName)),
-
-            Bloodline =
-                _familyService.IsBloodline(person)
-                    ? "Yes"
-                    : "No",
-
-            MaleLineage =
-                _familyService.IsMaleLineage(person)
-                    ? "Yes"
-                    : "No"
-        };
+        return _familyService
+            .GetChildren(father)
+            .Where(
+                sibling =>
+                    sibling.Id
+                    != person.Id)
+            .ToList();
     }
 
     private void RefreshActions()
     {
         AvailableActions.Clear();
 
-        var person = FindSelectedPerson();
+        var person =
+            FindSelectedPerson();
+
+        HasQueuedAction = false;
+        QueuedActionText =
+            string.Empty;
 
         if (person is not null)
         {
-            foreach (var action in
-                _actionRegistry.GetAvailableActions(
-                    person,
-                    person))
-            {
-                var actionId = action.Id;
+            var queued =
+                _actionRegistry
+                    .GetQueuedActions(person);
 
-                AvailableActions.Add(
-                    new AvailableActionViewModel(
-                        action,
-                        () => ExecuteAction(actionId)));
+            if (queued.Count > 0)
+            {
+                HasQueuedAction = true;
+
+                QueuedActionText =
+                    $"Queued: {queued[0].Label}";
+            }
+            else
+            {
+                foreach (var action in
+                    _actionRegistry
+                        .GetAvailableActions(
+                            person,
+                            person))
+                {
+                    var actionId =
+                        action.Id;
+
+                    AvailableActions.Add(
+                        new AvailableActionViewModel(
+                            action,
+                            () =>
+                                ExecuteAction(
+                                    actionId)));
+                }
             }
         }
 
-        OnPropertyChanged(nameof(ActionsEmptyText));
+        OnPropertyChanged(
+            nameof(ActionsEmptyText));
     }
 
-    private void ExecuteAction(string actionId)
+    private void ExecuteAction(
+        string actionId)
     {
-        var person = FindSelectedPerson();
+        var person =
+            FindSelectedPerson();
 
         if (person is null)
             return;
@@ -374,8 +591,11 @@ public sealed class MainWindowViewModel : ViewModelBase
         if (SelectedPerson is null)
             return null;
 
-        return _gameState.People.FirstOrDefault(
-            x => x.Id == SelectedPerson.Id);
+        return _gameState.People
+            .FirstOrDefault(
+                x =>
+                    x.Id
+                    == SelectedPerson.Id);
     }
 
     private void RefreshAlbum()
@@ -383,27 +603,103 @@ public sealed class MainWindowViewModel : ViewModelBase
         AlbumEvents.Clear();
 
         foreach (var gameEvent in
-            _eventBus.GetEventsForYear(AlbumYear))
+            _eventBus.GetEventsForYear(
+                AlbumYear))
         {
             AlbumEvents.Add(
-                new AlbumEventViewModel(gameEvent));
+                new AlbumEventViewModel(
+                    gameEvent));
         }
 
-        OnPropertyChanged(nameof(AlbumEmptyText));
+        OnPropertyChanged(
+            nameof(AlbumEmptyText));
     }
 
     private void OnEventPublished(
         object? sender,
         GameEvent gameEvent)
     {
-        if (gameEvent.Year == AlbumYear)
+        if (gameEvent.Year
+            == AlbumYear)
+        {
             RefreshAlbum();
+        }
     }
 
-    private static string PersonName(IPerson? person)
+    private string PersonName(
+        IPerson? person)
     {
-        return person is null
+        if (person is null)
+            return "None";
+
+        return _familyService is null
+            ? $"{person.Name} {person.Surname}"
+            : _familyService.GetDisplayName(
+                person);
+    }
+
+    private string FormatPeople(
+        IReadOnlyList<IPerson> people)
+    {
+        return people.Count == 0
             ? "None"
-            : $"{person.Name} {person.Surname}";
+            : string.Join(
+                ", ",
+                people.Select(
+                    PersonName));
+    }
+
+    private static string FormatNames(
+        IReadOnlyList<string> names)
+    {
+        return names.Count == 0
+            ? "None"
+            : string.Join(
+                ", ",
+                names);
+    }
+
+    private string FormatRelationshipHistory(
+        IReadOnlyList<RelationshipHistoryInfo> history)
+    {
+        if (history.Count == 0)
+            return "None";
+
+        var lines =
+            new List<string>();
+
+        foreach (var relationship in
+            history.OrderBy(
+                x => x.StartYear))
+        {
+            var spouse =
+                _gameState.People
+                    .FirstOrDefault(
+                        x =>
+                            x.Id
+                            == relationship.SpouseId);
+
+            var spouseName =
+                PersonName(spouse);
+
+            var end =
+                relationship.EndYear is int endYear
+                    ? endYear.ToString()
+                    : "present";
+
+            var reason =
+                string.IsNullOrWhiteSpace(
+                    relationship.EndReason)
+                    ? string.Empty
+                    : $" ({relationship.EndReason})";
+
+            lines.Add(
+                $"{relationship.StartYear}–{end}: " +
+                $"{spouseName}{reason}");
+        }
+
+        return string.Join(
+            Environment.NewLine,
+            lines);
     }
 }

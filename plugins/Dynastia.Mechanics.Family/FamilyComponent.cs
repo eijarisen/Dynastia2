@@ -13,4 +13,7 @@ public sealed class FamilyComponent
     public Guid? SpouseId { get; set; }
 
     public List<Guid> ChildrenIds { get; } = [];
+    public List<MarriageRecord> MarriageHistory { get; } = [];
+
+    public GeneratedFamilyBackgroundInfo? GeneratedBackground { get; set; }
 }

@@ -25,41 +25,85 @@ public partial class App : Application
         if (ApplicationLifetime
             is IClassicDesktopStyleApplicationLifetime desktop)
         {
-            var gameState = new GameState();
-            var registry = new YearSystemRegistry();
-            var selectionService = new SelectionService();
-            var gameRandom = new GameRandom();
-            var gameCalendar = new GameCalendar();
-            var eventBus = new GameEventBus();
+            var gameState =
+                new GameState();
 
-            var dataDirectory = Path.Combine(
-                AppContext.BaseDirectory,
-                "Data");
+            var registry =
+                new YearSystemRegistry();
+
+            var selectionService =
+                new SelectionService();
+
+            var gameRandom =
+                new GameRandom();
+
+            var gameCalendar =
+                new GameCalendar();
+
+            var eventBus =
+                new GameEventBus();
+
+            var dataDirectory =
+                Path.Combine(
+                    AppContext.BaseDirectory,
+                    "Data");
 
             var dataService =
-                new JsonGameDataService(dataDirectory);
+                new JsonGameDataService(
+                    dataDirectory);
 
-            var actionRegistry = new ActionRegistry(
-                gameState,
-                eventBus,
+            var actionRegistry =
+                new ActionRegistry(
+                    gameState,
+                    eventBus,
+                    gameRandom);
+
+            registry.Register(
+                new QueuedActionYearSystem(
+                    actionRegistry,
+                    YearPhase.QueuedActionsEarly,
+                    "actions.queued.early"));
+
+            registry.Register(
+                new QueuedActionYearSystem(
+                    actionRegistry,
+                    YearPhase.LifeEvents,
+                    "actions.queued.life_events"));
+
+            var pluginContext =
+                new GamePluginContext();
+
+            pluginContext.AddService<IGameState>(
+                gameState);
+
+            pluginContext.AddService<IYearSystemRegistry>(
+                registry);
+
+            pluginContext.AddService<ISelectionService>(
+                selectionService);
+
+            pluginContext.AddService<IGameRandom>(
                 gameRandom);
 
-            var pluginContext = new GamePluginContext();
+            pluginContext.AddService<IGameCalendar>(
+                gameCalendar);
 
-            pluginContext.AddService<IGameState>(gameState);
-            pluginContext.AddService<IYearSystemRegistry>(registry);
-            pluginContext.AddService<ISelectionService>(selectionService);
-            pluginContext.AddService<IGameRandom>(gameRandom);
-            pluginContext.AddService<IGameCalendar>(gameCalendar);
-            pluginContext.AddService<IGameEventBus>(eventBus);
-            pluginContext.AddService<IGameDataService>(dataService);
-            pluginContext.AddService<IActionRegistry>(actionRegistry);
+            pluginContext.AddService<IGameEventBus>(
+                eventBus);
 
-            var pluginsDirectory = Path.Combine(
-                AppContext.BaseDirectory,
-                "plugins");
+            pluginContext.AddService<IGameDataService>(
+                dataService);
 
-            var pluginLoader = new PluginLoader();
+            pluginContext.AddService<IActionRegistry>(
+                actionRegistry);
+
+            var pluginsDirectory =
+                Path.Combine(
+                    AppContext.BaseDirectory,
+                    "plugins");
+
+            var pluginLoader =
+                new PluginLoader();
 
             pluginLoader.LoadPlugins(
                 pluginsDirectory,
@@ -85,19 +129,21 @@ public partial class App : Application
             var healthService =
                 pluginContext.GetService<IHealthService>();
 
-            desktop.MainWindow = new MainWindow
-            {
-                DataContext = new MainWindowViewModel(
-                    gameState,
-                    newGameService,
-                    yearProcessor,
-                    selectionService,
-                    statsService,
-                    familyService,
-                    healthService,
-                    eventBus,
-                    actionRegistry)
-            };
+            desktop.MainWindow =
+                new MainWindow
+                {
+                    DataContext =
+                        new MainWindowViewModel(
+                            gameState,
+                            newGameService,
+                            yearProcessor,
+                            selectionService,
+                            statsService,
+                            familyService,
+                            healthService,
+                            eventBus,
+                            actionRegistry)
+                };
         }
 
         base.OnFrameworkInitializationCompleted();

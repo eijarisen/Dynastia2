@@ -1,0 +1,12 @@
+{
+  "id": "dynastia.relationships",
+  "name": "Standard Relationships",
+  "version": "0.1.0",
+  "apiVersion": 1,
+  "assembly": "Dynastia.Mechanics.Relationships.dll",
+  "entryType": "Dynastia.Mechanics.Relationships.RelationshipsPlugin",
+  "dependencies": [
+    "dynastia.family",
+    "dynastia.stats"
+  ]
+}

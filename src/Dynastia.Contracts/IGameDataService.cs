@@ -6,4 +6,6 @@ public interface IGameDataService
 
     IReadOnlyList<WeightedStringEntry> GetWeightedStringList(
         string relativePath);
+
+    string ReadText(string relativePath);
 }

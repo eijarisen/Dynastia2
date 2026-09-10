@@ -15,7 +15,7 @@ public sealed class HealthViewModel
                 ? "No health conditions"
                 : string.Join(
                     ", ",
-                    snapshot.Conditions.Select(x => x.Name));
+                    snapshot.Conditions.Select(FormatCondition));
     }
 
     public double Current { get; }
@@ -23,7 +23,21 @@ public sealed class HealthViewModel
     public double Percentage { get; }
 
     public string HealthText =>
-        $"Health: {Math.Round(Current)}/{Math.Round(Maximum)}";
+        $"Health: {Current:0.#}/{Maximum:0.#}";
 
     public string ConditionsText { get; }
+
+    private static string FormatCondition(
+        HealthConditionInfo condition)
+    {
+        if (condition.RemainingYears is int years
+            && !condition.Type.Equals(
+                "terminal",
+                StringComparison.OrdinalIgnoreCase))
+        {
+            return $"{condition.Name} ({years}y)";
+        }
+
+        return condition.Name;
+    }
 }

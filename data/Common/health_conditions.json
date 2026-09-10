@@ -1,0 +1,336 @@
+[
+  {
+    "id": "common_cold",
+    "name": "Common Cold",
+    "type": "seasonal",
+    "durationMin": 1,
+    "durationMax": 2,
+    "healthImpact": -3,
+    "weight": 30,
+    "randomIllness": true
+  },
+  {
+    "id": "stomach_bug",
+    "name": "Stomach Bug",
+    "type": "seasonal",
+    "durationMin": 1,
+    "durationMax": 2,
+    "healthImpact": -6,
+    "weight": 20,
+    "randomIllness": true
+  },
+  {
+    "id": "food_poisoning",
+    "name": "Food Poisoning",
+    "type": "curable",
+    "durationMin": 1,
+    "durationMax": 2,
+    "healthImpact": -8,
+    "weight": 10,
+    "randomIllness": true
+  },
+  {
+    "id": "migraines",
+    "name": "Migraines",
+    "type": "seasonal",
+    "durationMin": 1,
+    "durationMax": 2,
+    "healthImpact": -5,
+    "weight": 10,
+    "randomIllness": true
+  },
+  {
+    "id": "influenza",
+    "name": "Influenza",
+    "type": "seasonal",
+    "durationMin": 1,
+    "durationMax": 3,
+    "healthImpact": -8,
+    "weight": 15,
+    "randomIllness": true
+  },
+  {
+    "id": "pneumonia",
+    "name": "Pneumonia",
+    "type": "curable",
+    "durationMin": 2,
+    "durationMax": 5,
+    "healthImpact": -12,
+    "weight": 8,
+    "randomIllness": true
+  },
+  {
+    "id": "broken_arm",
+    "name": "Broken Arm",
+    "type": "curable",
+    "durationMin": 3,
+    "durationMax": 6,
+    "healthImpact": -6,
+    "weight": 5,
+    "randomIllness": true
+  },
+  {
+    "id": "tuberculosis",
+    "name": "Tuberculosis",
+    "type": "curable",
+    "durationMin": 6,
+    "durationMax": 12,
+    "healthImpact": -14,
+    "weight": 2,
+    "randomIllness": true
+  },
+  {
+    "id": "heart_condition",
+    "name": "Heart Condition",
+    "type": "permanent",
+    "healthImpact": -7,
+    "weight": 3,
+    "randomIllness": true
+  },
+  {
+    "id": "cancer",
+    "name": "Cancer",
+    "type": "terminal",
+    "durationMin": 6,
+    "durationMax": 18,
+    "healthImpact": -12,
+    "weight": 4,
+    "randomIllness": true
+  },
+  {
+    "id": "chronic_fatigue",
+    "name": "Chronic Fatigue",
+    "type": "permanent",
+    "healthImpact": -4,
+    "weight": 5,
+    "randomIllness": true
+  },
+  {
+    "id": "arthritis",
+    "name": "Arthritis",
+    "type": "permanent",
+    "healthImpact": -3,
+    "weight": 6,
+    "randomIllness": true
+  },
+  {
+    "id": "asthma",
+    "name": "Asthma",
+    "type": "permanent",
+    "healthImpact": -3,
+    "weight": 7,
+    "randomIllness": true
+  },
+  {
+    "id": "depression",
+    "name": "Depression",
+    "type": "curable",
+    "healthImpact": -5,
+    "weight": 8,
+    "randomIllness": true,
+    "durationMin": 3,
+    "durationMax": 12
+  },
+  {
+    "id": "anxiety",
+    "name": "Anxiety",
+    "type": "curable",
+    "healthImpact": -4,
+    "weight": 8,
+    "randomIllness": true,
+    "durationMin": 3,
+    "durationMax": 12
+  },
+  {
+    "id": "alcoholism",
+    "name": "Alcoholism",
+    "type": "curable",
+    "healthImpact": -7,
+    "weight": 5,
+    "randomIllness": true,
+    "durationMin": 6,
+    "durationMax": 18
+  },
+  {
+    "id": "paraplegia",
+    "name": "Paraplegia",
+    "type": "permanent",
+    "healthImpact": -6,
+    "weight": 1,
+    "randomIllness": true
+  },
+  {
+    "id": "down_syndrome",
+    "name": "Down Syndrome",
+    "type": "birth_defect",
+    "healthImpact": -2,
+    "weight": 0,
+    "randomIllness": false
+  },
+  {
+    "id": "cerebral_palsy",
+    "name": "Cerebral Palsy",
+    "type": "birth_defect",
+    "healthImpact": -5,
+    "weight": 0,
+    "randomIllness": false
+  },
+  {
+    "id": "autism",
+    "name": "Autism",
+    "type": "birth_defect",
+    "healthImpact": 0,
+    "weight": 0,
+    "randomIllness": false
+  },
+  {
+    "id": "seasonal_allergies",
+    "name": "Seasonal Allergies",
+    "type": "seasonal",
+    "durationMin": 1,
+    "durationMax": 3,
+    "healthImpact": -2,
+    "weight": 18,
+    "randomIllness": true
+  },
+  {
+    "id": "sinus_infection",
+    "name": "Sinus Infection",
+    "type": "curable",
+    "durationMin": 1,
+    "durationMax": 2,
+    "healthImpact": -4,
+    "weight": 10,
+    "randomIllness": true
+  },
+  {
+    "id": "bronchitis",
+    "name": "Bronchitis",
+    "type": "curable",
+    "durationMin": 1,
+    "durationMax": 3,
+    "healthImpact": -6,
+    "weight": 8,
+    "randomIllness": true
+  },
+  {
+    "id": "urinary_tract_infection",
+    "name": "Urinary Tract Infection",
+    "type": "curable",
+    "durationMin": 1,
+    "durationMax": 2,
+    "healthImpact": -5,
+    "weight": 6,
+    "randomIllness": true
+  },
+  {
+    "id": "kidney_stones",
+    "name": "Kidney Stones",
+    "type": "curable",
+    "durationMin": 1,
+    "durationMax": 2,
+    "healthImpact": -8,
+    "weight": 4,
+    "randomIllness": true
+  },
+  {
+    "id": "appendicitis",
+    "name": "Appendicitis",
+    "type": "curable",
+    "durationMin": 1,
+    "durationMax": 2,
+    "healthImpact": -12,
+    "weight": 2,
+    "randomIllness": true
+  },
+  {
+    "id": "sprained_ankle",
+    "name": "Sprained Ankle",
+    "type": "curable",
+    "durationMin": 1,
+    "durationMax": 2,
+    "healthImpact": -3,
+    "weight": 6,
+    "randomIllness": true
+  },
+  {
+    "id": "concussion",
+    "name": "Concussion",
+    "type": "curable",
+    "durationMin": 1,
+    "durationMax": 3,
+    "healthImpact": -7,
+    "weight": 3,
+    "randomIllness": true
+  },
+  {
+    "id": "broken_leg",
+    "name": "Broken Leg",
+    "type": "curable",
+    "durationMin": 4,
+    "durationMax": 6,
+    "healthImpact": -8,
+    "weight": 3,
+    "randomIllness": true
+  },
+  {
+    "id": "hypertension",
+    "name": "Hypertension",
+    "type": "permanent",
+    "healthImpact": -2,
+    "weight": 6,
+    "randomIllness": true
+  },
+  {
+    "id": "diabetes",
+    "name": "Diabetes",
+    "type": "permanent",
+    "healthImpact": -5,
+    "weight": 4,
+    "randomIllness": true
+  },
+  {
+    "id": "epilepsy",
+    "name": "Epilepsy",
+    "type": "permanent",
+    "healthImpact": -5,
+    "weight": 2,
+    "randomIllness": true
+  },
+  {
+    "id": "copd",
+    "name": "COPD",
+    "type": "permanent",
+    "healthImpact": -6,
+    "weight": 2,
+    "randomIllness": true
+  },
+  {
+    "id": "chronic_kidney_disease",
+    "name": "Chronic Kidney Disease",
+    "type": "permanent",
+    "healthImpact": -7,
+    "weight": 1,
+    "randomIllness": true
+  },
+  {
+    "id": "heart_attack",
+    "name": "Heart Attack",
+    "type": "terminal",
+    "durationMin": 1,
+    "durationMax": 2,
+    "healthImpact": -18,
+    "weight": 1,
+    "randomIllness": true
+  },
+  {
+    "id": "sepsis",
+    "name": "Sepsis",
+    "type": "terminal",
+    "durationMin": 1,
+    "durationMax": 2,
+    "healthImpact": -20,
+    "weight": 1,
+    "randomIllness": true
+  }
+]

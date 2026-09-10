@@ -74,7 +74,6 @@ public sealed class JsonGameDataService : IGameDataService
             var value = line[..separator].Trim();
             var weightText = line[(separator + 1)..].Trim();
 
-            // Optional conventional CSV header.
             if (value.Equals("name", StringComparison.OrdinalIgnoreCase)
                 && weightText.Equals("weight", StringComparison.OrdinalIgnoreCase))
             {
@@ -115,6 +114,12 @@ public sealed class JsonGameDataService : IGameDataService
 
         _weightedStringLists[relativePath] = result;
         return result;
+    }
+
+    public string ReadText(string relativePath)
+    {
+        return File.ReadAllText(
+            ResolvePath(relativePath));
     }
 
     private string ResolvePath(string relativePath)

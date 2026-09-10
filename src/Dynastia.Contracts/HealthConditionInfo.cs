@@ -4,4 +4,5 @@ public sealed record HealthConditionInfo(
     string Id,
     string Name,
     string Type,
-    double HealthImpact);
+    double HealthImpact,
+    int? RemainingYears);

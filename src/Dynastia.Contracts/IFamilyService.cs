@@ -25,6 +25,8 @@ public interface IFamilyService
         IPerson first,
         IPerson second);
 
+    void ClearCurrentSpouse(IPerson person);
+
     bool IsBloodline(IPerson person);
     bool IsMaleLineage(IPerson person);
 }

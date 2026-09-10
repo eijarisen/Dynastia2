@@ -1,0 +1,13 @@
+{
+  "id": "dynastia.mortality",
+  "name": "Standard Mortality",
+  "version": "0.1.0",
+  "apiVersion": 1,
+  "assembly": "Dynastia.Mechanics.Mortality.dll",
+  "entryType": "Dynastia.Mechanics.Mortality.MortalityPlugin",
+  "dependencies": [
+    "dynastia.stats",
+    "dynastia.health",
+    "dynastia.family"
+  ]
+}

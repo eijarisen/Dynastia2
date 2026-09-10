@@ -61,11 +61,11 @@ public sealed class StandardFamilyService : IFamilyService
     {
         var component = GetRequired(person);
 
-    return component.ChildrenIds
-        .Select(id => FindPerson(id))
-        .Where(p => p is not null)
-        .Cast<IPerson>()
-        .ToList();
+        return component.ChildrenIds
+            .Select(id => FindPerson(id))
+            .Where(person => person is not null)
+            .Cast<IPerson>()
+            .ToList();
     }
 
     public void SetParents(
@@ -79,14 +79,10 @@ public sealed class StandardFamilyService : IFamilyService
         childFamily.MotherId = mother?.Id;
 
         if (father is not null)
-        {
             AddChild(father, child);
-        }
 
         if (mother is not null)
-        {
             AddChild(mother, child);
-        }
     }
 
     public void SetSpouses(
@@ -103,6 +99,16 @@ public sealed class StandardFamilyService : IFamilyService
         second.Tags.Add("relationship.married");
     }
 
+    public void ClearCurrentSpouse(IPerson person)
+    {
+        GetRequired(person).SpouseId = null;
+
+        person.Tags.Remove("relationship.married");
+
+        if (!person.Tags.Has("state.dead"))
+            person.Tags.Add("relationship.single");
+    }
+
     public bool IsBloodline(IPerson person)
     {
         return person.Tags.Has("family.bloodline");
@@ -113,14 +119,14 @@ public sealed class StandardFamilyService : IFamilyService
         return person.Tags.Has("lineage.male");
     }
 
-    private void AddChild(IPerson parent, IPerson child)
+    private void AddChild(
+        IPerson parent,
+        IPerson child)
     {
         var family = GetRequired(parent);
 
         if (!family.ChildrenIds.Contains(child.Id))
-        {
             family.ChildrenIds.Add(child.Id);
-        }
     }
 
     private IPerson? FindPerson(Guid? id)
@@ -136,6 +142,7 @@ public sealed class StandardFamilyService : IFamilyService
     {
         return person.Components.Get<FamilyComponent>()
             ?? throw new InvalidOperationException(
-                $"Person '{person.Name} {person.Surname}' has no family component.");
+                $"Person '{person.Name} {person.Surname}' " +
+                "has no family component.");
     }
 }

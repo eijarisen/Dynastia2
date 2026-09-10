@@ -26,6 +26,11 @@ public sealed class FamilyPlugin : IGamePlugin
             ?? throw new InvalidOperationException(
                 "Game random service is unavailable.");
 
+        var calendar =
+            context.GetService<IGameCalendar>()
+            ?? throw new InvalidOperationException(
+                "Game calendar service is unavailable.");
+
         var familyService =
             new StandardFamilyService(gameState);
 
@@ -35,7 +40,8 @@ public sealed class FamilyPlugin : IGamePlugin
                 familyService,
                 selection,
                 data,
-                random);
+                random,
+                calendar);
 
         context.AddService<IFamilyService>(
             familyService);

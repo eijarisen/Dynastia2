@@ -5,28 +5,31 @@ namespace Dynastia.Mechanics.Family;
 
 public sealed class StandardNewGameService : INewGameService
 {
-    private const string MaleNamesPath = "Names/polish_male.json";
-    private const string FemaleNamesPath = "Names/polish_female.json";
-    private const string SurnamesPath = "Names/polish_surnames.json";
+    private const string MaleNamesPath = "Names/polish_male.csv";
+    private const string FemaleNamesPath = "Names/polish_female.csv";
+    private const string SurnamesPath = "Names/polish_surnames.csv";
 
     private readonly IGameState _gameState;
     private readonly IFamilyService _family;
     private readonly ISelectionService _selection;
     private readonly IGameDataService _data;
     private readonly IGameRandom _random;
+    private readonly IGameCalendar _calendar;
 
     public StandardNewGameService(
         IGameState gameState,
         IFamilyService family,
         ISelectionService selection,
         IGameDataService data,
-        IGameRandom random)
+        IGameRandom random,
+        IGameCalendar calendar)
     {
         _gameState = gameState;
         _family = family;
         _selection = selection;
         _data = data;
         _random = random;
+        _calendar = calendar;
     }
 
     public IPerson StartNewGame(string dynastySurname)
@@ -39,9 +42,14 @@ public sealed class StandardNewGameService : INewGameService
 
         var father =
             _gameState.CreatePerson(
-                RandomFrom(MaleNamesPath),
+                RandomWeightedFrom(MaleNamesPath),
                 surname,
                 45);
+
+        father.BirthDate = RandomDateInYear(
+            _gameState.Year - father.Age);
+
+        father.DeathDate = new GameDate(1899);
 
         _family.InitializePerson(
             father,
@@ -53,9 +61,16 @@ public sealed class StandardNewGameService : INewGameService
 
         var mother =
             _gameState.CreatePerson(
-                RandomFrom(FemaleNamesPath),
+                RandomWeightedFrom(FemaleNamesPath),
                 surname,
                 42);
+
+        mother.MaidenName = surname;
+
+        mother.BirthDate = RandomDateInYear(
+            _gameState.Year - mother.Age);
+
+        mother.DeathDate = new GameDate(1899);
 
         _family.InitializePerson(
             mother,
@@ -67,9 +82,12 @@ public sealed class StandardNewGameService : INewGameService
 
         var founder =
             _gameState.CreatePerson(
-                RandomFrom(MaleNamesPath),
+                RandomWeightedFrom(MaleNamesPath),
                 surname,
                 18);
+
+        founder.BirthDate = RandomDateInYear(
+            _gameState.Year - founder.Age);
 
         _family.InitializePerson(
             founder,
@@ -93,6 +111,20 @@ public sealed class StandardNewGameService : INewGameService
         return founder;
     }
 
+    private GameDate RandomDateInYear(int year)
+    {
+        var month = _random.NextInt(1, 12);
+
+        var day = _random.NextInt(
+            1,
+            _calendar.GetDaysInMonth(year, month));
+
+        return new GameDate(
+            Year: year,
+            Month: month,
+            Day: day);
+    }
+
     private string NormalizeOrGenerateSurname(string? input)
     {
         var cleaned = Regex.Replace(
@@ -101,22 +133,32 @@ public sealed class StandardNewGameService : INewGameService
             string.Empty);
 
         if (cleaned.Length < 2)
-        {
-            cleaned = RandomFrom(SurnamesPath);
-        }
-
-        if (cleaned.Length == 0)
-            return RandomFrom(SurnamesPath);
+            cleaned = RandomWeightedFrom(SurnamesPath);
 
         return char.ToUpperInvariant(cleaned[0])
             + cleaned[1..].ToLowerInvariant();
     }
 
-    private string RandomFrom(string relativePath)
+    private string RandomWeightedFrom(string relativePath)
     {
-        var values = _data.GetStringList(relativePath);
+        var entries =
+            _data.GetWeightedStringList(relativePath);
 
-        return values[
-            _random.NextInt(0, values.Count - 1)];
+        var totalWeight =
+            entries.Sum(entry => (double)entry.Weight);
+
+        var roll =
+            _random.NextDouble() * totalWeight;
+
+        foreach (var entry in entries)
+        {
+            if (roll < entry.Weight)
+                return entry.Value;
+
+            roll -= entry.Weight;
+        }
+
+        // Floating-point fallback.
+        return entries[^1].Value;
     }
 }

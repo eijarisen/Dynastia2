@@ -29,6 +29,7 @@ public partial class App : Application
             var registry = new YearSystemRegistry();
             var selectionService = new SelectionService();
             var gameRandom = new GameRandom();
+            var gameCalendar = new GameCalendar();
             var eventBus = new GameEventBus();
 
             var dataDirectory = Path.Combine(
@@ -49,6 +50,7 @@ public partial class App : Application
             pluginContext.AddService<IYearSystemRegistry>(registry);
             pluginContext.AddService<ISelectionService>(selectionService);
             pluginContext.AddService<IGameRandom>(gameRandom);
+            pluginContext.AddService<IGameCalendar>(gameCalendar);
             pluginContext.AddService<IGameEventBus>(eventBus);
             pluginContext.AddService<IGameDataService>(dataService);
             pluginContext.AddService<IActionRegistry>(actionRegistry);

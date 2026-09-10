@@ -16,7 +16,6 @@
 
     <Grid>
 
-        <!-- Start screen -->
         <Border
             IsVisible="{Binding IsStartScreenVisible}"
             HorizontalAlignment="Center"
@@ -49,7 +48,6 @@
             </StackPanel>
         </Border>
 
-        <!-- Game -->
         <Grid
             IsVisible="{Binding IsGameStarted}"
             RowDefinitions="Auto,Auto,Auto,*"
@@ -84,13 +82,11 @@
 
             <Border Grid.Row="1"
                     Padding="12">
-
                 <Grid RowDefinitions="Auto,Auto"
                       RowSpacing="8">
 
                     <Grid ColumnDefinitions="*,Auto,Auto,Auto"
                           ColumnSpacing="8">
-
                         <TextBlock
                             VerticalAlignment="Center"
                             FontSize="18"
@@ -135,7 +131,6 @@
 
             <Border Grid.Row="2"
                     Padding="12">
-
                 <Grid RowDefinitions="Auto,Auto"
                       RowSpacing="8">
 
@@ -233,7 +228,6 @@
 
                 <Border Grid.Column="1"
                         Padding="16">
-
                     <Grid RowDefinitions="Auto,Auto,*"
                           RowSpacing="14">
 
@@ -282,11 +276,16 @@
                         </ItemsControl>
 
                         <TabControl Grid.Row="2">
+
                             <TabItem Header="General">
                                 <StackPanel Margin="12"
                                             Spacing="8">
 
                                     <TextBlock Text="{Binding SelectedPerson.AgeText}" />
+                                    <TextBlock Text="{Binding SelectedPerson.BirthDateText}" />
+                                    <TextBlock Text="{Binding SelectedPerson.DeathDateText}" />
+                                    <TextBlock Text="{Binding SelectedPerson.MaidenNameText}" />
+
                                     <TextBlock Text="{Binding SelectedFamily.Sex, StringFormat='Sex: {0}'}" />
                                     <TextBlock Text="{Binding SelectedFamily.Generation, StringFormat='Generation: {0}'}" />
                                     <TextBlock Text="{Binding SelectedFamily.Bloodline, StringFormat='Bloodline: {0}'}" />
@@ -328,6 +327,7 @@
                                     TextWrapping="Wrap"
                                     Text="Biography events will appear here." />
                             </TabItem>
+
                         </TabControl>
                     </Grid>
                 </Border>

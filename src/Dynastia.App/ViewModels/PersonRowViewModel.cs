@@ -23,6 +23,21 @@ public sealed class PersonRowViewModel
     public string AgeText =>
         $"Age: {_person.Age}";
 
+    public string BirthDateText =>
+        _person.BirthDate is GameDate date
+            ? $"Born: {date}"
+            : "Born: Unknown";
+
+    public string DeathDateText =>
+        _person.DeathDate is GameDate date
+            ? $"Died: {date}"
+            : string.Empty;
+
+    public string MaidenNameText =>
+        string.IsNullOrWhiteSpace(_person.MaidenName)
+            ? string.Empty
+            : $"Maiden name: {_person.MaidenName}";
+
     public string StatusText =>
         _person.Tags.Has("state.dead")
             ? "Deceased"

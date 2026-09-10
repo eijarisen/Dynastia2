@@ -7,9 +7,11 @@ public sealed class Person : IPerson
     public Person(string name, string surname, int age)
     {
         Id = Guid.NewGuid();
+
         Name = name;
         Surname = surname;
         Age = age;
+
         Tags = new TagSet();
         Components = new ComponentContainer();
     }
@@ -18,7 +20,12 @@ public sealed class Person : IPerson
 
     public string Name { get; set; }
     public string Surname { get; set; }
+    public string? MaidenName { get; set; }
+
     public int Age { get; set; }
+
+    public GameDate? BirthDate { get; set; }
+    public GameDate? DeathDate { get; set; }
 
     public ITagSet Tags { get; }
     public IComponentContainer Components { get; }

@@ -5,6 +5,7 @@ using Dynastia.App.ViewModels;
 using Dynastia.App.Views;
 using Dynastia.Contracts;
 using Dynastia.Core.Actions;
+using Dynastia.Core.Data;
 using Dynastia.Core.Events;
 using Dynastia.Core.Plugins;
 using Dynastia.Core.Simulation;
@@ -30,6 +31,13 @@ public partial class App : Application
             var gameRandom = new GameRandom();
             var eventBus = new GameEventBus();
 
+            var dataDirectory = Path.Combine(
+                AppContext.BaseDirectory,
+                "Data");
+
+            var dataService =
+                new JsonGameDataService(dataDirectory);
+
             var actionRegistry = new ActionRegistry(
                 gameState,
                 eventBus,
@@ -42,6 +50,7 @@ public partial class App : Application
             pluginContext.AddService<ISelectionService>(selectionService);
             pluginContext.AddService<IGameRandom>(gameRandom);
             pluginContext.AddService<IGameEventBus>(eventBus);
+            pluginContext.AddService<IGameDataService>(dataService);
             pluginContext.AddService<IActionRegistry>(actionRegistry);
 
             var pluginsDirectory = Path.Combine(
@@ -54,13 +63,11 @@ public partial class App : Application
                 pluginsDirectory,
                 pluginContext);
 
-            var newGame =
+            var newGameService =
                 pluginContext.GetService<INewGameService>()
                 ?? throw new InvalidOperationException(
                     "No New Game service was registered. " +
                     "Is dynastia.family installed?");
-
-            newGame.StartNewGame("Kowalski");
 
             var yearProcessor =
                 new YearProcessor(
@@ -77,6 +84,7 @@ public partial class App : Application
             {
                 DataContext = new MainWindowViewModel(
                     gameState,
+                    newGameService,
                     yearProcessor,
                     selectionService,
                     statsService,

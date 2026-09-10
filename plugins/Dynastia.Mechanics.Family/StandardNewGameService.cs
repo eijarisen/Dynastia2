@@ -1,35 +1,47 @@
+using System.Text.RegularExpressions;
 using Dynastia.Contracts;
 
 namespace Dynastia.Mechanics.Family;
 
 public sealed class StandardNewGameService : INewGameService
 {
+    private const string MaleNamesPath = "Names/polish_male.json";
+    private const string FemaleNamesPath = "Names/polish_female.json";
+    private const string SurnamesPath = "Names/polish_surnames.json";
+
     private readonly IGameState _gameState;
     private readonly IFamilyService _family;
     private readonly ISelectionService _selection;
+    private readonly IGameDataService _data;
+    private readonly IGameRandom _random;
 
     public StandardNewGameService(
         IGameState gameState,
         IFamilyService family,
-        ISelectionService selection)
+        ISelectionService selection,
+        IGameDataService data,
+        IGameRandom random)
     {
         _gameState = gameState;
         _family = family;
         _selection = selection;
+        _data = data;
+        _random = random;
     }
 
     public IPerson StartNewGame(string dynastySurname)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(dynastySurname);
+        var surname = NormalizeOrGenerateSurname(dynastySurname);
 
         _gameState.ClearPeople();
         _gameState.Year = 1900;
-        _gameState.DynastySurname = dynastySurname.Trim();
+        _gameState.DynastySurname = surname;
 
-        // Temporary fixed names.
-        // Name/data generation will be moved into the data system next.
         var father =
-            _gameState.CreatePerson("Jan", dynastySurname, 45);
+            _gameState.CreatePerson(
+                RandomFrom(MaleNamesPath),
+                surname,
+                45);
 
         _family.InitializePerson(
             father,
@@ -40,7 +52,10 @@ public sealed class StandardNewGameService : INewGameService
         father.Tags.Add("family.bloodline");
 
         var mother =
-            _gameState.CreatePerson("Anna", dynastySurname, 42);
+            _gameState.CreatePerson(
+                RandomFrom(FemaleNamesPath),
+                surname,
+                42);
 
         _family.InitializePerson(
             mother,
@@ -51,7 +66,10 @@ public sealed class StandardNewGameService : INewGameService
         _family.SetSpouses(father, mother);
 
         var founder =
-            _gameState.CreatePerson("Piotr", dynastySurname, 18);
+            _gameState.CreatePerson(
+                RandomFrom(MaleNamesPath),
+                surname,
+                18);
 
         _family.InitializePerson(
             founder,
@@ -73,5 +91,32 @@ public sealed class StandardNewGameService : INewGameService
         _selection.SelectedPersonId = founder.Id;
 
         return founder;
+    }
+
+    private string NormalizeOrGenerateSurname(string? input)
+    {
+        var cleaned = Regex.Replace(
+            input ?? string.Empty,
+            @"[^a-zA-ZąćęłńóśźżĄĆĘŁŃÓŚŹŻ\s]",
+            string.Empty);
+
+        if (cleaned.Length < 2)
+        {
+            cleaned = RandomFrom(SurnamesPath);
+        }
+
+        if (cleaned.Length == 0)
+            return RandomFrom(SurnamesPath);
+
+        return char.ToUpperInvariant(cleaned[0])
+            + cleaned[1..].ToLowerInvariant();
+    }
+
+    private string RandomFrom(string relativePath)
+    {
+        var values = _data.GetStringList(relativePath);
+
+        return values[
+            _random.NextInt(0, values.Count - 1)];
     }
 }

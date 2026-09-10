@@ -14,285 +14,324 @@
     MinHeight="650"
     Title="Dynastia">
 
-    <Grid RowDefinitions="Auto,Auto,Auto,*"
-          Margin="16"
-          RowSpacing="12">
+    <Grid>
 
-        <Border Padding="16">
-            <Grid ColumnDefinitions="*,Auto,Auto"
-                  ColumnSpacing="16">
+        <!-- Start screen -->
+        <Border
+            IsVisible="{Binding IsStartScreenVisible}"
+            HorizontalAlignment="Center"
+            VerticalAlignment="Center"
+            Padding="28"
+            MinWidth="380">
 
+            <StackPanel Spacing="14">
                 <TextBlock
-                    VerticalAlignment="Center"
-                    FontSize="26"
+                    HorizontalAlignment="Center"
+                    FontSize="34"
                     FontWeight="Bold"
-                    Text="{Binding DynastyTitle}" />
+                    Text="Dynastia" />
 
                 <TextBlock
-                    Grid.Column="1"
-                    VerticalAlignment="Center"
-                    FontSize="24"
-                    FontWeight="SemiBold"
-                    Text="{Binding Year}" />
+                    HorizontalAlignment="Center"
+                    TextWrapping="Wrap"
+                    Text="Enter your family's surname, or leave it blank for a random surname." />
+
+                <TextBox
+                    Watermark="e.g. Nowak"
+                    Text="{Binding SurnameInput, Mode=TwoWay}" />
 
                 <Button
-                    Grid.Column="2"
-                    Padding="18,10"
-                    VerticalAlignment="Center"
-                    Content="Next Year"
-                    Command="{Binding NextYearCommand}" />
-            </Grid>
+                    HorizontalAlignment="Stretch"
+                    HorizontalContentAlignment="Center"
+                    Padding="12"
+                    Content="Start Dynasty"
+                    Command="{Binding StartGameCommand}" />
+            </StackPanel>
         </Border>
 
-        <Border Grid.Row="1"
-                Padding="12">
-
-            <Grid RowDefinitions="Auto,Auto"
-                  RowSpacing="8">
-
-                <Grid ColumnDefinitions="*,Auto,Auto,Auto"
-                      ColumnSpacing="8">
-
-                    <TextBlock
-                        VerticalAlignment="Center"
-                        FontSize="18"
-                        FontWeight="Bold"
-                        Text="Family Album" />
-
-                    <Button
-                        Grid.Column="1"
-                        Content="&lt;"
-                        Command="{Binding PreviousAlbumYearCommand}" />
-
-                    <TextBlock
-                        Grid.Column="2"
-                        VerticalAlignment="Center"
-                        FontWeight="SemiBold"
-                        Text="{Binding AlbumYear}" />
-
-                    <Button
-                        Grid.Column="3"
-                        Content="&gt;"
-                        Command="{Binding NextAlbumYearCommand}" />
-                </Grid>
-
-                <Grid Grid.Row="1">
-                    <TextBlock
-                        Opacity="0.65"
-                        Text="{Binding AlbumEmptyText}" />
-
-                    <ItemsControl ItemsSource="{Binding AlbumEvents}">
-                        <ItemsControl.ItemTemplate>
-                            <DataTemplate x:DataType="vm:AlbumEventViewModel">
-                                <TextBlock
-                                    Margin="0,2"
-                                    TextWrapping="Wrap"
-                                    Text="{Binding Text}" />
-                            </DataTemplate>
-                        </ItemsControl.ItemTemplate>
-                    </ItemsControl>
-                </Grid>
-            </Grid>
-        </Border>
-
-        <Border Grid.Row="2"
-                Padding="12">
-
-            <Grid RowDefinitions="Auto,Auto"
-                  RowSpacing="8">
-
-                <TextBlock
-                    FontSize="18"
-                    FontWeight="Bold"
-                    Text="Actions" />
-
-                <Grid Grid.Row="1">
-                    <TextBlock
-                        Opacity="0.65"
-                        Text="{Binding ActionsEmptyText}" />
-
-                    <ItemsControl ItemsSource="{Binding AvailableActions}">
-                        <ItemsControl.ItemsPanel>
-                            <ItemsPanelTemplate>
-                                <WrapPanel />
-                            </ItemsPanelTemplate>
-                        </ItemsControl.ItemsPanel>
-
-                        <ItemsControl.ItemTemplate>
-                            <DataTemplate x:DataType="vm:AvailableActionViewModel">
-                                <Button
-                                    Margin="0,0,8,6"
-                                    Padding="12,7"
-                                    Command="{Binding ExecuteCommand}"
-                                    ToolTip.Tip="{Binding Description}">
-                                    <StackPanel>
-                                        <TextBlock Text="{Binding Label}" />
-                                        <TextBlock
-                                            FontSize="10"
-                                            Opacity="0.6"
-                                            Text="{Binding ModeText}" />
-                                    </StackPanel>
-                                </Button>
-                            </DataTemplate>
-                        </ItemsControl.ItemTemplate>
-                    </ItemsControl>
-                </Grid>
-            </Grid>
-        </Border>
-
-        <Grid Grid.Row="3"
-              ColumnDefinitions="2*,3*"
-              ColumnSpacing="16">
+        <!-- Game -->
+        <Grid
+            IsVisible="{Binding IsGameStarted}"
+            RowDefinitions="Auto,Auto,Auto,*"
+            Margin="16"
+            RowSpacing="12">
 
             <Border Padding="16">
-                <Grid RowDefinitions="Auto,*"
-                      RowSpacing="12">
+                <Grid ColumnDefinitions="*,Auto,Auto"
+                      ColumnSpacing="16">
 
                     <TextBlock
-                        FontSize="20"
+                        VerticalAlignment="Center"
+                        FontSize="26"
                         FontWeight="Bold"
-                        Text="Family" />
+                        Text="{Binding DynastyTitle}" />
 
-                    <ListBox
-                        Grid.Row="1"
-                        ItemsSource="{Binding People}"
-                        SelectedItem="{Binding SelectedPerson, Mode=TwoWay}"
-                        SelectionMode="Single">
+                    <TextBlock
+                        Grid.Column="1"
+                        VerticalAlignment="Center"
+                        FontSize="24"
+                        FontWeight="SemiBold"
+                        Text="{Binding Year}" />
 
-                        <ListBox.ItemTemplate>
-                            <DataTemplate x:DataType="vm:PersonRowViewModel">
-                                <Grid Margin="6"
-                                      ColumnDefinitions="Auto,*,Auto"
-                                      ColumnSpacing="10">
-
-                                    <TextBlock
-                                        VerticalAlignment="Center"
-                                        FontWeight="Bold"
-                                        Text="{Binding GenerationText}" />
-
-                                    <StackPanel Grid.Column="1"
-                                                Spacing="3">
-                                        <TextBlock
-                                            FontSize="16"
-                                            FontWeight="SemiBold"
-                                            Text="{Binding FullName}" />
-
-                                        <TextBlock
-                                            Opacity="0.7"
-                                            Text="{Binding StatusText}" />
-                                    </StackPanel>
-
-                                    <TextBlock
-                                        Grid.Column="2"
-                                        VerticalAlignment="Center"
-                                        Text="{Binding AgeText}" />
-                                </Grid>
-                            </DataTemplate>
-                        </ListBox.ItemTemplate>
-                    </ListBox>
+                    <Button
+                        Grid.Column="2"
+                        Padding="18,10"
+                        VerticalAlignment="Center"
+                        Content="Next Year"
+                        Command="{Binding NextYearCommand}" />
                 </Grid>
             </Border>
 
-            <Border Grid.Column="1"
-                    Padding="16">
+            <Border Grid.Row="1"
+                    Padding="12">
 
-                <Grid RowDefinitions="Auto,Auto,*"
-                      RowSpacing="14">
+                <Grid RowDefinitions="Auto,Auto"
+                      RowSpacing="8">
 
-                    <StackPanel Spacing="4">
+                    <Grid ColumnDefinitions="*,Auto,Auto,Auto"
+                          ColumnSpacing="8">
+
                         <TextBlock
-                            FontSize="24"
+                            VerticalAlignment="Center"
+                            FontSize="18"
                             FontWeight="Bold"
-                            Text="{Binding SelectedPerson.FullName,
-                                           FallbackValue='Select a person'}" />
+                            Text="Family Album" />
+
+                        <Button
+                            Grid.Column="1"
+                            Content="&lt;"
+                            Command="{Binding PreviousAlbumYearCommand}" />
 
                         <TextBlock
-                            Opacity="0.75"
-                            Text="{Binding SelectedPerson.StatusText}" />
-                    </StackPanel>
+                            Grid.Column="2"
+                            VerticalAlignment="Center"
+                            FontWeight="SemiBold"
+                            Text="{Binding AlbumYear}" />
 
-                    <ItemsControl
-                        Grid.Row="1"
-                        ItemsSource="{Binding SelectedStats}">
+                        <Button
+                            Grid.Column="3"
+                            Content="&gt;"
+                            Command="{Binding NextAlbumYearCommand}" />
+                    </Grid>
 
-                        <ItemsControl.ItemsPanel>
-                            <ItemsPanelTemplate>
-                                <WrapPanel />
-                            </ItemsPanelTemplate>
-                        </ItemsControl.ItemsPanel>
+                    <Grid Grid.Row="1">
+                        <TextBlock
+                            Opacity="0.65"
+                            Text="{Binding AlbumEmptyText}" />
 
-                        <ItemsControl.ItemTemplate>
-                            <DataTemplate x:DataType="contracts:StatValue">
-                                <Border Margin="0,0,8,8"
-                                        Padding="10"
-                                        MinWidth="92">
-                                    <StackPanel HorizontalAlignment="Center">
-                                        <TextBlock
-                                            HorizontalAlignment="Center"
-                                            FontWeight="SemiBold"
-                                            Text="{Binding Name}" />
-
-                                        <TextBlock
-                                            HorizontalAlignment="Center"
-                                            FontSize="20"
-                                            FontWeight="Bold"
-                                            Text="{Binding Value}" />
-                                    </StackPanel>
-                                </Border>
-                            </DataTemplate>
-                        </ItemsControl.ItemTemplate>
-                    </ItemsControl>
-
-                    <TabControl Grid.Row="2">
-                        <TabItem Header="General">
-                            <StackPanel Margin="12"
-                                        Spacing="8">
-
-                                <TextBlock Text="{Binding SelectedPerson.AgeText}" />
-                                <TextBlock Text="{Binding SelectedFamily.Sex, StringFormat='Sex: {0}'}" />
-                                <TextBlock Text="{Binding SelectedFamily.Generation, StringFormat='Generation: {0}'}" />
-                                <TextBlock Text="{Binding SelectedFamily.Bloodline, StringFormat='Bloodline: {0}'}" />
-                                <TextBlock Text="{Binding SelectedFamily.MaleLineage, StringFormat='Male lineage: {0}'}" />
-
-                                <TextBlock
-                                    Margin="0,8,0,0"
-                                    FontWeight="SemiBold"
-                                    Text="Tags" />
-
-                                <TextBlock
-                                    TextWrapping="Wrap"
-                                    Text="{Binding SelectedPerson.TagsText}" />
-                            </StackPanel>
-                        </TabItem>
-
-                        <TabItem Header="About">
-                            <TextBlock
-                                Margin="12"
-                                TextWrapping="Wrap"
-                                Text="About information will be generated from identity and stats." />
-                        </TabItem>
-
-                        <TabItem Header="Relationships">
-                            <StackPanel Margin="12"
-                                        Spacing="8">
-                                <TextBlock Text="{Binding SelectedFamily.Father, StringFormat='Father: {0}'}" />
-                                <TextBlock Text="{Binding SelectedFamily.Mother, StringFormat='Mother: {0}'}" />
-                                <TextBlock Text="{Binding SelectedFamily.Spouse, StringFormat='Spouse: {0}'}" />
-                                <TextBlock
-                                    TextWrapping="Wrap"
-                                    Text="{Binding SelectedFamily.Children, StringFormat='Children: {0}'}" />
-                            </StackPanel>
-                        </TabItem>
-
-                        <TabItem Header="Biography">
-                            <TextBlock
-                                Margin="12"
-                                TextWrapping="Wrap"
-                                Text="Biography events will appear here." />
-                        </TabItem>
-                    </TabControl>
+                        <ItemsControl ItemsSource="{Binding AlbumEvents}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate x:DataType="vm:AlbumEventViewModel">
+                                    <TextBlock
+                                        Margin="0,2"
+                                        TextWrapping="Wrap"
+                                        Text="{Binding Text}" />
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </Grid>
                 </Grid>
             </Border>
+
+            <Border Grid.Row="2"
+                    Padding="12">
+
+                <Grid RowDefinitions="Auto,Auto"
+                      RowSpacing="8">
+
+                    <TextBlock
+                        FontSize="18"
+                        FontWeight="Bold"
+                        Text="Actions" />
+
+                    <Grid Grid.Row="1">
+                        <TextBlock
+                            Opacity="0.65"
+                            Text="{Binding ActionsEmptyText}" />
+
+                        <ItemsControl ItemsSource="{Binding AvailableActions}">
+                            <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <WrapPanel />
+                                </ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
+
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate x:DataType="vm:AvailableActionViewModel">
+                                    <Button
+                                        Margin="0,0,8,6"
+                                        Padding="12,7"
+                                        Command="{Binding ExecuteCommand}"
+                                        ToolTip.Tip="{Binding Description}">
+                                        <StackPanel>
+                                            <TextBlock Text="{Binding Label}" />
+                                            <TextBlock
+                                                FontSize="10"
+                                                Opacity="0.6"
+                                                Text="{Binding ModeText}" />
+                                        </StackPanel>
+                                    </Button>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </Grid>
+                </Grid>
+            </Border>
+
+            <Grid Grid.Row="3"
+                  ColumnDefinitions="2*,3*"
+                  ColumnSpacing="16">
+
+                <Border Padding="16">
+                    <Grid RowDefinitions="Auto,*"
+                          RowSpacing="12">
+
+                        <TextBlock
+                            FontSize="20"
+                            FontWeight="Bold"
+                            Text="Family" />
+
+                        <ListBox
+                            Grid.Row="1"
+                            ItemsSource="{Binding People}"
+                            SelectedItem="{Binding SelectedPerson, Mode=TwoWay}"
+                            SelectionMode="Single">
+
+                            <ListBox.ItemTemplate>
+                                <DataTemplate x:DataType="vm:PersonRowViewModel">
+                                    <Grid Margin="6"
+                                          ColumnDefinitions="Auto,*,Auto"
+                                          ColumnSpacing="10">
+
+                                        <TextBlock
+                                            VerticalAlignment="Center"
+                                            FontWeight="Bold"
+                                            Text="{Binding GenerationText}" />
+
+                                        <StackPanel Grid.Column="1"
+                                                    Spacing="3">
+                                            <TextBlock
+                                                FontSize="16"
+                                                FontWeight="SemiBold"
+                                                Text="{Binding FullName}" />
+
+                                            <TextBlock
+                                                Opacity="0.7"
+                                                Text="{Binding StatusText}" />
+                                        </StackPanel>
+
+                                        <TextBlock
+                                            Grid.Column="2"
+                                            VerticalAlignment="Center"
+                                            Text="{Binding AgeText}" />
+                                    </Grid>
+                                </DataTemplate>
+                            </ListBox.ItemTemplate>
+                        </ListBox>
+                    </Grid>
+                </Border>
+
+                <Border Grid.Column="1"
+                        Padding="16">
+
+                    <Grid RowDefinitions="Auto,Auto,*"
+                          RowSpacing="14">
+
+                        <StackPanel Spacing="4">
+                            <TextBlock
+                                FontSize="24"
+                                FontWeight="Bold"
+                                Text="{Binding SelectedPerson.FullName,
+                                               FallbackValue='Select a person'}" />
+
+                            <TextBlock
+                                Opacity="0.75"
+                                Text="{Binding SelectedPerson.StatusText}" />
+                        </StackPanel>
+
+                        <ItemsControl
+                            Grid.Row="1"
+                            ItemsSource="{Binding SelectedStats}">
+
+                            <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <WrapPanel />
+                                </ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
+
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate x:DataType="contracts:StatValue">
+                                    <Border Margin="0,0,8,8"
+                                            Padding="10"
+                                            MinWidth="92">
+                                        <StackPanel HorizontalAlignment="Center">
+                                            <TextBlock
+                                                HorizontalAlignment="Center"
+                                                FontWeight="SemiBold"
+                                                Text="{Binding Name}" />
+
+                                            <TextBlock
+                                                HorizontalAlignment="Center"
+                                                FontSize="20"
+                                                FontWeight="Bold"
+                                                Text="{Binding Value}" />
+                                        </StackPanel>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+
+                        <TabControl Grid.Row="2">
+                            <TabItem Header="General">
+                                <StackPanel Margin="12"
+                                            Spacing="8">
+
+                                    <TextBlock Text="{Binding SelectedPerson.AgeText}" />
+                                    <TextBlock Text="{Binding SelectedFamily.Sex, StringFormat='Sex: {0}'}" />
+                                    <TextBlock Text="{Binding SelectedFamily.Generation, StringFormat='Generation: {0}'}" />
+                                    <TextBlock Text="{Binding SelectedFamily.Bloodline, StringFormat='Bloodline: {0}'}" />
+                                    <TextBlock Text="{Binding SelectedFamily.MaleLineage, StringFormat='Male lineage: {0}'}" />
+
+                                    <TextBlock
+                                        Margin="0,8,0,0"
+                                        FontWeight="SemiBold"
+                                        Text="Tags" />
+
+                                    <TextBlock
+                                        TextWrapping="Wrap"
+                                        Text="{Binding SelectedPerson.TagsText}" />
+                                </StackPanel>
+                            </TabItem>
+
+                            <TabItem Header="About">
+                                <TextBlock
+                                    Margin="12"
+                                    TextWrapping="Wrap"
+                                    Text="About information will be generated from identity and stats." />
+                            </TabItem>
+
+                            <TabItem Header="Relationships">
+                                <StackPanel Margin="12"
+                                            Spacing="8">
+                                    <TextBlock Text="{Binding SelectedFamily.Father, StringFormat='Father: {0}'}" />
+                                    <TextBlock Text="{Binding SelectedFamily.Mother, StringFormat='Mother: {0}'}" />
+                                    <TextBlock Text="{Binding SelectedFamily.Spouse, StringFormat='Spouse: {0}'}" />
+                                    <TextBlock
+                                        TextWrapping="Wrap"
+                                        Text="{Binding SelectedFamily.Children, StringFormat='Children: {0}'}" />
+                                </StackPanel>
+                            </TabItem>
+
+                            <TabItem Header="Biography">
+                                <TextBlock
+                                    Margin="12"
+                                    TextWrapping="Wrap"
+                                    Text="Biography events will appear here." />
+                            </TabItem>
+                        </TabControl>
+                    </Grid>
+                </Border>
+            </Grid>
         </Grid>
     </Grid>
 </Window>

@@ -7,6 +7,7 @@ namespace Dynastia.App.ViewModels;
 public sealed class MainWindowViewModel : ViewModelBase
 {
     private readonly IGameState _gameState;
+    private readonly INewGameService _newGameService;
     private readonly YearProcessor _yearProcessor;
     private readonly ISelectionService _selectionService;
     private readonly IStatsService? _statsService;
@@ -17,9 +18,12 @@ public sealed class MainWindowViewModel : ViewModelBase
     private PersonRowViewModel? _selectedPerson;
     private FamilyDetailsViewModel? _selectedFamily;
     private int _albumYear;
+    private string _surnameInput = string.Empty;
+    private bool _isGameStarted;
 
     public MainWindowViewModel(
         IGameState gameState,
+        INewGameService newGameService,
         YearProcessor yearProcessor,
         ISelectionService selectionService,
         IStatsService? statsService,
@@ -28,6 +32,7 @@ public sealed class MainWindowViewModel : ViewModelBase
         IActionRegistry actionRegistry)
     {
         _gameState = gameState;
+        _newGameService = newGameService;
         _yearProcessor = yearProcessor;
         _selectionService = selectionService;
         _statsService = statsService;
@@ -35,26 +40,55 @@ public sealed class MainWindowViewModel : ViewModelBase
         _eventBus = eventBus;
         _actionRegistry = actionRegistry;
 
-        _albumYear = gameState.Year;
+        _albumYear = 1900;
 
+        StartGameCommand = new RelayCommand(StartGame);
         NextYearCommand = new RelayCommand(AdvanceYear);
 
         PreviousAlbumYearCommand = new RelayCommand(
             PreviousAlbumYear,
-            () => AlbumYear > 1900);
+            () => IsGameStarted && AlbumYear > 1900);
 
         NextAlbumYearCommand = new RelayCommand(
             NextAlbumYear,
-            () => AlbumYear < Year);
+            () => IsGameStarted && AlbumYear < Year);
 
         _eventBus.EventPublished += OnEventPublished;
-
-        RefreshPeople();
-        RefreshAlbum();
     }
 
+    public string SurnameInput
+    {
+        get => _surnameInput;
+        set
+        {
+            if (_surnameInput == value)
+                return;
+
+            _surnameInput = value;
+            OnPropertyChanged();
+        }
+    }
+
+    public bool IsGameStarted
+    {
+        get => _isGameStarted;
+        private set
+        {
+            if (_isGameStarted == value)
+                return;
+
+            _isGameStarted = value;
+            OnPropertyChanged();
+            OnPropertyChanged(nameof(IsStartScreenVisible));
+        }
+    }
+
+    public bool IsStartScreenVisible => !IsGameStarted;
+
     public string DynastyTitle =>
-        $"The {_gameState.DynastySurname} Dynasty";
+        IsGameStarted
+            ? $"The {_gameState.DynastySurname} Dynasty"
+            : "Dynastia";
 
     public int Year => _gameState.Year;
 
@@ -120,12 +154,33 @@ public sealed class MainWindowViewModel : ViewModelBase
         }
     }
 
+    public RelayCommand StartGameCommand { get; }
     public RelayCommand NextYearCommand { get; }
     public RelayCommand PreviousAlbumYearCommand { get; }
     public RelayCommand NextAlbumYearCommand { get; }
 
+    private void StartGame()
+    {
+        _newGameService.StartNewGame(SurnameInput);
+
+        IsGameStarted = true;
+        AlbumYear = _gameState.Year;
+
+        RefreshPeople();
+        RefreshAlbum();
+
+        OnPropertyChanged(nameof(Year));
+        OnPropertyChanged(nameof(DynastyTitle));
+
+        PreviousAlbumYearCommand.RaiseCanExecuteChanged();
+        NextAlbumYearCommand.RaiseCanExecuteChanged();
+    }
+
     private void AdvanceYear()
     {
+        if (!IsGameStarted)
+            return;
+
         _yearProcessor.AdvanceYear();
 
         AlbumYear = _gameState.Year;

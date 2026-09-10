@@ -16,6 +16,16 @@ public sealed class FamilyPlugin : IGamePlugin
             ?? throw new InvalidOperationException(
                 "Selection service is unavailable.");
 
+        var data =
+            context.GetService<IGameDataService>()
+            ?? throw new InvalidOperationException(
+                "Game data service is unavailable.");
+
+        var random =
+            context.GetService<IGameRandom>()
+            ?? throw new InvalidOperationException(
+                "Game random service is unavailable.");
+
         var familyService =
             new StandardFamilyService(gameState);
 
@@ -23,7 +33,9 @@ public sealed class FamilyPlugin : IGamePlugin
             new StandardNewGameService(
                 gameState,
                 familyService,
-                selection);
+                selection,
+                data,
+                random);
 
         context.AddService<IFamilyService>(
             familyService);

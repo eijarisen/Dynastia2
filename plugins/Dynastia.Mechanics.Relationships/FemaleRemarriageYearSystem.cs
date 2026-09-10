@@ -1,0 +1,261 @@
+using Dynastia.Contracts;
+
+namespace Dynastia.Mechanics.Relationships;
+
+public sealed class FemaleRemarriageYearSystem :
+    IYearSystem
+{
+    private const double RemarriageChance =
+        0.05;
+
+    private const int MarriageAge =
+        18;
+
+    private const int RemarriageMaxAge =
+        50;
+
+    private const string MaleNamesPath =
+        "Names/polish_male.csv";
+
+    private const string SurnamesPath =
+        "Names/polish_surnames.csv";
+
+    private readonly IFamilyService _family;
+    private readonly IStatsService _stats;
+    private readonly IHealthService _health;
+    private readonly IEducationService _education;
+    private readonly ICareerService _career;
+    private readonly IGameDataService _data;
+    private readonly IGameRandom _random;
+    private readonly IGameCalendar _calendar;
+    private readonly IGameEventBus _events;
+
+    public FemaleRemarriageYearSystem(
+        IFamilyService family,
+        IStatsService stats,
+        IHealthService health,
+        IEducationService education,
+        ICareerService career,
+        IGameDataService data,
+        IGameRandom random,
+        IGameCalendar calendar,
+        IGameEventBus events)
+    {
+        _family = family;
+        _stats = stats;
+        _health = health;
+        _education = education;
+        _career = career;
+        _data = data;
+        _random = random;
+        _calendar = calendar;
+        _events = events;
+    }
+
+    public string Id =>
+        "relationships.female_remarriage";
+
+    public YearPhase Phase =>
+        YearPhase.LifeEvents;
+
+    public IReadOnlyCollection<string> Before =>
+        Array.Empty<string>();
+
+    public IReadOnlyCollection<string> After =>
+        [
+            "relationships.affairs",
+            "reproduction.births"
+        ];
+
+    public void Execute(
+        IGameState gameState)
+    {
+        var livingSnapshot =
+            gameState.People
+                .Where(
+                    person =>
+                        person.Tags.Has(
+                            "state.alive"))
+                .ToList();
+
+        foreach (var woman in
+            livingSnapshot)
+        {
+            if (_family.GetSex(woman)
+                    != Sex.Female
+                || _family.GetSpouse(
+                    woman) is not null
+                || woman.Age
+                    < MarriageAge
+                || woman.Age
+                    >= RemarriageMaxAge
+                || woman.Tags.Has(
+                    "control.playable")
+                || _family.IsMaleLineage(
+                    woman))
+            {
+                continue;
+            }
+
+            if (_random.NextDouble()
+                >= RemarriageChance)
+            {
+                continue;
+            }
+
+            CreateHusband(
+                gameState,
+                woman);
+        }
+    }
+
+    private void CreateHusband(
+        IGameState gameState,
+        IPerson woman)
+    {
+        var husband =
+            gameState.CreatePerson(
+                RandomWeightedFrom(
+                    MaleNamesPath),
+                RandomWeightedFrom(
+                    SurnamesPath),
+                _random.NextInt(
+                    woman.Age,
+                    woman.Age + 10));
+
+        husband.BirthDate =
+            RandomDateInYear(
+                gameState.Year
+                - husband.Age);
+
+        _family.InitializePerson(
+            husband,
+            Sex.Male,
+            generation: null);
+
+        husband.Tags.Add(
+            "state.alive");
+
+        husband.Tags.Add(
+            "age.adult");
+
+        husband.Tags.Add(
+            "relationship.single");
+
+        husband.Tags.Add(
+            "sexuality.heterosexual");
+
+        // No lineage.male and no family.bloodline:
+        // this is an external husband of a female branch.
+        _stats.EnsureStats(
+            husband);
+
+        _health.EnsureHealth(
+            husband);
+
+        _education.SetEducationLevel(
+            husband,
+            0);
+
+        _career.InitializeCareer(
+            husband,
+            _random.NextInt(
+                0,
+                3),
+            _random.NextInt(
+                1,
+                5));
+
+        var womanEventName =
+            _family.GetDisplayName(
+                woman);
+
+        var husbandEventName =
+            _family.GetDisplayName(
+                husband);
+
+        _family.SetSpouses(
+            woman,
+            husband,
+            gameState.Year);
+
+        woman.Surname =
+            husband.Surname;
+
+        // Intentionally do NOT transfer woman's PendingInheritance
+        // into the husband's household. Dynasty 4 does not do so.
+        _events.Publish(
+            new GameEvent
+            {
+                Type =
+                    "relationship.remarried",
+
+                Year =
+                    gameState.Year,
+
+                SubjectId =
+                    woman.Id,
+
+                RelatedPersonIds =
+                    [husband.Id],
+
+                Data =
+                    new Dictionary<string, string>
+                    {
+                        ["text"] =
+                            $"{womanEventName} " +
+                            $"has remarried to " +
+                            $"{husbandEventName}."
+                    }
+            });
+    }
+
+    private string RandomWeightedFrom(
+        string relativePath)
+    {
+        var entries =
+            _data.GetWeightedStringList(
+                relativePath);
+
+        var totalWeight =
+            entries.Sum(
+                entry =>
+                    (double)entry.Weight);
+
+        var roll =
+            _random.NextDouble()
+            * totalWeight;
+
+        foreach (var entry in
+            entries)
+        {
+            if (roll < entry.Weight)
+                return entry.Value;
+
+            roll -= entry.Weight;
+        }
+
+        return entries[^1].Value;
+    }
+
+    private GameDate RandomDateInYear(
+        int year)
+    {
+        var month =
+            _random.NextInt(
+                1,
+                12);
+
+        var day =
+            _random.NextInt(
+                1,
+                _calendar.GetDaysInMonth(
+                    year,
+                    month));
+
+        return new GameDate(
+            year,
+            month,
+            day);
+    }
+}

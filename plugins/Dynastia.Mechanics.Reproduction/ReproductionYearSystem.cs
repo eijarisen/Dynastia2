@@ -87,12 +87,13 @@ public sealed class ReproductionYearSystem : IYearSystem
         YearPhase.LifeEvents;
 
     public IReadOnlyCollection<string> Before =>
-        Array.Empty<string>();
+        ["relationships.female_remarriage"];
 
     public IReadOnlyCollection<string> After =>
         [
             "actions.queued.life_events",
-            "relationships.marriage"
+            "relationships.marriage",
+            "relationships.affairs"
         ];
 
     public void Execute(

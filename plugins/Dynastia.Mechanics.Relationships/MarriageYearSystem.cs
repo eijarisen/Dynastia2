@@ -46,7 +46,7 @@ public sealed class MarriageYearSystem : IYearSystem
         YearPhase.LifeEvents;
 
     public IReadOnlyCollection<string> Before =>
-        Array.Empty<string>();
+        ["relationships.affairs"];
 
     public IReadOnlyCollection<string> After =>
         [
@@ -177,6 +177,10 @@ public sealed class MarriageYearSystem : IYearSystem
 
         _stats.EnsureStats(spouse);
 
+        var spouseEventName =
+            _family.GetDisplayName(
+                spouse);
+
         if (!homosexual)
         {
             spouse.MaidenName =
@@ -199,7 +203,7 @@ public sealed class MarriageYearSystem : IYearSystem
             _family.GetDisplayName(person);
 
         var spouseDisplayName =
-            _family.GetDisplayName(spouse);
+            spouseEventName;
 
         var eventType =
             homosexual

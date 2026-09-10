@@ -5,6 +5,7 @@
     <Project Path="plugins/Dynastia.Mechanics.Economy/Dynastia.Mechanics.Economy.csproj" />
     <Project Path="plugins/Dynastia.Mechanics.Education/Dynastia.Mechanics.Education.csproj" />
     <Project Path="plugins/Dynastia.Mechanics.Family/Dynastia.Mechanics.Family.csproj" />
+    <Project Path="plugins/Dynastia.Mechanics.FamilySupport/Dynastia.Mechanics.FamilySupport.csproj" />
     <Project Path="plugins/Dynastia.Mechanics.Health/Dynastia.Mechanics.Health.csproj" />
     <Project Path="plugins/Dynastia.Mechanics.Households/Dynastia.Mechanics.Households.csproj" />
     <Project Path="plugins/Dynastia.Mechanics.Inheritance/Dynastia.Mechanics.Inheritance.csproj" />

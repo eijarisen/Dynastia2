@@ -1,0 +1,12 @@
+{
+  "id": "dynastia.family_support",
+  "name": "Standard Family Support",
+  "version": "0.1.0",
+  "apiVersion": 1,
+  "assembly": "Dynastia.Mechanics.FamilySupport.dll",
+  "entryType": "Dynastia.Mechanics.FamilySupport.FamilySupportPlugin",
+  "dependencies": [
+    "dynastia.family",
+    "dynastia.economy"
+  ]
+}

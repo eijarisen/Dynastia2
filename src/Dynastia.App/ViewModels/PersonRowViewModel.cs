@@ -9,10 +9,19 @@ public sealed class PersonRowViewModel
 
     public PersonRowViewModel(
         IPerson person,
-        IFamilyService? familyService)
+        IFamilyService? familyService,
+        IHealthService? healthService)
     {
         _person = person;
         _familyService = familyService;
+
+        if (healthService is not null)
+        {
+            var health = healthService.GetHealth(person);
+            HealthValue = health.Percentage;
+            HealthText =
+                $"{Math.Round(health.Current)}/{Math.Round(health.Maximum)}";
+        }
     }
 
     public Guid Id => _person.Id;
@@ -42,6 +51,13 @@ public sealed class PersonRowViewModel
         _person.Tags.Has("state.dead")
             ? "Deceased"
             : "Living";
+
+    public double HealthValue { get; }
+
+    public string HealthText { get; } = string.Empty;
+
+    public bool ShowHealth =>
+        !_person.Tags.Has("state.dead");
 
     public string GenerationText
     {

@@ -2,6 +2,7 @@
   <Folder Name="/plugins/">
     <Project Path="plugins/Dynastia.Mechanics.Aging/Dynastia.Mechanics.Aging.csproj" />
     <Project Path="plugins/Dynastia.Mechanics.Family/Dynastia.Mechanics.Family.csproj" />
+    <Project Path="plugins/Dynastia.Mechanics.Health/Dynastia.Mechanics.Health.csproj" />
     <Project Path="plugins/Dynastia.Mechanics.Stats/Dynastia.Mechanics.Stats.csproj" />
     <Project Path="plugins/Dynastia.Plugin.Sample/Dynastia.Plugin.Sample.csproj" />
   </Folder>

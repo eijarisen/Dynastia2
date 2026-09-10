@@ -82,6 +82,9 @@ public partial class App : Application
             var familyService =
                 pluginContext.GetService<IFamilyService>();
 
+            var healthService =
+                pluginContext.GetService<IHealthService>();
+
             desktop.MainWindow = new MainWindow
             {
                 DataContext = new MainWindowViewModel(
@@ -91,6 +94,7 @@ public partial class App : Application
                     selectionService,
                     statsService,
                     familyService,
+                    healthService,
                     eventBus,
                     actionRegistry)
             };

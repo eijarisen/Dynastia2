@@ -12,11 +12,13 @@ public sealed class MainWindowViewModel : ViewModelBase
     private readonly ISelectionService _selectionService;
     private readonly IStatsService? _statsService;
     private readonly IFamilyService? _familyService;
+    private readonly IHealthService? _healthService;
     private readonly IGameEventBus _eventBus;
     private readonly IActionRegistry _actionRegistry;
 
     private PersonRowViewModel? _selectedPerson;
     private FamilyDetailsViewModel? _selectedFamily;
+    private HealthViewModel? _selectedHealth;
     private int _albumYear;
     private string _surnameInput = string.Empty;
     private bool _isGameStarted;
@@ -28,6 +30,7 @@ public sealed class MainWindowViewModel : ViewModelBase
         ISelectionService selectionService,
         IStatsService? statsService,
         IFamilyService? familyService,
+        IHealthService? healthService,
         IGameEventBus eventBus,
         IActionRegistry actionRegistry)
     {
@@ -37,6 +40,7 @@ public sealed class MainWindowViewModel : ViewModelBase
         _selectionService = selectionService;
         _statsService = statsService;
         _familyService = familyService;
+        _healthService = healthService;
         _eventBus = eventBus;
         _actionRegistry = actionRegistry;
 
@@ -138,6 +142,7 @@ public sealed class MainWindowViewModel : ViewModelBase
 
             RefreshSelectedStats();
             RefreshFamilyDetails();
+            RefreshHealth();
             RefreshActions();
 
             OnPropertyChanged();
@@ -150,6 +155,16 @@ public sealed class MainWindowViewModel : ViewModelBase
         private set
         {
             _selectedFamily = value;
+            OnPropertyChanged();
+        }
+    }
+
+    public HealthViewModel? SelectedHealth
+    {
+        get => _selectedHealth;
+        private set
+        {
+            _selectedHealth = value;
             OnPropertyChanged();
         }
     }
@@ -217,7 +232,8 @@ public sealed class MainWindowViewModel : ViewModelBase
             People.Add(
                 new PersonRowViewModel(
                     person,
-                    _familyService));
+                    _familyService,
+                    _healthService));
         }
 
         SelectedPerson =
@@ -228,6 +244,7 @@ public sealed class MainWindowViewModel : ViewModelBase
 
         RefreshSelectedStats();
         RefreshFamilyDetails();
+        RefreshHealth();
         RefreshActions();
     }
 
@@ -247,6 +264,21 @@ public sealed class MainWindowViewModel : ViewModelBase
         {
             SelectedStats.Add(stat);
         }
+    }
+
+    private void RefreshHealth()
+    {
+        var person = FindSelectedPerson();
+
+        if (person is null || _healthService is null)
+        {
+            SelectedHealth = null;
+            return;
+        }
+
+        SelectedHealth =
+            new HealthViewModel(
+                _healthService.GetHealth(person));
     }
 
     private void RefreshFamilyDetails()
@@ -333,6 +365,7 @@ public sealed class MainWindowViewModel : ViewModelBase
 
         RefreshPeople();
         RefreshAlbum();
+        RefreshHealth();
         RefreshActions();
     }
 

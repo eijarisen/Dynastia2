@@ -1,0 +1,12 @@
+{
+  "id": "dynastia.inheritance",
+  "name": "Standard Inheritance",
+  "version": "0.1.0",
+  "apiVersion": 1,
+  "assembly": "Dynastia.Mechanics.Inheritance.dll",
+  "entryType": "Dynastia.Mechanics.Inheritance.InheritancePlugin",
+  "dependencies": [
+    "dynastia.family",
+    "dynastia.economy"
+  ]
+}

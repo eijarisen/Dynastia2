@@ -14,6 +14,13 @@ public interface IHealthService
         IPerson person,
         double amount);
 
+    // Used only when the source intentionally allows health
+    // to temporarily exceed max health before the annual
+    // health pass performs its final cap.
+    void ChangeHealthUnclamped(
+        IPerson person,
+        double amount);
+
     bool HasCondition(
         IPerson person,
         string conditionId);

@@ -5,42 +5,36 @@ namespace Dynastia.App.ViewModels;
 public sealed class EconomyViewModel
 {
     public EconomyViewModel(
-        HouseholdFinanceSnapshot snapshot)
+        HouseholdFinanceSnapshot snapshot,
+        HouseholdStatusSnapshot? status)
     {
-        Wealth =
-            snapshot.Wealth;
+        Wealth = snapshot.Wealth;
+        HousesOwned = snapshot.HousesOwned;
+        RentedHouses = snapshot.RentedHouses;
+        PendingInheritance = snapshot.PendingInheritance;
+        PendingHouses = snapshot.PendingHouses;
+        LastIncome = snapshot.LastIncome;
+        LastExpenses = snapshot.LastExpenses;
 
-        HousesOwned =
-            snapshot.HousesOwned;
+        NannyText =
+            status?.HasNannyReference == true
+                ? $"Nanny: {status.NannyName ?? "Unknown"}"
+                : "Nanny: None";
 
-        RentedHouses =
-            snapshot.RentedHouses;
-
-        PendingInheritance =
-            snapshot.PendingInheritance;
-
-        PendingHouses =
-            snapshot.PendingHouses;
-
-        LastIncome =
-            snapshot.LastIncome;
-
-        LastExpenses =
-            snapshot.LastExpenses;
+        WarningText =
+            status is null
+                ? string.Empty
+                : string.Join(
+                    Environment.NewLine,
+                    status.Warnings);
     }
 
     public decimal Wealth { get; }
-
     public int HousesOwned { get; }
-
     public int RentedHouses { get; }
-
     public decimal PendingInheritance { get; }
-
     public int PendingHouses { get; }
-
     public decimal LastIncome { get; }
-
     public decimal LastExpenses { get; }
 
     public string WealthText =>
@@ -66,4 +60,8 @@ public sealed class EconomyViewModel
 
     public string PendingHousesText =>
         $"Pending houses: {PendingHouses}";
+
+    public string NannyText { get; }
+
+    public string WarningText { get; }
 }

@@ -1,0 +1,14 @@
+{
+  "id": "dynastia.education",
+  "name": "Standard Education",
+  "version": "0.1.0",
+  "apiVersion": 1,
+  "assembly": "Dynastia.Mechanics.Education.dll",
+  "entryType": "Dynastia.Mechanics.Education.EducationPlugin",
+  "dependencies": [
+    "dynastia.family",
+    "dynastia.stats",
+    "dynastia.health",
+    "dynastia.economy"
+  ]
+}

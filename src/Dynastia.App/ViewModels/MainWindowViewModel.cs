@@ -14,6 +14,9 @@ public sealed class MainWindowViewModel : ViewModelBase
     private readonly IFamilyService? _familyService;
     private readonly IHealthService? _healthService;
     private readonly IEconomyService? _economyService;
+    private readonly IHouseholdService? _householdService;
+    private readonly IEducationService? _educationService;
+    private readonly ICareerService? _careerService;
     private readonly ISuccessionService _succession;
     private readonly IGameEventBus _eventBus;
     private readonly IActionRegistry _actionRegistry;
@@ -22,6 +25,8 @@ public sealed class MainWindowViewModel : ViewModelBase
     private FamilyDetailsViewModel? _selectedFamily;
     private HealthViewModel? _selectedHealth;
     private EconomyViewModel? _selectedEconomy;
+    private EducationViewModel? _selectedEducation;
+    private CareerViewModel? _selectedCareer;
 
     private int _albumYear;
     private string _surnameInput = string.Empty;
@@ -29,6 +34,7 @@ public sealed class MainWindowViewModel : ViewModelBase
     private string _queuedActionText = string.Empty;
     private bool _hasQueuedAction;
     private bool _isGameOverOverlayVisible;
+    private bool _isLivingFamilyView = true;
 
     public MainWindowViewModel(
         IGameState gameState,
@@ -39,6 +45,9 @@ public sealed class MainWindowViewModel : ViewModelBase
         IFamilyService? familyService,
         IHealthService? healthService,
         IEconomyService? economyService,
+        IHouseholdService? householdService,
+        IEducationService? educationService,
+        ICareerService? careerService,
         ISuccessionService succession,
         IGameEventBus eventBus,
         IActionRegistry actionRegistry)
@@ -51,6 +60,9 @@ public sealed class MainWindowViewModel : ViewModelBase
         _familyService = familyService;
         _healthService = healthService;
         _economyService = economyService;
+        _householdService = householdService;
+        _educationService = educationService;
+        _careerService = careerService;
         _succession = succession;
         _eventBus = eventBus;
         _actionRegistry = actionRegistry;
@@ -74,6 +86,14 @@ public sealed class MainWindowViewModel : ViewModelBase
         GoBackFromGameOverCommand =
             new RelayCommand(
                 HideGameOver);
+
+        ShowLivingFamilyCommand =
+            new RelayCommand(
+                ShowLivingFamily);
+
+        ShowDeceasedFamilyCommand =
+            new RelayCommand(
+                ShowDeceasedFamily);
 
         PreviousAlbumYearCommand =
             new RelayCommand(
@@ -179,6 +199,138 @@ public sealed class MainWindowViewModel : ViewModelBase
         }
     }
 
+    public string ActiveHouseholdText
+    {
+        get
+        {
+            var active =
+                _succession.ActiveController;
+
+            if (active is null)
+                return "No active adult household head";
+
+            return _familyService is null
+                ? $"Active household: {active.Name} {active.Surname}"
+                : $"Active household: {_familyService.GetDisplayName(active)}";
+        }
+    }
+
+    public bool IsLivingFamilyView
+    {
+        get => _isLivingFamilyView;
+
+        private set
+        {
+            if (_isLivingFamilyView == value)
+                return;
+
+            _isLivingFamilyView = value;
+
+            OnPropertyChanged();
+            OnPropertyChanged(
+                nameof(IsDeceasedFamilyView));
+        }
+    }
+
+    public bool IsDeceasedFamilyView =>
+        !IsLivingFamilyView;
+
+    public bool HasActiveHousehold =>
+        _succession.ActiveController is not null;
+
+    public string HouseholdBudgetText
+    {
+        get
+        {
+            var head =
+                _succession.ActiveController;
+
+            var finance =
+                head is null
+                    ? null
+                    : _economyService?.GetHousehold(
+                        head);
+
+            return finance is null
+                ? "No active adult household."
+                : $"Family Budget: ${finance.Wealth:N0}";
+        }
+    }
+
+    public string HouseholdHousesText
+    {
+        get
+        {
+            var head =
+                _succession.ActiveController;
+
+            var finance =
+                head is null
+                    ? null
+                    : _economyService?.GetHousehold(
+                        head);
+
+            if (finance is null)
+                return string.Empty;
+
+            return finance.RentedHouses > 0
+                ? $"Houses: {finance.HousesOwned} " +
+                  $"({finance.RentedHouses} rented)"
+                : $"Houses: {finance.HousesOwned}";
+        }
+    }
+
+    public string HouseholdIncomeExpensesText
+    {
+        get
+        {
+            var head =
+                _succession.ActiveController;
+
+            var finance =
+                head is null
+                    ? null
+                    : _economyService?.GetHousehold(
+                        head);
+
+            return finance is null
+                ? string.Empty
+                : $"(Income: ${finance.LastIncome:N0}, " +
+                  $"Expenses: ${finance.LastExpenses:N0})";
+        }
+    }
+
+    public string HouseholdWarningText
+    {
+        get
+        {
+            var head =
+                _succession.ActiveController;
+
+            var status =
+                head is null
+                    ? null
+                    : _householdService?.GetStatus(
+                        head);
+
+            return status is null
+                ? string.Empty
+                : string.Join(
+                    Environment.NewLine,
+                    status.Warnings);
+        }
+    }
+
+    public string ExtendedFamilyEmptyText =>
+        ExtendedFamilyMembers.Count == 0
+            ? "No extended family members in this household."
+            : string.Empty;
+
+    public string DeceasedFamilyEmptyText =>
+        DeceasedFamilyMembers.Count == 0
+            ? "No deceased family members."
+            : string.Empty;
+
     public int AlbumYear
     {
         get => _albumYear;
@@ -243,6 +395,18 @@ public sealed class MainWindowViewModel : ViewModelBase
     public ObservableCollection<PersonRowViewModel>
         People { get; } = [];
 
+    public ObservableCollection<PlayablePersonTabViewModel>
+        PlayableTabs { get; } = [];
+
+    public ObservableCollection<FamilyMemberCardViewModel>
+        HouseholdMembers { get; } = [];
+
+    public ObservableCollection<FamilyMemberCardViewModel>
+        ExtendedFamilyMembers { get; } = [];
+
+    public ObservableCollection<FamilyMemberCardViewModel>
+        DeceasedFamilyMembers { get; } = [];
+
     public ObservableCollection<StatValue>
         SelectedStats { get; } = [];
 
@@ -270,7 +434,10 @@ public sealed class MainWindowViewModel : ViewModelBase
             RefreshFamilyDetails();
             RefreshHealth();
             RefreshEconomy();
+            RefreshEducation();
+            RefreshCareer();
             RefreshActions();
+            RefreshFamilySection();
 
             OnPropertyChanged();
         }
@@ -308,6 +475,26 @@ public sealed class MainWindowViewModel : ViewModelBase
         }
     }
 
+    public EducationViewModel? SelectedEducation
+    {
+        get => _selectedEducation;
+        private set
+        {
+            _selectedEducation = value;
+            OnPropertyChanged();
+        }
+    }
+
+    public CareerViewModel? SelectedCareer
+    {
+        get => _selectedCareer;
+        private set
+        {
+            _selectedCareer = value;
+            OnPropertyChanged();
+        }
+    }
+
     public bool HasSelectedEconomy =>
         SelectedEconomy is not null;
 
@@ -315,6 +502,8 @@ public sealed class MainWindowViewModel : ViewModelBase
     public RelayCommand NextYearCommand { get; }
     public RelayCommand CancelQueuedActionCommand { get; }
     public RelayCommand GoBackFromGameOverCommand { get; }
+    public RelayCommand ShowLivingFamilyCommand { get; }
+    public RelayCommand ShowDeceasedFamilyCommand { get; }
     public RelayCommand PreviousAlbumYearCommand { get; }
     public RelayCommand NextAlbumYearCommand { get; }
 
@@ -324,6 +513,8 @@ public sealed class MainWindowViewModel : ViewModelBase
             SurnameInput);
 
         _succession.Refresh();
+
+        IsLivingFamilyView = true;
 
         IsGameOverOverlayVisible =
             false;
@@ -357,23 +548,34 @@ public sealed class MainWindowViewModel : ViewModelBase
 
     private void CancelQueuedAction()
     {
-        var person =
-            FindSelectedPerson();
+        var actor =
+            _succession.ActiveController;
 
-        if (person is null)
+        if (actor is null)
             return;
 
         _actionRegistry
             .CancelQueuedActions(
-                person);
+                actor);
 
         RefreshActions();
+        RefreshFamilySection();
     }
 
     private void HideGameOver()
     {
         IsGameOverOverlayVisible =
             false;
+    }
+
+    private void ShowLivingFamily()
+    {
+        IsLivingFamilyView = true;
+    }
+
+    private void ShowDeceasedFamily()
+    {
+        IsLivingFamilyView = false;
     }
 
     private void PreviousAlbumYear()
@@ -403,7 +605,9 @@ public sealed class MainWindowViewModel : ViewModelBase
                     person,
                     _familyService,
                     _healthService,
-                    _economyService));
+                    _economyService,
+                    _careerService,
+                    _householdService));
         }
 
         SelectedPerson =
@@ -417,6 +621,253 @@ public sealed class MainWindowViewModel : ViewModelBase
         RefreshFamilyDetails();
         RefreshHealth();
         RefreshEconomy();
+        RefreshEducation();
+        RefreshCareer();
+        RefreshActions();
+        RefreshFamilySection();
+    }
+
+    private void RefreshFamilySection()
+    {
+        PlayableTabs.Clear();
+        HouseholdMembers.Clear();
+        ExtendedFamilyMembers.Clear();
+        DeceasedFamilyMembers.Clear();
+
+        var active =
+            _succession.ActiveController;
+
+        var selectedId =
+            SelectedPerson?.Id;
+
+        foreach (var person in
+            _gameState.People)
+        {
+            if (!person.Tags.Has(
+                    "state.alive")
+                || !_succession.IsControllable(
+                    person))
+            {
+                continue;
+            }
+
+            var generation =
+                _familyService?
+                    .GetGeneration(person);
+
+            var fullName =
+                _familyService is null
+                    ? $"{person.Name} {person.Surname}"
+                    : _familyService.GetDisplayName(
+                        person);
+
+            PlayableTabs.Add(
+                new PlayablePersonTabViewModel(
+                    person.Id,
+                    generation is int number
+                        ? $"G{number}"
+                        : string.Empty,
+                    $"{person.Name} ({person.Age})",
+                    fullName,
+                    active?.Id == person.Id,
+                    _actionRegistry
+                        .GetQueuedActions(person)
+                        .Count > 0,
+                    SwitchActiveHousehold));
+        }
+
+        if (active is not null)
+        {
+            AddHouseholdCard(
+                active,
+                selectedId,
+                active.Id);
+
+            var spouse =
+                _familyService?.GetSpouse(
+                    active);
+
+            if (spouse is not null
+                && spouse.Tags.Has(
+                    "state.alive"))
+            {
+                AddHouseholdCard(
+                    spouse,
+                    selectedId,
+                    active.Id);
+            }
+
+            if (_familyService is not null)
+            {
+                foreach (var child in
+                    _familyService.GetChildren(
+                        active))
+                {
+                    if (!child.Tags.Has(
+                        "state.alive"))
+                    {
+                        continue;
+                    }
+
+                    var isAdultSon =
+                        _familyService.GetSex(
+                            child) == Sex.Male
+                        && child.Age >= 18;
+
+                    var isMarriedDaughter =
+                        _familyService.GetSex(
+                            child) == Sex.Female
+                        && _familyService.GetSpouse(
+                            child) is not null;
+
+                    if (isAdultSon
+                        || isMarriedDaughter)
+                    {
+                        ExtendedFamilyMembers.Add(
+                            CreateFamilyCard(
+                                child,
+                                selectedId,
+                                active.Id));
+                    }
+                    else
+                    {
+                        AddHouseholdCard(
+                            child,
+                            selectedId,
+                            active.Id);
+                    }
+                }
+            }
+        }
+        else
+        {
+            // When only underage male-lineage heirs remain there is no
+            // controller, but the Living view must still remain useful.
+            foreach (var person in
+                _gameState.People)
+            {
+                if (person.Tags.Has(
+                        "state.alive")
+                    && !person.Tags.Has(
+                        "role.nanny"))
+                {
+                    HouseholdMembers.Add(
+                        CreateFamilyCard(
+                            person,
+                            selectedId,
+                            null));
+                }
+            }
+        }
+
+        foreach (var person in
+            _gameState.People)
+        {
+            if (!person.Tags.Has(
+                    "state.dead")
+                || person.Tags.Has(
+                    "role.nanny"))
+            {
+                continue;
+            }
+
+            DeceasedFamilyMembers.Add(
+                CreateFamilyCard(
+                    person,
+                    selectedId,
+                    null));
+        }
+
+        OnPropertyChanged(
+            nameof(HasActiveHousehold));
+
+        OnPropertyChanged(
+            nameof(HouseholdBudgetText));
+
+        OnPropertyChanged(
+            nameof(HouseholdHousesText));
+
+        OnPropertyChanged(
+            nameof(HouseholdIncomeExpensesText));
+
+        OnPropertyChanged(
+            nameof(HouseholdWarningText));
+
+        OnPropertyChanged(
+            nameof(ExtendedFamilyEmptyText));
+
+        OnPropertyChanged(
+            nameof(DeceasedFamilyEmptyText));
+
+        OnPropertyChanged(
+            nameof(ActiveHouseholdText));
+    }
+
+    private void AddHouseholdCard(
+        IPerson person,
+        Guid? selectedId,
+        Guid activeHeadId)
+    {
+        HouseholdMembers.Add(
+            CreateFamilyCard(
+                person,
+                selectedId,
+                activeHeadId));
+    }
+
+    private FamilyMemberCardViewModel
+        CreateFamilyCard(
+            IPerson person,
+            Guid? selectedId,
+            Guid? activeHeadId)
+    {
+        return new FamilyMemberCardViewModel(
+            person,
+            _familyService,
+            _healthService,
+            _careerService,
+            selectedId == person.Id,
+            activeHeadId == person.Id,
+            SelectFamilyMember);
+    }
+
+    private void SelectFamilyMember(
+        Guid personId)
+    {
+        var row =
+            People.FirstOrDefault(
+                person =>
+                    person.Id == personId);
+
+        if (row is not null)
+            SelectedPerson = row;
+    }
+
+    private void SwitchActiveHousehold(
+        Guid personId)
+    {
+        var person =
+            _gameState.People
+                .FirstOrDefault(
+                    candidate =>
+                        candidate.Id == personId);
+
+        if (person is null
+            || !_succession.SetActiveController(
+                person))
+        {
+            return;
+        }
+
+        var row =
+            People.FirstOrDefault(
+                candidate =>
+                    candidate.Id == personId);
+
+        if (row is not null)
+            SelectedPerson = row;
+
+        RefreshFamilySection();
         RefreshActions();
     }
 
@@ -476,11 +927,55 @@ public sealed class MainWindowViewModel : ViewModelBase
             _economyService.GetHousehold(
                 person);
 
+        var status =
+            snapshot is null
+                ? null
+                : _householdService?.GetStatus(
+                    person);
+
         SelectedEconomy =
             snapshot is null
                 ? null
                 : new EconomyViewModel(
-                    snapshot);
+                    snapshot,
+                    status);
+    }
+
+    private void RefreshEducation()
+    {
+        var person =
+            FindSelectedPerson();
+
+        if (person is null
+            || _educationService is null)
+        {
+            SelectedEducation = null;
+            return;
+        }
+
+        SelectedEducation =
+            new EducationViewModel(
+                person.Age,
+                _educationService
+                    .GetEducationLevel(person));
+    }
+
+    private void RefreshCareer()
+    {
+        var person =
+            FindSelectedPerson();
+
+        if (person is null
+            || _careerService is null)
+        {
+            SelectedCareer = null;
+            return;
+        }
+
+        SelectedCareer =
+            new CareerViewModel(
+                _careerService.GetCareer(person),
+                person.Tags.Has("state.alive"));
     }
 
     private void RefreshFamilyDetails()
@@ -607,20 +1102,24 @@ public sealed class MainWindowViewModel : ViewModelBase
     {
         AvailableActions.Clear();
 
-        var person =
+        var actor =
+            _succession.ActiveController;
+
+        var target =
             FindSelectedPerson();
 
         HasQueuedAction = false;
         QueuedActionText =
             string.Empty;
 
-        if (person is not null
+        if (actor is not null
+            && target is not null
             && !_succession.IsGameOver)
         {
             var queued =
                 _actionRegistry
                     .GetQueuedActions(
-                        person);
+                        actor);
 
             if (queued.Count > 0)
             {
@@ -636,8 +1135,8 @@ public sealed class MainWindowViewModel : ViewModelBase
                 foreach (var action in
                     _actionRegistry
                         .GetAvailableActions(
-                            person,
-                            person))
+                            actor,
+                            target))
                 {
                     var actionId =
                         action.Id;
@@ -659,10 +1158,14 @@ public sealed class MainWindowViewModel : ViewModelBase
     private void ExecuteAction(
         string actionId)
     {
-        var person =
+        var actor =
+            _succession.ActiveController;
+
+        var target =
             FindSelectedPerson();
 
-        if (person is null
+        if (actor is null
+            || target is null
             || _succession.IsGameOver)
         {
             return;
@@ -670,13 +1173,15 @@ public sealed class MainWindowViewModel : ViewModelBase
 
         _actionRegistry.Execute(
             actionId,
-            person,
-            person);
+            actor,
+            target);
 
         RefreshPeople();
         RefreshAlbum();
         RefreshHealth();
         RefreshEconomy();
+        RefreshEducation();
+        RefreshCareer();
         RefreshActions();
     }
 
@@ -738,6 +1243,11 @@ public sealed class MainWindowViewModel : ViewModelBase
 
         OnPropertyChanged(
             nameof(GameOverText));
+
+        OnPropertyChanged(
+            nameof(ActiveHouseholdText));
+
+        RefreshFamilySection();
     }
 
     private void NotifyGameStateChanged()
@@ -753,6 +1263,9 @@ public sealed class MainWindowViewModel : ViewModelBase
 
         OnPropertyChanged(
             nameof(GameOverText));
+
+        OnPropertyChanged(
+            nameof(ActiveHouseholdText));
 
         PreviousAlbumYearCommand
             .RaiseCanExecuteChanged();

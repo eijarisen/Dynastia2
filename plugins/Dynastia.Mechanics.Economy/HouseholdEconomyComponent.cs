@@ -8,10 +8,6 @@ public sealed class HouseholdEconomyComponent
 
     public int RentedHouses { get; set; }
 
-    public decimal PendingInheritance { get; set; }
-
-    public int PendingHouses { get; set; }
-
     public Guid? NannyId { get; set; }
 
     public decimal LastIncome { get; set; }

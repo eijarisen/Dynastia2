@@ -102,6 +102,16 @@ public sealed class StandardHealthService : IHealthService
             health.Current + amount);
     }
 
+    public void ChangeHealthUnclamped(
+        IPerson person,
+        double amount)
+    {
+        var health = GetRequired(person);
+
+        health.Current += amount;
+    }
+
+
     public bool HasCondition(
         IPerson person,
         string conditionId)

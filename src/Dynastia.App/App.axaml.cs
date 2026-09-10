@@ -138,6 +138,15 @@ public partial class App : Application
             var economyService =
                 pluginContext.GetService<IEconomyService>();
 
+            var householdService =
+                pluginContext.GetService<IHouseholdService>();
+
+            var educationService =
+                pluginContext.GetService<IEducationService>();
+
+            var careerService =
+                pluginContext.GetService<ICareerService>();
+
             desktop.MainWindow =
                 new MainWindow
                 {
@@ -151,6 +160,9 @@ public partial class App : Application
                             familyService,
                             healthService,
                             economyService,
+                            householdService,
+                            educationService,
+                            careerService,
                             successionService,
                             eventBus,
                             actionRegistry)

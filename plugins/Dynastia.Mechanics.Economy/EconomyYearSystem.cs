@@ -97,8 +97,8 @@ public sealed class EconomyYearSystem : IYearSystem
     private void ProcessLivingHousehold(
         IPerson head)
     {
-        var component =
-            _economy.GetRequired(
+        var household =
+            _economy.GetRequiredHousehold(
                 head);
 
         var spouse =
@@ -177,35 +177,35 @@ public sealed class EconomyYearSystem : IYearSystem
         }
 
         income +=
-            component.RentedHouses
+            household.RentedHouses
             * RentalIncomePerHouse;
 
         var expenses =
             members.Count
             * LivingExpense;
 
-        if (component.HousesOwned == 0)
+        if (household.HousesOwned == 0)
         {
             expenses +=
                 RentExpense;
         }
 
-        if (component.NannyId.HasValue)
+        if (household.NannyId.HasValue)
         {
             expenses +=
                 NannyExpense;
         }
 
-        component.LastIncome =
+        household.LastIncome =
             income;
 
-        component.LastExpenses =
+        household.LastExpenses =
             expenses;
 
-        component.Wealth =
+        household.Wealth =
             Math.Max(
                 0,
-                component.Wealth
+                household.Wealth
                 + income
                 - expenses);
     }
@@ -241,8 +241,8 @@ public sealed class EconomyYearSystem : IYearSystem
             if (children.Count == 0)
                 continue;
 
-            var component =
-                _economy.GetRequired(
+            var household =
+                _economy.GetRequiredHousehold(
                     head);
 
             var spouse =
@@ -269,29 +269,26 @@ public sealed class EconomyYearSystem : IYearSystem
             else
             {
                 // Source behavior for orphaned estates:
-                // no standard living expenses are deducted here.
+                // no normal living expenses are deducted.
                 expenses =
                     0;
             }
 
-            if (component.NannyId.HasValue)
+            if (household.NannyId.HasValue)
             {
                 expenses +=
                     NannyExpense;
             }
 
-            component.LastIncome =
+            household.LastIncome =
                 income;
 
-            component.LastExpenses =
+            household.LastExpenses =
                 expenses;
 
-            component.PendingInheritance =
-                Math.Max(
-                    0,
-                    component.PendingInheritance
-                    + income
-                    - expenses);
+            _economy.ChangePendingInheritance(
+                head,
+                income - expenses);
         }
     }
 }

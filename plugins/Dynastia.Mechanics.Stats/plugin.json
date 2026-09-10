@@ -1,0 +1,8 @@
+{
+  "id": "dynastia.stats",
+  "name": "Standard Stats",
+  "version": "0.1.0",
+  "apiVersion": 1,
+  "assembly": "Dynastia.Mechanics.Stats.dll",
+  "entryType": "Dynastia.Mechanics.Stats.StatsPlugin"
+}

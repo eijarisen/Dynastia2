@@ -4,19 +4,21 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:vm="using:Dynastia.App.ViewModels"
+    xmlns:contracts="using:Dynastia.Contracts"
     x:Class="Dynastia.App.Views.MainWindow"
     x:DataType="vm:MainWindowViewModel"
     mc:Ignorable="d"
-    Width="900"
-    Height="650"
-    MinWidth="650"
-    MinHeight="450"
+    Width="1100"
+    Height="780"
+    MinWidth="800"
+    MinHeight="600"
     Title="Dynastia">
 
-    <Grid RowDefinitions="Auto,*"
+    <Grid RowDefinitions="Auto,Auto,*"
           Margin="16"
-          RowSpacing="16">
+          RowSpacing="12">
 
+        <!-- Top bar -->
         <Border Padding="16">
             <Grid ColumnDefinitions="*,Auto,Auto"
                   ColumnSpacing="16">
@@ -43,49 +45,198 @@
             </Grid>
         </Border>
 
+        <!-- Family Album -->
         <Border Grid.Row="1"
-                Padding="16">
-            <Grid RowDefinitions="Auto,*"
-                  RowSpacing="12">
+                Padding="12">
 
-                <TextBlock
-                    FontSize="20"
-                    FontWeight="Bold"
-                    Text="People" />
+            <Grid RowDefinitions="Auto,Auto"
+                  RowSpacing="8">
 
-                <ScrollViewer Grid.Row="1">
-                    <ItemsControl ItemsSource="{Binding People}">
+                <Grid ColumnDefinitions="*,Auto,Auto,Auto"
+                      ColumnSpacing="8">
+
+                    <TextBlock
+                        VerticalAlignment="Center"
+                        FontSize="18"
+                        FontWeight="Bold"
+                        Text="Family Album" />
+
+                    <Button
+                        Grid.Column="1"
+                        Content="&lt;"
+                        Command="{Binding PreviousAlbumYearCommand}" />
+
+                    <TextBlock
+                        Grid.Column="2"
+                        VerticalAlignment="Center"
+                        FontWeight="SemiBold"
+                        Text="{Binding AlbumYear}" />
+
+                    <Button
+                        Grid.Column="3"
+                        Content="&gt;"
+                        Command="{Binding NextAlbumYearCommand}" />
+                </Grid>
+
+                <Grid Grid.Row="1">
+                    <TextBlock
+                        Opacity="0.65"
+                        Text="{Binding AlbumEmptyText}" />
+
+                    <ItemsControl ItemsSource="{Binding AlbumEvents}">
                         <ItemsControl.ItemTemplate>
+                            <DataTemplate x:DataType="vm:AlbumEventViewModel">
+                                <TextBlock
+                                    Margin="0,2"
+                                    TextWrapping="Wrap"
+                                    Text="{Binding Text}" />
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </Grid>
+            </Grid>
+        </Border>
+
+        <!-- Main content -->
+        <Grid Grid.Row="2"
+              ColumnDefinitions="2*,3*"
+              ColumnSpacing="16">
+
+            <Border Padding="16">
+                <Grid RowDefinitions="Auto,*"
+                      RowSpacing="12">
+
+                    <TextBlock
+                        FontSize="20"
+                        FontWeight="Bold"
+                        Text="Family" />
+
+                    <ListBox
+                        Grid.Row="1"
+                        ItemsSource="{Binding People}"
+                        SelectedItem="{Binding SelectedPerson, Mode=TwoWay}"
+                        SelectionMode="Single">
+
+                        <ListBox.ItemTemplate>
                             <DataTemplate x:DataType="vm:PersonRowViewModel">
-                                <Border
-                                    Margin="0,0,0,8"
-                                    Padding="12">
-                                    <Grid ColumnDefinitions="*,Auto"
-                                          ColumnSpacing="12">
+                                <Grid Margin="6"
+                                      ColumnDefinitions="*,Auto"
+                                      ColumnSpacing="12">
 
-                                        <StackPanel Spacing="3">
-                                            <TextBlock
-                                                FontSize="16"
-                                                FontWeight="SemiBold"
-                                                Text="{Binding FullName}" />
-
-                                            <TextBlock
-                                                Opacity="0.7"
-                                                Text="{Binding StatusText}" />
-                                        </StackPanel>
+                                    <StackPanel Spacing="3">
+                                        <TextBlock
+                                            FontSize="16"
+                                            FontWeight="SemiBold"
+                                            Text="{Binding FullName}" />
 
                                         <TextBlock
-                                            Grid.Column="1"
-                                            VerticalAlignment="Center"
-                                            Text="{Binding AgeText}" />
-                                    </Grid>
+                                            Opacity="0.7"
+                                            Text="{Binding StatusText}" />
+                                    </StackPanel>
+
+                                    <TextBlock
+                                        Grid.Column="1"
+                                        VerticalAlignment="Center"
+                                        Text="{Binding AgeText}" />
+                                </Grid>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+                </Grid>
+            </Border>
+
+            <Border Grid.Column="1"
+                    Padding="16">
+
+                <Grid RowDefinitions="Auto,Auto,*"
+                      RowSpacing="14">
+
+                    <StackPanel Spacing="4">
+                        <TextBlock
+                            FontSize="24"
+                            FontWeight="Bold"
+                            Text="{Binding SelectedPerson.FullName,
+                                           FallbackValue='Select a person'}" />
+
+                        <TextBlock
+                            Opacity="0.75"
+                            Text="{Binding SelectedPerson.StatusText}" />
+                    </StackPanel>
+
+                    <ItemsControl
+                        Grid.Row="1"
+                        ItemsSource="{Binding SelectedStats}">
+
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <WrapPanel />
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate x:DataType="contracts:StatValue">
+                                <Border Margin="0,0,8,8"
+                                        Padding="10"
+                                        MinWidth="92">
+                                    <StackPanel HorizontalAlignment="Center">
+                                        <TextBlock
+                                            HorizontalAlignment="Center"
+                                            FontWeight="SemiBold"
+                                            Text="{Binding Name}" />
+
+                                        <TextBlock
+                                            HorizontalAlignment="Center"
+                                            FontSize="20"
+                                            FontWeight="Bold"
+                                            Text="{Binding Value}" />
+                                    </StackPanel>
                                 </Border>
                             </DataTemplate>
                         </ItemsControl.ItemTemplate>
                     </ItemsControl>
-                </ScrollViewer>
-            </Grid>
-        </Border>
 
+                    <TabControl Grid.Row="2">
+                        <TabItem Header="General">
+                            <StackPanel Margin="12"
+                                        Spacing="10">
+
+                                <TextBlock
+                                    FontSize="16"
+                                    Text="{Binding SelectedPerson.AgeText}" />
+
+                                <TextBlock
+                                    FontWeight="SemiBold"
+                                    Text="Tags" />
+
+                                <TextBlock
+                                    TextWrapping="Wrap"
+                                    Text="{Binding SelectedPerson.TagsText}" />
+                            </StackPanel>
+                        </TabItem>
+
+                        <TabItem Header="About">
+                            <TextBlock
+                                Margin="12"
+                                TextWrapping="Wrap"
+                                Text="About information will be generated from identity and stats." />
+                        </TabItem>
+
+                        <TabItem Header="Relationships">
+                            <TextBlock
+                                Margin="12"
+                                TextWrapping="Wrap"
+                                Text="Relationship information will be supplied by family mechanics." />
+                        </TabItem>
+
+                        <TabItem Header="Biography">
+                            <TextBlock
+                                Margin="12"
+                                TextWrapping="Wrap"
+                                Text="Biography events will appear after the event system is implemented." />
+                        </TabItem>
+                    </TabControl>
+                </Grid>
+            </Border>
+        </Grid>
     </Grid>
 </Window>

@@ -4,6 +4,7 @@ using Avalonia.Markup.Xaml;
 using Dynastia.App.ViewModels;
 using Dynastia.App.Views;
 using Dynastia.Contracts;
+using Dynastia.Core.Events;
 using Dynastia.Core.Plugins;
 using Dynastia.Core.Simulation;
 using Dynastia.PluginHost;
@@ -28,18 +29,13 @@ public partial class App : Application
                 Year = 1900
             };
 
-            // Temporary starting family.
-            // Later this will move into a New Game / Family plugin.
-            var father =
-                gameState.CreatePerson("Jan", "Kowalski", 45);
+            var father = gameState.CreatePerson("Jan", "Kowalski", 45);
             father.Tags.Add("state.dead");
 
-            var mother =
-                gameState.CreatePerson("Anna", "Kowalski", 42);
+            var mother = gameState.CreatePerson("Anna", "Kowalski", 42);
             mother.Tags.Add("state.dead");
 
-            var founder =
-                gameState.CreatePerson("Piotr", "Kowalski", 18);
+            var founder = gameState.CreatePerson("Piotr", "Kowalski", 18);
             founder.Tags.Add("state.alive");
             founder.Tags.Add("age.adult");
             founder.Tags.Add("family.bloodline");
@@ -47,9 +43,21 @@ public partial class App : Application
 
             var registry = new YearSystemRegistry();
 
+            var selectionService = new SelectionService
+            {
+                SelectedPersonId = founder.Id
+            };
+
+            var gameRandom = new GameRandom();
+            var eventBus = new GameEventBus();
+
             var pluginContext = new GamePluginContext();
+
             pluginContext.AddService<IGameState>(gameState);
             pluginContext.AddService<IYearSystemRegistry>(registry);
+            pluginContext.AddService<ISelectionService>(selectionService);
+            pluginContext.AddService<IGameRandom>(gameRandom);
+            pluginContext.AddService<IGameEventBus>(eventBus);
 
             var pluginsDirectory = Path.Combine(
                 AppContext.BaseDirectory,
@@ -64,11 +72,17 @@ public partial class App : Application
             var yearProcessor =
                 new YearProcessor(gameState, registry);
 
+            var statsService =
+                pluginContext.GetService<IStatsService>();
+
             desktop.MainWindow = new MainWindow
             {
                 DataContext = new MainWindowViewModel(
                     gameState,
-                    yearProcessor)
+                    yearProcessor,
+                    selectionService,
+                    statsService,
+                    eventBus)
             };
         }
 

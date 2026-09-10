@@ -11,11 +11,15 @@ public sealed class Person : IPerson
         Surname = surname;
         Age = age;
         Tags = new TagSet();
+        Components = new ComponentContainer();
     }
 
     public Guid Id { get; }
+
     public string Name { get; set; }
     public string Surname { get; set; }
     public int Age { get; set; }
+
     public ITagSet Tags { get; }
+    public IComponentContainer Components { get; }
 }

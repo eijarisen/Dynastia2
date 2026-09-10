@@ -1,22 +1,91 @@
-<Window xmlns="https://github.com/avaloniaui"
-        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:vm="using:Dynastia.App.ViewModels"
-        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
-        x:Class="Dynastia.App.Views.MainWindow"
-        x:DataType="vm:MainViewModel"
-        Icon="/Assets/avalonia-logo.ico"
-        Title="Dynastia.App">
+<Window
+    xmlns="https://github.com/avaloniaui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:vm="using:Dynastia.App.ViewModels"
+    x:Class="Dynastia.App.Views.MainWindow"
+    x:DataType="vm:MainWindowViewModel"
+    mc:Ignorable="d"
+    Width="900"
+    Height="650"
+    MinWidth="650"
+    MinHeight="450"
+    Title="Dynastia">
 
-    <Design.DataContext>
-        <!-- This only sets the DataContext for the previewer in an IDE,
-             to set the actual DataContext for runtime, set the DataContext property in code (look at App.axaml.cs) -->
-        <vm:MainViewModel />
-    </Design.DataContext>
+    <Grid RowDefinitions="Auto,*"
+          Margin="16"
+          RowSpacing="16">
 
-    <TextBox Text="{Binding Greeting}"
-             HorizontalAlignment="Center"
-             VerticalAlignment="Center" />
+        <Border Padding="16">
+            <Grid ColumnDefinitions="*,Auto,Auto"
+                  ColumnSpacing="16">
 
+                <TextBlock
+                    VerticalAlignment="Center"
+                    FontSize="26"
+                    FontWeight="Bold"
+                    Text="{Binding DynastyTitle}" />
+
+                <TextBlock
+                    Grid.Column="1"
+                    VerticalAlignment="Center"
+                    FontSize="24"
+                    FontWeight="SemiBold"
+                    Text="{Binding Year}" />
+
+                <Button
+                    Grid.Column="2"
+                    Padding="18,10"
+                    VerticalAlignment="Center"
+                    Content="Next Year"
+                    Command="{Binding NextYearCommand}" />
+            </Grid>
+        </Border>
+
+        <Border Grid.Row="1"
+                Padding="16">
+            <Grid RowDefinitions="Auto,*"
+                  RowSpacing="12">
+
+                <TextBlock
+                    FontSize="20"
+                    FontWeight="Bold"
+                    Text="People" />
+
+                <ScrollViewer Grid.Row="1">
+                    <ItemsControl ItemsSource="{Binding People}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate x:DataType="vm:PersonRowViewModel">
+                                <Border
+                                    Margin="0,0,0,8"
+                                    Padding="12">
+                                    <Grid ColumnDefinitions="*,Auto"
+                                          ColumnSpacing="12">
+
+                                        <StackPanel Spacing="3">
+                                            <TextBlock
+                                                FontSize="16"
+                                                FontWeight="SemiBold"
+                                                Text="{Binding FullName}" />
+
+                                            <TextBlock
+                                                Opacity="0.7"
+                                                Text="{Binding StatusText}" />
+                                        </StackPanel>
+
+                                        <TextBlock
+                                            Grid.Column="1"
+                                            VerticalAlignment="Center"
+                                            Text="{Binding AgeText}" />
+                                    </Grid>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </ScrollViewer>
+            </Grid>
+        </Border>
+
+    </Grid>
 </Window>

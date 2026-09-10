@@ -4,13 +4,30 @@ namespace Dynastia.Mechanics.Aging;
 
 public sealed class AgingPlugin : IGamePlugin
 {
-    public void Initialize(IGamePluginContext context)
+    public void Initialize(
+        IGamePluginContext context)
     {
-        var registry = context.GetService<IYearSystemRegistry>()
+        var registry =
+            context.GetService<IYearSystemRegistry>()
             ?? throw new InvalidOperationException(
                 "Year system registry is unavailable.");
 
-        registry.Register(new AgingSystem());
-        context.Log("Aging mechanics registered.");
+        var family =
+            context.GetService<IFamilyService>()
+            ?? throw new InvalidOperationException(
+                "Family service is unavailable.");
+
+        var events =
+            context.GetService<IGameEventBus>()
+            ?? throw new InvalidOperationException(
+                "Game event bus is unavailable.");
+
+        registry.Register(
+            new AgingSystem(
+                family,
+                events));
+
+        context.Log(
+            "Aging mechanics registered.");
     }
 }

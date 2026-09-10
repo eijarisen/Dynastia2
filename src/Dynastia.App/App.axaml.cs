@@ -157,6 +157,9 @@ public partial class App : Application
             var justiceService =
                 pluginContext.GetService<IJusticeService>();
 
+            var biographyService =
+                pluginContext.GetService<IBiographyService>();
+
             desktop.MainWindow =
                 new MainWindow
                 {
@@ -174,6 +177,7 @@ public partial class App : Application
                             educationService,
                             careerService,
                             justiceService,
+                            biographyService,
                             successionService,
                             eventBus,
                             actionRegistry)

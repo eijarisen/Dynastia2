@@ -768,10 +768,13 @@
                             </TabItem>
 
                             <TabItem Header="About">
-                                <TextBlock
-                                    Margin="12"
-                                    TextWrapping="Wrap"
-                                    Text="About information will be generated from identity and stats." />
+                                <ScrollViewer>
+                                    <TextBlock
+                                        Margin="12"
+                                        TextWrapping="Wrap"
+                                        LineHeight="22"
+                                        Text="{Binding SelectedAboutText}" />
+                                </ScrollViewer>
                             </TabItem>
 
                             <TabItem Header="Relationships">
@@ -800,10 +803,39 @@
                             </TabItem>
 
                             <TabItem Header="Biography">
-                                <TextBlock
-                                    Margin="12"
-                                    TextWrapping="Wrap"
-                                    Text="Biography events will appear here." />
+                                <ScrollViewer>
+                                    <Grid Margin="12">
+
+                                        <TextBlock
+                                            Opacity="0.6"
+                                            Text="{Binding BiographyEmptyText}" />
+
+                                        <ItemsControl
+                                            ItemsSource="{Binding SelectedBiography}">
+
+                                            <ItemsControl.ItemTemplate>
+                                                <DataTemplate
+                                                    x:DataType="vm:BiographyEntryViewModel">
+
+                                                    <Grid
+                                                        Margin="0,0,0,7"
+                                                        ColumnDefinitions="58,*"
+                                                        ColumnSpacing="8">
+
+                                                        <TextBlock
+                                                            FontWeight="Bold"
+                                                            Text="{Binding Year}" />
+
+                                                        <TextBlock
+                                                            Grid.Column="1"
+                                                            TextWrapping="Wrap"
+                                                            Text="{Binding Message}" />
+                                                    </Grid>
+                                                </DataTemplate>
+                                            </ItemsControl.ItemTemplate>
+                                        </ItemsControl>
+                                    </Grid>
+                                </ScrollViewer>
                             </TabItem>
                         </TabControl>
                     </Grid>

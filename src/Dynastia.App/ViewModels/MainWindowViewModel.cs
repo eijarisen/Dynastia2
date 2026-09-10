@@ -18,6 +18,7 @@ public sealed class MainWindowViewModel : ViewModelBase
     private readonly IEducationService? _educationService;
     private readonly ICareerService? _careerService;
     private readonly IJusticeService? _justiceService;
+    private readonly IBiographyService? _biographyService;
     private readonly ISuccessionService _succession;
     private readonly IGameEventBus _eventBus;
     private readonly IActionRegistry _actionRegistry;
@@ -29,6 +30,8 @@ public sealed class MainWindowViewModel : ViewModelBase
     private EducationViewModel? _selectedEducation;
     private CareerViewModel? _selectedCareer;
     private JusticeViewModel? _selectedJustice;
+    private string _selectedAboutText =
+        "No information available.";
 
     private int _albumYear;
     private string _surnameInput = string.Empty;
@@ -51,6 +54,7 @@ public sealed class MainWindowViewModel : ViewModelBase
         IEducationService? educationService,
         ICareerService? careerService,
         IJusticeService? justiceService,
+        IBiographyService? biographyService,
         ISuccessionService succession,
         IGameEventBus eventBus,
         IActionRegistry actionRegistry)
@@ -67,6 +71,7 @@ public sealed class MainWindowViewModel : ViewModelBase
         _educationService = educationService;
         _careerService = careerService;
         _justiceService = justiceService;
+        _biographyService = biographyService;
         _succession = succession;
         _eventBus = eventBus;
         _actionRegistry = actionRegistry;
@@ -439,6 +444,9 @@ public sealed class MainWindowViewModel : ViewModelBase
     public ObservableCollection<StatValue>
         SelectedStats { get; } = [];
 
+    public ObservableCollection<BiographyEntryViewModel>
+        SelectedBiography { get; } = [];
+
     public ObservableCollection<AvailableActionViewModel>
         AvailableActions { get; } = [];
 
@@ -466,6 +474,7 @@ public sealed class MainWindowViewModel : ViewModelBase
             RefreshEducation();
             RefreshCareer();
             RefreshJustice();
+            RefreshNarrative();
             RefreshActions();
             RefreshFamilySection();
 
@@ -538,6 +547,25 @@ public sealed class MainWindowViewModel : ViewModelBase
 
     public bool HasSelectedEconomy =>
         SelectedEconomy is not null;
+
+    public string SelectedAboutText
+    {
+        get => _selectedAboutText;
+
+        private set
+        {
+            if (_selectedAboutText == value)
+                return;
+
+            _selectedAboutText = value;
+            OnPropertyChanged();
+        }
+    }
+
+    public string BiographyEmptyText =>
+        SelectedBiography.Count == 0
+            ? "No significant events recorded."
+            : string.Empty;
 
     public RelayCommand StartGameCommand { get; }
     public RelayCommand NextYearCommand { get; }
@@ -665,6 +693,7 @@ public sealed class MainWindowViewModel : ViewModelBase
         RefreshEducation();
         RefreshCareer();
         RefreshJustice();
+        RefreshNarrative();
         RefreshActions();
         RefreshFamilySection();
     }
@@ -1039,6 +1068,42 @@ public sealed class MainWindowViewModel : ViewModelBase
                     person));
     }
 
+    private void RefreshNarrative()
+    {
+        SelectedBiography.Clear();
+
+        var person =
+            FindSelectedPerson();
+
+        if (person is null
+            || _biographyService is null)
+        {
+            SelectedAboutText =
+                "No information available.";
+
+            OnPropertyChanged(
+                nameof(BiographyEmptyText));
+
+            return;
+        }
+
+        SelectedAboutText =
+            _biographyService.GetAbout(
+                person);
+
+        foreach (var entry in
+            _biographyService.GetBiography(
+                person))
+        {
+            SelectedBiography.Add(
+                new BiographyEntryViewModel(
+                    entry));
+        }
+
+        OnPropertyChanged(
+            nameof(BiographyEmptyText));
+    }
+
     private void RefreshFamilyDetails()
     {
         var person =
@@ -1244,6 +1309,7 @@ public sealed class MainWindowViewModel : ViewModelBase
         RefreshEducation();
         RefreshCareer();
         RefreshJustice();
+        RefreshNarrative();
         RefreshActions();
     }
 
@@ -1285,6 +1351,8 @@ public sealed class MainWindowViewModel : ViewModelBase
         {
             RefreshAlbum();
         }
+
+        RefreshNarrative();
     }
 
     private void OnSuccessionStateChanged(

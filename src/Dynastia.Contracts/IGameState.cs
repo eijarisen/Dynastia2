@@ -3,10 +3,10 @@ namespace Dynastia.Contracts;
 public interface IGameState
 {
     string DynastySurname { get; set; }
-
     int Year { get; set; }
 
     IReadOnlyList<IPerson> People { get; }
 
     IPerson CreatePerson(string name, string surname, int age);
+    void ClearPeople();
 }

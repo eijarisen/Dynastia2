@@ -1,0 +1,36 @@
+using Dynastia.Contracts;
+
+namespace Dynastia.Mechanics.Family;
+
+public sealed class FamilyPlugin : IGamePlugin
+{
+    public void Initialize(IGamePluginContext context)
+    {
+        var gameState =
+            context.GetService<IGameState>()
+            ?? throw new InvalidOperationException(
+                "Game state is unavailable.");
+
+        var selection =
+            context.GetService<ISelectionService>()
+            ?? throw new InvalidOperationException(
+                "Selection service is unavailable.");
+
+        var familyService =
+            new StandardFamilyService(gameState);
+
+        var newGameService =
+            new StandardNewGameService(
+                gameState,
+                familyService,
+                selection);
+
+        context.AddService<IFamilyService>(
+            familyService);
+
+        context.AddService<INewGameService>(
+            newGameService);
+
+        context.Log("Family mechanics registered.");
+    }
+}

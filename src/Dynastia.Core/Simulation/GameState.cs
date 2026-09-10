@@ -8,7 +8,6 @@ public sealed class GameState : IGameState
     private readonly List<IPerson> _people = [];
 
     public string DynastySurname { get; set; } = string.Empty;
-
     public int Year { get; set; } = 1900;
 
     public IReadOnlyList<IPerson> People => _people;
@@ -18,5 +17,10 @@ public sealed class GameState : IGameState
         var person = new Person(name, surname, age);
         _people.Add(person);
         return person;
+    }
+
+    public void ClearPeople()
+    {
+        _people.Clear();
     }
 }

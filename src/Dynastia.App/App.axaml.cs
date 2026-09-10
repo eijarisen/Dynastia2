@@ -24,31 +24,9 @@ public partial class App : Application
         if (ApplicationLifetime
             is IClassicDesktopStyleApplicationLifetime desktop)
         {
-            var gameState = new GameState
-            {
-                DynastySurname = "Kowalski",
-                Year = 1900
-            };
-
-            var father = gameState.CreatePerson("Jan", "Kowalski", 45);
-            father.Tags.Add("state.dead");
-
-            var mother = gameState.CreatePerson("Anna", "Kowalski", 42);
-            mother.Tags.Add("state.dead");
-
-            var founder = gameState.CreatePerson("Piotr", "Kowalski", 18);
-            founder.Tags.Add("state.alive");
-            founder.Tags.Add("age.adult");
-            founder.Tags.Add("family.bloodline");
-            founder.Tags.Add("lineage.male");
-
+            var gameState = new GameState();
             var registry = new YearSystemRegistry();
-
-            var selectionService = new SelectionService
-            {
-                SelectedPersonId = founder.Id
-            };
-
+            var selectionService = new SelectionService();
             var gameRandom = new GameRandom();
             var eventBus = new GameEventBus();
 
@@ -76,11 +54,24 @@ public partial class App : Application
                 pluginsDirectory,
                 pluginContext);
 
+            var newGame =
+                pluginContext.GetService<INewGameService>()
+                ?? throw new InvalidOperationException(
+                    "No New Game service was registered. " +
+                    "Is dynastia.family installed?");
+
+            newGame.StartNewGame("Kowalski");
+
             var yearProcessor =
-                new YearProcessor(gameState, registry);
+                new YearProcessor(
+                    gameState,
+                    registry);
 
             var statsService =
                 pluginContext.GetService<IStatsService>();
+
+            var familyService =
+                pluginContext.GetService<IFamilyService>();
 
             desktop.MainWindow = new MainWindow
             {
@@ -89,6 +80,7 @@ public partial class App : Application
                     yearProcessor,
                     selectionService,
                     statsService,
+                    familyService,
                     eventBus,
                     actionRegistry)
             };

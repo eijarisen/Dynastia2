@@ -18,7 +18,6 @@
           Margin="16"
           RowSpacing="12">
 
-        <!-- Top bar -->
         <Border Padding="16">
             <Grid ColumnDefinitions="*,Auto,Auto"
                   ColumnSpacing="16">
@@ -45,7 +44,6 @@
             </Grid>
         </Border>
 
-        <!-- Family Album -->
         <Border Grid.Row="1"
                 Padding="12">
 
@@ -97,7 +95,6 @@
             </Grid>
         </Border>
 
-        <!-- Actions -->
         <Border Grid.Row="2"
                 Padding="12">
 
@@ -143,7 +140,6 @@
             </Grid>
         </Border>
 
-        <!-- Main content -->
         <Grid Grid.Row="3"
               ColumnDefinitions="2*,3*"
               ColumnSpacing="16">
@@ -166,10 +162,16 @@
                         <ListBox.ItemTemplate>
                             <DataTemplate x:DataType="vm:PersonRowViewModel">
                                 <Grid Margin="6"
-                                      ColumnDefinitions="*,Auto"
-                                      ColumnSpacing="12">
+                                      ColumnDefinitions="Auto,*,Auto"
+                                      ColumnSpacing="10">
 
-                                    <StackPanel Spacing="3">
+                                    <TextBlock
+                                        VerticalAlignment="Center"
+                                        FontWeight="Bold"
+                                        Text="{Binding GenerationText}" />
+
+                                    <StackPanel Grid.Column="1"
+                                                Spacing="3">
                                         <TextBlock
                                             FontSize="16"
                                             FontWeight="SemiBold"
@@ -181,7 +183,7 @@
                                     </StackPanel>
 
                                     <TextBlock
-                                        Grid.Column="1"
+                                        Grid.Column="2"
                                         VerticalAlignment="Center"
                                         Text="{Binding AgeText}" />
                                 </Grid>
@@ -244,13 +246,16 @@
                     <TabControl Grid.Row="2">
                         <TabItem Header="General">
                             <StackPanel Margin="12"
-                                        Spacing="10">
+                                        Spacing="8">
+
+                                <TextBlock Text="{Binding SelectedPerson.AgeText}" />
+                                <TextBlock Text="{Binding SelectedFamily.Sex, StringFormat='Sex: {0}'}" />
+                                <TextBlock Text="{Binding SelectedFamily.Generation, StringFormat='Generation: {0}'}" />
+                                <TextBlock Text="{Binding SelectedFamily.Bloodline, StringFormat='Bloodline: {0}'}" />
+                                <TextBlock Text="{Binding SelectedFamily.MaleLineage, StringFormat='Male lineage: {0}'}" />
 
                                 <TextBlock
-                                    FontSize="16"
-                                    Text="{Binding SelectedPerson.AgeText}" />
-
-                                <TextBlock
+                                    Margin="0,8,0,0"
                                     FontWeight="SemiBold"
                                     Text="Tags" />
 
@@ -268,10 +273,15 @@
                         </TabItem>
 
                         <TabItem Header="Relationships">
-                            <TextBlock
-                                Margin="12"
-                                TextWrapping="Wrap"
-                                Text="Relationship information will be supplied by family mechanics." />
+                            <StackPanel Margin="12"
+                                        Spacing="8">
+                                <TextBlock Text="{Binding SelectedFamily.Father, StringFormat='Father: {0}'}" />
+                                <TextBlock Text="{Binding SelectedFamily.Mother, StringFormat='Mother: {0}'}" />
+                                <TextBlock Text="{Binding SelectedFamily.Spouse, StringFormat='Spouse: {0}'}" />
+                                <TextBlock
+                                    TextWrapping="Wrap"
+                                    Text="{Binding SelectedFamily.Children, StringFormat='Children: {0}'}" />
+                            </StackPanel>
                         </TabItem>
 
                         <TabItem Header="Biography">

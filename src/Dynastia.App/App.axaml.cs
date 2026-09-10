@@ -80,8 +80,6 @@ public partial class App : Application
                     gameState,
                     yearSystemRegistry);
 
-
-
             var mainWindow = new MainWindow
             {
                 DataContext = new MainViewModel()

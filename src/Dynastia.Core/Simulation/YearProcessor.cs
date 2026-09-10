@@ -26,9 +26,7 @@ public sealed class YearProcessor
 
         foreach (var system in systems)
         {
-            Console.WriteLine(
-                $"[{_gameState.Year}] Running {system.Id}");
-
+            Console.WriteLine($"[{_gameState.Year}] Running {system.Id}");
             system.Execute(_gameState);
         }
     }

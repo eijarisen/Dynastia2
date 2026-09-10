@@ -13,10 +13,7 @@ public sealed class YearSystemRegistry : IYearSystemRegistry
         ArgumentNullException.ThrowIfNull(system);
 
         if (_systems.Any(x =>
-            string.Equals(
-                x.Id,
-                system.Id,
-                StringComparison.OrdinalIgnoreCase)))
+            string.Equals(x.Id, system.Id, StringComparison.OrdinalIgnoreCase)))
         {
             throw new InvalidOperationException(
                 $"A year system with ID '{system.Id}' is already registered.");

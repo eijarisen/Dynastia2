@@ -1,0 +1,16 @@
+<Solution>
+  <Folder Name="/plugins/">
+    <Project Path="plugins/Dynastia.Plugin.Sample/Dynastia.Plugin.Sample.csproj" />
+  </Folder>
+  <Folder Name="/src/">
+    <Project Path="src/Dynastia.App/Dynastia.App.csproj" />
+    <Project Path="src/Dynastia.Contracts/Dynastia.Contracts.csproj" />
+    <Project Path="src/Dynastia.Core/Dynastia.Core.csproj" />
+    <Project Path="src/Dynastia.PluginHost/Dynastia.PluginHost.csproj" />
+    <Project Path="src/Dynastia.StandardUI/Dynastia.StandardUI.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Dynastia.Core.Tests/Dynastia.Core.Tests.csproj" />
+    <Project Path="tests/Dynastia.IntegrationTests/Dynastia.IntegrationTests.csproj" />
+  </Folder>
+</Solution>

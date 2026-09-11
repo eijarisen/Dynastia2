@@ -407,10 +407,10 @@ public sealed class ReproductionYearSystem : IYearSystem
         {
             var inherited =
                 _random.NextDouble() > 0.5
-                    ? GetStat(
+                    ? GetBaseStat(
                         father,
                         statId)
-                    : GetStat(
+                    : GetBaseStat(
                         mother,
                         statId);
 
@@ -586,6 +586,21 @@ public sealed class ReproductionYearSystem : IYearSystem
     {
         return _stats
             .GetStats(person)
+            .First(
+                stat =>
+                    stat.Id.Equals(
+                        statId,
+                        StringComparison.OrdinalIgnoreCase))
+            .Value;
+    }
+
+    private int GetBaseStat(
+        IPerson person,
+        string statId)
+    {
+        return _stats
+            .GetBaseStats(
+                person)
             .First(
                 stat =>
                     stat.Id.Equals(

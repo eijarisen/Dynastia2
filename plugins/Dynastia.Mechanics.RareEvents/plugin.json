@@ -1,0 +1,17 @@
+{
+  "id": "dynastia.rare_events",
+  "name": "Rare Life Events",
+  "version": "0.1.0",
+  "apiVersion": 1,
+  "assembly": "Dynastia.Mechanics.RareEvents.dll",
+  "entryType": "Dynastia.Mechanics.RareEvents.RareEventsPlugin",
+  "dependencies": [
+    "dynastia.family",
+    "dynastia.health",
+    "dynastia.economy",
+    "dynastia.career",
+    "dynastia.justice",
+    "dynastia.households",
+    "dynastia.mortality"
+  ]
+}

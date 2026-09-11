@@ -41,10 +41,11 @@ public sealed class StandardJusticeService :
             .PrisonSentence > 0;
     }
 
-    internal void Imprison(
+    public void Imprison(
         IPerson person,
-        CrimeDefinition crime,
-        int sentence)
+        int sentence,
+        string reasonId,
+        string reasonName)
     {
         var justice =
             GetRequired(
@@ -56,16 +57,33 @@ public sealed class StandardJusticeService :
                 sentence);
 
         justice.CrimeId =
-            crime.Id;
+            reasonId;
 
         justice.CrimeName =
-            crime.Name;
+            reasonName;
 
         if (justice.PrisonSentence > 0)
         {
             person.Tags.Add(
                 "state.imprisoned");
         }
+        else
+        {
+            person.Tags.Remove(
+                "state.imprisoned");
+        }
+    }
+
+    internal void Imprison(
+        IPerson person,
+        CrimeDefinition crime,
+        int sentence)
+    {
+        Imprison(
+            person,
+            sentence,
+            crime.Id,
+            crime.Name);
     }
 
     internal bool AdvanceSentence(

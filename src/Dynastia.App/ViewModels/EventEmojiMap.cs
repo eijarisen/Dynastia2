@@ -125,7 +125,26 @@ public static class EventEmojiMap
                 ["adoption.orphaned"] = "🕯️",
                 ["adoption.placed"] = "🏠",
                 ["adoption.orphanage"] = "🏚️",
-                ["adoption.left_orphanage"] = "🧳"
+                ["adoption.left_orphanage"] = "🧳",
+
+                ["rare.house_fire"] = "🔥",
+                ["rare.burglary"] = "🕵️",
+                ["rare.storm_flood_damage"] = "🌊",
+                ["rare.structural_accident"] = "🧱",
+                ["rare.assault"] = "🥊",
+                ["rare.mugging"] = "💸",
+                ["rare.workplace_accident"] = "⚠️",
+                ["rare.traffic_accident"] = "🚗",
+                ["rare.lightning_strike"] = "⚡",
+                ["rare.serious_fall"] = "🤕",
+                ["rare.lottery_win"] = "🎰",
+                ["rare.distant_inheritance"] = "💰",
+                ["rare.fraud"] = "🎭",
+                ["rare.found_property"] = "💎",
+                ["rare.wrongful_arrest"] = "⚖️",
+                ["rare.suicide"] = "🕯️",
+
+                ["stats.paid_improvement"] = "📈"
             };
 
     public static string GetEmoji(

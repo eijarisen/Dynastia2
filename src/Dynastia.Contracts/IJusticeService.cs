@@ -10,4 +10,10 @@ public interface IJusticeService
 
     bool IsImprisoned(
         IPerson person);
+
+    void Imprison(
+        IPerson person,
+        int sentence,
+        string reasonId,
+        string reasonName);
 }

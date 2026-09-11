@@ -4,11 +4,26 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Layout;
+using Avalonia.Media;
 using Dynastia.StandardUI.Genealogy.Contracts;
 
 public sealed class GenealogyWindow :
     Window
 {
+    private static readonly IBrush WindowBackground =
+        new SolidColorBrush(
+            Color.FromRgb(
+                2,
+                8,
+                9));
+
+    private static readonly IBrush Gold =
+        new SolidColorBrush(
+            Color.FromRgb(
+                222,
+                183,
+                78));
+
     private readonly GenealogyPanel
         _panel;
 
@@ -17,7 +32,7 @@ public sealed class GenealogyWindow :
         IGlobalSelectionService selection)
     {
         Title =
-            "Genealogy Tree";
+            "Family Tree";
 
         Width =
             1200;
@@ -37,6 +52,9 @@ public sealed class GenealogyWindow :
         WindowState =
             WindowState.Maximized;
 
+        Background =
+            WindowBackground;
+
         _panel =
             new GenealogyPanel(
                 data,
@@ -46,14 +64,16 @@ public sealed class GenealogyWindow :
             new TextBlock
             {
                 Text =
-                    "Genealogy Tree",
+                    "Family Tree",
 
                 FontSize =
-                    24,
+                    25,
 
                 FontWeight =
-                    Avalonia.Media
-                        .FontWeight.Bold,
+                    FontWeight.Bold,
+
+                Foreground =
+                    Gold,
 
                 VerticalAlignment =
                     VerticalAlignment.Center
@@ -63,12 +83,46 @@ public sealed class GenealogyWindow :
             new Button
             {
                 Content =
-                    "Close",
+                    new TextBlock
+                    {
+                        Text =
+                            "Close",
+
+                        Foreground =
+                            new SolidColorBrush(
+                                Color.FromRgb(
+                                    244,
+                                    230,
+                                    195)),
+
+                        FontWeight =
+                            FontWeight.SemiBold
+                    },
+
+                Background =
+                    new SolidColorBrush(
+                        Color.FromRgb(
+                            9,
+                            31,
+                            27)),
+
+                BorderBrush =
+                    new SolidColorBrush(
+                        Color.FromRgb(
+                            143,
+                            105,
+                            37)),
+
+                BorderThickness =
+                    new Thickness(1),
 
                 Padding =
                     new Thickness(
-                        16,
-                        8)
+                        15,
+                        7),
+
+                CornerRadius =
+                    new CornerRadius(4)
             };
 
         close.Click +=
@@ -81,9 +135,9 @@ public sealed class GenealogyWindow :
                 Margin =
                     new Thickness(
                         12,
-                        10,
+                        9,
                         12,
-                        4),
+                        7),
 
                 ColumnDefinitions =
                 {
@@ -112,7 +166,11 @@ public sealed class GenealogyWindow :
             close);
 
         var root =
-            new Grid();
+            new Grid
+            {
+                Background =
+                    WindowBackground
+            };
 
         root.RowDefinitions.Add(
             new RowDefinition(

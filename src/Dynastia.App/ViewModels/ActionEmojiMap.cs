@@ -27,6 +27,13 @@ public static class ActionEmojiMap
                 ["education.get_education"] = "🎓",
                 ["education.help_learning"] = "📚",
 
+                ["stats.improve_strength"] = "🏋️",
+                ["stats.improve_intellect"] = "🧠",
+                ["stats.improve_immunity"] = "🛡️",
+                ["stats.improve_appeal"] = "✨",
+                ["stats.improve_longevity"] = "🩺",
+                ["stats.improve_fertility"] = "🧬",
+
                 ["household.buy_house"] = "🏠",
                 ["household.sell_house"] = "💵",
                 ["household.give_house_to_son"] = "🎁",

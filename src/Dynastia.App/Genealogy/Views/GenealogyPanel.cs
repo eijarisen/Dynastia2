@@ -3,6 +3,7 @@ namespace Dynastia.StandardUI.Genealogy.Views;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Layout;
+using Avalonia.Media;
 using Dynastia.StandardUI.Genealogy.Contracts;
 using Dynastia.StandardUI.Genealogy.Layout;
 using Dynastia.StandardUI.Genealogy.Projection;
@@ -12,6 +13,28 @@ public sealed class GenealogyPanel :
     UserControl,
     IDisposable
 {
+    private static readonly IBrush ToolBackground =
+        new SolidColorBrush(
+            Color.FromArgb(
+                0xF0,
+                6,
+                17,
+                17));
+
+    private static readonly IBrush ToolBorder =
+        new SolidColorBrush(
+            Color.FromRgb(
+                143,
+                105,
+                37));
+
+    private static readonly IBrush ToolText =
+        new SolidColorBrush(
+            Color.FromRgb(
+                244,
+                230,
+                195));
+
     private readonly IGenealogyDataSource _data;
     private readonly IGlobalSelectionService _selection;
 
@@ -50,33 +73,24 @@ public sealed class GenealogyPanel :
             OnPersonClicked;
 
         var fit =
-            new Button
-            {
-                Content =
-                    "Fit Tree"
-            };
+            CreateToolButton(
+                "Fit Tree");
 
         fit.Click +=
             (_, _) =>
                 _canvas.FitTree();
 
         var reset =
-            new Button
-            {
-                Content =
-                    "100%"
-            };
+            CreateToolButton(
+                "100%");
 
         reset.Click +=
             (_, _) =>
                 _canvas.ResetZoom();
 
         var selected =
-            new Button
-            {
-                Content =
-                    "Center Selected"
-            };
+            CreateToolButton(
+                "Center Selected");
 
         selected.Click +=
             (_, _) =>
@@ -90,11 +104,8 @@ public sealed class GenealogyPanel :
             };
 
         var founder =
-            new Button
-            {
-                Content =
-                    "Center Founder"
-            };
+            CreateToolButton(
+                "Center Founder");
 
         founder.Click +=
             (_, _) =>
@@ -115,30 +126,36 @@ public sealed class GenealogyPanel :
             new TextBlock
             {
                 Text =
-                    "Mouse wheel: zoom · Drag empty space: pan · Click a person: select",
+                    "Mouse wheel: zoom · Drag empty space: pan · Hover: details · Click: select",
+
                 VerticalAlignment =
                     VerticalAlignment.Center,
+
+                Foreground =
+                    ToolText,
+
                 Opacity =
-                    0.65,
+                    0.76,
+
+                FontSize =
+                    12,
+
                 Margin =
                     new Thickness(
-                        8,
+                        10,
                         0,
                         0,
                         0)
             };
 
-        var tools =
+        var toolsContent =
             new StackPanel
             {
                 Orientation =
                     Orientation.Horizontal,
 
                 Spacing =
-                    6,
-
-                Margin =
-                    new Thickness(8),
+                    7,
 
                 Children =
                 {
@@ -148,6 +165,31 @@ public sealed class GenealogyPanel :
                     founder,
                     instructions
                 }
+            };
+
+        var tools =
+            new Border
+            {
+                Background =
+                    ToolBackground,
+
+                BorderBrush =
+                    ToolBorder,
+
+                BorderThickness =
+                    new Thickness(
+                        0,
+                        0,
+                        0,
+                        1),
+
+                Padding =
+                    new Thickness(
+                        8,
+                        7),
+
+                Child =
+                    toolsContent
             };
 
         var grid =
@@ -218,6 +260,53 @@ public sealed class GenealogyPanel :
 
         _canvas.PersonClicked -=
             OnPersonClicked;
+
+        _canvas.Dispose();
+    }
+
+    private static Button CreateToolButton(
+        string text)
+    {
+        return new Button
+        {
+            Content =
+                new TextBlock
+                {
+                    Text =
+                        text,
+
+                    Foreground =
+                        ToolText,
+
+                    FontSize =
+                        12,
+
+                    FontWeight =
+                        FontWeight.SemiBold
+                },
+
+            Background =
+                new SolidColorBrush(
+                    Color.FromArgb(
+                        0xE4,
+                        9,
+                        31,
+                        27)),
+
+            BorderBrush =
+                ToolBorder,
+
+            BorderThickness =
+                new Thickness(1),
+
+            Padding =
+                new Thickness(
+                    11,
+                    5),
+
+            CornerRadius =
+                new CornerRadius(4)
+        };
     }
 
     private void OnPersonClicked(
@@ -311,15 +400,9 @@ public sealed class GenealogyPanel :
                     person =>
                         person.Id);
 
-        // The uploaded feature separated topology and visual state,
-        // but its original RefreshVisualOnly only invalidated old immutable
-        // records. Replace node records while preserving coordinates/edges.
         _canvas.Layout =
             layout.WithPeople(
                 people);
-
-        _canvas.SelectedPersonId =
-            _selection.SelectedPersonId;
 
         _canvas.InvalidateVisual();
     }

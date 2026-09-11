@@ -188,7 +188,15 @@ public partial class App : Application
                     : new GameGenealogyDataSource(
                         gameState,
                         familyService,
-                        eventBus);
+                        eventBus,
+                        healthService,
+                        educationService,
+                        careerService,
+                        justiceService,
+                        statsService,
+                        locationService,
+                        marriageSatisfactionService,
+                        successionService);
 
             var genealogySelection =
                 new SelectionServiceGenealogyAdapter(

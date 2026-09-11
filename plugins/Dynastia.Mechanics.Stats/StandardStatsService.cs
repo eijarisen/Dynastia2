@@ -2,8 +2,12 @@ using Dynastia.Contracts;
 
 namespace Dynastia.Mechanics.Stats;
 
-public sealed class StandardStatsService : IStatsService
+public sealed class StandardStatsService :
+    IStatsService
 {
+    private const int MaximumEffectiveStat =
+        5;
+
     private readonly IGameRandom _random;
 
     private static readonly
@@ -44,38 +48,60 @@ public sealed class StandardStatsService : IStatsService
     public StandardStatsService(
         IGameRandom random)
     {
-        _random = random;
+        _random =
+            random;
     }
 
     public void EnsureStats(
         IPerson person)
     {
-        if (person.Components.Has<StatsComponent>())
+        ArgumentNullException.ThrowIfNull(
+            person);
+
+        if (person.Components.Has<
+            StatsComponent>())
+        {
+            EnsureComponentCompleteness(
+                person.Components.Get<
+                    StatsComponent>()
+                ?? throw new InvalidOperationException(
+                    "Stats component is unavailable."));
+
             return;
+        }
 
         var stats =
             new StatsComponent();
 
-        foreach (var definition in Definitions)
+        foreach (var definition in
+            Definitions)
         {
-            stats.Values[definition.Id] =
-                _random.NextInt(1, 5);
+            stats.Values[
+                definition.Id] =
+                    _random.NextInt(
+                        1,
+                        5);
         }
 
-        person.Components.Set(stats);
+        person.Components.Set(
+            stats);
     }
 
     public void SetStats(
         IPerson person,
         IReadOnlyDictionary<string, int> values)
     {
-        ArgumentNullException.ThrowIfNull(person);
-        ArgumentNullException.ThrowIfNull(values);
+        ArgumentNullException.ThrowIfNull(
+            person);
+
+        ArgumentNullException.ThrowIfNull(
+            values);
 
         var stats =
             new StatsComponent();
 
-        foreach (var definition in Definitions)
+        foreach (var definition in
+            Definitions)
         {
             if (!values.TryGetValue(
                 definition.Id,
@@ -85,26 +111,67 @@ public sealed class StandardStatsService : IStatsService
                     $"Missing stat '{definition.Id}'.");
             }
 
-            ValidateStatValue(
+            ValidateBaseStatValue(
                 definition.Id,
                 value);
 
-            stats.Values[definition.Id] =
-                value;
+            stats.Values[
+                definition.Id] =
+                    value;
         }
 
-        person.Components.Set(stats);
+        // SetStats is used to establish a newly inherited base profile.
+        // A fresh hereditary profile never carries acquired bonuses.
+        person.Components.Set(
+            stats);
     }
 
     public IReadOnlyList<StatValue> GetStats(
         IPerson person)
     {
-        EnsureStats(person);
-
         var stats =
-            person.Components.Get<StatsComponent>()
-            ?? throw new InvalidOperationException(
-                "Stats component could not be created.");
+            GetRequired(
+                person);
+
+        return Definitions
+            .Select(
+                definition =>
+                {
+                    var baseValue =
+                        stats.Values[
+                            definition.Id];
+
+                    var acquired =
+                        stats.AcquiredImprovements
+                            .TryGetValue(
+                                definition.Id,
+                                out var bonus)
+                            ? Math.Max(
+                                0,
+                                bonus)
+                            : 0;
+
+                    var effective =
+                        Math.Min(
+                            MaximumEffectiveStat,
+                            baseValue
+                            + acquired);
+
+                    return new StatValue(
+                        definition.Id,
+                        definition.Name,
+                        effective,
+                        definition.Description);
+                })
+            .ToList();
+    }
+
+    public IReadOnlyList<StatValue> GetBaseStats(
+        IPerson person)
+    {
+        var stats =
+            GetRequired(
+                person);
 
         return Definitions
             .Select(
@@ -118,7 +185,117 @@ public sealed class StandardStatsService : IStatsService
             .ToList();
     }
 
-    private static void ValidateStatValue(
+    public bool TryIncreaseAcquiredStat(
+        IPerson person,
+        string statId)
+    {
+        ArgumentNullException.ThrowIfNull(
+            person);
+
+        if (string.IsNullOrWhiteSpace(
+            statId))
+        {
+            throw new ArgumentException(
+                "Stat ID is required.",
+                nameof(statId));
+        }
+
+        var definition =
+            Definitions.FirstOrDefault(
+                candidate =>
+                    candidate.Id.Equals(
+                        statId,
+                        StringComparison.OrdinalIgnoreCase));
+
+        if (string.IsNullOrWhiteSpace(
+            definition.Id))
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(statId),
+                $"Unknown stat '{statId}'.");
+        }
+
+        var stats =
+            GetRequired(
+                person);
+
+        var baseValue =
+            stats.Values[
+                definition.Id];
+
+        var acquired =
+            stats.AcquiredImprovements
+                .TryGetValue(
+                    definition.Id,
+                    out var currentBonus)
+                ? Math.Max(
+                    0,
+                    currentBonus)
+                : 0;
+
+        if (baseValue + acquired
+            >= MaximumEffectiveStat)
+        {
+            return false;
+        }
+
+        stats.AcquiredImprovements[
+            definition.Id] =
+                acquired + 1;
+
+        return true;
+    }
+
+    private StatsComponent GetRequired(
+        IPerson person)
+    {
+        EnsureStats(
+            person);
+
+        return person.Components.Get<
+            StatsComponent>()
+            ?? throw new InvalidOperationException(
+                "Stats component could not be created.");
+    }
+
+    private void EnsureComponentCompleteness(
+        StatsComponent stats)
+    {
+        foreach (var definition in
+            Definitions)
+        {
+            if (!stats.Values.TryGetValue(
+                definition.Id,
+                out var value))
+            {
+                // Defensive migration for malformed very old saves.
+                stats.Values[
+                    definition.Id] =
+                        _random.NextInt(
+                            1,
+                            5);
+
+                continue;
+            }
+
+            ValidateBaseStatValue(
+                definition.Id,
+                value);
+
+            if (stats.AcquiredImprovements
+                .TryGetValue(
+                    definition.Id,
+                    out var acquired)
+                && acquired < 0)
+            {
+                stats.AcquiredImprovements[
+                    definition.Id] =
+                        0;
+            }
+        }
+    }
+
+    private static void ValidateBaseStatValue(
         string statId,
         int value)
     {

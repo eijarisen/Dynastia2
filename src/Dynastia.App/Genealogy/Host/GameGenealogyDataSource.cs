@@ -1,12 +1,13 @@
 namespace Dynastia.App.Genealogy.Host;
 
+using Dynastia.App.ViewModels;
 using Dynastia.Contracts;
 using Dynastia.StandardUI.Genealogy.Contracts;
 using Dynastia.StandardUI.Genealogy.Models;
 
 /// <summary>
-/// Exact adapter from the current Dynastia.Contracts family/event model
-/// to the read-only genealogy projection requested by the uploaded UI.
+/// Adapter from the current game state to the read-only genealogy projection.
+/// The visual fields deliberately mirror the Households person-card content.
 /// </summary>
 public sealed class GameGenealogyDataSource :
     IGenealogyDataSource
@@ -23,11 +24,21 @@ public sealed class GameGenealogyDataSource :
                 "relationship.remarried",
                 "relationship.divorce",
                 "relationship.prison_divorce",
+                "relationship.low_satisfaction_divorce",
                 "relationship.affair"
             };
 
     private readonly IGameState _gameState;
     private readonly IFamilyService _family;
+    private readonly IHealthService? _health;
+    private readonly IEducationService? _education;
+    private readonly ICareerService? _career;
+    private readonly IJusticeService? _justice;
+    private readonly IStatsService? _stats;
+    private readonly ILocationService? _locations;
+    private readonly IMarriageSatisfactionService?
+        _marriageSatisfaction;
+    private readonly ISuccessionService? _succession;
 
     private long _topologyVersion;
     private long _visualVersion;
@@ -35,13 +46,46 @@ public sealed class GameGenealogyDataSource :
     public GameGenealogyDataSource(
         IGameState gameState,
         IFamilyService family,
-        IGameEventBus events)
+        IGameEventBus events,
+        IHealthService? health = null,
+        IEducationService? education = null,
+        ICareerService? career = null,
+        IJusticeService? justice = null,
+        IStatsService? stats = null,
+        ILocationService? locations = null,
+        IMarriageSatisfactionService?
+            marriageSatisfaction = null,
+        ISuccessionService? succession = null)
     {
         _gameState =
             gameState;
 
         _family =
             family;
+
+        _health =
+            health;
+
+        _education =
+            education;
+
+        _career =
+            career;
+
+        _justice =
+            justice;
+
+        _stats =
+            stats;
+
+        _locations =
+            locations;
+
+        _marriageSatisfaction =
+            marriageSatisfaction;
+
+        _succession =
+            succession;
 
         events.EventPublished +=
             OnEventPublished;
@@ -176,22 +220,218 @@ public sealed class GameGenealogyDataSource :
                             marriage.EndReason))
                 .ToList();
 
+        var isAlive =
+            person.Tags.Has(
+                "state.alive")
+            && !person.Tags.Has(
+                "state.dead");
+
+        var birthYear =
+            GetBirthYear(
+                person);
+
+        var deathYear =
+            person.DeathDate?.Year;
+
+        var firstName =
+            person.Name;
+
+        var surname =
+            _family.FormatSurname(
+                person.Surname,
+                _family.GetSex(
+                    person));
+
+        var avatar =
+            PersonEmojiResolver
+                .GetPersonEmoji(
+                    person,
+                    _family,
+                    _health,
+                    _career,
+                    _justice,
+                    _stats);
+
+        double? healthValue =
+            null;
+
+        var healthTooltip =
+            isAlive
+                ? "Unknown"
+                : "Deceased";
+
+        if (_health is not null
+            && isAlive)
+        {
+            var health =
+                _health.GetHealth(
+                    person);
+
+            healthValue =
+                health.Percentage;
+
+            healthTooltip =
+                $"{Math.Round(health.Current)}/" +
+                $"{Math.Round(health.Maximum)}";
+        }
+
+        var educationTooltip =
+            _education is null
+                ? "Unknown"
+                : $"Level " +
+                  $"{_education.GetEducationLevel(person)}";
+
+        var occupation =
+            string.Empty;
+
+        var occupationTooltip =
+            "Unknown";
+
+        var satisfactionTooltip =
+            "Unknown";
+
+        if (_career is not null)
+        {
+            var career =
+                _career.GetCareer(
+                    person);
+
+            occupation =
+                career.JobTitle;
+
+            occupationTooltip =
+                career.IsRetired
+                    ? career.AnnualIncome > 0
+                        ? $"{career.JobTitle} — " +
+                          $"{career.AnnualIncome:N0} zł/year pension"
+                        : career.JobTitle
+                    : career.JobLevel > 0
+                        ? $"{career.JobTitle} — " +
+                          $"{career.AnnualIncome:N0} zł/year"
+                        : career.JobTitle;
+
+            satisfactionTooltip =
+                career.JobLevel > 0
+                && !career.IsRetired
+                    ? career.JobSatisfactionText
+                    : "N/A";
+        }
+
+        if (_justice is not null)
+        {
+            var justice =
+                _justice.GetStatus(
+                    person);
+
+            if (justice.IsImprisoned)
+            {
+                occupation =
+                    justice.IsLifeSentence
+                        ? "Imprisoned · Life"
+                        : justice.RemainingYears == 1
+                            ? "Imprisoned · 1 year left"
+                            : $"Imprisoned · " +
+                              $"{justice.RemainingYears} " +
+                              "years left";
+
+                occupationTooltip =
+                    occupation;
+            }
+        }
+
+        var town =
+            string.Empty;
+
+        if (_locations is not null)
+        {
+            var location =
+                _locations.GetLocation(
+                    person);
+
+            town =
+                isAlive
+                    ? location.HomeTown.Town
+                    : (
+                        location.DeathTown
+                        ?? location.HomeTown
+                    ).Town;
+        }
+
+        var spouse =
+            _family.GetSpouse(
+                person);
+
+        var spouseTooltip =
+            spouse is null
+                ? "None"
+                : _family.GetDisplayName(
+                    spouse);
+
+        var marriage =
+            _marriageSatisfaction?
+                .GetSatisfaction(
+                    person);
+
+        var marriageTooltip =
+            marriage is null
+                ? "N/A"
+                : $"{marriage.Label} " +
+                  $"({marriage.Value:0}%)";
+
+        var tooltip =
+            isAlive
+                ? string.Join(
+                    Environment.NewLine,
+                    new[]
+                    {
+                        $"Health: {healthTooltip}",
+                        $"Education: {educationTooltip}",
+                        $"Occupation: {occupationTooltip}",
+                        $"Job Satisfaction: {satisfactionTooltip}",
+                        $"Spouse: {spouseTooltip}",
+                        $"Marriage Satisfaction: {marriageTooltip}"
+                    })
+                : string.Join(
+                    Environment.NewLine,
+                    new[]
+                    {
+                        $"Education: {educationTooltip}",
+                        $"Spouse: {spouseTooltip}"
+                    });
+
+        var lifeSpan =
+            isAlive
+                ? $"{birthYear} • Age {person.Age}"
+                : deathYear is int died
+                    ? $"{birthYear}-{died} • Age {person.Age}"
+                    : $"{birthYear} • Age {person.Age}";
+
         return new GenealogyPersonRecord(
             person.Id,
             _family.GetDisplayName(
                 person),
+            firstName,
+            surname,
+            avatar,
             _family.IsBloodline(
                 person),
             _family.IsMaleLineage(
                 person),
-            person.Tags.Has(
-                "state.alive"),
-            GetBirthYear(
-                person),
-            person.DeathDate?.Year,
+            isAlive,
+            birthYear,
+            deathYear,
+            healthValue,
+            lifeSpan,
+            town,
+            occupation,
+            isAlive
+                && !string.IsNullOrWhiteSpace(
+                    occupation),
+            _succession?.ActiveControllerId
+                == person.Id,
+            tooltip,
             parents,
-            _family.GetSpouse(
-                person)?.Id,
+            spouse?.Id,
             history);
     }
 

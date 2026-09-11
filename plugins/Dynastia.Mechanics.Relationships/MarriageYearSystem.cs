@@ -18,6 +18,7 @@ public sealed class MarriageYearSystem : IYearSystem
 
     private readonly IFamilyService _family;
     private readonly IStatsService _stats;
+    private readonly ICareerService _career;
     private readonly IGameDataService _data;
     private readonly IGameRandom _random;
     private readonly IGameCalendar _calendar;
@@ -26,6 +27,7 @@ public sealed class MarriageYearSystem : IYearSystem
     public MarriageYearSystem(
         IFamilyService family,
         IStatsService stats,
+        ICareerService career,
         IGameDataService data,
         IGameRandom random,
         IGameCalendar calendar,
@@ -33,6 +35,7 @@ public sealed class MarriageYearSystem : IYearSystem
     {
         _family = family;
         _stats = stats;
+        _career = career;
         _data = data;
         _random = random;
         _calendar = calendar;
@@ -135,26 +138,11 @@ public sealed class MarriageYearSystem : IYearSystem
             RandomWeightedFrom(
                 SurnamesPath);
 
-        var lowerAge =
-            Math.Max(
-                18,
-                person.Age - 20);
-
-        var upperAge =
-            Math.Min(
-                40,
-                person.Age + 10);
-
-        // The source can form an inverted range for very old
-        // unmarried heads. Keep the intended max-spouse-age rule
-        // while avoiding an invalid RNG request.
-        if (lowerAge > upperAge)
-            lowerAge = upperAge;
-
         var spouseAge =
-            _random.NextInt(
-                lowerAge,
-                upperAge);
+            RelationshipPersonalityRules.ChoosePartnerAge(
+                person,
+                spouseSex,
+                _random);
 
         var spouse =
             gameState.CreatePerson(
@@ -187,6 +175,13 @@ public sealed class MarriageYearSystem : IYearSystem
             "sexuality.heterosexual");
 
         _stats.EnsureStats(spouse);
+
+        var exceptionalMatch =
+            RelationshipPersonalityRules.ApplyExceptionalPartnerStats(
+                person,
+                spouse,
+                _stats,
+                _random);
 
         var spouseEventName =
             _family.GetDisplayName(
@@ -243,6 +238,12 @@ public sealed class MarriageYearSystem : IYearSystem
                         ["text"] = text
                     }
             });
+
+        RelationshipPersonalityRules.ApplyExceptionalPartnerCareer(
+            exceptionalMatch,
+            spouse,
+            _career,
+            _random);
     }
 
     private void GenerateFamilyBackground(

@@ -148,11 +148,18 @@ public sealed class FamilySupportPlugin :
                             false);
                     }
 
+                    var agreementChance =
+                        PersonalityInfluence.AdjustProbability(
+                            SuccessChance,
+                            father,
+                            good: 0.20,
+                            evil: -0.20);
+
                     var success =
                         fatherHousehold.Wealth
                             >= WealthThreshold
                         && random.NextDouble()
-                            < SuccessChance;
+                            < agreementChance;
 
                     if (success)
                     {
@@ -317,11 +324,18 @@ public sealed class FamilySupportPlugin :
 
                     // Source execution check uses >= 10,000,
                     // even though the button appears only at > 10,000.
+                    var agreementChance =
+                        PersonalityInfluence.AdjustProbability(
+                            SuccessChance,
+                            child,
+                            good: 0.20,
+                            evil: -0.20);
+
                     var success =
                         childHousehold.Wealth
                             >= WealthThreshold
                         && random.NextDouble()
-                            < SuccessChance;
+                            < agreementChance;
 
                     if (success)
                     {

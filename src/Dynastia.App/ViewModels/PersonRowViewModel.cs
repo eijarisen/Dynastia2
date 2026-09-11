@@ -88,6 +88,15 @@ public sealed class PersonRowViewModel
 
     public string AgeText => $"Age: {_person.Age}";
 
+    public string PersonalityText =>
+        PersonalityInfluence.GetDisplayName(
+            _person)
+        ?? string.Empty;
+
+    public bool HasPersonality =>
+        !string.IsNullOrWhiteSpace(
+            PersonalityText);
+
     public string BirthDateText =>
         _person.BirthDate is GameDate date
             ? $"Born: {date}"

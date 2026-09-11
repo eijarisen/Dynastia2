@@ -451,21 +451,42 @@ public sealed class AdoptionYearSystem :
                         == maxIncome)
                 .ToList();
 
-        if (_random.NextDouble()
-            < PreferHighestIncomeChance)
+        var pool =
+            _random.NextDouble()
+                < PreferHighestIncomeChance
+                ? preferred
+                : candidates;
+
+        var totalWeight =
+            pool.Sum(candidate =>
+                HostPersonalityWeight(
+                    candidate.Person));
+
+        var roll =
+            _random.NextDouble()
+            * totalWeight;
+
+        foreach (var candidate in pool)
         {
-            return preferred[
-                _random.NextInt(
-                    0,
-                    preferred.Count - 1)]
-                .Person;
+            roll -=
+                HostPersonalityWeight(
+                    candidate.Person);
+
+            if (roll <= 0)
+                return candidate.Person;
         }
 
-        return candidates[
-            _random.NextInt(
-                0,
-                candidates.Count - 1)]
-            .Person;
+        return pool[^1].Person;
+    }
+
+
+    private static double HostPersonalityWeight(
+        IPerson person)
+    {
+        return PersonalityInfluence.Multiplier(
+            person,
+            good: 0.10,
+            evil: -0.10);
     }
 
     private bool IsEligibleHost(

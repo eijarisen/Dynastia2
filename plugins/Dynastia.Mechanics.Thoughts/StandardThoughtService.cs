@@ -358,14 +358,20 @@ internal sealed class StandardThoughtService :
                     person,
                     context))
             {
+                var ageAdjusted =
+                    ThoughtProviderUtilities
+                        .ApplyAgePriority(
+                            person,
+                            candidate);
+
                 candidates.Add(
                     candidate with
                     {
                         Salience =
-                            ThoughtProviderUtilities
-                                .ApplyAgePriority(
-                                    person,
-                                    candidate)
+                            ApplyPersonalitySalience(
+                                person,
+                                candidate,
+                                ageAdjusted)
                     });
             }
         }
@@ -454,6 +460,113 @@ internal sealed class StandardThoughtService :
                 SourceId =
                     selected.SourceId
             });
+    }
+
+
+    private static int ApplyPersonalitySalience(
+        IPerson person,
+        ThoughtCandidate candidate,
+        int salience)
+    {
+        var key =
+            $"{candidate.Id} {candidate.Topic} {candidate.WordingKey}"
+                .ToLowerInvariant();
+
+        var emotional =
+            key.Contains("loss")
+            || key.Contains("bereavement")
+            || key.Contains("divorce")
+            || key.Contains("affair")
+            || key.Contains("fired")
+            || key.Contains("assault")
+            || key.Contains("illness")
+            || key.Contains("orphan")
+            || key.Contains("marriage")
+            || key.Contains("birth")
+            || key.Contains("relationship");
+
+        var negative =
+            key.Contains("loss")
+            || key.Contains("bereavement")
+            || key.Contains("divorce")
+            || key.Contains("affair")
+            || key.Contains("fired")
+            || key.Contains("assault")
+            || key.Contains("miserable")
+            || key.Contains("unhappy")
+            || key.Contains("broke")
+            || key.Contains("illness")
+            || key.Contains("orphan")
+            || key.Contains("imprison")
+            || key.Contains("failure");
+
+        var positive =
+            key.Contains("married")
+            || key.Contains("marriage.new")
+            || key.Contains("birth")
+            || key.Contains("promotion")
+            || key.Contains("satisfied")
+            || key.Contains("thriving")
+            || key.Contains("repaired")
+            || key.Contains("success")
+            || key.Contains("inheritance")
+            || key.Contains("lottery");
+
+        var career =
+            key.Contains("career")
+            || key.Contains("employment")
+            || key.Contains("education");
+
+        var immediateProblem =
+            key.Contains("fired")
+            || key.Contains("miserable")
+            || key.Contains("unhappy")
+            || key.Contains("broke")
+            || key.Contains("assault")
+            || key.Contains("divorce");
+
+        var melancholic =
+            negative
+                ? (key.Contains("bereavement")
+                    || key.Contains("divorce")
+                    || key.Contains("fired")
+                    || key.Contains("assault")
+                        ? 0.20
+                        : 0.15)
+                : emotional
+                    ? 0.10
+                    : 0;
+
+        var phlegmatic =
+            emotional && salience < 90
+                ? -0.10
+                : 0;
+
+        var sanguine =
+            positive
+                ? 0.10
+                : career
+                    ? 0.05
+                    : 0;
+
+        var choleric =
+            career || immediateProblem
+                ? 0.10
+                : 0;
+
+        var multiplier =
+            PersonalityInfluence.Multiplier(
+                person,
+                melancholic,
+                phlegmatic,
+                sanguine,
+                choleric);
+
+        return Math.Max(
+            1,
+            (int)Math.Round(
+                salience * multiplier,
+                MidpointRounding.AwayFromZero));
     }
 
     private int FindFirstCurrentYearEventIndex()

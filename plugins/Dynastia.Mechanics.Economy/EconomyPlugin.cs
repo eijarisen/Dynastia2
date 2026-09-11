@@ -20,6 +20,16 @@ public sealed class EconomyPlugin : IGamePlugin
             ?? throw new InvalidOperationException(
                 "Family service is unavailable.");
 
+        var stats =
+            context.GetService<IStatsService>()
+            ?? throw new InvalidOperationException(
+                "Stats service is unavailable.");
+
+        var random =
+            context.GetService<IGameRandom>()
+            ?? throw new InvalidOperationException(
+                "Random service is unavailable.");
+
         var locations =
             context.GetService<ILocationService>()
             ?? throw new InvalidOperationException(
@@ -54,7 +64,10 @@ public sealed class EconomyPlugin : IGamePlugin
             new EconomyYearSystem(
                 economy,
                 family,
-                incomeRegistry));
+                stats,
+                incomeRegistry,
+                random,
+                events));
 
         events.EventPublished +=
             (_, gameEvent) =>

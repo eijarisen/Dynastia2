@@ -79,8 +79,15 @@ public sealed class AffairYearSystem :
                 continue;
             }
 
+            var affairChance =
+                PersonalityInfluence.AdjustProbability(
+                    AffairChance,
+                    person,
+                    good: -0.20,
+                    evil: 0.20);
+
             if (_random.NextDouble()
-                >= AffairChance)
+                >= affairChance)
             {
                 continue;
             }

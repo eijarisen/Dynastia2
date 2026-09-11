@@ -174,9 +174,15 @@ internal sealed class RareEventDeathService
             return;
         }
 
+        var penalty =
+            GriefHealthPenalty
+            * PersonalityInfluence.Multiplier(
+                relative,
+                melancholic: 0.15);
+
         _health.ChangeHealth(
             relative,
-            -GriefHealthPenalty);
+            -penalty);
     }
 
     private GameDate RandomDateInYear(

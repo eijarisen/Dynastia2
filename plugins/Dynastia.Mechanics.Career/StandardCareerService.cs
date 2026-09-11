@@ -219,10 +219,41 @@ public sealed class StandardCareerService :
             GetRequired(
                 person);
 
+        var adjustedAmount =
+            amount;
+
+        if (amount != 0)
+        {
+            var direction =
+                Math.Sign(
+                    amount);
+
+            if ((
+                    person.Tags.Has(
+                        "personality.melancholic")
+                    || person.Tags.Has(
+                        "personality.choleric")
+                )
+                && _random.NextDouble()
+                    < 0.20)
+            {
+                adjustedAmount +=
+                    direction;
+            }
+            else if (person.Tags.Has(
+                    "personality.phlegmatic")
+                && _random.NextDouble()
+                    < 0.20)
+            {
+                adjustedAmount -=
+                    direction;
+            }
+        }
+
         career.JobSatisfaction =
             Math.Clamp(
                 career.JobSatisfaction
-                + amount,
+                + adjustedAmount,
                 1,
                 5);
     }

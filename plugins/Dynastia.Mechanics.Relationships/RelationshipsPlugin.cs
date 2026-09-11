@@ -105,6 +105,7 @@ public sealed class RelationshipsPlugin : IGamePlugin
             new StandardMarriageSatisfactionService(
                 gameState,
                 family,
+                stats,
                 events);
 
         context.AddService<IMarriageSatisfactionService>(
@@ -133,6 +134,7 @@ public sealed class RelationshipsPlugin : IGamePlugin
                 stats,
                 health,
                 education,
+                career,
                 data,
                 random,
                 calendar,
@@ -158,6 +160,7 @@ public sealed class RelationshipsPlugin : IGamePlugin
             new MarriageYearSystem(
                 family,
                 stats,
+                career,
                 data,
                 random,
                 calendar,
@@ -249,6 +252,7 @@ public sealed class RelationshipsPlugin : IGamePlugin
             IStatsService stats,
             IHealthService health,
             IEducationService education,
+            ICareerService career,
             IGameDataService data,
             IGameRandom random,
             IGameCalendar calendar,
@@ -366,6 +370,7 @@ public sealed class RelationshipsPlugin : IGamePlugin
                         stats,
                         health,
                         education,
+                        career,
                         data,
                         random,
                         calendar,
@@ -428,6 +433,7 @@ public sealed class RelationshipsPlugin : IGamePlugin
         IStatsService stats,
         IHealthService health,
         IEducationService education,
+        ICareerService career,
         IGameDataService data,
         IGameRandom random,
         IGameCalendar calendar,
@@ -444,14 +450,10 @@ public sealed class RelationshipsPlugin : IGamePlugin
                     data,
                     random,
                     SurnamesPath),
-                random.NextInt(
-                    Math.Max(
-                        18,
-                        daughter.Age),
-                    Math.Max(
-                        18,
-                        daughter.Age)
-                        + 10));
+                RelationshipPersonalityRules.ChoosePartnerAge(
+                    daughter,
+                    Sex.Male,
+                    random));
 
         husband.BirthDate =
             RandomDateInYear(
@@ -480,6 +482,13 @@ public sealed class RelationshipsPlugin : IGamePlugin
 
         stats.EnsureStats(
             husband);
+
+        var exceptionalMatch =
+            RelationshipPersonalityRules.ApplyExceptionalPartnerStats(
+                daughter,
+                husband,
+                stats,
+                random);
 
         health.EnsureHealth(
             husband);
@@ -544,6 +553,12 @@ public sealed class RelationshipsPlugin : IGamePlugin
                             $"She married {husbandEventName}."
                     }
             });
+
+        RelationshipPersonalityRules.ApplyExceptionalPartnerCareer(
+            exceptionalMatch,
+            husband,
+            career,
+            random);
     }
 
     private static string RandomWeightedFrom(

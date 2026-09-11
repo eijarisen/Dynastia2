@@ -155,8 +155,12 @@ public sealed class MarriageSatisfactionYearSystem :
             }
 
             var divorceChance =
-                ResolveAutomaticDivorceChance(
-                    after.Value);
+                RelationshipPersonalityRules.AdjustAutonomousDivorceChance(
+                    ResolveAutomaticDivorceChance(
+                        after.Value),
+                    husband,
+                    wife,
+                    _stats);
 
             if (_random.NextDouble()
                 >= divorceChance)

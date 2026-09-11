@@ -17,19 +17,47 @@ public sealed class EconomyYearSystem :
     private const decimal NannyExpense =
         250m;
 
+    private const decimal EfficientHouseholdMultiplier =
+        0.95m;
+
+    private const double CarefulManagementChance =
+        0.05;
+
+    private const decimal CarefulManagementReward =
+        250m;
+
     private readonly StandardEconomyService _economy;
+    private readonly IFamilyService _family;
+    private readonly IStatsService _stats;
     private readonly IIncomeProviderRegistry _income;
+    private readonly IGameRandom _random;
+    private readonly IGameEventBus _events;
 
     public EconomyYearSystem(
         StandardEconomyService economy,
         IFamilyService family,
-        IIncomeProviderRegistry income)
+        IStatsService stats,
+        IIncomeProviderRegistry income,
+        IGameRandom random,
+        IGameEventBus events)
     {
         _economy =
             economy;
 
+        _family =
+            family;
+
+        _stats =
+            stats;
+
         _income =
             income;
+
+        _random =
+            random;
+
+        _events =
+            events;
     }
 
     public string Id =>
@@ -142,11 +170,61 @@ public sealed class EconomyYearSystem :
         income +=
             rentalIncome;
 
+        if (HasExceptionalIntellect(head)
+            && _random.NextDouble()
+                < CarefulManagementChance)
+        {
+            income +=
+                CarefulManagementReward;
+
+            household.LastIncomeBreakdown.Add(
+                new LedgerLineState
+                {
+                    Label =
+                        "careful management",
+
+                    Amount =
+                        CarefulManagementReward
+                });
+
+            _events.Publish(
+                new GameEvent
+                {
+                    Type =
+                        "economy.careful_management",
+
+                    Year =
+                        gameState.Year,
+
+                    SubjectId =
+                        head.Id,
+
+                    Data =
+                        new Dictionary<string, string>
+                        {
+                            ["amount"] =
+                                CarefulManagementReward.ToString(),
+
+                            ["text"] =
+                                $"{_family.GetDisplayName(head)}'s careful " +
+                                $"management brought an additional " +
+                                $"{CarefulManagementReward:N0} zł into " +
+                                "the household."
+                        }
+                });
+        }
+
         household.LastExpenseBreakdown.Clear();
 
         var livingCosts =
             members.Count
             * LivingExpense;
+
+        if (HasExceptionalIntellect(head))
+        {
+            livingCosts *=
+                EfficientHouseholdMultiplier;
+        }
 
         if (livingCosts > 0)
         {
@@ -210,6 +288,18 @@ public sealed class EconomyYearSystem :
                 household.Wealth
                 + income
                 - expenses);
+    }
+
+
+    private bool HasExceptionalIntellect(
+        IPerson head)
+    {
+        return _stats.GetStats(head)
+            .Any(stat =>
+                stat.Id.Equals(
+                    "intellect",
+                    StringComparison.OrdinalIgnoreCase)
+                && stat.Value == 5);
     }
 
     private static bool ShouldChargeNanny(

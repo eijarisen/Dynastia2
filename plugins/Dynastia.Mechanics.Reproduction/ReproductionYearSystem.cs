@@ -34,6 +34,12 @@ public sealed class ReproductionYearSystem : IYearSystem
     private const double InfertilityChance =
         0.05;
 
+    private const double TripletChance =
+        0.01;
+
+    private const double TwinChance =
+        0.04;
+
     private static readonly double[]
         FertilityToChildChance =
         [0, 0.05, 0.07, 0.10, 0.12, 0.16];
@@ -169,7 +175,7 @@ public sealed class ReproductionYearSystem : IYearSystem
                 continue;
             }
 
-            CreateChild(
+            CreateChildren(
                 gameState,
                 father,
                 mother!);
@@ -392,10 +398,80 @@ public sealed class ReproductionYearSystem : IYearSystem
             });
     }
 
-    private void CreateChild(
+    private void CreateChildren(
         IGameState gameState,
         IPerson father,
         IPerson mother)
+    {
+        var birthCount =
+            ResolveBirthCount(
+                mother);
+
+        var birthDate =
+            RandomDateInYear(
+                gameState.Year);
+
+        var fatherCountBefore =
+            _family.GetChildren(father).Count;
+
+        var motherCountBefore =
+            _family.GetChildren(mother).Count;
+
+        var sharedCountBefore =
+            _family.GetChildren(father)
+                .Count(candidate =>
+                    _family.GetFather(candidate)?.Id == father.Id
+                    && _family.GetMother(candidate)?.Id == mother.Id);
+
+        var children =
+            new List<IPerson>(birthCount);
+
+        for (var index = 0; index < birthCount; index++)
+        {
+            children.Add(
+                CreateChildEntity(
+                    gameState,
+                    father,
+                    mother,
+                    birthDate));
+        }
+
+        for (var index = 0; index < children.Count; index++)
+        {
+            PublishBirthEvent(
+                gameState,
+                children[index],
+                father,
+                mother,
+                fatherCountBefore + index + 1,
+                motherCountBefore + index + 1,
+                sharedCountBefore + index + 1,
+                children,
+                suppressChronicle:
+                    index > 0);
+        }
+    }
+
+    private int ResolveBirthCount(
+        IPerson mother)
+    {
+        if (GetStat(mother, "fertility") != 5)
+            return 1;
+
+        if (_random.NextDouble() < TripletChance)
+            return 3;
+
+        if (_random.NextDouble() < TwinChance)
+            return 2;
+
+        return 1;
+    }
+
+    private IPerson CreateChildEntity(
+        IGameState gameState,
+        IPerson father,
+        IPerson mother,
+        GameDate birthDate)
     {
         var sex =
             _random.NextDouble() > 0.5
@@ -420,8 +496,7 @@ public sealed class ReproductionYearSystem : IYearSystem
         }
 
         child.BirthDate =
-            RandomDateInYear(
-                gameState.Year);
+            birthDate;
 
         var bloodlineParent =
             _family.IsBloodline(
@@ -502,11 +577,7 @@ public sealed class ReproductionYearSystem : IYearSystem
                 birthCondition);
         }
 
-        PublishBirthEvent(
-            gameState,
-            child,
-            father,
-            mother);
+        return child;
     }
 
     private Dictionary<string, int>
@@ -769,38 +840,26 @@ public sealed class ReproductionYearSystem : IYearSystem
         IGameState gameState,
         IPerson child,
         IPerson father,
-        IPerson mother)
+        IPerson mother,
+        int fatherCount,
+        int motherCount,
+        int sharedCount,
+        IReadOnlyList<IPerson> birthGroup,
+        bool suppressChronicle)
     {
-        var fatherChildren =
-            _family
-                .GetChildren(
-                    father);
-
-        var fatherCount =
-            fatherChildren.Count;
-
-        var motherCount =
-            _family
-                .GetChildren(
-                    mother)
-                .Count;
-
-        // "Their nth child" must mean children of THIS couple,
-        // not the father's total across all marriages.
-        var sharedCount =
-            fatherChildren
-                .Count(
-                    candidate =>
-                        _family.GetFather(
-                            candidate)?.Id
-                            == father.Id
-                        && _family.GetMother(
-                            candidate)?.Id
-                            == mother.Id);
-
         var sharedOrder =
             ToOrdinalWord(
                 sharedCount);
+
+        var text =
+            birthGroup.Count == 1
+                ? $"{_family.GetDisplayName(child)} was born to " +
+                  $"{_family.GetDisplayName(father)} and " +
+                  $"{_family.GetDisplayName(mother)}. " +
+                  $"This is their {sharedOrder} child."
+                : BuildMultipleBirthText(
+                    mother,
+                    birthGroup);
 
         _events.Publish(
             new GameEvent
@@ -838,14 +897,39 @@ public sealed class ReproductionYearSystem : IYearSystem
                         ["sharedCount"] =
                             sharedCount.ToString(),
 
+                        ["multipleBirthCount"] =
+                            birthGroup.Count.ToString(),
+
+                        ["suppressChronicle"] =
+                            suppressChronicle
+                                ? "true"
+                                : "false",
+
                         ["text"] =
-                            $"{_family.GetDisplayName(child)} " +
-                            $"was born to " +
-                            $"{_family.GetDisplayName(father)} and " +
-                            $"{_family.GetDisplayName(mother)}. " +
-                            $"This is their {sharedOrder} child."
+                            text
                     }
             });
+    }
+
+    private string BuildMultipleBirthText(
+        IPerson mother,
+        IReadOnlyList<IPerson> children)
+    {
+        var kind =
+            children.Count == 3
+                ? "triplets"
+                : "twins";
+
+        var names =
+            string.Join(
+                ", ",
+                children.Select(
+                    child =>
+                        _family.GetDisplayName(child)));
+
+        return
+            $"{_family.GetDisplayName(mother)} gave birth to {kind}: " +
+            $"{names}.";
     }
 
     private static string ToOrdinalWord(

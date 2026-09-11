@@ -48,6 +48,27 @@ public sealed class RelationshipBreakupService
                 "There is no current spouse to divorce.");
         }
 
+        if (actor.Tags.Has("morals.good")
+            && _random.NextDouble() < 0.10)
+        {
+            _events.Publish(
+                new GameEvent
+                {
+                    Type = "relationship.divorce_refused",
+                    Year = gameState.Year,
+                    SubjectId = actor.Id,
+                    RelatedPersonIds = [spouse.Id],
+                    Data = new Dictionary<string, string>
+                    {
+                        ["text"] =
+                            $"{_family.GetDisplayName(actor)} could not " +
+                            "bring themselves to go through with the divorce."
+                    }
+                });
+
+            return new GameActionResult(true);
+        }
+
         var actorEventName =
             _family.GetDisplayName(actor);
 
@@ -72,22 +93,22 @@ public sealed class RelationshipBreakupService
                 household.Wealth / 2m);
         }
 
-        _health.ChangeHealth(
+        ApplyEmotionalHealthLoss(
             actor,
-            -DivorceHealthPenalty);
+            DivorceHealthPenalty);
 
-        _health.ChangeHealth(
+        ApplyEmotionalHealthLoss(
             spouse,
-            -DivorceHealthPenalty);
+            DivorceHealthPenalty);
 
         // Source behavior: ALL children stored on the actor
         // receive the penalty, not only children of this union.
         foreach (var child in
             _family.GetChildren(actor))
         {
-            _health.ChangeHealth(
+            ApplyEmotionalHealthLoss(
                 child,
-                -DivorceHealthPenalty);
+                DivorceHealthPenalty);
         }
 
         // Source action changes the spouse's surname directly,
@@ -174,21 +195,21 @@ public sealed class RelationshipBreakupService
                 household.Wealth / 2m);
         }
 
-        _health.ChangeHealth(
+        ApplyEmotionalHealthLoss(
             husband,
-            -DivorceHealthPenalty);
+            DivorceHealthPenalty);
 
-        _health.ChangeHealth(
+        ApplyEmotionalHealthLoss(
             wife,
-            -DivorceHealthPenalty);
+            DivorceHealthPenalty);
 
         foreach (var child in
             _family.GetChildren(
                 husband))
         {
-            _health.ChangeHealth(
+            ApplyEmotionalHealthLoss(
                 child,
-                -DivorceHealthPenalty);
+                DivorceHealthPenalty);
         }
 
         wife.Surname =
@@ -281,13 +302,13 @@ public sealed class RelationshipBreakupService
             }
         }
 
-        _health.ChangeHealth(
+        ApplyEmotionalHealthLoss(
             actor,
-            -AffairHealthPenalty);
+            AffairHealthPenalty);
 
-        _health.ChangeHealth(
+        ApplyEmotionalHealthLoss(
             spouse,
-            -AffairHealthPenalty);
+            AffairHealthPenalty);
 
         // Only children shared by both spouses receive grief.
         var spouseChildIds =
@@ -301,9 +322,9 @@ public sealed class RelationshipBreakupService
             if (spouseChildIds.Contains(
                 child.Id))
             {
-                _health.ChangeHealth(
+                ApplyEmotionalHealthLoss(
                     child,
-                    -AffairChildHealthPenalty);
+                    AffairChildHealthPenalty);
             }
         }
 
@@ -361,6 +382,22 @@ public sealed class RelationshipBreakupService
                             $"divorced {pronoun} immediately."
                     }
             });
+    }
+
+
+    private void ApplyEmotionalHealthLoss(
+        IPerson person,
+        double basePenalty)
+    {
+        var penalty =
+            basePenalty
+            * PersonalityInfluence.Multiplier(
+                person,
+                melancholic: 0.15);
+
+        _health.ChangeHealth(
+            person,
+            -penalty);
     }
 
     private string RandomSurname()

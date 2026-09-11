@@ -6,6 +6,7 @@ public sealed class HealthYearSystem : IYearSystem
 {
     private const double BaseIllnessChance = 0.15;
     private const double IllnessHealthFactorDivisor = 150.0;
+    private const double NaturalRecoveryChance = 0.03;
 
     private readonly StandardHealthService _health;
     private readonly IStatsService _stats;
@@ -69,6 +70,11 @@ public sealed class HealthYearSystem : IYearSystem
             _health.ChangeHealth(
                 person,
                 healthChange);
+
+            TryNaturalRecovery(
+                gameState,
+                person,
+                immunity);
 
             var currentHealth =
                 _health.GetHealth(
@@ -147,6 +153,81 @@ public sealed class HealthYearSystem : IYearSystem
                         }
                 });
         }
+    }
+
+
+    private void TryNaturalRecovery(
+        IGameState gameState,
+        IPerson person,
+        int immunity)
+    {
+        if (immunity != 5)
+            return;
+
+        var eligible =
+            _health.GetHealth(person)
+                .Conditions
+                .Where(condition =>
+                    !condition.Type.Equals(
+                        "permanent",
+                        StringComparison.OrdinalIgnoreCase)
+                    && !condition.Type.Equals(
+                        "birth_defect",
+                        StringComparison.OrdinalIgnoreCase)
+                    && !IsMentalHealthCondition(condition.Id)
+                    && (condition.Type.Equals(
+                            "terminal",
+                            StringComparison.OrdinalIgnoreCase)
+                        || _health.IsFamilyNewsCondition(
+                            condition.Id)))
+                .ToList();
+
+        foreach (var condition in eligible)
+        {
+            if (_random.NextDouble()
+                >= NaturalRecoveryChance)
+            {
+                continue;
+            }
+
+            if (!_health.RemoveCondition(
+                person,
+                condition.Id))
+            {
+                continue;
+            }
+
+            _events.Publish(
+                new GameEvent
+                {
+                    Type = "health.natural_recovery",
+                    Year = gameState.Year,
+                    SubjectId = person.Id,
+                    Data = new Dictionary<string, string>
+                    {
+                        ["conditionId"] = condition.Id,
+                        ["condition"] = condition.Name,
+                        ["familyNews"] = "true",
+                        ["text"] =
+                            $"Against expectations, {person.Name} " +
+                            $"recovered from {condition.Name}."
+                    }
+                });
+        }
+    }
+
+    private static bool IsMentalHealthCondition(
+        string conditionId)
+    {
+        return conditionId.Equals(
+                "depression",
+                StringComparison.OrdinalIgnoreCase)
+            || conditionId.Equals(
+                "anxiety",
+                StringComparison.OrdinalIgnoreCase)
+            || conditionId.Equals(
+                "alcoholism",
+                StringComparison.OrdinalIgnoreCase);
     }
 
     private int GetStat(

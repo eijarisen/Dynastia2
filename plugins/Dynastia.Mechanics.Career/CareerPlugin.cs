@@ -329,8 +329,14 @@ public sealed class CareerPlugin : IGamePlugin
                             actor,
                             stats);
 
+                    var successChance =
+                        PersonalityInfluence.AdjustProbability(
+                            opportunity.SuccessChance,
+                            actor,
+                            sanguine: 0.10);
+
                     if (random.NextDouble()
-                        < opportunity.SuccessChance)
+                        < successChance)
                     {
                         career.AcceptEmploymentOpportunity(
                             actor,
@@ -367,7 +373,7 @@ public sealed class CareerPlugin : IGamePlugin
                                             .ToString(),
 
                                     ["chance"] =
-                                        opportunity.SuccessChance
+                                        successChance
                                             .ToString(
                                                 "0.00"),
 
@@ -706,8 +712,14 @@ public sealed class CareerPlugin : IGamePlugin
                             target,
                             stats);
 
+                    var successChance =
+                        PersonalityInfluence.AdjustProbability(
+                            opportunity.SuccessChance,
+                            target,
+                            sanguine: 0.10);
+
                     if (random.NextDouble()
-                        < opportunity.SuccessChance)
+                        < successChance)
                     {
                         career.AcceptEmploymentOpportunity(
                             target,
@@ -745,7 +757,7 @@ public sealed class CareerPlugin : IGamePlugin
                                             .ToString(),
 
                                     ["chance"] =
-                                        opportunity.SuccessChance
+                                        successChance
                                             .ToString(
                                                 "0.00"),
 

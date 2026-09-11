@@ -22,6 +22,7 @@ public sealed class MainWindowViewModel : ViewModelBase
     private readonly IMarriageSatisfactionService?
         _marriageSatisfactionService;
     private readonly IThoughtService? _thoughtService;
+    private readonly IPersonalityService? _personalityService;
     private readonly IEducationService? _educationService;
     private readonly ICareerService? _careerService;
     private readonly IJusticeService? _justiceService;
@@ -71,6 +72,7 @@ public sealed class MainWindowViewModel : ViewModelBase
         ILocationService? locationService,
         IMarriageSatisfactionService? marriageSatisfactionService,
         IThoughtService? thoughtService,
+        IPersonalityService? personalityService,
         IEducationService? educationService,
         ICareerService? careerService,
         IJusticeService? justiceService,
@@ -95,6 +97,8 @@ public sealed class MainWindowViewModel : ViewModelBase
             marriageSatisfactionService;
         _thoughtService =
             thoughtService;
+        _personalityService =
+            personalityService;
         _educationService = educationService;
         _careerService = careerService;
         _justiceService = justiceService;
@@ -954,6 +958,9 @@ public sealed class MainWindowViewModel : ViewModelBase
 
         IsGameOverOverlayVisible =
             _succession.IsGameOver;
+
+        _personalityService?
+            .ReconcileAll();
 
         _householdService?
             .ReconcileHouseholds();

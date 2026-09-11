@@ -124,6 +124,21 @@ public sealed class StandardBiographyService :
             return;
         }
 
+        if (gameEvent.Type.Equals(
+                "life.birth",
+                StringComparison.OrdinalIgnoreCase)
+            && gameEvent.Data.TryGetValue(
+                "suppressChronicle",
+                out var suppressBirth)
+            && suppressBirth.Equals(
+                "true",
+                StringComparison.OrdinalIgnoreCase))
+        {
+            AddBirthEntries(
+                gameEvent);
+            return;
+        }
+
         if (!_households.ShouldShowFamilyNews(
             gameEvent))
         {

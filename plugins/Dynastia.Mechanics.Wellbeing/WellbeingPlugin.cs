@@ -316,8 +316,16 @@ public sealed class WellbeingPlugin : IGamePlugin
                                     }
                             });
 
+                        var alcoholismChance =
+                            PersonalityInfluence.AdjustProbability(
+                                AlcoholismChanceFromDrinking,
+                                actor,
+                                melancholic: 0.15,
+                                choleric: 0.15,
+                                good: -0.10);
+
                         if (random.NextDouble()
-                            < AlcoholismChanceFromDrinking
+                            < alcoholismChance
                             && !health.HasCondition(
                                 actor,
                                 "alcoholism"))

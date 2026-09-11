@@ -82,11 +82,18 @@ public sealed class CrimeYearSystem :
                 _family.GetSpouse(
                     person);
 
+            var crimeChance =
+                PersonalityInfluence.AdjustProbability(
+                    BaseCrimeChance,
+                    person,
+                    good: -0.20,
+                    evil: 0.20);
+
             if (person.Age >= 18
                 && !_justice.IsImprisoned(
                     person)
                 && _random.NextDouble()
-                    < BaseCrimeChance)
+                    < crimeChance)
             {
                 CommitCrime(
                     gameState,
@@ -103,7 +110,11 @@ public sealed class CrimeYearSystem :
                     person)
                 && spouse is not null
                 && _random.NextDouble()
-                    < ImprisonedDivorceChance)
+                    < PersonalityInfluence.AdjustProbability(
+                        ImprisonedDivorceChance,
+                        spouse,
+                        phlegmatic: -0.10,
+                        good: -0.20))
             {
                 DivorceImprisonedSpouse(
                     gameState,
@@ -180,18 +191,18 @@ public sealed class CrimeYearSystem :
 
         if (spouse is not null)
         {
-            _health.ChangeHealth(
+            ApplyEmotionalHealthLoss(
                 spouse,
-                -CrimeSpouseHealthPenalty);
+                CrimeSpouseHealthPenalty);
         }
 
         foreach (var child in
             _family.GetChildren(
                 person))
         {
-            _health.ChangeHealth(
+            ApplyEmotionalHealthLoss(
                 child,
-                -CrimeChildHealthPenalty);
+                CrimeChildHealthPenalty);
         }
     }
 
@@ -269,6 +280,22 @@ public sealed class CrimeYearSystem :
         }
 
         return _crimes[^1];
+    }
+
+
+    private void ApplyEmotionalHealthLoss(
+        IPerson person,
+        double basePenalty)
+    {
+        var penalty =
+            basePenalty
+            * PersonalityInfluence.Multiplier(
+                person,
+                melancholic: 0.15);
+
+        _health.ChangeHealth(
+            person,
+            -penalty);
     }
 
     private string RandomWeightedSurname()

@@ -227,6 +227,13 @@ public sealed class EducationPlugin : IGamePlugin
                     BaseSuccessChance
                     + intellect * IntellectMultiplier;
 
+                successChance =
+                    PersonalityInfluence.AdjustProbability(
+                        successChance,
+                        target,
+                        melancholic: 0.10,
+                        choleric: -0.10);
+
                 var success =
                     random.NextDouble() < successChance;
 
@@ -377,6 +384,13 @@ public sealed class EducationPlugin : IGamePlugin
                         HelpLearningBaseChance
                         + fatherEducation
                             * HelpLearningEducationStep;
+
+                    successChance =
+                        PersonalityInfluence.AdjustProbability(
+                            successChance,
+                            child,
+                            melancholic: 0.10,
+                            choleric: -0.10);
 
                     var success =
                         random.NextDouble()

@@ -141,9 +141,10 @@ public sealed class FemaleRemarriageYearSystem :
                     MaleNamesPath),
                 RandomWeightedFrom(
                     SurnamesPath),
-                _random.NextInt(
-                    woman.Age,
-                    woman.Age + 10));
+                RelationshipPersonalityRules.ChoosePartnerAge(
+                    woman,
+                    Sex.Male,
+                    _random));
 
         husband.BirthDate =
             RandomDateInYear(
@@ -178,6 +179,13 @@ public sealed class FemaleRemarriageYearSystem :
         // this is an external husband of a female branch.
         _stats.EnsureStats(
             husband);
+
+        var exceptionalMatch =
+            RelationshipPersonalityRules.ApplyExceptionalPartnerStats(
+                woman,
+                husband,
+                _stats,
+                _random);
 
         _health.EnsureHealth(
             husband);
@@ -251,6 +259,12 @@ public sealed class FemaleRemarriageYearSystem :
                                   $"{husbandEventName}."
                     }
             });
+
+        RelationshipPersonalityRules.ApplyExceptionalPartnerCareer(
+            exceptionalMatch,
+            husband,
+            _career,
+            _random);
     }
 
     private string RandomWeightedFrom(

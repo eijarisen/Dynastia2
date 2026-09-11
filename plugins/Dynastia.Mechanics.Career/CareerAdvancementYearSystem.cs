@@ -113,6 +113,12 @@ public sealed class CareerAdvancementYearSystem :
                 + obsolescence
                     .AdditionalJobLossChance;
 
+            jobLossChance =
+                PersonalityInfluence.AdjustProbability(
+                    jobLossChance,
+                    person,
+                    choleric: 0.15);
+
             if (_random.NextDouble()
                 < jobLossChance)
             {
@@ -239,6 +245,36 @@ public sealed class CareerAdvancementYearSystem :
         promotionChance *=
             obsolescence
                 .PromotionMultiplier;
+
+        var personalityModifier =
+            person.Tags.Has(
+                "personality.melancholic")
+                ? -0.10
+                : person.Tags.Has(
+                    "personality.sanguine")
+                    ? 0.10
+                    : person.Tags.Has(
+                        "personality.choleric")
+                        ? 0.15
+                        : 0.0;
+
+        if (person.Tags.Has(
+                "personality.choleric")
+            && person.Tags.Has(
+                "modifier.work_harder"))
+        {
+            personalityModifier +=
+                0.10;
+        }
+
+        personalityModifier =
+            Math.Clamp(
+                personalityModifier,
+                -PersonalityInfluence.MaximumModifier,
+                PersonalityInfluence.MaximumModifier);
+
+        promotionChance *=
+            1.0 + personalityModifier;
 
         if (_random.NextDouble()
             < promotionChance)

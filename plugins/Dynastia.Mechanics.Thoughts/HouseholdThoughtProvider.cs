@@ -230,7 +230,14 @@ internal sealed class HouseholdThoughtProvider :
                     "😌",
                     "event",
                     gameEvent.Type,
-                    "support.success");
+                    "support.success",
+                    new Dictionary<string, string>
+                    {
+                        ["supportRole"] =
+                            gameEvent.SubjectId == person.Id
+                                ? "recipient"
+                                : "donor"
+                    });
             }
 
             if (gameEvent.Type.Equals(

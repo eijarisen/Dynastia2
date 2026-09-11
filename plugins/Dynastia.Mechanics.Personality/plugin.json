@@ -1,0 +1,11 @@
+{
+  "id": "dynastia.personality",
+  "name": "Personality",
+  "version": "0.1.0",
+  "apiVersion": 1,
+  "assembly": "Dynastia.Mechanics.Personality.dll",
+  "entryType": "Dynastia.Mechanics.Personality.PersonalityPlugin",
+  "dependencies": [
+    "dynastia.family"
+  ]
+}

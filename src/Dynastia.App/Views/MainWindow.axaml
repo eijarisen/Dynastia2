@@ -995,7 +995,7 @@
 
                         <!-- Portrait -->
                         <Border
-                            Margin="49,101,0,0"
+                            Margin="49,116,0,0"
                             Width="135"
                             Height="202"
                             HorizontalAlignment="Left"
@@ -1026,6 +1026,19 @@
                             TextTrimming="CharacterEllipsis"
                             Text="{Binding SelectedPerson.FullName,
                                        FallbackValue='Select a person'}" />
+
+                        <TextBlock
+                            Margin="49,94,0,0"
+                            Width="140"
+                            Height="17"
+                            HorizontalAlignment="Left"
+                            VerticalAlignment="Top"
+                            FontSize="12"
+                            FontStyle="Italic"
+                            Foreground="#BFAE8B"
+                            TextTrimming="CharacterEllipsis"
+                            IsVisible="{Binding SelectedPerson.HasPersonality}"
+                            Text="{Binding SelectedPerson.PersonalityText}" />
 
                         <!-- Six larger, color-coded skills. -->
                         <ItemsControl

@@ -7,6 +7,7 @@
   "entryType": "Dynastia.Mechanics.Economy.EconomyPlugin",
   "dependencies": [
     "dynastia.family",
-    "dynastia.locations"
+    "dynastia.locations",
+    "dynastia.stats"
   ]
 }

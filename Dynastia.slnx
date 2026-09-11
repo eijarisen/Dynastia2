@@ -13,6 +13,7 @@
     <Project Path="plugins/Dynastia.Mechanics.Inheritance/Dynastia.Mechanics.Inheritance.csproj" />
     <Project Path="plugins/Dynastia.Mechanics.Justice/Dynastia.Mechanics.Justice.csproj" />
     <Project Path="plugins/Dynastia.Mechanics.Mortality/Dynastia.Mechanics.Mortality.csproj" />
+    <Project Path="plugins/Dynastia.Mechanics.Personality/Dynastia.Mechanics.Personality.csproj" />
     <Project Path="plugins/Dynastia.Mechanics.Relationships/Dynastia.Mechanics.Relationships.csproj" />
     <Project Path="plugins/Dynastia.Mechanics.Reproduction/Dynastia.Mechanics.Reproduction.csproj" />
     <Project Path="plugins/Dynastia.Mechanics.Stats/Dynastia.Mechanics.Stats.csproj" />

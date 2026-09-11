@@ -19,6 +19,7 @@ public sealed class MortalityYearSystem : IYearSystem
 
     private const double TerminalConditionDeathChance = 0.10;
     private const double GriefHealthPenalty = 15;
+    private const double SecondWindChance = 0.25;
 
     private readonly IStatsService _stats;
     private readonly IHealthService _health;
@@ -85,9 +86,18 @@ public sealed class MortalityYearSystem : IYearSystem
             terminalCount
             * TerminalConditionDeathChance;
 
+        var accidentChance =
+            PersonalityInfluence.AdjustProbability(
+                AccidentChance,
+                person,
+                melancholic: -0.10,
+                phlegmatic: -0.20,
+                sanguine: 0.15,
+                choleric: 0.20);
+
         var accident =
             _random.NextDouble()
-            < AccidentChance;
+            < accidentChance;
 
         if (accident)
             _health.SetHealth(person, 0);
@@ -121,6 +131,34 @@ public sealed class MortalityYearSystem : IYearSystem
 
         var currentHealth =
             _health.GetHealth(person).Current;
+
+        if (!accident
+            && currentHealth <= 0
+            && longevity == 5
+            && _random.NextDouble() < SecondWindChance)
+        {
+            _health.SetHealth(
+                person,
+                10);
+
+            _events.Publish(
+                new GameEvent
+                {
+                    Type = "health.second_wind",
+                    Year = gameState.Year,
+                    SubjectId = person.Id,
+                    Data = new Dictionary<string, string>
+                    {
+                        ["familyNews"] = "true",
+                        ["text"] =
+                            $"Despite being at death's door, " +
+                            $"{_family.GetDisplayName(person)} " +
+                            "unexpectedly pulled through."
+                    }
+                });
+
+            return;
+        }
 
         var died =
             currentHealth <= 0
@@ -239,9 +277,15 @@ public sealed class MortalityYearSystem : IYearSystem
             return;
         }
 
+        var penalty =
+            GriefHealthPenalty
+            * PersonalityInfluence.Multiplier(
+                relative,
+                melancholic: 0.15);
+
         _health.ChangeHealth(
             relative,
-            -GriefHealthPenalty);
+            -penalty);
     }
 
     private GameDate RandomDateInYear(

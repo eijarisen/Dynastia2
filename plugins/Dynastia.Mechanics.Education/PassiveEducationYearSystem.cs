@@ -60,6 +60,13 @@ public sealed class PassiveEducationYearSystem : IYearSystem
                 intellect / IntellectDivisor
                 + health / HealthDivisor;
 
+            chance =
+                PersonalityInfluence.AdjustProbability(
+                    chance,
+                    person,
+                    melancholic: 0.10,
+                    choleric: -0.10);
+
             if (_random.NextDouble() < chance)
                 _education.IncreaseEducation(person);
         }

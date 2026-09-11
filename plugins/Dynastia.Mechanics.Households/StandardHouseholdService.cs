@@ -468,6 +468,16 @@ public sealed class StandardHouseholdService :
     private bool EvaluateFamilyNewsNow(
         GameEvent gameEvent)
     {
+        if (gameEvent.Data.TryGetValue(
+                "suppressChronicle",
+                out var suppress)
+            && suppress.Equals(
+                "true",
+                StringComparison.OrdinalIgnoreCase))
+        {
+            return false;
+        }
+
         var involved =
             new List<Guid>();
 
@@ -561,6 +571,12 @@ public sealed class StandardHouseholdService :
 
         if (type.Equals(
                 "health.serious_illness",
+                StringComparison.OrdinalIgnoreCase)
+            || type.Equals(
+                "health.natural_recovery",
+                StringComparison.OrdinalIgnoreCase)
+            || type.Equals(
+                "health.second_wind",
                 StringComparison.OrdinalIgnoreCase))
         {
             return gameEvent.Data.TryGetValue(

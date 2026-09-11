@@ -162,7 +162,9 @@ internal sealed class AutonomousHouseholdDecisionSystem :
                     Score(
                         action.Id,
                         finance,
-                        status);
+                        status,
+                        head,
+                        target);
 
                 if (score <= 0)
                     continue;
@@ -191,7 +193,9 @@ internal sealed class AutonomousHouseholdDecisionSystem :
     private static int Score(
         string actionId,
         HouseholdFinanceSnapshot? finance,
-        HouseholdStatusSnapshot? status)
+        HouseholdStatusSnapshot? status,
+        IPerson head,
+        IPerson target)
     {
         var broke =
             status?.IsBroke
@@ -201,11 +205,16 @@ internal sealed class AutonomousHouseholdDecisionSystem :
             status?.IsLargeFamilyStrained
             == true;
 
-        return actionId.ToLowerInvariant()
-            switch
+        var id =
+            actionId.ToLowerInvariant();
+
+        var baseScore =
+            id switch
             {
                 "turn.pass" =>
-                    0,
+                    head.Tags.Has("personality.phlegmatic")
+                        ? 45
+                        : 5,
 
                 "relationship.divorce_spouse" =>
                     0,
@@ -244,6 +253,9 @@ internal sealed class AutonomousHouseholdDecisionSystem :
 
                 "wellbeing.recover" =>
                     72,
+
+                "wellbeing.drink" =>
+                    70,
 
                 "career.ask_to_recover" =>
                     72,
@@ -307,6 +319,81 @@ internal sealed class AutonomousHouseholdDecisionSystem :
                 _ =>
                     0
             };
+
+        if (baseScore <= 0)
+            return baseScore;
+
+        var melancholic = 0.0;
+        var phlegmatic = 0.0;
+        var sanguine = 0.0;
+        var choleric = 0.0;
+        var good = 0.0;
+        var evil = 0.0;
+
+        if (id is "wellbeing.recover"
+            or "wellbeing.therapy"
+            or "relationship.repair_marriage")
+        {
+            melancholic += 0.20;
+        }
+
+        if (id is "career.seek_employment"
+            or "career.help_seek_employment"
+            or "career.work_harder"
+            or "relationship.find_spouse"
+            or "reproduction.try_for_baby"
+            or "education.get_education")
+        {
+            sanguine += 0.15;
+        }
+
+        if (id is "career.work_harder"
+            or "career.quit_job"
+            or "wellbeing.drink")
+        {
+            choleric += 0.20;
+        }
+
+        if (id is "career.work_harder"
+            or "career.quit_job"
+            or "career.ask_to_quit")
+        {
+            phlegmatic -= 0.15;
+        }
+
+        var mainlyHelpsAnother =
+            target.Id != head.Id
+            && (id is "wellbeing.heal_relative"
+                or "education.help_learning"
+                or "career.help_seek_employment"
+                or "career.ask_to_recover"
+                or "household.ask_daughter_nanny");
+
+        if (mainlyHelpsAnother)
+        {
+            good += 0.10;
+            evil -= 0.10;
+        }
+
+        if (id == "wellbeing.drink")
+        {
+            good -= 0.10;
+            evil += 0.10;
+        }
+
+        var multiplier =
+            PersonalityInfluence.Multiplier(
+                head,
+                melancholic,
+                phlegmatic,
+                sanguine,
+                choleric,
+                good: good,
+                evil: evil);
+
+        return (int)Math.Round(
+            baseScore * multiplier,
+            MidpointRounding.AwayFromZero);
     }
 
     private IPerson? FindPerson(

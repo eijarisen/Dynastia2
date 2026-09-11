@@ -276,6 +276,18 @@ public sealed class StandardHealthService : IHealthService
                                         ? 3
                                         : 1
                                 )
+                                * PersonalityInfluence.Multiplier(
+                                    person,
+                                    melancholic:
+                                        IsEmotionalCondition(definition.Id)
+                                            ? 0.20
+                                            : 0,
+                                    choleric:
+                                        definition.Id.Equals(
+                                            "alcoholism",
+                                            StringComparison.OrdinalIgnoreCase)
+                                            ? 0.20
+                                            : 0)
                         })
                 .ToList();
 
@@ -301,6 +313,21 @@ public sealed class StandardHealthService : IHealthService
         }
 
         return weighted[^1].Definition;
+    }
+
+
+    private static bool IsEmotionalCondition(
+        string conditionId)
+    {
+        return conditionId.Equals(
+                "depression",
+                StringComparison.OrdinalIgnoreCase)
+            || conditionId.Equals(
+                "anxiety",
+                StringComparison.OrdinalIgnoreCase)
+            || conditionId.Equals(
+                "alcoholism",
+                StringComparison.OrdinalIgnoreCase);
     }
 
     private HealthComponent GetRequired(IPerson person)

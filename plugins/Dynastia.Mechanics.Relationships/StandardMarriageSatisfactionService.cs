@@ -13,14 +13,17 @@ public sealed class StandardMarriageSatisfactionService :
 
     private readonly IGameState _gameState;
     private readonly IFamilyService _family;
+    private readonly IStatsService _stats;
 
     public StandardMarriageSatisfactionService(
         IGameState gameState,
         IFamilyService family,
+        IStatsService stats,
         IGameEventBus events)
     {
         _gameState = gameState;
         _family = family;
+        _stats = stats;
 
         events.EventPublished +=
             OnEventPublished;
@@ -114,7 +117,11 @@ public sealed class StandardMarriageSatisfactionService :
             spouse,
             Math.Clamp(
                 component.Satisfaction
-                + amount,
+                + RelationshipPersonalityRules.AdjustMarriageChange(
+                    person,
+                    spouse,
+                    amount,
+                    _stats),
                 0,
                 100),
             component.StartYear,
@@ -137,7 +144,11 @@ public sealed class StandardMarriageSatisfactionService :
             second,
             Math.Clamp(
                 component.Satisfaction
-                + amount,
+                + RelationshipPersonalityRules.AdjustMarriageChange(
+                    first,
+                    second,
+                    amount,
+                    _stats),
                 0,
                 100),
             component.StartYear,
@@ -178,7 +189,13 @@ public sealed class StandardMarriageSatisfactionService :
 
         if (!gameEvent.Type.Equals(
             "life.birth",
-            StringComparison.OrdinalIgnoreCase))
+            StringComparison.OrdinalIgnoreCase)
+            || (gameEvent.Data.TryGetValue(
+                    "suppressChronicle",
+                    out var suppressChronicle)
+                && suppressChronicle.Equals(
+                    "true",
+                    StringComparison.OrdinalIgnoreCase)))
         {
             return;
         }

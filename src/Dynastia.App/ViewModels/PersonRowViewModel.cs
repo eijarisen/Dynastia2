@@ -64,6 +64,18 @@ public sealed class PersonRowViewModel
             BirthplaceText =
                 $"Birthplace: " +
                 $"{location.Birthplace.DisplayName}";
+
+            if (person.Tags.Has(
+                    "state.dead"))
+            {
+                var deathTown =
+                    location.DeathTown
+                    ?? location.HomeTown;
+
+                DeathplaceText =
+                    $"Death place: " +
+                    $"{deathTown.DisplayName}";
+            }
         }
     }
 
@@ -91,6 +103,15 @@ public sealed class PersonRowViewModel
 
     public string BirthplaceText { get; } =
         string.Empty;
+
+    public string DeathplaceText { get; } =
+        string.Empty;
+
+    public bool HasDeathplace =>
+        _person.Tags.Has(
+            "state.dead")
+        && !string.IsNullOrWhiteSpace(
+            DeathplaceText);
 
     public string MaidenNameText
     {

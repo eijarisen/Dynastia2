@@ -25,9 +25,6 @@ public sealed class WellbeingPlugin : IGamePlugin
     private const double TherapySuccessDivisor =
         10;
 
-    private const string RecoveryActivitiesPath =
-        "Common/recovery_activities.json";
-
     public void Initialize(
         IGamePluginContext context)
     {
@@ -87,8 +84,8 @@ public sealed class WellbeingPlugin : IGamePlugin
                 "Annual health modifier registry is unavailable.");
 
         var recoveryActivities =
-            data.GetStringList(
-                RecoveryActivitiesPath);
+            RecoveryActivityCatalog.Load(
+                data);
 
         healthModifiers.Register(
             new WellbeingHealthModifierProvider());
@@ -138,7 +135,7 @@ public sealed class WellbeingPlugin : IGamePlugin
         ICareerService career,
         IGameRandom random,
         IGameEventBus events,
-        IReadOnlyList<string> recoveryActivities)
+        RecoveryActivityCatalog recoveryActivities)
     {
         actions.Register(
             new GameActionDefinition
@@ -196,10 +193,9 @@ public sealed class WellbeingPlugin : IGamePlugin
                             "modifier.recover");
 
                         var activity =
-                            recoveryActivities[
-                                random.NextInt(
-                                    0,
-                                    recoveryActivities.Count - 1)];
+                            recoveryActivities.Select(
+                                actionContext.GameState.Year,
+                                random);
 
                         events.Publish(
                             new GameEvent
@@ -218,7 +214,7 @@ public sealed class WellbeingPlugin : IGamePlugin
                                     {
                                         ["text"] =
                                             $"{family.GetDisplayName(actor)} " +
-                                            $"{activity}."
+                                            $"{activity.Text}."
                                     }
                             });
 

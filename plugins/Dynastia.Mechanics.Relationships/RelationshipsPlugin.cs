@@ -7,6 +7,11 @@ public sealed class RelationshipsPlugin : IGamePlugin
     public void Initialize(
         IGamePluginContext context)
     {
+        var gameState =
+            context.GetService<IGameState>()
+            ?? throw new InvalidOperationException(
+                "Game state is unavailable.");
+
         var family =
             context.GetService<IFamilyService>()
             ?? throw new InvalidOperationException(
@@ -36,6 +41,11 @@ public sealed class RelationshipsPlugin : IGamePlugin
             context.GetService<ICareerService>()
             ?? throw new InvalidOperationException(
                 "Career service is unavailable.");
+
+        var households =
+            context.GetService<IHouseholdService>()
+            ?? throw new InvalidOperationException(
+                "Household service is unavailable.");
 
         var data =
             context.GetService<IGameDataService>()
@@ -76,6 +86,15 @@ public sealed class RelationshipsPlugin : IGamePlugin
                 random,
                 events);
 
+        var marriageSatisfaction =
+            new StandardMarriageSatisfactionService(
+                gameState,
+                family,
+                events);
+
+        context.AddService<IMarriageSatisfactionService>(
+            marriageSatisfaction);
+
         actions.Register(
             CreateFindSpouseAction(
                 family));
@@ -84,6 +103,12 @@ public sealed class RelationshipsPlugin : IGamePlugin
             CreateDivorceAction(
                 family,
                 breakups));
+
+        actions.Register(
+            CreateRepairMarriageAction(
+                family,
+                marriageSatisfaction,
+                events));
 
         systems.Register(
             new SexualityYearSystem(
@@ -116,6 +141,17 @@ public sealed class RelationshipsPlugin : IGamePlugin
                 random,
                 calendar,
                 events));
+
+        systems.Register(
+            new MarriageSatisfactionYearSystem(
+                marriageSatisfaction,
+                family,
+                stats,
+                health,
+                career,
+                households,
+                random,
+                breakups));
 
         context.Log(
             "Relationship mechanics registered.");
@@ -160,6 +196,134 @@ public sealed class RelationshipsPlugin : IGamePlugin
                 {
                     actionContext.Actor.Tags.Add(
                         "modifier.find_spouse");
+
+                    return new GameActionResult(
+                        true);
+                }
+        };
+    }
+
+    private static GameActionDefinition
+        CreateRepairMarriageAction(
+            IFamilyService family,
+            IMarriageSatisfactionService satisfaction,
+            IGameEventBus events)
+    {
+        return new GameActionDefinition
+        {
+            Id =
+                "relationship.repair_marriage",
+
+            Label =
+                "Repair Marriage",
+
+            Description =
+                "Spend the year working on the marriage. " +
+                "This raises Marriage Satisfaction by 20 points.",
+
+            Mode =
+                ActionExecutionMode.Queued,
+
+            QueuePhase =
+                YearPhase.LifeEvents,
+
+            IsAvailable =
+                actionContext =>
+                {
+                    var actor =
+                        actionContext.Actor;
+
+                    var target =
+                        actionContext.Target;
+
+                    if (!actor.Tags.Has(
+                            "state.alive")
+                        || !actor.Tags.Has(
+                            "control.playable")
+                        || !target.Tags.Has(
+                            "state.alive")
+                        || family.GetSex(
+                            actor) != Sex.Male
+                        || family.GetSex(
+                            target) != Sex.Female)
+                    {
+                        return false;
+                    }
+
+                    var wife =
+                        family.GetSpouse(
+                            actor);
+
+                    if (wife?.Id
+                        != target.Id)
+                    {
+                        return false;
+                    }
+
+                    var current =
+                        satisfaction.GetSatisfaction(
+                            actor);
+
+                    return current is not null
+                        && current.Value < 100;
+                },
+
+            Execute =
+                actionContext =>
+                {
+                    var actor =
+                        actionContext.Actor;
+
+                    var wife =
+                        actionContext.Target;
+
+                    if (family.GetSpouse(
+                            actor)?.Id
+                            != wife.Id)
+                    {
+                        return new GameActionResult(
+                            false,
+                            "The marriage no longer exists.");
+                    }
+
+                    satisfaction.ChangeSatisfaction(
+                        actor,
+                        20);
+
+                    var updated =
+                        satisfaction.GetSatisfaction(
+                            actor);
+
+                    events.Publish(
+                        new GameEvent
+                        {
+                            Type =
+                                "relationship.repair_marriage",
+
+                            Year =
+                                actionContext.GameState.Year,
+
+                            SubjectId =
+                                actor.Id,
+
+                            RelatedPersonIds =
+                                [wife.Id],
+
+                            Data =
+                                new Dictionary<string, string>
+                                {
+                                    ["satisfaction"] =
+                                        updated?.Value
+                                            .ToString(
+                                                "0")
+                                        ?? string.Empty,
+
+                                    ["text"] =
+                                        $"{family.GetDisplayName(actor)} " +
+                                        $"and {family.GetDisplayName(wife)} " +
+                                        "worked on their marriage."
+                                }
+                        });
 
                     return new GameActionResult(
                         true);

@@ -136,6 +136,108 @@ public sealed class RelationshipBreakupService
             true);
     }
 
+    public void LowSatisfactionDivorce(
+        IGameState gameState,
+        IPerson husband,
+        IPerson wife,
+        double satisfaction)
+    {
+        if (_family.GetSpouse(
+                husband)?.Id
+                != wife.Id)
+        {
+            return;
+        }
+
+        var husbandEventName =
+            _family.GetDisplayName(
+                husband);
+
+        var wifeEventName =
+            _family.GetDisplayName(
+                wife);
+
+        var household =
+            _economy.GetHousehold(
+                husband);
+
+        var settlement =
+            household is null
+                ? 0
+                : Math.Floor(
+                    household.Wealth / 2m);
+
+        if (household is not null)
+        {
+            _economy.SetWealth(
+                husband,
+                household.Wealth / 2m);
+        }
+
+        _health.ChangeHealth(
+            husband,
+            -DivorceHealthPenalty);
+
+        _health.ChangeHealth(
+            wife,
+            -DivorceHealthPenalty);
+
+        foreach (var child in
+            _family.GetChildren(
+                husband))
+        {
+            _health.ChangeHealth(
+                child,
+                -DivorceHealthPenalty);
+        }
+
+        wife.Surname =
+            !string.IsNullOrWhiteSpace(
+                wife.MaidenName)
+                ? wife.MaidenName
+                : RandomSurname();
+
+        _family.EndRelationship(
+            husband,
+            wife,
+            gameState.Year,
+            "divorce");
+
+        _events.Publish(
+            new GameEvent
+            {
+                Type =
+                    "relationship.low_satisfaction_divorce",
+
+                Year =
+                    gameState.Year,
+
+                SubjectId =
+                    husband.Id,
+
+                RelatedPersonIds =
+                    [wife.Id],
+
+                Data =
+                    new Dictionary<string, string>
+                    {
+                        ["settlement"] =
+                            settlement.ToString(),
+
+                        ["satisfaction"] =
+                            satisfaction.ToString(
+                                "0"),
+
+                        ["text"] =
+                            $"{husbandEventName} and " +
+                            $"{wifeEventName} divorced after " +
+                            "their marriage deteriorated. " +
+                            $"The settlement cost " +
+                            $"{settlement:N0} zł."
+                    }
+            });
+    }
+
     public void AffairDivorce(
         IGameState gameState,
         IPerson actor,

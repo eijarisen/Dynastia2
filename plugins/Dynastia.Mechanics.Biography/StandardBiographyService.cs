@@ -472,6 +472,12 @@ public sealed class StandardBiographyService :
                     0,
                     "divorced"),
 
+            "relationship.low_satisfaction_divorce" =>
+                RelatedName(
+                    gameEvent,
+                    0,
+                    "divorced after the marriage deteriorated with"),
+
             "relationship.prison_divorce" =>
                 "was divorced while imprisoned",
 
@@ -571,6 +577,9 @@ public sealed class StandardBiographyService :
                 "relationship.divorce",
                 StringComparison.OrdinalIgnoreCase)
             || type.Equals(
+                "relationship.low_satisfaction_divorce",
+                StringComparison.OrdinalIgnoreCase)
+            || type.Equals(
                 "relationship.prison_divorce",
                 StringComparison.OrdinalIgnoreCase)
             || type.Equals(
@@ -633,6 +642,8 @@ public sealed class StandardBiographyService :
             "life.death" => "💀 ",
             "career.quit" => "🚶 ",
             "relationship.divorce" => "💔 ",
+            "relationship.low_satisfaction_divorce" => "💔 ",
+            "relationship.repair_marriage" => "❤️‍🩹 ",
             "relationship.prison_divorce" => "💔 ",
             "career.employment" => "✅ ",
             "family_support.parents_success" => "🙏 ",

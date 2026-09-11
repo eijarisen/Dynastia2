@@ -15,6 +15,9 @@ public sealed class CareerPlugin : IGamePlugin
         var stats = context.GetService<IStatsService>()
             ?? throw new InvalidOperationException("Stats service is unavailable.");
 
+        var data = context.GetService<IGameDataService>()
+            ?? throw new InvalidOperationException("Game data service is unavailable.");
+
         var education = context.GetService<IEducationService>()
             ?? throw new InvalidOperationException("Education service is unavailable.");
 
@@ -39,9 +42,16 @@ public sealed class CareerPlugin : IGamePlugin
         var systems = context.GetService<IYearSystemRegistry>()
             ?? throw new InvalidOperationException("Year system registry is unavailable.");
 
-        var career = new StandardCareerService(
-            family,
-            random);
+        var catalog =
+            CareerCatalog.Load(
+                data);
+
+        var career =
+            new StandardCareerService(
+                gameState,
+                family,
+                random,
+                catalog);
 
         context.AddService<ICareerService>(career);
 
@@ -123,6 +133,9 @@ public sealed class CareerPlugin : IGamePlugin
                         StringComparison.OrdinalIgnoreCase)
                     || gameEvent.Type.Equals(
                         "relationship.partnered",
+                        StringComparison.OrdinalIgnoreCase)
+                    || gameEvent.Type.Equals(
+                        "relationship.remarried",
                         StringComparison.OrdinalIgnoreCase))
                 {
                     var spouse =
@@ -216,8 +229,19 @@ public sealed class CareerPlugin : IGamePlugin
                             SubjectId = actor.Id,
                             Data = new Dictionary<string, string>
                             {
+                                ["careerId"] =
+                                    current.CareerId
+                                    ?? string.Empty,
+
+                                ["careerName"] =
+                                    current.CareerName
+                                    ?? string.Empty,
+
+                                ["jobTitle"] =
+                                    current.JobTitle,
+
                                 ["text"] =
-                                    $"{family.GetDisplayName(actor)} quit their job."
+                                    $"{family.GetDisplayName(actor)} quit their job as {current.JobTitle}."
                             }
                         });
 
@@ -268,7 +292,7 @@ public sealed class CareerPlugin : IGamePlugin
                 Id = "career.seek_employment",
                 Label = "Seek Employment",
                 Description =
-                    "Look for a basic job. Success depends on Strength. A successful job begins paying next year.",
+                    "Look for work. Success depends on Strength. On success, a career is selected from professions open in the current year using the current male/female entry weights. The new job begins paying next year.",
                 Mode = ActionExecutionMode.Queued,
                 QueuePhase = YearPhase.LifeEvents,
 
@@ -312,7 +336,13 @@ public sealed class CareerPlugin : IGamePlugin
 
                     if (random.NextDouble() < chance)
                     {
-                        career.SetJobLevel(actor, 1);
+                        career.SetJobLevel(
+                            actor,
+                            1);
+
+                        var employed =
+                            career.GetCareer(
+                                actor);
 
                         events.Publish(
                             new GameEvent
@@ -322,8 +352,19 @@ public sealed class CareerPlugin : IGamePlugin
                                 SubjectId = actor.Id,
                                 Data = new Dictionary<string, string>
                                 {
+                                    ["careerId"] =
+                                        employed.CareerId
+                                        ?? string.Empty,
+
+                                    ["careerName"] =
+                                        employed.CareerName
+                                        ?? string.Empty,
+
+                                    ["jobTitle"] =
+                                        employed.JobTitle,
+
                                     ["text"] =
-                                        $"{family.GetDisplayName(actor)} found employment as a Laborer."
+                                        $"{family.GetDisplayName(actor)} found employment as {employed.JobTitle}."
                                 }
                             });
                     }
@@ -349,8 +390,8 @@ public sealed class CareerPlugin : IGamePlugin
                 Id = "career.help_seek_employment",
                 Label = "Help Selected Relative Seek Employment",
                 Description =
-                    "Help your unemployed wife or unmarried adult daughter find a basic job. " +
-                    "Success depends on her Strength.",
+                    "Help your unemployed wife or unmarried adult daughter find work. " +
+                    "Success depends on her Strength; on success her career is selected from professions open in the current year using female entry weights.",
                 Mode = ActionExecutionMode.Queued,
                 QueuePhase = YearPhase.QueuedActionsEarly,
 
@@ -438,6 +479,10 @@ public sealed class CareerPlugin : IGamePlugin
                             target,
                             1);
 
+                        var employed =
+                            career.GetCareer(
+                                target);
+
                         events.Publish(
                             new GameEvent
                             {
@@ -447,8 +492,19 @@ public sealed class CareerPlugin : IGamePlugin
                                 RelatedPersonIds = [actor.Id],
                                 Data = new Dictionary<string, string>
                                 {
+                                    ["careerId"] =
+                                        employed.CareerId
+                                        ?? string.Empty,
+
+                                    ["careerName"] =
+                                        employed.CareerName
+                                        ?? string.Empty,
+
+                                    ["jobTitle"] =
+                                        employed.JobTitle,
+
                                     ["text"] =
-                                        $"{family.GetDisplayName(target)} found employment as a Laborer."
+                                        $"{family.GetDisplayName(target)} found employment as {employed.JobTitle}."
                                 }
                             });
                     }

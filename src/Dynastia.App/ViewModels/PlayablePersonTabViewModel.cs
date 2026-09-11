@@ -7,6 +7,7 @@ public sealed class PlayablePersonTabViewModel
         string generationText,
         string label,
         string fullName,
+        string actionSummaryText,
         bool isActive,
         bool hasQueuedAction,
         Action<Guid> switchHousehold)
@@ -15,6 +16,7 @@ public sealed class PlayablePersonTabViewModel
         GenerationText = generationText;
         Label = label;
         FullName = fullName;
+        ActionSummaryText = actionSummaryText;
         IsActive = isActive;
         HasQueuedAction = hasQueuedAction;
 
@@ -30,6 +32,8 @@ public sealed class PlayablePersonTabViewModel
     public string Label { get; }
 
     public string FullName { get; }
+
+    public string ActionSummaryText { get; }
 
     public bool IsActive { get; }
 

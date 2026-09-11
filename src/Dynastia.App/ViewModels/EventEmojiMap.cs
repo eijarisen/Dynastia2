@@ -85,6 +85,8 @@ public static class EventEmojiMap
                 ["life.death"] = "💀",
                 ["career.quit"] = "🚶",
                 ["relationship.divorce"] = "💔",
+                ["relationship.low_satisfaction_divorce"] = "💔",
+                ["relationship.repair_marriage"] = "❤️‍🩹",
                 ["relationship.prison_divorce"] = "💔",
                 ["career.employment"] = "✅",
                 ["family_support.parents_success"] = "🙏",

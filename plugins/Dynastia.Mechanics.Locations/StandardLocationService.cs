@@ -121,9 +121,23 @@ public sealed class StandardLocationService :
                 $"{_family.GetDisplayName(person)}.");
         }
 
+        if (person.Tags.Has(
+                "state.dead")
+            && component.DeathTown is null)
+        {
+            // Older saves predate explicit death-town storage.
+            // Their last known home town is the best available fallback.
+            component.DeathTown =
+                component.HomeTown;
+
+            person.Components.Set(
+                component);
+        }
+
         return new LocationSnapshot(
             component.Birthplace,
-            component.HomeTown);
+            component.HomeTown,
+            component.DeathTown);
     }
 
     public TownInfo ChoosePropertyTown(
@@ -251,6 +265,16 @@ public sealed class StandardLocationService :
                 StringComparison.OrdinalIgnoreCase))
         {
             InitializeNewborn(
+                gameEvent);
+
+            return;
+        }
+
+        if (gameEvent.Type.Equals(
+                "life.death",
+                StringComparison.OrdinalIgnoreCase))
+        {
+            RecordDeathTown(
                 gameEvent);
         }
     }
@@ -404,6 +428,40 @@ public sealed class StandardLocationService :
             child,
             birthplace,
             householdTown);
+    }
+
+    private void RecordDeathTown(
+        GameEvent gameEvent)
+    {
+        var person =
+            FindPerson(
+                gameEvent.SubjectId);
+
+        if (person is null)
+            return;
+
+        var location =
+            person.Components.Get<
+                LocationComponent>();
+
+        if (location?.HomeTown is null)
+        {
+            EnsureFallbackLocation(
+                person);
+
+            location =
+                person.Components.Get<
+                    LocationComponent>();
+        }
+
+        if (location?.HomeTown is null)
+            return;
+
+        location.DeathTown =
+            location.HomeTown;
+
+        person.Components.Set(
+            location);
     }
 
     private void EnsureFallbackLocation(

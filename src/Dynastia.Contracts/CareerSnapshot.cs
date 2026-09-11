@@ -7,4 +7,7 @@ public sealed record CareerSnapshot(
     string JobSatisfactionText,
     decimal LastIncome,
     decimal AnnualIncome,
-    bool IsRetired);
+    bool IsRetired,
+    string? CareerId = null,
+    string? CareerName = null,
+    decimal BaseSalary = 0);

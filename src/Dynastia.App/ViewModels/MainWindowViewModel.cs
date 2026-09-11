@@ -19,6 +19,8 @@ public sealed class MainWindowViewModel : ViewModelBase
     private readonly IHouseholdService? _householdService;
     private readonly IAdoptionService? _adoptionService;
     private readonly ILocationService? _locationService;
+    private readonly IMarriageSatisfactionService?
+        _marriageSatisfactionService;
     private readonly IEducationService? _educationService;
     private readonly ICareerService? _careerService;
     private readonly IJusticeService? _justiceService;
@@ -61,6 +63,7 @@ public sealed class MainWindowViewModel : ViewModelBase
         IHouseholdService? householdService,
         IAdoptionService? adoptionService,
         ILocationService? locationService,
+        IMarriageSatisfactionService? marriageSatisfactionService,
         IEducationService? educationService,
         ICareerService? careerService,
         IJusticeService? justiceService,
@@ -81,6 +84,8 @@ public sealed class MainWindowViewModel : ViewModelBase
         _householdService = householdService;
         _adoptionService = adoptionService;
         _locationService = locationService;
+        _marriageSatisfactionService =
+            marriageSatisfactionService;
         _educationService = educationService;
         _careerService = careerService;
         _justiceService = justiceService;
@@ -619,6 +624,7 @@ public sealed class MainWindowViewModel : ViewModelBase
             RefreshEconomy();
             RefreshEducation();
             RefreshCareer();
+            RefreshMarriageSatisfaction();
             RefreshJustice();
             RefreshNarrative();
             RefreshActions();
@@ -681,6 +687,61 @@ public sealed class MainWindowViewModel : ViewModelBase
             OnPropertyChanged();
         }
     }
+
+    public string SelectedMarriageSatisfactionText
+    {
+        get
+        {
+            var person =
+                FindSelectedPerson();
+
+            var snapshot =
+                person is null
+                    ? null
+                    : _marriageSatisfactionService?
+                        .GetSatisfaction(
+                            person);
+
+            return snapshot is null
+                ? string.Empty
+                : $"Marriage satisfaction: " +
+                  $"{snapshot.Label} " +
+                  $"({snapshot.Value:0}%)";
+        }
+    }
+
+    public string SelectedMarriageSatisfactionDetailsText
+    {
+        get
+        {
+            var person =
+                FindSelectedPerson();
+
+            var snapshot =
+                person is null
+                    ? null
+                    : _marriageSatisfactionService?
+                        .GetSatisfaction(
+                            person);
+
+            if (snapshot is null)
+                return string.Empty;
+
+            return snapshot.CurrentIssues.Count == 0
+                ? "No current marriage strains."
+                : "Current strains:" +
+                  Environment.NewLine +
+                  string.Join(
+                      Environment.NewLine,
+                      snapshot.CurrentIssues.Select(
+                          issue =>
+                              $"• {issue}"));
+        }
+    }
+
+    public bool HasSelectedMarriageSatisfaction =>
+        !string.IsNullOrWhiteSpace(
+            SelectedMarriageSatisfactionText);
 
     public JusticeViewModel? SelectedJustice
     {
@@ -1095,6 +1156,11 @@ public sealed class MainWindowViewModel : ViewModelBase
                     : _familyService.GetDisplayName(
                         person);
 
+            var queuedActions =
+                _actionRegistry
+                    .GetQueuedActions(
+                        person);
+
             PlayableTabs.Add(
                 new PlayablePersonTabViewModel(
                     person.Id,
@@ -1103,10 +1169,10 @@ public sealed class MainWindowViewModel : ViewModelBase
                         : string.Empty,
                     $"{person.Name} ({person.Age})",
                     fullName,
+                    BuildHouseholdActionSummary(
+                        queuedActions.FirstOrDefault()),
                     active?.Id == person.Id,
-                    _actionRegistry
-                        .GetQueuedActions(person)
-                        .Count > 0,
+                    queuedActions.Count > 0,
                     SwitchActiveHousehold));
         }
 
@@ -1385,13 +1451,53 @@ public sealed class MainWindowViewModel : ViewModelBase
             person,
             _familyService,
             _healthService,
+            _educationService,
             _careerService,
             _justiceService,
             _statsService,
-            _adoptionService,
+            _locationService,
+            _marriageSatisfactionService,
             selectedId == person.Id,
             activeHeadId == person.Id,
             SelectFamilyMember);
+    }
+
+    private string BuildHouseholdActionSummary(
+        QueuedActionInfo? queued)
+    {
+        if (queued is null)
+        {
+            return
+                "No action selected for this household.";
+        }
+
+        var target =
+            _gameState.People
+                .FirstOrDefault(
+                    person =>
+                        person.Id
+                        == queued.TargetId);
+
+        var targetName =
+            target is null
+                ? "Unknown"
+                : _familyService is null
+                    ? $"{target.Name} {target.Surname}"
+                    : _familyService.GetDisplayName(
+                        target);
+
+        var description =
+            string.IsNullOrWhiteSpace(
+                queued.Description)
+                ? "This action is queued for the next annual pass."
+                : queued.Description;
+
+        return
+            $"{ActionEmojiMap.Format(queued.ActionId, queued.Label)}" +
+            Environment.NewLine +
+            $"Target: {targetName}" +
+            Environment.NewLine +
+            description;
     }
 
     private int GetBirthSortYear(
@@ -1549,6 +1655,21 @@ public sealed class MainWindowViewModel : ViewModelBase
                 person.Tags.Has("state.alive"));
     }
 
+    private void RefreshMarriageSatisfaction()
+    {
+        OnPropertyChanged(
+            nameof(
+                SelectedMarriageSatisfactionText));
+
+        OnPropertyChanged(
+            nameof(
+                SelectedMarriageSatisfactionDetailsText));
+
+        OnPropertyChanged(
+            nameof(
+                HasSelectedMarriageSatisfaction));
+    }
+
     private void RefreshJustice()
     {
         var person =
@@ -1637,11 +1758,9 @@ public sealed class MainWindowViewModel : ViewModelBase
                 person);
 
         var siblings =
-            generatedBackground is null
-                ? GetSimulatedSiblings(
-                    person,
-                    father)
-                : [];
+            GetSimulatedSiblings(
+                person,
+                father);
 
         var relationshipHistory =
             _familyService
@@ -1664,25 +1783,34 @@ public sealed class MainWindowViewModel : ViewModelBase
                             : "N/A",
 
                 Father =
-                    generatedBackground?.FatherName
-                    ?? PersonName(father),
+                    father is not null
+                        ? PersonNameWithLifeYears(
+                            father)
+                        : generatedBackground?.FatherName
+                          ?? "None",
 
                 Mother =
-                    generatedBackground?.MotherName
-                    ?? PersonName(mother),
+                    mother is not null
+                        ? PersonNameWithLifeYears(
+                            mother)
+                        : generatedBackground?.MotherName
+                          ?? "None",
 
                 Siblings =
-                    generatedBackground is not null
-                        ? FormatNames(
-                            generatedBackground.Siblings)
-                        : FormatPeople(
-                            siblings),
+                    siblings.Count > 0
+                        ? FormatPeopleWithLifeYears(
+                            siblings)
+                        : generatedBackground is not null
+                            ? FormatNames(
+                                generatedBackground.Siblings)
+                            : "None",
 
                 Spouse =
-                    PersonName(spouse),
+                    PersonNameWithLifeYears(
+                        spouse),
 
                 Children =
-                    FormatPeople(
+                    FormatPeopleWithLifeYears(
                         children),
 
                 RelationshipHistory =
@@ -1963,6 +2091,55 @@ public sealed class MainWindowViewModel : ViewModelBase
                 ", ",
                 people.Select(
                     PersonName));
+    }
+
+    private string PersonNameWithLifeYears(
+        IPerson? person)
+    {
+        if (person is null)
+            return "None";
+
+        var name =
+            PersonName(
+                person);
+
+        var birthYear =
+            person.BirthDate?.Year;
+
+        var deathYear =
+            person.DeathDate?.Year;
+
+        if (birthYear is int born
+            && deathYear is int died)
+        {
+            return $"{name} ({born}–{died})";
+        }
+
+        if (birthYear is int livingBorn)
+        {
+            return person.Tags.Has(
+                "state.dead")
+                    ? $"{name} ({livingBorn}–?)"
+                    : $"{name} ({livingBorn}–)";
+        }
+
+        if (deathYear is int knownDeath)
+        {
+            return $"{name} (?–{knownDeath})";
+        }
+
+        return name;
+    }
+
+    private string FormatPeopleWithLifeYears(
+        IReadOnlyList<IPerson> people)
+    {
+        return people.Count == 0
+            ? "None"
+            : string.Join(
+                ", ",
+                people.Select(
+                    PersonNameWithLifeYears));
     }
 
     private static string FormatNames(

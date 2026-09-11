@@ -2,52 +2,113 @@ using Dynastia.Contracts;
 
 namespace Dynastia.Mechanics.Career;
 
-public sealed class StandardCareerService : ICareerService
+public sealed class StandardCareerService :
+    ICareerService
 {
-    public const decimal BaseIncomePerLevel = 500m;
+    public const decimal DefaultBaseIncomePerLevel =
+        500m;
 
+    private readonly IGameState _gameState;
     private readonly IFamilyService _family;
     private readonly IGameRandom _random;
+    private readonly CareerCatalog _catalog;
 
-    public StandardCareerService(
+    internal StandardCareerService(
+        IGameState gameState,
         IFamilyService family,
-        IGameRandom random)
+        IGameRandom random,
+        CareerCatalog catalog)
     {
+        _gameState = gameState;
         _family = family;
         _random = random;
+        _catalog = catalog;
     }
 
-    public void EnsureCareer(IPerson person)
+    public void EnsureCareer(
+        IPerson person)
     {
-        if (person.Components.Has<CareerComponent>())
-            return;
+        if (person.Components.Has<
+            CareerComponent>())
+        {
+            EnsureValidAssignment(
+                person,
+                person.Components.Get<
+                    CareerComponent>()
+                ?? throw new InvalidOperationException(
+                    "Career component is unavailable."));
 
-        person.Components.Set(
+            return;
+        }
+
+        var jobLevel =
+            person.Age >= 18
+                && !person.Tags.Has(
+                    "role.nanny")
+                ? _random.NextInt(
+                    0,
+                    3)
+                : 0;
+
+        var component =
             new CareerComponent
             {
                 JobLevel =
-                    person.Age >= 18
-                        ? _random.NextInt(0, 3)
-                        : 0,
+                    jobLevel,
+
                 JobSatisfaction =
-                    _random.NextInt(1, 5),
-                LastIncome = 0,
-                IsRetired = false
-            });
+                    _random.NextInt(
+                        1,
+                        5),
+
+                LastIncome =
+                    0,
+
+                IsRetired =
+                    false
+            };
+
+        if (jobLevel > 0)
+        {
+            component.CareerId =
+                SelectCareerForEntry(
+                    person)
+                .Id;
+        }
+
+        person.Components.Set(
+            component);
     }
 
-    public CareerSnapshot GetCareer(IPerson person)
+    public CareerSnapshot GetCareer(
+        IPerson person)
     {
-        var career = GetRequired(person);
+        var career =
+            GetRequired(
+                person);
+
+        var definition =
+            ResolveDefinition(
+                person,
+                career);
 
         return new CareerSnapshot(
             career.JobLevel,
-            ResolveJobTitle(person, career),
+            ResolveJobTitle(
+                person,
+                career,
+                definition),
             career.JobSatisfaction,
-            ResolveJobSatisfactionText(career.JobSatisfaction),
+            ResolveJobSatisfactionText(
+                career.JobSatisfaction),
             career.LastIncome,
-            GetAnnualIncome(person),
-            career.IsRetired);
+            GetAnnualIncome(
+                person),
+            career.IsRetired,
+            definition?.Id,
+            definition?.Name,
+            definition?.BaseSalary
+                ?? 0);
     }
 
     public void InitializeCareer(
@@ -55,78 +116,232 @@ public sealed class StandardCareerService : ICareerService
         int jobLevel,
         int jobSatisfaction)
     {
-        person.Components.Set(
+        var level =
+            Math.Clamp(
+                jobLevel,
+                0,
+                5);
+
+        var component =
             new CareerComponent
             {
-                JobLevel = Math.Clamp(jobLevel, 0, 5),
-                JobSatisfaction = Math.Clamp(jobSatisfaction, 1, 5),
-                LastIncome = 0,
-                IsRetired = false
-            });
+                JobLevel =
+                    level,
+
+                JobSatisfaction =
+                    Math.Clamp(
+                        jobSatisfaction,
+                        1,
+                        5),
+
+                LastIncome =
+                    0,
+
+                IsRetired =
+                    false,
+
+                CareerId =
+                    level > 0
+                        ? SelectCareerForEntry(
+                            person)
+                            .Id
+                        : null
+            };
+
+        person.Components.Set(
+            component);
     }
 
-    public void SetJobLevel(IPerson person, int jobLevel)
+    public void SetJobLevel(
+        IPerson person,
+        int jobLevel)
     {
-        GetRequired(person).JobLevel =
-            Math.Clamp(jobLevel, 0, 5);
+        var career =
+            GetRequired(
+                person);
+
+        var targetLevel =
+            Math.Clamp(
+                jobLevel,
+                0,
+                5);
+
+        if (targetLevel <= 0)
+        {
+            career.JobLevel =
+                0;
+
+            if (!career.IsRetired)
+            {
+                // Leaving employment deliberately clears the career.
+                // A future successful job search therefore draws again
+                // from the then-current employment pool.
+                career.CareerId =
+                    null;
+            }
+
+            return;
+        }
+
+        var definition =
+            _catalog.Find(
+                career.CareerId);
+
+        if (career.JobLevel <= 0
+            || definition is null)
+        {
+            career.CareerId =
+                SelectCareerForEntry(
+                    person)
+                    .Id;
+        }
+
+        career.JobLevel =
+            targetLevel;
     }
 
     public void ChangeJobSatisfaction(
         IPerson person,
         int amount)
     {
-        var career = GetRequired(person);
+        var career =
+            GetRequired(
+                person);
 
         career.JobSatisfaction =
             Math.Clamp(
-                career.JobSatisfaction + amount,
+                career.JobSatisfaction
+                + amount,
                 1,
                 5);
     }
 
-    public void Retire(IPerson person)
+    public void Retire(
+        IPerson person)
     {
-        var career = GetRequired(person);
+        var career =
+            GetRequired(
+                person);
 
         if (career.IsRetired)
             return;
 
         career.LastIncome =
-            career.JobLevel * BaseIncomePerLevel;
+            GetActiveSalary(
+                person,
+                career);
 
-        career.JobLevel = 0;
-        career.IsRetired = true;
+        career.JobLevel =
+            0;
+
+        career.IsRetired =
+            true;
     }
 
-    public decimal GetAnnualIncome(IPerson person)
+    public decimal GetAnnualIncome(
+        IPerson person)
     {
-        var career = GetRequired(person);
+        var career =
+            GetRequired(
+                person);
 
         if (career.IsRetired)
-            return career.LastIncome * 0.10m;
+        {
+            return career.LastIncome
+                * 0.10m;
+        }
 
-        if (career.JobLevel > 0)
-            return career.JobLevel * BaseIncomePerLevel;
+        return GetActiveSalary(
+            person,
+            career);
+    }
 
-        return 0;
+    internal CareerObsolescencePressure
+        GetObsolescencePressure(
+            IPerson person,
+            int gameYear)
+    {
+        var career =
+            GetRequired(
+                person);
+
+        if (career.JobLevel <= 0
+            || career.IsRetired)
+        {
+            return CareerObsolescencePressure.None;
+        }
+
+        var definition =
+            ResolveDefinition(
+                person,
+                career);
+
+        return definition?
+            .GetObsolescencePressure(
+                gameYear)
+            ?? CareerObsolescencePressure.None;
+    }
+
+    internal CareerDefinition? GetDefinition(
+        IPerson person)
+    {
+        var career =
+            GetRequired(
+                person);
+
+        return ResolveDefinition(
+            person,
+            career);
+    }
+
+    private decimal GetActiveSalary(
+        IPerson person,
+        CareerComponent career)
+    {
+        if (career.JobLevel <= 0)
+            return 0;
+
+        var definition =
+            ResolveDefinition(
+                person,
+                career);
+
+        var baseSalary =
+            definition?.BaseSalary
+            ?? DefaultBaseIncomePerLevel;
+
+        return baseSalary
+            * career.JobLevel;
     }
 
     private string ResolveJobTitle(
         IPerson person,
-        CareerComponent career)
+        CareerComponent career,
+        CareerDefinition? definition)
     {
-        if (person.Tags.Has("role.nanny"))
+        // Existing special-status precedence is intentionally preserved.
+        if (person.Tags.Has(
+            "role.nanny"))
+        {
             return "Nanny";
+        }
 
-        if (person.Tags.Has("state.imprisoned"))
+        if (person.Tags.Has(
+            "state.imprisoned"))
+        {
             return "Imprisoned";
+        }
 
         if (career.IsRetired)
             return "Retired";
 
-        if (_family.GetSex(person) == Sex.Female
+        if (_family.GetSex(
+                person)
+                == Sex.Female
             && career.JobLevel == 0
-            && _family.GetChildren(person).Count > 0)
+            && _family.GetChildren(
+                person)
+                .Count > 0)
         {
             return "Housewife";
         }
@@ -137,20 +352,82 @@ public sealed class StandardCareerService : ICareerService
         if (person.Age < 18)
             return "Student";
 
-        return career.JobLevel switch
-        {
-            0 => "Unemployed",
-            1 => "Laborer",
-            2 => "Clerk",
-            3 => "Manager",
-            4 => "Director",
-            5 => "Magnate",
-            _ => "Unemployed"
-        };
+        if (career.JobLevel <= 0)
+            return "Unemployed";
+
+        return definition?
+            .GetTitle(
+                career.JobLevel)
+            ?? career.JobLevel switch
+            {
+                1 => "Laborer",
+                2 => "Clerk",
+                3 => "Manager",
+                4 => "Director",
+                5 => "Magnate",
+                _ => "Unemployed"
+            };
     }
 
-    private static string ResolveJobSatisfactionText(int value) =>
-        value switch
+    private CareerDefinition? ResolveDefinition(
+        IPerson person,
+        CareerComponent career)
+    {
+        EnsureValidAssignment(
+            person,
+            career);
+
+        return _catalog.Find(
+            career.CareerId);
+    }
+
+    private void EnsureValidAssignment(
+        IPerson person,
+        CareerComponent career)
+    {
+        if (career.JobLevel <= 0)
+        {
+            if (!career.IsRetired)
+            {
+                career.CareerId =
+                    null;
+            }
+
+            return;
+        }
+
+        if (_catalog.Find(
+            career.CareerId)
+            is not null)
+        {
+            // A valid existing career is retained even if obsolete.
+            return;
+        }
+
+        // Old saves have an employed JobLevel but no CareerId.
+        // Preserve the level and assign a career that was open to
+        // entrants in the loaded game's effective technological year.
+        career.CareerId =
+            SelectCareerForEntry(
+                person)
+                .Id;
+    }
+
+    private CareerDefinition SelectCareerForEntry(
+        IPerson person)
+    {
+        return _catalog.SelectForEntry(
+            _family.GetSex(
+                person),
+            _gameState.Year,
+            _random);
+    }
+
+    private static string
+        ResolveJobSatisfactionText(
+            int value)
+    {
+        return value switch
         {
             1 => "Miserable",
             2 => "Unhappy",
@@ -159,12 +436,16 @@ public sealed class StandardCareerService : ICareerService
             5 => "Thriving",
             _ => string.Empty
         };
+    }
 
-    private CareerComponent GetRequired(IPerson person)
+    private CareerComponent GetRequired(
+        IPerson person)
     {
-        EnsureCareer(person);
+        EnsureCareer(
+            person);
 
-        return person.Components.Get<CareerComponent>()
+        return person.Components.Get<
+            CareerComponent>()
             ?? throw new InvalidOperationException(
                 "Career component could not be created.");
     }

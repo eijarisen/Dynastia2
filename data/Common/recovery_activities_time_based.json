@@ -1,0 +1,429 @@
+[
+  {
+    "id": "family_illness",
+    "text": "took extended leave to care for a seriously ill family member",
+    "startYear": 1900,
+    "endYear": null,
+    "weight": 5
+  },
+  {
+    "id": "bereavement",
+    "text": "withdrew from work for several months after a death in the family",
+    "startYear": 1900,
+    "endYear": null,
+    "weight": 4
+  },
+  {
+    "id": "own_health",
+    "text": "took an extended period of rest to recover their health",
+    "startYear": 1900,
+    "endYear": null,
+    "weight": 5
+  },
+  {
+    "id": "country_relatives",
+    "text": "spent several months staying with relatives in the countryside to rest and recuperate",
+    "startYear": 1900,
+    "endYear": null,
+    "weight": 4
+  },
+  {
+    "id": "family_matters",
+    "text": "took prolonged leave to settle difficult family matters",
+    "startYear": 1900,
+    "endYear": null,
+    "weight": 4
+  },
+  {
+    "id": "care_children",
+    "text": "took extended leave to care for children during a difficult period at home",
+    "startYear": 1900,
+    "endYear": null,
+    "weight": 4
+  },
+  {
+    "id": "exhaustion_rest",
+    "text": "took several months away from regular duties after a period of severe exhaustion",
+    "startYear": 1900,
+    "endYear": null,
+    "weight": 5
+  },
+  {
+    "id": "quiet_home",
+    "text": "spent an extended period at home resting and putting neglected personal affairs in order",
+    "startYear": 1900,
+    "endYear": null,
+    "weight": 4
+  },
+  {
+    "id": "relative_household",
+    "text": "spent several months helping to run a relative's household during a family emergency",
+    "startYear": 1900,
+    "endYear": null,
+    "weight": 3
+  },
+  {
+    "id": "doctor_ordered_rest",
+    "text": "followed a doctor's advice to abandon regular work for several months of complete rest",
+    "startYear": 1900,
+    "endYear": 1965,
+    "weight": 4
+  },
+  {
+    "id": "spa_cure_early",
+    "text": "spent several months taking the waters and resting at a health resort",
+    "startYear": 1900,
+    "endYear": 1939,
+    "weight": 4
+  },
+  {
+    "id": "sanatorium_early",
+    "text": "spent an extended period recuperating at a sanatorium",
+    "startYear": 1900,
+    "endYear": 1945,
+    "weight": 4
+  },
+  {
+    "id": "rural_rest_early",
+    "text": "left town for several months of quiet convalescence in the countryside",
+    "startYear": 1900,
+    "endYear": 1945,
+    "weight": 4
+  },
+  {
+    "id": "nervous_exhaustion",
+    "text": "withdrew from work for a prolonged rest after suffering nervous exhaustion",
+    "startYear": 1900,
+    "endYear": 1955,
+    "weight": 3
+  },
+  {
+    "id": "seaside_cure",
+    "text": "spent several months by the sea for rest and recuperation",
+    "startYear": 1900,
+    "endYear": 1939,
+    "weight": 3
+  },
+  {
+    "id": "pilgrimage_simple",
+    "text": "took a long religious retreat and pilgrimage after a difficult period in life",
+    "startYear": 1900,
+    "endYear": 1965,
+    "weight": 2
+  },
+  {
+    "id": "mountain_resort",
+    "text": "spent an extended period resting at a mountain health resort",
+    "startYear": 1919,
+    "endYear": 1939,
+    "weight": 3
+  },
+  {
+    "id": "spa_interwar",
+    "text": "took a prolonged restorative stay at a spa town",
+    "startYear": 1919,
+    "endYear": 1939,
+    "weight": 4
+  },
+  {
+    "id": "country_recovery_interwar",
+    "text": "spent much of the season recuperating with family outside the city",
+    "startYear": 1919,
+    "endYear": 1939,
+    "weight": 4
+  },
+  {
+    "id": "household_crisis_interwar",
+    "text": "took several months away from work to deal with a prolonged household crisis",
+    "startYear": 1919,
+    "endYear": 1939,
+    "weight": 4
+  },
+  {
+    "id": "rest_after_overwork",
+    "text": "took a long rest after years of overwork began to affect their health",
+    "startYear": 1919,
+    "endYear": 1965,
+    "weight": 4
+  },
+  {
+    "id": "quiet_routine_interwar",
+    "text": "gave up regular work for a time and adopted a quieter routine to regain their strength",
+    "startYear": 1919,
+    "endYear": 1939,
+    "weight": 3
+  },
+  {
+    "id": "wartime_family_care",
+    "text": "spent months away from regular work caring for relatives during a period of upheaval",
+    "startYear": 1939,
+    "endYear": 1946,
+    "weight": 5
+  },
+  {
+    "id": "wartime_displacement",
+    "text": "was unable to maintain regular work for months while the family relocated and recovered from disruption",
+    "startYear": 1939,
+    "endYear": 1946,
+    "weight": 4
+  },
+  {
+    "id": "wartime_country",
+    "text": "spent an extended period with family in the countryside, away from normal working life",
+    "startYear": 1939,
+    "endYear": 1946,
+    "weight": 4
+  },
+  {
+    "id": "wartime_health",
+    "text": "withdrew from regular duties for several months after their health deteriorated during difficult conditions",
+    "startYear": 1939,
+    "endYear": 1946,
+    "weight": 5
+  },
+  {
+    "id": "wartime_home",
+    "text": "spent months focused on keeping the household together rather than pursuing regular employment",
+    "startYear": 1939,
+    "endYear": 1946,
+    "weight": 4
+  },
+  {
+    "id": "sanatorium_postwar",
+    "text": "spent several weeks at a sanatorium followed by a long period of rest at home",
+    "startYear": 1947,
+    "endYear": 1989,
+    "weight": 5
+  },
+  {
+    "id": "workers_resort",
+    "text": "took an extended restorative stay at a workers' holiday resort",
+    "startYear": 1950,
+    "endYear": 1989,
+    "weight": 3
+  },
+  {
+    "id": "rural_family_postwar",
+    "text": "spent several months recovering with relatives in the countryside",
+    "startYear": 1947,
+    "endYear": 1989,
+    "weight": 4
+  },
+  {
+    "id": "extended_sick_leave",
+    "text": "remained on extended sick leave until their strength and routine returned",
+    "startYear": 1947,
+    "endYear": 2026,
+    "weight": 5
+  },
+  {
+    "id": "home_recovery_postwar",
+    "text": "spent a prolonged period at home recovering from exhaustion and poor health",
+    "startYear": 1947,
+    "endYear": 1989,
+    "weight": 5
+  },
+  {
+    "id": "spa_postwar",
+    "text": "received a place at a health resort and used the stay to recuperate",
+    "startYear": 1950,
+    "endYear": 1989,
+    "weight": 4
+  },
+  {
+    "id": "family_obligations_postwar",
+    "text": "temporarily left regular work to handle demanding family obligations",
+    "startYear": 1947,
+    "endYear": 1989,
+    "weight": 4
+  },
+  {
+    "id": "allotment_rest",
+    "text": "spent much of the warmer months resting and working lightly on the family allotment",
+    "startYear": 1955,
+    "endYear": 1989,
+    "weight": 3
+  },
+  {
+    "id": "doctor_leave_prl",
+    "text": "took prolonged medical leave after a doctor advised a slower pace of life",
+    "startYear": 1970,
+    "endYear": 1989,
+    "weight": 5
+  },
+  {
+    "id": "sanatorium_prl",
+    "text": "spent an extended period recovering through sanatorium treatment and rest",
+    "startYear": 1970,
+    "endYear": 1989,
+    "weight": 5
+  },
+  {
+    "id": "family_care_prl",
+    "text": "stepped away from work for several months to care for an elderly or sick relative",
+    "startYear": 1970,
+    "endYear": 1989,
+    "weight": 5
+  },
+  {
+    "id": "country_house_prl",
+    "text": "spent a long period outside the city, resting with family and avoiding regular work",
+    "startYear": 1970,
+    "endYear": 1989,
+    "weight": 3
+  },
+  {
+    "id": "exhaustion_prl",
+    "text": "took an extended break after persistent exhaustion made normal work difficult",
+    "startYear": 1970,
+    "endYear": 1989,
+    "weight": 5
+  },
+  {
+    "id": "household_recovery_prl",
+    "text": "spent several months concentrating on home life after a difficult personal period",
+    "startYear": 1970,
+    "endYear": 1989,
+    "weight": 4
+  },
+  {
+    "id": "unpaid_leave_90s",
+    "text": "took several months of unpaid leave to recover from prolonged stress",
+    "startYear": 1990,
+    "endYear": 2026,
+    "weight": 5
+  },
+  {
+    "id": "career_break_90s",
+    "text": "took a temporary break from regular employment to recover their health and energy",
+    "startYear": 1990,
+    "endYear": 2026,
+    "weight": 5
+  },
+  {
+    "id": "family_care_90s",
+    "text": "put work aside for several months to care for a close relative",
+    "startYear": 1990,
+    "endYear": 2026,
+    "weight": 5
+  },
+  {
+    "id": "quiet_country_90s",
+    "text": "spent an extended period away from the city, resting with family",
+    "startYear": 1990,
+    "endYear": 2026,
+    "weight": 3
+  },
+  {
+    "id": "health_treatment_90s",
+    "text": "took a long medical leave while undergoing treatment and recuperation",
+    "startYear": 1990,
+    "endYear": 2026,
+    "weight": 5
+  },
+  {
+    "id": "personal_crisis_90s",
+    "text": "stepped away from work for several months during a serious personal crisis",
+    "startYear": 1990,
+    "endYear": 2026,
+    "weight": 4
+  },
+  {
+    "id": "home_and_family_90s",
+    "text": "took a long break to concentrate on home and family after an exhausting period",
+    "startYear": 1990,
+    "endYear": 2026,
+    "weight": 4
+  },
+  {
+    "id": "modest_travel_90s",
+    "text": "used an extended break for quiet travel and time away from everyday pressures",
+    "startYear": 1990,
+    "endYear": 2026,
+    "weight": 2
+  },
+  {
+    "id": "burnout_leave",
+    "text": "took extended leave after prolonged work-related exhaustion",
+    "startYear": 2005,
+    "endYear": null,
+    "weight": 6
+  },
+  {
+    "id": "mental_health_break",
+    "text": "took several months away from work to focus on mental health and recovery",
+    "startYear": 2005,
+    "endYear": null,
+    "weight": 5
+  },
+  {
+    "id": "sabbatical_rest",
+    "text": "arranged a long career break and used it primarily for rest and recovery",
+    "startYear": 2005,
+    "endYear": null,
+    "weight": 4
+  },
+  {
+    "id": "stress_leave",
+    "text": "went on extended leave after chronic stress began affecting everyday life",
+    "startYear": 2005,
+    "endYear": null,
+    "weight": 6
+  },
+  {
+    "id": "care_parent_modern",
+    "text": "took a long leave of absence to care for an aging parent",
+    "startYear": 2005,
+    "endYear": null,
+    "weight": 5
+  },
+  {
+    "id": "care_partner_modern",
+    "text": "stepped away from work for several months to support an ill partner",
+    "startYear": 2005,
+    "endYear": null,
+    "weight": 4
+  },
+  {
+    "id": "therapy_recovery",
+    "text": "reduced normal commitments for an extended period while focusing on therapy and recovery",
+    "startYear": 2005,
+    "endYear": null,
+    "weight": 4
+  },
+  {
+    "id": "medical_recovery_modern",
+    "text": "took extended medical leave and gradually returned to normal daily life",
+    "startYear": 2005,
+    "endYear": null,
+    "weight": 6
+  },
+  {
+    "id": "family_reset_modern",
+    "text": "took several months away from regular work to recover and spend more time with family",
+    "startYear": 2005,
+    "endYear": null,
+    "weight": 5
+  },
+  {
+    "id": "home_rest_modern",
+    "text": "spent a prolonged period at home resting after reaching a point of severe exhaustion",
+    "startYear": 2005,
+    "endYear": null,
+    "weight": 5
+  },
+  {
+    "id": "slow_travel_modern",
+    "text": "used a long leave of absence for quiet travel and a complete break from their usual routine",
+    "startYear": 2005,
+    "endYear": null,
+    "weight": 3
+  },
+  {
+    "id": "countryside_modern",
+    "text": "spent several months in quieter surroundings away from normal work and city life",
+    "startYear": 2005,
+    "endYear": null,
+    "weight": 4
+  }
+]

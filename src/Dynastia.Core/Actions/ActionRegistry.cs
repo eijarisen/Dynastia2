@@ -170,12 +170,20 @@ public sealed class ActionRegistry : IActionRegistry
                             ? action.Label
                             : queued.ActionId;
 
+                    var description =
+                        _actions.TryGetValue(
+                            queued.ActionId,
+                            out var definition)
+                            ? definition.Description
+                            : null;
+
                     return new QueuedActionInfo(
                         queued.ActionId,
                         label,
                         queued.Phase,
                         queued.ActorId,
-                        queued.TargetId);
+                        queued.TargetId,
+                        description);
                 })
             .ToList();
     }
@@ -194,12 +202,20 @@ public sealed class ActionRegistry : IActionRegistry
                             ? action.Label
                             : queued.ActionId;
 
+                    var description =
+                        _actions.TryGetValue(
+                            queued.ActionId,
+                            out var definition)
+                            ? definition.Description
+                            : null;
+
                     return new QueuedActionInfo(
                         queued.ActionId,
                         label,
                         queued.Phase,
                         queued.ActorId,
-                        queued.TargetId);
+                        queued.TargetId,
+                        description);
                 })
             .ToList();
     }

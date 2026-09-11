@@ -2,4 +2,5 @@ namespace Dynastia.Contracts;
 
 public sealed record LocationSnapshot(
     TownInfo Birthplace,
-    TownInfo HomeTown);
+    TownInfo HomeTown,
+    TownInfo? DeathTown);

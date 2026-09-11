@@ -157,6 +157,10 @@ public partial class App : Application
             var locationService =
                 pluginContext.GetService<ILocationService>();
 
+            var marriageSatisfactionService =
+                pluginContext.GetService<
+                    IMarriageSatisfactionService>();
+
             var educationService =
                 pluginContext.GetService<IEducationService>();
 
@@ -215,6 +219,7 @@ public partial class App : Application
                             householdService,
                             adoptionService,
                             locationService,
+                            marriageSatisfactionService,
                             educationService,
                             careerService,
                             justiceService,

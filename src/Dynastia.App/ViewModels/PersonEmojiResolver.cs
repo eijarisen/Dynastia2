@@ -101,41 +101,58 @@ public static class PersonEmojiResolver
 
         if (person.Age >= AdultAge)
         {
+            if (jobTitle.Equals(
+                "Housewife",
+                StringComparison.Ordinal))
+            {
+                return "👩‍🍳";
+            }
+
+            if (jobTitle.Equals(
+                "Nanny",
+                StringComparison.Ordinal))
+            {
+                return "🧑‍🍼";
+            }
+
             if (jobLevel > 0)
             {
-                switch (jobTitle)
+                // Career-specific titles replaced the old generic
+                // Laborer/Clerk/Manager/Director/Magnate strings.
+                // Preserve the original occupational emoji hierarchy
+                // by universal job level instead of title text.
+                return jobLevel switch
                 {
-                    case "Laborer":
-                        return sex == Sex.Male
+                    1 =>
+                        sex == Sex.Male
                             ? "👷‍♂️"
-                            : "👷‍♀️";
+                            : "👷‍♀️",
 
-                    case "Clerk":
-                        return sex == Sex.Male
+                    2 =>
+                        sex == Sex.Male
                             ? "👨‍💼"
-                            : "👩‍💼";
+                            : "👩‍💼",
 
-                    case "Manager":
-                        return sex == Sex.Male
+                    3 =>
+                        sex == Sex.Male
                             ? "👨‍💻"
-                            : "👩‍💻";
+                            : "👩‍💻",
 
-                    case "Director":
-                        return sex == Sex.Male
+                    4 =>
+                        sex == Sex.Male
                             ? "🤵‍♂️"
-                            : "🤵‍♀️";
+                            : "🤵‍♀️",
 
-                    case "Magnate":
-                        return sex == Sex.Male
+                    5 =>
+                        sex == Sex.Male
                             ? "🤴"
-                            : "👸";
+                            : "👸",
 
-                    case "Housewife":
-                        return "👩‍🍳";
-
-                    case "Nanny":
-                        return "🧑‍🍼";
-                }
+                    _ =>
+                        sex == Sex.Male
+                            ? "👨"
+                            : "👩"
+                };
             }
             else if (jobTitle.Equals(
                 "Unemployed",

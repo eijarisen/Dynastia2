@@ -5,4 +5,5 @@ public sealed record QueuedActionInfo(
     string Label,
     YearPhase Phase,
     Guid ActorId,
-    Guid TargetId);
+    Guid TargetId,
+    string? Description = null);

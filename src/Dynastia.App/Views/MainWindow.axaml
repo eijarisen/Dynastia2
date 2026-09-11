@@ -33,8 +33,25 @@
                 Classes="familyCard"
                 Classes.selected="{Binding IsSelected}"
                 Classes.head="{Binding IsActiveHouseholdHead}"
-                Command="{Binding SelectCommand}"
-                ToolTip.Tip="{Binding FullName}">
+                Command="{Binding SelectCommand}">
+
+                <ToolTip.Tip>
+                    <Border
+                        MaxWidth="390"
+                        Padding="10,7"
+                        Background="#F20A1514"
+                        BorderBrush="#B88934"
+                        BorderThickness="1"
+                        CornerRadius="4">
+
+                        <TextBlock
+                            FontSize="10.5"
+                            LineHeight="17"
+                            Foreground="#F5E6C6"
+                            TextWrapping="Wrap"
+                            Text="{Binding InfoTooltipText}" />
+                    </Border>
+                </ToolTip.Tip>
 
                 <StackPanel
                     Width="98"
@@ -45,18 +62,6 @@
                         HorizontalAlignment="Center"
                         FontSize="31"
                         Text="{Binding AvatarText}" />
-
-                    <ProgressBar
-                        Classes="healthBar"
-                        IsVisible="{Binding ShowHealth}"
-                        Width="50"
-                        Height="5"
-                        Minimum="0"
-                        Maximum="100"
-                        HorizontalAlignment="Center"
-                        Foreground="{Binding HealthValue,
-                                             Converter={StaticResource HealthBrushConverter}}"
-                        Value="{Binding HealthValue}" />
 
                     <TextBlock
                         HorizontalAlignment="Center"
@@ -72,28 +77,41 @@
                         FontWeight="SemiBold"
                         Text="{Binding Surname}" />
 
-                    <TextBlock
+                    <ProgressBar
+                        Classes="healthBar"
+                        IsVisible="{Binding ShowHealth}"
+                        Width="42"
+                        Height="5"
+                        Minimum="0"
+                        Maximum="100"
                         HorizontalAlignment="Center"
-                        TextAlignment="Center"
-                        FontSize="9.5"
-                        Opacity="0.78"
-                        Text="{Binding SubtitleText}" />
+                        Foreground="{Binding HealthValue,
+                                             Converter={StaticResource HealthBrushConverter}}"
+                        Value="{Binding HealthValue}" />
 
                     <TextBlock
                         HorizontalAlignment="Center"
                         TextAlignment="Center"
-                        TextWrapping="Wrap"
                         FontSize="9"
-                        Opacity="0.72"
-                        Text="{Binding OccupationText}" />
+                        Opacity="0.82"
+                        Text="{Binding LifeSpanText}" />
 
                     <TextBlock
                         HorizontalAlignment="Center"
                         TextAlignment="Center"
                         TextWrapping="Wrap"
-                        FontSize="7.5"
-                        Opacity="0.7"
-                        Text="{Binding ResidenceText}" />
+                        FontSize="8.5"
+                        Opacity="0.78"
+                        Text="{Binding TownText}" />
+
+                    <TextBlock
+                        IsVisible="{Binding ShowOccupation}"
+                        HorizontalAlignment="Center"
+                        TextAlignment="Center"
+                        TextWrapping="Wrap"
+                        FontSize="8.5"
+                        Opacity="0.74"
+                        Text="{Binding OccupationText}" />
                 </StackPanel>
             </Button>
         </DataTemplate>
@@ -103,7 +121,7 @@
             x:DataType="contracts:StatValue">
 
             <StackPanel
-                Width="78"
+                Width="76"
                 HorizontalAlignment="Center"
                 Spacing="1">
 
@@ -397,7 +415,7 @@
                             Stretch="Fill" />
 
                         <Grid
-                            Margin="50,80,48,34"
+                            Margin="50,74,48,34"
                             RowDefinitions="Auto,Auto,*"
                             RowSpacing="9">
 
@@ -501,9 +519,10 @@
                             Stretch="Fill" />
 
                         <Grid
-                            Margin="50,65,48,31"
+                            Margin="50,76,48,50"
                             RowDefinitions="Auto,*"
-                            RowSpacing="9">
+                            RowSpacing="9"
+                            ClipToBounds="True">
 
                             <Grid
                                 ColumnDefinitions="*,Auto,Auto,Auto"
@@ -612,8 +631,25 @@
                                     MinWidth="82"
                                     FontSize="10.5"
                                     Classes="gameAction"
-                                    Click="OnViewTreeClick"
-                                    ToolTip.Tip="Open the full genealogy tree.">
+                                    Click="OnViewTreeClick">
+
+                                    <ToolTip.Tip>
+                                        <Border
+                                            MaxWidth="390"
+                                            Padding="10,7"
+                                            Background="#F20A1514"
+                                            BorderBrush="#B88934"
+                                            BorderThickness="1"
+                                            CornerRadius="4">
+
+                                            <TextBlock
+                                                FontSize="10.5"
+                                                LineHeight="17"
+                                                Foreground="#F5E6C6"
+                                                TextWrapping="Wrap"
+                                                Text="Open the full genealogy tree. Scroll to zoom, drag to pan, and click a person to select them." />
+                                        </Border>
+                                    </ToolTip.Tip>
 
                                     <TextBlock
                                         Foreground="#F8E9C8"
@@ -675,8 +711,25 @@
                                                 Classes="playableTab"
                                                 Classes.active="{Binding IsActive}"
                                                 Classes.queued="{Binding HasQueuedAction}"
-                                                Command="{Binding SwitchCommand}"
-                                                ToolTip.Tip="{Binding FullName}">
+                                                Command="{Binding SwitchCommand}">
+
+                                                <ToolTip.Tip>
+                                                    <Border
+                                                        MaxWidth="390"
+                                                        Padding="10,7"
+                                                        Background="#F20A1514"
+                                                        BorderBrush="#B88934"
+                                                        BorderThickness="1"
+                                                        CornerRadius="4">
+
+                                                        <TextBlock
+                                                            FontSize="10.5"
+                                                            LineHeight="17"
+                                                            Foreground="#F5E6C6"
+                                                            TextWrapping="Wrap"
+                                                            Text="{Binding ActionSummaryText}" />
+                                                    </Border>
+                                                </ToolTip.Tip>
 
                                                 <TextBlock
                                                     Foreground="#F4E8CB"
@@ -895,7 +948,7 @@
 
                         <!-- Portrait -->
                         <Border
-                            Margin="49,83,0,0"
+                            Margin="49,101,0,0"
                             Width="135"
                             Height="202"
                             HorizontalAlignment="Left"
@@ -929,7 +982,7 @@
 
                         <!-- Six larger, color-coded skills. -->
                         <ItemsControl
-                            Margin="196,43,30,0"
+                            Margin="196,43,50,0"
                             Height="54"
                             VerticalAlignment="Top"
                             HorizontalAlignment="Stretch"
@@ -1011,6 +1064,31 @@
                                             <TextBlock FontSize="12" Text="{Binding SelectedEducation.EducationText}" />
                                             <TextBlock FontSize="12" Text="{Binding SelectedCareer.OccupationText}" />
                                             <TextBlock FontSize="12" Text="{Binding SelectedCareer.SatisfactionText}" />
+
+                                            <TextBlock
+                                                IsVisible="{Binding HasSelectedMarriageSatisfaction}"
+                                                FontSize="12"
+                                                Text="{Binding SelectedMarriageSatisfactionText}">
+
+                                                <ToolTip.Tip>
+                                                    <Border
+                                                        MaxWidth="330"
+                                                        Padding="10,7"
+                                                        Background="#F20A1514"
+                                                        BorderBrush="#B88934"
+                                                        BorderThickness="1"
+                                                        CornerRadius="4">
+
+                                                        <TextBlock
+                                                            FontSize="11"
+                                                            LineHeight="17"
+                                                            Foreground="#F5E6C6"
+                                                            TextWrapping="Wrap"
+                                                            Text="{Binding SelectedMarriageSatisfactionDetailsText}" />
+                                                    </Border>
+                                                </ToolTip.Tip>
+                                            </TextBlock>
+
                                             <TextBlock FontSize="12" Text="{Binding SelectedCareer.IncomeText}" />
                                             <TextBlock FontSize="12" Text="{Binding SelectedJustice.StatusText}" />
                                             <TextBlock FontSize="12" Text="{Binding SelectedJustice.CrimeText}" />
@@ -1033,6 +1111,12 @@
                                                 IsVisible="{Binding SelectedPerson.HasDeathDate}"
                                                 FontSize="12"
                                                 Text="{Binding SelectedPerson.DeathDateText}" />
+
+                                            <TextBlock
+                                                IsVisible="{Binding SelectedPerson.HasDeathplace}"
+                                                FontSize="12"
+                                                TextWrapping="Wrap"
+                                                Text="{Binding SelectedPerson.DeathplaceText}" />
 
                                             <TextBlock
                                                 IsVisible="{Binding SelectedPerson.HasMaidenName}"

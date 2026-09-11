@@ -1,7 +1,7 @@
 {
   "id": "dynastia.households",
   "name": "Standard Households",
-  "version": "0.1.0",
+  "version": "0.3.0",
   "apiVersion": 1,
   "assembly": "Dynastia.Mechanics.Households.dll",
   "entryType": "Dynastia.Mechanics.Households.HouseholdsPlugin",

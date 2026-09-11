@@ -9,7 +9,7 @@ public static class EventEmojiMap
             {
                 // Exact Dynasty 4 emojiMap keys.
                 ["heal"] = "❤️‍🩹",
-                ["recover"] = " ",
+                ["recover"] = "🛌",
                 ["educationSuccess"] = "🎓",
                 ["educationFail"] = "🧱",
                 ["therapySuccess"] = "😊",
@@ -59,7 +59,7 @@ public static class EventEmojiMap
 
                 // Modular Dynastia event IDs -> original visual meaning.
                 ["wellbeing.heal"] = "❤️‍🩹",
-                ["wellbeing.recover"] = " ",
+                ["wellbeing.recover"] = "🛌",
                 ["education.success"] = "🎓",
                 ["education.failure"] = "🧱",
                 ["education.help_learning_success"] = "📚",
@@ -90,6 +90,8 @@ public static class EventEmojiMap
                 ["relationship.repair_marriage"] = "❤️‍🩹",
                 ["relationship.prison_divorce"] = "💔",
                 ["career.employment"] = "✅",
+                ["career.family_connections_success"] = "🤝",
+                ["career.family_connections_failure"] = "🚫",
                 ["family_support.parents_success"] = "🙏",
                 ["family_support.parents_failure"] = "🚫",
 
@@ -120,6 +122,8 @@ public static class EventEmojiMap
                 ["household.house_promised"] = "🎁",
 
                 ["household.nanny_hired"] = "🧑‍🍼",
+                ["household.family_nanny_started"] = "🧑‍🍼",
+                ["household.family_nanny_ended"] = "👋",
                 ["household.nanny_fired"] = "👋",
 
                 ["adoption.with_mother"] = "👩‍👧",

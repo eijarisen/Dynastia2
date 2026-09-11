@@ -37,12 +37,23 @@ public sealed class CareerViewModel
                 : $"Occupation: " +
                   $"{snapshot.JobTitle}";
 
+        var unemployedAdult =
+            isAlive
+            && !snapshot.IsRetired
+            && snapshot.JobLevel <= 0
+            && snapshot.JobTitle.Equals(
+                "Unemployed",
+                StringComparison.OrdinalIgnoreCase);
+
         SatisfactionText =
             isAlive
             && !snapshot.IsRetired
-            && snapshot.JobLevel > 0
-                ? $"Job satisfaction: " +
-                  $"{snapshot.JobSatisfactionText}"
+                ? snapshot.JobLevel > 0
+                    ? $"Job satisfaction: " +
+                      $"{snapshot.JobSatisfactionText}"
+                    : unemployedAdult
+                        ? "Job satisfaction: N/A"
+                        : string.Empty
                 : string.Empty;
 
         IncomeText =
@@ -54,7 +65,9 @@ public sealed class CareerViewModel
                     : snapshot.JobLevel > 0
                         ? $"Income: " +
                           $"{snapshot.AnnualIncome:N0} zł/year"
-                        : string.Empty;
+                        : unemployedAdult
+                            ? "Income: 0 zł"
+                            : string.Empty;
     }
 
     public int JobLevel { get; }

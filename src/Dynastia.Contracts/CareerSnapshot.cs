@@ -10,4 +10,6 @@ public sealed record CareerSnapshot(
     bool IsRetired,
     string? CareerId = null,
     string? CareerName = null,
-    decimal BaseSalary = 0);
+    decimal BaseSalary = 0,
+    int PeakJobLevel = 0,
+    string? PeakCareerId = null);

@@ -307,7 +307,9 @@ public sealed class EconomyYearSystem : IYearSystem
                 });
         }
 
-        if (household.NannyId.HasValue)
+        if (ShouldChargeNanny(
+            gameState,
+            household))
         {
             expenses +=
                 NannyExpense;
@@ -335,6 +337,28 @@ public sealed class EconomyYearSystem : IYearSystem
                 household.Wealth
                 + income
                 - expenses);
+    }
+
+    private static bool ShouldChargeNanny(
+        IGameState gameState,
+        HouseholdEconomyComponent household)
+    {
+        if (household.NannyId
+            is not Guid nannyId)
+        {
+            return false;
+        }
+
+        var nanny =
+            gameState.People
+                .FirstOrDefault(
+                    person =>
+                        person.Id
+                        == nannyId);
+
+        return nanny is null
+            || !nanny.Tags.Has(
+                "role.family_nanny");
     }
 
     private decimal AddPersonIncome(
@@ -481,7 +505,9 @@ public sealed class EconomyYearSystem : IYearSystem
                     });
             }
 
-            if (household.NannyId.HasValue)
+            if (ShouldChargeNanny(
+                gameState,
+                household))
             {
                 expenses +=
                     NannyExpense;

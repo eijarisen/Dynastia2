@@ -92,6 +92,8 @@ public sealed class FemaleRemarriageYearSystem :
                 || woman.Tags.Has(
                     "control.playable")
                 || _family.IsMaleLineage(
+                    woman)
+                || HasDivorceAffectedMinorChild(
                     woman))
             {
                 continue;
@@ -107,6 +109,20 @@ public sealed class FemaleRemarriageYearSystem :
                 gameState,
                 woman);
         }
+    }
+
+    private bool HasDivorceAffectedMinorChild(
+        IPerson woman)
+    {
+        return _family.GetChildren(
+                woman)
+            .Any(
+                child =>
+                    child.Tags.Has(
+                        "state.alive")
+                    && child.Age < 18
+                    && child.Tags.Has(
+                        DivorcedParentsTracker.Tag));
     }
 
     private void CreateHusband(

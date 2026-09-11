@@ -616,7 +616,7 @@ public sealed class StandardBiographyService :
         {
             // Structured-event aliases of Dynasty 4's const emojiMap.
             "wellbeing.heal" => "❤️‍🩹 ",
-            "wellbeing.recover" => " ",
+            "wellbeing.recover" => "🛌 ",
             "education.success" => "🎓 ",
             "education.failure" => "🧱 ",
             "education.help_learning_success" => "📚 ",
@@ -698,8 +698,6 @@ public sealed class StandardBiographyService :
             "rare.found_property" => "💎 ",
             "rare.wrongful_arrest" => "⚖️ ",
             "rare.suicide" => "🕯️ ",
-
-            "stats.paid_improvement" => "📈 ",
 
             _ => "🔹 "
         };

@@ -74,6 +74,9 @@ public sealed class StandardCareerService :
                 SelectCareerForEntry(
                     person)
                 .Id;
+
+            UpdatePeakCareer(
+                component);
         }
 
         person.Components.Set(
@@ -108,7 +111,9 @@ public sealed class StandardCareerService :
             definition?.Id,
             definition?.Name,
             definition?.BaseSalary
-                ?? 0);
+                ?? 0,
+            career.PeakJobLevel,
+            career.PeakCareerId);
     }
 
     public void InitializeCareer(
@@ -147,6 +152,9 @@ public sealed class StandardCareerService :
                             .Id
                         : null
             };
+
+        UpdatePeakCareer(
+            component);
 
         person.Components.Set(
             component);
@@ -198,6 +206,9 @@ public sealed class StandardCareerService :
 
         career.JobLevel =
             targetLevel;
+
+        UpdatePeakCareer(
+            career);
     }
 
     public void ChangeJobSatisfaction(
@@ -230,6 +241,9 @@ public sealed class StandardCareerService :
             GetActiveSalary(
                 person,
                 career);
+
+        UpdatePeakCareer(
+            career);
 
         career.JobLevel =
             0;
@@ -326,6 +340,120 @@ public sealed class StandardCareerService :
 
         career.JobLevel =
             1;
+
+        UpdatePeakCareer(
+            career);
+    }
+
+    internal FamilyConnectionOpportunity?
+        FindBestFamilyConnection(
+            IPerson person)
+    {
+        var candidates =
+            new[]
+            {
+                _family.GetFather(
+                    person),
+                _family.GetMother(
+                    person)
+            }
+            .Where(
+                parent =>
+                    parent is not null
+                    && parent.Tags.Has(
+                        "state.alive"))
+            .Cast<IPerson>()
+            .Select(
+                parent =>
+                    new
+                    {
+                        Parent =
+                            parent,
+
+                        Career =
+                            GetCareer(
+                                parent)
+                    })
+            .Where(
+                candidate =>
+                    candidate.Career.PeakJobLevel >= 3
+                    && !string.IsNullOrWhiteSpace(
+                        candidate.Career.PeakCareerId))
+            .Select(
+                candidate =>
+                    new
+                    {
+                        candidate.Parent,
+                        candidate.Career,
+
+                        Definition =
+                            _catalog.Find(
+                                candidate.Career.PeakCareerId)
+                    })
+            .Where(
+                candidate =>
+                    candidate.Definition is not null
+                    && candidate.Definition.IsOpenForEntry(
+                        _gameState.Year))
+            .OrderByDescending(
+                candidate =>
+                    candidate.Career.PeakJobLevel)
+            .ThenBy(
+                candidate =>
+                    candidate.Parent.Id)
+            .FirstOrDefault();
+
+        if (candidates is null
+            || candidates.Definition is null)
+        {
+            return null;
+        }
+
+        var targetLevel =
+            Math.Clamp(
+                candidates.Career.PeakJobLevel - 2,
+                1,
+                3);
+
+        var acceptanceChance =
+            candidates.Career.PeakJobLevel switch
+            {
+                >= 5 => 0.90,
+                4 => 0.70,
+                _ => 0.50
+            };
+
+        return new FamilyConnectionOpportunity(
+            candidates.Parent,
+            candidates.Definition,
+            candidates.Career.PeakJobLevel,
+            targetLevel,
+            acceptanceChance);
+    }
+
+    internal void AcceptFamilyConnection(
+        IPerson person,
+        FamilyConnectionOpportunity opportunity)
+    {
+        var career =
+            GetRequired(
+                person);
+
+        if (career.IsRetired
+            || career.JobLevel > 0)
+        {
+            throw new InvalidOperationException(
+                "Family connections can only place an unemployed non-retired person.");
+        }
+
+        career.CareerId =
+            opportunity.Career.Id;
+
+        career.JobLevel =
+            opportunity.JobLevel;
+
+        UpdatePeakCareer(
+            career);
     }
 
     internal CareerObsolescencePressure
@@ -473,6 +601,9 @@ public sealed class StandardCareerService :
             is not null)
         {
             // A valid existing career is retained even if obsolete.
+            UpdatePeakCareer(
+                career);
+
             return;
         }
 
@@ -483,6 +614,41 @@ public sealed class StandardCareerService :
             SelectCareerForEntry(
                 person)
                 .Id;
+
+        UpdatePeakCareer(
+            career);
+    }
+
+    private static void UpdatePeakCareer(
+        CareerComponent career)
+    {
+        if (career.JobLevel <= 0
+            || string.IsNullOrWhiteSpace(
+                career.CareerId))
+        {
+            return;
+        }
+
+        if (career.JobLevel
+            > career.PeakJobLevel)
+        {
+            career.PeakJobLevel =
+                career.JobLevel;
+
+            career.PeakCareerId =
+                career.CareerId;
+
+            return;
+        }
+
+        if (career.JobLevel
+                == career.PeakJobLevel
+            && string.IsNullOrWhiteSpace(
+                career.PeakCareerId))
+        {
+            career.PeakCareerId =
+                career.CareerId;
+        }
     }
 
     private CareerDefinition SelectCareerForEntry(

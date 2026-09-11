@@ -92,7 +92,8 @@ public sealed class CareerAdvancementYearSystem :
                 person,
                 gameState.Year);
 
-        if (career.JobLevel > 0)
+        if (career.JobLevel > 0
+            && career.JobLevel < 5)
         {
             var jobLossChance =
                 FiredChance

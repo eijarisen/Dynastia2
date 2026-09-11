@@ -6,6 +6,10 @@ public sealed class CareerComponent
 
     public int JobLevel { get; set; }
 
+    public int PeakJobLevel { get; set; }
+
+    public string? PeakCareerId { get; set; }
+
     public int JobSatisfaction { get; set; }
 
     public decimal LastIncome { get; set; }

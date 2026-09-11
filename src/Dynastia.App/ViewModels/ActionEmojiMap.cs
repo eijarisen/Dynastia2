@@ -19,6 +19,7 @@ public static class ActionEmojiMap
                 ["career.quit_job"] = "🚶",
                 ["career.work_harder"] = "✨",
                 ["career.seek_employment"] = "✅",
+                ["career.use_family_connections"] = "🤝",
                 ["career.help_seek_employment"] = "✅",
                 ["career.ask_to_recover"] = "🧘",
                 ["career.ask_to_quit"] = "🚶",
@@ -41,6 +42,7 @@ public static class ActionEmojiMap
                 ["household.sell_house"] = "💵",
                 ["household.give_house_to_son"] = "🎁",
                 ["household.hire_nanny"] = "🧑‍🍼",
+                ["household.ask_daughter_nanny"] = "🧑‍🍼",
                 ["household.fire_nanny"] = "👋",
 
                 ["family_support.ask_parents"] = "🙏",

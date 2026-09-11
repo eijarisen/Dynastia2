@@ -41,7 +41,8 @@ public sealed class CareerRetirementYearSystem : IYearSystem
             var career = _career.GetCareer(person);
 
             if (person.Age != retirementAge
-                || career.IsRetired)
+                || career.IsRetired
+                || career.JobLevel >= 5)
             {
                 continue;
             }

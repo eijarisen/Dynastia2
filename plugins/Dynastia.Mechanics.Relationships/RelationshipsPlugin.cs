@@ -37,6 +37,11 @@ public sealed class RelationshipsPlugin : IGamePlugin
             ?? throw new InvalidOperationException(
                 "Health service is unavailable.");
 
+        var healthModifiers =
+            context.GetService<IAnnualHealthModifierRegistry>()
+            ?? throw new InvalidOperationException(
+                "Annual health modifier registry is unavailable.");
+
         var economy =
             context.GetService<IEconomyService>()
             ?? throw new InvalidOperationException(
@@ -104,6 +109,18 @@ public sealed class RelationshipsPlugin : IGamePlugin
 
         context.AddService<IMarriageSatisfactionService>(
             marriageSatisfaction);
+
+        _ =
+            new DivorcedParentsTracker(
+                gameState,
+                family,
+                events);
+
+        healthModifiers.Register(
+            new DivorcedParentsHealthModifierProvider());
+
+        systems.Register(
+            new DivorcedParentsStateYearSystem());
 
         actions.Register(
             CreateFindSpouseAction(

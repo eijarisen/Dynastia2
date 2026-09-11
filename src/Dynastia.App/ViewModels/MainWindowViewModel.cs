@@ -738,8 +738,7 @@ public sealed class MainWindowViewModel : ViewModelBase
             return snapshot is null
                 ? string.Empty
                 : $"Marriage satisfaction: " +
-                  $"{snapshot.Label} " +
-                  $"({snapshot.Value:0}%)";
+                  $"{snapshot.Label}";
         }
     }
 
@@ -2014,10 +2013,11 @@ public sealed class MainWindowViewModel : ViewModelBase
             else
             {
                 foreach (var action in
-                    _actionRegistry
-                        .GetAvailableActions(
-                            actor,
-                            target))
+                    OrderAvailableActions(
+                        _actionRegistry
+                            .GetAvailableActions(
+                                actor,
+                                target)))
                 {
                     var actionId =
                         action.Id;
@@ -2034,6 +2034,67 @@ public sealed class MainWindowViewModel : ViewModelBase
 
         OnPropertyChanged(
             nameof(ActionsEmptyText));
+    }
+
+    private static IReadOnlyList<GameActionDefinition>
+        OrderAvailableActions(
+            IReadOnlyList<GameActionDefinition> source)
+    {
+        var actions =
+            source.ToList();
+
+        var connections =
+            actions.FirstOrDefault(
+                action =>
+                    action.Id.Equals(
+                        "career.use_family_connections",
+                        StringComparison.OrdinalIgnoreCase));
+
+        if (connections is not null)
+        {
+            actions.Remove(
+                connections);
+
+            var seekIndex =
+                actions.FindIndex(
+                    action =>
+                        action.Id.Equals(
+                            "career.seek_employment",
+                            StringComparison.OrdinalIgnoreCase)
+                        || action.Id.Equals(
+                            "career.help_seek_employment",
+                            StringComparison.OrdinalIgnoreCase));
+
+            if (seekIndex >= 0)
+            {
+                actions.Insert(
+                    seekIndex + 1,
+                    connections);
+            }
+            else
+            {
+                actions.Add(
+                    connections);
+            }
+        }
+
+        var pass =
+            actions.FirstOrDefault(
+                action =>
+                    action.Id.Equals(
+                        "turn.pass",
+                        StringComparison.OrdinalIgnoreCase));
+
+        if (pass is not null)
+        {
+            actions.Remove(
+                pass);
+
+            actions.Add(
+                pass);
+        }
+
+        return actions;
     }
 
     private void ExecuteAction(

@@ -13,15 +13,18 @@ public sealed class HouseholdHealthModifierProvider :
     private readonly IHouseholdService _households;
     private readonly IFamilyService _family;
     private readonly IStatsService _stats;
+    private readonly ICareerService _career;
 
     public HouseholdHealthModifierProvider(
         IHouseholdService households,
         IFamilyService family,
-        IStatsService stats)
+        IStatsService stats,
+        ICareerService career)
     {
         _households = households;
         _family = family;
         _stats = stats;
+        _career = career;
     }
 
     public string Id =>
@@ -69,6 +72,24 @@ public sealed class HouseholdHealthModifierProvider :
                         + (BrokeModifier
                            - immunity * 2);
                 }
+            }
+
+            var retiredWife =
+                _family.GetSpouse(
+                    head);
+
+            if (retiredWife is not null
+                && retiredWife.Tags.Has(
+                    "state.alive")
+                && _family.GetSex(
+                    retiredWife)
+                    == Sex.Female
+                && _career.GetCareer(
+                    retiredWife)
+                    .IsRetired)
+            {
+                change +=
+                    1;
             }
 
             return change;

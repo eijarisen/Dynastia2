@@ -176,7 +176,8 @@ public sealed class StandardHealthService : IHealthService
         out HealthConditionState? addedCondition)
     {
         var definition =
-            GetWeightedRandomIllness();
+            GetWeightedRandomIllness(
+                person);
 
         return TryAddCondition(
             person,
@@ -234,23 +235,63 @@ public sealed class StandardHealthService : IHealthService
         return true;
     }
 
-    private HealthConditionDefinition GetWeightedRandomIllness()
+    private HealthConditionDefinition GetWeightedRandomIllness(
+        IPerson person)
     {
+        var parentsDivorced =
+            person.Age < 18
+            && person.Tags.Has(
+                "state.parents_divorced");
+
+        var weighted =
+            _randomIllnesses
+                .Select(
+                    definition =>
+                        new
+                        {
+                            Definition =
+                                definition,
+
+                            Weight =
+                                definition.Weight
+                                * (
+                                    parentsDivorced
+                                    && (
+                                        definition.Id.Equals(
+                                            "depression",
+                                            StringComparison.OrdinalIgnoreCase)
+                                        || definition.Id.Equals(
+                                            "anxiety",
+                                            StringComparison.OrdinalIgnoreCase)
+                                    )
+                                        ? 3
+                                        : 1
+                                )
+                        })
+                .ToList();
+
         var totalWeight =
-            _randomIllnesses.Sum(x => x.Weight);
+            weighted.Sum(
+                entry =>
+                    entry.Weight);
 
         var roll =
-            _random.NextDouble() * totalWeight;
+            _random.NextDouble()
+            * totalWeight;
 
-        foreach (var definition in _randomIllnesses)
+        foreach (var entry in weighted)
         {
-            if (roll < definition.Weight)
-                return definition;
+            if (roll
+                < entry.Weight)
+            {
+                return entry.Definition;
+            }
 
-            roll -= definition.Weight;
+            roll -=
+                entry.Weight;
         }
 
-        return _randomIllnesses[^1];
+        return weighted[^1].Definition;
     }
 
     private HealthComponent GetRequired(IPerson person)

@@ -124,33 +124,27 @@ public sealed class ActionRegistry : IActionRegistry
                 "This action is no longer available.");
         }
 
-        if (action.Mode
-            == ActionExecutionMode.Queued)
+        if (_queued.Any(
+            queued =>
+                queued.ActorId
+                == actor.Id))
         {
-            if (_queued.Any(
-                queued =>
-                    queued.ActorId
-                    == actor.Id))
-            {
-                return new GameActionResult(
-                    false,
-                    "This character already has a queued action.");
-            }
-
-            _queued.Add(
-                new QueuedAction(
-                    action.Id,
-                    actor.Id,
-                    target.Id,
-                    action.QueuePhase));
-
             return new GameActionResult(
-                true,
-                $"{action.Label} queued.");
+                false,
+                "This character already has a queued action.");
         }
 
-        return action.Execute(
-            context);
+        _queued.Add(
+            new QueuedAction(
+                action.Id,
+                actor.Id,
+                target.Id,
+                ResolveQueuePhase(
+                    action)));
+
+        return new GameActionResult(
+            true,
+            $"{action.Label} queued.");
     }
 
     public IReadOnlyList<QueuedActionInfo>
@@ -286,7 +280,8 @@ public sealed class ActionRegistry : IActionRegistry
                     definition.Id,
                     saved.ActorId,
                     saved.TargetId,
-                    definition.QueuePhase));
+                    ResolveQueuePhase(
+                        definition)));
         }
 
         _queued.Clear();
@@ -376,6 +371,18 @@ public sealed class ActionRegistry : IActionRegistry
         return result.Allowed
             ? null
             : result.Reason;
+    }
+
+    private static YearPhase ResolveQueuePhase(
+        GameActionDefinition action)
+    {
+        // Actions that were historically Immediate now resolve during the
+        // next year's early queued-action phase. Explicitly queued actions
+        // keep their designed phase.
+        return action.Mode
+            == ActionExecutionMode.Immediate
+                ? YearPhase.QueuedActionsEarly
+                : action.QueuePhase;
     }
 
     private GameActionContext CreateContext(

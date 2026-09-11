@@ -80,7 +80,7 @@
                     <ProgressBar
                         Classes="healthBar"
                         IsVisible="{Binding ShowHealth}"
-                        Width="42"
+                        Width="34"
                         Height="5"
                         Minimum="0"
                         Maximum="100"
@@ -121,9 +121,9 @@
             x:DataType="contracts:StatValue">
 
             <StackPanel
-                Width="76"
+                Width="62"
                 HorizontalAlignment="Center"
-                Spacing="1">
+                Spacing="0">
 
                 <TextBlock
                     HorizontalAlignment="Center"
@@ -362,8 +362,8 @@
                                 <ui:ImageStateButton
                                     Width="205"
                                     Height="71"
-                                    IdleSource="avares://Dynastia.App/Assets/UI/start_idle.png"
-                                    HoverSource="avares://Dynastia.App/Assets/UI/start_hover.png"
+                                    IdleSource="avares://Dynastia.App/Assets/UI/b_start_idle.png"
+                                    HoverSource="avares://Dynastia.App/Assets/UI/b_start_hover.png"
                                     FallbackText="Start"
                                     Command="{Binding StartGameCommand}" />
 
@@ -455,9 +455,10 @@
 
                                 <Grid>
                                     <TextBlock
-                                        Opacity="0.72"
+                                        Opacity="0.82"
                                         TextWrapping="Wrap"
-                                        FontSize="10.5"
+                                        FontSize="14"
+                                        LineHeight="20"
                                         Text="{Binding ActionsEmptyText}" />
 
                                     <ItemsControl
@@ -519,7 +520,7 @@
                             Stretch="Fill" />
 
                         <Grid
-                            Margin="50,76,48,50"
+                            Margin="50,76,48,36"
                             RowDefinitions="Auto,*"
                             RowSpacing="9"
                             ClipToBounds="True">
@@ -609,7 +610,7 @@
                             Stretch="Fill" />
 
                         <Grid
-                            Margin="54,58,49,57"
+                            Margin="54,58,49,46"
                             RowDefinitions="Auto,Auto,Auto,*"
                             RowSpacing="8">
 
@@ -838,7 +839,6 @@
 
                             <ScrollViewer
                                 Grid.Row="3"
-                                Margin="0,0,0,12"
                                 HorizontalScrollBarVisibility="Disabled"
                                 VerticalScrollBarVisibility="Auto">
 
@@ -1001,7 +1001,7 @@
 
                         <!-- Health -->
                         <StackPanel
-                            Margin="196,101,38,0"
+                            Margin="196,107,38,0"
                             Height="48"
                             VerticalAlignment="Top"
                             Spacing="4"
@@ -1264,7 +1264,7 @@
 
                     <TextBlock
                         Canvas.Left="218"
-                        Canvas.Top="39"
+                        Canvas.Top="49"
                         Width="480"
                         FontFamily="avares://Dynastia.App/Assets/Fonts#UnifrakturCook"
                         FontSize="46"
@@ -1282,17 +1282,17 @@
                         Text="{Binding PersistenceStatusText}" />
 
                     <Grid
-                        Canvas.Left="674"
-                        Canvas.Top="28"
-                        Width="344"
-                        Height="116"
+                        Canvas.Left="744"
+                        Canvas.Top="10"
+                        Width="338"
+                        Height="112"
                         ColumnDefinitions="Auto,Auto"
                         RowDefinitions="Auto,Auto"
-                        ColumnSpacing="16"
-                        RowSpacing="12">
+                        ColumnSpacing="2"
+                        RowSpacing="6">
 
                         <ui:ImageStateButton
-                            Width="164"
+                            Width="166"
                             Height="52"
                             IdleSource="avares://Dynastia.App/Assets/UI/b_menu_idle.png"
                             HoverSource="avares://Dynastia.App/Assets/UI/b_menu_hover.png"
@@ -1301,7 +1301,7 @@
 
                         <ui:ImageStateButton
                             Grid.Column="1"
-                            Width="164"
+                            Width="166"
                             Height="52"
                             IdleSource="avares://Dynastia.App/Assets/UI/b_instructions_idle.png"
                             HoverSource="avares://Dynastia.App/Assets/UI/b_instructions_hover.png"
@@ -1310,7 +1310,7 @@
 
                         <ui:ImageStateButton
                             Grid.Row="1"
-                            Width="164"
+                            Width="166"
                             Height="52"
                             IdleSource="avares://Dynastia.App/Assets/UI/b_load_idle.png"
                             HoverSource="avares://Dynastia.App/Assets/UI/b_load_hover.png"
@@ -1320,7 +1320,7 @@
                         <ui:ImageStateButton
                             Grid.Column="1"
                             Grid.Row="1"
-                            Width="164"
+                            Width="166"
                             Height="52"
                             IdleSource="avares://Dynastia.App/Assets/UI/b_export_idle.png"
                             HoverSource="avares://Dynastia.App/Assets/UI/b_export_hover.png"
@@ -1329,7 +1329,7 @@
                     </Grid>
 
                     <TextBlock
-                        Canvas.Left="1182"
+                        Canvas.Left="1166"
                         Canvas.Top="35"
                         Width="150"
                         TextAlignment="Center"

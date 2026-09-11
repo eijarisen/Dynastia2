@@ -146,6 +146,15 @@ public sealed class StandardHealthService : IHealthService
                 StringComparison.OrdinalIgnoreCase)) > 0;
     }
 
+    internal bool IsFamilyNewsCondition(
+        string conditionId)
+    {
+        return _definitions.TryGetValue(
+                conditionId,
+                out var definition)
+            && definition.FamilyNews;
+    }
+
     internal double ApplyAnnualConditionEffects(
         IPerson person)
     {
@@ -157,8 +166,8 @@ public sealed class StandardHealthService : IHealthService
             healthChange += condition.HealthImpact;
 
             if (condition.RemainingYears.HasValue
-                && !condition.Id.Equals(
-                    "autism",
+                && !condition.Type.Equals(
+                    "birth_defect",
                     StringComparison.OrdinalIgnoreCase))
             {
                 condition.RemainingYears--;
@@ -320,8 +329,8 @@ public sealed class StandardHealthService : IHealthService
             return true;
         }
 
-        if (condition.Id.Equals(
-            "autism",
+        if (condition.Type.Equals(
+            "birth_defect",
             StringComparison.OrdinalIgnoreCase))
         {
             return true;

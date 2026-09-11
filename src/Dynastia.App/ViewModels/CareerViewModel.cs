@@ -45,13 +45,25 @@ public sealed class CareerViewModel
                 "Unemployed",
                 StringComparison.OrdinalIgnoreCase);
 
+        var housewife =
+            isAlive
+            && !snapshot.IsRetired
+            && snapshot.JobLevel <= 0
+            && snapshot.JobTitle.Equals(
+                "Housewife",
+                StringComparison.OrdinalIgnoreCase);
+
+        var nonWorkingAdult =
+            unemployedAdult
+            || housewife;
+
         SatisfactionText =
             isAlive
             && !snapshot.IsRetired
                 ? snapshot.JobLevel > 0
                     ? $"Job satisfaction: " +
                       $"{snapshot.JobSatisfactionText}"
-                    : unemployedAdult
+                    : nonWorkingAdult
                         ? "Job satisfaction: N/A"
                         : string.Empty
                 : string.Empty;
@@ -65,7 +77,7 @@ public sealed class CareerViewModel
                     : snapshot.JobLevel > 0
                         ? $"Income: " +
                           $"{snapshot.AnnualIncome:N0} zł/year"
-                        : unemployedAdult
+                        : nonWorkingAdult
                             ? "Income: 0 zł"
                             : string.Empty;
     }

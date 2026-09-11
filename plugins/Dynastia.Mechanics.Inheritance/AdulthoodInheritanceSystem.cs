@@ -14,43 +14,69 @@ public sealed class AdulthoodInheritanceSystem :
         IEconomyService economy,
         IGameEventBus events)
     {
-        _family = family;
-        _economy = economy;
-        _events = events;
+        _family =
+            family;
+
+        _economy =
+            economy;
+
+        _events =
+            events;
     }
 
     public string Id =>
-        "inheritance.adulthood_claims";
+        "inheritance.household_claims";
 
     public YearPhase Phase =>
-        YearPhase.Status;
+        YearPhase.DerivedState;
 
     public IReadOnlyCollection<string> Before =>
         Array.Empty<string>();
 
     public IReadOnlyCollection<string> After =>
-        ["aging.increment_age"];
+        ["households.post_inheritance_reconcile"];
 
     public void Execute(
         IGameState gameState)
     {
         foreach (var person in
-            gameState.People)
+            gameState.People
+                .Where(
+                    person =>
+                    {
+                        if (!person.Tags.Has(
+                                "state.alive")
+                            || person.Age < 18)
+                        {
+                            return false;
+                        }
+
+                        var householdId =
+                            _economy.GetHouseholdId(
+                                person);
+
+                        if (householdId is null)
+                            return false;
+
+                        var spouse =
+                            _family.GetSpouse(
+                                person);
+
+                        return _economy.HasHousehold(
+                                person)
+                            || _economy
+                                .GetHouseholdDynastyAnchorId(
+                                    person)
+                                == person.Id
+                            || (
+                                spouse is not null
+                                && _economy.GetHouseholdId(
+                                    spouse)
+                                    == householdId
+                            );
+                    })
+                .ToList())
         {
-            if (!person.Tags.Has(
-                    "state.alive")
-                || person.Age != 18
-                || _family.GetSex(person)
-                    != Sex.Male
-                || !_family.IsMaleLineage(
-                    person))
-            {
-                continue;
-            }
-
-            _economy.EnsureHousehold(
-                person);
-
             TransferPendingCash(
                 gameState,
                 person);
@@ -84,7 +110,7 @@ public sealed class AdulthoodInheritanceSystem :
             new GameEvent
             {
                 Type =
-                    "inheritance.received_at_adulthood",
+                    "inheritance.received_at_household",
 
                 Year =
                     gameState.Year,
@@ -100,8 +126,8 @@ public sealed class AdulthoodInheritanceSystem :
 
                         ["text"] =
                             $"{_family.GetDisplayName(person)} " +
-                            $"received an inheritance of " +
-                            $"${amount:N0} upon adulthood."
+                            $"received {amount:N0} zł of inheritance " +
+                            "after establishing a household."
                     }
             });
     }
@@ -117,9 +143,6 @@ public sealed class AdulthoodInheritanceSystem :
         if (houses.Count == 0)
             return;
 
-        _economy.EnsureHousehold(
-            person);
-
         foreach (var house in
             houses)
         {
@@ -128,26 +151,17 @@ public sealed class AdulthoodInheritanceSystem :
                 house);
         }
 
-        var father =
-            _family.GetFather(
-                person);
-
         _events.Publish(
             new GameEvent
             {
                 Type =
-                    "inheritance.promised_houses_received",
+                    "inheritance.pending_houses_received",
 
                 Year =
                     gameState.Year,
 
                 SubjectId =
                     person.Id,
-
-                RelatedPersonIds =
-                    father is null
-                        ? []
-                        : [father.Id],
 
                 Data =
                     new Dictionary<string, string>
@@ -164,10 +178,10 @@ public sealed class AdulthoodInheritanceSystem :
 
                         ["text"] =
                             $"{_family.GetDisplayName(person)} " +
-                            $"received {houses.Count} promised " +
-                            $"house{(houses.Count == 1 ? "" : "s")}."
+                            $"received {houses.Count} inherited " +
+                            $"house{(houses.Count == 1 ? "" : "s")} " +
+                            "after establishing a household."
                     }
             });
     }
-
 }

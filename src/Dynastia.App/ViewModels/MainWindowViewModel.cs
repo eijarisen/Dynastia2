@@ -48,7 +48,11 @@ public sealed class MainWindowViewModel : ViewModelBase
     private bool _hasQueuedAction;
     private bool _isGameOverOverlayVisible;
     private bool _isMainMenuPromptVisible;
-    private bool _isLivingFamilyView = true;
+    private HouseholdViewMode _householdViewMode =
+        HouseholdViewMode.Lineage;
+
+    private Guid? _inspectedBloodlineHouseholdId;
+
     private int _detailsTabIndex;
     private string _persistenceStatusText = string.Empty;
     private CancellationTokenSource? _loadedStatusCancellation;
@@ -136,6 +140,10 @@ public sealed class MainWindowViewModel : ViewModelBase
         ShowLivingFamilyCommand =
             new RelayCommand(
                 ShowLivingFamily);
+
+        ShowBloodlineFamilyCommand =
+            new RelayCommand(
+                ShowBloodlineFamily);
 
         ShowDeceasedFamilyCommand =
             new RelayCommand(
@@ -295,47 +303,62 @@ public sealed class MainWindowViewModel : ViewModelBase
     {
         get
         {
-            var active =
-                _succession.ActiveController;
+            var head =
+                GetDisplayedHouseholdHead();
 
-            if (active is null)
-                return "No active adult household head";
+            if (head is null)
+                return "No active household";
 
-            return _familyService is null
-                ? $"Active household: {active.Name} {active.Surname}"
-                : $"Active household: {_familyService.GetDisplayName(active)}";
+            var name =
+                _familyService is null
+                    ? $"{head.Name} {head.Surname}"
+                    : _familyService.GetDisplayName(
+                        head);
+
+            return IsBloodlineFamilyView
+                ? $"Independent household: {name}"
+                : $"Active household: {name}";
         }
     }
 
     public bool IsLivingFamilyView
     {
-        get => _isLivingFamilyView;
+        get =>
+            _householdViewMode
+            != HouseholdViewMode.Deceased;
 
         private set
         {
-            if (_isLivingFamilyView == value)
-                return;
-
-            _isLivingFamilyView = value;
-
-            OnPropertyChanged();
-            OnPropertyChanged(
-                nameof(IsDeceasedFamilyView));
+            SetHouseholdViewMode(
+                value
+                    ? HouseholdViewMode.Lineage
+                    : HouseholdViewMode.Deceased);
         }
     }
 
+    public bool IsLineageFamilyView =>
+        _householdViewMode
+        == HouseholdViewMode.Lineage;
+
+    public bool IsBloodlineFamilyView =>
+        _householdViewMode
+        == HouseholdViewMode.Bloodline;
+
     public bool IsDeceasedFamilyView =>
-        !IsLivingFamilyView;
+        _householdViewMode
+        == HouseholdViewMode.Deceased;
 
     public bool HasActiveHousehold =>
-        _succession.ActiveController is not null;
+        GetDisplayedHouseholdHead()
+        is not null;
+
 
     public string HouseholdBudgetText
     {
         get
         {
             var finance =
-                GetActiveHouseholdFinance();
+                GetDisplayedHouseholdFinance();
 
             return finance is null
                 ? "No active adult household."
@@ -349,7 +372,7 @@ public sealed class MainWindowViewModel : ViewModelBase
         get
         {
             var finance =
-                GetActiveHouseholdFinance();
+                GetDisplayedHouseholdFinance();
 
             return finance is null
                 ? string.Empty
@@ -363,7 +386,7 @@ public sealed class MainWindowViewModel : ViewModelBase
         get
         {
             var finance =
-                GetActiveHouseholdFinance();
+                GetDisplayedHouseholdFinance();
 
             if (finance is null)
                 return string.Empty;
@@ -379,7 +402,7 @@ public sealed class MainWindowViewModel : ViewModelBase
         get
         {
             var finance =
-                GetActiveHouseholdFinance();
+                GetDisplayedHouseholdFinance();
 
             return finance is null
                 ? string.Empty
@@ -393,7 +416,7 @@ public sealed class MainWindowViewModel : ViewModelBase
         get
         {
             var finance =
-                GetActiveHouseholdFinance();
+                GetDisplayedHouseholdFinance();
 
             if (finance is null)
                 return string.Empty;
@@ -409,7 +432,7 @@ public sealed class MainWindowViewModel : ViewModelBase
         get
         {
             var finance =
-                GetActiveHouseholdFinance();
+                GetDisplayedHouseholdFinance();
 
             return finance is null
                 ? string.Empty
@@ -425,7 +448,7 @@ public sealed class MainWindowViewModel : ViewModelBase
                 _succession.ActiveController;
 
             var finance =
-                GetActiveHouseholdFinance();
+                GetDisplayedHouseholdFinance();
 
             if (head is null
                 || finance is null)
@@ -472,10 +495,10 @@ public sealed class MainWindowViewModel : ViewModelBase
                         value)));
 
     private HouseholdFinanceSnapshot?
-        GetActiveHouseholdFinance()
+        GetDisplayedHouseholdFinance()
     {
         var head =
-            _succession.ActiveController;
+            GetDisplayedHouseholdHead();
 
         return head is null
             ? null
@@ -503,7 +526,7 @@ public sealed class MainWindowViewModel : ViewModelBase
         get
         {
             var head =
-                _succession.ActiveController;
+                GetDisplayedHouseholdHead();
 
             var status =
                 head is null
@@ -559,6 +582,14 @@ public sealed class MainWindowViewModel : ViewModelBase
     {
         get
         {
+            if (IsBloodlineFamilyView)
+            {
+                return GetDisplayedHouseholdHead()
+                    is null
+                        ? "No autonomous bloodline households."
+                        : "This household lives independently.";
+            }
+
             if (AvailableActions.Count > 0
                 || HasQueuedAction)
             {
@@ -620,6 +651,9 @@ public sealed class MainWindowViewModel : ViewModelBase
 
     public ObservableCollection<PlayablePersonTabViewModel>
         PlayableTabs { get; } = [];
+
+    public ObservableCollection<PlayablePersonTabViewModel>
+        BloodlineTabs { get; } = [];
 
     public ObservableCollection<FamilyMemberCardViewModel>
         HouseholdMembers { get; } = [];
@@ -864,6 +898,7 @@ public sealed class MainWindowViewModel : ViewModelBase
     public RelayCommand ShowMainMenuPromptCommand { get; }
     public RelayCommand HideMainMenuPromptCommand { get; }
     public RelayCommand ShowLivingFamilyCommand { get; }
+    public RelayCommand ShowBloodlineFamilyCommand { get; }
     public RelayCommand ShowDeceasedFamilyCommand { get; }
     public RelayCommand PreviousAlbumYearCommand { get; }
     public RelayCommand NextAlbumYearCommand { get; }
@@ -919,6 +954,9 @@ public sealed class MainWindowViewModel : ViewModelBase
 
         IsGameOverOverlayVisible =
             _succession.IsGameOver;
+
+        _householdService?
+            .ReconcileHouseholds();
 
         _thoughtService?
             .ResetAfterLoad();
@@ -1195,12 +1233,114 @@ public sealed class MainWindowViewModel : ViewModelBase
 
     private void ShowLivingFamily()
     {
-        IsLivingFamilyView = true;
+        SetHouseholdViewMode(
+            HouseholdViewMode.Lineage);
+
+        var active =
+            _succession.ActiveController;
+
+        if (active is not null)
+        {
+            var row =
+                People.FirstOrDefault(
+                    person =>
+                        person.Id
+                        == active.Id);
+
+            if (row is not null)
+            {
+                SelectedPerson =
+                    row;
+            }
+        }
+
+        RefreshFamilySection();
+        RefreshActions();
+    }
+
+    private void ShowBloodlineFamily()
+    {
+        SetHouseholdViewMode(
+            HouseholdViewMode.Bloodline);
+
+        var first =
+            _householdService?
+                .GetActiveHouseholds()
+                .FirstOrDefault(
+                    household =>
+                        household.Class
+                        == HouseholdClass.Bloodline);
+
+        _inspectedBloodlineHouseholdId ??=
+            first?.HouseholdId;
+
+        if (_inspectedBloodlineHouseholdId
+            is Guid inspectedId)
+        {
+            var inspected =
+                _householdService?
+                    .GetActiveHouseholds()
+                    .FirstOrDefault(
+                        household =>
+                            household.HouseholdId
+                                == inspectedId
+                            && household.Class
+                                == HouseholdClass.Bloodline);
+
+            var row =
+                inspected is null
+                    ? null
+                    : People.FirstOrDefault(
+                        person =>
+                            person.Id
+                            == inspected.HeadId);
+
+            if (row is not null)
+            {
+                SelectedPerson =
+                    row;
+            }
+        }
+
+        RefreshFamilySection();
+        RefreshActions();
     }
 
     private void ShowDeceasedFamily()
     {
-        IsLivingFamilyView = false;
+        SetHouseholdViewMode(
+            HouseholdViewMode.Deceased);
+
+        RefreshFamilySection();
+        RefreshActions();
+    }
+
+    private void SetHouseholdViewMode(
+        HouseholdViewMode mode)
+    {
+        if (_householdViewMode
+            == mode)
+        {
+            return;
+        }
+
+        _householdViewMode =
+            mode;
+
+        OnPropertyChanged(
+            nameof(IsLivingFamilyView));
+
+        OnPropertyChanged(
+            nameof(IsLineageFamilyView));
+
+        OnPropertyChanged(
+            nameof(IsBloodlineFamilyView));
+
+        OnPropertyChanged(
+            nameof(IsDeceasedFamilyView));
+
+        OnPropertyChanged(
+            nameof(ActionsEmptyText));
     }
 
     private void PreviousAlbumYear()
@@ -1258,223 +1398,191 @@ public sealed class MainWindowViewModel : ViewModelBase
     private void RefreshFamilySection()
     {
         PlayableTabs.Clear();
+        BloodlineTabs.Clear();
         HouseholdMembers.Clear();
         ExtendedFamilyMembers.Clear();
         DeceasedFamilyMembers.Clear();
 
-        var active =
-            _succession.ActiveController;
-
         var selectedId =
             SelectedPerson?.Id;
 
-        foreach (var person in
-            _gameState.People
+        var households =
+            _householdService?
+                .GetActiveHouseholds()
+            ?? Array.Empty<HouseholdInfo>();
+
+        var active =
+            _succession.ActiveController;
+
+        foreach (var household in
+            households
                 .Where(
-                    person =>
-                        person.Tags.Has(
-                            "state.alive")
-                        && _succession.IsControllable(
-                            person))
+                    household =>
+                        household.Class
+                        == HouseholdClass.Lineage)
                 .OrderBy(
-                    person =>
-                        _familyService?
-                            .GetGeneration(person)
+                    household =>
+                        household.Generation
                         ?? int.MaxValue)
                 .ThenBy(
-                    GetBirthSortYear)
+                    GetHouseholdHeadBirthSortKey)
                 .ThenBy(
-                    person =>
-                        person.BirthDate?.Month
-                        ?? 1)
-                .ThenBy(
-                    person =>
-                        person.BirthDate?.Day
-                        ?? 1)
-                .ThenBy(
-                    person =>
-                        person.Id))
+                    household =>
+                        household.HeadId))
         {
-            var generation =
-                _familyService?
-                    .GetGeneration(person);
+            var head =
+                _gameState.People
+                    .FirstOrDefault(
+                        person =>
+                            person.Id
+                            == household.HeadId);
 
-            var fullName =
-                _familyService is null
-                    ? $"{person.Name} {person.Surname}"
-                    : _familyService.GetDisplayName(
-                        person);
+            if (head is null)
+                continue;
 
             var queuedActions =
                 _actionRegistry
                     .GetQueuedActions(
-                        person);
+                        head);
+
+            var summary =
+                $"{household.HeadName}" +
+                Environment.NewLine +
+                BuildHouseholdActionSummary(
+                    queuedActions.FirstOrDefault());
 
             PlayableTabs.Add(
                 new PlayablePersonTabViewModel(
-                    person.Id,
-                    generation is int number
-                        ? $"G{number}"
+                    head.Id,
+                    household.Generation is int generation
+                        ? $"G{generation}"
                         : string.Empty,
-                    $"{person.Name} ({person.Age})",
-                    fullName,
-                    BuildHouseholdActionSummary(
-                        queuedActions.FirstOrDefault()),
-                    active?.Id == person.Id,
+                    $"{head.Name} ({head.Age})",
+                    household.HeadName,
+                    summary,
+                    active?.Id
+                        == head.Id,
                     queuedActions.Count > 0,
                     SwitchActiveHousehold));
         }
 
-        if (active is not null)
+        foreach (var household in
+            households
+                .Where(
+                    household =>
+                        household.Class
+                        == HouseholdClass.Bloodline)
+                .OrderBy(
+                    household =>
+                        household.Generation
+                        ?? int.MaxValue)
+                .ThenBy(
+                    household =>
+                        household.Surname,
+                    StringComparer.OrdinalIgnoreCase)
+                .ThenBy(
+                    GetHouseholdHeadBirthSortKey)
+                .ThenBy(
+                    household =>
+                        household.HouseholdId))
         {
-            AddHouseholdCard(
-                active,
-                selectedId,
-                active.Id);
+            var head =
+                _gameState.People
+                    .FirstOrDefault(
+                        person =>
+                            person.Id
+                            == household.HeadId);
 
-            var spouse =
-                _familyService?.GetSpouse(
-                    active);
+            if (head is null)
+                continue;
 
-            if (spouse is not null
-                && spouse.Tags.Has(
-                    "state.alive"))
+            BloodlineTabs.Add(
+                new PlayablePersonTabViewModel(
+                    head.Id,
+                    household.Generation is int generation
+                        ? $"G{generation}"
+                        : string.Empty,
+                    household.Surname,
+                    household.HeadName,
+                    $"{household.HeadName}" +
+                    Environment.NewLine +
+                    "This household lives independently.",
+                    _inspectedBloodlineHouseholdId
+                        == household.HouseholdId,
+                    false,
+                    InspectBloodlineHousehold));
+        }
+
+        if (IsBloodlineFamilyView)
+        {
+            var availableIds =
+                households
+                    .Where(
+                        household =>
+                            household.Class
+                            == HouseholdClass.Bloodline)
+                    .Select(
+                        household =>
+                            household.HouseholdId)
+                    .ToHashSet();
+
+            if (_inspectedBloodlineHouseholdId is null
+                || !availableIds.Contains(
+                    _inspectedBloodlineHouseholdId.Value))
             {
-                AddHouseholdCard(
-                    spouse,
-                    selectedId,
-                    active.Id);
-            }
-
-            if (_familyService is not null)
-            {
-                foreach (var child in
-                    _familyService.GetChildren(
-                        active))
-                {
-                    if (!child.Tags.Has(
-                        "state.alive"))
-                    {
-                        continue;
-                    }
-
-                    var isAdultSon =
-                        _familyService.GetSex(
-                            child) == Sex.Male
-                        && child.Age >= 18;
-
-                    var isMarriedDaughter =
-                        _familyService.GetSex(
-                            child) == Sex.Female
-                        && _familyService.GetSpouse(
-                            child) is not null;
-
-                    if (isAdultSon
-                        || isMarriedDaughter)
-                    {
-                        ExtendedFamilyMembers.Add(
-                            CreateFamilyCard(
-                                child,
-                                selectedId,
-                                active.Id));
-                    }
-                    else
-                    {
-                        AddHouseholdCard(
-                            child,
-                            selectedId,
-                            active.Id);
-                    }
-                }
-
-                if (_adoptionService is not null)
-                {
-                    foreach (var ward in
-                        _adoptionService
-                            .GetHostedChildren(
-                                active)
-                            .OrderBy(
-                                GetBirthSortYear)
-                            .ThenBy(
-                                person =>
-                                    person.Id))
-                    {
-                        if (HouseholdMembers.Any(
-                            member =>
-                                member.PersonId
-                                == ward.Id))
-                        {
-                            continue;
-                        }
-
-                        AddHouseholdCard(
-                            ward,
-                            selectedId,
-                            active.Id);
-                    }
-
-                    foreach (var relative in
-                        _gameState.People
-                            .Where(
-                                person =>
-                                    person.Tags.Has(
-                                        "state.alive")
-                                    && !person.Tags.Has(
-                                        "role.nanny")
-                                    && _familyService.IsBloodline(
-                                        person)
-                                    && (
-                                        person.Tags.Has(
-                                            "residence.with_mother")
-                                        || person.Tags.Has(
-                                            "residence.orphanage")))
-                            .OrderBy(
-                                person =>
-                                    _familyService.GetGeneration(
-                                        person)
-                                    ?? int.MaxValue)
-                            .ThenBy(
-                                GetBirthSortYear))
-                    {
-                        if (HouseholdMembers.Any(
-                                member =>
-                                    member.PersonId
-                                    == relative.Id)
-                            || ExtendedFamilyMembers.Any(
-                                member =>
-                                    member.PersonId
-                                    == relative.Id))
-                        {
-                            continue;
-                        }
-
-                        ExtendedFamilyMembers.Add(
-                            CreateFamilyCard(
-                                relative,
-                                selectedId,
-                                active.Id));
-
-                    }
-                }
+                _inspectedBloodlineHouseholdId =
+                    availableIds
+                        .Cast<Guid?>()
+                        .FirstOrDefault();
             }
         }
-        else
+
+        var displayed =
+            GetDisplayedHouseholdHead(
+                households);
+
+        if (IsLivingFamilyView
+            && displayed is not null)
         {
-            // When only underage male-lineage heirs remain there is no
-            // controller, but the Living view must still remain useful.
-            foreach (var person in
-                _gameState.People)
+            var info =
+                households.FirstOrDefault(
+                    household =>
+                        household.HeadId
+                        == displayed.Id);
+
+            if (info is not null)
             {
-                if (person.Tags.Has(
-                        "state.alive")
-                    && !person.Tags.Has(
-                        "role.nanny"))
+                foreach (var member in
+                    info.MemberIds
+                        .Select(
+                            id =>
+                                _gameState.People
+                                    .FirstOrDefault(
+                                        person =>
+                                            person.Id
+                                            == id))
+                        .Where(
+                            person =>
+                                person is not null
+                                && person.Tags.Has(
+                                    "state.alive")
+                                && !person.Tags.Has(
+                                    "role.nanny"))
+                        .Cast<IPerson>()
+                        .OrderByDescending(
+                            person =>
+                                person.Id
+                                == displayed.Id)
+                        .ThenBy(
+                            GetBirthSortYear)
+                        .ThenBy(
+                            person =>
+                                person.Id))
                 {
-                    HouseholdMembers.Add(
-                        CreateFamilyCard(
-                            person,
-                            selectedId,
-                            null));
+                    AddHouseholdCard(
+                        member,
+                        selectedId,
+                        displayed.Id);
                 }
             }
         }
@@ -1486,7 +1594,9 @@ public sealed class MainWindowViewModel : ViewModelBase
                         person.Tags.Has(
                             "state.dead")
                         && !person.Tags.Has(
-                            "role.nanny"))
+                            "role.nanny")
+                        && IsDynastyRelevantDeceased(
+                            person))
                 .OrderByDescending(
                     person =>
                         person.DeathDate?.Year
@@ -1547,6 +1657,149 @@ public sealed class MainWindowViewModel : ViewModelBase
 
         OnPropertyChanged(
             nameof(ActiveHouseholdText));
+
+        OnPropertyChanged(
+            nameof(ActionsEmptyText));
+    }
+
+    private bool IsDynastyRelevantDeceased(
+        IPerson person)
+    {
+        if (_familyService is null)
+            return true;
+
+        if (_familyService.IsBloodline(
+            person))
+        {
+            return true;
+        }
+
+        return _familyService
+            .GetRelationshipHistory(
+                person)
+            .Any(
+                relationship =>
+                {
+                    var spouse =
+                        _gameState.People
+                            .FirstOrDefault(
+                                candidate =>
+                                    candidate.Id
+                                    == relationship.SpouseId);
+
+                    return spouse is not null
+                        && _familyService.IsBloodline(
+                            spouse);
+                });
+    }
+
+    private long GetHouseholdHeadBirthSortKey(
+        HouseholdInfo household)
+    {
+        var head =
+            _gameState.People
+                .FirstOrDefault(
+                    person =>
+                        person.Id
+                        == household.HeadId);
+
+        if (head is null)
+            return long.MaxValue;
+
+        var year =
+            head.BirthDate?.Year
+            ?? GetBirthSortYear(
+                head);
+
+        var month =
+            head.BirthDate?.Month
+            ?? 1;
+
+        var day =
+            head.BirthDate?.Day
+            ?? 1;
+
+        return year * 10000L
+            + month * 100L
+            + day;
+    }
+
+    private IPerson? GetDisplayedHouseholdHead()
+    {
+        return GetDisplayedHouseholdHead(
+            _householdService?
+                .GetActiveHouseholds()
+            ?? Array.Empty<HouseholdInfo>());
+    }
+
+    private IPerson? GetDisplayedHouseholdHead(
+        IReadOnlyList<HouseholdInfo> households)
+    {
+        if (IsBloodlineFamilyView)
+        {
+            if (_inspectedBloodlineHouseholdId
+                is not Guid inspectedId)
+            {
+                return null;
+            }
+
+            var household =
+                households.FirstOrDefault(
+                    candidate =>
+                        candidate.HouseholdId
+                            == inspectedId
+                        && candidate.Class
+                            == HouseholdClass.Bloodline);
+
+            if (household is null)
+                return null;
+
+            return _gameState.People
+                .FirstOrDefault(
+                    person =>
+                        person.Id
+                        == household.HeadId);
+        }
+
+        if (IsDeceasedFamilyView)
+            return null;
+
+        return _succession.ActiveController;
+    }
+
+    private void InspectBloodlineHousehold(
+        Guid personId)
+    {
+        var household =
+            _householdService?
+                .GetActiveHouseholds()
+                .FirstOrDefault(
+                    candidate =>
+                        candidate.Class
+                            == HouseholdClass.Bloodline
+                        && candidate.HeadId
+                            == personId);
+
+        _inspectedBloodlineHouseholdId =
+            household?.HouseholdId;
+
+        SetHouseholdViewMode(
+            HouseholdViewMode.Bloodline);
+
+        var row =
+            People.FirstOrDefault(
+                candidate =>
+                    candidate.Id
+                    == personId);
+
+        if (row is not null)
+        {
+            SelectedPerson =
+                row;
+        }
+
+        RefreshFamilySection();
+        RefreshActions();
     }
 
     private void AddHouseholdCard(
@@ -1680,6 +1933,9 @@ public sealed class MainWindowViewModel : ViewModelBase
 
         if (row is not null)
             SelectedPerson = row;
+
+        SetHouseholdViewMode(
+            HouseholdViewMode.Lineage);
 
         RefreshFamilySection();
         RefreshActions();
@@ -2002,6 +2258,14 @@ public sealed class MainWindowViewModel : ViewModelBase
         QueuedActionText =
             string.Empty;
 
+        if (IsBloodlineFamilyView)
+        {
+            OnPropertyChanged(
+                nameof(ActionsEmptyText));
+
+            return;
+        }
+
         if (actor is not null
             && target is not null
             && !_succession.IsGameOver)
@@ -2171,7 +2435,13 @@ public sealed class MainWindowViewModel : ViewModelBase
 
         foreach (var gameEvent in
             _eventBus.GetEventsForYear(
-                AlbumYear))
+                AlbumYear)
+                .Where(
+                    gameEvent =>
+                        _householdService?
+                            .ShouldShowFamilyNews(
+                                gameEvent)
+                        ?? true))
         {
             AlbumEvents.Add(
                 new AlbumEventViewModel(
@@ -2410,4 +2680,12 @@ public sealed class MainWindowViewModel : ViewModelBase
             Environment.NewLine,
             lines);
     }
+
+    private enum HouseholdViewMode
+    {
+        Lineage = 0,
+        Bloodline = 1,
+        Deceased = 2
+    }
+
 }

@@ -9,7 +9,17 @@ public interface IActionRegistry
         IPerson actor,
         IPerson target);
 
+    IReadOnlyList<GameActionDefinition>
+        GetMechanicallyAvailableActions(
+            IPerson actor,
+            IPerson target);
+
     GameActionResult Execute(
+        string actionId,
+        IPerson actor,
+        IPerson target);
+
+    GameActionResult ExecuteAutonomous(
         string actionId,
         IPerson actor,
         IPerson target);

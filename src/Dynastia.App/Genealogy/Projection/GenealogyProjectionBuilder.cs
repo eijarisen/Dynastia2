@@ -73,8 +73,15 @@ public sealed class GenealogyProjectionBuilder
                 node.Person.MarriageHistory
                     .ToList();
 
-            if (node.Person.CurrentSpouseId
+            if (node.Person.IsAlive
+                && node.Person.CurrentSpouseId
                     is Guid currentSpouseId
+                && people.TryGetValue(
+                    currentSpouseId,
+                    out var currentSpouse)
+                && currentSpouse.IsAlive
+                && currentSpouse.CurrentSpouseId
+                    == node.Person.Id
                 && normalizedMarriages.All(
                     marriage =>
                         marriage.SpouseId

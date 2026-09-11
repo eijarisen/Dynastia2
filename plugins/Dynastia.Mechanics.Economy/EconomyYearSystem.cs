@@ -2,7 +2,8 @@ using Dynastia.Contracts;
 
 namespace Dynastia.Mechanics.Economy;
 
-public sealed class EconomyYearSystem : IYearSystem
+public sealed class EconomyYearSystem :
+    IYearSystem
 {
     private const decimal LivingExpense =
         250m;
@@ -17,7 +18,6 @@ public sealed class EconomyYearSystem : IYearSystem
         250m;
 
     private readonly StandardEconomyService _economy;
-    private readonly IFamilyService _family;
     private readonly IIncomeProviderRegistry _income;
 
     public EconomyYearSystem(
@@ -25,9 +25,11 @@ public sealed class EconomyYearSystem : IYearSystem
         IFamilyService family,
         IIncomeProviderRegistry income)
     {
-        _economy = economy;
-        _family = family;
-        _income = income;
+        _economy =
+            economy;
+
+        _income =
+            income;
     }
 
     public string Id =>
@@ -45,70 +47,23 @@ public sealed class EconomyYearSystem : IYearSystem
     public void Execute(
         IGameState gameState)
     {
-        EnsureMaleLineHouseholds(
-            gameState);
-
         foreach (var head in
-            gameState.People)
+            gameState.People
+                .Where(
+                    person =>
+                        person.Tags.Has(
+                            "state.alive")
+                        && _economy.HasHousehold(
+                            person))
+                .ToList())
         {
-            if (!IsLivingAdultHead(
-                head))
-            {
-                continue;
-            }
-
-            ProcessLivingHousehold(
+            ProcessHousehold(
                 gameState,
                 head);
         }
-
-        ProcessDeceasedEstates(
-            gameState);
     }
 
-    private void EnsureMaleLineHouseholds(
-        IGameState gameState)
-    {
-        foreach (var person in
-            gameState.People)
-        {
-            if (_family.GetSex(person)
-                    == Sex.Male
-                && _family.IsMaleLineage(
-                    person))
-            {
-                _economy.EnsureHousehold(
-                    person);
-            }
-        }
-    }
-
-    private bool IsLivingAdultHead(
-        IPerson person)
-    {
-        var dynastyHead =
-            _family.GetSex(person)
-                == Sex.Male
-            && _family.IsMaleLineage(
-                person);
-
-        var independentOrphanHead =
-            person.Tags.Has(
-                "household.independent_orphan")
-            && _economy.HasHousehold(
-                person);
-
-        return person.Tags.Has(
-                "state.alive")
-            && person.Age >= 18
-            && !person.Tags.Has(
-                "residence.orphanage")
-            && (
-                dynastyHead
-                || independentOrphanHead);
-    }
-
-    private void ProcessLivingHousehold(
+    private void ProcessHousehold(
         IGameState gameState,
         IPerson head)
     {
@@ -116,131 +71,49 @@ public sealed class EconomyYearSystem : IYearSystem
             _economy.GetRequiredHousehold(
                 head);
 
+        if (household.EstateReady)
+            return;
+
         _economy.SynchronizeForFinance(
             head,
             household);
 
-        var spouse =
-            _family.GetSpouse(
-                head);
-
-        var children =
-            _family.GetChildren(
-                head);
-
         var members =
-            new List<IPerson>
-            {
-                head
-            };
-
-        if (spouse is not null
-            && spouse.Tags.Has(
-                "state.alive"))
-        {
-            members.Add(
-                spouse);
-        }
-
-        var adultUnmarriedDaughters =
-            new List<IPerson>();
-
-        var memberIds =
-            members
+            household.MemberIds
                 .Select(
-                    member =>
-                        member.Id)
-                .ToHashSet();
-
-        foreach (var child in
-            children)
-        {
-            if (!child.Tags.Has(
-                "state.alive"))
-            {
-                continue;
-            }
-
-            if (child.Age < 18)
-            {
-                if (memberIds.Add(
-                    child.Id))
-                {
-                    members.Add(
-                        child);
-                }
-
-                continue;
-            }
-
-            if (_family.GetSex(child)
-                    == Sex.Female
-                && _family.GetSpouse(
-                    child) is null)
-            {
-                if (memberIds.Add(
-                    child.Id))
-                {
-                    members.Add(
-                        child);
-                }
-
-                adultUnmarriedDaughters.Add(
-                    child);
-            }
-        }
-
-        foreach (var dependentId in
-            _economy.GetHostedDependentIds(
-                head))
-        {
-            var dependent =
-                gameState.People
-                    .FirstOrDefault(
-                        person =>
-                            person.Id
-                            == dependentId);
-
-            if (dependent is null
-                || !dependent.Tags.Has(
-                    "state.alive")
-                || dependent.Tags.Has(
-                    "role.nanny")
-                || dependent.Age >= 18
-                || !memberIds.Add(
-                    dependent.Id))
-            {
-                continue;
-            }
-
-            members.Add(
-                dependent);
-        }
+                    id =>
+                        gameState.People
+                            .FirstOrDefault(
+                                person =>
+                                    person.Id
+                                    == id))
+                .Where(
+                    person =>
+                        person is not null
+                        && person.Tags.Has(
+                            "state.alive")
+                        && !person.Tags.Has(
+                            "role.nanny"))
+                .Cast<IPerson>()
+                .DistinctBy(
+                    person =>
+                        person.Id)
+                .ToList();
 
         household.LastIncomeBreakdown.Clear();
 
-        var income =
-            AddPersonIncome(
-                household,
-                head);
+        decimal income =
+            0;
 
-        if (spouse is not null
-            && spouse.Tags.Has(
-                "state.alive"))
+        foreach (var member in
+            members.Where(
+                person =>
+                    person.Age >= 18))
         {
             income +=
                 AddPersonIncome(
                     household,
-                    spouse);
-        }
-
-        foreach (var daughter in
-            adultUnmarriedDaughters)
-        {
-            income +=
-                AddPersonIncome(
-                    household,
-                    daughter);
+                    member);
         }
 
         var rentalHouses =
@@ -383,156 +256,5 @@ public sealed class EconomyYearSystem : IYearSystem
         }
 
         return amount;
-    }
-
-    private void ProcessDeceasedEstates(
-        IGameState gameState)
-    {
-        foreach (var head in
-            gameState.People)
-        {
-            if (!head.Tags.Has(
-                    "state.dead")
-                || _family.GetSex(head)
-                    != Sex.Male
-                || !_family.IsMaleLineage(
-                    head)
-                || !_economy.HasHousehold(
-                    head))
-            {
-                continue;
-            }
-
-            var children =
-                _family.GetChildren(
-                    head)
-                .Where(
-                    child =>
-                        child.Tags.Has(
-                            "state.alive")
-                        && child.Age < 18)
-                .ToList();
-
-            if (children.Count == 0)
-                continue;
-
-            var household =
-                _economy.GetRequiredHousehold(
-                    head);
-
-            _economy.SynchronizeForFinance(
-                head,
-                household);
-
-            var spouse =
-                _family.GetSpouse(
-                    head);
-
-            var caregivers =
-                new Dictionary<Guid, IPerson>();
-
-            if (spouse is not null
-                && spouse.Tags.Has(
-                    "state.alive"))
-            {
-                caregivers[spouse.Id] =
-                    spouse;
-            }
-
-            foreach (var child in
-                children)
-            {
-                var mother =
-                    _family.GetMother(
-                        child);
-
-                if (mother is null
-                    || !mother.Tags.Has(
-                        "state.alive"))
-                {
-                    continue;
-                }
-
-                var currentSpouse =
-                    _family.GetSpouse(
-                        mother);
-
-                // A divorced/unmarried mother returns to the deceased
-                // father's household to care for the child. If she has
-                // remarried, she belongs to that current household instead.
-                if (currentSpouse is null
-                    || currentSpouse.Id
-                        == head.Id)
-                {
-                    caregivers[mother.Id] =
-                        mother;
-                }
-            }
-
-            household.LastIncomeBreakdown.Clear();
-            household.LastExpenseBreakdown.Clear();
-
-            decimal income =
-                0;
-
-            foreach (var caregiver in
-                caregivers.Values)
-            {
-                income +=
-                    AddPersonIncome(
-                        household,
-                        caregiver);
-            }
-
-            decimal expenses =
-                0;
-
-            if (caregivers.Count > 0)
-            {
-                expenses =
-                    (caregivers.Count
-                        + children.Count)
-                    * LivingExpense;
-
-                household.LastExpenseBreakdown.Add(
-                    new LedgerLineState
-                    {
-                        Label =
-                            "living costs",
-
-                        Amount =
-                            expenses
-                    });
-            }
-
-            if (ShouldChargeNanny(
-                gameState,
-                household))
-            {
-                expenses +=
-                    NannyExpense;
-
-                household.LastExpenseBreakdown.Add(
-                    new LedgerLineState
-                    {
-                        Label =
-                            "nanny",
-
-                        Amount =
-                            NannyExpense
-                    });
-            }
-
-            household.LastIncome =
-                income;
-
-            household.LastExpenses =
-                expenses;
-
-            _economy.ChangePendingInheritance(
-                head,
-                income
-                - expenses);
-        }
     }
 }

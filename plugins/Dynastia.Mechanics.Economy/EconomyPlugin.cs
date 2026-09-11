@@ -40,6 +40,7 @@ public sealed class EconomyPlugin : IGamePlugin
 
         var economy =
             new StandardEconomyService(
+                gameState,
                 family,
                 locations);
 

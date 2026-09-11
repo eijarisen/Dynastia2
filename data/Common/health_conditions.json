@@ -4,176 +4,189 @@
     "name": "Common Cold",
     "type": "seasonal",
     "durationMin": 1,
-    "durationMax": 2,
-    "healthImpact": -3,
+    "durationMax": 1,
+    "healthImpact": -5,
     "weight": 30,
-    "randomIllness": true
+    "randomIllness": true,
+    "familyNews": false
   },
   {
     "id": "stomach_bug",
     "name": "Stomach Bug",
     "type": "seasonal",
     "durationMin": 1,
-    "durationMax": 2,
-    "healthImpact": -6,
+    "durationMax": 1,
+    "healthImpact": -8,
     "weight": 20,
-    "randomIllness": true
+    "randomIllness": true,
+    "familyNews": false
   },
   {
     "id": "food_poisoning",
     "name": "Food Poisoning",
-    "type": "curable",
+    "type": "seasonal",
     "durationMin": 1,
-    "durationMax": 2,
-    "healthImpact": -8,
+    "durationMax": 1,
+    "healthImpact": -10,
     "weight": 10,
-    "randomIllness": true
+    "randomIllness": true,
+    "familyNews": false
   },
   {
     "id": "migraines",
     "name": "Migraines",
     "type": "seasonal",
     "durationMin": 1,
-    "durationMax": 2,
-    "healthImpact": -5,
+    "durationMax": 1,
+    "healthImpact": -3,
     "weight": 10,
-    "randomIllness": true
+    "randomIllness": true,
+    "familyNews": false
   },
   {
     "id": "influenza",
     "name": "Influenza",
     "type": "seasonal",
     "durationMin": 1,
-    "durationMax": 3,
-    "healthImpact": -8,
+    "durationMax": 2,
+    "healthImpact": -10,
     "weight": 15,
-    "randomIllness": true
+    "randomIllness": true,
+    "familyNews": false
   },
   {
     "id": "pneumonia",
     "name": "Pneumonia",
     "type": "curable",
     "durationMin": 2,
-    "durationMax": 5,
-    "healthImpact": -12,
+    "durationMax": 4,
+    "healthImpact": -15,
     "weight": 8,
-    "randomIllness": true
+    "randomIllness": true,
+    "familyNews": true
   },
   {
     "id": "broken_arm",
     "name": "Broken Arm",
     "type": "curable",
-    "durationMin": 3,
-    "durationMax": 6,
-    "healthImpact": -6,
+    "durationMin": 2,
+    "durationMax": 3,
+    "healthImpact": -5,
     "weight": 5,
-    "randomIllness": true
+    "randomIllness": true,
+    "familyNews": false
   },
   {
     "id": "tuberculosis",
     "name": "Tuberculosis",
-    "type": "curable",
-    "durationMin": 6,
-    "durationMax": 12,
-    "healthImpact": -14,
+    "type": "terminal",
+    "durationMin": 3,
+    "durationMax": 8,
+    "healthImpact": -20,
     "weight": 2,
-    "randomIllness": true
+    "randomIllness": true,
+    "familyNews": true
   },
   {
     "id": "heart_condition",
     "name": "Heart Condition",
-    "type": "permanent",
-    "healthImpact": -7,
+    "type": "terminal",
+    "healthImpact": -5,
     "weight": 3,
-    "randomIllness": true
+    "randomIllness": true,
+    "familyNews": true
   },
   {
     "id": "cancer",
     "name": "Cancer",
     "type": "terminal",
-    "durationMin": 6,
-    "durationMax": 18,
-    "healthImpact": -12,
+    "durationMin": 5,
+    "durationMax": 15,
+    "healthImpact": -10,
     "weight": 4,
-    "randomIllness": true
+    "randomIllness": true,
+    "familyNews": true
   },
   {
     "id": "chronic_fatigue",
     "name": "Chronic Fatigue",
     "type": "permanent",
-    "healthImpact": -4,
+    "healthImpact": -3,
     "weight": 5,
-    "randomIllness": true
+    "randomIllness": true,
+    "familyNews": false
   },
   {
     "id": "arthritis",
     "name": "Arthritis",
     "type": "permanent",
-    "healthImpact": -3,
+    "healthImpact": -2,
     "weight": 6,
-    "randomIllness": true
+    "randomIllness": true,
+    "familyNews": false
   },
   {
     "id": "asthma",
     "name": "Asthma",
     "type": "permanent",
-    "healthImpact": -3,
+    "healthImpact": -2,
     "weight": 7,
-    "randomIllness": true
+    "randomIllness": true,
+    "familyNews": false
   },
   {
     "id": "depression",
     "name": "Depression",
-    "type": "curable",
-    "healthImpact": -5,
+    "type": "permanent",
+    "healthImpact": -4,
     "weight": 8,
     "randomIllness": true,
-    "durationMin": 3,
-    "durationMax": 12
+    "familyNews": false
   },
   {
     "id": "anxiety",
     "name": "Anxiety",
-    "type": "curable",
-    "healthImpact": -4,
+    "type": "permanent",
+    "healthImpact": -3,
     "weight": 8,
     "randomIllness": true,
-    "durationMin": 3,
-    "durationMax": 12
+    "familyNews": false
   },
   {
     "id": "alcoholism",
     "name": "Alcoholism",
-    "type": "curable",
-    "healthImpact": -7,
+    "type": "permanent",
+    "healthImpact": -10,
     "weight": 5,
     "randomIllness": true,
-    "durationMin": 6,
-    "durationMax": 18
+    "familyNews": false
   },
   {
     "id": "paraplegia",
     "name": "Paraplegia",
     "type": "permanent",
-    "healthImpact": -6,
+    "healthImpact": -5,
     "weight": 1,
-    "randomIllness": true
+    "randomIllness": true,
+    "familyNews": true
   },
   {
     "id": "down_syndrome",
     "name": "Down Syndrome",
     "type": "birth_defect",
-    "healthImpact": -2,
+    "healthImpact": -10,
     "weight": 0,
-    "randomIllness": false
+    "randomIllness": false,
+    "familyNews": false
   },
   {
     "id": "cerebral_palsy",
     "name": "Cerebral Palsy",
     "type": "birth_defect",
-    "healthImpact": -5,
+    "healthImpact": -10,
     "weight": 0,
-    "randomIllness": false
+    "randomIllness": false,
+    "familyNews": false
   },
   {
     "id": "autism",
@@ -181,156 +194,106 @@
     "type": "birth_defect",
     "healthImpact": 0,
     "weight": 0,
-    "randomIllness": false
+    "randomIllness": false,
+    "familyNews": false
   },
   {
-    "id": "seasonal_allergies",
-    "name": "Seasonal Allergies",
-    "type": "seasonal",
-    "durationMin": 1,
-    "durationMax": 3,
-    "healthImpact": -2,
-    "weight": 18,
-    "randomIllness": true
+    "id": "congenital_heart_defect",
+    "name": "Congenital Heart Defect",
+    "type": "birth_defect",
+    "healthImpact": 0,
+    "weight": 0,
+    "randomIllness": false,
+    "familyNews": false
   },
   {
-    "id": "sinus_infection",
-    "name": "Sinus Infection",
-    "type": "curable",
-    "durationMin": 1,
-    "durationMax": 2,
-    "healthImpact": -4,
-    "weight": 10,
-    "randomIllness": true
+    "id": "cleft_lip_palate",
+    "name": "Cleft Lip / Palate",
+    "type": "birth_defect",
+    "healthImpact": 0,
+    "weight": 0,
+    "randomIllness": false,
+    "familyNews": false
   },
   {
-    "id": "bronchitis",
-    "name": "Bronchitis",
-    "type": "curable",
-    "durationMin": 1,
-    "durationMax": 3,
-    "healthImpact": -6,
-    "weight": 8,
-    "randomIllness": true
+    "id": "congenital_hearing_loss",
+    "name": "Congenital Hearing Loss",
+    "type": "birth_defect",
+    "healthImpact": 0,
+    "weight": 0,
+    "randomIllness": false,
+    "familyNews": false
   },
   {
-    "id": "urinary_tract_infection",
-    "name": "Urinary Tract Infection",
-    "type": "curable",
-    "durationMin": 1,
-    "durationMax": 2,
-    "healthImpact": -5,
-    "weight": 6,
-    "randomIllness": true
+    "id": "limb_difference",
+    "name": "Congenital Limb Difference",
+    "type": "birth_defect",
+    "healthImpact": 0,
+    "weight": 0,
+    "randomIllness": false,
+    "familyNews": false
   },
   {
-    "id": "kidney_stones",
-    "name": "Kidney Stones",
-    "type": "curable",
-    "durationMin": 1,
-    "durationMax": 2,
-    "healthImpact": -8,
-    "weight": 4,
-    "randomIllness": true
+    "id": "craniosynostosis",
+    "name": "Craniosynostosis",
+    "type": "birth_defect",
+    "healthImpact": 0,
+    "weight": 0,
+    "randomIllness": false,
+    "familyNews": false
   },
   {
-    "id": "appendicitis",
-    "name": "Appendicitis",
-    "type": "curable",
-    "durationMin": 1,
-    "durationMax": 2,
-    "healthImpact": -12,
-    "weight": 2,
-    "randomIllness": true
+    "id": "gastroschisis",
+    "name": "Gastroschisis",
+    "type": "birth_defect",
+    "healthImpact": 0,
+    "weight": 0,
+    "randomIllness": false,
+    "familyNews": false
   },
   {
-    "id": "sprained_ankle",
-    "name": "Sprained Ankle",
-    "type": "curable",
-    "durationMin": 1,
-    "durationMax": 2,
-    "healthImpact": -3,
-    "weight": 6,
-    "randomIllness": true
+    "id": "spina_bifida",
+    "name": "Spina Bifida",
+    "type": "birth_defect",
+    "healthImpact": 0,
+    "weight": 0,
+    "randomIllness": false,
+    "familyNews": false
   },
   {
-    "id": "concussion",
-    "name": "Concussion",
-    "type": "curable",
-    "durationMin": 1,
-    "durationMax": 3,
-    "healthImpact": -7,
-    "weight": 3,
-    "randomIllness": true
+    "id": "congenital_diaphragmatic_hernia",
+    "name": "Congenital Diaphragmatic Hernia",
+    "type": "birth_defect",
+    "healthImpact": 0,
+    "weight": 0,
+    "randomIllness": false,
+    "familyNews": false
   },
   {
-    "id": "broken_leg",
-    "name": "Broken Leg",
-    "type": "curable",
-    "durationMin": 4,
-    "durationMax": 6,
-    "healthImpact": -8,
-    "weight": 3,
-    "randomIllness": true
+    "id": "cystic_fibrosis",
+    "name": "Cystic Fibrosis",
+    "type": "birth_defect",
+    "healthImpact": 0,
+    "weight": 0,
+    "randomIllness": false,
+    "familyNews": false
   },
   {
-    "id": "hypertension",
-    "name": "Hypertension",
-    "type": "permanent",
-    "healthImpact": -2,
-    "weight": 6,
-    "randomIllness": true
+    "id": "anophthalmia_microphthalmia",
+    "name": "Congenital Eye Malformation",
+    "type": "birth_defect",
+    "healthImpact": 0,
+    "weight": 0,
+    "randomIllness": false,
+    "familyNews": false
   },
   {
-    "id": "diabetes",
-    "name": "Diabetes",
-    "type": "permanent",
-    "healthImpact": -5,
-    "weight": 4,
-    "randomIllness": true
-  },
-  {
-    "id": "epilepsy",
-    "name": "Epilepsy",
-    "type": "permanent",
-    "healthImpact": -5,
-    "weight": 2,
-    "randomIllness": true
-  },
-  {
-    "id": "copd",
-    "name": "COPD",
-    "type": "permanent",
-    "healthImpact": -6,
-    "weight": 2,
-    "randomIllness": true
-  },
-  {
-    "id": "chronic_kidney_disease",
-    "name": "Chronic Kidney Disease",
-    "type": "permanent",
-    "healthImpact": -7,
-    "weight": 1,
-    "randomIllness": true
-  },
-  {
-    "id": "heart_attack",
-    "name": "Heart Attack",
-    "type": "terminal",
-    "durationMin": 1,
-    "durationMax": 2,
-    "healthImpact": -18,
-    "weight": 1,
-    "randomIllness": true
-  },
-  {
-    "id": "sepsis",
-    "name": "Sepsis",
-    "type": "terminal",
-    "durationMin": 1,
-    "durationMax": 2,
-    "healthImpact": -20,
-    "weight": 1,
-    "randomIllness": true
+    "id": "achondroplasia",
+    "name": "Achondroplasia",
+    "type": "birth_defect",
+    "healthImpact": 0,
+    "weight": 0,
+    "randomIllness": false,
+    "familyNews": false
   }
 ]

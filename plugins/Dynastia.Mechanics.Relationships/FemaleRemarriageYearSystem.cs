@@ -93,6 +93,12 @@ public sealed class FemaleRemarriageYearSystem :
                     "control.playable")
                 || _family.IsMaleLineage(
                     woman)
+                || (
+                    !_family.IsBloodline(
+                        woman)
+                    && !woman.Tags.Has(
+                        "simulation.peripheral_ex")
+                )
                 || HasDivorceAffectedMinorChild(
                     woman))
             {
@@ -158,6 +164,13 @@ public sealed class FemaleRemarriageYearSystem :
         husband.Tags.Add(
             "relationship.single");
 
+        if (woman.Tags.Has(
+            "simulation.peripheral_ex"))
+        {
+            husband.Tags.Add(
+                "simulation.peripheral_partner");
+        }
+
         husband.Tags.Add(
             "sexuality.heterosexual");
 
@@ -190,21 +203,32 @@ public sealed class FemaleRemarriageYearSystem :
             _family.GetDisplayName(
                 husband);
 
+        var hadPriorRelationship =
+            _family.GetRelationshipHistory(
+                woman)
+            .Count > 0;
+
         _family.SetSpouses(
             woman,
             husband,
             gameState.Year);
 
+        woman.MaidenName ??=
+            woman.Surname;
+
         woman.Surname =
             husband.Surname;
 
-        // Intentionally do NOT transfer woman's PendingInheritance
-        // into the husband's household. Dynasty 4 does not do so.
+        // Pending inheritance follows the bloodline person. The
+        // post-inheritance household-claim system transfers it only after
+        // this marriage has produced a real household.
         _events.Publish(
             new GameEvent
             {
                 Type =
-                    "relationship.remarried",
+                    hadPriorRelationship
+                        ? "relationship.remarried"
+                        : "relationship.married",
 
                 Year =
                     gameState.Year,
@@ -219,9 +243,12 @@ public sealed class FemaleRemarriageYearSystem :
                     new Dictionary<string, string>
                     {
                         ["text"] =
-                            $"{womanEventName} " +
-                            $"has remarried to " +
-                            $"{husbandEventName}."
+                            hadPriorRelationship
+                                ? $"{womanEventName} " +
+                                  $"has remarried to " +
+                                  $"{husbandEventName}."
+                                : $"{womanEventName} married " +
+                                  $"{husbandEventName}."
                     }
             });
     }

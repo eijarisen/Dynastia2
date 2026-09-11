@@ -25,6 +25,30 @@ public sealed class PlayablePersonTabViewModel
                 () => switchHousehold(PersonId));
     }
 
+    public PlayablePersonTabViewModel(
+        Guid personId,
+        string generationText,
+        string label,
+        string fullName,
+        string actionSummaryText,
+        bool isActive,
+        bool hasQueuedAction,
+        bool showHeadIdentifier,
+        Action<Guid> switchHousehold)
+        : this(
+            personId,
+            generationText,
+            label,
+            fullName,
+            actionSummaryText,
+            isActive,
+            hasQueuedAction,
+            switchHousehold)
+    {
+        // Backward-compatible overload. Duplicate names are now allowed,
+        // so the old disambiguation flag is intentionally ignored.
+    }
+
     public Guid PersonId { get; }
 
     public string GenerationText { get; }

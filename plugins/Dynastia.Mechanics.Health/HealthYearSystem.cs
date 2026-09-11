@@ -28,9 +28,14 @@ public sealed class HealthYearSystem : IYearSystem
     }
 
     public string Id => "health.annual";
+
     public YearPhase Phase => YearPhase.Health;
-    public IReadOnlyCollection<string> Before => Array.Empty<string>();
-    public IReadOnlyCollection<string> After => Array.Empty<string>();
+
+    public IReadOnlyCollection<string> Before =>
+        Array.Empty<string>();
+
+    public IReadOnlyCollection<string> After =>
+        Array.Empty<string>();
 
     public void Execute(IGameState gameState)
     {
@@ -41,56 +46,121 @@ public sealed class HealthYearSystem : IYearSystem
 
             _health.EnsureHealth(person);
 
-            var longevity = GetStat(person, "longevity");
-            var immunity = GetStat(person, "immunity");
+            var longevity =
+                GetStat(person, "longevity");
 
-            var healthChange = longevity * 0.5;
-            healthChange += _modifiers.GetAnnualHealthChange(person);
-            healthChange += _health.ApplyAnnualConditionEffects(person);
+            var immunity =
+                GetStat(person, "immunity");
 
-            _health.ChangeHealth(person, healthChange);
+            var healthChange =
+                longevity * 0.5;
 
-            var currentHealth = _health.GetHealth(person).Current;
+            // Household pressure, retired-wife support, divorced-parent
+            // penalties and other registered annual effects all remain
+            // part of the normal Health pipeline.
+            healthChange +=
+                _modifiers.GetAnnualHealthChange(
+                    person);
+
+            healthChange +=
+                _health.ApplyAnnualConditionEffects(
+                    person);
+
+            _health.ChangeHealth(
+                person,
+                healthChange);
+
+            var currentHealth =
+                _health.GetHealth(
+                    person)
+                .Current;
 
             var illnessChance =
                 (BaseIllnessChance / immunity)
-                * (1 - currentHealth / IllnessHealthFactorDivisor);
+                * (
+                    1
+                    - currentHealth
+                    / IllnessHealthFactorDivisor
+                );
 
-            if (_random.NextDouble() >= illnessChance)
+            if (_random.NextDouble()
+                >= illnessChance)
+            {
                 continue;
+            }
 
-            if (!_health.TryAddRandomIllness(person, out var condition)
+            if (!_health.TryAddRandomIllness(
+                    person,
+                    out var condition)
                 || condition is null)
             {
                 continue;
             }
 
+            var familyNews =
+                _health.IsFamilyNewsCondition(
+                    condition.Id);
+
             var serious =
-                condition.Type.Equals("terminal", StringComparison.OrdinalIgnoreCase)
-                || condition.Type.Equals("permanent", StringComparison.OrdinalIgnoreCase);
+                familyNews
+                || condition.Type.Equals(
+                    "terminal",
+                    StringComparison.OrdinalIgnoreCase)
+                || condition.Type.Equals(
+                    "permanent",
+                    StringComparison.OrdinalIgnoreCase);
 
             _events.Publish(
                 new GameEvent
                 {
-                    Type = serious
-                        ? "health.serious_illness"
-                        : "health.illness",
-                    Year = gameState.Year,
-                    SubjectId = person.Id,
-                    Data = new Dictionary<string, string>
-                    {
-                        ["conditionId"] = condition.Id,
-                        ["condition"] = condition.Name,
-                        ["conditionType"] = condition.Type,
-                        ["text"] =
-                            $"{person.Name} {person.Surname} fell ill with {condition.Name}."
-                    }
+                    Type =
+                        serious
+                            ? "health.serious_illness"
+                            : "health.illness",
+
+                    Year =
+                        gameState.Year,
+
+                    SubjectId =
+                        person.Id,
+
+                    Data =
+                        new Dictionary<string, string>
+                        {
+                            ["conditionId"] =
+                                condition.Id,
+
+                            ["condition"] =
+                                condition.Name,
+
+                            ["conditionType"] =
+                                condition.Type,
+
+                            ["familyNews"] =
+                                familyNews
+                                    .ToString()
+                                    .ToLowerInvariant(),
+
+                            ["text"] =
+                                $"{person.Name} {person.Surname} " +
+                                $"fell ill with {condition.Name}."
+                        }
                 });
         }
     }
 
-    private int GetStat(IPerson person, string id) =>
-        _stats.GetStats(person)
-            .First(stat => stat.Id.Equals(id, StringComparison.OrdinalIgnoreCase))
+    private int GetStat(
+        IPerson person,
+        string id)
+    {
+        return _stats
+            .GetStats(
+                person)
+            .First(
+                stat =>
+                    stat.Id.Equals(
+                        id,
+                        StringComparison.OrdinalIgnoreCase))
             .Value;
+    }
 }

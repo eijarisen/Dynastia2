@@ -103,7 +103,11 @@ public sealed class MarriageYearSystem : IYearSystem
     {
         return person.Tags.Has("state.alive")
             && _family.GetSex(person) == Sex.Male
-            && _family.IsMaleLineage(person)
+            && (
+                _family.IsBloodline(person)
+                || person.Tags.Has(
+                    "simulation.peripheral_ex")
+            )
             && _family.GetSpouse(person) is null
             && person.Age >= 18;
     }
@@ -131,39 +135,26 @@ public sealed class MarriageYearSystem : IYearSystem
             RandomWeightedFrom(
                 SurnamesPath);
 
-        int spouseAge;
+        var lowerAge =
+            Math.Max(
+                18,
+                person.Age - 20);
 
-        if (spouseSex == Sex.Female)
-        {
-            // New gameplay rule:
-            // a male-lineage husband can find an adult wife of
-            // childbearing age regardless of his own age.
-            spouseAge =
-                _random.NextInt(
-                    18,
-                    35);
-        }
-        else
-        {
-            // Preserve the previous age-range behavior for male partners.
-            var lowerAge =
-                Math.Max(
-                    18,
-                    person.Age - 20);
+        var upperAge =
+            Math.Min(
+                40,
+                person.Age + 10);
 
-            var upperAge =
-                Math.Min(
-                    40,
-                    person.Age + 10);
+        // The source can form an inverted range for very old
+        // unmarried heads. Keep the intended max-spouse-age rule
+        // while avoiding an invalid RNG request.
+        if (lowerAge > upperAge)
+            lowerAge = upperAge;
 
-            if (lowerAge > upperAge)
-                lowerAge = upperAge;
-
-            spouseAge =
-                _random.NextInt(
-                    lowerAge,
-                    upperAge);
-        }
+        var spouseAge =
+            _random.NextInt(
+                lowerAge,
+                upperAge);
 
         var spouse =
             gameState.CreatePerson(
@@ -183,6 +174,13 @@ public sealed class MarriageYearSystem : IYearSystem
         spouse.Tags.Add("state.alive");
         spouse.Tags.Add("age.adult");
         spouse.Tags.Add("relationship.single");
+
+        if (person.Tags.Has(
+            "simulation.peripheral_ex"))
+        {
+            spouse.Tags.Add(
+                "simulation.peripheral_partner");
+        }
 
         // Person constructor default in the source is heterosexual.
         spouse.Tags.Add(

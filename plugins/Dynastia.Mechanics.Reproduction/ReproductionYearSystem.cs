@@ -157,6 +157,18 @@ public sealed class ReproductionYearSystem : IYearSystem
                 continue;
             }
 
+            if (IsPeripheralCouple(
+                father,
+                mother!))
+            {
+                PublishPeripheralBirth(
+                    gameState,
+                    father,
+                    mother!);
+
+                continue;
+            }
+
             CreateChild(
                 gameState,
                 father,
@@ -286,6 +298,100 @@ public sealed class ReproductionYearSystem : IYearSystem
         return chance;
     }
 
+    private bool IsPeripheralCouple(
+        IPerson father,
+        IPerson mother)
+    {
+        if (_family.IsBloodline(
+                father)
+            || _family.IsBloodline(
+                mother))
+        {
+            return false;
+        }
+
+        return father.Tags.Has(
+                "simulation.peripheral_ex")
+            || father.Tags.Has(
+                "simulation.peripheral_partner")
+            || mother.Tags.Has(
+                "simulation.peripheral_ex")
+            || mother.Tags.Has(
+                "simulation.peripheral_partner");
+    }
+
+    private void PublishPeripheralBirth(
+        IGameState gameState,
+        IPerson father,
+        IPerson mother)
+    {
+        var sex =
+            _random.NextDouble() > 0.5
+                ? Sex.Female
+                : Sex.Male;
+
+        var entries =
+            _data.GetWeightedStringList(
+                sex == Sex.Male
+                    ? MaleNamesPath
+                    : FemaleNamesPath);
+
+        var childName =
+            RandomWeightedFrom(
+                entries);
+
+        var birthDate =
+            RandomDateInYear(
+                gameState.Year);
+
+        var childSurname =
+            _family.FormatSurname(
+                father.Surname,
+                sex);
+
+        var relationship =
+            sex == Sex.Male
+                ? "son"
+                : "daughter";
+
+        _events.Publish(
+            new GameEvent
+            {
+                Type =
+                    "peripheral.birth",
+
+                Year =
+                    gameState.Year,
+
+                SubjectId =
+                    father.Id,
+
+                RelatedPersonIds =
+                    [mother.Id],
+
+                Data =
+                    new Dictionary<string, string>
+                    {
+                        ["childName"] =
+                            childName,
+
+                        ["childSurname"] =
+                            childSurname,
+
+                        ["sex"] =
+                            sex.ToString(),
+
+                        ["birthDate"] =
+                            birthDate.ToString(),
+
+                        ["text"] =
+                            $"{_family.GetDisplayName(mother)} and " +
+                            $"{_family.GetDisplayName(father)} welcomed " +
+                            $"a {relationship}, {childName} {childSurname}."
+                    }
+            });
+    }
+
     private void CreateChild(
         IGameState gameState,
         IPerson father,
@@ -317,16 +423,25 @@ public sealed class ReproductionYearSystem : IYearSystem
             RandomDateInYear(
                 gameState.Year);
 
-        var fatherGeneration =
-            _family.GetGeneration(
+        var bloodlineParent =
+            _family.IsBloodline(
                 father)
+                ? father
+                : _family.IsBloodline(
+                    mother)
+                    ? mother
+                    : father;
+
+        var parentGeneration =
+            _family.GetGeneration(
+                bloodlineParent)
             ?? 0;
 
         _family.InitializePerson(
             child,
             sex,
             generation:
-                fatherGeneration + 1);
+                parentGeneration + 1);
 
         child.Tags.Add(
             "state.alive");

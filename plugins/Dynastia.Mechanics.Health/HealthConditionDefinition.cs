@@ -13,4 +13,6 @@ public sealed class HealthConditionDefinition
     public double Weight { get; init; }
 
     public bool RandomIllness { get; init; }
+
+    public bool FamilyNews { get; init; }
 }

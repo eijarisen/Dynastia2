@@ -5,22 +5,41 @@ namespace Dynastia.Mechanics.Economy;
 public sealed class StandardEconomyService :
     IEconomyService
 {
+    private readonly IGameState _gameState;
     private readonly IFamilyService _family;
     private readonly ILocationService _locations;
 
     public StandardEconomyService(
+        IGameState gameState,
         IFamilyService family,
         ILocationService locations)
     {
-        _family = family;
-        _locations = locations;
+        _gameState =
+            gameState;
+
+        _family =
+            family;
+
+        _locations =
+            locations;
     }
 
     public bool HasHousehold(
         IPerson person)
     {
-        return person.Components.Has<
-            HouseholdEconomyComponent>();
+        var direct =
+            person.Components.Get<
+                HouseholdEconomyComponent>();
+
+        if (direct is null)
+            return false;
+
+        MigrateHousehold(
+            person,
+            direct);
+
+        return direct.HeadId
+            == person.Id;
     }
 
     public void EnsureHousehold(
@@ -29,7 +48,10 @@ public sealed class StandardEconomyService :
         if (HasHousehold(person))
             return;
 
-        if (_family.GetSex(person)
+        if (!person.Tags.Has(
+                "state.alive")
+            || person.Age < 18
+            || _family.GetSex(person)
                 != Sex.Male
             || !_family.IsMaleLineage(
                 person))
@@ -37,36 +59,52 @@ public sealed class StandardEconomyService :
             return;
         }
 
-        person.Components.Set(
-            new HouseholdEconomyComponent());
+        CreateHousehold(
+            person,
+            person);
     }
 
     public void EnsureIndependentHousehold(
-        IPerson person)
+        IPerson person,
+        IPerson? dynastyAnchor = null)
     {
         if (HasHousehold(person))
             return;
 
-        person.Components.Set(
-            new HouseholdEconomyComponent());
+        var existing =
+            FindHousehold(
+                person);
+
+        if (existing is not null)
+        {
+            RemoveHouseholdMember(
+                person);
+        }
+
+        CreateHousehold(
+            person,
+            dynastyAnchor
+            ?? person);
     }
 
     public HouseholdFinanceSnapshot?
         GetHousehold(
             IPerson person)
     {
-        EnsureHousehold(
-            person);
+        var resolved =
+            FindHousehold(
+                person);
 
-        var household =
-            person.Components.Get<
-                HouseholdEconomyComponent>();
-
-        if (household is null)
+        if (resolved is null)
             return null;
 
+        var (
+            owner,
+            household) =
+                resolved.Value;
+
         SynchronizeHouses(
-            person,
+            owner,
             household);
 
         var claim =
@@ -114,6 +152,265 @@ public sealed class StandardEconomyService :
             houses);
     }
 
+    public Guid? GetHouseholdId(
+        IPerson person)
+    {
+        var resolved =
+            FindHousehold(
+                person);
+
+        return resolved is null
+            ? null
+            : resolved.Value
+                .Household
+                .HouseholdId;
+    }
+
+    public Guid? GetHouseholdDynastyAnchorId(
+        IPerson person)
+    {
+        var resolved =
+            FindHousehold(
+                person);
+
+        return resolved is null
+            ? null
+            : resolved.Value
+                .Household
+                .DynastyAnchorId;
+    }
+
+    public IReadOnlyList<Guid> GetHouseholdMemberIds(
+        IPerson person)
+    {
+        var resolved =
+            FindHousehold(
+                person);
+
+        return resolved is null
+            ? Array.Empty<Guid>()
+            : resolved.Value
+                .Household
+                .MemberIds
+                .Distinct()
+                .ToList();
+    }
+
+    public bool IsLegacyMembershipSeeded(
+        IPerson householdRepresentative)
+    {
+        var resolved =
+            FindHousehold(
+                householdRepresentative);
+
+        return resolved is not null
+            && resolved.Value
+                .Household
+                .LegacyMembershipSeeded;
+    }
+
+    public void MarkLegacyMembershipSeeded(
+        IPerson householdRepresentative)
+    {
+        GetRequiredHousehold(
+            householdRepresentative)
+            .LegacyMembershipSeeded =
+                true;
+    }
+
+    public void AddHouseholdMember(
+        IPerson householdRepresentative,
+        IPerson member)
+    {
+        var target =
+            GetRequiredHousehold(
+                householdRepresentative);
+
+        var old =
+            FindHousehold(
+                member);
+
+        if (old is not null
+            && old.Value.Household.HouseholdId
+                != target.HouseholdId)
+        {
+            if (old.Value.Household.HeadId
+                == member.Id)
+            {
+                throw new InvalidOperationException(
+                    $"{_family.GetDisplayName(member)} already heads " +
+                    "another active household; household transfer must be " +
+                    "resolved before membership can change.");
+            }
+
+            old.Value
+                .Household
+                .MemberIds
+                .Remove(
+                    member.Id);
+        }
+
+        if (!target.MemberIds.Contains(
+            member.Id))
+        {
+            target.MemberIds.Add(
+                member.Id);
+        }
+    }
+
+    public void RemoveHouseholdMember(
+        IPerson member)
+    {
+        var resolved =
+            FindHousehold(
+                member);
+
+        if (resolved is null)
+            return;
+
+        resolved.Value
+            .Household
+            .MemberIds
+            .Remove(
+                member.Id);
+    }
+
+    public void TransferHouseholdHead(
+        IPerson currentHead,
+        IPerson newHead)
+    {
+        var current =
+            currentHead.Components.Get<
+                HouseholdEconomyComponent>();
+
+        if (current is null)
+        {
+            throw new InvalidOperationException(
+                $"{_family.GetDisplayName(currentHead)} " +
+                "is not the current household head.");
+        }
+
+        MigrateHousehold(
+            currentHead,
+            current);
+
+        if (current.HeadId
+            != currentHead.Id)
+        {
+            throw new InvalidOperationException(
+                "Household component is not attached to its current head.");
+        }
+
+        var previous =
+            newHead.Components.Get<
+                HouseholdEconomyComponent>();
+
+        if (previous is not null
+            && previous.HouseholdId
+                != current.HouseholdId)
+        {
+            throw new InvalidOperationException(
+                $"{_family.GetDisplayName(newHead)} already heads another household.");
+        }
+
+        currentHead.Components.Remove<
+            HouseholdEconomyComponent>();
+
+        current.HeadId =
+            newHead.Id;
+
+        current.EstateReady =
+            false;
+
+        current.MemberIds.Remove(
+            currentHead.Id);
+
+        if (!current.MemberIds.Contains(
+            newHead.Id))
+        {
+            current.MemberIds.Insert(
+                0,
+                newHead.Id);
+        }
+
+        newHead.Components.Set(
+            current);
+
+        if (current.Houses.Count > 0)
+        {
+            var residence =
+                current.Houses[0].Town;
+
+            if (residence is not null)
+            {
+                _locations.SetHouseholdHomeTown(
+                    newHead,
+                    residence);
+            }
+        }
+    }
+
+    public void MarkEstateReady(
+        IPerson householdRepresentative,
+        bool ready = true)
+    {
+        GetRequiredHousehold(
+            householdRepresentative)
+            .EstateReady =
+                ready;
+    }
+
+    public bool IsEstateReady(
+        IPerson householdRepresentative)
+    {
+        var resolved =
+            FindHousehold(
+                householdRepresentative);
+
+        return resolved is not null
+            && resolved.Value
+                .Household
+                .EstateReady;
+    }
+
+    public void DissolveHousehold(
+        IPerson householdRepresentative)
+    {
+        var resolved =
+            FindHousehold(
+                householdRepresentative);
+
+        if (resolved is null)
+            return;
+
+        var householdId =
+            resolved.Value
+                .Household
+                .HouseholdId;
+
+        foreach (var person in
+            _gameState.People)
+        {
+            var component =
+                person.Components.Get<
+                    HouseholdEconomyComponent>();
+
+            if (component is not null)
+            {
+                MigrateHousehold(
+                    person,
+                    component);
+
+                if (component.HouseholdId
+                    == householdId)
+                {
+                    person.Components.Remove<
+                        HouseholdEconomyComponent>();
+                }
+            }
+        }
+    }
+
     public void SetWealth(
         IPerson person,
         decimal wealth)
@@ -136,10 +433,11 @@ public sealed class StandardEconomyService :
             GetRequiredHousehold(
                 person);
 
-        SetWealth(
-            person,
-            household.Wealth
-            + amount);
+        household.Wealth =
+            Math.Max(
+                0,
+                household.Wealth
+                + amount);
     }
 
     public void SetHousesOwned(
@@ -150,8 +448,12 @@ public sealed class StandardEconomyService :
             GetRequiredHousehold(
                 person);
 
+        var owner =
+            GetHead(
+                household);
+
         SynchronizeHouses(
-            person,
+            owner,
             household);
 
         var target =
@@ -182,17 +484,9 @@ public sealed class StandardEconomyService :
         IPerson person,
         int rentedHouses)
     {
-        // Rental status is now automatic:
-        // first house = residence; every additional house = rented.
-        // Keep this method for source/API compatibility, but ignore the
-        // requested number and normalize derived state instead.
         var household =
             GetRequiredHousehold(
                 person);
-
-        SynchronizeHouses(
-            person,
-            household);
 
         SynchronizeDerivedHouseCounts(
             household);
@@ -206,7 +500,7 @@ public sealed class StandardEconomyService :
                 person);
 
         SynchronizeHouses(
-            person,
+            GetHead(household),
             household);
 
         return household.Houses
@@ -226,8 +520,12 @@ public sealed class StandardEconomyService :
             GetRequiredHousehold(
                 person);
 
+        var head =
+            GetHead(
+                household);
+
         SynchronizeHouses(
-            person,
+            head,
             household);
 
         var firstHouse =
@@ -239,11 +537,11 @@ public sealed class StandardEconomyService :
                 firstHouse
                     ? _locations
                         .GetLocation(
-                            person)
+                            head)
                         .HomeTown
                     : _locations
                         .ChoosePropertyTown(
-                            person)
+                            head)
             );
 
         var state =
@@ -262,7 +560,7 @@ public sealed class StandardEconomyService :
         if (firstHouse)
         {
             _locations.SetHouseholdHomeTown(
-                person,
+                head,
                 assignedTown);
         }
 
@@ -285,8 +583,12 @@ public sealed class StandardEconomyService :
             GetRequiredHousehold(
                 person);
 
+        var head =
+            GetHead(
+                household);
+
         SynchronizeHouses(
-            person,
+            head,
             household);
 
         if (household.Houses.Any(
@@ -313,7 +615,7 @@ public sealed class StandardEconomyService :
         if (firstHouse)
         {
             _locations.SetHouseholdHomeTown(
-                person,
+                head,
                 house.Town);
         }
 
@@ -329,7 +631,7 @@ public sealed class StandardEconomyService :
                 person);
 
         SynchronizeHouses(
-            person,
+            GetHead(household),
             household);
 
         if (household.Houses.Count <= 1)
@@ -363,7 +665,7 @@ public sealed class StandardEconomyService :
                 person);
 
         SynchronizeHouses(
-            person,
+            GetHead(household),
             household);
 
         var houses =
@@ -533,7 +835,8 @@ public sealed class StandardEconomyService :
                 .ToList();
 
         claim.PendingHouseProperties.Clear();
-        claim.PendingHouses = 0;
+        claim.PendingHouses =
+            0;
 
         return result;
     }
@@ -551,11 +854,8 @@ public sealed class StandardEconomyService :
     public IReadOnlyList<Guid> GetHostedDependentIds(
         IPerson householdHead)
     {
-        var household =
-            GetRequiredHousehold(
-                householdHead);
-
-        return household
+        return GetRequiredHousehold(
+                householdHead)
             .HostedDependentIds
             .ToList();
     }
@@ -574,21 +874,32 @@ public sealed class StandardEconomyService :
             household.HostedDependentIds.Add(
                 dependent.Id);
         }
+
+        AddHouseholdMember(
+            householdHead,
+            dependent);
     }
 
     public void RemoveHostedDependent(
         IPerson householdHead,
         IPerson dependent)
     {
-        if (!HasHousehold(
-            householdHead))
-        {
-            return;
-        }
+        var resolved =
+            FindHousehold(
+                householdHead);
 
-        GetRequiredHousehold(
-            householdHead)
+        if (resolved is null)
+            return;
+
+        resolved.Value
+            .Household
             .HostedDependentIds
+            .Remove(
+                dependent.Id);
+
+        resolved.Value
+            .Household
+            .MemberIds
             .Remove(
                 dependent.Id);
     }
@@ -597,14 +908,29 @@ public sealed class StandardEconomyService :
         GetRequiredHousehold(
             IPerson person)
     {
+        var resolved =
+            FindHousehold(
+                person);
+
+        if (resolved is not null)
+            return resolved.Value.Household;
+
         EnsureHousehold(
             person);
 
-        return person.Components.Get<
-            HouseholdEconomyComponent>()
-            ?? throw new InvalidOperationException(
-                $"{_family.GetDisplayName(person)} " +
-                "does not own a dynasty household.");
+        resolved =
+            FindHousehold(
+                person);
+
+        if (resolved is not null)
+        {
+            return resolved.Value
+                .Household;
+        }
+
+        throw new InvalidOperationException(
+            $"{_family.GetDisplayName(person)} " +
+            "does not belong to an active dynasty household.");
     }
 
     internal void SynchronizeForFinance(
@@ -612,12 +938,173 @@ public sealed class StandardEconomyService :
         HouseholdEconomyComponent household)
     {
         SynchronizeHouses(
-            person,
+            GetHead(
+                household),
             household);
     }
 
+    private void CreateHousehold(
+        IPerson head,
+        IPerson dynastyAnchor)
+    {
+        var component =
+            new HouseholdEconomyComponent
+            {
+                HouseholdId =
+                    Guid.NewGuid(),
+
+                HeadId =
+                    head.Id,
+
+                DynastyAnchorId =
+                    dynastyAnchor.Id,
+
+                DynastyGeneration =
+                    _family.GetGeneration(
+                        dynastyAnchor),
+
+                LegacyMembershipSeeded =
+                    true
+            };
+
+        component.MemberIds.Add(
+            head.Id);
+
+        if (dynastyAnchor.Id
+            != head.Id)
+        {
+            component.MemberIds.Add(
+                dynastyAnchor.Id);
+        }
+
+        head.Components.Set(
+            component);
+    }
+
+    private (
+        IPerson Owner,
+        HouseholdEconomyComponent Household)?
+        FindHousehold(
+            IPerson person)
+    {
+        var direct =
+            person.Components.Get<
+                HouseholdEconomyComponent>();
+
+        if (direct is not null)
+        {
+            MigrateHousehold(
+                person,
+                direct);
+
+            return (
+                person,
+                direct);
+        }
+
+        foreach (var candidate in
+            _gameState.People)
+        {
+            var household =
+                candidate.Components.Get<
+                    HouseholdEconomyComponent>();
+
+            if (household is null)
+                continue;
+
+            MigrateHousehold(
+                candidate,
+                household);
+
+            if (household.MemberIds.Contains(
+                person.Id))
+            {
+                return (
+                    candidate,
+                    household);
+            }
+        }
+
+        return null;
+    }
+
+    private void MigrateHousehold(
+        IPerson owner,
+        HouseholdEconomyComponent household)
+    {
+        if (household.HouseholdId
+            == Guid.Empty)
+        {
+            household.HouseholdId =
+                Guid.NewGuid();
+        }
+
+        if (household.HeadId
+            == Guid.Empty)
+        {
+            household.HeadId =
+                owner.Id;
+        }
+
+        if (household.DynastyAnchorId
+            == Guid.Empty)
+        {
+            var spouse =
+                _family.GetSpouse(
+                    owner);
+
+            household.DynastyAnchorId =
+                _family.IsBloodline(
+                    owner)
+                    ? owner.Id
+                    : spouse is not null
+                      && _family.IsBloodline(
+                          spouse)
+                        ? spouse.Id
+                        : owner.Id;
+        }
+
+        if (household.DynastyGeneration
+            is null)
+        {
+            var anchor =
+                _gameState.People
+                    .FirstOrDefault(
+                        person =>
+                            person.Id
+                            == household.DynastyAnchorId);
+
+            household.DynastyGeneration =
+                anchor is null
+                    ? _family.GetGeneration(
+                        owner)
+                    : _family.GetGeneration(
+                        anchor);
+        }
+
+        if (!household.MemberIds.Contains(
+            household.HeadId))
+        {
+            household.MemberIds.Insert(
+                0,
+                household.HeadId);
+        }
+    }
+
+    private IPerson GetHead(
+        HouseholdEconomyComponent household)
+    {
+        return _gameState.People
+            .FirstOrDefault(
+                person =>
+                    person.Id
+                    == household.HeadId)
+            ?? throw new InvalidOperationException(
+                "Household head is unavailable.");
+    }
+
     private void SynchronizeHouses(
-        IPerson person,
+        IPerson head,
         HouseholdEconomyComponent household)
     {
         if (household.Houses.Count == 0
@@ -631,11 +1118,11 @@ public sealed class StandardEconomyService :
                     index == 0
                         ? _locations
                             .GetLocation(
-                                person)
+                                head)
                             .HomeTown
                         : _locations
                             .ChoosePropertyTown(
-                                person);
+                                head);
 
                 household.Houses.Add(
                     new HousePropertyState
@@ -660,7 +1147,7 @@ public sealed class StandardEconomyService :
             house.Town ??=
                 _locations
                     .GetLocation(
-                        person)
+                        head)
                     .HomeTown;
         }
 

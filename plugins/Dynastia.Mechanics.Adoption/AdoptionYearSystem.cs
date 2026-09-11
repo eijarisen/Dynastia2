@@ -101,14 +101,16 @@ public sealed class AdoptionYearSystem :
             component.Kind;
 
         // Normal unmarried daughters retain their biological/mother
-        // residence. Adult male-lineage heirs form their own household.
+        // residence. Every adult male bloodline member becomes
+        // independent; male-lineage decides player control, not whether
+        // he is allowed to establish a household.
         if (previousKind
                 is AdoptionPlacementKind.BiologicalHousehold
                 or AdoptionPlacementKind.Mother
             && !(
                 _family.GetSex(person)
                     == Sex.Male
-                && _family.IsMaleLineage(
+                && _family.IsBloodline(
                     person)))
         {
             return;
@@ -171,13 +173,19 @@ public sealed class AdoptionYearSystem :
             _family.GetMother(
                 child);
 
+        var fatherAlive =
+            IsAlive(
+                father);
+
+        var motherAlive =
+            IsAlive(
+                mother);
+
         var component =
             _adoption.GetOrCreateComponent(
                 child);
 
-        if (father is not null
-            && father.Tags.Has(
-                "state.alive"))
+        if (fatherAlive)
         {
             RemoveFromPreviousHost(
                 child,
@@ -187,15 +195,13 @@ public sealed class AdoptionYearSystem :
                 child,
                 component,
                 AdoptionPlacementKind.BiologicalHousehold,
-                father.Id,
+                father!.Id,
                 father.Id);
 
             return;
         }
 
-        if (mother is not null
-            && mother.Tags.Has(
-                "state.alive"))
+        if (motherAlive)
         {
             RemoveFromPreviousHost(
                 child,
@@ -205,7 +211,7 @@ public sealed class AdoptionYearSystem :
                 component.Kind
                     != AdoptionPlacementKind.Mother
                 || component.GuardianId
-                    != mother.Id;
+                    != mother!.Id;
 
             SetPlacement(
                 child,
@@ -475,9 +481,9 @@ public sealed class AdoptionYearSystem :
             || person.Tags.Has(
                 "residence.orphanage")
             || person.Age < 18
-            || _family.GetSex(person)
-                != Sex.Male
-            || !_family.IsMaleLineage(
+            || !_family.IsBloodline(
+                person)
+            || !_economy.HasHousehold(
                 person))
         {
             return false;
@@ -608,4 +614,11 @@ public sealed class AdoptionYearSystem :
         }
     }
 
+    private static bool IsAlive(
+        IPerson? person)
+    {
+        return person is not null
+            && person.Tags.Has(
+                "state.alive");
+    }
 }

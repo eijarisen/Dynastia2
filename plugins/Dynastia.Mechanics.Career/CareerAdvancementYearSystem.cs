@@ -75,6 +75,19 @@ public sealed class CareerAdvancementYearSystem :
         IGameState gameState,
         IPerson person)
     {
+        if (person.Tags.Has(
+                "simulation.peripheral_detached")
+            || person.Tags.Has(
+                "simulation.peripheral_partner")
+            || person.Tags.Has(
+                "simulation.peripheral_inactive"))
+        {
+            person.Tags.Remove(
+                "modifier.work_harder");
+
+            return;
+        }
+
         var career =
             _career.GetCareer(
                 person);

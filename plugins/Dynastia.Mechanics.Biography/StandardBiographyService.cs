@@ -7,6 +7,7 @@ public sealed class StandardBiographyService :
 {
     private readonly IGameState _gameState;
     private readonly IFamilyService _family;
+    private readonly IHouseholdService _households;
     private readonly AboutTextBuilder _about;
 
     private readonly Dictionary<
@@ -19,10 +20,12 @@ public sealed class StandardBiographyService :
         IFamilyService family,
         IStatsService stats,
         ILocationService locations,
+        IHouseholdService households,
         IGameEventBus events)
     {
         _gameState = gameState;
         _family = family;
+        _households = households;
 
         _about =
             new AboutTextBuilder(
@@ -121,11 +124,27 @@ public sealed class StandardBiographyService :
             return;
         }
 
+        if (!_households.ShouldShowFamilyNews(
+            gameEvent))
+        {
+            return;
+        }
+
         if (gameEvent.Type.Equals(
             "life.birth",
             StringComparison.OrdinalIgnoreCase))
         {
             AddBirthEntries(
+                gameEvent);
+
+            return;
+        }
+
+        if (gameEvent.Type.Equals(
+            "peripheral.birth",
+            StringComparison.OrdinalIgnoreCase))
+        {
+            AddPeripheralBirthEntries(
                 gameEvent);
 
             return;
@@ -168,6 +187,51 @@ public sealed class StandardBiographyService :
             AddRelativeEntries(
                 gameEvent,
                 subject);
+        }
+    }
+
+    private void AddPeripheralBirthEntries(
+        GameEvent gameEvent)
+    {
+        var message =
+            GetEventText(
+                gameEvent);
+
+        if (string.IsNullOrWhiteSpace(
+            message))
+        {
+            return;
+        }
+
+        var parentIds =
+            new List<Guid>();
+
+        if (gameEvent.SubjectId
+            is Guid subjectId)
+        {
+            parentIds.Add(
+                subjectId);
+        }
+
+        parentIds.AddRange(
+            gameEvent.RelatedPersonIds);
+
+        foreach (var parent in
+            parentIds
+                .Distinct()
+                .Select(
+                    id =>
+                        FindPerson(
+                            id))
+                .Where(
+                    person =>
+                        person is not null)
+                .Cast<IPerson>())
+        {
+            AddEntry(
+                parent,
+                gameEvent.Year,
+                $"👶 {message}");
         }
     }
 
@@ -676,6 +740,9 @@ public sealed class StandardBiographyService :
             "household.house_promised" => "🎁 ",
 
             "household.nanny_hired" => "🧑‍🍼 ",
+            "household.family_nanny_started" => "🧑‍🍼 ",
+            "household.family_nanny_ended" => "👋 ",
+            "household.nanny_service_ended" => "👋 ",
             "household.nanny_fired" => "👋 ",
 
             "adoption.with_mother" => "👩‍👧 ",

@@ -24,14 +24,22 @@ public sealed class CareerRetirementYearSystem : IYearSystem
     public string Id => "career.retirement";
     public YearPhase Phase => YearPhase.Status;
     public IReadOnlyCollection<string> Before => Array.Empty<string>();
-    public IReadOnlyCollection<string> After => ["aging.increment_age"];
+    public IReadOnlyCollection<string> After => Array.Empty<string>();
 
     public void Execute(IGameState gameState)
     {
         foreach (var person in gameState.People)
         {
-            if (person.Tags.Has("state.dead"))
+            if (person.Tags.Has("state.dead")
+                || person.Tags.Has(
+                    "simulation.peripheral_detached")
+                || person.Tags.Has(
+                    "simulation.peripheral_partner")
+                || person.Tags.Has(
+                    "simulation.peripheral_inactive"))
+            {
                 continue;
+            }
 
             var retirementAge =
                 _family.GetSex(person) == Sex.Male

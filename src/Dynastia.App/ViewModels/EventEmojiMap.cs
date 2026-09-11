@@ -76,6 +76,12 @@ public static class EventEmojiMap
                 ["inheritance.unclaimed"] = "💨",
                 ["inheritance.estate_settled"] = "🏦",
                 ["inheritance.houses"] = "🏡",
+                ["inheritance.pending"] = "⏳",
+                ["inheritance.pending_houses"] = "🏡",
+                ["inheritance.received_at_household"] = "💸",
+                ["inheritance.pending_houses_received"] = "🏡",
+                ["inheritance.estate_left_dynasty"] = "💨",
+                ["household.assets_followed_anchor"] = "🏠",
                 ["inheritance.promised_houses_received"] = "🏡",
 
                 ["career.retirement"] = "🕊️",
@@ -111,6 +117,7 @@ public static class EventEmojiMap
                 ["relationship.affair"] = "🤫",
                 ["birth.condition"] = "🧩",
                 ["life.birth"] = "👶",
+                ["peripheral.birth"] = "👶",
                 ["relationship.remarried"] = "💍",
 
                 ["household.house_bought"] = "🏠",
@@ -124,6 +131,7 @@ public static class EventEmojiMap
                 ["household.nanny_hired"] = "🧑‍🍼",
                 ["household.family_nanny_started"] = "🧑‍🍼",
                 ["household.family_nanny_ended"] = "👋",
+                ["household.nanny_service_ended"] = "👋",
                 ["household.nanny_fired"] = "👋",
 
                 ["adoption.with_mother"] = "👩‍👧",

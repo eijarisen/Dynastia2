@@ -7,10 +7,47 @@ public interface IEconomyService
     void EnsureHousehold(IPerson person);
 
     void EnsureIndependentHousehold(
-        IPerson person);
+        IPerson person,
+        IPerson? dynastyAnchor = null);
 
     HouseholdFinanceSnapshot? GetHousehold(
         IPerson person);
+
+    Guid? GetHouseholdId(
+        IPerson person);
+
+    Guid? GetHouseholdDynastyAnchorId(
+        IPerson person);
+
+    IReadOnlyList<Guid> GetHouseholdMemberIds(
+        IPerson person);
+
+    bool IsLegacyMembershipSeeded(
+        IPerson householdRepresentative);
+
+    void MarkLegacyMembershipSeeded(
+        IPerson householdRepresentative);
+
+    void AddHouseholdMember(
+        IPerson householdRepresentative,
+        IPerson member);
+
+    void RemoveHouseholdMember(
+        IPerson member);
+
+    void TransferHouseholdHead(
+        IPerson currentHead,
+        IPerson newHead);
+
+    void MarkEstateReady(
+        IPerson householdRepresentative,
+        bool ready = true);
+
+    bool IsEstateReady(
+        IPerson householdRepresentative);
+
+    void DissolveHousehold(
+        IPerson householdRepresentative);
 
     void SetWealth(
         IPerson person,

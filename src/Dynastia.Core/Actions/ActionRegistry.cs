@@ -14,6 +14,14 @@ public sealed class ActionRegistry : IActionRegistry
     private readonly List<QueuedAction>
         _queued = [];
 
+    // Autonomous household choices use the same queued-action pipeline as
+    // player choices, but they must temporarily bypass UI/control-only
+    // `control.playable` checks when the action resolves later in the year.
+    // This set is intentionally not persisted: annual simulation runs
+    // synchronously, so an autonomous queue never survives between saves.
+    private readonly HashSet<AutonomousQueuedAction>
+        _autonomousQueued = [];
+
     private readonly IGameState _gameState;
     private readonly IGameEventBus _eventBus;
     private readonly IGameRandom _random;
@@ -84,6 +92,37 @@ public sealed class ActionRegistry : IActionRegistry
             .ToList();
     }
 
+    public IReadOnlyList<GameActionDefinition>
+        GetMechanicallyAvailableActions(
+            IPerson actor,
+            IPerson target)
+    {
+        var hadPlayableTag =
+            actor.Tags.Has(
+                "control.playable");
+
+        if (!hadPlayableTag)
+        {
+            actor.Tags.Add(
+                "control.playable");
+        }
+
+        try
+        {
+            return GetAvailableActions(
+                actor,
+                target);
+        }
+        finally
+        {
+            if (!hadPlayableTag)
+            {
+                actor.Tags.Remove(
+                    "control.playable");
+            }
+        }
+    }
+
     public GameActionResult Execute(
         string actionId,
         IPerson actor,
@@ -145,6 +184,99 @@ public sealed class ActionRegistry : IActionRegistry
         return new GameActionResult(
             true,
             $"{action.Label} queued.");
+    }
+
+    public GameActionResult ExecuteAutonomous(
+        string actionId,
+        IPerson actor,
+        IPerson target)
+    {
+        if (!_actions.TryGetValue(
+            actionId,
+            out var action))
+        {
+            return new GameActionResult(
+                false,
+                $"Unknown action '{actionId}'.");
+        }
+
+        var guardResult =
+            _guards.Evaluate(
+                actor);
+
+        if (!guardResult.Allowed
+            && !action.BypassGuards)
+        {
+            return new GameActionResult(
+                false,
+                guardResult.Reason
+                    ?? "This character cannot perform actions.");
+        }
+
+        if (_queued.Any(
+            queued =>
+                queued.ActorId
+                == actor.Id))
+        {
+            return new GameActionResult(
+                false,
+                "This character already has a queued action.");
+        }
+
+        var hadPlayableTag =
+            actor.Tags.Has(
+                "control.playable");
+
+        if (!hadPlayableTag)
+        {
+            actor.Tags.Add(
+                "control.playable");
+        }
+
+        try
+        {
+            var context =
+                CreateContext(
+                    actor,
+                    target);
+
+            if (!action.IsAvailable(
+                context))
+            {
+                return new GameActionResult(
+                    false,
+                    "This action is no longer mechanically available.");
+            }
+
+            var queued =
+                new QueuedAction(
+                    action.Id,
+                    actor.Id,
+                    target.Id,
+                    ResolveQueuePhase(
+                        action));
+
+            _queued.Add(
+                queued);
+
+            _autonomousQueued.Add(
+                new AutonomousQueuedAction(
+                    queued.ActionId,
+                    queued.ActorId,
+                    queued.TargetId));
+
+            return new GameActionResult(
+                true,
+                $"{action.Label} selected autonomously.");
+        }
+        finally
+        {
+            if (!hadPlayableTag)
+            {
+                actor.Tags.Remove(
+                    "control.playable");
+            }
+        }
     }
 
     public IReadOnlyList<QueuedActionInfo>
@@ -224,6 +356,11 @@ public sealed class ActionRegistry : IActionRegistry
             queued =>
                 queued.ActorId
                 == actor.Id);
+
+        _autonomousQueued.RemoveWhere(
+            queued =>
+                queued.ActorId
+                == actor.Id);
     }
 
     public void RestoreQueuedActions(
@@ -287,6 +424,8 @@ public sealed class ActionRegistry : IActionRegistry
         _queued.Clear();
         _queued.AddRange(
             restored);
+
+        _autonomousQueued.Clear();
     }
 
     public void ExecuteQueued(
@@ -345,19 +484,52 @@ public sealed class ActionRegistry : IActionRegistry
                 continue;
             }
 
-            var context =
-                CreateContext(
-                    actor,
-                    target);
+            var autonomousKey =
+                new AutonomousQueuedAction(
+                    queued.ActionId,
+                    queued.ActorId,
+                    queued.TargetId);
 
-            if (!action.IsAvailable(
-                context))
+            var isAutonomous =
+                _autonomousQueued.Remove(
+                    autonomousKey);
+
+            var hadPlayableTag =
+                actor.Tags.Has(
+                    "control.playable");
+
+            if (isAutonomous
+                && !hadPlayableTag)
             {
-                continue;
+                actor.Tags.Add(
+                    "control.playable");
             }
 
-            action.Execute(
-                context);
+            try
+            {
+                var context =
+                    CreateContext(
+                        actor,
+                        target);
+
+                if (!action.IsAvailable(
+                    context))
+                {
+                    continue;
+                }
+
+                action.Execute(
+                    context);
+            }
+            finally
+            {
+                if (isAutonomous
+                    && !hadPlayableTag)
+                {
+                    actor.Tags.Remove(
+                        "control.playable");
+                }
+            }
         }
     }
 
@@ -402,4 +574,9 @@ public sealed class ActionRegistry : IActionRegistry
         Guid ActorId,
         Guid TargetId,
         YearPhase Phase);
+
+    private sealed record AutonomousQueuedAction(
+        string ActionId,
+        Guid ActorId,
+        Guid TargetId);
 }

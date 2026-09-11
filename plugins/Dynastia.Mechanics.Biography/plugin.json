@@ -1,13 +1,14 @@
 {
   "id": "dynastia.biography",
   "name": "Standard Biography",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "apiVersion": 1,
   "assembly": "Dynastia.Mechanics.Biography.dll",
   "entryType": "Dynastia.Mechanics.Biography.BiographyPlugin",
   "dependencies": [
     "dynastia.family",
     "dynastia.stats",
-    "dynastia.locations"
+    "dynastia.locations",
+    "dynastia.households"
   ]
 }

@@ -62,6 +62,11 @@ public sealed class HouseholdsPlugin : IGamePlugin
             ?? throw new InvalidOperationException(
                 "Action registry is unavailable.");
 
+        var systems =
+            context.GetService<IYearSystemRegistry>()
+            ?? throw new InvalidOperationException(
+                "Year-system registry is unavailable.");
+
         var events =
             context.GetService<IGameEventBus>()
             ?? throw new InvalidOperationException(
@@ -87,10 +92,92 @@ public sealed class HouseholdsPlugin : IGamePlugin
                 gameState,
                 family,
                 economy,
-                career);
+                career,
+                events);
 
         context.AddService<IHouseholdService>(
             households);
+
+        systems.Register(
+            new HouseholdReconcileYearSystem(
+                households,
+                "households.status_reconcile",
+                YearPhase.Status,
+                before:
+                    Array.Empty<string>(),
+                after:
+                    Array.Empty<string>()));
+
+        systems.Register(
+            new HouseholdReconcileYearSystem(
+                households,
+                "households.inheritance_reconcile",
+                YearPhase.Inheritance,
+                before:
+                    ["inheritance.estate_settlement"],
+                after:
+                    ["adoption.child_placement"]));
+
+        systems.Register(
+            new HouseholdReconcileYearSystem(
+                households,
+                "households.post_inheritance_reconcile",
+                YearPhase.DerivedState,
+                before:
+                    Array.Empty<string>(),
+                after:
+                    Array.Empty<string>()));
+
+        systems.Register(
+            new NannyNeedReconcileYearSystem(
+                households,
+                economy,
+                family,
+                events,
+                "households.nanny_need_prefinance",
+                YearPhase.QueuedActionsEarly,
+                before:
+                    Array.Empty<string>(),
+                after:
+                    ["actions.queued.early"]));
+
+        systems.Register(
+            new NannyNeedReconcileYearSystem(
+                households,
+                economy,
+                family,
+                events,
+                "households.nanny_need_postyear",
+                YearPhase.DerivedState,
+                before:
+                    Array.Empty<string>(),
+                after:
+                    ["households.post_inheritance_reconcile"]));
+
+        systems.Register(
+            new AutonomousHouseholdDecisionSystem(
+                gameState,
+                households,
+                actions,
+                economy,
+                random));
+
+        events.EventPublished +=
+            (_, gameEvent) =>
+            {
+                households.RecordFamilyNewsVisibility(
+                    gameEvent);
+
+                households.UpdatePeripheralRelationshipState(
+                    gameEvent);
+
+                if (gameEvent.Type.Equals(
+                    "game.started",
+                    StringComparison.OrdinalIgnoreCase))
+                {
+                    households.ReconcileHouseholds();
+                }
+            };
 
         healthModifiers.Register(
             new HouseholdHealthModifierProvider(
@@ -515,7 +602,8 @@ public sealed class HouseholdsPlugin : IGamePlugin
                 Label = "Hire a Nanny ($250/year)",
                 Description =
                     "Hire help for an oversized household. " +
-                    "The annual nanny cost is charged during finances.",
+                    "The annual nanny cost is charged during finances. " +
+                    "The service ends automatically once the household is no longer strained by young children.",
                 Mode = ActionExecutionMode.Queued,
                 QueuePhase = YearPhase.QueuedActionsEarly,
 
@@ -641,7 +729,8 @@ public sealed class HouseholdsPlugin : IGamePlugin
                     "Ask the selected adult unmarried and unemployed daughter " +
                     "who still lives in this household to care for the younger " +
                     "children for free. Her help removes the large-family strain. " +
-                    "It ends automatically if she dies, finds work or marries.",
+                    "It ends automatically if she dies, finds work, marries, or " +
+                    "the household no longer has large-family strain.",
 
                 Mode =
                     ActionExecutionMode.Queued,
@@ -700,7 +789,8 @@ public sealed class HouseholdsPlugin : IGamePlugin
                         return finance is not null
                             && status is not null
                             && !status.HasNannyReference
-                            && status.UnderageChildren > 0
+                            && status.UnderageChildren
+                                > status.BaseChildCapacity
                             && !daughterCareer.IsRetired
                             && daughterCareer.JobLevel == 0;
                     },
@@ -729,7 +819,8 @@ public sealed class HouseholdsPlugin : IGamePlugin
                         if (finance is null
                             || status is null
                             || status.HasNannyReference
-                            || status.UnderageChildren <= 0
+                            || status.UnderageChildren
+                                <= status.BaseChildCapacity
                             || daughterCareer.IsRetired
                             || daughterCareer.JobLevel != 0
                             || family.GetSpouse(

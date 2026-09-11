@@ -14,9 +14,14 @@ public sealed class EstateInheritanceSystem :
         IEconomyService economy,
         IGameEventBus events)
     {
-        _family = family;
-        _economy = economy;
-        _events = events;
+        _family =
+            family;
+
+        _economy =
+            economy;
+
+        _events =
+            events;
     }
 
     public string Id =>
@@ -29,284 +34,179 @@ public sealed class EstateInheritanceSystem :
         Array.Empty<string>();
 
     public IReadOnlyCollection<string> After =>
-        Array.Empty<string>();
+        ["households.inheritance_reconcile"];
 
     public void Execute(
         IGameState gameState)
     {
-        var deceasedThisYear =
+        var readyHouseholds =
             gameState.People
                 .Where(
                     person =>
-                        person.Tags.Has(
-                            "state.dead")
-                        && person.DeathDate
-                            is GameDate deathDate
-                        && deathDate.Year
-                            == gameState.Year)
+                        _economy.HasHousehold(
+                            person)
+                        && _economy.IsEstateReady(
+                            person))
                 .ToList();
 
-        foreach (var deceased in
-            deceasedThisYear)
+        foreach (var head in
+            readyHouseholds)
         {
-            DistributeHouses(
+            SettleHouseholdEstate(
                 gameState,
-                deceased);
-
-            SettleRecordedUnions(
-                gameState,
-                deceased);
+                head);
         }
     }
 
-    private void DistributeHouses(
+    private void SettleHouseholdEstate(
         IGameState gameState,
-        IPerson deceased)
+        IPerson head)
     {
-        if (_family.GetSex(deceased)
-                != Sex.Male
-            || !_family.IsMaleLineage(
-                deceased))
-        {
-            return;
-        }
+        var anchorId =
+            _economy
+                .GetHouseholdDynastyAnchorId(
+                    head);
 
-        var household =
+        var anchor =
+            anchorId is Guid id
+                ? gameState.People
+                    .FirstOrDefault(
+                        person =>
+                            person.Id == id)
+                : null;
+
+        var finance =
             _economy.GetHousehold(
-                deceased);
+                head);
 
-        if (household is null
-            || household.HousesOwned <= 0)
+        if (finance is null)
         {
+            _economy.DissolveHousehold(
+                head);
+
             return;
         }
 
-        var livingSons =
-            _family.GetChildren(
-                deceased)
-                .Where(
-                    child =>
-                        child.Tags.Has(
-                            "state.alive")
-                        && _family.GetSex(
-                            child)
-                            == Sex.Male)
-                .ToList();
+        var estateHouseholdId =
+            _economy.GetHouseholdId(
+                head);
 
-        if (livingSons.Count == 0)
+        // A household can also dissolve because its living bloodline
+        // anchor left it after separation. That is not an inheritance
+        // event: remaining assets follow the living bloodline anchor.
+        if (anchor is not null
+            && anchor.Tags.Has(
+                "state.alive"))
+        {
+            TransferResidualAssetsToLivingAnchor(
+                gameState,
+                head,
+                anchor,
+                finance,
+                estateHouseholdId);
+
             return;
+        }
 
         var houses =
-            _economy.TakeAllHouses(
-                deceased)
-            .ToList();
+            _economy
+                .TakeAllHouses(
+                    head)
+                .ToList();
 
-        if (houses.Count == 0)
-            return;
+        var wealth =
+            finance.Wealth;
 
-        var housesPerSon =
-            houses.Count
-            / livingSons.Count;
+        IReadOnlyList<IPerson> heirs =
+            anchor is null
+                ? Array.Empty<IPerson>()
+                : _family
+                    .GetChildren(
+                        anchor)
+                    .Where(
+                        child =>
+                            child.Tags.Has(
+                                "state.alive"))
+                    .OrderBy(
+                        child =>
+                            child.BirthDate?.Year
+                            ?? int.MaxValue)
+                    .ThenBy(
+                        child =>
+                            child.BirthDate?.Month
+                            ?? 1)
+                    .ThenBy(
+                        child =>
+                            child.BirthDate?.Day
+                            ?? 1)
+                    .ThenBy(
+                        child =>
+                            child.Id)
+                    .ToList();
 
-        var remainder =
-            houses.Count
-            % livingSons.Count;
-
-        var houseIndex =
-            0;
-
-        foreach (var son in
-            livingSons)
+        if (heirs.Count == 0)
         {
-            var inherited =
-                housesPerSon;
-
-            if (remainder > 0)
-            {
-                inherited++;
-                remainder--;
-            }
-
-            if (inherited <= 0)
-                continue;
-
-            _economy.EnsureHousehold(
-                son);
-
-            var inheritedTowns =
-                new List<string>();
-
-            for (var index = 0;
-                index < inherited;
-                index++)
-            {
-                var house =
-                    houses[
-                        houseIndex++];
-
-                _economy.AddExistingHouse(
-                    son,
-                    house);
-
-                inheritedTowns.Add(
-                    house.Town.Town);
-            }
+            _economy.SetWealth(
+                head,
+                0);
 
             _events.Publish(
                 new GameEvent
                 {
                     Type =
-                        "inheritance.houses",
+                        "inheritance.estate_left_dynasty",
 
                     Year =
                         gameState.Year,
 
                     SubjectId =
-                        son.Id,
+                        anchor?.Id
+                        ?? head.Id,
 
                     RelatedPersonIds =
-                        [deceased.Id],
+                        [head.Id],
 
                     Data =
                         new Dictionary<string, string>
                         {
-                            ["count"] =
-                                inherited.ToString(),
+                            ["amount"] =
+                                wealth.ToString(),
 
-                            ["fatherId"] =
-                                deceased.Id.ToString(),
-
-                            ["towns"] =
-                                string.Join(
-                                    ", ",
-                                    inheritedTowns),
+                            ["houses"] =
+                                houses.Count.ToString(),
 
                             ["text"] =
-                                $"{_family.GetDisplayName(son)} " +
-                                $"inherited {inherited} " +
-                                $"house{(inherited == 1 ? "" : "s")} " +
-                                $"from their late father."
+                                $"The remaining estate of " +
+                                $"{(anchor is null ? _family.GetDisplayName(head) : _family.GetDisplayName(anchor))} " +
+                                "left the dynasty because there were no living children to inherit it."
                         }
                 });
-        }
-    }
 
-    private void SettleRecordedUnions(
-        IGameState gameState,
-        IPerson deceased)
-    {
-        foreach (var marriage in
-            _family.GetRelationshipHistory(
-                deceased))
-        {
-            var spouse =
-                gameState.People
-                    .FirstOrDefault(
-                        person =>
-                            person.Id
-                            == marriage.SpouseId);
+            _economy.DissolveHousehold(
+                head);
 
-            if (spouse is null
-                || !spouse.Tags.Has(
-                    "state.dead"))
-            {
-                continue;
-            }
-
-            var male =
-                _family.GetSex(deceased)
-                    == Sex.Male
-                        ? deceased
-                        : spouse;
-
-            var female =
-                _family.GetSex(deceased)
-                    == Sex.Female
-                        ? deceased
-                        : spouse;
-
-            if (!_family.IsMaleLineage(
-                male))
-            {
-                continue;
-            }
-
-            var maleHousehold =
-                _economy.GetHousehold(
-                    male);
-
-            if (maleHousehold is null)
-                continue;
-
-            var livingHeirs =
-                FindLivingChildrenOfUnion(
-                    male,
-                    female);
-
-            var estate =
-                maleHousehold.Wealth
-                + _economy
-                    .GetPendingInheritance(
-                        male);
-
-            if (livingHeirs.Count > 0
-                && estate > 0)
-            {
-                SettleEstate(
-                    gameState,
-                    male,
-                    female,
-                    livingHeirs,
-                    estate);
-            }
-
-            // The source clears the cash estate as soon as one
-            // qualifying recorded union is processed.
-            _economy.SetWealth(
-                male,
-                0);
-
-            _economy.SetPendingInheritance(
-                male,
-                0);
-        }
-    }
-
-    private IReadOnlyList<IPerson>
-        FindLivingChildrenOfUnion(
-            IPerson male,
-            IPerson female)
-    {
-        return _family
-            .GetChildren(
-                male)
-            .Where(
-                child =>
-                    child.Tags.Has(
-                        "state.alive")
-                    && _family.GetFather(
-                        child)?.Id
-                        == male.Id
-                    && _family.GetMother(
-                        child)?.Id
-                        == female.Id)
-            .ToList();
-    }
-
-    private void SettleEstate(
-        IGameState gameState,
-        IPerson male,
-        IPerson female,
-        IReadOnlyList<IPerson> livingHeirs,
-        decimal estate)
-    {
-        var share =
-            Math.Floor(
-                estate
-                / livingHeirs.Count);
-
-        if (share <= 0)
             return;
+        }
+
+        DistributeHouses(
+            gameState,
+            anchor
+            ?? head,
+            heirs,
+            houses,
+            estateHouseholdId);
+
+        DistributeCash(
+            gameState,
+            anchor
+            ?? head,
+            heirs,
+            wealth,
+            estateHouseholdId);
+
+        _economy.SetWealth(
+            head,
+            0);
 
         _events.Publish(
             new GameEvent
@@ -318,170 +218,381 @@ public sealed class EstateInheritanceSystem :
                     gameState.Year,
 
                 SubjectId =
-                    male.Id,
+                    anchor?.Id
+                    ?? head.Id,
 
                 RelatedPersonIds =
-                    [female.Id],
+                    heirs
+                        .Select(
+                            heir =>
+                                heir.Id)
+                        .ToList(),
 
                 Data =
                     new Dictionary<string, string>
                     {
                         ["estate"] =
-                            estate.ToString(),
+                            wealth.ToString(),
 
-                        ["share"] =
-                            share.ToString(),
+                        ["houses"] =
+                            houses.Count.ToString(),
 
                         ["heirs"] =
-                            livingHeirs.Count.ToString(),
+                            heirs.Count.ToString(),
 
                         ["text"] =
-                            $"The estate of the late " +
-                            $"{_family.GetDisplayName(male)} and " +
-                            $"{_family.GetDisplayName(female)} " +
-                            $"(${estate:N0}) was settled."
+                            $"The remaining household estate of " +
+                            $"{(anchor is null ? _family.GetDisplayName(head) : _family.GetDisplayName(anchor))} " +
+                            "was divided among the living children."
                     }
             });
 
-        foreach (var heir in
-            livingHeirs)
-        {
-            DistributeCashShare(
-                gameState,
-                heir,
-                share);
-        }
-
-        // Any remainder from floor division is intentionally lost
-        // when the deceased male's estate is cleared.
+        _economy.DissolveHousehold(
+            head);
     }
 
-    private void DistributeCashShare(
+    private void TransferResidualAssetsToLivingAnchor(
         IGameState gameState,
-        IPerson heir,
-        decimal share)
+        IPerson oldHead,
+        IPerson anchor,
+        HouseholdFinanceSnapshot finance,
+        Guid? oldHouseholdId)
     {
-        if (heir.Age < 18)
+        var houses =
+            _economy
+                .TakeAllHouses(
+                    oldHead)
+                .ToList();
+
+        var wealth =
+            finance.Wealth;
+
+        var anchorHouseholdId =
+            _economy.GetHouseholdId(
+                anchor);
+
+        var hasEstablishedHousehold =
+            anchor.Age >= 18
+            && anchorHouseholdId is not null
+            && anchorHouseholdId
+                != oldHouseholdId;
+
+        if (hasEstablishedHousehold)
         {
-            _economy.ChangePendingInheritance(
-                heir,
-                share);
-
-            PublishPending(
-                gameState,
-                heir,
-                share,
-                "inheritance.pending_minor",
-                $"{_family.GetDisplayName(heir)} " +
-                $"has an inheritance of ${share:N0} " +
-                "waiting for adulthood.");
-
-            return;
-        }
-
-        if (_family.GetSex(heir)
-                == Sex.Male
-            && _family.IsMaleLineage(
-                heir))
-        {
-            _economy.EnsureHousehold(
-                heir);
-
-            _economy.ChangeWealth(
-                heir,
-                share);
-
-            PublishReceived(
-                gameState,
-                heir,
-                share,
-                _family.GetDisplayName(
-                    heir));
-
-            return;
-        }
-
-        if (_family.GetSex(heir)
-                == Sex.Female)
-        {
-            var husband =
-                _family.GetSpouse(
-                    heir);
-
-            if (husband is not null
-                && husband.Tags.Has(
-                    "state.alive")
-                && _economy.GetHousehold(
-                    husband)
-                    is not null)
+            if (wealth > 0)
             {
                 _economy.ChangeWealth(
-                    husband,
-                    share);
-
-                PublishReceived(
-                    gameState,
-                    husband,
-                    share,
-                    $"{_family.GetDisplayName(heir)}'s household",
-                    heir.Id);
-
-                return;
+                    anchor,
+                    wealth);
             }
 
-            if (husband is null)
+            foreach (var house in
+                houses)
+            {
+                _economy.AddExistingHouse(
+                    anchor,
+                    house);
+            }
+        }
+        else
+        {
+            if (wealth > 0)
             {
                 _economy.ChangePendingInheritance(
-                    heir,
-                    share);
+                    anchor,
+                    wealth);
+            }
 
-                PublishPending(
-                    gameState,
-                    heir,
-                    share,
-                    "inheritance.claimable",
-                    $"{_family.GetDisplayName(heir)} " +
-                    $"received an inheritance of ${share:N0}, " +
-                    "to be claimed upon marriage.");
-
-                return;
+            foreach (var house in
+                houses)
+            {
+                _economy.AddPendingHouse(
+                    anchor,
+                    house);
             }
         }
 
-        // The original can display a misleading "received" message
-        // here even though no household balance is credited.
-        // We preserve the state outcome (no recipient gets the money)
-        // but make the event truthful.
+        _economy.SetWealth(
+            oldHead,
+            0);
+
         _events.Publish(
             new GameEvent
             {
                 Type =
-                    "inheritance.unclaimed",
+                    "household.assets_followed_anchor",
 
                 Year =
                     gameState.Year,
 
                 SubjectId =
-                    heir.Id,
+                    anchor.Id,
+
+                RelatedPersonIds =
+                    [oldHead.Id],
 
                 Data =
                     new Dictionary<string, string>
                     {
                         ["amount"] =
-                            share.ToString(),
+                            wealth.ToString(),
+
+                        ["houses"] =
+                            houses.Count.ToString(),
 
                         ["text"] =
-                            $"{_family.GetDisplayName(heir)} " +
-                            $"was due ${share:N0} from an inheritance, " +
-                            "but had no eligible household to receive it."
+                            $"The remaining assets of " +
+                            $"{_family.GetDisplayName(anchor)}'s former household " +
+                            "followed the living bloodline member when that household ended."
                     }
             });
+
+        _economy.DissolveHousehold(
+            oldHead);
     }
 
-    private void PublishPending(
+    private void DistributeHouses(
         IGameState gameState,
+        IPerson source,
+        IReadOnlyList<IPerson> heirs,
+        IReadOnlyList<HousePropertyInfo> houses,
+        Guid? estateHouseholdId)
+    {
+        if (houses.Count == 0)
+            return;
+
+        var received =
+            heirs.ToDictionary(
+                heir =>
+                    heir.Id,
+                _ =>
+                    new List<HousePropertyInfo>());
+
+        for (var index = 0;
+            index < houses.Count;
+            index++)
+        {
+            var heir =
+                heirs[
+                    index
+                    % heirs.Count];
+
+            var house =
+                houses[index];
+
+            var hasOwnHousehold =
+                HasEstablishedHouseholdOutsideEstate(
+                    heir,
+                    estateHouseholdId);
+
+            if (hasOwnHousehold)
+            {
+                _economy.AddExistingHouse(
+                    heir,
+                    house);
+            }
+            else
+            {
+                _economy.AddPendingHouse(
+                    heir,
+                    house);
+            }
+
+            received[heir.Id]
+                .Add(
+                    house);
+        }
+
+        foreach (var heir in
+            heirs)
+        {
+            var inherited =
+                received[heir.Id];
+
+            if (inherited.Count == 0)
+                continue;
+
+            _events.Publish(
+                new GameEvent
+                {
+                    Type =
+                        HasEstablishedHouseholdOutsideEstate(
+                            heir,
+                            estateHouseholdId)
+                            ? "inheritance.houses"
+                            : "inheritance.pending_houses",
+
+                    Year =
+                        gameState.Year,
+
+                    SubjectId =
+                        heir.Id,
+
+                    RelatedPersonIds =
+                        [source.Id],
+
+                    Data =
+                        new Dictionary<string, string>
+                        {
+                            ["count"] =
+                                inherited.Count.ToString(),
+
+                            ["towns"] =
+                                string.Join(
+                                    ", ",
+                                    inherited.Select(
+                                        house =>
+                                            house.Town.Town)),
+
+                            ["text"] =
+                                $"{_family.GetDisplayName(heir)} " +
+                                $"inherited {inherited.Count} " +
+                                $"house{(inherited.Count == 1 ? "" : "s")}."
+                        }
+                });
+        }
+    }
+
+    private void DistributeCash(
+        IGameState gameState,
+        IPerson source,
+        IReadOnlyList<IPerson> heirs,
+        decimal wealth,
+        Guid? estateHouseholdId)
+    {
+        if (wealth <= 0)
+            return;
+
+        // Dynastia displays and prices money in whole zł units. Divide
+        // those units evenly and hand any remainder to the eldest heirs
+        // first. If an old save somehow contains a fractional zł residue,
+        // preserve it by adding that residue to the eldest share.
+        var wholeUnits =
+            decimal.ToInt64(
+                decimal.Truncate(
+                    wealth));
+
+        var fractionalResidue =
+            wealth
+            - wholeUnits;
+
+        var baseUnits =
+            wholeUnits
+            / heirs.Count;
+
+        var remainder =
+            wholeUnits
+            % heirs.Count;
+
+        for (var index = 0;
+            index < heirs.Count;
+            index++)
+        {
+            var heir =
+                heirs[index];
+
+            var amount =
+                baseUnits
+                + (
+                    index < remainder
+                        ? 1m
+                        : 0m
+                )
+                + (
+                    index == 0
+                        ? fractionalResidue
+                        : 0m
+                );
+
+            if (amount <= 0)
+                continue;
+
+            var hasOwnHousehold =
+                HasEstablishedHouseholdOutsideEstate(
+                    heir,
+                    estateHouseholdId);
+
+            if (hasOwnHousehold)
+            {
+                _economy.ChangeWealth(
+                    heir,
+                    amount);
+
+                PublishCashEvent(
+                    gameState,
+                    source,
+                    heir,
+                    amount,
+                    "inheritance.received",
+                    $"{_family.GetDisplayName(heir)} received " +
+                    $"an inheritance of {amount:N0} zł.");
+            }
+            else
+            {
+                _economy.ChangePendingInheritance(
+                    heir,
+                    amount);
+
+                PublishCashEvent(
+                    gameState,
+                    source,
+                    heir,
+                    amount,
+                    "inheritance.pending",
+                    $"{_family.GetDisplayName(heir)} has " +
+                    $"an inheritance of {amount:N0} zł waiting until " +
+                    "they establish a household.");
+            }
+        }
+    }
+
+    private bool HasEstablishedHouseholdOutsideEstate(
+        IPerson person,
+        Guid? estateHouseholdId)
+    {
+        if (person.Age < 18)
+            return false;
+
+        var householdId =
+            _economy.GetHouseholdId(
+                person);
+
+        if (householdId is null
+            || householdId
+                == estateHouseholdId)
+        {
+            return false;
+        }
+
+        if (_economy.HasHousehold(
+            person))
+        {
+            return true;
+        }
+
+        if (_economy
+            .GetHouseholdDynastyAnchorId(
+                person)
+            == person.Id)
+        {
+            return true;
+        }
+
+        var spouse =
+            _family.GetSpouse(
+                person);
+
+        return spouse is not null
+            && _economy.GetHouseholdId(
+                spouse)
+                == householdId;
+    }
+
+    private void PublishCashEvent(
+        IGameState gameState,
+        IPerson source,
         IPerson heir,
-        decimal share,
+        decimal amount,
         string type,
         string text)
     {
@@ -497,57 +608,17 @@ public sealed class EstateInheritanceSystem :
                 SubjectId =
                     heir.Id,
 
+                RelatedPersonIds =
+                    [source.Id],
+
                 Data =
                     new Dictionary<string, string>
                     {
                         ["amount"] =
-                            share.ToString(),
+                            amount.ToString(),
 
                         ["text"] =
                             text
-                    }
-            });
-    }
-
-    private void PublishReceived(
-        IGameState gameState,
-        IPerson recipient,
-        decimal share,
-        string recipientName,
-        Guid? heirId = null)
-    {
-        var related =
-            heirId is Guid id
-                ? new List<Guid>
-                    {
-                        id
-                    }
-                : new List<Guid>();
-
-        _events.Publish(
-            new GameEvent
-            {
-                Type =
-                    "inheritance.received",
-
-                Year =
-                    gameState.Year,
-
-                SubjectId =
-                    recipient.Id,
-
-                RelatedPersonIds =
-                    related,
-
-                Data =
-                    new Dictionary<string, string>
-                    {
-                        ["amount"] =
-                            share.ToString(),
-
-                        ["text"] =
-                            $"{recipientName} received " +
-                            $"an inheritance of ${share:N0}."
                     }
             });
     }

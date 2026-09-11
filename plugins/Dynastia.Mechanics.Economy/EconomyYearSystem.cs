@@ -404,25 +404,70 @@ public sealed class EconomyYearSystem : IYearSystem
                 _family.GetSpouse(
                     head);
 
+            var caregivers =
+                new Dictionary<Guid, IPerson>();
+
+            if (spouse is not null
+                && spouse.Tags.Has(
+                    "state.alive"))
+            {
+                caregivers[spouse.Id] =
+                    spouse;
+            }
+
+            foreach (var child in
+                children)
+            {
+                var mother =
+                    _family.GetMother(
+                        child);
+
+                if (mother is null
+                    || !mother.Tags.Has(
+                        "state.alive"))
+                {
+                    continue;
+                }
+
+                var currentSpouse =
+                    _family.GetSpouse(
+                        mother);
+
+                // A divorced/unmarried mother returns to the deceased
+                // father's household to care for the child. If she has
+                // remarried, she belongs to that current household instead.
+                if (currentSpouse is null
+                    || currentSpouse.Id
+                        == head.Id)
+                {
+                    caregivers[mother.Id] =
+                        mother;
+                }
+            }
+
             household.LastIncomeBreakdown.Clear();
             household.LastExpenseBreakdown.Clear();
 
             decimal income =
                 0;
 
-            decimal expenses;
-
-            if (spouse is not null
-                && spouse.Tags.Has(
-                    "state.alive"))
+            foreach (var caregiver in
+                caregivers.Values)
             {
-                income =
+                income +=
                     AddPersonIncome(
                         household,
-                        spouse);
+                        caregiver);
+            }
 
+            decimal expenses =
+                0;
+
+            if (caregivers.Count > 0)
+            {
                 expenses =
-                    (1 + children.Count)
+                    (caregivers.Count
+                        + children.Count)
                     * LivingExpense;
 
                 household.LastExpenseBreakdown.Add(
@@ -434,11 +479,6 @@ public sealed class EconomyYearSystem : IYearSystem
                         Amount =
                             expenses
                     });
-            }
-            else
-            {
-                expenses =
-                    0;
             }
 
             if (household.NannyId.HasValue)

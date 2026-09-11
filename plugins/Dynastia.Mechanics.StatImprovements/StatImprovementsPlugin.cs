@@ -32,13 +32,13 @@ public sealed class StatImprovementsPlugin :
                 StatName:
                     "Intellect",
                 Label:
-                    "Advanced Specialist Course",
+                    "Intelligence Training",
                 Cost:
                     7000m,
                 Description:
-                    "Pay for intensive private instruction or specialist intellectual training. Guaranteed Intellect +1. Education level is unchanged.",
+                    "Fund intensive intelligence training, private instruction and demanding mental exercises. Guaranteed Intellect +1. Education level is unchanged.",
                 Narrative:
-                    "completed an intensive specialist course that substantially developed their intellectual abilities"),
+                    "completed intensive intelligence training that substantially developed their intellectual abilities"),
 
             new(
                 ActionId:
@@ -80,13 +80,13 @@ public sealed class StatImprovementsPlugin :
                 StatName:
                     "Longevity",
                 Label:
-                    "Preventive Medicine Program",
+                    "Preventive Medicine",
                 Cost:
                     9000m,
                 Description:
-                    "Fund prolonged preventive examinations, specialist monitoring, rehabilitation and risk-factor treatment. Guaranteed Longevity +1.",
+                    "Fund prolonged preventive medicine, specialist monitoring, rehabilitation and risk-factor treatment. Guaranteed Longevity +1.",
                 Narrative:
-                    "completed an extensive preventive health program intended to improve their long-term health"),
+                    "completed an extensive preventive medicine program intended to improve their long-term health"),
 
             new(
                 ActionId:

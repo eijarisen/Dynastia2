@@ -44,6 +44,48 @@ public sealed class StandardHouseholdService :
             return person;
         }
 
+        // A living, currently unmarried mother who is caring for a minor
+        // after the male-line father dies belongs to the deceased father's
+        // estate household until that child reaches adulthood. This covers
+        // divorced mothers returning to care for their child without making
+        // them appear as members of the next living uncle's household.
+        if (person.Tags.Has(
+                "state.alive")
+            && _family.GetSex(
+                person) == Sex.Female
+            && _family.GetSpouse(
+                person) is null)
+        {
+            foreach (var child in
+                _family.GetChildren(
+                    person))
+            {
+                if (!child.Tags.Has(
+                        "state.alive")
+                    || child.Age >= 18
+                    || child.Tags.Has(
+                        "trait.orphan"))
+                {
+                    continue;
+                }
+
+                var deceasedFather =
+                    _family.GetFather(
+                        child);
+
+                if (deceasedFather is not null
+                    && deceasedFather.Tags.Has(
+                        "state.dead")
+                    && _family.IsMaleLineage(
+                        deceasedFather)
+                    && _economy.HasHousehold(
+                        deceasedFather))
+                {
+                    return deceasedFather;
+                }
+            }
+        }
+
         // Adopted/hosted wards belong to the host household for
         // expenses, poverty and large-family strain.
         foreach (var candidate in

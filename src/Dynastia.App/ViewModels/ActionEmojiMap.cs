@@ -7,6 +7,8 @@ public static class ActionEmojiMap
             new Dictionary<string, string>(
                 StringComparer.OrdinalIgnoreCase)
             {
+                ["turn.pass"] = "⏭️",
+
                 ["wellbeing.recover"] = "🧘",
                 ["relationship.find_spouse"] = "💍",
                 ["reproduction.try_for_baby"] = "👶",

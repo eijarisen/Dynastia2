@@ -997,6 +997,53 @@ public sealed class MainWindowViewModel : ViewModelBase
             return;
         }
 
+        var missing =
+            GetMaleHeirsWithoutAnnualAction();
+
+        if (missing.Count > 0)
+        {
+            var first =
+                missing[0];
+
+            _succession.SetActiveController(
+                first);
+
+            var row =
+                People.FirstOrDefault(
+                    person =>
+                        person.Id
+                        == first.Id);
+
+            if (row is not null)
+            {
+                SelectedPerson =
+                    row;
+            }
+
+            var names =
+                string.Join(
+                    ", ",
+                    missing.Select(
+                        person =>
+                            _familyService is null
+                                ? person.Name
+                                : _familyService.GetDisplayName(
+                                    person)));
+
+            ReportPersistenceStatus(
+                missing.Count == 1
+                    ? $"Choose an annual action for {names} before advancing the year."
+                    : $"Choose annual actions for every male heir before advancing the year. Missing: {names}.");
+
+            RefreshFamilySection();
+            RefreshActions();
+
+            return;
+        }
+
+        PersistenceStatusText =
+            string.Empty;
+
         _yearProcessor.AdvanceYear();
 
         AlbumYear =
@@ -1005,6 +1052,38 @@ public sealed class MainWindowViewModel : ViewModelBase
         RefreshPeople();
 
         NotifyGameStateChanged();
+    }
+
+    private IReadOnlyList<IPerson>
+        GetMaleHeirsWithoutAnnualAction()
+    {
+        var queuedActorIds =
+            _actionRegistry
+                .GetAllQueuedActions()
+                .Select(
+                    queued =>
+                        queued.ActorId)
+                .ToHashSet();
+
+        return _gameState.People
+            .Where(
+                person =>
+                    _succession.IsControllable(
+                        person)
+                    && !queuedActorIds.Contains(
+                        person.Id))
+            .OrderBy(
+                person =>
+                    _familyService?
+                        .GetGeneration(
+                            person)
+                    ?? int.MaxValue)
+            .ThenBy(
+                GetBirthSortYear)
+            .ThenBy(
+                person =>
+                    person.Id)
+            .ToList();
     }
 
     private void CancelQueuedAction()
@@ -1305,29 +1384,6 @@ public sealed class MainWindowViewModel : ViewModelBase
                                 selectedId,
                                 active.Id));
 
-                        if (relative.Tags.Has(
-                                "residence.with_mother")
-                            && _familyService.GetMother(
-                                relative) is IPerson mother
-                            && mother.Tags.Has(
-                                "state.alive")
-                            && !mother.Tags.Has(
-                                "role.nanny")
-                            && !HouseholdMembers.Any(
-                                member =>
-                                    member.PersonId
-                                    == mother.Id)
-                            && !ExtendedFamilyMembers.Any(
-                                member =>
-                                    member.PersonId
-                                    == mother.Id))
-                        {
-                            ExtendedFamilyMembers.Add(
-                                CreateFamilyCard(
-                                    mother,
-                                    selectedId,
-                                    active.Id));
-                        }
                     }
                 }
             }
@@ -1469,6 +1525,16 @@ public sealed class MainWindowViewModel : ViewModelBase
         {
             return
                 "No action selected for this household.";
+        }
+
+        if (queued.ActionId.Equals(
+            "turn.pass",
+            StringComparison.OrdinalIgnoreCase))
+        {
+            return
+                $"{ActionEmojiMap.Format(queued.ActionId, queued.Label)}" +
+                Environment.NewLine +
+                "No planned action for this year.";
         }
 
         var target =
@@ -1926,10 +1992,22 @@ public sealed class MainWindowViewModel : ViewModelBase
             return;
         }
 
-        _actionRegistry.Execute(
-            actionId,
-            actor,
-            target);
+        var result =
+            _actionRegistry.Execute(
+                actionId,
+                actor,
+                target);
+
+        if (result.Success
+            && GetMaleHeirsWithoutAnnualAction()
+                .Count == 0
+            && PersistenceStatusText.StartsWith(
+                "Choose ",
+                StringComparison.OrdinalIgnoreCase))
+        {
+            PersistenceStatusText =
+                string.Empty;
+        }
 
         RefreshPeople();
         RefreshAlbum();

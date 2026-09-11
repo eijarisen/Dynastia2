@@ -21,6 +21,15 @@ public sealed class GenealogyCanvas :
     private const double Parallax3Factor =
         0.26;
 
+    // All scenery is deliberately zoomed beyond a simple "fit" so the
+    // viewport is fully covered and parallax layers have safe travel room
+    // in both horizontal and vertical directions.
+    private const double BackgroundZoom =
+        1.08;
+
+    private const double ParallaxZoom =
+        1.18;
+
     private static readonly IBrush SceneFill =
         new SolidColorBrush(
             Color.FromRgb(
@@ -488,8 +497,9 @@ public sealed class GenealogyCanvas :
 
         context.DrawImage(
             bitmap,
-            GetFullyVisibleImageRect(
-                bitmap));
+            GetCoverImageRect(
+                bitmap,
+                BackgroundZoom));
     }
 
     private void DrawParallaxImage(
@@ -501,12 +511,10 @@ public sealed class GenealogyCanvas :
             return;
 
         var baseRect =
-            GetFullyVisibleImageRect(
-                bitmap);
+            GetCoverImageRect(
+                bitmap,
+                ParallaxZoom);
 
-        // Because the image is fitted with Uniform semantics, any leftover
-        // viewport space is the only legal travel range. Clamping to that
-        // slack guarantees that the complete layer remains on screen.
         var desiredX =
             _parallaxTravel.X
             * factor;
@@ -515,21 +523,25 @@ public sealed class GenealogyCanvas :
             _parallaxTravel.Y
             * factor;
 
+        // Keep the parallax layer covering the complete viewport at all
+        // times. Unlike the old "show the full image" clamp, this uses the
+        // overscanned crop as safe travel room. Both X and Y therefore move,
+        // but never far enough to expose empty space beyond an image edge.
         var minimumX =
-            Bounds.Left
-            - baseRect.Left;
-
-        var maximumX =
             Bounds.Right
             - baseRect.Right;
 
-        var minimumY =
-            Bounds.Top
-            - baseRect.Top;
+        var maximumX =
+            Bounds.Left
+            - baseRect.Left;
 
-        var maximumY =
+        var minimumY =
             Bounds.Bottom
             - baseRect.Bottom;
+
+        var maximumY =
+            Bounds.Top
+            - baseRect.Top;
 
         var offsetX =
             Math.Clamp(
@@ -555,8 +567,9 @@ public sealed class GenealogyCanvas :
             destination);
     }
 
-    private Rect GetFullyVisibleImageRect(
-        Bitmap bitmap)
+    private Rect GetCoverImageRect(
+        Bitmap bitmap,
+        double zoom)
     {
         var imageSize =
             bitmap.Size;
@@ -569,12 +582,18 @@ public sealed class GenealogyCanvas :
             return Bounds;
         }
 
-        var scale =
-            Math.Min(
+        var coverScale =
+            Math.Max(
                 Bounds.Width
                     / imageSize.Width,
                 Bounds.Height
                     / imageSize.Height);
+
+        var scale =
+            coverScale
+            * Math.Max(
+                1,
+                zoom);
 
         var width =
             imageSize.Width
@@ -586,11 +605,15 @@ public sealed class GenealogyCanvas :
 
         return new Rect(
             Bounds.X
-                + Bounds.Width / 2
-                - width / 2,
+                + (
+                    Bounds.Width
+                    - width
+                ) / 2,
             Bounds.Y
-                + Bounds.Height / 2
-                - height / 2,
+                + (
+                    Bounds.Height
+                    - height
+                ) / 2,
             width,
             height);
     }

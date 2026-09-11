@@ -25,6 +25,9 @@ public sealed class HealthViewModel
     public string HealthText =>
         $"Health: {Current:0.#}/{Maximum:0.#}";
 
+    public string HealthSummaryText =>
+        $"{HealthText} • {ConditionsText}";
+
     public string ConditionsText { get; }
 
     private static string FormatCondition(

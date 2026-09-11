@@ -56,9 +56,6 @@ public sealed class ActionRegistry : IActionRegistry
             _guards.Evaluate(
                 actor);
 
-        if (!guardResult.Allowed)
-            return [];
-
         if (_queued.Any(
             queued =>
                 queued.ActorId
@@ -75,7 +72,11 @@ public sealed class ActionRegistry : IActionRegistry
         return _actions.Values
             .Where(
                 action =>
-                    action.IsAvailable(
+                    (
+                        guardResult.Allowed
+                        || action.BypassGuards
+                    )
+                    && action.IsAvailable(
                         context))
             .OrderBy(
                 action =>
@@ -88,18 +89,6 @@ public sealed class ActionRegistry : IActionRegistry
         IPerson actor,
         IPerson target)
     {
-        var guardResult =
-            _guards.Evaluate(
-                actor);
-
-        if (!guardResult.Allowed)
-        {
-            return new GameActionResult(
-                false,
-                guardResult.Reason
-                    ?? "This character cannot perform actions.");
-        }
-
         if (!_actions.TryGetValue(
             actionId,
             out var action))
@@ -107,6 +96,19 @@ public sealed class ActionRegistry : IActionRegistry
             return new GameActionResult(
                 false,
                 $"Unknown action '{actionId}'.");
+        }
+
+        var guardResult =
+            _guards.Evaluate(
+                actor);
+
+        if (!guardResult.Allowed
+            && !action.BypassGuards)
+        {
+            return new GameActionResult(
+                false,
+                guardResult.Reason
+                    ?? "This character cannot perform actions.");
         }
 
         var context =
@@ -342,8 +344,11 @@ public sealed class ActionRegistry : IActionRegistry
                 _guards.Evaluate(
                     actor);
 
-            if (!guardResult.Allowed)
+            if (!guardResult.Allowed
+                && !action.BypassGuards)
+            {
                 continue;
+            }
 
             var context =
                 CreateContext(

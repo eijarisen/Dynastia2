@@ -1,0 +1,11 @@
+{
+  "id": "dynastia.turn_actions",
+  "name": "Annual Turn Actions",
+  "version": "0.1.0",
+  "apiVersion": 1,
+  "assembly": "Dynastia.Mechanics.TurnActions.dll",
+  "entryType": "Dynastia.Mechanics.TurnActions.TurnActionsPlugin",
+  "dependencies": [
+    "dynastia.succession"
+  ]
+}

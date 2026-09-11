@@ -38,6 +38,7 @@ public sealed class GameGenealogyDataSource :
     private readonly ILocationService? _locations;
     private readonly IMarriageSatisfactionService?
         _marriageSatisfaction;
+    private readonly IThoughtService? _thoughts;
     private readonly ISuccessionService? _succession;
 
     private long _topologyVersion;
@@ -55,6 +56,7 @@ public sealed class GameGenealogyDataSource :
         ILocationService? locations = null,
         IMarriageSatisfactionService?
             marriageSatisfaction = null,
+        IThoughtService? thoughts = null,
         ISuccessionService? succession = null)
     {
         _gameState =
@@ -83,6 +85,9 @@ public sealed class GameGenealogyDataSource :
 
         _marriageSatisfaction =
             marriageSatisfaction;
+
+        _thoughts =
+            thoughts;
 
         _succession =
             succession;
@@ -250,7 +255,8 @@ public sealed class GameGenealogyDataSource :
                     _health,
                     _career,
                     _justice,
-                    _stats);
+                    _stats,
+                    _thoughts);
 
         double? healthValue =
             null;
@@ -378,19 +384,41 @@ public sealed class GameGenealogyDataSource :
                 : $"{marriage.Label} " +
                   $"({marriage.Value:0}%)";
 
+        var thought =
+            isAlive
+                ? _thoughts?.GetCurrentThought(
+                    person)
+                : null;
+
+        var livingTooltipSections =
+            new List<string>();
+
+        var quotedThought =
+            ThoughtUiFormatter.QuoteAndWrap(
+                thought?.Text);
+
+        if (!string.IsNullOrWhiteSpace(
+            quotedThought))
+        {
+            livingTooltipSections.Add(
+                quotedThought
+                + Environment.NewLine);
+        }
+
+        livingTooltipSections.Add(
+            $"Health: {healthTooltip}");
+
+        livingTooltipSections.Add(
+            $"Job Satisfaction: {satisfactionTooltip}");
+
+        livingTooltipSections.Add(
+            $"Marriage Satisfaction: {marriageTooltip}");
+
         var tooltip =
             isAlive
                 ? string.Join(
                     Environment.NewLine,
-                    new[]
-                    {
-                        $"Health: {healthTooltip}",
-                        $"Education: {educationTooltip}",
-                        $"Occupation: {occupationTooltip}",
-                        $"Job Satisfaction: {satisfactionTooltip}",
-                        $"Spouse: {spouseTooltip}",
-                        $"Marriage Satisfaction: {marriageTooltip}"
-                    })
+                    livingTooltipSections)
                 : string.Join(
                     Environment.NewLine,
                     new[]

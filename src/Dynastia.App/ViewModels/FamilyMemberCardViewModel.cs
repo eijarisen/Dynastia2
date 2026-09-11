@@ -14,6 +14,7 @@ public sealed class FamilyMemberCardViewModel
         IStatsService? stats,
         ILocationService? locations,
         IMarriageSatisfactionService? marriageSatisfaction,
+        IThoughtService? thoughts,
         bool isSelected,
         bool isActiveHouseholdHead,
         Action<Guid> selectPerson)
@@ -54,7 +55,8 @@ public sealed class FamilyMemberCardViewModel
                 health,
                 career,
                 justice,
-                stats);
+                stats,
+                thoughts);
 
         var birthYear =
             person.BirthDate?.Year
@@ -110,11 +112,8 @@ public sealed class FamilyMemberCardViewModel
                 : $"Level " +
                   $"{education.GetEducationLevel(person)}";
 
-        var occupationTooltip =
-            "Unknown";
-
         var satisfactionTooltip =
-            "Unknown";
+            "N/A";
 
         if (career is not null)
         {
@@ -124,17 +123,6 @@ public sealed class FamilyMemberCardViewModel
 
             OccupationText =
                 careerSnapshot.JobTitle;
-
-            occupationTooltip =
-                careerSnapshot.IsRetired
-                    ? careerSnapshot.AnnualIncome > 0
-                        ? $"{careerSnapshot.JobTitle} — " +
-                          $"{careerSnapshot.AnnualIncome:N0} zł/year pension"
-                        : careerSnapshot.JobTitle
-                    : careerSnapshot.JobLevel > 0
-                        ? $"{careerSnapshot.JobTitle} — " +
-                          $"{careerSnapshot.AnnualIncome:N0} zł/year"
-                        : careerSnapshot.JobTitle;
 
             satisfactionTooltip =
                 careerSnapshot.JobLevel > 0
@@ -159,9 +147,6 @@ public sealed class FamilyMemberCardViewModel
                             : $"Imprisoned · " +
                               $"{justiceStatus.RemainingYears} " +
                               "years left";
-
-                occupationTooltip =
-                    OccupationText;
             }
         }
 
@@ -208,19 +193,23 @@ public sealed class FamilyMemberCardViewModel
                 : $"{marriageTooltip.Label} " +
                   $"({marriageTooltip.Value:0}%)";
 
+        var thought =
+            IsLiving
+                ? thoughts?.GetCurrentThought(
+                    person)
+                : null;
+
+        ThoughtText =
+            thought?.Text
+            ?? string.Empty;
+
         InfoTooltipText =
             IsLiving
-                ? string.Join(
-                    Environment.NewLine,
-                    new[]
-                    {
-                        $"Health: {healthTooltip}",
-                        $"Education: {educationTooltip}",
-                        $"Occupation: {occupationTooltip}",
-                        $"Job Satisfaction: {satisfactionTooltip}",
-                        $"Spouse: {spouseTooltip}",
-                        $"Marriage Satisfaction: {marriageText}"
-                    })
+                ? BuildLivingTooltip(
+                    ThoughtText,
+                    healthTooltip,
+                    satisfactionTooltip,
+                    marriageText)
                 : string.Join(
                     Environment.NewLine,
                     new[]
@@ -265,6 +254,8 @@ public sealed class FamilyMemberCardViewModel
     public string HealthText { get; } =
         string.Empty;
 
+    public string ThoughtText { get; }
+
     public string InfoTooltipText { get; }
 
     public bool IsSelected { get; }
@@ -272,4 +263,39 @@ public sealed class FamilyMemberCardViewModel
     public bool IsActiveHouseholdHead { get; }
 
     public RelayCommand SelectCommand { get; }
+
+    private static string BuildLivingTooltip(
+        string thought,
+        string health,
+        string jobSatisfaction,
+        string marriageSatisfaction)
+    {
+        var sections =
+            new List<string>();
+
+        var quoted =
+            ThoughtUiFormatter.QuoteAndWrap(
+                thought);
+
+        if (!string.IsNullOrWhiteSpace(
+            quoted))
+        {
+            sections.Add(
+                quoted
+                + Environment.NewLine);
+        }
+
+        sections.Add(
+            $"Health: {health}");
+
+        sections.Add(
+            $"Job Satisfaction: {jobSatisfaction}");
+
+        sections.Add(
+            $"Marriage Satisfaction: {marriageSatisfaction}");
+
+        return string.Join(
+            Environment.NewLine,
+            sections);
+    }
 }

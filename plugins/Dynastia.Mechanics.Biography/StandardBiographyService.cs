@@ -18,6 +18,7 @@ public sealed class StandardBiographyService :
         IGameState gameState,
         IFamilyService family,
         IStatsService stats,
+        ILocationService locations,
         IGameEventBus events)
     {
         _gameState = gameState;
@@ -27,7 +28,8 @@ public sealed class StandardBiographyService :
             new AboutTextBuilder(
                 gameState,
                 family,
-                stats);
+                stats,
+                locations);
 
         events.EventPublished +=
             OnEventPublished;

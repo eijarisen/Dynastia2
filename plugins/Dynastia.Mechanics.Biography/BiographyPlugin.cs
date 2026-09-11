@@ -22,6 +22,11 @@ public sealed class BiographyPlugin : IGamePlugin
             ?? throw new InvalidOperationException(
                 "Stats service is unavailable.");
 
+        var locations =
+            context.GetService<ILocationService>()
+            ?? throw new InvalidOperationException(
+                "Location service is unavailable.");
+
         var events =
             context.GetService<IGameEventBus>()
             ?? throw new InvalidOperationException(
@@ -32,6 +37,7 @@ public sealed class BiographyPlugin : IGamePlugin
                 gameState,
                 family,
                 stats,
+                locations,
                 events);
 
         context.AddService<IBiographyService>(

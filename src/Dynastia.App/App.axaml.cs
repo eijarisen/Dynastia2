@@ -161,6 +161,10 @@ public partial class App : Application
                 pluginContext.GetService<
                     IMarriageSatisfactionService>();
 
+            var thoughtService =
+                pluginContext.GetService<
+                    IThoughtService>();
+
             var educationService =
                 pluginContext.GetService<IEducationService>();
 
@@ -196,6 +200,7 @@ public partial class App : Application
                         statsService,
                         locationService,
                         marriageSatisfactionService,
+                        thoughtService,
                         successionService);
 
             var genealogySelection =
@@ -228,6 +233,7 @@ public partial class App : Application
                             adoptionService,
                             locationService,
                             marriageSatisfactionService,
+                            thoughtService,
                             educationService,
                             careerService,
                             justiceService,

@@ -17,6 +17,7 @@
     <Project Path="plugins/Dynastia.Mechanics.Reproduction/Dynastia.Mechanics.Reproduction.csproj" />
     <Project Path="plugins/Dynastia.Mechanics.Stats/Dynastia.Mechanics.Stats.csproj" />
     <Project Path="plugins/Dynastia.Mechanics.Succession/Dynastia.Mechanics.Succession.csproj" />
+    <Project Path="plugins/Dynastia.Mechanics.Thoughts/Dynastia.Mechanics.Thoughts.csproj" />
     <Project Path="plugins/Dynastia.Mechanics.Wellbeing/Dynastia.Mechanics.Wellbeing.csproj" />
   </Folder>
   <Folder Name="/src/">

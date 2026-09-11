@@ -13,5 +13,6 @@ public enum YearPhase
     Inheritance = 800,
     Succession = 900,
     DerivedState = 1000,
-    PostYear = 1100
+    PostYear = 1100,
+    Thoughts = 1200
 }

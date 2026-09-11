@@ -1,0 +1,20 @@
+{
+  "id": "dynastia.thoughts",
+  "name": "Thoughts and Person Emoji",
+  "version": "0.1.0",
+  "apiVersion": 1,
+  "assembly": "Dynastia.Mechanics.Thoughts.dll",
+  "entryType": "Dynastia.Mechanics.Thoughts.ThoughtsPlugin",
+  "dependencies": [
+    "dynastia.family",
+    "dynastia.stats",
+    "dynastia.health",
+    "dynastia.economy",
+    "dynastia.education",
+    "dynastia.career",
+    "dynastia.households",
+    "dynastia.justice",
+    "dynastia.adoption",
+    "dynastia.relationships"
+  ]
+}

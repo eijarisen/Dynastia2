@@ -21,6 +21,7 @@ public sealed class MainWindowViewModel : ViewModelBase
     private readonly ILocationService? _locationService;
     private readonly IMarriageSatisfactionService?
         _marriageSatisfactionService;
+    private readonly IThoughtService? _thoughtService;
     private readonly IEducationService? _educationService;
     private readonly ICareerService? _careerService;
     private readonly IJusticeService? _justiceService;
@@ -65,6 +66,7 @@ public sealed class MainWindowViewModel : ViewModelBase
         IAdoptionService? adoptionService,
         ILocationService? locationService,
         IMarriageSatisfactionService? marriageSatisfactionService,
+        IThoughtService? thoughtService,
         IEducationService? educationService,
         ICareerService? careerService,
         IJusticeService? justiceService,
@@ -87,6 +89,8 @@ public sealed class MainWindowViewModel : ViewModelBase
         _locationService = locationService;
         _marriageSatisfactionService =
             marriageSatisfactionService;
+        _thoughtService =
+            thoughtService;
         _educationService = educationService;
         _careerService = careerService;
         _justiceService = justiceService;
@@ -218,7 +222,8 @@ public sealed class MainWindowViewModel : ViewModelBase
                     _healthService,
                     _careerService,
                     _justiceService,
-                    _statsService);
+                    _statsService,
+                    _thoughtService);
         }
     }
 
@@ -915,6 +920,9 @@ public sealed class MainWindowViewModel : ViewModelBase
         IsGameOverOverlayVisible =
             _succession.IsGameOver;
 
+        _thoughtService?
+            .ResetAfterLoad();
+
         RefreshPeople();
         RefreshAlbum();
 
@@ -1022,6 +1030,9 @@ public sealed class MainWindowViewModel : ViewModelBase
             SurnameInput);
 
         _succession.Refresh();
+
+        _thoughtService?
+            .EnsureCurrentThoughts();
 
         IsLivingFamilyView = true;
 
@@ -1572,6 +1583,7 @@ public sealed class MainWindowViewModel : ViewModelBase
             _statsService,
             _locationService,
             _marriageSatisfactionService,
+            _thoughtService,
             selectedId == person.Id,
             activeHeadId == person.Id,
             SelectFamilyMember);

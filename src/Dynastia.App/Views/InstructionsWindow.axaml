@@ -3,110 +3,220 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:ui="using:Dynastia.App.Controls"
     x:Class="Dynastia.App.Views.InstructionsWindow"
-    Width="900"
-    Height="700"
-    MinWidth="700"
-    MinHeight="520"
+    Width="1120"
+    Height="860"
+    MinWidth="900"
+    MinHeight="700"
     WindowStartupLocation="CenterOwner"
+    Background="#00000000"
     Title="Dynastia — Instructions">
 
-    <Grid Background="#071416">
+    <Window.Styles>
+        <Style Selector="TabControl.instructionsTabs">
+            <Setter Property="Background" Value="Transparent" />
+        </Style>
+
+        <Style Selector="TabControl.instructionsTabs TabStrip">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="HorizontalAlignment" Value="Center" />
+            <Setter Property="Margin" Value="0,0,0,10" />
+        </Style>
+
+        <Style Selector="TabControl.instructionsTabs TabItem">
+            <Setter Property="Foreground" Value="#3F2714" />
+            <Setter Property="Background" Value="#E8D5AF" />
+            <Setter Property="BorderBrush" Value="#9D6F35" />
+            <Setter Property="BorderThickness" Value="1.5" />
+            <Setter Property="Padding" Value="18,8" />
+            <Setter Property="Margin" Value="4,0" />
+            <Setter Property="FontFamily" Value="Georgia" />
+            <Setter Property="FontSize" Value="15" />
+            <Setter Property="FontWeight" Value="Bold" />
+        </Style>
+
+        <Style Selector="TabControl.instructionsTabs TabItem:selected">
+            <Setter Property="Background" Value="#D4B178" />
+            <Setter Property="Foreground" Value="#2D1A0E" />
+        </Style>
+
+        <Style Selector="TabControl.instructionsTabs ContentPresenter">
+            <Setter Property="Background" Value="#00FFFFFF" />
+        </Style>
+    </Window.Styles>
+
+    <Grid>
         <Image
-            Source="/Assets/UI/bg.png"
-            Stretch="UniformToFill"
-            Opacity="0.6" />
+            Source="/Assets/UI/instructions_paper.png"
+            Stretch="Fill" />
 
-        <Border
-            Margin="42"
-            Padding="30"
-            Background="#D9071112"
-            BorderBrush="#B98A34"
-            BorderThickness="2"
-            CornerRadius="8">
+        <Grid
+            Margin="80,72,80,58"
+            RowDefinitions="Auto,Auto,*,Auto"
+            RowSpacing="14">
 
-            <Grid RowDefinitions="Auto,*,Auto"
-                  RowSpacing="18">
+            <TextBlock
+                HorizontalAlignment="Center"
+                FontFamily="avares://Dynastia.App/Assets/Fonts#UnifrakturCook"
+                FontSize="42"
+                Foreground="#2F1D0E"
+                Text="Instructions" />
 
+            <StackPanel
+                Grid.Row="1"
+                Spacing="6">
                 <TextBlock
-                    HorizontalAlignment="Center"
-                    FontFamily="avares://Dynastia.App/Assets/Fonts#UnifrakturCook"
-                    FontSize="42"
-                    Foreground="#E0B64C"
-                    Text="Instructions" />
+                    TextWrapping="Wrap"
+                    TextAlignment="Center"
+                    FontFamily="Georgia"
+                    FontSize="17"
+                    Foreground="#3A2615"
+                    LineHeight="24"
+                    Text="Dynastia is a generational family simulation. You guide one family through decades of marriages, children, careers, illness, property, inheritance and unexpected events. Your main goal is to keep the direct male lineage alive, but lasting success also depends on how well the wider family lives, works, marries and survives." />
+            </StackPanel>
 
-                <ScrollViewer Grid.Row="1">
-                    <StackPanel
-                        Spacing="12">
+            <Border
+                Grid.Row="2"
+                Padding="8"
+                Background="#0FFFFFFF"
+                BorderBrush="#8F6A34"
+                BorderThickness="1.5"
+                CornerRadius="6">
 
-                        <StackPanel.Styles>
-                            <Style Selector="TextBlock">
-                                <Setter Property="Foreground" Value="#F2E6C9" />
-                                <Setter Property="FontFamily" Value="Georgia" />
-                                <Setter Property="FontSize" Value="15" />
-                            </Style>
-                        </StackPanel.Styles>
+                <TabControl
+                    Classes="instructionsTabs"
+                    SelectedIndex="0">
 
-                        <TextBlock
-                            TextWrapping="Wrap"
-                            Text="Dynastia is a generational family simulation. Keep the direct male lineage alive while managing marriage, children, health, careers, wealth, property, relationships, inheritance and unexpected events." />
+                    <TabItem Header="Playing">
+                        <ScrollViewer>
+                            <StackPanel Margin="12,8,12,6" Spacing="12">
+                                <TextBlock
+                                    TextWrapping="Wrap"
+                                    FontFamily="Georgia"
+                                    FontSize="16"
+                                    Foreground="#352110"
+                                    LineHeight="24"
+                                    Text="The main screen is built around four panels. Household shows the currently active family branch, who lives there, and what resources that household controls. Personal Details explains the selected person in more depth, including their traits, health, relationships and biography. Actions is where you choose what the active household head intends to do. Family Chronicle records the story of the dynasty year by year." />
 
-                        <TextBlock
-                            FontWeight="Bold"
-                            Foreground="#E0B64C"
-                            Text="Households" />
+                                <TextBlock
+                                    TextWrapping="Wrap"
+                                    FontFamily="Georgia"
+                                    FontSize="16"
+                                    Foreground="#352110"
+                                    LineHeight="24"
+                                    Text="Time advances one year at a time. Before moving on, each playable male heir must have an annual action queued, even if that choice is simply Pass. Some actions take effect at once, but most are intentions for the coming year and resolve when the year is simulated. After the simulation, look through your households again rather than relying only on the Chronicle, because finances, health, work and relationships can all shift at the same time." />
 
-                        <TextBlock
-                            TextWrapping="Wrap"
-                            Text="Use the household tabs to switch between playable adult male-lineage characters. Selecting a spouse, child or relative changes the action target without changing the active household. Green household tabs have an action queued." />
+                                <TextBlock
+                                    TextWrapping="Wrap"
+                                    FontFamily="Georgia"
+                                    FontSize="16"
+                                    Foreground="#352110"
+                                    LineHeight="24"
+                                    Text="You can inspect a person either from the household panel or from the family tree. Selection lets you target actions and read details, but it does not change which household you control. Export saves the current state of the dynasty to a file, Load restores an exported game, and pressing Enter is the same as clicking Next Year." />
+                            </StackPanel>
+                        </ScrollViewer>
+                    </TabItem>
 
-                        <TextBlock
-                            FontWeight="Bold"
-                            Foreground="#E0B64C"
-                            Text="Actions" />
+                    <TabItem Header="Dynasty">
+                        <ScrollViewer>
+                            <StackPanel Margin="12,8,12,6" Spacing="12">
+                                <TextBlock
+                                    TextWrapping="Wrap"
+                                    FontFamily="Georgia"
+                                    FontSize="16"
+                                    Foreground="#352110"
+                                    LineHeight="24"
+                                    Text="The dynasty is broader than the household you are currently playing. Daughters, their descendants, former spouses and side branches all remain part of the family’s history and continue to appear in the tree. The playable line, however, depends on the direct male lineage. As long as at least one living male from that line survives, the dynasty continues, even if he is still a child." />
 
-                        <TextBlock
-                            TextWrapping="Wrap"
-                            Text="Choose one available action for the active household head. Some actions resolve immediately; queued actions resolve during the next annual simulation pass. Press Enter anywhere in the main game to advance exactly one year." />
+                                <TextBlock
+                                    TextWrapping="Wrap"
+                                    FontFamily="Georgia"
+                                    FontSize="16"
+                                    Foreground="#352110"
+                                    LineHeight="24"
+                                    Text="This makes succession more fragile than the family tree may first suggest. A large extended family can still be close to collapse if very few male-line heirs remain. Sons are therefore strategically important, but the wider family still matters because daughters create alliances, relatives can provide support, and one branch’s success may later rescue another." />
 
-                        <TextBlock
-                            FontWeight="Bold"
-                            Foreground="#E0B64C"
-                            Text="Chronicle and personal details" />
+                                <TextBlock
+                                    TextWrapping="Wrap"
+                                    FontFamily="Georgia"
+                                    FontSize="16"
+                                    Foreground="#352110"
+                                    LineHeight="24"
+                                    Text="Households split as adult male heirs establish homes of their own. You can switch between those playable branches in the Household panel. Older generations eventually die, wealth passes on, children grow into adults, and the balance of the dynasty can change completely over time." />
+                            </StackPanel>
+                        </ScrollViewer>
+                    </TabItem>
 
-                        <TextBlock
-                            TextWrapping="Wrap"
-                            Text="The Family Chronicle records events by year. Select a person to inspect skills, health, general information, relationships, About text and Biography." />
+                    <TabItem Header="People">
+                        <ScrollViewer>
+                            <StackPanel Margin="12,8,12,6" Spacing="12">
+                                <TextBlock
+                                    TextWrapping="Wrap"
+                                    FontFamily="Georgia"
+                                    FontSize="16"
+                                    Foreground="#352110"
+                                    LineHeight="24"
+                                    Text="Every person has six core traits that shape the way their life unfolds. Immunity and Longevity support survival and recovery, Fertility matters when couples try to have children, Appeal influences romantic prospects, Strength helps where physical capability matters, and Intellect supports learning and many advanced careers. Traits are inherited imperfectly, so family strengths and weaknesses can echo through generations without producing identical descendants." />
 
-                        <TextBlock
-                            FontWeight="Bold"
-                            Foreground="#E0B64C"
-                            Text="Genealogy" />
+                                <TextBlock
+                                    TextWrapping="Wrap"
+                                    FontFamily="Georgia"
+                                    FontSize="16"
+                                    Foreground="#352110"
+                                    LineHeight="24"
+                                    Text="Health is separate from traits and changes throughout life. Illness, injury, mental strain, poverty, household pressure, grief and old age can all shape it. Marriages also develop over time. Good conditions help them thrive, while money troubles, poor health, infertility, strain or betrayal can wear them down. A damaged marriage can sometimes be repaired, but deeper problems in the household may still pull it back down again." />
 
-                        <TextBlock
-                            TextWrapping="Wrap"
-                            Text="Use View Tree in the household panel to open the zoomable genealogy tree. Clicking a person in the tree selects that person but does not switch the active household." />
+                                <TextBlock
+                                    TextWrapping="Wrap"
+                                    FontFamily="Georgia"
+                                    FontSize="16"
+                                    Foreground="#352110"
+                                    LineHeight="24"
+                                    Text="From age five onward, living people also have a current thought. It reflects the concern that matters most to them that year, whether that is grief, illness, poverty, work, marriage, prison, a birth, a promotion or something else. Their displayed emoji comes from that thought, so it gives you a quick sense of what is on their mind. Children and adolescents think differently from adults, and adult phrasing changes with Intellect." />
+                            </StackPanel>
+                        </ScrollViewer>
+                    </TabItem>
 
-                        <TextBlock
-                            FontWeight="Bold"
-                            Foreground="#E0B64C"
-                            Text="Save and load" />
+                    <TabItem Header="Work &amp; Wealth">
+                        <ScrollViewer>
+                            <StackPanel Margin="12,8,12,6" Spacing="12">
+                                <TextBlock
+                                    TextWrapping="Wrap"
+                                    FontFamily="Georgia"
+                                    FontSize="16"
+                                    Foreground="#352110"
+                                    LineHeight="24"
+                                    Text="Household money is one of the game’s central pressures. Income can come from working adults, pensions and rented property, while expenses grow with dependents, services and family needs. Because wealth belongs to the household rather than to a private purse, every major decision competes with something else: paying for treatment, educating children, improving a trait, buying property or simply staying afloat." />
 
-                        <TextBlock
-                            TextWrapping="Wrap"
-                            Text="Export creates a Dynastia save file. Load restores a previously exported desktop save, including people, relationships, plugin state, Chronicle, Biography, active household, selection and queued actions." />
-                    </StackPanel>
-                </ScrollViewer>
+                                <TextBlock
+                                    TextWrapping="Wrap"
+                                    FontFamily="Georgia"
+                                    FontSize="16"
+                                    Foreground="#352110"
+                                    LineHeight="24"
+                                    Text="Careers begin with education and opportunity, then develop through work, promotion, setbacks and retirement. Some professions reward Strength more, others rely more on Intellect and education. Job satisfaction is separate from status, so a successful career can still make someone miserable. When a person becomes unhappy or exhausted, recovery or a different path may be wiser than pushing harder." />
 
-                <ui:ImageStateButton
-                    Grid.Row="2"
-                    HorizontalAlignment="Center"
-                    Width="170"
-                    Height="54"
-                    IdleSource="avares://Dynastia.App/Assets/UI/b_close_idle.png"
-                    HoverSource="avares://Dynastia.App/Assets/UI/b_close_hover.png"
-                    FallbackText="Close"
-                    Click="OnCloseClick" />
-            </Grid>
-        </Border>
+                                <TextBlock
+                                    TextWrapping="Wrap"
+                                    FontFamily="Georgia"
+                                    FontSize="16"
+                                    Foreground="#352110"
+                                    LineHeight="24"
+                                    Text="Property gives the family both security and income. A household’s first owned house becomes its home, while additional houses are treated as rental property until you decide otherwise in the future. Wealth can also move through inheritance, support between relatives, marriage, and rare life events. Not everything can be planned, so part of playing well is building families that can absorb shocks instead of collapsing after one bad year." />
+                            </StackPanel>
+                        </ScrollViewer>
+                    </TabItem>
+                </TabControl>
+            </Border>
+
+            <ui:ImageStateButton
+                Grid.Row="3"
+                HorizontalAlignment="Center"
+                Width="190"
+                Height="62"
+                IdleSource="avares://Dynastia.App/Assets/UI/b_close_idle.png"
+                HoverSource="avares://Dynastia.App/Assets/UI/b_close_hover.png"
+                FallbackText="Close"
+                Click="OnCloseClick" />
+        </Grid>
     </Grid>
 </Window>

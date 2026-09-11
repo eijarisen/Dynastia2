@@ -1,6 +1,7 @@
 <Window
     xmlns="https://github.com/avaloniaui"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:ui="using:Dynastia.App.Controls"
     x:Class="Dynastia.App.Views.InstructionsWindow"
     Width="900"
     Height="700"
@@ -96,16 +97,14 @@
                     </StackPanel>
                 </ScrollViewer>
 
-                <Button
+                <ui:ImageStateButton
                     Grid.Row="2"
                     HorizontalAlignment="Center"
-                    Width="130"
-                    Padding="12,7"
-                    Background="#102D26"
-                    BorderBrush="#C99A39"
-                    BorderThickness="1"
-                    Foreground="#F4E5BE"
-                    Content="Close"
+                    Width="170"
+                    Height="54"
+                    IdleSource="avares://Dynastia.App/Assets/UI/b_close_idle.png"
+                    HoverSource="avares://Dynastia.App/Assets/UI/b_close_hover.png"
+                    FallbackText="Close"
                     Click="OnCloseClick" />
             </Grid>
         </Border>

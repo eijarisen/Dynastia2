@@ -176,7 +176,7 @@ public sealed class CareerPlugin : IGamePlugin
 
     private static void RegisterActions(
         IActionRegistry actions,
-        ICareerService career,
+        StandardCareerService career,
         IStatsService stats,
         IGameRandom random,
         IFamilyService family,
@@ -292,7 +292,7 @@ public sealed class CareerPlugin : IGamePlugin
                 Id = "career.seek_employment",
                 Label = "Seek Employment",
                 Description =
-                    "Look for work. Success depends on Strength. On success, a career is selected from professions open in the current year using the current male/female entry weights. The new job begins paying next year.",
+                    "Look for work. The game first draws a career from professions open in the current year. Manual/physical careers use Strength; office, professional and technical careers use Intellect. The new job begins paying next year.",
                 Mode = ActionExecutionMode.Queued,
                 QueuePhase = YearPhase.LifeEvents,
 
@@ -324,21 +324,17 @@ public sealed class CareerPlugin : IGamePlugin
                         return new GameActionResult(false);
                     }
 
-                    var strength = stats.GetStats(actor)
-                        .First(stat =>
-                            stat.Id.Equals(
-                                "strength",
-                                StringComparison.OrdinalIgnoreCase))
-                        .Value;
-
-                    var chance =
-                        (strength / 5.0) * 0.5;
-
-                    if (random.NextDouble() < chance)
-                    {
-                        career.SetJobLevel(
+                    var opportunity =
+                        career.CreateEmploymentOpportunity(
                             actor,
-                            1);
+                            stats);
+
+                    if (random.NextDouble()
+                        < opportunity.SuccessChance)
+                    {
+                        career.AcceptEmploymentOpportunity(
+                            actor,
+                            opportunity);
 
                         var employed =
                             career.GetCareer(
@@ -363,6 +359,18 @@ public sealed class CareerPlugin : IGamePlugin
                                     ["jobTitle"] =
                                         employed.JobTitle,
 
+                                    ["aptitudeStat"] =
+                                        opportunity.StatId,
+
+                                    ["aptitudeValue"] =
+                                        opportunity.StatValue
+                                            .ToString(),
+
+                                    ["chance"] =
+                                        opportunity.SuccessChance
+                                            .ToString(
+                                                "0.00"),
+
                                     ["text"] =
                                         $"{family.GetDisplayName(actor)} found employment as {employed.JobTitle}."
                                 }
@@ -377,7 +385,7 @@ public sealed class CareerPlugin : IGamePlugin
 
     private static void RegisterFamilySupportActions(
         IActionRegistry actions,
-        ICareerService career,
+        StandardCareerService career,
         IStatsService stats,
         IHealthService health,
         IGameRandom random,
@@ -391,7 +399,7 @@ public sealed class CareerPlugin : IGamePlugin
                 Label = "Help Selected Relative Seek Employment",
                 Description =
                     "Help your unemployed wife or unmarried adult daughter find work. " +
-                    "Success depends on her Strength; on success her career is selected from professions open in the current year using female entry weights.",
+                    "A career is drawn first; manual/physical careers use her Strength while office, professional and technical careers use her Intellect.",
                 Mode = ActionExecutionMode.Queued,
                 QueuePhase = YearPhase.QueuedActionsEarly,
 
@@ -462,22 +470,17 @@ public sealed class CareerPlugin : IGamePlugin
                         return new GameActionResult(false);
                     }
 
-                    var strength =
-                        stats.GetStats(target)
-                            .First(stat =>
-                                stat.Id.Equals(
-                                    "strength",
-                                    StringComparison.OrdinalIgnoreCase))
-                            .Value;
-
-                    var chance =
-                        (strength / 5.0) * 0.5;
-
-                    if (random.NextDouble() < chance)
-                    {
-                        career.SetJobLevel(
+                    var opportunity =
+                        career.CreateEmploymentOpportunity(
                             target,
-                            1);
+                            stats);
+
+                    if (random.NextDouble()
+                        < opportunity.SuccessChance)
+                    {
+                        career.AcceptEmploymentOpportunity(
+                            target,
+                            opportunity);
 
                         var employed =
                             career.GetCareer(
@@ -502,6 +505,18 @@ public sealed class CareerPlugin : IGamePlugin
 
                                     ["jobTitle"] =
                                         employed.JobTitle,
+
+                                    ["aptitudeStat"] =
+                                        opportunity.StatId,
+
+                                    ["aptitudeValue"] =
+                                        opportunity.StatValue
+                                            .ToString(),
+
+                                    ["chance"] =
+                                        opportunity.SuccessChance
+                                            .ToString(
+                                                "0.00"),
 
                                     ["text"] =
                                         $"{family.GetDisplayName(target)} found employment as {employed.JobTitle}."

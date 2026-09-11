@@ -37,8 +37,12 @@ public sealed class TurnActionsPlugin :
 
                 IsAvailable =
                     actionContext =>
-                        actionContext.Actor.Tags.Has(
+                        actionContext.Actor.Id
+                            == actionContext.Target.Id
+                        && actionContext.Actor.Tags.Has(
                             "state.alive")
+                        && !actionContext.Target.Tags.Has(
+                            "state.dead")
                         && actionContext.Actor.Tags.Has(
                             "control.playable"),
 

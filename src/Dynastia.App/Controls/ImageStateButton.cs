@@ -1,5 +1,6 @@
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Layout;
 using Avalonia.Media;
 using Avalonia.Media.Imaging;
 using Avalonia.Platform;
@@ -7,31 +8,93 @@ using Avalonia.Platform;
 namespace Dynastia.App.Controls;
 
 /// <summary>
-/// A normal Avalonia Button whose visible content is supplied by three
-/// image assets: idle, hover and pressed. It keeps ordinary Button command
-/// and click behavior while avoiding theme chrome around the supplied art.
+/// A normal Avalonia Button whose visible content is supplied by idle/hover
+/// image assets. If an asset is missing, a styled text fallback keeps the
+/// control usable.
 /// </summary>
 public sealed class ImageStateButton : Button
 {
+    private readonly Grid _root =
+        new();
+
+    private readonly Border _fallbackBorder =
+        new()
+        {
+            Background =
+                new SolidColorBrush(
+                    Color.Parse(
+                        "#103126")),
+
+            BorderBrush =
+                new SolidColorBrush(
+                    Color.Parse(
+                        "#C99A39")),
+
+            BorderThickness =
+                new Thickness(1),
+
+            CornerRadius =
+                new CornerRadius(4)
+        };
+
+    private readonly TextBlock _fallbackText =
+        new()
+        {
+            HorizontalAlignment =
+                HorizontalAlignment.Center,
+
+            VerticalAlignment =
+                VerticalAlignment.Center,
+
+            FontFamily =
+                new FontFamily(
+                    "Georgia"),
+
+            FontSize =
+                14,
+
+            FontWeight =
+                FontWeight.SemiBold,
+
+            Foreground =
+                new SolidColorBrush(
+                    Color.Parse(
+                        "#F4E5BE")),
+
+            TextAlignment =
+                TextAlignment.Center
+        };
+
     private readonly Image _image =
         new()
         {
-            Stretch = Stretch.Uniform,
-            IsHitTestVisible = false
+            Stretch =
+                Stretch.Uniform,
+
+            IsHitTestVisible =
+                false
         };
 
     private Bitmap? _idle;
     private Bitmap? _hover;
-    private Bitmap? _pressed;
 
     public string? IdleSource { get; set; }
 
     public string? HoverSource { get; set; }
 
-    public string? PressedSource { get; set; }
+    public string? FallbackText { get; set; }
 
     public ImageStateButton()
     {
+        _fallbackBorder.Child =
+            _fallbackText;
+
+        _root.Children.Add(
+            _fallbackBorder);
+
+        _root.Children.Add(
+            _image);
+
         Background =
             Brushes.Transparent;
 
@@ -45,21 +108,19 @@ public sealed class ImageStateButton : Button
             new Thickness(0);
 
         HorizontalContentAlignment =
-            Avalonia.Layout.HorizontalAlignment.Stretch;
+            HorizontalAlignment.Stretch;
 
         VerticalContentAlignment =
-            Avalonia.Layout.VerticalAlignment.Stretch;
+            VerticalAlignment.Stretch;
 
         Content =
-            _image;
+            _root;
 
         AttachedToVisualTree +=
             (_, _) =>
             {
                 LoadBitmaps();
-
-                _image.Source =
-                    _idle;
+                ShowIdleState();
             };
 
         DetachedFromVisualTree +=
@@ -71,35 +132,34 @@ public sealed class ImageStateButton : Button
             {
                 if (IsEnabled)
                 {
-                    _image.Source =
-                        _hover ?? _idle;
+                    ShowHoverState();
                 }
             };
 
         PointerExited +=
             (_, _) =>
-                _image.Source =
-                    _idle;
+                ShowIdleState();
 
         PointerPressed +=
             (_, _) =>
             {
                 if (IsEnabled)
                 {
-                    _image.Source =
-                        _pressed
-                        ?? _hover
-                        ?? _idle;
+                    ShowHoverState();
                 }
             };
 
         PointerReleased +=
             (_, _) =>
             {
-                if (IsEnabled)
+                if (IsEnabled
+                    && IsPointerOver)
                 {
-                    _image.Source =
-                        _hover ?? _idle;
+                    ShowHoverState();
+                }
+                else
+                {
+                    ShowIdleState();
                 }
             };
     }
@@ -116,16 +176,59 @@ public sealed class ImageStateButton : Button
             LoadBitmap(
                 HoverSource);
 
-        _pressed =
-            LoadBitmap(
-                PressedSource);
+        _fallbackText.Text =
+            FallbackText
+            ?? string.Empty;
+    }
+
+    private void ShowIdleState()
+    {
+        ApplyVisual(
+            _idle);
+    }
+
+    private void ShowHoverState()
+    {
+        ApplyVisual(
+            _hover
+            ?? _idle);
+    }
+
+    private void ApplyVisual(
+        Bitmap? bitmap)
+    {
+        _image.Source =
+            bitmap;
+
+        var hasImage =
+            bitmap is not null;
+
+        _image.IsVisible =
+            hasImage;
+
+        _fallbackBorder.IsVisible =
+            !hasImage;
+
+        _fallbackBorder.Background =
+            new SolidColorBrush(
+                Color.Parse(
+                    IsPointerOver
+                        ? "#184438"
+                        : "#103126"));
+
+        _fallbackBorder.BorderBrush =
+            new SolidColorBrush(
+                Color.Parse(
+                    IsPointerOver
+                        ? "#E0B64C"
+                        : "#C99A39"));
     }
 
     private static Bitmap? LoadBitmap(
         string? source)
     {
         if (string.IsNullOrWhiteSpace(
-            source))
+                source))
         {
             return null;
         }
@@ -136,7 +239,7 @@ public sealed class ImageStateButton : Button
                 UriKind.Absolute);
 
         if (!AssetLoader.Exists(
-            uri))
+                uri))
         {
             return null;
         }
@@ -156,10 +259,11 @@ public sealed class ImageStateButton : Button
 
         _idle?.Dispose();
         _hover?.Dispose();
-        _pressed?.Dispose();
 
-        _idle = null;
-        _hover = null;
-        _pressed = null;
+        _idle =
+            null;
+
+        _hover =
+            null;
     }
 }

@@ -85,6 +85,7 @@ public static class EventEmojiMap
                 ["life.death"] = "💀",
                 ["career.quit"] = "🚶",
                 ["relationship.divorce"] = "💔",
+                ["relationship.marry_off_failed"] = "💒",
                 ["relationship.low_satisfaction_divorce"] = "💔",
                 ["relationship.repair_marriage"] = "❤️‍🩹",
                 ["relationship.prison_divorce"] = "💔",
@@ -142,9 +143,7 @@ public static class EventEmojiMap
                 ["rare.fraud"] = "🎭",
                 ["rare.found_property"] = "💎",
                 ["rare.wrongful_arrest"] = "⚖️",
-                ["rare.suicide"] = "🕯️",
-
-                ["stats.paid_improvement"] = "📈"
+                ["rare.suicide"] = "🕯️"
             };
 
     public static string GetEmoji(

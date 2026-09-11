@@ -256,6 +256,78 @@ public sealed class StandardCareerService :
             career);
     }
 
+    internal EmploymentOpportunity
+        CreateEmploymentOpportunity(
+            IPerson person,
+            IStatsService stats)
+    {
+        ArgumentNullException.ThrowIfNull(
+            person);
+
+        ArgumentNullException.ThrowIfNull(
+            stats);
+
+        var definition =
+            SelectCareerForEntry(
+                person);
+
+        var aptitude =
+            CareerEntryAptitudeClassifier.Get(
+                definition);
+
+        var statId =
+            CareerEntryAptitudeClassifier.GetStatId(
+                aptitude);
+
+        var statValue =
+            stats.GetStats(
+                person)
+            .First(
+                stat =>
+                    stat.Id.Equals(
+                        statId,
+                        StringComparison.OrdinalIgnoreCase))
+            .Value;
+
+        var successChance =
+            (statValue / 5.0)
+            * 0.5;
+
+        return new EmploymentOpportunity(
+            definition,
+            aptitude,
+            statId,
+            statValue,
+            successChance);
+    }
+
+    internal void AcceptEmploymentOpportunity(
+        IPerson person,
+        EmploymentOpportunity opportunity)
+    {
+        ArgumentNullException.ThrowIfNull(
+            person);
+
+        ArgumentNullException.ThrowIfNull(
+            opportunity);
+
+        var career =
+            GetRequired(
+                person);
+
+        if (career.IsRetired)
+        {
+            throw new InvalidOperationException(
+                "A retired character cannot accept new employment.");
+        }
+
+        career.CareerId =
+            opportunity.Career.Id;
+
+        career.JobLevel =
+            1;
+    }
+
     internal CareerObsolescencePressure
         GetObsolescencePressure(
             IPerson person,

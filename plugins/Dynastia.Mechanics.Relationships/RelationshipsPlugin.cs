@@ -4,6 +4,16 @@ namespace Dynastia.Mechanics.Relationships;
 
 public sealed class RelationshipsPlugin : IGamePlugin
 {
+    private const string MaleNamesPath =
+        "Names/polish_male.csv";
+
+    private const string SurnamesPath =
+        "Names/polish_surnames.csv";
+
+    private static readonly double[]
+        ArrangedMarriageChanceByAppeal =
+            [0, 0.25, 0.35, 0.50, 0.60, 0.80];
+
     public void Initialize(
         IGamePluginContext context)
     {
@@ -98,6 +108,18 @@ public sealed class RelationshipsPlugin : IGamePlugin
         actions.Register(
             CreateFindSpouseAction(
                 family));
+
+        actions.Register(
+            CreateMarryOffDaughterAction(
+                family,
+                households,
+                stats,
+                health,
+                education,
+                data,
+                random,
+                calendar,
+                events));
 
         actions.Register(
             CreateDivorceAction(
@@ -201,6 +223,363 @@ public sealed class RelationshipsPlugin : IGamePlugin
                         true);
                 }
         };
+    }
+
+    private static GameActionDefinition
+        CreateMarryOffDaughterAction(
+            IFamilyService family,
+            IHouseholdService households,
+            IStatsService stats,
+            IHealthService health,
+            IEducationService education,
+            IGameDataService data,
+            IGameRandom random,
+            IGameCalendar calendar,
+            IGameEventBus events)
+    {
+        return new GameActionDefinition
+        {
+            Id =
+                "relationship.marry_off_daughter",
+
+            Label =
+                "Marry Off",
+
+            Description =
+                "Try to find a husband for the selected adult " +
+                "unmarried daughter who still belongs to this " +
+                "household. Success depends on her Appeal.",
+
+            Mode =
+                ActionExecutionMode.Queued,
+
+            QueuePhase =
+                YearPhase.LifeEvents,
+
+            IsAvailable =
+                actionContext =>
+                    IsEligibleDaughter(
+                        actionContext.Actor,
+                        actionContext.Target,
+                        family,
+                        households),
+
+            Execute =
+                actionContext =>
+                {
+                    var father =
+                        actionContext.Actor;
+
+                    var daughter =
+                        actionContext.Target;
+
+                    if (!IsEligibleDaughter(
+                        father,
+                        daughter,
+                        family,
+                        households))
+                    {
+                        return new GameActionResult(
+                            false,
+                            "The selected daughter is no longer eligible.");
+                    }
+
+                    var appeal =
+                        stats.GetStats(
+                            daughter)
+                        .First(
+                            stat =>
+                                stat.Id.Equals(
+                                    "appeal",
+                                    StringComparison.OrdinalIgnoreCase))
+                        .Value;
+
+                    var chance =
+                        ArrangedMarriageChanceByAppeal[
+                            Math.Clamp(
+                                appeal,
+                                1,
+                                5)];
+
+                    if (random.NextDouble()
+                        >= chance)
+                    {
+                        events.Publish(
+                            new GameEvent
+                            {
+                                Type =
+                                    "relationship.marry_off_failed",
+
+                                Year =
+                                    actionContext.GameState.Year,
+
+                                SubjectId =
+                                    father.Id,
+
+                                RelatedPersonIds =
+                                    [daughter.Id],
+
+                                Data =
+                                    new Dictionary<string, string>
+                                    {
+                                        ["appeal"] =
+                                            appeal.ToString(),
+
+                                        ["chance"] =
+                                            chance.ToString(
+                                                "0.00"),
+
+                                        ["text"] =
+                                            $"{family.GetDisplayName(father)} " +
+                                            $"tried to find a husband for " +
+                                            $"{family.GetDisplayName(daughter)}, " +
+                                            "but no suitable match was found."
+                                    }
+                            });
+
+                        return new GameActionResult(
+                            true);
+                    }
+
+                    CreateArrangedHusband(
+                        actionContext.GameState,
+                        father,
+                        daughter,
+                        family,
+                        stats,
+                        health,
+                        education,
+                        data,
+                        random,
+                        calendar,
+                        events,
+                        chance);
+
+                    return new GameActionResult(
+                        true);
+                }
+        };
+    }
+
+    private static bool IsEligibleDaughter(
+        IPerson father,
+        IPerson daughter,
+        IFamilyService family,
+        IHouseholdService households)
+    {
+        if (!father.Tags.Has(
+                "state.alive")
+            || !father.Tags.Has(
+                "control.playable")
+            || !daughter.Tags.Has(
+                "state.alive")
+            || daughter.Tags.Has(
+                "state.dead")
+            || daughter.Id == father.Id
+            || daughter.Age < 18
+            || family.GetSex(
+                daughter) != Sex.Female
+            || family.GetSpouse(
+                daughter) is not null)
+        {
+            return false;
+        }
+
+        var isDaughter =
+            family.GetChildren(
+                father)
+            .Any(
+                child =>
+                    child.Id
+                    == daughter.Id);
+
+        if (!isDaughter)
+            return false;
+
+        return households
+            .ResolveHouseholdHead(
+                daughter)?
+            .Id
+            == father.Id;
+    }
+
+    private static void CreateArrangedHusband(
+        IGameState gameState,
+        IPerson father,
+        IPerson daughter,
+        IFamilyService family,
+        IStatsService stats,
+        IHealthService health,
+        IEducationService education,
+        IGameDataService data,
+        IGameRandom random,
+        IGameCalendar calendar,
+        IGameEventBus events,
+        double chance)
+    {
+        var husband =
+            gameState.CreatePerson(
+                RandomWeightedFrom(
+                    data,
+                    random,
+                    MaleNamesPath),
+                RandomWeightedFrom(
+                    data,
+                    random,
+                    SurnamesPath),
+                random.NextInt(
+                    Math.Max(
+                        18,
+                        daughter.Age),
+                    Math.Max(
+                        18,
+                        daughter.Age)
+                        + 10));
+
+        husband.BirthDate =
+            RandomDateInYear(
+                gameState.Year
+                - husband.Age,
+                random,
+                calendar);
+
+        family.InitializePerson(
+            husband,
+            Sex.Male,
+            generation:
+                null);
+
+        husband.Tags.Add(
+            "state.alive");
+
+        husband.Tags.Add(
+            "age.adult");
+
+        husband.Tags.Add(
+            "relationship.single");
+
+        husband.Tags.Add(
+            "sexuality.heterosexual");
+
+        stats.EnsureStats(
+            husband);
+
+        health.EnsureHealth(
+            husband);
+
+        education.SetEducationLevel(
+            husband,
+            0);
+
+        var daughterEventName =
+            family.GetDisplayName(
+                daughter);
+
+        var husbandEventName =
+            family.GetDisplayName(
+                husband);
+
+        daughter.MaidenName ??=
+            daughter.Surname;
+
+        family.SetSpouses(
+            daughter,
+            husband,
+            gameState.Year);
+
+        daughter.Surname =
+            husband.Surname;
+
+        events.Publish(
+            new GameEvent
+            {
+                Type =
+                    "relationship.married",
+
+                Year =
+                    gameState.Year,
+
+                SubjectId =
+                    daughter.Id,
+
+                RelatedPersonIds =
+                    [
+                        husband.Id,
+                        father.Id
+                    ],
+
+                Data =
+                    new Dictionary<string, string>
+                    {
+                        ["spouseId"] =
+                            husband.Id.ToString(),
+
+                        ["arrangedByFatherId"] =
+                            father.Id.ToString(),
+
+                        ["chance"] =
+                            chance.ToString(
+                                "0.00"),
+
+                        ["text"] =
+                            $"{family.GetDisplayName(father)} " +
+                            $"found a husband for {daughterEventName}. " +
+                            $"She married {husbandEventName}."
+                    }
+            });
+    }
+
+    private static string RandomWeightedFrom(
+        IGameDataService data,
+        IGameRandom random,
+        string relativePath)
+    {
+        var entries =
+            data.GetWeightedStringList(
+                relativePath);
+
+        var totalWeight =
+            entries.Sum(
+                entry =>
+                    (double)entry.Weight);
+
+        var roll =
+            random.NextDouble()
+            * totalWeight;
+
+        foreach (var entry in entries)
+        {
+            if (roll < entry.Weight)
+                return entry.Value;
+
+            roll -=
+                entry.Weight;
+        }
+
+        return entries[^1].Value;
+    }
+
+    private static GameDate RandomDateInYear(
+        int year,
+        IGameRandom random,
+        IGameCalendar calendar)
+    {
+        var month =
+            random.NextInt(
+                1,
+                12);
+
+        var day =
+            random.NextInt(
+                1,
+                calendar.GetDaysInMonth(
+                    year,
+                    month));
+
+        return new GameDate(
+            year,
+            month,
+            day);
     }
 
     private static GameActionDefinition

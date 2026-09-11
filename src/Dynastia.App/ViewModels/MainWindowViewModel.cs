@@ -46,6 +46,7 @@ public sealed class MainWindowViewModel : ViewModelBase
     private string _queuedActionText = string.Empty;
     private bool _hasQueuedAction;
     private bool _isGameOverOverlayVisible;
+    private bool _isMainMenuPromptVisible;
     private bool _isLivingFamilyView = true;
     private int _detailsTabIndex;
     private string _persistenceStatusText = string.Empty;
@@ -119,6 +120,15 @@ public sealed class MainWindowViewModel : ViewModelBase
             new RelayCommand(
                 ReturnToMainMenu);
 
+        ShowMainMenuPromptCommand =
+            new RelayCommand(
+                ShowMainMenuPrompt,
+                () => IsGameStarted);
+
+        HideMainMenuPromptCommand =
+            new RelayCommand(
+                HideMainMenuPrompt);
+
         ShowLivingFamilyCommand =
             new RelayCommand(
                 ShowLivingFamily);
@@ -179,6 +189,9 @@ public sealed class MainWindowViewModel : ViewModelBase
 
             NextYearCommand
                 .RaiseCanExecuteChanged();
+
+            ShowMainMenuPromptCommand
+                .RaiseCanExecuteChanged();
         }
     }
 
@@ -237,6 +250,26 @@ public sealed class MainWindowViewModel : ViewModelBase
 
     public string GameOverTitle =>
         "Dynasty collapsed";
+
+    public bool IsMainMenuPromptVisible
+    {
+        get =>
+            _isMainMenuPromptVisible;
+
+        private set
+        {
+            if (_isMainMenuPromptVisible
+                == value)
+            {
+                return;
+            }
+
+            _isMainMenuPromptVisible =
+                value;
+
+            OnPropertyChanged();
+        }
+    }
 
     public string GameOverText
     {
@@ -824,6 +857,8 @@ public sealed class MainWindowViewModel : ViewModelBase
     public RelayCommand CancelQueuedActionCommand { get; }
     public RelayCommand GoBackFromGameOverCommand { get; }
     public RelayCommand ReturnToMainMenuCommand { get; }
+    public RelayCommand ShowMainMenuPromptCommand { get; }
+    public RelayCommand HideMainMenuPromptCommand { get; }
     public RelayCommand ShowLivingFamilyCommand { get; }
     public RelayCommand ShowDeceasedFamilyCommand { get; }
     public RelayCommand PreviousAlbumYearCommand { get; }
@@ -866,6 +901,9 @@ public sealed class MainWindowViewModel : ViewModelBase
         DetailsTabIndex =
             loadedUiState.DetailsTabIndex;
 
+        IsMainMenuPromptVisible =
+            false;
+
         IsGameStarted =
             true;
 
@@ -899,9 +937,8 @@ public sealed class MainWindowViewModel : ViewModelBase
         PersistenceStatusText =
             message;
 
-        if (!message.StartsWith(
-            "Loaded ",
-            StringComparison.OrdinalIgnoreCase))
+        if (!ShouldAutoClearPersistenceStatus(
+                message))
         {
             return;
         }
@@ -916,6 +953,18 @@ public sealed class MainWindowViewModel : ViewModelBase
             ClearLoadedStatusAfterDelayAsync(
                 message,
                 cancellation);
+    }
+
+    private bool ShouldAutoClearPersistenceStatus(
+        string message)
+    {
+        return
+            message.StartsWith(
+                "Loaded ",
+                StringComparison.OrdinalIgnoreCase)
+            || message.StartsWith(
+                "Choose an annual action",
+                StringComparison.OrdinalIgnoreCase);
     }
 
     private async Task ClearLoadedStatusAfterDelayAsync(
@@ -980,6 +1029,9 @@ public sealed class MainWindowViewModel : ViewModelBase
         IsGameOverOverlayVisible =
             false;
 
+        IsMainMenuPromptVisible =
+            false;
+
         IsGameStarted = true;
         AlbumYear = _gameState.Year;
 
@@ -1020,20 +1072,8 @@ public sealed class MainWindowViewModel : ViewModelBase
                     row;
             }
 
-            var names =
-                string.Join(
-                    ", ",
-                    missing.Select(
-                        person =>
-                            _familyService is null
-                                ? person.Name
-                                : _familyService.GetDisplayName(
-                                    person)));
-
             ReportPersistenceStatus(
-                missing.Count == 1
-                    ? $"Choose an annual action for {names} before advancing the year."
-                    : $"Choose annual actions for every male heir before advancing the year. Missing: {names}.");
+                "Choose an annual action for every adult male heir before advancing the year.");
 
             RefreshFamilySection();
             RefreshActions();
@@ -1108,9 +1148,29 @@ public sealed class MainWindowViewModel : ViewModelBase
             false;
     }
 
+    private void ShowMainMenuPrompt()
+    {
+        if (!IsGameStarted)
+        {
+            return;
+        }
+
+        IsMainMenuPromptVisible =
+            true;
+    }
+
+    private void HideMainMenuPrompt()
+    {
+        IsMainMenuPromptVisible =
+            false;
+    }
+
     private void ReturnToMainMenu()
     {
         IsGameOverOverlayVisible =
+            false;
+
+        IsMainMenuPromptVisible =
             false;
 
         IsGameStarted =

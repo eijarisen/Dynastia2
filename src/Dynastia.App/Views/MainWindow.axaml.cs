@@ -64,8 +64,11 @@ public partial class MainWindow : Window
             return;
         }
 
-        if (!viewModel.NextYearCommand.CanExecute(null))
+        if (viewModel.IsMainMenuPromptVisible
+            || !viewModel.NextYearCommand.CanExecute(null))
+        {
             return;
+        }
 
         // Tunnel routing prevents a focused Button from also
         // consuming Enter and accidentally advancing twice.

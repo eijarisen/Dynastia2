@@ -13,6 +13,7 @@ public static class ActionEmojiMap
                 ["relationship.find_spouse"] = "💍",
                 ["reproduction.try_for_baby"] = "👶",
                 ["relationship.divorce_spouse"] = "💔",
+                ["relationship.marry_off_daughter"] = "💒",
                 ["relationship.repair_marriage"] = "❤️‍🩹",
 
                 ["career.quit_job"] = "🚶",

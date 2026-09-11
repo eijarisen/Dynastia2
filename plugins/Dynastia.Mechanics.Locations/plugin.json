@@ -1,7 +1,7 @@
 {
   "id": "dynastia.locations",
   "name": "Standard Locations",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "apiVersion": 1,
   "assembly": "Dynastia.Mechanics.Locations.dll",
   "entryType": "Dynastia.Mechanics.Locations.LocationsPlugin",

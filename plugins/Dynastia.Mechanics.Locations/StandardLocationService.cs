@@ -7,7 +7,7 @@ public sealed class StandardLocationService :
     ILocationService
 {
     private const string TownsPath =
-        "Common/towns.csv";
+        "Towns/towns.csv";
 
     private const double SpouseSameTownChance =
         0.62;
@@ -43,6 +43,12 @@ public sealed class StandardLocationService :
 
     private readonly IReadOnlyList<TownInfo>
         _towns;
+
+    private readonly IReadOnlyDictionary<string, TownInfo>
+        _townsById;
+
+    private readonly IReadOnlyDictionary<string, TownInfo>
+        _townsByLegacyKey;
 
     public StandardLocationService(
         IGameState gameState,
@@ -88,6 +94,18 @@ public sealed class StandardLocationService :
                 $"{TownsPath} contains no towns.");
         }
 
+        _townsById =
+            _towns.ToDictionary(
+                town => town.Id,
+                StringComparer.OrdinalIgnoreCase);
+
+        _townsByLegacyKey =
+            _towns.ToDictionary(
+                town => LegacyTownKey(
+                    town.Town,
+                    town.County),
+                StringComparer.OrdinalIgnoreCase);
+
         _events.EventPublished +=
             OnEventPublished;
     }
@@ -101,6 +119,14 @@ public sealed class StandardLocationService :
         var component =
             person.Components.Get<
                 LocationComponent>();
+
+        if (component is not null
+            && CanonicalizeComponent(
+                component))
+        {
+            person.Components.Set(
+                component);
+        }
 
         if (component?.Birthplace is null
             || component.HomeTown is null)
@@ -298,8 +324,7 @@ public sealed class StandardLocationService :
                 founder);
 
         var fatherTown =
-            ChoosePopulationWeighted(
-                _towns);
+            ChooseStartingTown();
 
         if (father is not null)
         {
@@ -640,6 +665,45 @@ public sealed class StandardLocationService :
             .Town;
     }
 
+    private TownInfo ChooseStartingTown()
+    {
+        var roll =
+            _random.NextDouble();
+
+        var settlementClass =
+            roll < 0.20
+                ? SettlementClass.SmallTown
+                : roll < 0.50
+                    ? SettlementClass.Town
+                    : roll < 0.80
+                        ? SettlementClass.City
+                        : SettlementClass.MajorCity;
+
+        var candidates =
+            _towns
+                .Where(
+                    town =>
+                        town.SettlementClass
+                        == settlementClass)
+                .ToList();
+
+        if (candidates.Count == 0)
+        {
+            candidates =
+                _towns.ToList();
+        }
+
+        // Soft population weighting avoids both a uniform list roll
+        // and domination by the handful of largest cities.
+        return ChooseWeighted(
+            candidates,
+            town =>
+                Math.Sqrt(
+                    Math.Max(
+                        1,
+                        town.Population)));
+    }
+
     private TownInfo ChooseRandomTown()
     {
         return _towns[
@@ -725,6 +789,15 @@ public sealed class StandardLocationService :
                 StringSplitOptions
                     .RemoveEmptyEntries);
 
+        if (lines.Length < 2
+            || !lines[0].Equals(
+                "TownId,Town,County,Longitude,Latitude,Population,RegionId",
+                StringComparison.Ordinal))
+        {
+            throw new InvalidDataException(
+                $"{TownsPath} has an unexpected header.");
+        }
+
         for (var index = 1;
             index < lines.Length;
             index++)
@@ -733,44 +806,162 @@ public sealed class StandardLocationService :
                 lines[index]
                     .Split(',');
 
-            if (fields.Length != 5)
+            if (fields.Length != 7)
             {
                 throw new InvalidDataException(
-                    $"Invalid towns.csv row " +
-                    $"{index + 1}: expected 5 fields.");
+                    $"Invalid towns.csv row "
+                    + $"{index + 1}: expected 7 fields.");
             }
 
             if (!double.TryParse(
-                    fields[2],
+                    fields[3],
                     NumberStyles.Float,
                     CultureInfo.InvariantCulture,
                     out var longitude)
                 || !double.TryParse(
-                    fields[3],
+                    fields[4],
                     NumberStyles.Float,
                     CultureInfo.InvariantCulture,
                     out var latitude)
                 || !int.TryParse(
-                    fields[4],
+                    fields[5],
                     NumberStyles.Integer,
                     CultureInfo.InvariantCulture,
                     out var population))
             {
                 throw new InvalidDataException(
-                    $"Invalid numeric town data on row " +
-                    $"{index + 1}.");
+                    $"Invalid numeric town data on row "
+                    + $"{index + 1}.");
+            }
+
+            var townId =
+                fields[0].Trim();
+
+            var regionId =
+                fields[6].Trim();
+
+            if (townId.Length == 0
+                || regionId.Length == 0)
+            {
+                throw new InvalidDataException(
+                    $"Invalid towns.csv row {index + 1}: "
+                    + "TownId and RegionId are required.");
             }
 
             result.Add(
                 new TownInfo(
-                    fields[0],
                     fields[1],
+                    fields[2],
                     longitude,
                     latitude,
-                    population));
+                    population)
+                {
+                    Id = townId,
+                    RegionId = regionId
+                });
+        }
+
+        if (result
+            .Select(town => town.Id)
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .Count()
+            != result.Count)
+        {
+            throw new InvalidDataException(
+                $"{TownsPath} contains duplicate TownIds.");
         }
 
         return result;
+    }
+
+    private bool CanonicalizeComponent(
+        LocationComponent component)
+    {
+        var changed = false;
+
+        if (component.Birthplace is not null)
+        {
+            var canonical =
+                CanonicalizeTown(
+                    component.Birthplace);
+
+            if (!ReferenceEquals(
+                    canonical,
+                    component.Birthplace))
+            {
+                component.Birthplace =
+                    canonical;
+
+                changed = true;
+            }
+        }
+
+        if (component.HomeTown is not null)
+        {
+            var canonical =
+                CanonicalizeTown(
+                    component.HomeTown);
+
+            if (!ReferenceEquals(
+                    canonical,
+                    component.HomeTown))
+            {
+                component.HomeTown =
+                    canonical;
+
+                changed = true;
+            }
+        }
+
+        if (component.DeathTown is not null)
+        {
+            var canonical =
+                CanonicalizeTown(
+                    component.DeathTown);
+
+            if (!ReferenceEquals(
+                    canonical,
+                    component.DeathTown))
+            {
+                component.DeathTown =
+                    canonical;
+
+                changed = true;
+            }
+        }
+
+        return changed;
+    }
+
+    private TownInfo CanonicalizeTown(
+        TownInfo town)
+    {
+        if (!string.IsNullOrWhiteSpace(
+                town.Id)
+            && _townsById.TryGetValue(
+                town.Id,
+                out var byId))
+        {
+            return byId;
+        }
+
+        var key =
+            LegacyTownKey(
+                town.Town,
+                town.County);
+
+        return _townsByLegacyKey.TryGetValue(
+            key,
+            out var legacyMatch)
+                ? legacyMatch
+                : town;
+    }
+
+    private static string LegacyTownKey(
+        string town,
+        string county)
+    {
+        return $"{town.Trim()}|{county.Trim()}";
     }
 
     private void SetHomeTown(

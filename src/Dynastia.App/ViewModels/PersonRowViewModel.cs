@@ -19,6 +19,12 @@ public sealed class PersonRowViewModel
         _person = person;
         _familyService = familyService;
 
+        // Family reads also run small compatibility reconciliation for
+        // legacy founding-parent metadata. Do this before binding any
+        // identity fields such as maiden name.
+        _ = familyService?.IsBloodline(
+            person);
+
         if (healthService is not null)
         {
             var health = healthService.GetHealth(person);
@@ -76,6 +82,12 @@ public sealed class PersonRowViewModel
                     $"Death place: " +
                     $"{deathTown.DisplayName}";
             }
+            else
+            {
+                ResidenceText =
+                    $"Residence: " +
+                    $"{location.HomeTown.DisplayName}";
+            }
         }
     }
 
@@ -115,6 +127,13 @@ public sealed class PersonRowViewModel
 
     public string DeathplaceText { get; } =
         string.Empty;
+
+    public string ResidenceText { get; } =
+        string.Empty;
+
+    public bool HasResidence =>
+        !string.IsNullOrWhiteSpace(
+            ResidenceText);
 
     public bool HasDeathplace =>
         _person.Tags.Has(

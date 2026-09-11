@@ -52,6 +52,9 @@ public sealed class StandardNewGameService : INewGameService
         _gameState.DynastySurname =
             surname;
 
+        var parentDeathDate =
+            RandomDateInYear(1899);
+
         var father =
             _gameState.CreatePerson(
                 RandomWeightedFrom(
@@ -65,7 +68,7 @@ public sealed class StandardNewGameService : INewGameService
                 - father.Age);
 
         father.DeathDate =
-            new GameDate(1899);
+            parentDeathDate;
 
         _family.InitializePerson(
             father,
@@ -79,6 +82,9 @@ public sealed class StandardNewGameService : INewGameService
             "family.bloodline");
 
         father.Tags.Add(
+            "lineage.male");
+
+        father.Tags.Add(
             "sexuality.heterosexual");
 
         var mother =
@@ -89,7 +95,9 @@ public sealed class StandardNewGameService : INewGameService
                 42);
 
         mother.MaidenName =
-            surname;
+            RandomWeightedDifferentFrom(
+                SurnamesPath,
+                surname);
 
         mother.BirthDate =
             RandomDateInYear(
@@ -97,14 +105,18 @@ public sealed class StandardNewGameService : INewGameService
                 - mother.Age);
 
         mother.DeathDate =
-            new GameDate(1899);
+            parentDeathDate;
 
         _family.InitializePerson(
             mother,
-            Sex.Female);
+            Sex.Female,
+            generation: 0);
 
         mother.Tags.Add(
             "state.dead");
+
+        mother.Tags.Add(
+            "family.bloodline");
 
         mother.Tags.Add(
             "sexuality.heterosexual");
@@ -232,6 +244,34 @@ public sealed class StandardNewGameService : INewGameService
                 cleaned[0])
             + cleaned[1..]
                 .ToLowerInvariant();
+    }
+
+    private string RandomWeightedDifferentFrom(
+        string relativePath,
+        string excludedValue)
+    {
+        for (var attempt = 0; attempt < 12; attempt++)
+        {
+            var candidate =
+                RandomWeightedFrom(
+                    relativePath);
+
+            if (!candidate.Equals(
+                    excludedValue,
+                    StringComparison.OrdinalIgnoreCase))
+            {
+                return candidate;
+            }
+        }
+
+        return _data
+            .GetWeightedStringList(
+                relativePath)
+            .Select(entry => entry.Value)
+            .First(candidate =>
+                !candidate.Equals(
+                    excludedValue,
+                    StringComparison.OrdinalIgnoreCase));
     }
 
     private string RandomWeightedFrom(

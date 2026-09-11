@@ -18,6 +18,11 @@ public sealed class CareerPlugin : IGamePlugin
         var data = context.GetService<IGameDataService>()
             ?? throw new InvalidOperationException("Game data service is unavailable.");
 
+        var localOpportunities =
+            context.GetService<ILocalCareerOpportunityService>()
+            ?? throw new InvalidOperationException(
+                "Local career opportunity service is unavailable.");
+
         var education = context.GetService<IEducationService>()
             ?? throw new InvalidOperationException("Education service is unavailable.");
 
@@ -51,7 +56,8 @@ public sealed class CareerPlugin : IGamePlugin
                 gameState,
                 family,
                 random,
-                catalog);
+                catalog,
+                localOpportunities);
 
         context.AddService<ICareerService>(career);
 
@@ -292,7 +298,7 @@ public sealed class CareerPlugin : IGamePlugin
                 Id = "career.seek_employment",
                 Label = "Seek Employment",
                 Description =
-                    "Look for work. The game first draws a career from professions open in the current year. Manual/physical careers use Strength; office, professional and technical careers use Intellect. The new job begins paying next year.",
+                    "Look for work. The game first draws a career from professions open in the current year. Manual/physical careers use Strength; office, professional and technical careers use Intellect. Strong regional or local opportunities also improve the chance of being hired. The new job begins paying next year.",
                 Mode = ActionExecutionMode.Queued,
                 QueuePhase = YearPhase.LifeEvents,
 
@@ -775,7 +781,7 @@ public sealed class CareerPlugin : IGamePlugin
             new GameActionDefinition
             {
                 Id = "career.ask_to_recover",
-                Label = "Ask Selected Relative to Recover",
+                Label = "Ask to Recover",
                 Description =
                     "Ask your miserable employed spouse or adult daughter to take a break. " +
                     "There is a 50% refusal chance.",
@@ -888,7 +894,7 @@ public sealed class CareerPlugin : IGamePlugin
             new GameActionDefinition
             {
                 Id = "career.ask_to_quit",
-                Label = "Ask Selected Relative to Quit Job",
+                Label = "Ask to Quit Job",
                 Description =
                     "Ask your miserable employed spouse or adult daughter to quit. " +
                     "There is a 50% refusal chance.",

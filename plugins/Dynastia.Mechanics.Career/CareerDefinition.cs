@@ -16,10 +16,20 @@ internal sealed record CareerDefinition(
     string Level2Title,
     string Level3Title,
     string Level4Title,
-    string Level5Title)
+    string Level5Title,
+    CareerLocationType LocationType,
+    SettlementClass MinimumSettlementClass,
+    IReadOnlyList<string> RequiredOpportunityTags)
 {
     public const int TechnologyFreezeYear =
         2026;
+
+    public CareerLocationRequirement LocationRequirement =>
+        new(
+            LocationType,
+            MinimumSettlementClass,
+            RequiredOpportunityTags);
+
 
     public bool IsOpenForEntry(
         int gameYear)

@@ -1,0 +1,17 @@
+RegionId,RegionName,OpportunityTags
+masovia,Masovia,agriculture;manufacturing;finance;media;technology
+lodz,Łódź Region,textiles;manufacturing;agriculture;food
+greater_poland,Greater Poland,agriculture;manufacturing;automotive;food;technology
+kujawy_pomerania,Kuyavia-Pomerania,agriculture;food;chemicals;manufacturing
+pomerania,Pomerania,port;shipping;shipbuilding;manufacturing;tourism;technology
+west_pomerania,West Pomerania,port;shipping;shipbuilding;forestry;tourism
+warmia_masuria,Warmia-Masuria,forestry;agriculture;tourism;food
+podlasie,Podlasie,agriculture;forestry;food
+lublin,Lublin Region,agriculture;food;chemicals;manufacturing
+subcarpathia,Subcarpathia,aviation;oil;chemicals;manufacturing;forestry
+lesser_poland,Lesser Poland,manufacturing;chemicals;tourism;technology
+silesia,Silesia,coal;steel;heavy_industry;automotive;manufacturing
+opole,Opole Region,agriculture;chemicals;manufacturing
+lower_silesia,Lower Silesia,manufacturing;chemicals;technology;coal;heavy_industry
+lubusz,Lubusz,forestry;agriculture;manufacturing
+swietokrzyskie,Świętokrzyskie,heavy_industry;steel;manufacturing;agriculture

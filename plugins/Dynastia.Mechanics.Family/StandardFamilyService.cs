@@ -4,11 +4,21 @@ namespace Dynastia.Mechanics.Family;
 
 public sealed class StandardFamilyService : IFamilyService
 {
-    private readonly IGameState _gameState;
+    private const string SurnamesPath =
+        "Names/polish_surnames.csv";
 
-    public StandardFamilyService(IGameState gameState)
+    private readonly IGameState _gameState;
+    private readonly IGameDataService _data;
+
+    private IPerson? _reconciledFounderReference;
+    private bool _reconcilingFounderParents;
+
+    public StandardFamilyService(
+        IGameState gameState,
+        IGameDataService data)
     {
         _gameState = gameState;
+        _data = data;
     }
 
     public void InitializePerson(
@@ -219,11 +229,15 @@ public sealed class StandardFamilyService : IFamilyService
 
     public bool IsBloodline(IPerson person)
     {
+        ReconcileFoundingParents();
+
         return person.Tags.Has("family.bloodline");
     }
 
     public bool IsMaleLineage(IPerson person)
     {
+        ReconcileFoundingParents();
+
         return person.Tags.Has("lineage.male");
     }
 
@@ -285,11 +299,239 @@ public sealed class StandardFamilyService : IFamilyService
             person => person.Id == id.Value);
     }
 
-    private static FamilyComponent GetRequired(IPerson person)
+    private FamilyComponent GetRequired(IPerson person)
     {
+        ReconcileFoundingParents();
+
         return person.Components.Get<FamilyComponent>()
             ?? throw new InvalidOperationException(
                 $"Person '{person.Name} {person.Surname}' " +
                 "has no family component.");
+    }
+
+    private void ReconcileFoundingParents()
+    {
+        if (_reconcilingFounderParents)
+            return;
+
+        _reconcilingFounderParents =
+            true;
+
+        try
+        {
+            var founder =
+                _gameState.People
+                    .FirstOrDefault(
+                        candidate =>
+                        {
+                            var component =
+                                candidate.Components.Get<
+                                    FamilyComponent>();
+
+                            return component is not null
+                                && component.Sex == Sex.Male
+                                && component.Generation == 1
+                                && component.FatherId is not null
+                                && component.MotherId is not null
+                                && candidate.Tags.Has(
+                                    "family.bloodline");
+                        });
+
+            if (founder is null)
+                return;
+
+            if (ReferenceEquals(
+                    _reconciledFounderReference,
+                    founder))
+            {
+                return;
+            }
+
+            var founderFamily =
+                founder.Components.Get<
+                    FamilyComponent>();
+
+            if (founderFamily is null)
+                return;
+
+            var father =
+                _gameState.People
+                    .FirstOrDefault(
+                        candidate =>
+                            candidate.Id
+                            == founderFamily.FatherId);
+
+            var mother =
+                _gameState.People
+                    .FirstOrDefault(
+                        candidate =>
+                            candidate.Id
+                            == founderFamily.MotherId);
+
+            if (father is null
+                || mother is null)
+            {
+                return;
+            }
+
+            father.Tags.Add(
+                "family.bloodline");
+
+            father.Tags.Add(
+                "lineage.male");
+
+            mother.Tags.Add(
+                "family.bloodline");
+
+            var motherFamily =
+                mother.Components.Get<
+                    FamilyComponent>();
+
+            if (motherFamily is not null
+                && motherFamily.Generation is null)
+            {
+                motherFamily.Generation =
+                    0;
+            }
+
+            if (string.IsNullOrWhiteSpace(
+                    mother.MaidenName)
+                || mother.MaidenName.Equals(
+                    mother.Surname,
+                    StringComparison.OrdinalIgnoreCase)
+                || mother.MaidenName.Equals(
+                    _gameState.DynastySurname,
+                    StringComparison.OrdinalIgnoreCase))
+            {
+                mother.MaidenName =
+                    SelectDeterministicMaidenName(
+                        mother);
+            }
+
+            ReconcileParentDeathDates(
+                founder,
+                father,
+                mother);
+
+            _reconciledFounderReference =
+                founder;
+        }
+        finally
+        {
+            _reconcilingFounderParents =
+                false;
+        }
+    }
+
+    private string SelectDeterministicMaidenName(
+        IPerson mother)
+    {
+        var entries =
+            _data.GetWeightedStringList(
+                SurnamesPath);
+
+        if (entries.Count == 0)
+            return mother.Surname;
+
+        var bytes =
+            mother.Id.ToByteArray();
+
+        var seed =
+            (uint)bytes[0]
+            | ((uint)bytes[1] << 8)
+            | ((uint)bytes[2] << 16)
+            | ((uint)bytes[3] << 24);
+
+        var start =
+            (int)(seed
+                % (uint)entries.Count);
+
+        for (var offset = 0;
+            offset < entries.Count;
+            offset++)
+        {
+            var candidate =
+                entries[
+                    (start + offset)
+                    % entries.Count]
+                .Value;
+
+            if (!candidate.Equals(
+                    mother.Surname,
+                    StringComparison.OrdinalIgnoreCase)
+                && !candidate.Equals(
+                    _gameState.DynastySurname,
+                    StringComparison.OrdinalIgnoreCase))
+            {
+                return candidate;
+            }
+        }
+
+        return mother.Surname;
+    }
+
+    private static void ReconcileParentDeathDates(
+        IPerson founder,
+        IPerson father,
+        IPerson mother)
+    {
+        var fatherDate =
+            father.DeathDate;
+
+        var motherDate =
+            mother.DeathDate;
+
+        int month;
+        int day;
+
+        if (fatherDate is GameDate completeFather
+            && completeFather.Month is int fatherMonth
+            && completeFather.Day is int fatherDay)
+        {
+            month = fatherMonth;
+            day = fatherDay;
+        }
+        else if (motherDate is GameDate completeMother
+            && completeMother.Month is int motherMonth
+            && completeMother.Day is int motherDay)
+        {
+            month = motherMonth;
+            day = motherDay;
+        }
+        else
+        {
+            var bytes =
+                founder.Id.ToByteArray();
+
+            month =
+                bytes[4] % 12
+                + 1;
+
+            day =
+                bytes[5] % 28
+                + 1;
+        }
+
+        if (fatherDate is GameDate fatherValue
+            && (!fatherValue.Month.HasValue
+                || !fatherValue.Day.HasValue))
+        {
+            father.DeathDate =
+                new GameDate(
+                    fatherValue.Year,
+                    month,
+                    day);
+        }
+
+        if (motherDate is GameDate motherValue
+            && (!motherValue.Month.HasValue
+                || !motherValue.Day.HasValue))
+        {
+            mother.DeathDate =
+                new GameDate(
+                    motherValue.Year,
+                    month,
+                    day);
+        }
     }
 }

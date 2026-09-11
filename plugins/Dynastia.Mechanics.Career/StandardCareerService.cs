@@ -12,17 +12,22 @@ public sealed class StandardCareerService :
     private readonly IFamilyService _family;
     private readonly IGameRandom _random;
     private readonly CareerCatalog _catalog;
+    private readonly ILocalCareerOpportunityService
+        _localOpportunities;
 
     internal StandardCareerService(
         IGameState gameState,
         IFamilyService family,
         IGameRandom random,
-        CareerCatalog catalog)
+        CareerCatalog catalog,
+        ILocalCareerOpportunityService localOpportunities)
     {
         _gameState = gameState;
         _family = family;
         _random = random;
         _catalog = catalog;
+        _localOpportunities =
+            localOpportunities;
     }
 
     public void EnsureCareer(
@@ -334,9 +339,38 @@ public sealed class StandardCareerService :
                         StringComparison.OrdinalIgnoreCase))
             .Value;
 
+        var locationEvaluation =
+            _localOpportunities.Evaluate(
+                person,
+                definition.LocationRequirement);
+
+        // Employment search should remain uncertain, but a strong
+        // aptitude now matters more than in the legacy 10-50% curve.
+        // Stat values 1-5 produce 20%, 30%, 40%, 52.5% and 65%
+        // before location and personality effects.
         var successChance =
-            (statValue / 5.0)
-            * 0.5;
+            0.10
+            + statValue * 0.10;
+
+        if (statValue >= 4)
+        {
+            successChance +=
+                (statValue - 3)
+                * 0.025;
+        }
+
+        successChance +=
+            locationEvaluation.Strength switch
+            {
+                CareerOpportunityStrength.Regional => 0.05,
+                CareerOpportunityStrength.Town => 0.10,
+                _ => 0.0
+            };
+
+        successChance =
+            Math.Min(
+                0.80,
+                successChance);
 
         return new EmploymentOpportunity(
             definition,
@@ -425,7 +459,10 @@ public sealed class StandardCareerService :
                 candidate =>
                     candidate.Definition is not null
                     && candidate.Definition.IsOpenForEntry(
-                        _gameState.Year))
+                        _gameState.Year)
+                    && IsLocallyAvailable(
+                        person,
+                        candidate.Definition))
             .OrderByDescending(
                 candidate =>
                     candidate.Career.PeakJobLevel)
@@ -689,7 +726,29 @@ public sealed class StandardCareerService :
             _family.GetSex(
                 person),
             _gameState.Year,
-            _random);
+            _random,
+            definition =>
+            {
+                var evaluation =
+                    _localOpportunities.Evaluate(
+                        person,
+                        definition.LocationRequirement);
+
+                return evaluation.IsEligible
+                    ? evaluation.WeightMultiplier
+                    : 0;
+            });
+    }
+
+    private bool IsLocallyAvailable(
+        IPerson person,
+        CareerDefinition definition)
+    {
+        return _localOpportunities
+            .Evaluate(
+                person,
+                definition.LocationRequirement)
+            .IsEligible;
     }
 
     private static string

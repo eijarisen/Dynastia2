@@ -66,7 +66,9 @@ internal sealed class CareerCatalog
     public CareerDefinition SelectForEntry(
         Sex sex,
         int gameYear,
-        IGameRandom random)
+        IGameRandom random,
+        Func<CareerDefinition, double>?
+            availabilityMultiplier = null)
     {
         var available =
             _careers
@@ -76,11 +78,21 @@ internal sealed class CareerCatalog
                             gameYear))
                 .Select(
                     career =>
-                        new WeightedCareer(
+                    {
+                        var locationMultiplier =
+                            availabilityMultiplier?.Invoke(
+                                career)
+                            ?? 1.0;
+
+                        return new WeightedCareer(
                             career,
                             career.GetEntryWeight(
                                 sex,
-                                gameYear)))
+                                gameYear)
+                            * Math.Max(
+                                0,
+                                locationMultiplier));
+                    })
                 .Where(
                     entry =>
                         entry.Weight > 0)
@@ -151,7 +163,10 @@ internal sealed class CareerCatalog
                 "Level2Title",
                 "Level3Title",
                 "Level4Title",
-                "Level5Title"
+                "Level5Title",
+                "LocationType",
+                "MinimumSettlementClass",
+                "RequiredOpportunityTags"
             };
 
         if (!header.SequenceEqual(
@@ -227,7 +242,18 @@ internal sealed class CareerCatalog
                     Level4Title:
                         fields[13],
                     Level5Title:
-                        fields[14]));
+                        fields[14],
+                    LocationType:
+                        ParseLocationType(
+                            fields[15],
+                            index),
+                    MinimumSettlementClass:
+                        ParseSettlementClass(
+                            fields[16],
+                            index),
+                    RequiredOpportunityTags:
+                        ParseTags(
+                            fields[17])));
         }
 
         return result;
@@ -299,6 +325,24 @@ internal sealed class CareerCatalog
                     "impossible.");
             }
 
+            if (career.LocationType
+                    == CareerLocationType.Specialist
+                && career.RequiredOpportunityTags.Count == 0)
+            {
+                throw new InvalidDataException(
+                    $"{career.Name}: specialist careers require "
+                    + "at least one opportunity tag.");
+            }
+
+            if (career.LocationType
+                    != CareerLocationType.Specialist
+                && career.RequiredOpportunityTags.Count > 0)
+            {
+                throw new InvalidDataException(
+                    $"{career.Name}: opportunity tags are only "
+                    + "valid for specialist careers.");
+            }
+
             if (career.BaseSalary <= 0)
             {
                 throw new InvalidDataException(
@@ -322,6 +366,59 @@ internal sealed class CareerCatalog
                     "are required.");
             }
         }
+    }
+
+    private static CareerLocationType ParseLocationType(
+        string value,
+        int rowIndex)
+    {
+        if (Enum.TryParse<CareerLocationType>(
+                value,
+                ignoreCase: true,
+                out var result))
+        {
+            return result;
+        }
+
+        throw new InvalidDataException(
+            $"{DataPath} row {rowIndex + 1}: "
+            + $"'{value}' is not a valid location type.");
+    }
+
+    private static SettlementClass ParseSettlementClass(
+        string value,
+        int rowIndex)
+    {
+        if (Enum.TryParse<SettlementClass>(
+                value,
+                ignoreCase: true,
+                out var result))
+        {
+            return result;
+        }
+
+        throw new InvalidDataException(
+            $"{DataPath} row {rowIndex + 1}: "
+            + $"'{value}' is not a valid settlement class.");
+    }
+
+    private static IReadOnlyList<string> ParseTags(
+        string value)
+    {
+        if (string.IsNullOrWhiteSpace(value)
+            || value.Trim() == "-")
+        {
+            return Array.Empty<string>();
+        }
+
+        return value
+            .Split(
+                ';',
+                StringSplitOptions.RemoveEmptyEntries
+                | StringSplitOptions.TrimEntries)
+            .Distinct(
+                StringComparer.OrdinalIgnoreCase)
+            .ToArray();
     }
 
     private static int ParseInt(

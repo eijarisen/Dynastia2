@@ -194,15 +194,6 @@ public sealed class FemaleRemarriageYearSystem :
             husband,
             0);
 
-        _career.InitializeCareer(
-            husband,
-            _random.NextInt(
-                0,
-                3),
-            _random.NextInt(
-                1,
-                5));
-
         var womanEventName =
             _family.GetDisplayName(
                 woman);

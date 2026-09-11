@@ -1158,6 +1158,12 @@
                                                 Text="{Binding SelectedPerson.BirthplaceText}" />
 
                                             <TextBlock
+                                                IsVisible="{Binding SelectedPerson.HasResidence}"
+                                                FontSize="12"
+                                                TextWrapping="Wrap"
+                                                Text="{Binding SelectedPerson.ResidenceText}" />
+
+                                            <TextBlock
                                                 IsVisible="{Binding SelectedPerson.HasDeathDate}"
                                                 FontSize="12"
                                                 Text="{Binding SelectedPerson.DeathDateText}" />

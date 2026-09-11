@@ -39,7 +39,8 @@ public sealed class FamilyPlugin : IGamePlugin
 
         var familyService =
             new StandardFamilyService(
-                gameState);
+                gameState,
+                data);
 
         var newGameService =
             new StandardNewGameService(

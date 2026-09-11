@@ -44,7 +44,15 @@ public sealed class LocationsPlugin :
         context.AddService<ILocationService>(
             locations);
 
+        var localCareers =
+            new StandardLocalCareerOpportunityService(
+                locations,
+                data);
+
+        context.AddService<ILocalCareerOpportunityService>(
+            localCareers);
+
         context.Log(
-            "Location and birthplace mechanics registered.");
+            "Location, birthplace and local career opportunity mechanics registered.");
     }
 }

@@ -5,8 +5,9 @@ namespace Dynastia.Mechanics.Education;
 public sealed class EducationPlugin : IGamePlugin
 {
     private const decimal EducationCost = 2000m;
-    private const double BaseSuccessChance = 0.30;
-    private const double IntellectMultiplier = 0.15;
+    private const double BaseSuccessChance = 0.45;
+    private const double IntellectMultiplier = 0.10;
+    private const double MaximumPaidEducationSuccessChance = 0.95;
 
     private const int HelpLearningMinimumAge = 6;
     private const int HelpLearningAdultAge = 18;
@@ -228,11 +229,13 @@ public sealed class EducationPlugin : IGamePlugin
                     + intellect * IntellectMultiplier;
 
                 successChance =
-                    PersonalityInfluence.AdjustProbability(
-                        successChance,
-                        target,
-                        melancholic: 0.10,
-                        choleric: -0.10);
+                    Math.Min(
+                        MaximumPaidEducationSuccessChance,
+                        PersonalityInfluence.AdjustProbability(
+                            successChance,
+                            target,
+                            melancholic: 0.10,
+                            choleric: -0.10));
 
                 var success =
                     random.NextDouble() < successChance;

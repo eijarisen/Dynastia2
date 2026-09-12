@@ -23,6 +23,7 @@ public sealed class MainWindowViewModel : ViewModelBase
         _marriageSatisfactionService;
     private readonly IThoughtService? _thoughtService;
     private readonly IPersonalityService? _personalityService;
+    private readonly IChildHappinessService? _childHappinessService;
     private readonly IEducationService? _educationService;
     private readonly ICareerService? _careerService;
     private readonly IJusticeService? _justiceService;
@@ -49,6 +50,8 @@ public sealed class MainWindowViewModel : ViewModelBase
     private bool _hasQueuedAction;
     private bool _isGameOverOverlayVisible;
     private bool _isMainMenuPromptVisible;
+    private bool _isYearSummaryVisible;
+    private int _yearSummaryEventYear = 1900;
     private HouseholdViewMode _householdViewMode =
         HouseholdViewMode.Lineage;
 
@@ -56,7 +59,6 @@ public sealed class MainWindowViewModel : ViewModelBase
 
     private int _detailsTabIndex;
     private string _persistenceStatusText = string.Empty;
-    private CancellationTokenSource? _loadedStatusCancellation;
 
     public MainWindowViewModel(
         IGameState gameState,
@@ -73,6 +75,7 @@ public sealed class MainWindowViewModel : ViewModelBase
         IMarriageSatisfactionService? marriageSatisfactionService,
         IThoughtService? thoughtService,
         IPersonalityService? personalityService,
+        IChildHappinessService? childHappinessService,
         IEducationService? educationService,
         ICareerService? careerService,
         IJusticeService? justiceService,
@@ -99,6 +102,8 @@ public sealed class MainWindowViewModel : ViewModelBase
             thoughtService;
         _personalityService =
             personalityService;
+        _childHappinessService =
+            childHappinessService;
         _educationService = educationService;
         _careerService = careerService;
         _justiceService = justiceService;
@@ -141,6 +146,19 @@ public sealed class MainWindowViewModel : ViewModelBase
             new RelayCommand(
                 HideMainMenuPrompt);
 
+        HideStatusMessageCommand =
+            new RelayCommand(
+                () => PersistenceStatusText = string.Empty);
+
+        ShowAlbumYearSummaryCommand =
+            new RelayCommand(
+                ShowAlbumYearSummary,
+                () => IsGameStarted);
+
+        HideYearSummaryCommand =
+            new RelayCommand(
+                HideYearSummary);
+
         ShowLivingFamilyCommand =
             new RelayCommand(
                 ShowLivingFamily);
@@ -158,7 +176,7 @@ public sealed class MainWindowViewModel : ViewModelBase
                 PreviousAlbumYear,
                 () =>
                     IsGameStarted
-                    && AlbumYear > 1900);
+                    && AlbumYear > 1901);
 
         NextAlbumYearCommand =
             new RelayCommand(
@@ -207,6 +225,9 @@ public sealed class MainWindowViewModel : ViewModelBase
                 .RaiseCanExecuteChanged();
 
             ShowMainMenuPromptCommand
+                .RaiseCanExecuteChanged();
+
+            ShowAlbumYearSummaryCommand
                 .RaiseCanExecuteChanged();
         }
     }
@@ -566,6 +587,8 @@ public sealed class MainWindowViewModel : ViewModelBase
 
             _albumYear = value;
             OnPropertyChanged();
+            OnPropertyChanged(
+                nameof(AlbumDisplayYear));
 
             PreviousAlbumYearCommand
                 .RaiseCanExecuteChanged();
@@ -579,6 +602,32 @@ public sealed class MainWindowViewModel : ViewModelBase
 
     public string AlbumEmptyText =>
         AlbumEvents.Count == 0
+            ? "Nothing of note happened this year."
+            : string.Empty;
+
+    public int AlbumDisplayYear =>
+        AlbumYear <= 1900
+            ? 1900
+            : AlbumYear - 1;
+
+    public bool IsYearSummaryVisible
+    {
+        get => _isYearSummaryVisible;
+        private set
+        {
+            if (_isYearSummaryVisible == value)
+                return;
+
+            _isYearSummaryVisible = value;
+            OnPropertyChanged();
+        }
+    }
+
+    public string YearSummaryTitle =>
+        $"Year {Math.Max(1900, _yearSummaryEventYear - 1)}";
+
+    public string YearSummaryEmptyText =>
+        YearSummaryHouseholds.Count == 0
             ? "Nothing of note happened this year."
             : string.Empty;
 
@@ -650,6 +699,9 @@ public sealed class MainWindowViewModel : ViewModelBase
     public ObservableCollection<AlbumEventViewModel>
         AlbumEvents { get; } = [];
 
+    public ObservableCollection<YearSummaryHouseholdViewModel>
+        YearSummaryHouseholds { get; } = [];
+
     public ObservableCollection<PersonRowViewModel>
         People { get; } = [];
 
@@ -701,6 +753,7 @@ public sealed class MainWindowViewModel : ViewModelBase
             RefreshEducation();
             RefreshCareer();
             RefreshMarriageSatisfaction();
+            RefreshChildHappiness();
             RefreshJustice();
             RefreshNarrative();
             RefreshActions();
@@ -780,8 +833,26 @@ public sealed class MainWindowViewModel : ViewModelBase
 
             return snapshot is null
                 ? string.Empty
-                : $"Marriage satisfaction: " +
-                  $"{snapshot.Label}";
+                : $"Marriage: {snapshot.Label}";
+        }
+    }
+
+    public string SelectedMarriageSatisfactionLabel
+    {
+        get
+        {
+            var person =
+                FindSelectedPerson();
+
+            var snapshot =
+                person is null
+                    ? null
+                    : _marriageSatisfactionService?
+                        .GetSatisfaction(
+                            person);
+
+            return snapshot?.Label
+                ?? string.Empty;
         }
     }
 
@@ -817,6 +888,32 @@ public sealed class MainWindowViewModel : ViewModelBase
     public bool HasSelectedMarriageSatisfaction =>
         !string.IsNullOrWhiteSpace(
             SelectedMarriageSatisfactionText);
+
+    public string SelectedChildHappinessText
+    {
+        get
+        {
+            var person = FindSelectedPerson();
+            var snapshot = person is null
+                ? null
+                : _childHappinessService?.GetHappiness(person);
+            return snapshot is null ? string.Empty : $"Happiness: {snapshot.Label}";
+        }
+    }
+
+    public string SelectedChildHappinessLabel
+    {
+        get
+        {
+            var person = FindSelectedPerson();
+            return person is null
+                ? string.Empty
+                : _childHappinessService?.GetHappiness(person)?.Label ?? string.Empty;
+        }
+    }
+
+    public bool HasSelectedChildHappiness =>
+        !string.IsNullOrWhiteSpace(SelectedChildHappinessText);
 
     public JusticeViewModel? SelectedJustice
     {
@@ -887,12 +984,17 @@ public sealed class MainWindowViewModel : ViewModelBase
             OnPropertyChanged();
             OnPropertyChanged(
                 nameof(HasPersistenceStatus));
+            OnPropertyChanged(
+                nameof(IsStatusMessageVisible));
         }
     }
 
     public bool HasPersistenceStatus =>
         !string.IsNullOrWhiteSpace(
             PersistenceStatusText);
+
+    public bool IsStatusMessageVisible =>
+        HasPersistenceStatus;
 
     public RelayCommand StartGameCommand { get; }
     public RelayCommand NextYearCommand { get; }
@@ -901,6 +1003,9 @@ public sealed class MainWindowViewModel : ViewModelBase
     public RelayCommand ReturnToMainMenuCommand { get; }
     public RelayCommand ShowMainMenuPromptCommand { get; }
     public RelayCommand HideMainMenuPromptCommand { get; }
+    public RelayCommand HideStatusMessageCommand { get; }
+    public RelayCommand ShowAlbumYearSummaryCommand { get; }
+    public RelayCommand HideYearSummaryCommand { get; }
     public RelayCommand ShowLivingFamilyCommand { get; }
     public RelayCommand ShowBloodlineFamilyCommand { get; }
     public RelayCommand ShowDeceasedFamilyCommand { get; }
@@ -947,6 +1052,9 @@ public sealed class MainWindowViewModel : ViewModelBase
         IsMainMenuPromptVisible =
             false;
 
+        IsYearSummaryVisible =
+            false;
+
         IsGameStarted =
             true;
 
@@ -977,83 +1085,8 @@ public sealed class MainWindowViewModel : ViewModelBase
     public void ReportPersistenceStatus(
         string message)
     {
-        _loadedStatusCancellation?
-            .Cancel();
-
-        _loadedStatusCancellation?
-            .Dispose();
-
-        _loadedStatusCancellation =
-            null;
-
         PersistenceStatusText =
             message;
-
-        if (!ShouldAutoClearPersistenceStatus(
-                message))
-        {
-            return;
-        }
-
-        var cancellation =
-            new CancellationTokenSource();
-
-        _loadedStatusCancellation =
-            cancellation;
-
-        _ =
-            ClearLoadedStatusAfterDelayAsync(
-                message,
-                cancellation);
-    }
-
-    private bool ShouldAutoClearPersistenceStatus(
-        string message)
-    {
-        return
-            message.StartsWith(
-                "Loaded ",
-                StringComparison.OrdinalIgnoreCase)
-            || message.StartsWith(
-                "Choose an annual action",
-                StringComparison.OrdinalIgnoreCase);
-    }
-
-    private async Task ClearLoadedStatusAfterDelayAsync(
-        string expectedMessage,
-        CancellationTokenSource cancellation)
-    {
-        try
-        {
-            await Task.Delay(
-                TimeSpan.FromSeconds(15),
-                cancellation.Token);
-        }
-        catch (OperationCanceledException)
-        {
-            return;
-        }
-
-        await Dispatcher.UIThread.InvokeAsync(
-            () =>
-            {
-                if (ReferenceEquals(
-                        _loadedStatusCancellation,
-                        cancellation)
-                    && PersistenceStatusText.Equals(
-                        expectedMessage,
-                        StringComparison.Ordinal))
-                {
-                    PersistenceStatusText =
-                        string.Empty;
-
-                    _loadedStatusCancellation?
-                        .Dispose();
-
-                    _loadedStatusCancellation =
-                        null;
-                }
-            });
     }
 
     private GameUiSaveState CaptureUiSaveState()
@@ -1085,6 +1118,9 @@ public sealed class MainWindowViewModel : ViewModelBase
             false;
 
         IsMainMenuPromptVisible =
+            false;
+
+        IsYearSummaryVisible =
             false;
 
         IsGameStarted = true;
@@ -1147,6 +1183,9 @@ public sealed class MainWindowViewModel : ViewModelBase
         RefreshPeople();
 
         NotifyGameStateChanged();
+
+        ShowYearSummary(
+            _gameState.Year);
     }
 
     private IReadOnlyList<IPerson>
@@ -1197,6 +1236,131 @@ public sealed class MainWindowViewModel : ViewModelBase
         RefreshFamilySection();
     }
 
+    private void ShowAlbumYearSummary()
+    {
+        if (!IsGameStarted)
+            return;
+
+        ShowYearSummary(
+            AlbumYear);
+    }
+
+    private void ShowYearSummary(
+        int eventYear)
+    {
+        IsGameOverOverlayVisible =
+            false;
+
+        _yearSummaryEventYear =
+            eventYear;
+
+        YearSummaryHouseholds.Clear();
+
+        var grouped =
+            GetVisibleChronicleEvents(eventYear)
+                .Select(gameEvent =>
+                {
+                    var household =
+                        ResolveChronicleHousehold(
+                            gameEvent);
+
+                    return new
+                    {
+                        Event = gameEvent,
+                        household.Key,
+                        household.Title,
+                        Severity =
+                            ChronicleEventOrdering.GetSeverity(
+                                gameEvent)
+                    };
+                })
+                .GroupBy(item => item.Key)
+                .Select(group => new
+                {
+                    Key = group.Key,
+                    Title = group.First().Title,
+                    Severity = group.Min(item => item.Severity),
+                    Events = group
+                        .OrderBy(item => item.Severity)
+                        .Select(item => item.Event)
+                        .ToList()
+                })
+                .OrderBy(group => group.Severity)
+                .ThenBy(group => group.Title, StringComparer.OrdinalIgnoreCase)
+                .ToList();
+
+        foreach (var group in grouped)
+        {
+            YearSummaryHouseholds.Add(
+                new YearSummaryHouseholdViewModel(
+                    group.Title,
+                    group.Events.Select(
+                        gameEvent =>
+                            new AlbumEventViewModel(
+                                gameEvent))));
+        }
+
+        OnPropertyChanged(
+            nameof(YearSummaryTitle));
+
+        OnPropertyChanged(
+            nameof(YearSummaryEmptyText));
+
+        IsYearSummaryVisible =
+            true;
+    }
+
+    private void HideYearSummary()
+    {
+        IsYearSummaryVisible =
+            false;
+
+        if (_succession.IsGameOver)
+        {
+            IsGameOverOverlayVisible =
+                true;
+        }
+    }
+
+    private (Guid Key, string Title) ResolveChronicleHousehold(
+        GameEvent gameEvent)
+    {
+        var personIds =
+            new List<Guid>();
+
+        if (gameEvent.SubjectId is Guid subjectId)
+            personIds.Add(subjectId);
+
+        personIds.AddRange(
+            gameEvent.RelatedPersonIds);
+
+        foreach (var personId in personIds.Distinct())
+        {
+            var person =
+                _gameState.People.FirstOrDefault(
+                    candidate =>
+                        candidate.Id == personId);
+
+            if (person is null)
+                continue;
+
+            var household =
+                _householdService?.GetHouseholdInfo(
+                    person);
+
+            if (household is null)
+                continue;
+
+            return (
+                household.HouseholdId,
+                $"{household.HeadName}'s household");
+        }
+
+        return (
+            Guid.Empty,
+            "Extended family");
+    }
+
     private void HideGameOver()
     {
         IsGameOverOverlayVisible =
@@ -1226,6 +1390,9 @@ public sealed class MainWindowViewModel : ViewModelBase
             false;
 
         IsMainMenuPromptVisible =
+            false;
+
+        IsYearSummaryVisible =
             false;
 
         IsGameStarted =
@@ -1352,7 +1519,7 @@ public sealed class MainWindowViewModel : ViewModelBase
 
     private void PreviousAlbumYear()
     {
-        if (AlbumYear > 1900)
+        if (AlbumYear > 1901)
             AlbumYear--;
     }
 
@@ -1843,6 +2010,7 @@ public sealed class MainWindowViewModel : ViewModelBase
             _statsService,
             _locationService,
             _marriageSatisfactionService,
+            _childHappinessService,
             _thoughtService,
             selectedId == person.Id,
             activeHeadId == person.Id,
@@ -2063,11 +2231,22 @@ public sealed class MainWindowViewModel : ViewModelBase
 
         OnPropertyChanged(
             nameof(
+                SelectedMarriageSatisfactionLabel));
+
+        OnPropertyChanged(
+            nameof(
                 SelectedMarriageSatisfactionDetailsText));
 
         OnPropertyChanged(
             nameof(
                 HasSelectedMarriageSatisfaction));
+    }
+
+    private void RefreshChildHappiness()
+    {
+        OnPropertyChanged(nameof(SelectedChildHappinessText));
+        OnPropertyChanged(nameof(SelectedChildHappinessLabel));
+        OnPropertyChanged(nameof(HasSelectedChildHappiness));
     }
 
     private void RefreshJustice()
@@ -2167,13 +2346,6 @@ public sealed class MainWindowViewModel : ViewModelBase
                 .GetRelationshipHistory(
                     person);
 
-        var hasUnknownFoundingBackground =
-            _familyService.GetGeneration(
-                person) == 0
-            && _familyService.IsBloodline(
-                person)
-            && generatedBackground is null;
-
         SelectedFamily =
             new FamilyDetailsViewModel
             {
@@ -2194,18 +2366,14 @@ public sealed class MainWindowViewModel : ViewModelBase
                         ? PersonNameWithLifeYears(
                             father)
                         : generatedBackground?.FatherName
-                          ?? (hasUnknownFoundingBackground
-                              ? "Unknown"
-                              : "None"),
+                          ?? "Unknown",
 
                 Mother =
                     mother is not null
                         ? PersonNameWithLifeYears(
                             mother)
                         : generatedBackground?.MotherName
-                          ?? (hasUnknownFoundingBackground
-                              ? "Unknown"
-                              : "None"),
+                          ?? "Unknown",
 
                 Siblings =
                     siblings.Count > 0
@@ -2214,7 +2382,8 @@ public sealed class MainWindowViewModel : ViewModelBase
                         : generatedBackground is not null
                             ? FormatNames(
                                 generatedBackground.Siblings)
-                            : hasUnknownFoundingBackground
+                            : father is null
+                              && mother is null
                                 ? "Unknown"
                                 : "None",
 
@@ -2229,6 +2398,9 @@ public sealed class MainWindowViewModel : ViewModelBase
                 RelationshipHistory =
                     FormatRelationshipHistory(
                         relationshipHistory),
+
+                ShowAdultRelationships =
+                    person.Age >= 18,
 
                 Bloodline =
                     _familyService
@@ -2454,14 +2626,8 @@ public sealed class MainWindowViewModel : ViewModelBase
         AlbumEvents.Clear();
 
         foreach (var gameEvent in
-            _eventBus.GetEventsForYear(
-                AlbumYear)
-                .Where(
-                    gameEvent =>
-                        _householdService?
-                            .ShouldShowFamilyNews(
-                                gameEvent)
-                        ?? true))
+            GetVisibleChronicleEvents(
+                AlbumYear))
         {
             AlbumEvents.Add(
                 new AlbumEventViewModel(
@@ -2470,6 +2636,22 @@ public sealed class MainWindowViewModel : ViewModelBase
 
         OnPropertyChanged(
             nameof(AlbumEmptyText));
+    }
+
+    private IReadOnlyList<GameEvent>
+        GetVisibleChronicleEvents(
+            int eventYear)
+    {
+        return _eventBus
+            .GetEventsForYear(eventYear)
+            .Where(gameEvent =>
+                _householdService?
+                    .ShouldShowFamilyNews(
+                        gameEvent)
+                ?? true)
+            .OrderBy(
+                ChronicleEventOrdering.GetSeverity)
+            .ToList();
     }
 
     private void OnEventPublished(

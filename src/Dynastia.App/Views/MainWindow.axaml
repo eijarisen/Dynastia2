@@ -25,6 +25,9 @@
         <conv:HealthBrushConverter
             x:Key="HealthBrushConverter" />
 
+        <conv:SatisfactionBrushConverter
+            x:Key="SatisfactionBrushConverter" />
+
         <DataTemplate
             x:Key="FamilyCardTemplate"
             x:DataType="vm:FamilyMemberCardViewModel">
@@ -44,45 +47,91 @@
                         BorderThickness="1"
                         CornerRadius="4">
 
-                        <TextBlock
-                            FontSize="10.5"
-                            LineHeight="17"
-                            Foreground="#F5E6C6"
-                            TextWrapping="Wrap"
-                            Text="{Binding InfoTooltipText}" />
+                        <Grid>
+                            <StackPanel
+                                IsVisible="{Binding IsLiving}"
+                                Spacing="3">
+
+                                <TextBlock
+                                    IsVisible="{Binding HasTooltipThought}"
+                                    Margin="0,0,0,4"
+                                    FontSize="12"
+                                    LineHeight="18"
+                                    Foreground="#F5E6C6"
+                                    TextWrapping="Wrap"
+                                    Text="{Binding TooltipThoughtText}" />
+
+                                <TextBlock
+                                    FontSize="12"
+                                    FontWeight="SemiBold"
+                                    Foreground="{Binding HealthValue, Converter={StaticResource HealthBrushConverter}}"
+                                    Text="{Binding HealthTooltipText}" />
+
+                                <TextBlock
+                                    IsVisible="{Binding ShowChildHappiness}"
+                                    FontSize="12"
+                                    FontWeight="SemiBold"
+                                    Foreground="{Binding ChildHappinessLabel, Converter={StaticResource SatisfactionBrushConverter}}"
+                                    Text="{Binding ChildHappinessTooltipText}" />
+
+                                <TextBlock
+                                    IsVisible="{Binding ShowAdultSatisfaction}"
+                                    FontSize="12"
+                                    FontWeight="SemiBold"
+                                    Foreground="{Binding CareerSatisfactionLabel,
+                                                         Converter={StaticResource SatisfactionBrushConverter}}"
+                                    Text="{Binding CareerTooltipText}" />
+
+                                <TextBlock
+                                    IsVisible="{Binding ShowAdultSatisfaction}"
+                                    FontSize="12"
+                                    FontWeight="SemiBold"
+                                    Foreground="{Binding MarriageSatisfactionLabel,
+                                                         Converter={StaticResource SatisfactionBrushConverter}}"
+                                    Text="{Binding MarriageTooltipText}" />
+                            </StackPanel>
+
+                            <TextBlock
+                                IsVisible="{Binding IsDeceased}"
+                                FontSize="12"
+                                LineHeight="18"
+                                Foreground="#F5E6C6"
+                                TextWrapping="Wrap"
+                                Text="{Binding InfoTooltipText}" />
+                        </Grid>
                     </Border>
                 </ToolTip.Tip>
 
                 <StackPanel
-                    Width="98"
+                    Width="128"
                     HorizontalAlignment="Center"
                     Spacing="2">
 
                     <TextBlock
                         HorizontalAlignment="Center"
-                        FontSize="31"
+                        FontSize="35"
                         Text="{Binding AvatarText}" />
 
                     <TextBlock
                         HorizontalAlignment="Center"
                         TextAlignment="Center"
-                        FontSize="11.5"
+                        FontSize="13.5"
                         FontWeight="SemiBold"
                         Text="{Binding FirstName}" />
 
                     <TextBlock
                         HorizontalAlignment="Center"
                         TextAlignment="Center"
-                        FontSize="11.5"
+                        FontSize="13.5"
                         FontWeight="SemiBold"
                         Text="{Binding Surname}" />
 
                     <ProgressBar
                         Classes="healthBar"
                         IsVisible="{Binding ShowHealth}"
-                        Width="68"
+                        Width="100"
                         MinWidth="0"
-                        MaxWidth="68"
+                        MaxWidth="100"
                         Height="5"
                         Minimum="0"
                         Maximum="100"
@@ -94,16 +143,16 @@
                     <TextBlock
                         HorizontalAlignment="Center"
                         TextAlignment="Center"
-                        FontSize="9"
-                        Opacity="0.82"
+                        FontSize="11"
+                        Opacity="0.84"
                         Text="{Binding LifeSpanText}" />
 
                     <TextBlock
                         HorizontalAlignment="Center"
                         TextAlignment="Center"
                         TextWrapping="Wrap"
-                        FontSize="8.5"
-                        Opacity="0.78"
+                        FontSize="10.5"
+                        Opacity="0.8"
                         Text="{Binding TownText}" />
 
                     <TextBlock
@@ -111,8 +160,8 @@
                         HorizontalAlignment="Center"
                         TextAlignment="Center"
                         TextWrapping="Wrap"
-                        FontSize="8.5"
-                        Opacity="0.74"
+                        FontSize="10.5"
+                        Opacity="0.78"
                         Text="{Binding OccupationText}" />
                 </StackPanel>
             </Button>
@@ -235,6 +284,7 @@
         </Style>
 
         <Style Selector="Button.familyCard">
+            <Setter Property="Width" Value="140" />
             <Setter Property="Padding" Value="5" />
             <Setter Property="Margin" Value="2" />
             <Setter Property="Background" Value="#79071413" />
@@ -271,7 +321,7 @@
             <Setter Property="FontWeight" Value="SemiBold" />
             <Setter Property="Foreground" Value="#E4D3AE" />
             <Setter Property="Background" Value="#85081312" />
-            <Setter Property="Padding" Value="11,7" />
+            <Setter Property="Padding" Value="11,4" />
         </Style>
 
         <Style Selector="TabItem:selected">
@@ -379,13 +429,6 @@
                                     Click="OnLoadGameClick" />
                             </StackPanel>
 
-                            <TextBlock
-                                IsVisible="{Binding HasPersistenceStatus}"
-                                HorizontalAlignment="Center"
-                                TextAlignment="Center"
-                                TextWrapping="Wrap"
-                                Foreground="#6E1D17"
-                                Text="{Binding PersistenceStatusText}" />
                         </StackPanel>
                     </Grid>
                 </Grid>
@@ -555,15 +598,22 @@
                                             Text="‹" />
                                     </Button>
 
-                                    <TextBlock
+                                    <Button
                                         Grid.Column="1"
-                                        HorizontalAlignment="Center"
-                                        VerticalAlignment="Center"
-                                        TextAlignment="Center"
-                                        FontSize="16"
-                                        FontWeight="Bold"
-                                        Foreground="#DDB64E"
-                                        Text="{Binding AlbumYear}" />
+                                        Padding="0"
+                                        Background="Transparent"
+                                        BorderThickness="0"
+                                        Command="{Binding ShowAlbumYearSummaryCommand}">
+
+                                        <TextBlock
+                                            HorizontalAlignment="Center"
+                                            VerticalAlignment="Center"
+                                            TextAlignment="Center"
+                                            FontSize="16"
+                                            FontWeight="Bold"
+                                            Foreground="#DDB64E"
+                                            Text="{Binding AlbumDisplayYear}" />
+                                    </Button>
 
                                     <Button
                                         Grid.Column="2"
@@ -941,7 +991,8 @@
                                             HorizontalAlignment="Center"
                                             TextAlignment="Center"
                                             TextWrapping="Wrap"
-                                            FontSize="8.5"
+                                            FontSize="10.5"
+                                            FontWeight="SemiBold"
                                             Foreground="#E1B546"
                                             Text="{Binding HouseholdWarningText}" />
 
@@ -1077,7 +1128,7 @@
 
                         <!-- Health -->
                         <StackPanel
-                            Margin="196,112,38,0"
+                            Margin="196,122,38,0"
                             Height="48"
                             VerticalAlignment="Top"
                             Spacing="4"
@@ -1103,7 +1154,7 @@
 
                         <!-- Personal tabs are explicitly clipped to the frame. -->
                         <TabControl
-                            Margin="202,157,40,54"
+                            Margin="202,167,40,54"
                             ClipToBounds="True"
                             SelectedIndex="{Binding DetailsTabIndex, Mode=TwoWay}">
 
@@ -1130,11 +1181,20 @@
                                             <TextBlock FontSize="12" Text="{Binding SelectedFamily.Sex, StringFormat='Sex: {0}'}" />
                                             <TextBlock FontSize="12" Text="{Binding SelectedEducation.EducationText}" />
                                             <TextBlock FontSize="12" Text="{Binding SelectedCareer.OccupationText}" />
-                                            <TextBlock FontSize="12" Text="{Binding SelectedCareer.SatisfactionText}" />
+                                            <TextBlock
+                                                IsVisible="{Binding SelectedCareer.HasSatisfaction}"
+                                                FontSize="12"
+                                                FontWeight="SemiBold"
+                                                Foreground="{Binding SelectedCareer.SatisfactionLabel,
+                                                                     Converter={StaticResource SatisfactionBrushConverter}}"
+                                                Text="{Binding SelectedCareer.SatisfactionText}" />
 
                                             <TextBlock
                                                 IsVisible="{Binding HasSelectedMarriageSatisfaction}"
                                                 FontSize="12"
+                                                FontWeight="SemiBold"
+                                                Foreground="{Binding SelectedMarriageSatisfactionLabel,
+                                                                     Converter={StaticResource SatisfactionBrushConverter}}"
                                                 Text="{Binding SelectedMarriageSatisfactionText}">
 
                                                 <ToolTip.Tip>
@@ -1155,6 +1215,13 @@
                                                     </Border>
                                                 </ToolTip.Tip>
                                             </TextBlock>
+
+                                            <TextBlock
+                                                IsVisible="{Binding HasSelectedChildHappiness}"
+                                                FontSize="12"
+                                                FontWeight="SemiBold"
+                                                Foreground="{Binding SelectedChildHappinessLabel, Converter={StaticResource SatisfactionBrushConverter}}"
+                                                Text="{Binding SelectedChildHappinessText}" />
 
                                             <TextBlock FontSize="12" Text="{Binding SelectedCareer.IncomeText}" />
                                             <TextBlock FontSize="12" Text="{Binding SelectedJustice.StatusText}" />
@@ -1259,12 +1326,20 @@
                                             <TextBlock FontSize="12" Text="{Binding SelectedFamily.Father, StringFormat='Father: {0}'}" />
                                             <TextBlock FontSize="12" Text="{Binding SelectedFamily.Mother, StringFormat='Mother: {0}'}" />
                                             <TextBlock FontSize="12" TextWrapping="Wrap" Text="{Binding SelectedFamily.Siblings, StringFormat='Siblings: {0}'}" />
-                                            <TextBlock FontSize="12" Text="{Binding SelectedFamily.Spouse, StringFormat='Current spouse: {0}'}" />
-                                            <TextBlock FontSize="12" TextWrapping="Wrap" Text="{Binding SelectedFamily.Children, StringFormat='Children: {0}'}" />
+                                            <TextBlock
+                                                IsVisible="{Binding SelectedFamily.ShowAdultRelationships}"
+                                                FontSize="12"
+                                                Text="{Binding SelectedFamily.Spouse, StringFormat='Current spouse: {0}'}" />
+                                            <TextBlock
+                                                IsVisible="{Binding SelectedFamily.ShowAdultRelationships}"
+                                                FontSize="12"
+                                                TextWrapping="Wrap"
+                                                Text="{Binding SelectedFamily.Children, StringFormat='Children: {0}'}" />
                                         </StackPanel>
 
                                         <StackPanel
                                             Grid.Column="1"
+                                            IsVisible="{Binding SelectedFamily.ShowAdultRelationships}"
                                             Spacing="4">
 
                                             <TextBlock
@@ -1353,15 +1428,6 @@
                         Foreground="#DDB64E"
                         Text="{Binding DynastyTitle}" />
 
-                    <TextBlock
-                        Canvas.Left="220"
-                        Canvas.Top="103"
-                        Width="490"
-                        FontSize="12.5"
-                        LineHeight="17"
-                        Opacity="0.82"
-                        TextWrapping="Wrap"
-                        Text="{Binding PersistenceStatusText}" />
 
                     <Canvas
                         Canvas.Left="744"
@@ -1431,6 +1497,54 @@
                         Command="{Binding NextYearCommand}" />
                 </Canvas>
 
+                <!-- STATUS MESSAGE -->
+                <Grid
+                    IsVisible="{Binding IsStatusMessageVisible}"
+                    Background="#A8000000">
+
+                    <Grid
+                        Width="700"
+                        Height="290"
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Center">
+
+                        <Image
+                            Source="/Assets/UI/year_paper.png"
+                            Stretch="Fill" />
+
+                        <StackPanel
+                            Width="500"
+                            HorizontalAlignment="Center"
+                            VerticalAlignment="Center"
+                            Spacing="16">
+
+                            <TextBlock
+                                HorizontalAlignment="Center"
+                                FontFamily="avares://Dynastia.App/Assets/Fonts#UnifrakturCook"
+                                FontSize="36"
+                                Foreground="#301E0E"
+                                Text="Dynastia" />
+
+                            <TextBlock
+                                HorizontalAlignment="Center"
+                                TextAlignment="Center"
+                                TextWrapping="Wrap"
+                                FontSize="16"
+                                Foreground="#362616"
+                                Text="{Binding PersistenceStatusText}" />
+
+                            <ui:ImageStateButton
+                                Width="172"
+                                Height="56"
+                                HorizontalAlignment="Center"
+                                IdleSource="avares://Dynastia.App/Assets/UI/b_close_idle.png"
+                                HoverSource="avares://Dynastia.App/Assets/UI/b_close_hover.png"
+                                FallbackText="Close"
+                                Command="{Binding HideStatusMessageCommand}" />
+                        </StackPanel>
+                    </Grid>
+                </Grid>
+
                 <!-- MAIN MENU PROMPT -->
                 <Grid
                     IsVisible="{Binding IsMainMenuPromptVisible}"
@@ -1497,6 +1611,101 @@
                                     Command="{Binding HideMainMenuPromptCommand}" />
                             </StackPanel>
                         </StackPanel>
+                    </Grid>
+                </Grid>
+
+                <!-- YEAR SUMMARY -->
+                <Grid
+                    IsVisible="{Binding IsYearSummaryVisible}"
+                    Background="#B0000000">
+
+                    <Grid
+                        Width="1120"
+                        Height="860"
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Center">
+
+                        <Image
+                            Source="/Assets/UI/instructions_paper.png"
+                            Stretch="Fill" />
+
+                        <Grid
+                            Margin="80,72,80,58"
+                            RowDefinitions="Auto,*,Auto"
+                            RowSpacing="16">
+
+                            <TextBlock
+                                HorizontalAlignment="Center"
+                                FontFamily="avares://Dynastia.App/Assets/Fonts#UnifrakturCook"
+                                FontSize="42"
+                                Foreground="#301E0E"
+                                Text="{Binding YearSummaryTitle}" />
+
+                            <ScrollViewer
+                                Grid.Row="1"
+                                HorizontalScrollBarVisibility="Disabled"
+                                VerticalScrollBarVisibility="Auto">
+
+                                <Grid>
+                                    <TextBlock
+                                        HorizontalAlignment="Center"
+                                        Opacity="0.7"
+                                        FontStyle="Italic"
+                                        FontSize="15"
+                                        Foreground="#362616"
+                                        Text="{Binding YearSummaryEmptyText}" />
+
+                                    <ItemsControl
+                                        ItemsSource="{Binding YearSummaryHouseholds}">
+
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate
+                                                x:DataType="vm:YearSummaryHouseholdViewModel">
+
+                                                <StackPanel
+                                                    Margin="0,0,0,18"
+                                                    Spacing="5">
+
+                                                    <TextBlock
+                                                        FontSize="18"
+                                                        FontWeight="Bold"
+                                                        Foreground="#4D2D13"
+                                                        Text="{Binding Title}" />
+
+                                                    <ItemsControl
+                                                        ItemsSource="{Binding Events}">
+
+                                                        <ItemsControl.ItemTemplate>
+                                                            <DataTemplate
+                                                                x:DataType="vm:AlbumEventViewModel">
+
+                                                                <TextBlock
+                                                                    Margin="10,2,0,3"
+                                                                    FontSize="15"
+                                                                    LineHeight="21"
+                                                                    Foreground="#362616"
+                                                                    TextWrapping="Wrap"
+                                                                    Text="{Binding Text}" />
+                                                            </DataTemplate>
+                                                        </ItemsControl.ItemTemplate>
+                                                    </ItemsControl>
+                                                </StackPanel>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                </Grid>
+                            </ScrollViewer>
+
+                            <ui:ImageStateButton
+                                Grid.Row="2"
+                                Width="190"
+                                Height="62"
+                                HorizontalAlignment="Center"
+                                IdleSource="avares://Dynastia.App/Assets/UI/b_close_idle.png"
+                                HoverSource="avares://Dynastia.App/Assets/UI/b_close_hover.png"
+                                FallbackText="Close"
+                                Command="{Binding HideYearSummaryCommand}" />
+                        </Grid>
                     </Grid>
                 </Grid>
 

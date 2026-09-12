@@ -5,6 +5,9 @@ namespace Dynastia.Mechanics.Wellbeing;
 public sealed class WellbeingCleanupYearSystem :
     IYearSystem
 {
+    private const string RecoverIncomePrefix =
+        "modifier.salary.recover.";
+
     public string Id =>
         "wellbeing.cleanup";
 
@@ -25,6 +28,19 @@ public sealed class WellbeingCleanupYearSystem :
         {
             person.Tags.Remove(
                 "modifier.recover");
+
+            foreach (var tag in
+                person.Tags.All
+                    .Where(
+                        tag =>
+                            tag.StartsWith(
+                                RecoverIncomePrefix,
+                                StringComparison.OrdinalIgnoreCase))
+                    .ToList())
+            {
+                person.Tags.Remove(
+                    tag);
+            }
         }
     }
 }

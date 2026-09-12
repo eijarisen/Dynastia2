@@ -81,7 +81,8 @@ public sealed class FemaleRemarriageYearSystem :
         foreach (var woman in
             livingSnapshot)
         {
-            if (_family.GetSex(woman)
+            if (SimulationState.IsInactive(woman)
+                || _family.GetSex(woman)
                     != Sex.Female
                 || _family.GetSpouse(
                     woman) is not null
@@ -174,6 +175,13 @@ public sealed class FemaleRemarriageYearSystem :
 
         husband.Tags.Add(
             "sexuality.heterosexual");
+
+        GeneratedFamilyBackgroundGenerator.Assign(
+            husband,
+            husband.Surname,
+            _family,
+            _data,
+            _random);
 
         // No lineage.male and no family.bloodline:
         // this is an external husband of a female branch.

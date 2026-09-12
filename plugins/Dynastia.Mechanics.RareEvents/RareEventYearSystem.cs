@@ -132,14 +132,18 @@ internal sealed class RareEventYearSystem :
                 .Where(
                     person =>
                         person.Tags.Has(
-                            "state.alive"))
+                            "state.alive")
+                        && !SimulationState.IsInactive(
+                            person))
                 .ToList();
 
         foreach (var person in
             living)
         {
             if (person.Tags.Has(
-                "state.dead"))
+                    "state.dead")
+                || SimulationState.IsInactive(
+                    person))
             {
                 continue;
             }

@@ -14,6 +14,7 @@ public sealed class FamilyMemberCardViewModel
         IStatsService? stats,
         ILocationService? locations,
         IMarriageSatisfactionService? marriageSatisfaction,
+        IChildHappinessService? childHappiness,
         IThoughtService? thoughts,
         bool isSelected,
         bool isActiveHouseholdHead,
@@ -218,15 +219,31 @@ public sealed class FamilyMemberCardViewModel
             family?.GetMother(
                 person);
 
-        var parentNames =
-            new[] { father, mother }
-                .Where(parent => parent is not null)
-                .Cast<IPerson>()
-                .Select(parent =>
-                    family is null
-                        ? $"{parent.Name} {parent.Surname}"
-                        : family.GetDisplayName(parent))
-                .ToList();
+        var generatedBackground =
+            family?.GetGeneratedFamilyBackground(
+                person);
+
+        var fatherName =
+            father is not null
+                ? family is null
+                    ? $"{father.Name} {father.Surname}"
+                    : family.GetDisplayName(father)
+                : generatedBackground?.FatherName
+                  ?? "Unknown";
+
+        var motherName =
+            mother is not null
+                ? family is null
+                    ? $"{mother.Name} {mother.Surname}"
+                    : family.GetDisplayName(mother)
+                : generatedBackground?.MotherName
+                  ?? "Unknown";
+
+        var parentsTooltip =
+            fatherName == "Unknown"
+            && motherName == "Unknown"
+                ? "Unknown"
+                : $"{fatherName}, {motherName}";
 
         var children =
             family?.GetChildren(
@@ -241,22 +258,58 @@ public sealed class FamilyMemberCardViewModel
                         : family.GetDisplayName(child))
                 .ToList();
 
+        TooltipThoughtText =
+            ThoughtUiFormatter.QuoteAndWrap(
+                ThoughtText);
+
+        HasTooltipThought =
+            !string.IsNullOrWhiteSpace(
+                TooltipThoughtText);
+
+        HealthTooltipText =
+            $"Health: {healthTooltip}";
+
+        var childHappinessSnapshot =
+            IsLiving && person.Age < 18
+                ? childHappiness?.GetHappiness(person)
+                : null;
+
+        ChildHappinessLabel =
+            childHappinessSnapshot?.Label ?? string.Empty;
+
+        ChildHappinessTooltipText =
+            childHappinessSnapshot is null
+                ? string.Empty
+                : $"Happiness: {childHappinessSnapshot.Label}";
+
+        ShowChildHappiness =
+            childHappinessSnapshot is not null;
+
+        CareerSatisfactionLabel =
+            satisfactionTooltip;
+
+        CareerTooltipText =
+            $"Career: {CareerSatisfactionLabel}";
+
+        MarriageSatisfactionLabel =
+            marriageText;
+
+        MarriageTooltipText =
+            $"Marriage: {MarriageSatisfactionLabel}";
+
+        ShowAdultSatisfaction =
+            IsLiving
+            && person.Age >= 18;
+
         InfoTooltipText =
             IsLiving
-                ? BuildLivingTooltip(
-                    ThoughtText,
-                    healthTooltip,
-                    satisfactionTooltip,
-                    marriageText)
+                ? string.Empty
                 : string.Join(
                     Environment.NewLine,
                     new[]
                     {
                         $"Education: {educationTooltip}",
-                        $"Parents: " +
-                        (parentNames.Count == 0
-                            ? "None"
-                            : string.Join(", ", parentNames)),
+                        $"Parents: {parentsTooltip}",
                         $"Spouse: {spouseTooltip}",
                         $"Children: " +
                         (childNames.Count == 0
@@ -302,6 +355,35 @@ public sealed class FamilyMemberCardViewModel
         string.Empty;
 
     public string ThoughtText { get; }
+
+    public string TooltipThoughtText { get; } =
+        string.Empty;
+
+    public bool HasTooltipThought { get; }
+
+    public string HealthTooltipText { get; } =
+        string.Empty;
+
+    public string ChildHappinessLabel { get; } = string.Empty;
+    public string ChildHappinessTooltipText { get; } = string.Empty;
+    public bool ShowChildHappiness { get; }
+
+    public string CareerSatisfactionLabel { get; } =
+        string.Empty;
+
+    public string CareerTooltipText { get; } =
+        string.Empty;
+
+    public string MarriageSatisfactionLabel { get; } =
+        string.Empty;
+
+    public string MarriageTooltipText { get; } =
+        string.Empty;
+
+    public bool ShowAdultSatisfaction { get; }
+
+    public bool IsDeceased =>
+        !IsLiving;
 
     public string InfoTooltipText { get; }
 
@@ -350,38 +432,5 @@ public sealed class FamilyMemberCardViewModel
         return "None";
     }
 
-    private static string BuildLivingTooltip(
-        string thought,
-        string health,
-        string jobSatisfaction,
-        string marriageSatisfaction)
-    {
-        var sections =
-            new List<string>();
 
-        var quoted =
-            ThoughtUiFormatter.QuoteAndWrap(
-                thought);
-
-        if (!string.IsNullOrWhiteSpace(
-            quoted))
-        {
-            sections.Add(
-                quoted
-                + Environment.NewLine);
-        }
-
-        sections.Add(
-            $"Health: {health}");
-
-        sections.Add(
-            $"Job Satisfaction: {jobSatisfaction}");
-
-        sections.Add(
-            $"Marriage Satisfaction: {marriageSatisfaction}");
-
-        return string.Join(
-            Environment.NewLine,
-            sections);
-    }
 }

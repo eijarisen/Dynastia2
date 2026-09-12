@@ -76,9 +76,10 @@ public sealed class FamilySupportPlugin :
                 "Ask Parents for Money",
 
             Description =
-                "When broke, ask your living father for $2,000. " +
-                "He must have at least $10,000 when the request resolves, " +
-                "and there is a 50% chance he agrees.",
+                "When broke, ask your living parents for financial help. " +
+                "Their household must currently earn more than it spends. " +
+                "How willing they are to help, and how much they offer, " +
+                "depends on the parent's Morals. The gift is capped at 2,000 zł.",
 
             Mode =
                 ActionExecutionMode.Queued,
@@ -89,147 +90,91 @@ public sealed class FamilySupportPlugin :
             IsAvailable =
                 actionContext =>
                 {
-                    var actor =
-                        actionContext.Actor;
-
-                    if (!CanRequestMoney(
-                        actor,
-                        actionContext.Target,
-                        economy))
-                    {
+                    var actor = actionContext.Actor;
+                    if (!CanRequestMoney(actor, actionContext.Target, economy))
                         return false;
-                    }
 
-                    var father =
-                        family.GetFather(
-                            actor);
+                    var parents = GetLivingParents(actor, family);
+                    if (parents.Count == 0)
+                        return false;
 
-                    return father is not null
-                        && father.Tags.Has(
-                            "state.alive")
-                        && family.IsMaleLineage(
-                            father)
-                        && economy.GetHousehold(
-                            father) is not null;
+                    var parentHousehold = economy.GetHousehold(parents[0]);
+                    return parentHousehold is not null
+                        && parentHousehold.Wealth > 0
+                        && parentHousehold.LastIncome > parentHousehold.LastExpenses;
                 },
 
             Execute =
                 actionContext =>
                 {
-                    var actor =
-                        actionContext.Actor;
+                    var actor = actionContext.Actor;
+                    var parents = GetLivingParents(actor, family);
+                    if (parents.Count == 0)
+                        return new GameActionResult(false);
 
-                    var father =
-                        family.GetFather(
-                            actor);
-
-                    if (father is null
-                        || !father.Tags.Has(
-                            "state.alive")
-                        || !family.IsMaleLineage(
-                            father))
-                    {
-                        return new GameActionResult(
-                            false);
-                    }
-
-                    var actorHousehold =
-                        economy.GetHousehold(
-                            actor);
-
-                    var fatherHousehold =
-                        economy.GetHousehold(
-                            father);
-
+                    var parentRepresentative = parents[0];
+                    var actorHousehold = economy.GetHousehold(actor);
+                    var parentHousehold = economy.GetHousehold(parentRepresentative);
                     if (actorHousehold is null
-                        || fatherHousehold is null)
+                        || parentHousehold is null
+                        || parentHousehold.Wealth <= 0
+                        || parentHousehold.LastIncome <= parentHousehold.LastExpenses)
                     {
-                        return new GameActionResult(
-                            false);
+                        return new GameActionResult(false);
                     }
 
-                    var agreementChance =
-                        PersonalityInfluence.AdjustProbability(
-                            SuccessChance,
-                            father,
-                            good: 0.20,
-                            evil: -0.20);
+                    var (sharePercent, agreementChance) =
+                        GetParentSupportTerms(parents);
 
-                    var success =
-                        fatherHousehold.Wealth
-                            >= WealthThreshold
-                        && random.NextDouble()
-                            < agreementChance;
+                    var amount = Math.Min(
+                        SupportAmount,
+                        Math.Floor((parentHousehold.Wealth * sharePercent) / 100m) * 100m);
+
+                    if (amount < 100m)
+                        amount = Math.Min(100m, parentHousehold.Wealth);
+
+                    var success = amount > 0
+                        && random.NextDouble() < agreementChance;
 
                     if (success)
                     {
-                        economy.ChangeWealth(
-                            actor,
-                            SupportAmount);
+                        economy.ChangeWealth(actor, amount);
+                        economy.ChangeWealth(parentRepresentative, -amount);
 
-                        economy.ChangeWealth(
-                            father,
-                            -SupportAmount);
-
-                        events.Publish(
-                            new GameEvent
+                        events.Publish(new GameEvent
+                        {
+                            Type = "family_support.parents_success",
+                            Year = actionContext.GameState.Year,
+                            SubjectId = actor.Id,
+                            RelatedPersonIds = parents.Select(parent => parent.Id).ToList(),
+                            Data = new Dictionary<string, string>
                             {
-                                Type =
-                                    "family_support.parents_success",
-
-                                Year =
-                                    actionContext.GameState.Year,
-
-                                SubjectId =
-                                    actor.Id,
-
-                                RelatedPersonIds =
-                                    [father.Id],
-
-                                Data =
-                                    new Dictionary<string, string>
-                                    {
-                                        ["amount"] =
-                                            SupportAmount.ToString(),
-
-                                        ["text"] =
-                                            $"{family.GetDisplayName(actor)} " +
-                                            $"successfully borrowed " +
-                                            $"${SupportAmount:N0} from his father, " +
-                                            $"{family.GetDisplayName(father)}."
-                                    }
-                            });
+                                ["amount"] = amount.ToString(),
+                                ["text"] =
+                                    $"{family.GetDisplayName(actor)} received " +
+                                    $"{amount:N0} zł in financial help from " +
+                                    $"{string.Join(" and ", parents.Select(family.GetDisplayName))}."
+                            }
+                        });
                     }
                     else
                     {
-                        events.Publish(
-                            new GameEvent
+                        events.Publish(new GameEvent
+                        {
+                            Type = "family_support.parents_failure",
+                            Year = actionContext.GameState.Year,
+                            SubjectId = actor.Id,
+                            RelatedPersonIds = parents.Select(parent => parent.Id).ToList(),
+                            Data = new Dictionary<string, string>
                             {
-                                Type =
-                                    "family_support.parents_failure",
-
-                                Year =
-                                    actionContext.GameState.Year,
-
-                                SubjectId =
-                                    actor.Id,
-
-                                RelatedPersonIds =
-                                    [father.Id],
-
-                                Data =
-                                    new Dictionary<string, string>
-                                    {
-                                        ["text"] =
-                                            $"{family.GetDisplayName(actor)} " +
-                                            "asked his father for money, " +
-                                            "but was denied."
-                                    }
-                            });
+                                ["text"] =
+                                    $"{family.GetDisplayName(actor)} asked his parents for money, " +
+                                    "but they decided not to help this time."
+                            }
+                        });
                     }
 
-                    return new GameActionResult(
-                        true);
+                    return new GameActionResult(true);
                 }
         };
     }
@@ -251,7 +196,7 @@ public sealed class FamilySupportPlugin :
 
             Description =
                 "When broke, ask the selected wealthy adult child " +
-                "for $2,000. The child must have more than $10,000 " +
+                "for 2,000 zł. The child must have more than 10,000 zł " +
                 "when queued, and there is a 50% chance they agree.",
 
             Mode =
@@ -371,7 +316,7 @@ public sealed class FamilySupportPlugin :
                                         ["text"] =
                                             $"{family.GetDisplayName(actor)} " +
                                             $"successfully borrowed " +
-                                            $"${SupportAmount:N0} from their child, " +
+                                            $"{SupportAmount:N0} zł from their child, " +
                                             $"{family.GetDisplayName(child)}."
                                     }
                             });
@@ -408,6 +353,51 @@ public sealed class FamilySupportPlugin :
                         true);
                 }
         };
+    }
+
+    private static List<IPerson> GetLivingParents(
+        IPerson actor,
+        IFamilyService family)
+    {
+        var parents = new List<IPerson>();
+        var father = family.GetFather(actor);
+        var mother = family.GetMother(actor);
+
+        if (father is not null && father.Tags.Has("state.alive"))
+            parents.Add(father);
+        if (mother is not null && mother.Tags.Has("state.alive"))
+            parents.Add(mother);
+
+        return parents;
+    }
+
+    private static (decimal SharePercent, double AgreementChance)
+        GetParentSupportTerms(IReadOnlyList<IPerson> parents)
+    {
+        var share = 0m;
+        var chance = 0.0;
+
+        foreach (var parent in parents)
+        {
+            if (parent.Tags.Has("morals.good"))
+            {
+                share += 0.20m;
+                chance += 0.85;
+            }
+            else if (parent.Tags.Has("morals.evil"))
+            {
+                share += 0.05m;
+                chance += 0.30;
+            }
+            else
+            {
+                share += 0.10m;
+                chance += 0.60;
+            }
+        }
+
+        var count = Math.Max(1, parents.Count);
+        return (share / count, chance / count);
     }
 
     private static bool CanRequestMoney(

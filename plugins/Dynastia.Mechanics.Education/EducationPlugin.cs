@@ -43,13 +43,15 @@ public sealed class EducationPlugin : IGamePlugin
         var actions = context.GetService<IActionRegistry>()
             ?? throw new InvalidOperationException("Action registry is unavailable.");
 
-        var education = new StandardEducationService();
+        var education = new StandardEducationService(
+            family);
 
         context.AddService<IEducationService>(education);
 
         InitializeFromEvents(
             gameState,
             education,
+            family,
             random,
             events);
 
@@ -82,6 +84,7 @@ public sealed class EducationPlugin : IGamePlugin
     private static void InitializeFromEvents(
         IGameState gameState,
         IEducationService education,
+        IFamilyService family,
         IGameRandom random,
         IGameEventBus events)
     {
@@ -106,6 +109,28 @@ public sealed class EducationPlugin : IGamePlugin
                             education.SetEducationLevel(
                                 founder,
                                 random.NextInt(1, 2));
+
+                            var father =
+                                family.GetFather(
+                                    founder);
+
+                            var mother =
+                                family.GetMother(
+                                    founder);
+
+                            if (father is not null)
+                            {
+                                education.SetEducationLevel(
+                                    father,
+                                    random.NextInt(1, 3));
+                            }
+
+                            if (mother is not null)
+                            {
+                                education.SetEducationLevel(
+                                    mother,
+                                    random.NextInt(1, 3));
+                            }
                         }
                     }
 
@@ -160,7 +185,7 @@ public sealed class EducationPlugin : IGamePlugin
         return new GameActionDefinition
         {
             Id = "education.get_education",
-            Label = "Get Education ($2,000)",
+            Label = "Get Education (2,000 zł)",
             Description =
                 "Pay for a course. The cost is paid whether the course succeeds or fails. " +
                 "Success depends on the target's Intellect.",

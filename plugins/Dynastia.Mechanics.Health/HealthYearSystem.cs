@@ -10,6 +10,7 @@ public sealed class HealthYearSystem : IYearSystem
 
     private readonly StandardHealthService _health;
     private readonly IStatsService _stats;
+    private readonly IFamilyService _family;
     private readonly IGameRandom _random;
     private readonly IGameEventBus _events;
     private readonly IAnnualHealthModifierRegistry _modifiers;
@@ -17,12 +18,14 @@ public sealed class HealthYearSystem : IYearSystem
     public HealthYearSystem(
         StandardHealthService health,
         IStatsService stats,
+        IFamilyService family,
         IGameRandom random,
         IGameEventBus events,
         IAnnualHealthModifierRegistry modifiers)
     {
         _health = health;
         _stats = stats;
+        _family = family;
         _random = random;
         _events = events;
         _modifiers = modifiers;
@@ -42,8 +45,11 @@ public sealed class HealthYearSystem : IYearSystem
     {
         foreach (var person in gameState.People)
         {
-            if (person.Tags.Has("state.dead"))
+            if (person.Tags.Has("state.dead")
+                || SimulationState.IsInactive(person))
+            {
                 continue;
+            }
 
             _health.EnsureHealth(person);
 
@@ -148,7 +154,7 @@ public sealed class HealthYearSystem : IYearSystem
                                     .ToLowerInvariant(),
 
                             ["text"] =
-                                $"{person.Name} {person.Surname} " +
+                                $"{_family.GetDisplayName(person)} " +
                                 $"fell ill with {condition.Name}."
                         }
                 });

@@ -420,11 +420,62 @@ public sealed class GameGenealogyDataSource :
         livingTooltipSections.Add(
             $"Health: {healthTooltip}");
 
-        livingTooltipSections.Add(
-            $"Job Satisfaction: {satisfactionTooltip}");
+        if (person.Age >= 18)
+        {
+            livingTooltipSections.Add(
+                $"Career: {satisfactionTooltip}");
 
-        livingTooltipSections.Add(
-            $"Marriage Satisfaction: {marriageTooltip}");
+            livingTooltipSections.Add(
+                $"Marriage: {marriageTooltip}");
+        }
+
+        var tooltipFather =
+            _family.GetFather(
+                person);
+
+        var tooltipMother =
+            _family.GetMother(
+                person);
+
+        var generatedBackground =
+            _family.GetGeneratedFamilyBackground(
+                person);
+
+        var fatherName =
+            tooltipFather is not null
+                ? _family.GetDisplayName(tooltipFather)
+                : generatedBackground?.FatherName
+                  ?? "Unknown";
+
+        var motherName =
+            tooltipMother is not null
+                ? _family.GetDisplayName(tooltipMother)
+                : generatedBackground?.MotherName
+                  ?? "Unknown";
+
+        var parentsTooltip =
+            fatherName == "Unknown"
+            && motherName == "Unknown"
+                ? "Unknown"
+                : $"{fatherName}, {motherName}";
+
+        var children =
+            _family.GetChildren(
+                person);
+
+        var childrenTooltip =
+            children.Count == 0
+                ? "None"
+                : string.Join(
+                    ", ",
+                    children.Select(
+                        _family.GetDisplayName));
+
+        var lastOccupationTooltip =
+            _career is null
+                ? occupationTooltip
+                : ResolveLastOccupation(
+                    _career.GetCareer(person));
 
         var tooltip =
             isAlive
@@ -436,7 +487,10 @@ public sealed class GameGenealogyDataSource :
                     new[]
                     {
                         $"Education: {educationTooltip}",
-                        $"Spouse: {spouseTooltip}"
+                        $"Parents: {parentsTooltip}",
+                        $"Spouse: {spouseTooltip}",
+                        $"Children: {childrenTooltip}",
+                        $"Last occupation: {lastOccupationTooltip}"
                     });
 
         var lifeSpan =
@@ -517,4 +571,30 @@ public sealed class GameGenealogyDataSource :
             this,
             EventArgs.Empty);
     }
+    private static string ResolveLastOccupation(
+        CareerSnapshot career)
+    {
+        if (career.JobLevel > 0)
+        {
+            return $"{career.JobTitle} ({career.JobLevel})";
+        }
+
+        if (!string.IsNullOrWhiteSpace(
+                career.PeakJobTitle))
+        {
+            return career.PeakJobLevel > 0
+                ? $"{career.PeakJobTitle} ({career.PeakJobLevel})"
+                : career.PeakJobTitle;
+        }
+
+        if (career.JobTitle.Equals(
+                "Housewife",
+                StringComparison.OrdinalIgnoreCase))
+        {
+            return "Housewife";
+        }
+
+        return "None";
+    }
+
 }

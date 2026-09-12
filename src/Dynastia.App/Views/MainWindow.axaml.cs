@@ -80,6 +80,8 @@ public partial class MainWindow : Window
         }
 
         if (viewModel.IsMainMenuPromptVisible
+            || viewModel.IsStatusMessageVisible
+            || viewModel.IsYearSummaryVisible
             || !viewModel.NextYearCommand.CanExecute(null))
         {
             return;

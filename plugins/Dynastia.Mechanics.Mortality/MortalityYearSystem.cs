@@ -24,6 +24,7 @@ public sealed class MortalityYearSystem : IYearSystem
     private readonly IStatsService _stats;
     private readonly IHealthService _health;
     private readonly IFamilyService _family;
+    private readonly IEconomyService _economy;
     private readonly IGameRandom _random;
     private readonly IGameCalendar _calendar;
     private readonly IGameEventBus _events;
@@ -32,6 +33,7 @@ public sealed class MortalityYearSystem : IYearSystem
         IStatsService stats,
         IHealthService health,
         IFamilyService family,
+        IEconomyService economy,
         IGameRandom random,
         IGameCalendar calendar,
         IGameEventBus events)
@@ -39,6 +41,7 @@ public sealed class MortalityYearSystem : IYearSystem
         _stats = stats;
         _health = health;
         _family = family;
+        _economy = economy;
         _random = random;
         _calendar = calendar;
         _events = events;
@@ -60,8 +63,11 @@ public sealed class MortalityYearSystem : IYearSystem
     {
         foreach (var person in gameState.People)
         {
-            if (person.Tags.Has("state.dead"))
+            if (person.Tags.Has("state.dead")
+                || SimulationState.IsInactive(person))
+            {
                 continue;
+            }
 
             ProcessPerson(
                 gameState,
@@ -200,6 +206,9 @@ public sealed class MortalityYearSystem : IYearSystem
         var mother =
             _family.GetMother(person);
 
+        var siblings =
+            GetSiblings(person);
+
         person.Tags.Remove("state.alive");
         person.Tags.Remove("control.playable");
         person.Tags.Add("state.dead");
@@ -224,13 +233,39 @@ public sealed class MortalityYearSystem : IYearSystem
         if (mother is not null)
             related.Add(mother.Id);
 
-        ApplyGrief(spouse);
+        related.AddRange(
+            siblings.Select(sibling => sibling.Id));
+
+        ApplyGrief(
+            spouse,
+            person,
+            extendedRelative: false);
 
         foreach (var child in children)
-            ApplyGrief(child);
+        {
+            ApplyGrief(
+                child,
+                person,
+                extendedRelative: true);
+        }
 
-        ApplyGrief(father);
-        ApplyGrief(mother);
+        ApplyGrief(
+            father,
+            person,
+            extendedRelative: true);
+
+        ApplyGrief(
+            mother,
+            person,
+            extendedRelative: true);
+
+        foreach (var sibling in siblings)
+        {
+            ApplyGrief(
+                sibling,
+                person,
+                extendedRelative: true);
+        }
 
         if (spouse is not null)
         {
@@ -243,6 +278,8 @@ public sealed class MortalityYearSystem : IYearSystem
                 clearSecond:
                     !spouse.Tags.Has("state.dead"));
         }
+
+        var survivors = BuildSurvivorText(person, spouse, children);
 
         _events.Publish(
             new GameEvent
@@ -264,28 +301,116 @@ public sealed class MortalityYearSystem : IYearSystem
                             person.Age.ToString(),
                         ["text"] =
                             $"{_family.GetDisplayName(person)} " +
-                            $"died at age {person.Age}."
+                            $"died at age {person.Age}." + survivors
                     }
             });
     }
 
-    private void ApplyGrief(IPerson? relative)
+    private string BuildSurvivorText(
+        IPerson person,
+        IPerson? spouse,
+        IReadOnlyList<IPerson> children)
+    {
+        var livingSpouse = spouse is not null && spouse.Tags.Has("state.alive")
+            ? spouse
+            : null;
+
+        var livingChildren = children
+            .Where(child => child.Tags.Has("state.alive"))
+            .Select(child => child.Name)
+            .ToList();
+
+        if (livingSpouse is null && livingChildren.Count == 0)
+            return string.Empty;
+
+        var pronoun = _family.GetSex(person) == Sex.Female ? " She" : " He";
+        var parts = new List<string>();
+
+        if (livingSpouse is not null)
+            parts.Add($"spouse {livingSpouse.Name}");
+
+        if (livingChildren.Count > 0)
+        {
+            parts.Add(livingChildren.Count == 1
+                ? $"child {livingChildren[0]}"
+                : $"children {string.Join(", ", livingChildren)}");
+        }
+
+        return $"{pronoun} left " + string.Join(" and ", parts) + ".";
+    }
+
+    private void ApplyGrief(
+        IPerson? relative,
+        IPerson deceased,
+        bool extendedRelative)
     {
         if (relative is null
-            || relative.Tags.Has("state.dead"))
+            || relative.Tags.Has("state.dead")
+            || SimulationState.IsInactive(relative))
         {
             return;
         }
 
-        var penalty =
-            GriefHealthPenalty
-            * PersonalityInfluence.Multiplier(
+        var sameHousehold =
+            AreInSameHousehold(
                 relative,
-                melancholic: 0.15);
+                deceased);
+
+        var penalty =
+            FamilyShockRules.ScaleHealthLoss(
+                relative,
+                GriefHealthPenalty,
+                sameHousehold,
+                extendedRelative);
 
         _health.ChangeHealth(
             relative,
             -penalty);
+    }
+
+    private IReadOnlyList<IPerson> GetSiblings(
+        IPerson person)
+    {
+        var result =
+            new Dictionary<Guid, IPerson>();
+
+        var father = _family.GetFather(person);
+        var mother = _family.GetMother(person);
+
+        if (father is not null)
+        {
+            foreach (var sibling in _family.GetChildren(father))
+            {
+                if (sibling.Id != person.Id)
+                    result[sibling.Id] = sibling;
+            }
+        }
+
+        if (mother is not null)
+        {
+            foreach (var sibling in _family.GetChildren(mother))
+            {
+                if (sibling.Id != person.Id)
+                    result[sibling.Id] = sibling;
+            }
+        }
+
+        return result.Values.ToList();
+    }
+
+    private bool AreInSameHousehold(
+        IPerson first,
+        IPerson second)
+    {
+        var firstId =
+            _economy.GetHouseholdId(first);
+
+        var secondId =
+            _economy.GetHouseholdId(second);
+
+        return firstId is not null
+            && secondId is not null
+            && firstId == secondId;
     }
 
     private GameDate RandomDateInYear(

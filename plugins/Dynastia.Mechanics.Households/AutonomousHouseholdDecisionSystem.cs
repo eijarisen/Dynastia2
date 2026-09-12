@@ -343,6 +343,9 @@ internal sealed class AutonomousHouseholdDecisionSystem :
                 "education.help_learning" =>
                     52,
 
+                "childhood.raise_child" =>
+                    56,
+
                 "household.buy_house" =>
                     finance?.Wealth >= 20000m
                         ? 42

@@ -57,16 +57,21 @@ public sealed class CareerViewModel
             unemployedAdult
             || housewife;
 
-        SatisfactionText =
+        SatisfactionLabel =
             isAlive
             && !snapshot.IsRetired
                 ? snapshot.JobLevel > 0
-                    ? $"Job satisfaction: " +
-                      $"{snapshot.JobSatisfactionText}"
+                    ? snapshot.JobSatisfactionText
                     : nonWorkingAdult
-                        ? "Job satisfaction: N/A"
+                        ? "N/A"
                         : string.Empty
                 : string.Empty;
+
+        SatisfactionText =
+            string.IsNullOrWhiteSpace(
+                SatisfactionLabel)
+                ? string.Empty
+                : $"Career: {SatisfactionLabel}";
 
         IncomeText =
             !isAlive
@@ -98,7 +103,13 @@ public sealed class CareerViewModel
 
     public string OccupationText { get; }
 
+    public string SatisfactionLabel { get; }
+
     public string SatisfactionText { get; }
+
+    public bool HasSatisfaction =>
+        !string.IsNullOrWhiteSpace(
+            SatisfactionText);
 
     public string IncomeText { get; }
 }

@@ -105,6 +105,13 @@ public sealed class CareerPlugin : IGamePlugin
                 family,
                 events));
 
+        systems.Register(
+            new CareerJobLossYearSystem(
+                career,
+                random,
+                family,
+                events));
+
         context.Log("Career mechanics registered.");
     }
 
@@ -267,7 +274,7 @@ public sealed class CareerPlugin : IGamePlugin
                 Id = "career.work_harder",
                 Label = "Work Harder",
                 Description =
-                    "Increase this year's promotion chance, but lose 5 health during annual health processing.",
+                    "Push harder at work. Greatly improves this year's promotion chance and usually brings 10-50% extra salary home, although there is a small chance the extra effort is unpaid. Costs 5 health and may slightly reduce children's Happiness.",
                 Mode = ActionExecutionMode.Queued,
                 QueuePhase = YearPhase.QueuedActionsEarly,
 
@@ -291,8 +298,48 @@ public sealed class CareerPlugin : IGamePlugin
 
                 Execute = actionContext =>
                 {
-                    actionContext.Actor.Tags.Add(
+                    var actor = actionContext.Actor;
+
+                    actor.Tags.Add(
                         "modifier.work_harder");
+
+                    foreach (var tag in actor.Tags.All
+                        .Where(tag => tag.StartsWith(
+                            "modifier.salary.work_harder.",
+                            StringComparison.OrdinalIgnoreCase))
+                        .ToList())
+                    {
+                        actor.Tags.Remove(tag);
+                    }
+
+                    var bonusPercent =
+                        random.NextDouble() < 0.10
+                            ? 0
+                            : random.NextInt(10, 50);
+
+                    if (bonusPercent > 0)
+                    {
+                        actor.Tags.Add(
+                            $"modifier.salary.work_harder.{bonusPercent}");
+                    }
+
+                    events.Publish(
+                        new GameEvent
+                        {
+                            Type = "career.work_harder",
+                            Year = actionContext.GameState.Year,
+                            SubjectId = actor.Id,
+                            Data = new Dictionary<string, string>
+                            {
+                                ["bonusPercent"] =
+                                    bonusPercent.ToString(),
+                                ["suppressChronicle"] = "true",
+                                ["text"] =
+                                    bonusPercent > 0
+                                        ? $"{family.GetDisplayName(actor)} worked harder and earned {bonusPercent}% extra salary."
+                                        : $"{family.GetDisplayName(actor)} worked harder, but the extra effort brought no additional pay."
+                            }
+                        });
 
                     return new GameActionResult(true);
                 }
@@ -789,8 +836,8 @@ public sealed class CareerPlugin : IGamePlugin
                 Id = "career.ask_to_recover",
                 Label = "Ask to Recover",
                 Description =
-                    "Ask your miserable or unhappy employed spouse, or a miserable adult daughter, " +
-                    "to take a break. There is a 50% refusal chance.",
+                    "Ask your unhappy employed spouse or miserable adult daughter to take a year easier. " +
+                    "There is a 50% refusal chance. On success their salary is reduced by 10-50% for the year.",
                 Mode = ActionExecutionMode.Queued,
                 QueuePhase = YearPhase.QueuedActionsEarly,
 
@@ -871,6 +918,21 @@ public sealed class CareerPlugin : IGamePlugin
                             target,
                             20);
 
+                        foreach (var tag in target.Tags.All
+                            .Where(tag => tag.StartsWith(
+                                "modifier.salary.recover.",
+                                StringComparison.OrdinalIgnoreCase))
+                            .ToList())
+                        {
+                            target.Tags.Remove(tag);
+                        }
+
+                        var incomeReductionPercent =
+                            random.NextInt(10, 50);
+
+                        target.Tags.Add(
+                            $"modifier.salary.recover.{incomeReductionPercent}");
+
                         events.Publish(
                             new GameEvent
                             {
@@ -880,6 +942,8 @@ public sealed class CareerPlugin : IGamePlugin
                                 RelatedPersonIds = [target.Id],
                                 Data = new Dictionary<string, string>
                                 {
+                                    ["incomeReductionPercent"] =
+                                        incomeReductionPercent.ToString(),
                                     ["text"] =
                                         $"{family.GetDisplayName(actor)} convinced " +
                                         $"{family.GetDisplayName(target)} to take a year off to recover."

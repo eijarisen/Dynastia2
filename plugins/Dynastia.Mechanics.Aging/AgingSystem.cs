@@ -34,7 +34,9 @@ public sealed class AgingSystem : IYearSystem
             gameState.People)
         {
             if (person.Tags.Has(
-                "state.dead"))
+                    "state.dead")
+                || SimulationState.IsInactive(
+                    person))
             {
                 continue;
             }

@@ -27,6 +27,11 @@ public sealed class JusticePlugin :
             ?? throw new InvalidOperationException(
                 "Career service is unavailable.");
 
+        var economy =
+            context.GetService<IEconomyService>()
+            ?? throw new InvalidOperationException(
+                "Economy service is unavailable.");
+
         var data =
             context.GetService<IGameDataService>()
             ?? throw new InvalidOperationException(
@@ -89,6 +94,7 @@ public sealed class JusticePlugin :
                 family,
                 health,
                 career,
+                economy,
                 data,
                 random,
                 events,

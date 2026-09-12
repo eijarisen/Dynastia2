@@ -147,8 +147,7 @@ public sealed class WellbeingPlugin : IGamePlugin
                     "Recover",
 
                 Description =
-                    "Take the year easier. Improves job satisfaction " +
-                    "and adds +20 to this year's health calculation.",
+                    "Take the year easier. Improves job satisfaction and adds +20 to this year's health calculation, but reduces salary by 10-50% for the year. May slightly improve children's Happiness.",
 
                 Mode =
                     ActionExecutionMode.Queued,
@@ -192,6 +191,21 @@ public sealed class WellbeingPlugin : IGamePlugin
                         actor.Tags.Add(
                             "modifier.recover");
 
+                        foreach (var tag in actor.Tags.All
+                            .Where(tag => tag.StartsWith(
+                                "modifier.salary.recover.",
+                                StringComparison.OrdinalIgnoreCase))
+                            .ToList())
+                        {
+                            actor.Tags.Remove(tag);
+                        }
+
+                        var incomeReductionPercent =
+                            random.NextInt(10, 50);
+
+                        actor.Tags.Add(
+                            $"modifier.salary.recover.{incomeReductionPercent}");
+
                         var activity =
                             recoveryActivities.Select(
                                 actionContext.GameState.Year,
@@ -212,6 +226,9 @@ public sealed class WellbeingPlugin : IGamePlugin
                                 Data =
                                     new Dictionary<string, string>
                                     {
+                                        ["incomeReductionPercent"] =
+                                            incomeReductionPercent.ToString(),
+
                                         ["text"] =
                                             $"{family.GetDisplayName(actor)} " +
                                             $"{activity.Text}."
@@ -384,7 +401,7 @@ public sealed class WellbeingPlugin : IGamePlugin
                     "wellbeing.therapy",
 
                 Label =
-                    "Go to Therapy ($1,500)",
+                    "Go to Therapy (1,500 zł)",
 
                 Description =
                     "Treat Alcoholism, Depression and Anxiety. " +
@@ -555,11 +572,12 @@ public sealed class WellbeingPlugin : IGamePlugin
                     "wellbeing.heal_relative",
 
                 Label =
-                    "Medical Treatment",
+                    "Medical Treatment (1,000 zł)",
 
                 Description =
-                    "Pay for medical treatment for your current spouse " +
-                    "or one of your children. Restores 25 health.",
+                    "Pay 1,000 zł for medical treatment for the selected " +
+                    "living person. Restores 25 health. Available whenever " +
+                    "their health is below maximum.",
 
                 Mode =
                     ActionExecutionMode.Queued,
@@ -577,26 +595,17 @@ public sealed class WellbeingPlugin : IGamePlugin
                             actionContext.Target;
 
                         if (!CanActorAct(actor)
-                            || target.Id == actor.Id
                             || !target.Tags.Has(
                                 "state.alive"))
                         {
                             return false;
                         }
 
-                        var validRelative =
-                            family.GetSpouse(actor)
-                                ?.Id == target.Id
-                            || family.GetChildren(actor)
-                                .Any(
-                                    child =>
-                                        child.Id == target.Id);
+                        var targetHealth =
+                            health.GetHealth(target);
 
-                        if (!validRelative)
-                            return false;
-
-                        if (health.GetHealth(target)
-                            .Current >= 90)
+                        if (targetHealth.Current
+                            >= targetHealth.Maximum)
                         {
                             return false;
                         }
@@ -617,21 +626,15 @@ public sealed class WellbeingPlugin : IGamePlugin
                         var household =
                             economy.GetHousehold(actor);
 
-                        var validRelative =
-                            family.GetSpouse(actor)
-                                ?.Id == target.Id
-                            || family.GetChildren(actor)
-                                .Any(
-                                    child =>
-                                        child.Id == target.Id);
+                        var targetHealth =
+                            health.GetHealth(target);
 
                         if (household is null
                             || household.Wealth < HealCost
-                            || !validRelative
                             || !target.Tags.Has(
                                 "state.alive")
-                            || health.GetHealth(target)
-                                .Current >= 90)
+                            || targetHealth.Current
+                                >= targetHealth.Maximum)
                         {
                             return new GameActionResult(
                                 false);

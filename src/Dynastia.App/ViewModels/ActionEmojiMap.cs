@@ -30,6 +30,7 @@ public static class ActionEmojiMap
 
                 ["education.get_education"] = "🎓",
                 ["education.help_learning"] = "📚",
+                ["childhood.raise_child"] = "🫂",
 
                 ["stats.improve_strength"] = "🏋️",
                 ["stats.improve_intellect"] = "🧠",

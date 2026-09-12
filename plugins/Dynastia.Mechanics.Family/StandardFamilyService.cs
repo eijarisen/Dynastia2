@@ -7,6 +7,12 @@ public sealed class StandardFamilyService : IFamilyService
     private const string SurnamesPath =
         "Names/polish_surnames.csv";
 
+    private const string MaleNamesPath =
+        "Names/polish_male.csv";
+
+    private const string FemaleNamesPath =
+        "Names/polish_female.csv";
+
     private readonly IGameState _gameState;
     private readonly IGameDataService _data;
 
@@ -191,7 +197,25 @@ public sealed class StandardFamilyService : IFamilyService
     public GeneratedFamilyBackgroundInfo? GetGeneratedFamilyBackground(
         IPerson person)
     {
-        return GetRequired(person).GeneratedBackground;
+        var component =
+            GetRequired(person);
+
+        if (component.GeneratedBackground is not null)
+            return component.GeneratedBackground;
+
+        if (component.FatherId is not null
+            || component.MotherId is not null
+            || component.MarriageHistory.Count == 0
+            || (component.Generation == 0
+                && person.Tags.Has(
+                    "family.bloodline")))
+        {
+            return null;
+        }
+
+        return BuildDeterministicExternalBackground(
+            person,
+            component);
     }
 
     public string FormatSurname(
@@ -421,6 +445,114 @@ public sealed class StandardFamilyService : IFamilyService
             _reconcilingFounderParents =
                 false;
         }
+    }
+
+    private GeneratedFamilyBackgroundInfo
+        BuildDeterministicExternalBackground(
+            IPerson person,
+            FamilyComponent component)
+    {
+        var familySurname =
+            component.Sex == Sex.Female
+            && !string.IsNullOrWhiteSpace(
+                person.MaidenName)
+                ? person.MaidenName!
+                : person.Surname;
+
+        var fatherName =
+            $"{SelectDeterministicValue(MaleNamesPath, person.Id, 11)} " +
+            familySurname;
+
+        var motherName =
+            $"{SelectDeterministicValue(FemaleNamesPath, person.Id, 23)} " +
+            FormatSurname(
+                familySurname,
+                Sex.Female);
+
+        var siblingCount =
+            DeterministicByte(
+                person.Id,
+                31)
+            % 5;
+
+        var siblings =
+            new List<string>();
+
+        for (var index = 0;
+            index < siblingCount;
+            index++)
+        {
+            var male =
+                DeterministicByte(
+                    person.Id,
+                    41 + index)
+                % 2 == 0;
+
+            var sex =
+                male
+                    ? Sex.Male
+                    : Sex.Female;
+
+            var name =
+                SelectDeterministicValue(
+                    male
+                        ? MaleNamesPath
+                        : FemaleNamesPath,
+                    person.Id,
+                    53 + index);
+
+            siblings.Add(
+                $"{name} " +
+                FormatSurname(
+                    familySurname,
+                    sex));
+        }
+
+        return new GeneratedFamilyBackgroundInfo(
+            fatherName,
+            motherName,
+            siblings);
+    }
+
+    private string SelectDeterministicValue(
+        string path,
+        Guid id,
+        int salt)
+    {
+        var entries =
+            _data.GetWeightedStringList(
+                path);
+
+        if (entries.Count == 0)
+            return "Unknown";
+
+        var index =
+            DeterministicByte(
+                id,
+                salt)
+            % entries.Count;
+
+        return entries[index].Value;
+    }
+
+    private static int DeterministicByte(
+        Guid id,
+        int salt)
+    {
+        var bytes =
+            id.ToByteArray();
+
+        var first =
+            bytes[salt % bytes.Length];
+
+        var second =
+            bytes[(salt * 7 + 3)
+                % bytes.Length];
+
+        return (first * 31
+                + second
+                + salt * 17)
+            & 0x7FFFFFFF;
     }
 
     private string SelectDeterministicMaidenName(

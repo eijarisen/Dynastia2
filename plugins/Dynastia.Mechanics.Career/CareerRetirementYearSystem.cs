@@ -32,10 +32,6 @@ public sealed class CareerRetirementYearSystem : IYearSystem
         {
             if (person.Tags.Has("state.dead")
                 || person.Tags.Has(
-                    "simulation.peripheral_detached")
-                || person.Tags.Has(
-                    "simulation.peripheral_partner")
-                || person.Tags.Has(
                     "simulation.peripheral_inactive"))
             {
                 continue;

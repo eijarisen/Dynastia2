@@ -16,6 +16,10 @@ public sealed class HealthPlugin : IGamePlugin
             ?? throw new InvalidOperationException(
                 "Stats service is unavailable. The Health plugin requires dynastia.stats.");
 
+        var family = context.GetService<IFamilyService>()
+            ?? throw new InvalidOperationException(
+                "Family service is unavailable. The Health plugin requires dynastia.family.");
+
         var events = context.GetService<IGameEventBus>()
             ?? throw new InvalidOperationException("Game event bus is unavailable.");
 
@@ -34,6 +38,7 @@ public sealed class HealthPlugin : IGamePlugin
             new HealthYearSystem(
                 healthService,
                 stats,
+                family,
                 random,
                 events,
                 modifiers));

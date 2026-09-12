@@ -164,6 +164,7 @@ internal sealed class StandardThoughtService :
         {
             if (person.Tags.Has(
                     "state.dead")
+                || SimulationState.IsInactive(person)
                 || person.Age < 5)
             {
                 person.Components.Remove<
@@ -280,6 +281,7 @@ internal sealed class StandardThoughtService :
         {
             if (person.Tags.Has(
                     "state.dead")
+                || SimulationState.IsInactive(person)
                 || person.Age < 5)
             {
                 person.Components.Remove<

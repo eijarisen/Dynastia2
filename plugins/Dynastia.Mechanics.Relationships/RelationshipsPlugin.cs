@@ -475,6 +475,13 @@ public sealed class RelationshipsPlugin : IGamePlugin
         husband.Tags.Add(
             "sexuality.heterosexual");
 
+        GeneratedFamilyBackgroundGenerator.Assign(
+            husband,
+            husband.Surname,
+            family,
+            data,
+            random);
+
         stats.EnsureStats(
             husband);
 

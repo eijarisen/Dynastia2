@@ -93,23 +93,11 @@ public sealed class RelationshipBreakupService
                 household.Wealth / 2m);
         }
 
-        ApplyEmotionalHealthLoss(
+        ApplyBreakupHealthShock(
             actor,
-            DivorceHealthPenalty);
-
-        ApplyEmotionalHealthLoss(
             spouse,
+            DivorceHealthPenalty,
             DivorceHealthPenalty);
-
-        // Source behavior: ALL children stored on the actor
-        // receive the penalty, not only children of this union.
-        foreach (var child in
-            _family.GetChildren(actor))
-        {
-            ApplyEmotionalHealthLoss(
-                child,
-                DivorceHealthPenalty);
-        }
 
         // Source action changes the spouse's surname directly,
         // even in unusual same-sex cases.
@@ -149,7 +137,7 @@ public sealed class RelationshipBreakupService
                         ["text"] =
                             $"{actorEventName} and " +
                             $"{spouseEventName} divorced. " +
-                            $"The settlement cost ${settlement:N0}."
+                            $"The settlement cost {settlement:N0} zł."
                     }
             });
 
@@ -195,22 +183,11 @@ public sealed class RelationshipBreakupService
                 household.Wealth / 2m);
         }
 
-        ApplyEmotionalHealthLoss(
+        ApplyBreakupHealthShock(
             husband,
-            DivorceHealthPenalty);
-
-        ApplyEmotionalHealthLoss(
             wife,
+            DivorceHealthPenalty,
             DivorceHealthPenalty);
-
-        foreach (var child in
-            _family.GetChildren(
-                husband))
-        {
-            ApplyEmotionalHealthLoss(
-                child,
-                DivorceHealthPenalty);
-        }
 
         wife.Surname =
             !string.IsNullOrWhiteSpace(
@@ -302,31 +279,11 @@ public sealed class RelationshipBreakupService
             }
         }
 
-        ApplyEmotionalHealthLoss(
+        ApplyBreakupHealthShock(
             actor,
-            AffairHealthPenalty);
-
-        ApplyEmotionalHealthLoss(
             spouse,
-            AffairHealthPenalty);
-
-        // Only children shared by both spouses receive grief.
-        var spouseChildIds =
-            _family.GetChildren(spouse)
-                .Select(child => child.Id)
-                .ToHashSet();
-
-        foreach (var child in
-            _family.GetChildren(actor))
-        {
-            if (spouseChildIds.Contains(
-                child.Id))
-            {
-                ApplyEmotionalHealthLoss(
-                    child,
-                    AffairChildHealthPenalty);
-            }
-        }
+            AffairHealthPenalty,
+            AffairChildHealthPenalty);
 
         // Source selects "wife" as:
         // actor if Female, otherwise spouse.
@@ -385,15 +342,166 @@ public sealed class RelationshipBreakupService
     }
 
 
+    private void ApplyBreakupHealthShock(
+        IPerson first,
+        IPerson second,
+        double directPenalty,
+        double childPenalty)
+    {
+        ApplyEmotionalHealthLoss(
+            first,
+            second,
+            directPenalty,
+            extendedRelative: false);
+
+        ApplyEmotionalHealthLoss(
+            second,
+            first,
+            directPenalty,
+            extendedRelative: false);
+
+        var relatives =
+            new Dictionary<Guid, (IPerson Person, IPerson Reference, double Penalty)>();
+
+        AddExtendedRelatives(
+            first,
+            childPenalty,
+            relatives);
+
+        AddExtendedRelatives(
+            second,
+            childPenalty,
+            relatives);
+
+        relatives.Remove(first.Id);
+        relatives.Remove(second.Id);
+
+        foreach (var item in relatives.Values)
+        {
+            ApplyEmotionalHealthLoss(
+                item.Person,
+                item.Reference,
+                item.Penalty,
+                extendedRelative: true);
+        }
+    }
+
+    private void AddExtendedRelatives(
+        IPerson subject,
+        double childPenalty,
+        IDictionary<Guid, (IPerson Person, IPerson Reference, double Penalty)> relatives)
+    {
+        foreach (var child in _family.GetChildren(subject))
+        {
+            AddRelative(
+                child,
+                subject,
+                childPenalty,
+                relatives);
+        }
+
+        var familyPenalty =
+            childPenalty * 0.70;
+
+        var father = _family.GetFather(subject);
+        var mother = _family.GetMother(subject);
+
+        AddRelative(
+            father,
+            subject,
+            familyPenalty,
+            relatives);
+
+        AddRelative(
+            mother,
+            subject,
+            familyPenalty,
+            relatives);
+
+        var siblingIds =
+            new HashSet<Guid>();
+
+        if (father is not null)
+        {
+            foreach (var sibling in _family.GetChildren(father))
+            {
+                if (sibling.Id != subject.Id
+                    && siblingIds.Add(sibling.Id))
+                {
+                    AddRelative(
+                        sibling,
+                        subject,
+                        familyPenalty,
+                        relatives);
+                }
+            }
+        }
+
+        if (mother is not null)
+        {
+            foreach (var sibling in _family.GetChildren(mother))
+            {
+                if (sibling.Id != subject.Id
+                    && siblingIds.Add(sibling.Id))
+                {
+                    AddRelative(
+                        sibling,
+                        subject,
+                        familyPenalty,
+                        relatives);
+                }
+            }
+        }
+    }
+
+    private static void AddRelative(
+        IPerson? relative,
+        IPerson reference,
+        double penalty,
+        IDictionary<Guid, (IPerson Person, IPerson Reference, double Penalty)> relatives)
+    {
+        if (relative is null)
+            return;
+
+        if (!relatives.TryGetValue(
+                relative.Id,
+                out var existing)
+            || penalty > existing.Penalty)
+        {
+            relatives[relative.Id] =
+                (relative, reference, penalty);
+        }
+    }
+
     private void ApplyEmotionalHealthLoss(
         IPerson person,
-        double basePenalty)
+        IPerson eventRelative,
+        double basePenalty,
+        bool extendedRelative)
     {
+        if (person.Tags.Has("state.dead")
+            || SimulationState.IsInactive(person))
+        {
+            return;
+        }
+
+        var personHousehold =
+            _economy.GetHouseholdId(person);
+
+        var eventHousehold =
+            _economy.GetHouseholdId(eventRelative);
+
+        var sameHousehold =
+            personHousehold is not null
+            && eventHousehold is not null
+            && personHousehold == eventHousehold;
+
         var penalty =
-            basePenalty
-            * PersonalityInfluence.Multiplier(
+            FamilyShockRules.ScaleHealthLoss(
                 person,
-                melancholic: 0.15);
+                basePenalty,
+                sameHousehold,
+                extendedRelative);
 
         _health.ChangeHealth(
             person,

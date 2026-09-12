@@ -39,6 +39,7 @@ public sealed class PrisonStatusYearSystem :
         {
             if (person.Tags.Has(
                     "state.dead")
+                || SimulationState.IsInactive(person)
                 || !_justice.IsImprisoned(
                     person))
             {

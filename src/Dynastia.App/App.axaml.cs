@@ -169,6 +169,10 @@ public partial class App : Application
                 pluginContext.GetService<
                     IPersonalityService>();
 
+            var childHappinessService =
+                pluginContext.GetService<
+                    IChildHappinessService>();
+
             var educationService =
                 pluginContext.GetService<IEducationService>();
 
@@ -239,6 +243,7 @@ public partial class App : Application
                             marriageSatisfactionService,
                             thoughtService,
                             personalityService,
+                            childHappinessService,
                             educationService,
                             careerService,
                             justiceService,

@@ -19,6 +19,15 @@ public static class PersonEmojiResolver
             return "💀";
         }
 
+        // Imprisonment is an overriding visual state. Do this before
+        // thoughts and age-based emoji so prisoners always show chains.
+        if (person.Tags.Has(
+            "state.imprisoned")
+            || justice?.IsImprisoned(person) == true)
+        {
+            return "⛓️";
+        }
+
         // Ages 0-4 never receive a thought. Only their immediate physical
         // condition may replace the normal infant emoji.
         if (person.Age < 5)

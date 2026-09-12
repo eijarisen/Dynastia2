@@ -761,8 +761,51 @@ public sealed class StandardHouseholdService :
             FindPerson(
                 deceasedId);
 
-        if (deceased is null
-            || !deceased.Tags.Has(
+        if (deceased is null)
+            return;
+
+        // A living current/former partner of a Bloodline person remains part
+        // of active simulation for life. When the Bloodline partner dies,
+        // preserve the survivor as a direct former partner instead of
+        // archiving them. Their later spouse is only a temporary peripheral
+        // person and is handled separately below/reconciliation.
+        if (_family.IsBloodline(deceased))
+        {
+            var directPartners =
+                gameEvent.RelatedPersonIds
+                    .Select(FindPerson)
+                    .Where(person =>
+                        person is not null
+                        && person.Tags.Has("state.alive")
+                        && !_family.IsBloodline(person)
+                        && HasDirectBloodlineMarriage(person))
+                    .Cast<IPerson>()
+                    .DistinctBy(person => person.Id)
+                    .ToList();
+
+            var staleSpouse =
+                _family.GetSpouse(deceased);
+
+            if (staleSpouse is not null
+                && staleSpouse.Tags.Has("state.alive")
+                && !_family.IsBloodline(staleSpouse)
+                && HasDirectBloodlineMarriage(staleSpouse)
+                && !directPartners.Any(person => person.Id == staleSpouse.Id))
+            {
+                directPartners.Add(staleSpouse);
+            }
+
+            foreach (var partner in directPartners)
+            {
+                partner.Tags.Add(
+                    "simulation.peripheral_ex");
+
+                partner.Tags.Remove(
+                    SimulationState.PeripheralInactiveTag);
+            }
+        }
+
+        if (!deceased.Tags.Has(
                 "simulation.peripheral_ex"))
         {
             return;
@@ -1667,48 +1710,138 @@ public sealed class StandardHouseholdService :
 
     private void TagPeripheralFormerPartners()
     {
-        foreach (var person in
+        var living =
             _gameState.People
-                .Where(
-                    candidate =>
-                        candidate.Tags.Has(
-                            "state.alive")
-                        && !_family.IsBloodline(
-                            candidate)
-                        && HasDirectBloodlineMarriage(
-                            candidate))
-                .ToList())
+                .Where(person =>
+                    person.Tags.Has("state.alive"))
+                .ToList();
+
+        // Tier 1: every living current/former partner of a Bloodline person is
+        // permanently simulated. Direct former partners keep the peripheral_ex
+        // tag even if the Bloodline relationship ended years ago.
+        var directPartners =
+            living
+                .Where(person =>
+                    !_family.IsBloodline(person)
+                    && HasDirectBloodlineMarriage(person))
+                .ToList();
+
+        foreach (var person in directPartners)
         {
-            if (IsCurrentSpouseOfBloodline(
-                person))
+            person.Tags.Remove(
+                SimulationState.PeripheralInactiveTag);
+
+            person.Tags.Remove(
+                "simulation.peripheral_partner");
+
+            if (IsCurrentSpouseOfBloodline(person))
             {
                 person.Tags.Remove(
                     "simulation.peripheral_ex");
 
                 person.Tags.Remove(
                     "simulation.peripheral_detached");
+            }
+            else
+            {
+                person.Tags.Add(
+                    "simulation.peripheral_ex");
+            }
+        }
 
+        var directPartnerIds =
+            directPartners
+                .Select(person => person.Id)
+                .ToHashSet();
+
+        // Tier 2: the current spouse of a direct former partner is simulated
+        // only for as long as that marriage remains current.
+        var temporaryPartners =
+            new HashSet<Guid>();
+
+        foreach (var formerPartner in
+            directPartners.Where(person =>
+                person.Tags.Has(
+                    "simulation.peripheral_ex")))
+        {
+            var spouse =
+                _family.GetSpouse(formerPartner);
+
+            if (spouse is null
+                || !spouse.Tags.Has("state.alive")
+                || _family.IsBloodline(spouse)
+                || directPartnerIds.Contains(spouse.Id))
+            {
                 continue;
             }
 
-            // Peripheral relationship status is separate from household
-            // caregiving. A divorced/widowed former spouse may still head or
-            // belong to a Bloodline household while bloodline children depend
-            // on them, but any later marriage remains peripheral and any
-            // children from that later union are news-only.
-            person.Tags.Add(
-                "simulation.peripheral_ex");
+            spouse.Tags.Add(
+                "simulation.peripheral_partner");
 
-            var laterPartner =
-                _family.GetSpouse(
-                    person);
+            spouse.Tags.Remove(
+                SimulationState.PeripheralInactiveTag);
 
-            if (laterPartner is not null
-                && !_family.IsBloodline(
-                    laterPartner))
+            temporaryPartners.Add(
+                spouse.Id);
+        }
+
+        // A former temporary spouse (the ex-partner of an ex-partner) stops
+        // simulation once that relationship ends. Keep the record for history.
+        foreach (var person in living.Where(person =>
+            person.Tags.Has(
+                "simulation.peripheral_partner")
+            && !temporaryPartners.Contains(person.Id)))
+        {
+            person.Tags.Remove(
+                "simulation.peripheral_partner");
+
+            if (!_family.IsBloodline(person)
+                && !HasDirectBloodlineMarriage(person))
             {
-                laterPartner.Tags.Add(
-                    "simulation.peripheral_partner");
+                person.Tags.Add(
+                    SimulationState.PeripheralInactiveTag);
+            }
+        }
+
+        // Older saves may contain fully simulated children from a later
+        // peripheral marriage. They are not Bloodline relatives and should be
+        // retained only as historical records, matching new peripheral births.
+        foreach (var child in living.Where(person =>
+            !_family.IsBloodline(person)
+            && !HasDirectBloodlineMarriage(person)
+            && !temporaryPartners.Contains(person.Id)))
+        {
+            var father =
+                _family.GetFather(child);
+
+            var mother =
+                _family.GetMother(child);
+
+            if (father is null
+                && mother is null)
+            {
+                continue;
+            }
+
+            var hasBloodlineParent =
+                (father is not null && _family.IsBloodline(father))
+                || (mother is not null && _family.IsBloodline(mother));
+
+            if (hasBloodlineParent)
+                continue;
+
+            var peripheralParent =
+                (father is not null
+                    && (father.Tags.Has("simulation.peripheral_ex")
+                        || father.Tags.Has("simulation.peripheral_partner")))
+                || (mother is not null
+                    && (mother.Tags.Has("simulation.peripheral_ex")
+                        || mother.Tags.Has("simulation.peripheral_partner")));
+
+            if (peripheralParent)
+            {
+                child.Tags.Add(
+                    SimulationState.PeripheralInactiveTag);
             }
         }
     }
@@ -1773,7 +1906,9 @@ public sealed class StandardHouseholdService :
             }
 
             if (oldHead.Tags.Has(
-                "state.alive"))
+                    "state.alive")
+                && !SimulationState.IsInactive(
+                    oldHead))
             {
                 if (!_family.IsBloodline(
                         oldHead)

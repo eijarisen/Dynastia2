@@ -601,7 +601,7 @@ public sealed class HouseholdsPlugin : IGamePlugin
             new GameActionDefinition
             {
                 Id = "household.hire_nanny",
-                Label = "Hire a Nanny ($250/year)",
+                Label = "Hire a Nanny (250 zł/year)",
                 Description =
                     "Hire help for an oversized household. " +
                     "The annual nanny cost is charged during finances. " +

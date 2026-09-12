@@ -26,6 +26,11 @@ public sealed class MortalityPlugin : IGamePlugin
             ?? throw new InvalidOperationException(
                 "Family service is unavailable.");
 
+        var economy =
+            context.GetService<IEconomyService>()
+            ?? throw new InvalidOperationException(
+                "Economy service is unavailable.");
+
         var random =
             context.GetService<IGameRandom>()
             ?? throw new InvalidOperationException(
@@ -46,6 +51,7 @@ public sealed class MortalityPlugin : IGamePlugin
                 stats,
                 health,
                 family,
+                economy,
                 random,
                 calendar,
                 events));

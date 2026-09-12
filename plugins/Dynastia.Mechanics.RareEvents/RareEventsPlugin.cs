@@ -73,6 +73,7 @@ public sealed class RareEventsPlugin :
             new RareEventDeathService(
                 family,
                 health,
+                economy,
                 random,
                 calendar,
                 events);

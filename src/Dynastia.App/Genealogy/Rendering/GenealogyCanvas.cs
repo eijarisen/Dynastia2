@@ -168,6 +168,30 @@ public sealed class GenealogyCanvas :
                 230,
                 198));
 
+    private static readonly IBrush SatisfactionMiserable =
+        new SolidColorBrush(
+            Color.FromRgb(198, 40, 40));
+
+    private static readonly IBrush SatisfactionUnhappy =
+        new SolidColorBrush(
+            Color.FromRgb(230, 81, 0));
+
+    private static readonly IBrush SatisfactionContent =
+        new SolidColorBrush(
+            Color.FromRgb(226, 201, 76));
+
+    private static readonly IBrush SatisfactionSatisfied =
+        new SolidColorBrush(
+            Color.FromRgb(154, 205, 50));
+
+    private static readonly IBrush SatisfactionThriving =
+        new SolidColorBrush(
+            Color.FromRgb(67, 160, 71));
+
+    private static readonly IBrush SatisfactionNeutral =
+        new SolidColorBrush(
+            Color.FromRgb(191, 174, 139));
+
     public static readonly StyledProperty<TreeLayout?>
         LayoutProperty =
             AvaloniaProperty.Register<
@@ -1065,7 +1089,8 @@ public sealed class GenealogyCanvas :
                 textY,
                 11,
                 FontWeight.Normal,
-                TooltipText,
+                ResolveTooltipLineBrush(
+                    line),
                 width - 20);
 
             textY +=
@@ -1073,6 +1098,38 @@ public sealed class GenealogyCanvas :
         }
     }
 
+
+    private static IBrush ResolveTooltipLineBrush(
+        string line)
+    {
+        if (!line.StartsWith(
+                "Career:",
+                StringComparison.OrdinalIgnoreCase)
+            && !line.StartsWith(
+                "Marriage:",
+                StringComparison.OrdinalIgnoreCase))
+        {
+            return TooltipText;
+        }
+
+        var separator =
+            line.IndexOf(':');
+
+        var label =
+            separator >= 0
+                ? line[(separator + 1)..].Trim()
+                : string.Empty;
+
+        return label.ToLowerInvariant() switch
+        {
+            "miserable" => SatisfactionMiserable,
+            "unhappy" => SatisfactionUnhappy,
+            "content" => SatisfactionContent,
+            "satisfied" => SatisfactionSatisfied,
+            "thriving" => SatisfactionThriving,
+            _ => SatisfactionNeutral
+        };
+    }
     private static void DrawCenteredText(
         DrawingContext context,
         string text,

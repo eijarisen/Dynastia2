@@ -105,6 +105,7 @@ public sealed class MarriageYearSystem : IYearSystem
     private bool CanSearch(IPerson person)
     {
         return person.Tags.Has("state.alive")
+            && !SimulationState.IsInactive(person)
             && _family.GetSex(person) == Sex.Male
             && (
                 _family.IsBloodline(person)
@@ -187,14 +188,17 @@ public sealed class MarriageYearSystem : IYearSystem
             _family.GetDisplayName(
                 spouse);
 
+        GeneratedFamilyBackgroundGenerator.Assign(
+            spouse,
+            originalSurname,
+            _family,
+            _data,
+            _random);
+
         if (!homosexual)
         {
             spouse.MaidenName =
                 originalSurname;
-
-            GenerateFamilyBackground(
-                spouse,
-                originalSurname);
 
             spouse.Surname =
                 person.Surname;
@@ -244,54 +248,6 @@ public sealed class MarriageYearSystem : IYearSystem
             spouse,
             _career,
             _random);
-    }
-
-    private void GenerateFamilyBackground(
-        IPerson spouse,
-        string maidenSurname)
-    {
-        var fatherName =
-            $"{RandomWeightedFrom(MaleNamesPath)} " +
-            $"{maidenSurname}";
-
-        var motherName =
-            $"{RandomWeightedFrom(FemaleNamesPath)} " +
-            $"{_family.FormatSurname(maidenSurname, Sex.Female)}";
-
-        var siblings =
-            new List<string>();
-
-        var count =
-            _random.NextInt(0, 4);
-
-        for (var i = 0; i < count; i++)
-        {
-            var sex =
-                _random.NextDouble() > 0.5
-                    ? Sex.Male
-                    : Sex.Female;
-
-            var name =
-                RandomWeightedFrom(
-                    sex == Sex.Male
-                        ? MaleNamesPath
-                        : FemaleNamesPath);
-
-            var surname =
-                _family.FormatSurname(
-                    maidenSurname,
-                    sex);
-
-            siblings.Add(
-                $"{name} {surname}");
-        }
-
-        _family.SetGeneratedFamilyBackground(
-            spouse,
-            new GeneratedFamilyBackgroundInfo(
-                fatherName,
-                motherName,
-                siblings));
     }
 
     private GameDate RandomDateInYear(

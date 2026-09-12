@@ -334,6 +334,42 @@ public sealed class StandardPersonalityService :
             : null;
     }
 
+    public bool ShiftMorals(
+        IPerson person,
+        int steps)
+    {
+        var component =
+            person.Components.Get<PersonalityComponent>();
+
+        if (!IsComplete(component)
+            || steps == 0)
+        {
+            return false;
+        }
+
+        var index = component!.Morals switch
+        {
+            "Good" => 2,
+            "Neutral" => 1,
+            "Evil" => 0,
+            _ => 1
+        };
+
+        var next = Math.Clamp(index + steps, 0, 2);
+        if (next == index)
+            return false;
+
+        component.Morals = next switch
+        {
+            2 => "Good",
+            1 => "Neutral",
+            _ => "Evil"
+        };
+
+        ApplyTags(person, component);
+        return true;
+    }
+
     private double Roll(
         IPerson person,
         string purpose)

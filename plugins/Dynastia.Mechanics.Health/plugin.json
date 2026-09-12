@@ -6,6 +6,7 @@
   "assembly": "Dynastia.Mechanics.Health.dll",
   "entryType": "Dynastia.Mechanics.Health.HealthPlugin",
   "dependencies": [
+    "dynastia.family",
     "dynastia.stats"
   ]
 }

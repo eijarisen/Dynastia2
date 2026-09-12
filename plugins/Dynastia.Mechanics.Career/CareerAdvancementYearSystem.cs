@@ -2,12 +2,14 @@ using Dynastia.Contracts;
 
 namespace Dynastia.Mechanics.Career;
 
+/// <summary>
+/// Resolves promotions immediately after early queued actions so a promotion
+/// changes the salary paid in the same annual turn. Job loss remains a later
+/// life-event system to preserve the existing "salary before firing" rule.
+/// </summary>
 public sealed class CareerAdvancementYearSystem :
     IYearSystem
 {
-    private const double FiredChance =
-        0.01;
-
     private const int PromotionMinAge =
         21;
 
@@ -41,16 +43,16 @@ public sealed class CareerAdvancementYearSystem :
     }
 
     public string Id =>
-        "career.employment";
+        "career.promotion_resolution";
 
     public YearPhase Phase =>
-        YearPhase.LifeEvents;
+        YearPhase.QueuedActionsEarly;
 
     public IReadOnlyCollection<string> Before =>
         Array.Empty<string>();
 
     public IReadOnlyCollection<string> After =>
-        ["actions.queued.life_events"];
+        ["actions.queued.early"];
 
     public void Execute(
         IGameState gameState)
@@ -76,15 +78,8 @@ public sealed class CareerAdvancementYearSystem :
         IPerson person)
     {
         if (person.Tags.Has(
-                "simulation.peripheral_detached")
-            || person.Tags.Has(
-                "simulation.peripheral_partner")
-            || person.Tags.Has(
                 "simulation.peripheral_inactive"))
         {
-            person.Tags.Remove(
-                "modifier.work_harder");
-
             return;
         }
 
@@ -92,11 +87,12 @@ public sealed class CareerAdvancementYearSystem :
             _career.GetCareer(
                 person);
 
-        if (career.IsRetired)
+        if (career.IsRetired
+            || IsAtOrPastRetirementAge(person)
+            || career.JobLevel <= 0
+            || person.Age <= PromotionMinAge
+            || career.JobLevel >= 5)
         {
-            person.Tags.Remove(
-                "modifier.work_harder");
-
             return;
         }
 
@@ -104,97 +100,6 @@ public sealed class CareerAdvancementYearSystem :
             _career.GetObsolescencePressure(
                 person,
                 gameState.Year);
-
-        if (career.JobLevel > 0
-            && career.JobLevel < 5)
-        {
-            var jobLossChance =
-                FiredChance
-                + obsolescence
-                    .AdditionalJobLossChance;
-
-            jobLossChance =
-                PersonalityInfluence.AdjustProbability(
-                    jobLossChance,
-                    person,
-                    choleric: 0.15);
-
-            if (_random.NextDouble()
-                < jobLossChance)
-            {
-                var text =
-                    obsolescence.YearsAfterEnd > 0
-                        ? $"{_family.GetDisplayName(person)} " +
-                          $"lost their job as {career.JobTitle} " +
-                          $"as {career.CareerName ?? "the profession"} declined."
-                        : $"{_family.GetDisplayName(person)} " +
-                          $"was fired from their job as {career.JobTitle}.";
-
-                _events.Publish(
-                    new GameEvent
-                    {
-                        Type =
-                            "career.fired",
-
-                        Year =
-                            gameState.Year,
-
-                        SubjectId =
-                            person.Id,
-
-                        Data =
-                            new Dictionary<string, string>
-                            {
-                                ["careerId"] =
-                                    career.CareerId
-                                    ?? string.Empty,
-
-                                ["careerName"] =
-                                    career.CareerName
-                                    ?? string.Empty,
-
-                                ["jobTitle"] =
-                                    career.JobTitle,
-
-                                ["jobLossChance"] =
-                                    jobLossChance
-                                        .ToString(
-                                            "0.000"),
-
-                                ["yearsAfterCareerEnd"] =
-                                    obsolescence
-                                        .YearsAfterEnd
-                                        .ToString(),
-
-                                ["text"] =
-                                    text
-                            }
-                    });
-
-                _career.SetJobLevel(
-                    person,
-                    0);
-
-                person.Tags.Remove(
-                    "modifier.work_harder");
-
-                return;
-            }
-        }
-
-        career =
-            _career.GetCareer(
-                person);
-
-        if (career.JobLevel <= 0
-            || person.Age <= PromotionMinAge
-            || career.JobLevel >= 5)
-        {
-            person.Tags.Remove(
-                "modifier.work_harder");
-
-            return;
-        }
 
         var intellect =
             GetStat(
@@ -218,9 +123,6 @@ public sealed class CareerAdvancementYearSystem :
             _education.GetEducationLevel(
                 person);
 
-        // Preserve the existing universal education influence.
-        // The new feature intentionally does not add career-specific
-        // qualification requirements.
         if (career.JobLevel >= 2
             && education < 3)
         {
@@ -277,61 +179,72 @@ public sealed class CareerAdvancementYearSystem :
             1.0 + personalityModifier;
 
         if (_random.NextDouble()
-            < promotionChance)
+            >= promotionChance)
         {
-            _career.SetJobLevel(
-                person,
-                career.JobLevel + 1);
-
-            var promoted =
-                _career.GetCareer(
-                    person);
-
-            _events.Publish(
-                new GameEvent
-                {
-                    Type =
-                        "career.promotion",
-
-                    Year =
-                        gameState.Year,
-
-                    SubjectId =
-                        person.Id,
-
-                    Data =
-                        new Dictionary<string, string>
-                        {
-                            ["careerId"] =
-                                promoted.CareerId
-                                ?? string.Empty,
-
-                            ["careerName"] =
-                                promoted.CareerName
-                                ?? string.Empty,
-
-                            ["jobTitle"] =
-                                promoted.JobTitle,
-
-                            ["jobLevel"] =
-                                promoted.JobLevel
-                                    .ToString(),
-
-                            ["promotionChance"] =
-                                promotionChance
-                                    .ToString(
-                                        "0.000"),
-
-                            ["text"] =
-                                $"{_family.GetDisplayName(person)} " +
-                                $"was promoted to " +
-                                $"{promoted.JobTitle}."
-                        }
-                });
+            return;
         }
 
-        person.Tags.Remove(
-            "modifier.work_harder");
+        _career.SetJobLevel(
+            person,
+            career.JobLevel + 1);
+
+        var promoted =
+            _career.GetCareer(
+                person);
+
+        _events.Publish(
+            new GameEvent
+            {
+                Type =
+                    "career.promotion",
+
+                Year =
+                    gameState.Year,
+
+                SubjectId =
+                    person.Id,
+
+                Data =
+                    new Dictionary<string, string>
+                    {
+                        ["careerId"] =
+                            promoted.CareerId
+                            ?? string.Empty,
+
+                        ["careerName"] =
+                            promoted.CareerName
+                            ?? string.Empty,
+
+                        ["jobTitle"] =
+                            promoted.JobTitle,
+
+                        ["jobLevel"] =
+                            promoted.JobLevel
+                                .ToString(),
+
+                        ["promotionChance"] =
+                            promotionChance
+                                .ToString(
+                                    "0.000"),
+
+                        ["text"] =
+                            $"{_family.GetDisplayName(person)} " +
+                            $"was promoted to " +
+                            $"{promoted.JobTitle}."
+                    }
+            });
+    }
+
+    private bool IsAtOrPastRetirementAge(
+        IPerson person)
+    {
+        var retirementAge =
+            _family.GetSex(person)
+                == Sex.Male
+                ? 65
+                : 60;
+
+        return person.Age >= retirementAge;
     }
 
     private int GetStat(

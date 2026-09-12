@@ -6,4 +6,6 @@ public interface IPersonalityService
         IPerson person);
 
     void ReconcileAll();
+
+    bool ShiftMorals(IPerson person, int steps);
 }

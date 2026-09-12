@@ -25,6 +25,7 @@ public sealed class CrimeYearSystem :
     private readonly IFamilyService _family;
     private readonly IHealthService _health;
     private readonly ICareerService _career;
+    private readonly IEconomyService _economy;
     private readonly IGameDataService _data;
     private readonly IGameRandom _random;
     private readonly IGameEventBus _events;
@@ -37,6 +38,7 @@ public sealed class CrimeYearSystem :
         IFamilyService family,
         IHealthService health,
         ICareerService career,
+        IEconomyService economy,
         IGameDataService data,
         IGameRandom random,
         IGameEventBus events,
@@ -46,6 +48,7 @@ public sealed class CrimeYearSystem :
         _family = family;
         _health = health;
         _career = career;
+        _economy = economy;
         _data = data;
         _random = random;
         _events = events;
@@ -72,7 +75,9 @@ public sealed class CrimeYearSystem :
                 .Where(
                     person =>
                         person.Tags.Has(
-                            "state.alive"))
+                            "state.alive")
+                        && !SimulationState.IsInactive(
+                            person))
                 .ToList();
 
         foreach (var person in
@@ -211,6 +216,10 @@ public sealed class CrimeYearSystem :
         IPerson person,
         IPerson spouse)
     {
+        ApplyDivorceHealthShock(
+            person,
+            spouse);
+
         _events.Publish(
             new GameEvent
             {
@@ -282,6 +291,136 @@ public sealed class CrimeYearSystem :
         return _crimes[^1];
     }
 
+
+    private void ApplyDivorceHealthShock(
+        IPerson first,
+        IPerson second)
+    {
+        ApplyFamilySituationLoss(
+            first,
+            second,
+            10,
+            extendedRelative: false);
+
+        ApplyFamilySituationLoss(
+            second,
+            first,
+            10,
+            extendedRelative: false);
+
+        var affectedExtended =
+            new HashSet<Guid>();
+
+        foreach (var subject in new[] { first, second })
+        {
+            foreach (var child in _family.GetChildren(subject))
+            {
+                if (child.Id != first.Id
+                    && child.Id != second.Id
+                    && affectedExtended.Add(child.Id))
+                {
+                    ApplyFamilySituationLoss(
+                        child,
+                        subject,
+                        10,
+                        extendedRelative: true);
+                }
+            }
+
+            var father = _family.GetFather(subject);
+            var mother = _family.GetMother(subject);
+
+            foreach (var relative in new[] { father, mother })
+            {
+                if (relative is not null
+                    && relative.Id != first.Id
+                    && relative.Id != second.Id
+                    && affectedExtended.Add(relative.Id))
+                {
+                    ApplyFamilySituationLoss(
+                        relative,
+                        subject,
+                        7,
+                        extendedRelative: true);
+                }
+            }
+
+            foreach (var sibling in GetSiblings(subject))
+            {
+                if (sibling.Id != first.Id
+                    && sibling.Id != second.Id
+                    && affectedExtended.Add(sibling.Id))
+                {
+                    ApplyFamilySituationLoss(
+                        sibling,
+                        subject,
+                        7,
+                        extendedRelative: true);
+                }
+            }
+        }
+    }
+
+    private void ApplyFamilySituationLoss(
+        IPerson? person,
+        IPerson eventRelative,
+        double basePenalty,
+        bool extendedRelative)
+    {
+        if (person is null
+            || person.Tags.Has("state.dead")
+            || SimulationState.IsInactive(person))
+        {
+            return;
+        }
+
+        var personHousehold =
+            _economy.GetHouseholdId(person);
+
+        var eventHousehold =
+            _economy.GetHouseholdId(eventRelative);
+
+        var penalty =
+            FamilyShockRules.ScaleHealthLoss(
+                person,
+                basePenalty,
+                personHousehold is not null
+                    && eventHousehold is not null
+                    && personHousehold == eventHousehold,
+                extendedRelative);
+
+        _health.ChangeHealth(
+            person,
+            -penalty);
+    }
+
+    private IReadOnlyList<IPerson> GetSiblings(
+        IPerson person)
+    {
+        var result = new Dictionary<Guid, IPerson>();
+        var father = _family.GetFather(person);
+        var mother = _family.GetMother(person);
+
+        if (father is not null)
+        {
+            foreach (var sibling in _family.GetChildren(father))
+            {
+                if (sibling.Id != person.Id)
+                    result[sibling.Id] = sibling;
+            }
+        }
+
+        if (mother is not null)
+        {
+            foreach (var sibling in _family.GetChildren(mother))
+            {
+                if (sibling.Id != person.Id)
+                    result[sibling.Id] = sibling;
+            }
+        }
+
+        return result.Values.ToList();
+    }
 
     private void ApplyEmotionalHealthLoss(
         IPerson person,

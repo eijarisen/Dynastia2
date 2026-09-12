@@ -9,6 +9,8 @@ internal sealed class AutonomousHouseholdDecisionSystem :
     private readonly IHouseholdService _households;
     private readonly IActionRegistry _actions;
     private readonly IEconomyService _economy;
+    private readonly IHealthService _health;
+    private readonly ICareerService _career;
     private readonly IGameRandom _random;
 
     public AutonomousHouseholdDecisionSystem(
@@ -16,6 +18,8 @@ internal sealed class AutonomousHouseholdDecisionSystem :
         IHouseholdService households,
         IActionRegistry actions,
         IEconomyService economy,
+        IHealthService health,
+        ICareerService career,
         IGameRandom random)
     {
         _gameState =
@@ -29,6 +33,12 @@ internal sealed class AutonomousHouseholdDecisionSystem :
 
         _economy =
             economy;
+
+        _health =
+            health;
+
+        _career =
+            career;
 
         _random =
             random;
@@ -91,16 +101,9 @@ internal sealed class AutonomousHouseholdDecisionSystem :
                         3)
                     .ToList();
 
-            var index =
-                Math.Min(
-                    top.Count - 1,
-                    (int)(
-                        _random.NextDouble()
-                        * top.Count
-                    ));
-
             var selected =
-                top[index];
+                ChooseOption(
+                    top);
 
             _actions.ExecuteAutonomous(
                 selected.Action.Id,
@@ -122,6 +125,14 @@ internal sealed class AutonomousHouseholdDecisionSystem :
 
         var status =
             _households.GetStatus(
+                head);
+
+        var headHealth =
+            _health.GetHealth(
+                head);
+
+        var headCareer =
+            _career.GetCareer(
                 head);
 
         var members =
@@ -152,6 +163,20 @@ internal sealed class AutonomousHouseholdDecisionSystem :
         foreach (var target in
             members)
         {
+            var targetHealth =
+                target.Id == head.Id
+                    ? headHealth
+                    : _health.GetHealth(
+                        target);
+
+            var targetCareer =
+                target.Id == head.Id
+                    ? headCareer
+                    : target.Age >= 18
+                        ? _career.GetCareer(
+                            target)
+                        : null;
+
             foreach (var action in
                 _actions
                     .GetMechanicallyAvailableActions(
@@ -164,7 +189,11 @@ internal sealed class AutonomousHouseholdDecisionSystem :
                         finance,
                         status,
                         head,
-                        target);
+                        target,
+                        headHealth,
+                        targetHealth,
+                        headCareer,
+                        targetCareer);
 
                 if (score <= 0)
                     continue;
@@ -195,7 +224,11 @@ internal sealed class AutonomousHouseholdDecisionSystem :
         HouseholdFinanceSnapshot? finance,
         HouseholdStatusSnapshot? status,
         IPerson head,
-        IPerson target)
+        IPerson target,
+        HealthSnapshot headHealth,
+        HealthSnapshot targetHealth,
+        CareerSnapshot headCareer,
+        CareerSnapshot? targetCareer)
     {
         var broke =
             status?.IsBroke
@@ -212,9 +245,13 @@ internal sealed class AutonomousHouseholdDecisionSystem :
             id switch
             {
                 "turn.pass" =>
-                    head.Tags.Has("personality.phlegmatic")
-                        ? 45
-                        : 5,
+                    broke
+                    || strained
+                    || headHealth.Percentage < 75
+                        ? 1
+                        : head.Tags.Has("personality.phlegmatic")
+                            ? 45
+                            : 5,
 
                 "relationship.divorce_spouse" =>
                     0,
@@ -246,19 +283,36 @@ internal sealed class AutonomousHouseholdDecisionSystem :
                         : 20,
 
                 "wellbeing.heal_relative" =>
-                    92,
+                    88 + HealthUrgency(
+                        targetHealth.Percentage),
 
                 "wellbeing.therapy" =>
-                    88,
+                    92 + MentalHealthUrgency(
+                        targetHealth),
 
                 "wellbeing.recover" =>
-                    72,
+                    72
+                    + HealthUrgency(
+                        headHealth.Percentage)
+                    + (broke ? 18 : 0)
+                    + (headCareer.JobSatisfaction == 1
+                        ? 18
+                        : 0),
 
                 "wellbeing.drink" =>
-                    70,
+                    headHealth.Percentage <= 55
+                        ? 0
+                        : headHealth.Percentage <= 70
+                            ? 22
+                            : 58,
 
                 "career.ask_to_recover" =>
-                    72,
+                    76
+                    + HealthUrgency(
+                        targetHealth.Percentage)
+                    + (targetCareer?.JobSatisfaction == 1
+                        ? 12
+                        : 0),
 
                 "relationship.repair_marriage" =>
                     80,
@@ -298,13 +352,21 @@ internal sealed class AutonomousHouseholdDecisionSystem :
                     44,
 
                 "career.work_harder" =>
-                    38,
+                    headHealth.Percentage <= 50
+                        ? 0
+                        : headHealth.Percentage <= 70
+                            ? 18
+                            : 38,
 
                 "career.quit_job" =>
-                    35,
+                    headCareer.JobSatisfaction == 1
+                        ? 72
+                        : 18,
 
                 "career.ask_to_quit" =>
-                    35,
+                    targetCareer?.JobSatisfaction == 1
+                        ? 48
+                        : 20,
 
                 "stats.improve_strength" or
                 "stats.improve_intellect" or
@@ -319,6 +381,26 @@ internal sealed class AutonomousHouseholdDecisionSystem :
                 _ =>
                     0
             };
+
+
+        if (broke
+            && (id is "household.sell_house"
+                or "family_support.ask_parents"
+                or "family_support.ask_child"
+                or "career.seek_employment"
+                or "career.help_seek_employment"))
+        {
+            baseScore +=
+                headHealth.Percentage < 55
+                    ? 25
+                    : 12;
+        }
+
+        if (strained
+            && id == "household.ask_daughter_nanny")
+        {
+            baseScore += 22;
+        }
 
         if (baseScore <= 0)
             return baseScore;
@@ -394,6 +476,99 @@ internal sealed class AutonomousHouseholdDecisionSystem :
         return (int)Math.Round(
             baseScore * multiplier,
             MidpointRounding.AwayFromZero);
+    }
+
+    private DecisionOption ChooseOption(
+        IReadOnlyList<DecisionOption> options)
+    {
+        if (options.Count == 1)
+            return options[0];
+
+        var highest =
+            options[0];
+
+        // A clearly dominant emergency response should not be lost to an
+        // arbitrary routine choice. When several urgent responses compete,
+        // preserve variation with a score-weighted choice below.
+        if (highest.Score >= 150
+            && (options.Count == 1
+                || highest.Score
+                    - options[1].Score >= 30))
+        {
+            return highest;
+        }
+
+        var weights =
+            options
+                .Select(
+                    option =>
+                        Math.Max(
+                            1L,
+                            (long)option.Score
+                            * option.Score))
+                .ToArray();
+
+        var total =
+            weights.Sum();
+
+        var roll =
+            _random.NextDouble()
+            * total;
+
+        for (var index = 0;
+             index < options.Count;
+             index++)
+        {
+            if (roll < weights[index])
+                return options[index];
+
+            roll -=
+                weights[index];
+        }
+
+        return options[^1];
+    }
+
+    private static int HealthUrgency(
+        double percentage)
+    {
+        return percentage switch
+        {
+            <= 25 => 135,
+            <= 40 => 100,
+            <= 55 => 70,
+            <= 70 => 42,
+            <= 80 => 20,
+            _ => 0
+        };
+    }
+
+    private static int MentalHealthUrgency(
+        HealthSnapshot health)
+    {
+        var seriousMentalCondition =
+            health.Conditions.Any(
+                condition =>
+                    condition.Id.Equals(
+                        "alcoholism",
+                        StringComparison.OrdinalIgnoreCase)
+                    || condition.Id.Equals(
+                        "depression",
+                        StringComparison.OrdinalIgnoreCase)
+                    || condition.Id.Equals(
+                        "anxiety",
+                        StringComparison.OrdinalIgnoreCase));
+
+        if (!seriousMentalCondition)
+            return 0;
+
+        return health.Percentage switch
+        {
+            <= 40 => 70,
+            <= 60 => 45,
+            <= 75 => 25,
+            _ => 12
+        };
     }
 
     private IPerson? FindPerson(

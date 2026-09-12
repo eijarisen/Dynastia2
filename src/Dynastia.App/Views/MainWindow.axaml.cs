@@ -46,7 +46,7 @@ public partial class MainWindow : Window
             handledEventsToo: true);
     }
 
-    private void OnWindowKeyDown(
+    private async void OnWindowKeyDown(
         object? sender,
         KeyEventArgs e)
     {
@@ -61,6 +61,21 @@ public partial class MainWindow : Window
         if (DataContext
             is not MainWindowViewModel viewModel)
         {
+            return;
+        }
+
+        if (!viewModel.IsGameStarted)
+        {
+            if (!viewModel.StartGameCommand.CanExecute(null))
+                return;
+
+            // Tunnel routing makes Enter in the surname field behave
+            // exactly like Start Dynasty and prevents the focused
+            // control from also handling the same key press.
+            e.Handled = true;
+
+            viewModel.StartGameCommand.Execute(null);
+            await ShowInstructionsAsync();
             return;
         }
 
@@ -211,10 +226,33 @@ public partial class MainWindow : Window
         }
     }
 
+    private async void OnStartGameClick(
+        object? sender,
+        RoutedEventArgs e)
+    {
+        if (DataContext
+            is not MainWindowViewModel viewModel
+            || !viewModel.StartGameCommand.CanExecute(null))
+        {
+            return;
+        }
+
+        viewModel.StartGameCommand.Execute(null);
+        await ShowInstructionsAsync();
+    }
+
     private async void OnInstructionsClick(
         object? sender,
         RoutedEventArgs e)
     {
+        await ShowInstructionsAsync();
+    }
+
+    private async Task ShowInstructionsAsync()
+    {
+        if (_instructionsDialogOpen)
+            return;
+
         _instructionsDialogOpen =
             true;
 
@@ -244,6 +282,7 @@ public partial class MainWindow : Window
                 false;
         }
     }
+
 
     private async void OnViewTreeClick(
         object? sender,

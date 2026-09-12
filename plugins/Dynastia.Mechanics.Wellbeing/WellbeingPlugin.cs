@@ -555,7 +555,7 @@ public sealed class WellbeingPlugin : IGamePlugin
                     "wellbeing.heal_relative",
 
                 Label =
-                    "Heal Selected Relative ($1,000)",
+                    "Medical Treatment",
 
                 Description =
                     "Pay for medical treatment for your current spouse " +

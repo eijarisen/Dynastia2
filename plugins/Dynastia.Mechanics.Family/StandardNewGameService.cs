@@ -134,6 +134,47 @@ public sealed class StandardNewGameService : INewGameService
             clearFirst: false,
             clearSecond: false);
 
+        var olderSibling =
+            _gameState.CreatePerson(
+                RandomWeightedDifferentFrom(
+                    FemaleNamesPath,
+                    mother.Name),
+                surname,
+                _random.NextInt(20, 24));
+
+        olderSibling.MaidenName =
+            surname;
+
+        olderSibling.BirthDate =
+            RandomDateInYear(
+                _gameState.Year
+                - olderSibling.Age);
+
+        _family.InitializePerson(
+            olderSibling,
+            Sex.Female,
+            generation: 1);
+
+        olderSibling.Tags.Add(
+            "state.alive");
+
+        olderSibling.Tags.Add(
+            "age.adult");
+
+        olderSibling.Tags.Add(
+            "family.bloodline");
+
+        olderSibling.Tags.Add(
+            "relationship.single");
+
+        olderSibling.Tags.Add(
+            "sexuality.heterosexual");
+
+        _family.SetParents(
+            olderSibling,
+            father,
+            mother);
+
         var founder =
             _gameState.CreatePerson(
                 RandomWeightedFrom(
@@ -187,7 +228,8 @@ public sealed class StandardNewGameService : INewGameService
                 RelatedPersonIds =
                     [
                         father.Id,
-                        mother.Id
+                        mother.Id,
+                        olderSibling.Id
                     ],
 
                 Data =

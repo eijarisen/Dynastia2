@@ -37,11 +37,6 @@ public sealed class RelationshipsPlugin : IGamePlugin
             ?? throw new InvalidOperationException(
                 "Health service is unavailable.");
 
-        var healthModifiers =
-            context.GetService<IAnnualHealthModifierRegistry>()
-            ?? throw new InvalidOperationException(
-                "Annual health modifier registry is unavailable.");
-
         var economy =
             context.GetService<IEconomyService>()
             ?? throw new InvalidOperationException(
@@ -115,13 +110,13 @@ public sealed class RelationshipsPlugin : IGamePlugin
             new DivorcedParentsTracker(
                 gameState,
                 family,
+                health,
                 events);
 
-        healthModifiers.Register(
-            new DivorcedParentsHealthModifierProvider());
-
         systems.Register(
-            new DivorcedParentsStateYearSystem());
+            new DivorcedParentsStateYearSystem(
+                family,
+                health));
 
         actions.Register(
             CreateFindSpouseAction(
@@ -651,12 +646,8 @@ public sealed class RelationshipsPlugin : IGamePlugin
                             "state.alive")
                         || !actor.Tags.Has(
                             "control.playable")
-                        || !target.Tags.Has(
-                            "state.alive")
                         || family.GetSex(
-                            actor) != Sex.Male
-                        || family.GetSex(
-                            target) != Sex.Female)
+                            actor) != Sex.Male)
                     {
                         return false;
                     }
@@ -665,8 +656,11 @@ public sealed class RelationshipsPlugin : IGamePlugin
                         family.GetSpouse(
                             actor);
 
-                    if (wife?.Id
-                        != target.Id)
+                    if (wife is null
+                        || !wife.Tags.Has(
+                            "state.alive")
+                        || (target.Id != actor.Id
+                            && target.Id != wife.Id))
                     {
                         return false;
                     }
@@ -686,11 +680,12 @@ public sealed class RelationshipsPlugin : IGamePlugin
                         actionContext.Actor;
 
                     var wife =
-                        actionContext.Target;
+                        family.GetSpouse(
+                            actor);
 
-                    if (family.GetSpouse(
-                            actor)?.Id
-                            != wife.Id)
+                    if (wife is null
+                        || !wife.Tags.Has(
+                            "state.alive"))
                     {
                         return new GameActionResult(
                             false,
@@ -767,14 +762,24 @@ public sealed class RelationshipsPlugin : IGamePlugin
 
             IsAvailable =
                 actionContext =>
-                    actionContext.Actor.Id
-                        == actionContext.Target.Id
-                    && actionContext.Actor.Tags.Has(
-                        "state.alive")
-                    && actionContext.Actor.Tags.Has(
-                        "control.playable")
-                    && family.GetSpouse(
-                        actionContext.Actor) is not null,
+                {
+                    var actor =
+                        actionContext.Actor;
+
+                    var spouse =
+                        family.GetSpouse(
+                            actor);
+
+                    return actor.Tags.Has(
+                            "state.alive")
+                        && actor.Tags.Has(
+                            "control.playable")
+                        && spouse is not null
+                        && spouse.Tags.Has(
+                            "state.alive")
+                        && (actionContext.Target.Id == actor.Id
+                            || actionContext.Target.Id == spouse.Id);
+                },
 
             Execute =
                 actionContext =>

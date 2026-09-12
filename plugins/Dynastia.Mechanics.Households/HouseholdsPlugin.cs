@@ -160,6 +160,8 @@ public sealed class HouseholdsPlugin : IGamePlugin
                 households,
                 actions,
                 economy,
+                health,
+                career,
                 random));
 
         events.EventPublished +=

@@ -135,6 +135,15 @@
     "familyNews": false
   },
   {
+    "id": "parents_divorced",
+    "name": "Parents Divorced",
+    "type": "childhood",
+    "healthImpact": -5,
+    "weight": 0,
+    "randomIllness": false,
+    "familyNews": false
+  },
+  {
     "id": "depression",
     "name": "Depression",
     "type": "permanent",

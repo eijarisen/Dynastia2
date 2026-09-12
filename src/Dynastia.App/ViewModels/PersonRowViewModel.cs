@@ -57,8 +57,14 @@ public sealed class PersonRowViewModel
 
         if (careerService is not null)
         {
+            var career =
+                careerService.GetCareer(
+                    person);
+
             OccupationText =
-                careerService.GetCareer(person).JobTitle;
+                career.JobLevel > 0
+                    ? $"{career.JobTitle} ({career.JobLevel})"
+                    : career.JobTitle;
         }
 
         if (locationService is not null)

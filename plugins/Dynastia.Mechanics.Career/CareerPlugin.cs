@@ -123,11 +123,17 @@ public sealed class CareerPlugin : IGamePlugin
                 {
                     foreach (var person in gameState.People)
                     {
+                        var initialJobLevel =
+                            gameEvent.SubjectId is Guid founderId
+                            && person.Id == founderId
+                                ? 1
+                                : person.Age >= 18
+                                    ? random.NextInt(0, 3)
+                                    : 0;
+
                         career.InitializeCareer(
                             person,
-                            person.Age >= 18
-                                ? random.NextInt(0, 3)
-                                : 0,
+                            initialJobLevel,
                             random.NextInt(1, 5));
                     }
 
@@ -639,7 +645,7 @@ public sealed class CareerPlugin : IGamePlugin
             new GameActionDefinition
             {
                 Id = "career.help_seek_employment",
-                Label = "Help Selected Relative Seek Employment",
+                Label = "Help to Seek Employment",
                 Description =
                     "Help your unemployed wife or unmarried adult daughter find work. " +
                     "A career is drawn first; manual/physical careers use her Strength while office, professional and technical careers use her Intellect.",
@@ -783,8 +789,8 @@ public sealed class CareerPlugin : IGamePlugin
                 Id = "career.ask_to_recover",
                 Label = "Ask to Recover",
                 Description =
-                    "Ask your miserable employed spouse or adult daughter to take a break. " +
-                    "There is a 50% refusal chance.",
+                    "Ask your miserable or unhappy employed spouse, or a miserable adult daughter, " +
+                    "to take a break. There is a 50% refusal chance.",
                 Mode = ActionExecutionMode.Queued,
                 QueuePhase = YearPhase.QueuedActionsEarly,
 
@@ -812,8 +818,14 @@ public sealed class CareerPlugin : IGamePlugin
                     var targetCareer =
                         career.GetCareer(target);
 
+                    var maximumSatisfaction =
+                        family.GetSpouse(actor)?.Id == target.Id
+                            ? 2
+                            : 1;
+
                     return targetCareer.JobLevel > 0
-                        && targetCareer.JobSatisfaction == 1;
+                        && targetCareer.JobSatisfaction
+                            <= maximumSatisfaction;
                 },
 
                 Execute = actionContext =>
@@ -835,8 +847,14 @@ public sealed class CareerPlugin : IGamePlugin
                     var targetCareer =
                         career.GetCareer(target);
 
+                    var maximumSatisfaction =
+                        family.GetSpouse(actor)?.Id == target.Id
+                            ? 2
+                            : 1;
+
                     if (targetCareer.JobLevel <= 0
-                        || targetCareer.JobSatisfaction != 1)
+                        || targetCareer.JobSatisfaction
+                            > maximumSatisfaction)
                     {
                         return new GameActionResult(false);
                     }

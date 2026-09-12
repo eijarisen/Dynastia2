@@ -115,6 +115,9 @@ public sealed class FamilyMemberCardViewModel
         var satisfactionTooltip =
             "N/A";
 
+        var lastOccupationTooltip =
+            "None";
+
         if (career is not null)
         {
             var careerSnapshot =
@@ -122,7 +125,13 @@ public sealed class FamilyMemberCardViewModel
                     person);
 
             OccupationText =
-                careerSnapshot.JobTitle;
+                FormatOccupation(
+                    careerSnapshot.JobTitle,
+                    careerSnapshot.JobLevel);
+
+            lastOccupationTooltip =
+                ResolveLastOccupation(
+                    careerSnapshot);
 
             satisfactionTooltip =
                 careerSnapshot.JobLevel > 0
@@ -188,10 +197,8 @@ public sealed class FamilyMemberCardViewModel
                     person);
 
         var marriageText =
-            marriageTooltip is null
-                ? "N/A"
-                : $"{marriageTooltip.Label} " +
-                  $"({marriageTooltip.Value:0}%)";
+            marriageTooltip?.Label
+            ?? "N/A";
 
         var thought =
             IsLiving
@@ -202,6 +209,37 @@ public sealed class FamilyMemberCardViewModel
         ThoughtText =
             thought?.Text
             ?? string.Empty;
+
+        var father =
+            family?.GetFather(
+                person);
+
+        var mother =
+            family?.GetMother(
+                person);
+
+        var parentNames =
+            new[] { father, mother }
+                .Where(parent => parent is not null)
+                .Cast<IPerson>()
+                .Select(parent =>
+                    family is null
+                        ? $"{parent.Name} {parent.Surname}"
+                        : family.GetDisplayName(parent))
+                .ToList();
+
+        var children =
+            family?.GetChildren(
+                person)
+            ?? Array.Empty<IPerson>();
+
+        var childNames =
+            children
+                .Select(child =>
+                    family is null
+                        ? $"{child.Name} {child.Surname}"
+                        : family.GetDisplayName(child))
+                .ToList();
 
         InfoTooltipText =
             IsLiving
@@ -215,7 +253,16 @@ public sealed class FamilyMemberCardViewModel
                     new[]
                     {
                         $"Education: {educationTooltip}",
-                        $"Spouse: {spouseTooltip}"
+                        $"Parents: " +
+                        (parentNames.Count == 0
+                            ? "None"
+                            : string.Join(", ", parentNames)),
+                        $"Spouse: {spouseTooltip}",
+                        $"Children: " +
+                        (childNames.Count == 0
+                            ? "None"
+                            : string.Join(", ", childNames)),
+                        $"Last occupation: {lastOccupationTooltip}"
                     });
 
         SelectCommand =
@@ -263,6 +310,45 @@ public sealed class FamilyMemberCardViewModel
     public bool IsActiveHouseholdHead { get; }
 
     public RelayCommand SelectCommand { get; }
+
+    private static string FormatOccupation(
+        string title,
+        int level)
+    {
+        return level > 0
+            ? $"{title} ({level})"
+            : title;
+    }
+
+    private static string ResolveLastOccupation(
+        CareerSnapshot career)
+    {
+        if (career.JobLevel > 0)
+        {
+            return FormatOccupation(
+                career.JobTitle,
+                career.JobLevel);
+        }
+
+        if (!string.IsNullOrWhiteSpace(
+                career.PeakJobTitle))
+        {
+            return career.PeakJobLevel > 0
+                ? FormatOccupation(
+                    career.PeakJobTitle,
+                    career.PeakJobLevel)
+                : career.PeakJobTitle;
+        }
+
+        if (career.JobTitle.Equals(
+                "Housewife",
+                StringComparison.OrdinalIgnoreCase))
+        {
+            return "Housewife";
+        }
+
+        return "None";
+    }
 
     private static string BuildLivingTooltip(
         string thought,

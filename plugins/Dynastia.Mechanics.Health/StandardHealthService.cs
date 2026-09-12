@@ -363,6 +363,13 @@ public sealed class StandardHealthService : IHealthService
             return true;
         }
 
+        if (condition.Type.Equals(
+            "childhood",
+            StringComparison.OrdinalIgnoreCase))
+        {
+            return true;
+        }
+
         return condition.RemainingYears is > 0;
     }
 

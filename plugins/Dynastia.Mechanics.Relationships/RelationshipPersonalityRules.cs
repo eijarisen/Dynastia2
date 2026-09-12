@@ -19,6 +19,49 @@ internal static class RelationshipPersonalityRules
         Sex partnerSex,
         IGameRandom random)
     {
+        // Female partners are preferably generated while still within
+        // the game's normal reproductive age range. Morals continue to
+        // define the acceptable age gap: Good +/-10, Neutral +/-20,
+        // while Evil has no normal gap limit and strongly favors youth.
+        if (partnerSex == Sex.Female)
+        {
+            if (seeker.Tags.Has("morals.evil"))
+            {
+                var first = random.NextInt(18, 45);
+                var second = random.NextInt(18, 45);
+
+                return Math.Min(first, second);
+            }
+
+            var gap =
+                seeker.Tags.Has("morals.good")
+                    ? 10
+                    : 20;
+
+            var minimum =
+                Math.Max(18, seeker.Age - gap);
+
+            var maximum =
+                Math.Max(18, seeker.Age + gap);
+
+            var preferredMinimum =
+                Math.Max(18, minimum);
+
+            var preferredMaximum =
+                Math.Min(45, maximum);
+
+            if (preferredMinimum <= preferredMaximum)
+            {
+                return random.NextInt(
+                    preferredMinimum,
+                    preferredMaximum);
+            }
+
+            return random.NextInt(
+                minimum,
+                maximum);
+        }
+
         if (seeker.Tags.Has("morals.good"))
         {
             return random.NextInt(
@@ -34,26 +77,25 @@ internal static class RelationshipPersonalityRules
         }
 
         // Evil characters do not use the normal 10/20-year gap cap.
-        // Draw twice from a broad adult range and bias the selection; the
-        // opposite direction remains possible, so this stays a preference.
+        // For male partners, preserve the existing bias toward older men.
         var broadUpper =
             Math.Max(
                 60,
                 seeker.Age + 30);
 
-        var first =
+        var firstMaleAge =
             random.NextInt(
                 18,
                 broadUpper);
 
-        var second =
+        var secondMaleAge =
             random.NextInt(
                 18,
                 broadUpper);
 
-        return partnerSex == Sex.Female
-            ? Math.Min(first, second)
-            : Math.Max(first, second);
+        return Math.Max(
+            firstMaleAge,
+            secondMaleAge);
     }
 
     public static bool ApplyExceptionalPartnerStats(

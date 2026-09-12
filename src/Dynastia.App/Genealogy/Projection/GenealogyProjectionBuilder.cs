@@ -128,9 +128,15 @@ public sealed class GenealogyProjectionBuilder
                     continue;
                 }
 
-                // Preserve uploaded design: recursive expansion is bloodline-only.
-                if (spouse.IsBloodline)
+                // Bloodline spouses normally own their own recursive branch.
+                // The founding parents are the exception: both are bloodline,
+                // but the mother is rendered as the root father's spouse so
+                // their children can form the first visible sibling row.
+                if (spouse.IsBloodline
+                    && node.Person.Id != rootId)
+                {
                     continue;
+                }
 
                 var union =
                     new GenealogyUnion

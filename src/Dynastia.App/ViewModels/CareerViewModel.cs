@@ -33,7 +33,7 @@ public sealed class CareerViewModel
             snapshot.JobLevel > 0
                 ? $"Occupation: " +
                   $"{snapshot.JobTitle} " +
-                  $"(Level {snapshot.JobLevel})"
+                  $"({snapshot.JobLevel})"
                 : $"Occupation: " +
                   $"{snapshot.JobTitle}";
 

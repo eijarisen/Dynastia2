@@ -80,7 +80,9 @@
                     <ProgressBar
                         Classes="healthBar"
                         IsVisible="{Binding ShowHealth}"
-                        Width="34"
+                        Width="68"
+                        MinWidth="0"
+                        MaxWidth="68"
                         Height="5"
                         Minimum="0"
                         Maximum="100"
@@ -347,6 +349,7 @@
 
                             <TextBox
                                 Height="38"
+                                VerticalContentAlignment="Center"
                                 Background="#D9F0E2C4"
                                 Foreground="#20150B"
                                 BorderBrush="#7B5220"
@@ -365,7 +368,7 @@
                                     IdleSource="avares://Dynastia.App/Assets/UI/b_start_idle.png"
                                     HoverSource="avares://Dynastia.App/Assets/UI/b_start_hover.png"
                                     FallbackText="Start"
-                                    Command="{Binding StartGameCommand}" />
+                                    Click="OnStartGameClick" />
 
                                 <ui:ImageStateButton
                                     Width="205"
@@ -402,12 +405,12 @@
                         Source="/Assets/UI/year_paper.png"
                         Stretch="Fill" />
 
-                    <!-- TOP LEFT — ACTIONS, exact 8:3 -->
+                    <!-- TOP LEFT — ACTIONS -->
                     <Grid
                         Canvas.Left="8"
                         Canvas.Top="118"
                         Width="820"
-                        Height="307.5">
+                        Height="300.5">
 
                         <Image
                             IsHitTestVisible="False"
@@ -507,7 +510,7 @@
                         </Grid>
                     </Grid>
 
-                    <!-- TOP RIGHT — CHRONICLE, exact same 8:3 size -->
+                    <!-- TOP RIGHT — CHRONICLE -->
                     <Grid
                         Canvas.Left="844"
                         Canvas.Top="118"
@@ -526,7 +529,7 @@
                             ClipToBounds="True">
 
                             <Grid
-                                ColumnDefinitions="*,Auto,Auto,Auto"
+                                ColumnDefinitions="*,Auto"
                                 ColumnSpacing="7">
 
                                 <TextBlock
@@ -534,33 +537,47 @@
                                     FontWeight="Bold"
                                     Text="Family Chronicle" />
 
-                                <Button
+                                <Grid
                                     Grid.Column="1"
-                                    Classes="gameAction"
-                                    Command="{Binding PreviousAlbumYearCommand}">
+                                    Width="132"
+                                    ColumnDefinitions="40,52,40">
+
+                                    <Button
+                                        Grid.Column="0"
+                                        Margin="0"
+                                        HorizontalAlignment="Stretch"
+                                        Classes="gameAction"
+                                        Command="{Binding PreviousAlbumYearCommand}">
+
+                                        <TextBlock
+                                            HorizontalAlignment="Center"
+                                            Foreground="#F8E9C8"
+                                            Text="‹" />
+                                    </Button>
 
                                     <TextBlock
-                                        Foreground="#F8E9C8"
-                                        Text="‹" />
-                                </Button>
+                                        Grid.Column="1"
+                                        HorizontalAlignment="Center"
+                                        VerticalAlignment="Center"
+                                        TextAlignment="Center"
+                                        FontSize="16"
+                                        FontWeight="Bold"
+                                        Foreground="#DDB64E"
+                                        Text="{Binding AlbumYear}" />
 
-                                <TextBlock
-                                    Grid.Column="2"
-                                    VerticalAlignment="Center"
-                                    FontSize="14"
-                                    FontWeight="Bold"
-                                    Foreground="#DDB64E"
-                                    Text="{Binding AlbumYear}" />
+                                    <Button
+                                        Grid.Column="2"
+                                        Margin="0"
+                                        HorizontalAlignment="Stretch"
+                                        Classes="gameAction"
+                                        Command="{Binding NextAlbumYearCommand}">
 
-                                <Button
-                                    Grid.Column="3"
-                                    Classes="gameAction"
-                                    Command="{Binding NextAlbumYearCommand}">
-
-                                    <TextBlock
-                                        Foreground="#F8E9C8"
-                                        Text="›" />
-                                </Button>
+                                        <TextBlock
+                                            HorizontalAlignment="Center"
+                                            Foreground="#F8E9C8"
+                                            Text="›" />
+                                    </Button>
+                                </Grid>
                             </Grid>
 
                             <ScrollViewer
@@ -572,7 +589,7 @@
                                     <TextBlock
                                         Opacity="0.67"
                                         FontStyle="Italic"
-                                        FontSize="10"
+                                        FontSize="13"
                                         Text="{Binding AlbumEmptyText}" />
 
                                     <ItemsControl
@@ -995,7 +1012,7 @@
 
                         <!-- Portrait -->
                         <Border
-                            Margin="49,116,0,0"
+                            Margin="49,121,0,0"
                             Width="135"
                             Height="202"
                             HorizontalAlignment="Left"
@@ -1042,7 +1059,7 @@
 
                         <!-- Six larger, color-coded skills. -->
                         <ItemsControl
-                            Margin="196,53,50,0"
+                            Margin="196,58,50,0"
                             Height="54"
                             VerticalAlignment="Top"
                             HorizontalAlignment="Stretch"
@@ -1060,7 +1077,7 @@
 
                         <!-- Health -->
                         <StackPanel
-                            Margin="196,107,38,0"
+                            Margin="196,112,38,0"
                             Height="48"
                             VerticalAlignment="Top"
                             Spacing="4"
@@ -1346,18 +1363,16 @@
                         TextWrapping="Wrap"
                         Text="{Binding PersistenceStatusText}" />
 
-                    <Grid
+                    <Canvas
                         Canvas.Left="744"
                         Canvas.Top="10"
-                        Width="338"
-                        Height="112"
-                        ColumnDefinitions="Auto,Auto"
-                        RowDefinitions="Auto,Auto"
-                        ColumnSpacing="2"
-                        RowSpacing="6">
+                        Width="364"
+                        Height="112">
 
                         <ui:ImageStateButton
-                            Width="166"
+                            Canvas.Left="40"
+                            Canvas.Top="0"
+                            Width="156"
                             Height="52"
                             IdleSource="avares://Dynastia.App/Assets/UI/b_menu_idle.png"
                             HoverSource="avares://Dynastia.App/Assets/UI/b_menu_hover.png"
@@ -1365,7 +1380,8 @@
                             Command="{Binding ShowMainMenuPromptCommand}" />
 
                         <ui:ImageStateButton
-                            Grid.Column="1"
+                            Canvas.Left="198"
+                            Canvas.Top="0"
                             Width="166"
                             Height="52"
                             IdleSource="avares://Dynastia.App/Assets/UI/b_instructions_idle.png"
@@ -1374,8 +1390,9 @@
                             Click="OnInstructionsClick" />
 
                         <ui:ImageStateButton
-                            Grid.Row="1"
-                            Width="166"
+                            Canvas.Left="40"
+                            Canvas.Top="58"
+                            Width="156"
                             Height="52"
                             IdleSource="avares://Dynastia.App/Assets/UI/b_load_idle.png"
                             HoverSource="avares://Dynastia.App/Assets/UI/b_load_hover.png"
@@ -1383,15 +1400,15 @@
                             Click="OnLoadGameClick" />
 
                         <ui:ImageStateButton
-                            Grid.Column="1"
-                            Grid.Row="1"
+                            Canvas.Left="198"
+                            Canvas.Top="58"
                             Width="166"
                             Height="52"
                             IdleSource="avares://Dynastia.App/Assets/UI/b_export_idle.png"
                             HoverSource="avares://Dynastia.App/Assets/UI/b_export_hover.png"
                             FallbackText="Export"
                             Click="OnSaveGameClick" />
-                    </Grid>
+                    </Canvas>
 
                     <TextBlock
                         Canvas.Left="1166"
@@ -1399,7 +1416,7 @@
                         Width="150"
                         TextAlignment="Center"
                         FontFamily="avares://Dynastia.App/Assets/Fonts#UnifrakturCook"
-                        FontSize="52"
+                        FontSize="56"
                         Foreground="#17110C"
                         Text="{Binding Year}" />
 
@@ -1524,33 +1541,21 @@
                                 Orientation="Horizontal"
                                 Spacing="12">
 
-                                <Button
-                                    MinWidth="120"
-                                    Height="42"
-                                    Background="#0A3228"
-                                    Foreground="#F0D38C"
-                                    BorderBrush="#A67A28"
-                                    BorderThickness="2"
-                                    Command="{Binding GoBackFromGameOverCommand}">
+                                <ui:ImageStateButton
+                                    Width="172"
+                                    Height="56"
+                                    IdleSource="avares://Dynastia.App/Assets/UI/b_close_idle.png"
+                                    HoverSource="avares://Dynastia.App/Assets/UI/b_close_hover.png"
+                                    FallbackText="Close"
+                                    Command="{Binding GoBackFromGameOverCommand}" />
 
-                                    <TextBlock
-                                        Foreground="#F0D38C"
-                                        Text="Go Back" />
-                                </Button>
-
-                                <Button
-                                    MinWidth="140"
-                                    Height="42"
-                                    Background="#0A3228"
-                                    Foreground="#F0D38C"
-                                    BorderBrush="#A67A28"
-                                    BorderThickness="2"
-                                    Command="{Binding ReturnToMainMenuCommand}">
-
-                                    <TextBlock
-                                        Foreground="#F0D38C"
-                                        Text="Main Menu" />
-                                </Button>
+                                <ui:ImageStateButton
+                                    Width="172"
+                                    Height="56"
+                                    IdleSource="avares://Dynastia.App/Assets/UI/b_menu_idle.png"
+                                    HoverSource="avares://Dynastia.App/Assets/UI/b_menu_hover.png"
+                                    FallbackText="Main Menu"
+                                    Command="{Binding ReturnToMainMenuCommand}" />
                             </StackPanel>
                         </StackPanel>
                     </Grid>

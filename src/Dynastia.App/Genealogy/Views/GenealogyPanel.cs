@@ -105,7 +105,7 @@ public sealed class GenealogyPanel :
 
         var founder =
             CreateToolButton(
-                "Center Founder");
+                "Center Tree");
 
         founder.Click +=
             (_, _) =>

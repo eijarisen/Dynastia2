@@ -12,4 +12,5 @@ public sealed record CareerSnapshot(
     string? CareerName = null,
     decimal BaseSalary = 0,
     int PeakJobLevel = 0,
-    string? PeakCareerId = null);
+    string? PeakCareerId = null,
+    string? PeakJobTitle = null);

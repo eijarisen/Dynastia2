@@ -126,9 +126,22 @@ public sealed class GameGenealogyDataSource :
                         && _family.IsMaleLineage(
                             person));
 
+        var foundingFather =
+            founder is null
+                ? null
+                : _family.GetFather(
+                    founder);
+
+        var treeRoot =
+            foundingFather is not null
+            && _family.IsBloodline(
+                foundingFather)
+                ? foundingFather
+                : founder;
+
         return new GenealogySnapshot(
             people,
-            founder?.Id,
+            treeRoot?.Id,
             _topologyVersion,
             _visualVersion);
     }
@@ -381,8 +394,7 @@ public sealed class GameGenealogyDataSource :
         var marriageTooltip =
             marriage is null
                 ? "N/A"
-                : $"{marriage.Label} " +
-                  $"({marriage.Value:0}%)";
+                : marriage.Label;
 
         var thought =
             isAlive

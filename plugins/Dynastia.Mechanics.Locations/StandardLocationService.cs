@@ -349,6 +349,27 @@ public sealed class StandardLocationService :
                 householdTown);
         }
 
+        if (father is not null)
+        {
+            foreach (var sibling in
+                _family.GetChildren(father)
+                    .Where(
+                        candidate =>
+                            candidate.Id != founder.Id
+                            && _family.GetMother(candidate)?.Id
+                                == mother?.Id))
+            {
+                var siblingBirthplace =
+                    ChooseChildBirthplace(
+                        householdTown);
+
+                SetLocation(
+                    sibling,
+                    siblingBirthplace,
+                    householdTown);
+            }
+        }
+
         var founderBirthplace =
             ChooseChildBirthplace(
                 householdTown);

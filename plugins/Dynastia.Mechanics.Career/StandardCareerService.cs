@@ -118,7 +118,9 @@ public sealed class StandardCareerService :
             definition?.BaseSalary
                 ?? 0,
             career.PeakJobLevel,
-            career.PeakCareerId);
+            career.PeakCareerId,
+            ResolvePeakJobTitle(
+                career));
     }
 
     public void InitializeCareer(
@@ -560,6 +562,47 @@ public sealed class StandardCareerService :
         return ResolveDefinition(
             person,
             career);
+    }
+
+
+    private string? ResolvePeakJobTitle(
+        CareerComponent career)
+    {
+        if (career.PeakJobLevel > 0
+            && !string.IsNullOrWhiteSpace(
+                career.PeakCareerId))
+        {
+            return _catalog
+                .Find(
+                    career.PeakCareerId)
+                ?.GetTitle(
+                    career.PeakJobLevel);
+        }
+
+        // Compatibility fallback for older retired saves that predate
+        // peak-career tracking but still retain the career and last salary.
+        var definition =
+            _catalog.Find(
+                career.CareerId);
+
+        if (career.IsRetired
+            && definition is not null
+            && definition.BaseSalary > 0
+            && career.LastIncome > 0)
+        {
+            var inferredLevel =
+                Math.Clamp(
+                    (int)Math.Round(
+                        career.LastIncome
+                        / definition.BaseSalary),
+                    1,
+                    5);
+
+            return definition.GetTitle(
+                inferredLevel);
+        }
+
+        return null;
     }
 
     private decimal GetActiveSalary(

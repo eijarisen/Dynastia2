@@ -2167,6 +2167,13 @@ public sealed class MainWindowViewModel : ViewModelBase
                 .GetRelationshipHistory(
                     person);
 
+        var hasUnknownFoundingBackground =
+            _familyService.GetGeneration(
+                person) == 0
+            && _familyService.IsBloodline(
+                person)
+            && generatedBackground is null;
+
         SelectedFamily =
             new FamilyDetailsViewModel
             {
@@ -2187,14 +2194,18 @@ public sealed class MainWindowViewModel : ViewModelBase
                         ? PersonNameWithLifeYears(
                             father)
                         : generatedBackground?.FatherName
-                          ?? "None",
+                          ?? (hasUnknownFoundingBackground
+                              ? "Unknown"
+                              : "None"),
 
                 Mother =
                     mother is not null
                         ? PersonNameWithLifeYears(
                             mother)
                         : generatedBackground?.MotherName
-                          ?? "None",
+                          ?? (hasUnknownFoundingBackground
+                              ? "Unknown"
+                              : "None"),
 
                 Siblings =
                     siblings.Count > 0
@@ -2203,7 +2214,9 @@ public sealed class MainWindowViewModel : ViewModelBase
                         : generatedBackground is not null
                             ? FormatNames(
                                 generatedBackground.Siblings)
-                            : "None",
+                            : hasUnknownFoundingBackground
+                                ? "Unknown"
+                                : "None",
 
                 Spouse =
                     PersonNameWithLifeYears(

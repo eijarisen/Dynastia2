@@ -247,7 +247,7 @@ public sealed class FamilySupportPlugin :
                 "family_support.ask_child",
 
             Label =
-                "Ask Selected Child for Money",
+                "Ask Child for Money",
 
             Description =
                 "When broke, ask the selected wealthy adult child " +

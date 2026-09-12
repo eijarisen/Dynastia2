@@ -117,12 +117,6 @@ public sealed class ReproductionPlugin : IGamePlugin
             IsAvailable =
                 actionContext =>
                 {
-                    if (actionContext.Actor.Id
-                        != actionContext.Target.Id)
-                    {
-                        return false;
-                    }
-
                     var actor =
                         actionContext.Actor;
 
@@ -138,8 +132,14 @@ public sealed class ReproductionPlugin : IGamePlugin
                         family.GetSpouse(
                             actor);
 
-                    return spouse is not null
-                        && spouse.Tags.Has(
+                    if (spouse is null
+                        || (actionContext.Target.Id != actor.Id
+                            && actionContext.Target.Id != spouse.Id))
+                    {
+                        return false;
+                    }
+
+                    return spouse.Tags.Has(
                             "state.alive")
                         && family.GetSex(
                             spouse)

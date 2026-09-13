@@ -1023,6 +1023,17 @@
                                         </Border>
                                     </ToolTip.Tip>
                                 </TextBlock>
+
+                                <TextBlock
+                                    MaxWidth="650"
+                                    HorizontalAlignment="Center"
+                                    IsVisible="{Binding HasHouseholdLoans}"
+                                    FontSize="10.5"
+                                    LineHeight="15"
+                                    Foreground="#DCCBA7"
+                                    TextAlignment="Center"
+                                    TextWrapping="Wrap"
+                                    Text="{Binding HouseholdLoansText}" />
                             </StackPanel>
 
                             <ScrollViewer
@@ -1592,6 +1603,13 @@
                         </StackPanel>
                     </Grid>
                 </Grid>
+
+                <!-- BACKDROP FOR BORDERLESS PAPER DIALOGS -->
+                <Grid
+                    x:Name="PaperDialogBackdrop"
+                    IsVisible="False"
+                    IsHitTestVisible="True"
+                    Background="#A8000000" />
 
                 <!-- MAIN MENU PROMPT -->
                 <Grid

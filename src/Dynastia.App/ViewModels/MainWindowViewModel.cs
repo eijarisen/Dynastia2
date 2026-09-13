@@ -16,6 +16,7 @@ public sealed partial class MainWindowViewModel : ViewModelBase
     private readonly IFamilyService? _familyService;
     private readonly IHealthService? _healthService;
     private readonly IEconomyService? _economyService;
+    private readonly ILoanService? _loanService;
     private readonly IHouseholdService? _householdService;
     private readonly IAdoptionService? _adoptionService;
     private readonly ILocationService? _locationService;
@@ -77,6 +78,7 @@ public sealed partial class MainWindowViewModel : ViewModelBase
         IFamilyService? familyService,
         IHealthService? healthService,
         IEconomyService? economyService,
+        ILoanService? loanService,
         IHouseholdService? householdService,
         IAdoptionService? adoptionService,
         ILocationService? locationService,
@@ -102,6 +104,7 @@ public sealed partial class MainWindowViewModel : ViewModelBase
         _familyService = familyService;
         _healthService = healthService;
         _economyService = economyService;
+        _loanService = loanService;
         _householdService = householdService;
         _adoptionService = adoptionService;
         _locationService = locationService;
@@ -418,8 +421,9 @@ public sealed partial class MainWindowViewModel : ViewModelBase
             var projected =
                 head is null
                     ? finance.LastIncome
-                    : _economyService?.GetProjectedAnnualIncome(head)
-                        ?? finance.LastIncome;
+                    : (_economyService?.GetProjectedAnnualIncome(head)
+                        ?? finance.LastIncome)
+                      + GetProjectedLoanIncome(head);
 
             return $"Income: {projected:N0} zł";
         }
@@ -439,10 +443,25 @@ public sealed partial class MainWindowViewModel : ViewModelBase
                 GetDisplayedHouseholdHead();
 
             var projected =
-                head is null
+                (head is null
                     ? finance.LastIncomeBreakdown
                     : _economyService?.GetProjectedIncomeBreakdown(head)
-                        ?? finance.LastIncomeBreakdown;
+                        ?? finance.LastIncomeBreakdown)
+                .ToList();
+
+            if (head is not null)
+            {
+                var loanIncome =
+                    GetProjectedLoanIncome(head);
+
+                if (loanIncome > 0)
+                {
+                    projected.Add(
+                        new FinanceBreakdownItem(
+                            "loan repayments",
+                            loanIncome));
+                }
+            }
 
             return FormatFinanceBreakdown(
                 projected,
@@ -554,6 +573,80 @@ public sealed partial class MainWindowViewModel : ViewModelBase
         }
     }
 
+    public bool HasHouseholdLoans
+    {
+        get
+        {
+            var head =
+                GetDisplayedHouseholdHead();
+
+            if (head is null
+                || _loanService is null)
+            {
+                return false;
+            }
+
+            return _loanService.GetDebts(head).Count > 0
+                || _loanService.GetLoansGiven(head).Count > 0;
+        }
+    }
+
+    public string HouseholdLoansText
+    {
+        get
+        {
+            var head =
+                GetDisplayedHouseholdHead();
+
+            if (head is null
+                || _loanService is null)
+            {
+                return string.Empty;
+            }
+
+            var lines =
+                new List<string>();
+
+            var debts =
+                _loanService.GetDebts(head);
+
+            if (debts.Count > 0)
+            {
+                lines.Add("Debts");
+
+                lines.AddRange(
+                    debts.Select(debt =>
+                        $"{debt.CreditorName} — " +
+                        $"{debt.RemainingAmount:N0} remaining — " +
+                        $"{debt.AnnualPayment:N0}/year — " +
+                        $"{debt.YearsRemaining} " +
+                        $"{(debt.YearsRemaining == 1 ? "year" : "years")}"));
+            }
+
+            var receivables =
+                _loanService.GetLoansGiven(head);
+
+            if (receivables.Count > 0)
+            {
+                if (lines.Count > 0)
+                    lines.Add(string.Empty);
+
+                lines.Add("Loans Given");
+
+                lines.AddRange(
+                    receivables.Select(loan =>
+                        $"{loan.RemainingAmount:N0} remaining — " +
+                        $"{loan.AnnualPayment:N0}/year — " +
+                        $"{loan.YearsRemaining} " +
+                        $"{(loan.YearsRemaining == 1 ? "year" : "years")}"));
+            }
+
+            return string.Join(
+                Environment.NewLine,
+                lines);
+        }
+    }
+
     // Retained for compatibility with older bindings/packages.
     public string HouseholdIncomeExpensesText =>
         string.Join(
@@ -567,6 +660,15 @@ public sealed partial class MainWindowViewModel : ViewModelBase
                 value =>
                     !string.IsNullOrWhiteSpace(
                         value)));
+
+    private decimal GetProjectedLoanIncome(
+        IPerson householdRepresentative)
+    {
+        return _loanService?
+            .GetLoansGiven(householdRepresentative)
+            .Sum(loan => loan.AnnualPayment)
+            ?? 0m;
+    }
 
     private HouseholdFinanceSnapshot?
         GetDisplayedHouseholdFinance()

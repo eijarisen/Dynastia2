@@ -70,6 +70,13 @@ public interface IEconomyService
         IPerson person,
         decimal amount);
 
+    // Debt repayment is the only ordinary finance path allowed to make a
+    // household balance negative. All existing ChangeWealth callers retain
+    // the historical zero floor.
+    void ChangeWealthAllowDebt(
+        IPerson person,
+        decimal amount);
+
     void SetHousesOwned(
         IPerson person,
         int housesOwned);

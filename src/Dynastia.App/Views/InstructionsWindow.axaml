@@ -7,6 +7,10 @@
     Height="860"
     MinWidth="900"
     MinHeight="700"
+    CanResize="False"
+    ShowInTaskbar="False"
+    SystemDecorations="None"
+    TransparencyLevelHint="Transparent"
     WindowStartupLocation="CenterOwner"
     Background="#00000000"
     Title="Dynastia — Instructions">

@@ -78,27 +78,64 @@ public partial class MainWindow : Window
             return;
         }
 
-        var options = viewModel.GetPropertySelectionOptions(e.ActionId);
-        if (options.Count == 0)
-        {
-            viewModel.ReportPersistenceStatus(
-                "No valid property options are currently available.");
-            return;
-        }
-
-        var isBuy = e.ActionId.Equals(
-            "household.buy_house",
-            StringComparison.OrdinalIgnoreCase);
-
         _actionSelectionDialogOpen = true;
+        SetPaperDialogBackdrop(true);
+
         try
         {
+            if (e.ActionId.Equals(
+                    "loan.take",
+                    StringComparison.OrdinalIgnoreCase)
+                || e.ActionId.Equals(
+                    "loan.give",
+                    StringComparison.OrdinalIgnoreCase))
+            {
+                var isGivingLoan =
+                    e.ActionId.Equals(
+                        "loan.give",
+                        StringComparison.OrdinalIgnoreCase);
+
+                var loanWindow =
+                    new LoanSelectionWindow(
+                        isGivingLoan,
+                        viewModel.GetLoanTerms);
+
+                var selection =
+                    await loanWindow.ShowDialog<LoanSelectionResult?>(this);
+
+                if (selection is not null)
+                {
+                    viewModel.QueueLoanAction(
+                        e.ActionId,
+                        selection);
+                }
+
+                return;
+            }
+
+            var options =
+                viewModel.GetPropertySelectionOptions(
+                    e.ActionId);
+
+            if (options.Count == 0)
+            {
+                viewModel.ReportPersistenceStatus(
+                    "No valid property options are currently available.");
+                return;
+            }
+
+            var isBuy = e.ActionId.Equals(
+                "household.buy_house",
+                StringComparison.OrdinalIgnoreCase);
+
             var window = new PropertySelectionWindow(
                 isBuy ? "Select Town" : "Select Property",
                 isBuy ? "Buy" : "Sell",
                 options);
 
-            var selectedId = await window.ShowDialog<string?>(this);
+            var selectedId =
+                await window.ShowDialog<string?>(this);
+
             if (!string.IsNullOrWhiteSpace(selectedId))
             {
                 viewModel.QueueActionWithSelection(
@@ -110,10 +147,11 @@ public partial class MainWindow : Window
         {
             Console.Error.WriteLine(exception);
             viewModel.ReportPersistenceStatus(
-                $"Property selection failed: {exception.Message}");
+                $"Action selection failed: {exception.Message}");
         }
         finally
         {
+            SetPaperDialogBackdrop(false);
             _actionSelectionDialogOpen = false;
         }
     }
@@ -341,6 +379,8 @@ public partial class MainWindow : Window
         _instructionsDialogOpen =
             true;
 
+        SetPaperDialogBackdrop(true);
+
         try
         {
             var window =
@@ -363,8 +403,19 @@ public partial class MainWindow : Window
         }
         finally
         {
+            SetPaperDialogBackdrop(false);
             _instructionsDialogOpen =
                 false;
+        }
+    }
+
+    private void SetPaperDialogBackdrop(
+        bool isVisible)
+    {
+        if (PaperDialogBackdrop is not null)
+        {
+            PaperDialogBackdrop.IsVisible =
+                isVisible;
         }
     }
 

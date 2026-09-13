@@ -276,12 +276,15 @@ public sealed class EconomyYearSystem :
         household.LastExpenses =
             expenses;
 
+        // Ordinary expenses still cannot create debt, but an existing
+        // negative balance created by loan repayments must survive. Income
+        // first fills that balance; living costs are charged only against a
+        // non-negative balance and therefore never deepen loan debt.
         household.Wealth =
-            Math.Max(
-                0,
-                household.Wealth
-                + income
-                - expenses);
+            EconomyBalanceRules.ApplyOrdinaryAnnualFinance(
+                household.Wealth,
+                income,
+                expenses);
     }
 
 

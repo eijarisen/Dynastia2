@@ -80,13 +80,15 @@ public sealed class RelationshipBreakupService
 
         var settlement =
             household is null
-                ? 0
-                : Math.Floor(
-                    household.Wealth / 2m);
+                || household.Wealth <= 0
+                    ? 0
+                    : Math.Floor(
+                        household.Wealth / 2m);
 
-        // Dynasty 4's event reports floor(wealth / 2),
-        // but the actual balance is divided by two exactly.
-        if (household is not null)
+        // Positive cash is divided by the existing settlement rule. A
+        // negative balance represents debt already paid on the household's
+        // behalf and must not disappear merely because the couple divorces.
+        if (household?.Wealth > 0)
         {
             _economy.SetWealth(
                 actor,
@@ -178,11 +180,12 @@ public sealed class RelationshipBreakupService
 
         var settlement =
             household is null
-                ? 0
-                : Math.Floor(
-                    household.Wealth / 2m);
+                || household.Wealth <= 0
+                    ? 0
+                    : Math.Floor(
+                        household.Wealth / 2m);
 
-        if (household is not null)
+        if (household?.Wealth > 0)
         {
             _economy.SetWealth(
                 husband,

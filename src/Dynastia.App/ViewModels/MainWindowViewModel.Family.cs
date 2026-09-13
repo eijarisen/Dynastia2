@@ -285,6 +285,12 @@ public sealed partial class MainWindowViewModel
             nameof(HouseholdHousesDetailsText));
 
         OnPropertyChanged(
+            nameof(HasHouseholdLoans));
+
+        OnPropertyChanged(
+            nameof(HouseholdLoansText));
+
+        OnPropertyChanged(
             nameof(HouseholdIncomeText));
 
         OnPropertyChanged(

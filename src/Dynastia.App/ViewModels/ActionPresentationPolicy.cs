@@ -163,6 +163,16 @@ internal static class ActionPresentationPolicy
         }
 
         if (actionId.StartsWith(
+            "loan.",
+            StringComparison.OrdinalIgnoreCase))
+        {
+            categories.Add(
+                ActionCategory.Finances);
+
+            return categories;
+        }
+
+        if (actionId.StartsWith(
             "household.",
             StringComparison.OrdinalIgnoreCase))
         {

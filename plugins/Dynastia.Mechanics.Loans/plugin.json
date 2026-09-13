@@ -1,0 +1,16 @@
+{
+  "id": "dynastia.loans",
+  "name": "Loans and Debt",
+  "version": "0.1.0",
+  "apiVersion": 1,
+  "assembly": "Dynastia.Mechanics.Loans.dll",
+  "entryType": "Dynastia.Mechanics.Loans.LoansPlugin",
+  "dependencies": [
+    "dynastia.family",
+    "dynastia.economy",
+    "dynastia.households",
+    "dynastia.inheritance",
+    "dynastia.succession",
+    "dynastia.thoughts"
+  ]
+}

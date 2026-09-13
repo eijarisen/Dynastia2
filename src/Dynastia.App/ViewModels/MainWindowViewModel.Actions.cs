@@ -205,6 +205,12 @@ public sealed partial class MainWindowViewModel
                 StringComparison.OrdinalIgnoreCase)
             || actionId.Equals(
                 "household.sell_house",
+                StringComparison.OrdinalIgnoreCase)
+            || actionId.Equals(
+                "loan.take",
+                StringComparison.OrdinalIgnoreCase)
+            || actionId.Equals(
+                "loan.give",
                 StringComparison.OrdinalIgnoreCase))
         {
             ActionSelectionRequested?.Invoke(
@@ -250,6 +256,11 @@ public sealed partial class MainWindowViewModel
 
         if (actionId.Equals("household.buy_house", StringComparison.OrdinalIgnoreCase))
         {
+            var ownedTownIds =
+                _economyService.GetHouses(actor)
+                    .Select(house => house.Town.Id)
+                    .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
             return _locationService.GetTowns()
                 .Select(town =>
                 {
@@ -272,7 +283,8 @@ public sealed partial class MainWindowViewModel
                         $"{price:N0} zł",
                         search);
                 })
-                .OrderBy(option => option.PrimaryText, StringComparer.CurrentCultureIgnoreCase)
+                .OrderByDescending(option => ownedTownIds.Contains(option.Id))
+                .ThenBy(option => option.PrimaryText, StringComparer.CurrentCultureIgnoreCase)
                 .ToList();
         }
 
@@ -327,6 +339,80 @@ public sealed partial class MainWindowViewModel
 
         if (!result.Success && !string.IsNullOrWhiteSpace(result.Message))
             PersistenceStatusText = result.Message;
+
+        RefreshPeople();
+        RefreshAlbum();
+        RefreshHealth();
+        RefreshEconomy();
+        RefreshEducation();
+        RefreshCareer();
+        RefreshJustice();
+        RefreshNarrative();
+        RefreshActions();
+    }
+
+    public LoanTermsInfo? GetLoanTerms(
+        decimal principal,
+        int durationYears)
+    {
+        if (_loanService is null)
+            return null;
+
+        try
+        {
+            return _loanService.CalculateTerms(
+                principal,
+                durationYears);
+        }
+        catch (ArgumentOutOfRangeException)
+        {
+            return null;
+        }
+    }
+
+    public void QueueLoanAction(
+        string actionId,
+        LoanSelectionResult selection)
+    {
+        var actor =
+            _succession.ActiveController;
+
+        var target =
+            FindSelectedPerson();
+
+        if (actor is null
+            || target is null
+            || _succession.IsGameOver)
+        {
+            return;
+        }
+
+        var parameters =
+            new Dictionary<string, string>(
+                StringComparer.OrdinalIgnoreCase)
+            {
+                ["principal"] =
+                    selection.Principal.ToString(
+                        System.Globalization.CultureInfo.InvariantCulture),
+
+                ["durationYears"] =
+                    selection.DurationYears.ToString(
+                        System.Globalization.CultureInfo.InvariantCulture)
+            };
+
+        var result =
+            _actionRegistry.Execute(
+                actionId,
+                actor,
+                target,
+                parameters);
+
+        if (!result.Success
+            && !string.IsNullOrWhiteSpace(result.Message))
+        {
+            PersistenceStatusText =
+                result.Message;
+        }
 
         RefreshPeople();
         RefreshAlbum();

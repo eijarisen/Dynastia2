@@ -106,10 +106,21 @@ public sealed partial class StandardEconomyService
                 person);
 
         household.Wealth =
-            Math.Max(
-                0,
-                household.Wealth
-                + amount);
+            EconomyBalanceRules.ApplyOrdinaryWealthChange(
+                household.Wealth,
+                amount);
+    }
+
+    public void ChangeWealthAllowDebt(
+        IPerson person,
+        decimal amount)
+    {
+        var household =
+            GetRequiredHousehold(
+                person);
+
+        household.Wealth +=
+            amount;
     }
 
     public void SetHousesOwned(

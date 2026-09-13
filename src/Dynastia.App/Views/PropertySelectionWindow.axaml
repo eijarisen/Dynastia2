@@ -7,7 +7,10 @@
     Height="760"
     MinWidth="840"
     MinHeight="650"
-    CanResize="True"
+    CanResize="False"
+    ShowInTaskbar="False"
+    SystemDecorations="None"
+    TransparencyLevelHint="Transparent"
     WindowStartupLocation="CenterOwner"
     Background="#00000000"
     Title="Select Property">

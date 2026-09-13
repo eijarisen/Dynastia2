@@ -716,6 +716,11 @@ public sealed class StandardBiographyService :
             "inheritance.houses" => "🏡 ",
             "inheritance.promised_houses_received" => "🏡 ",
 
+            "loan.taken" => "🏦 ",
+            "loan.given" => "🤝 ",
+            "loan.repaid" => "✅ ",
+            "loan.receivable_repaid" => "✅ ",
+            "loan.debt_inherited" => "📜 ",
             "career.retirement" => "🕊️ ",
             "justice.released" => "✅ ",
             "health.illness" => "🤧 ",

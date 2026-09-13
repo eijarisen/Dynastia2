@@ -1,12 +1,13 @@
 {
   "id": "dynastia.health",
   "name": "Standard Health",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "apiVersion": 1,
   "assembly": "Dynastia.Mechanics.Health.dll",
   "entryType": "Dynastia.Mechanics.Health.HealthPlugin",
   "dependencies": [
     "dynastia.family",
-    "dynastia.stats"
+    "dynastia.stats",
+    "dynastia.economy"
   ]
 }

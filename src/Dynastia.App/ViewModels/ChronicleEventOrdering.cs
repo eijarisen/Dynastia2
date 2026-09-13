@@ -25,6 +25,9 @@ public static class ChronicleEventOrdering
         if (type.Equals(
                 "justice.crime",
                 StringComparison.OrdinalIgnoreCase)
+            || type.Equals(
+                "justice.crime_uncaught",
+                StringComparison.OrdinalIgnoreCase)
             || type.StartsWith(
                 "rare.",
                 StringComparison.OrdinalIgnoreCase))

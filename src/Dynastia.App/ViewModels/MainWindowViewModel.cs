@@ -60,6 +60,13 @@ public sealed class MainWindowViewModel : ViewModelBase
     private int _detailsTabIndex;
     private string _persistenceStatusText = string.Empty;
 
+    private readonly List<AvailableActionViewModel>
+        _allAvailableActions = [];
+
+    private readonly HashSet<ActionCategory>
+        _activeActionCategories =
+            new(Enum.GetValues<ActionCategory>());
+
     public MainWindowViewModel(
         IGameState gameState,
         INewGameService newGameService,
@@ -644,6 +651,7 @@ public sealed class MainWindowViewModel : ViewModelBase
             }
 
             if (AvailableActions.Count > 0
+                || PassActions.Count > 0
                 || HasQueuedAction)
             {
                 return string.Empty;
@@ -728,6 +736,12 @@ public sealed class MainWindowViewModel : ViewModelBase
 
     public ObservableCollection<AvailableActionViewModel>
         AvailableActions { get; } = [];
+
+    public ObservableCollection<AvailableActionViewModel>
+        PassActions { get; } = [];
+
+    public ObservableCollection<ActionFilterViewModel>
+        ActionFilters { get; } = [];
 
     public PersonRowViewModel? SelectedPerson
     {
@@ -1125,6 +1139,8 @@ public sealed class MainWindowViewModel : ViewModelBase
 
         IsGameStarted = true;
         AlbumYear = _gameState.Year;
+
+        ResetActionCategoryFilters();
 
         RefreshPeople();
         RefreshAlbum();
@@ -2439,6 +2455,9 @@ public sealed class MainWindowViewModel : ViewModelBase
     private void RefreshActions()
     {
         AvailableActions.Clear();
+        PassActions.Clear();
+        ActionFilters.Clear();
+        _allAvailableActions.Clear();
 
         var actor =
             _succession.ActiveController;
@@ -2490,18 +2509,317 @@ public sealed class MainWindowViewModel : ViewModelBase
                     var actionId =
                         action.Id;
 
-                    AvailableActions.Add(
+                    var categories =
+                        GetActionCategories(
+                            actionId);
+
+                    var viewModel =
                         new AvailableActionViewModel(
                             action,
+                            categories,
                             () =>
                                 ExecuteAction(
-                                    actionId)));
+                                    actionId));
+
+                    if (actionId.Equals(
+                        "turn.pass",
+                        StringComparison.OrdinalIgnoreCase))
+                    {
+                        PassActions.Add(
+                            viewModel);
+                    }
+                    else
+                    {
+                        _allAvailableActions.Add(
+                            viewModel);
+                    }
                 }
+
+                RebuildActionFilters();
+                ApplyActionFilters();
             }
         }
 
         OnPropertyChanged(
             nameof(ActionsEmptyText));
+    }
+
+    private void RebuildActionFilters()
+    {
+        ActionFilters.Clear();
+
+        foreach (var category in
+            Enum.GetValues<ActionCategory>())
+        {
+            if (!_allAvailableActions.Any(
+                action =>
+                    action.Categories.Contains(
+                        category)))
+            {
+                continue;
+            }
+
+            ActionFilters.Add(
+                new ActionFilterViewModel(
+                    category,
+                    _activeActionCategories.Contains(
+                        category),
+                    ToggleActionCategory));
+        }
+    }
+
+    private void ToggleActionCategory(
+        ActionCategory category)
+    {
+        if (!_activeActionCategories.Add(
+            category))
+        {
+            _activeActionCategories.Remove(
+                category);
+        }
+
+        foreach (var filter in
+            ActionFilters)
+        {
+            filter.SetActive(
+                _activeActionCategories.Contains(
+                    filter.Category));
+        }
+
+        ApplyActionFilters();
+
+        OnPropertyChanged(
+            nameof(ActionsEmptyText));
+    }
+
+    private void ApplyActionFilters()
+    {
+        AvailableActions.Clear();
+
+        foreach (var action in
+            _allAvailableActions)
+        {
+            if (action.Categories.Any(
+                _activeActionCategories.Contains))
+            {
+                AvailableActions.Add(
+                    action);
+            }
+        }
+
+        // Pass is never filtered, but stays at the end of the regular
+        // action flow instead of occupying a separate row.
+        foreach (var pass in PassActions)
+        {
+            AvailableActions.Add(pass);
+        }
+    }
+
+    private void ResetActionCategoryFilters()
+    {
+        _activeActionCategories.Clear();
+
+        foreach (var category in
+            Enum.GetValues<ActionCategory>())
+        {
+            _activeActionCategories.Add(
+                category);
+        }
+    }
+
+    private static IReadOnlySet<ActionCategory>
+        GetActionCategories(
+            string actionId)
+    {
+        var categories =
+            new HashSet<ActionCategory>();
+
+        if (actionId.Equals(
+            "turn.pass",
+            StringComparison.OrdinalIgnoreCase))
+        {
+            return categories;
+        }
+
+        if (actionId.StartsWith(
+            "stats.",
+            StringComparison.OrdinalIgnoreCase))
+        {
+            categories.Add(
+                ActionCategory.Skills);
+
+            return categories;
+        }
+
+        if (actionId.Equals(
+            "wellbeing.recover",
+            StringComparison.OrdinalIgnoreCase))
+        {
+            categories.UnionWith(
+                new[]
+                {
+                    ActionCategory.Personal,
+                    ActionCategory.Career,
+                    ActionCategory.Finances
+                });
+
+            return categories;
+        }
+
+        if (actionId.Equals(
+            "career.work_harder",
+            StringComparison.OrdinalIgnoreCase))
+        {
+            categories.UnionWith(
+                new[]
+                {
+                    ActionCategory.Personal,
+                    ActionCategory.Career,
+                    ActionCategory.Finances
+                });
+
+            return categories;
+        }
+
+        if (actionId.Equals(
+            "career.ask_to_recover",
+            StringComparison.OrdinalIgnoreCase))
+        {
+            categories.UnionWith(
+                new[]
+                {
+                    ActionCategory.Personal,
+                    ActionCategory.Career,
+                    ActionCategory.Family,
+                    ActionCategory.Finances
+                });
+
+            return categories;
+        }
+
+        if (actionId.StartsWith(
+            "wellbeing.",
+            StringComparison.OrdinalIgnoreCase))
+        {
+            categories.Add(
+                ActionCategory.Personal);
+
+            if (actionId.Equals(
+                    "wellbeing.heal_relative",
+                    StringComparison.OrdinalIgnoreCase)
+                || actionId.Equals(
+                    "wellbeing.therapy",
+                    StringComparison.OrdinalIgnoreCase))
+            {
+                categories.Add(
+                    ActionCategory.Family);
+            }
+
+            return categories;
+        }
+
+        if (actionId.StartsWith(
+            "education.",
+            StringComparison.OrdinalIgnoreCase))
+        {
+            categories.Add(
+                ActionCategory.Career);
+
+            if (actionId.Equals(
+                "education.help_learning",
+                StringComparison.OrdinalIgnoreCase))
+            {
+                categories.Add(
+                    ActionCategory.Family);
+            }
+
+            return categories;
+        }
+
+        if (actionId.StartsWith(
+            "career.",
+            StringComparison.OrdinalIgnoreCase))
+        {
+            categories.Add(
+                ActionCategory.Career);
+
+            if (actionId.Equals(
+                    "career.help_seek_employment",
+                    StringComparison.OrdinalIgnoreCase)
+                || actionId.Equals(
+                    "career.ask_to_quit",
+                    StringComparison.OrdinalIgnoreCase))
+            {
+                categories.Add(
+                    ActionCategory.Family);
+            }
+
+            return categories;
+        }
+
+        if (actionId.StartsWith(
+                "relationship.",
+                StringComparison.OrdinalIgnoreCase)
+            || actionId.StartsWith(
+                "reproduction.",
+                StringComparison.OrdinalIgnoreCase)
+            || actionId.StartsWith(
+                "childhood.",
+                StringComparison.OrdinalIgnoreCase))
+        {
+            categories.Add(
+                ActionCategory.Family);
+
+            return categories;
+        }
+
+        if (actionId.StartsWith(
+            "family_support.",
+            StringComparison.OrdinalIgnoreCase))
+        {
+            categories.UnionWith(
+                new[]
+                {
+                    ActionCategory.Family,
+                    ActionCategory.Finances
+                });
+
+            return categories;
+        }
+
+        if (actionId.StartsWith(
+            "household.",
+            StringComparison.OrdinalIgnoreCase))
+        {
+            if (actionId.Contains(
+                "nanny",
+                StringComparison.OrdinalIgnoreCase))
+            {
+                categories.Add(
+                    ActionCategory.Family);
+            }
+            else
+            {
+                categories.Add(
+                    ActionCategory.Finances);
+
+                if (actionId.Equals(
+                    "household.give_house_to_son",
+                    StringComparison.OrdinalIgnoreCase))
+                {
+                    categories.Add(
+                        ActionCategory.Family);
+                }
+            }
+
+            return categories;
+        }
+
+        // Keep future uncategorized actions reachable instead of hiding them.
+        categories.Add(
+            ActionCategory.Personal);
+
+        return categories;
     }
 
     private static IReadOnlyList<GameActionDefinition>

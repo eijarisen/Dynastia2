@@ -3,8 +3,11 @@ using Dynastia.Contracts;
 namespace Dynastia.Mechanics.Economy;
 
 public sealed class StandardEconomyService :
-    IEconomyService
+    IEconomyService,
+    IEconomyBalanceService
 {
+    public decimal OrdinaryLivingCostUnit => 250m;
+
     private readonly IGameState _gameState;
     private readonly IFamilyService _family;
     private readonly ILocationService _locations;

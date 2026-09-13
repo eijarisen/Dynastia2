@@ -5,424 +5,197 @@ namespace Dynastia.Mechanics.Health;
 
 public sealed class StandardHealthService : IHealthService
 {
-    private const string ConditionsPath =
-        "Common/health_conditions.json";
-
+    private const string ConditionsPath = "Common/health_conditions.json";
     private readonly IGameRandom _random;
+    private readonly Dictionary<string, HealthConditionDefinition> _definitions;
 
-    private readonly Dictionary<string, HealthConditionDefinition>
-        _definitions;
-
-    private readonly IReadOnlyList<HealthConditionDefinition>
-        _randomIllnesses;
-
-    public StandardHealthService(
-        IGameDataService data,
-        IGameRandom random)
+    public StandardHealthService(IGameDataService data, IGameRandom random)
     {
         _random = random;
-
-        var definitions =
-            JsonSerializer.Deserialize<List<HealthConditionDefinition>>(
-                data.ReadText(ConditionsPath),
-                new JsonSerializerOptions
-                {
-                    PropertyNameCaseInsensitive = true
-                })
-            ?? throw new InvalidDataException(
-                $"Could not read {ConditionsPath}.");
-
+        var definitions = JsonSerializer.Deserialize<List<HealthConditionDefinition>>(
+            data.ReadText(ConditionsPath),
+            new JsonSerializerOptions { PropertyNameCaseInsensitive = true })
+            ?? throw new InvalidDataException($"Could not read {ConditionsPath}.");
         ValidateDefinitions(definitions);
-
-        _definitions =
-            definitions.ToDictionary(
-                x => x.Id,
-                StringComparer.OrdinalIgnoreCase);
-
-        _randomIllnesses =
-            definitions
-                .Where(x => x.RandomIllness)
-                .ToList();
+        _definitions = definitions.ToDictionary(x => x.Id, StringComparer.OrdinalIgnoreCase);
     }
 
     public void EnsureHealth(IPerson person)
     {
-        if (person.Components.Has<HealthComponent>())
-            return;
-
-        person.Components.Set(
-            new HealthComponent
-            {
-                Current = 100,
-                Maximum = 100
-            });
+        if (!person.Components.Has<HealthComponent>())
+            person.Components.Set(new HealthComponent { Current = 100, Maximum = 100 });
     }
 
     public HealthSnapshot GetHealth(IPerson person)
     {
         var health = GetRequired(person);
-
-        var conditions =
-            health.Conditions
-                .Select(condition => new HealthConditionInfo(
-                    condition.Id,
-                    condition.Name,
-                    condition.Type,
-                    condition.HealthImpact,
-                    condition.RemainingYears))
-                .ToList();
-
         return new HealthSnapshot(
             health.Current,
             health.Maximum,
-            conditions);
+            health.Conditions.Select(c => new HealthConditionInfo(c.Id, c.Name, c.Type, c.HealthImpact, c.RemainingYears)).ToList());
     }
 
-    public void SetHealth(
-        IPerson person,
-        double value)
+    public void SetHealth(IPerson person, double value) => GetRequired(person).Current = Math.Min(value, GetRequired(person).Maximum);
+    public void ChangeHealth(IPerson person, double amount) => SetHealth(person, GetRequired(person).Current + amount);
+    public void ChangeHealthUnclamped(IPerson person, double amount) => GetRequired(person).Current += amount;
+    public bool HasCondition(IPerson person, string conditionId) => GetRequired(person).Conditions.Any(x => x.Id.Equals(conditionId, StringComparison.OrdinalIgnoreCase));
+    public bool AddCondition(IPerson person, string conditionId) => TryAddCondition(person, conditionId, out _);
+    public bool RemoveCondition(IPerson person, string conditionId) => GetRequired(person).Conditions.RemoveAll(x => x.Id.Equals(conditionId, StringComparison.OrdinalIgnoreCase)) > 0;
+
+    internal HealthConditionDefinition? GetDefinition(string conditionId) => _definitions.TryGetValue(conditionId, out var d) ? d : null;
+    internal bool IsFamilyNewsCondition(string conditionId) => GetDefinition(conditionId)?.Newsworthy == true || GetDefinition(conditionId)?.FamilyNews == true;
+
+    internal double ApplyAnnualConditionEffects(IPerson person)
     {
         var health = GetRequired(person);
-
-        // Source behavior: cap at max health,
-        // but do not impose a lower clamp.
-        health.Current = Math.Min(
-            value,
-            health.Maximum);
-    }
-
-    public void ChangeHealth(
-        IPerson person,
-        double amount)
-    {
-        var health = GetRequired(person);
-
-        SetHealth(
-            person,
-            health.Current + amount);
-    }
-
-    public void ChangeHealthUnclamped(
-        IPerson person,
-        double amount)
-    {
-        var health = GetRequired(person);
-
-        health.Current += amount;
-    }
-
-
-    public bool HasCondition(
-        IPerson person,
-        string conditionId)
-    {
-        var health = GetRequired(person);
-
-        return health.Conditions.Any(
-            x => x.Id.Equals(
-                conditionId,
-                StringComparison.OrdinalIgnoreCase));
-    }
-
-    public bool AddCondition(
-        IPerson person,
-        string conditionId)
-    {
-        return TryAddCondition(
-            person,
-            conditionId,
-            out _);
-    }
-
-    public bool RemoveCondition(
-        IPerson person,
-        string conditionId)
-    {
-        var health = GetRequired(person);
-
-        return health.Conditions.RemoveAll(
-            x => x.Id.Equals(
-                conditionId,
-                StringComparison.OrdinalIgnoreCase)) > 0;
-    }
-
-    internal bool IsFamilyNewsCondition(
-        string conditionId)
-    {
-        return _definitions.TryGetValue(
-                conditionId,
-                out var definition)
-            && definition.FamilyNews;
-    }
-
-    internal double ApplyAnnualConditionEffects(
-        IPerson person)
-    {
-        var health = GetRequired(person);
-        var healthChange = 0.0;
-
+        var change = 0.0;
         foreach (var condition in health.Conditions)
         {
-            healthChange += condition.HealthImpact;
-
-            if (condition.RemainingYears.HasValue
-                && !condition.Type.Equals(
-                    "birth_defect",
-                    StringComparison.OrdinalIgnoreCase))
+            var definition = GetDefinition(condition.Id);
+            if (definition is not null
+                && !IsPersistent(definition, condition)
+                && !condition.RemainingYears.HasValue
+                && definition.DurationMin.HasValue
+                && definition.DurationMax.HasValue)
             {
-                condition.RemainingYears--;
+                // Save migration for conditions that used to be permanent
+                // (notably Anxiety/Depression) but now have a finite course.
+                condition.RemainingYears = _random.NextInt(
+                    definition.DurationMin.Value,
+                    definition.DurationMax.Value);
             }
+
+            change += condition.HealthImpact;
+            if (condition.RemainingYears.HasValue && !IsPersistent(definition, condition))
+                condition.RemainingYears--;
         }
-
-        health.Conditions.RemoveAll(
-            condition => !ShouldRetain(condition));
-
-        return healthChange;
+        health.Conditions.RemoveAll(condition => !ShouldRetain(condition));
+        return change;
     }
 
-    internal bool TryAddRandomIllness(
+    internal bool TryAddWeightedCondition(
         IPerson person,
-        out HealthConditionState? addedCondition)
+        string category,
+        int age,
+        Func<HealthConditionDefinition, double>? weightModifier,
+        out HealthConditionState? added,
+        out HealthConditionDefinition? selected)
     {
-        var definition =
-            GetWeightedRandomIllness(
-                person);
+        var candidates = _definitions.Values
+            .Where(d => d.Category.Equals(category, StringComparison.OrdinalIgnoreCase)
+                        && age >= d.MinimumAge
+                        && d.Weight > 0
+                        && !HasCondition(person, d.Id))
+            .Select(d => new { Definition = d, Weight = d.Weight * Math.Max(0, weightModifier?.Invoke(d) ?? 1) })
+            .Where(x => x.Weight > 0)
+            .ToList();
 
-        return TryAddCondition(
-            person,
-            definition.Id,
-            out addedCondition);
-    }
-
-    private bool TryAddCondition(
-        IPerson person,
-        string conditionId,
-        out HealthConditionState? addedCondition)
-    {
-        var health = GetRequired(person);
-
-        if (health.Conditions.Any(
-            x => x.Id.Equals(
-                conditionId,
-                StringComparison.OrdinalIgnoreCase)))
+        if (candidates.Count == 0)
         {
-            addedCondition = null;
+            added = null;
+            selected = null;
             return false;
         }
 
-        if (!_definitions.TryGetValue(
-            conditionId,
-            out var definition))
+        var total = candidates.Sum(x => x.Weight);
+        var roll = _random.NextDouble() * total;
+        selected = candidates[^1].Definition;
+        foreach (var entry in candidates)
         {
-            throw new KeyNotFoundException(
-                $"Unknown health condition '{conditionId}'.");
+            if (roll < entry.Weight) { selected = entry.Definition; break; }
+            roll -= entry.Weight;
         }
 
-        int? remainingYears = null;
+        return TryAddCondition(person, selected.Id, out added);
+    }
 
-        if (definition.DurationMin.HasValue
-            && definition.DurationMax.HasValue)
+    internal void ApplyImmediateImpact(IPerson person, HealthConditionDefinition definition)
+    {
+        if (definition.ImmediateHealthImpact != 0)
+            ChangeHealth(person, definition.ImmediateHealthImpact);
+    }
+
+    private bool TryAddCondition(IPerson person, string conditionId, out HealthConditionState? added)
+    {
+        var health = GetRequired(person);
+        if (health.Conditions.Any(x => x.Id.Equals(conditionId, StringComparison.OrdinalIgnoreCase)))
         {
-            remainingYears =
-                _random.NextInt(
-                    definition.DurationMin.Value,
-                    definition.DurationMax.Value);
+            added = null;
+            return false;
         }
+        if (!_definitions.TryGetValue(conditionId, out var definition))
+            throw new KeyNotFoundException($"Unknown health condition '{conditionId}'.");
 
-        addedCondition =
-            new HealthConditionState
-            {
-                Id = definition.Id,
-                Name = definition.Name,
-                Type = definition.Type,
-                HealthImpact = definition.HealthImpact,
-                RemainingYears = remainingYears
-            };
+        int? remaining = null;
+        if (definition.DurationMin.HasValue && definition.DurationMax.HasValue)
+            remaining = _random.NextInt(definition.DurationMin.Value, definition.DurationMax.Value);
 
-        health.Conditions.Add(addedCondition);
-
+        added = new HealthConditionState
+        {
+            Id = definition.Id,
+            Name = definition.Name,
+            Type = definition.Type,
+            HealthImpact = definition.HealthImpact,
+            RemainingYears = remaining
+        };
+        health.Conditions.Add(added);
         return true;
-    }
-
-    private HealthConditionDefinition GetWeightedRandomIllness(
-        IPerson person)
-    {
-        var parentsDivorced =
-            person.Age < 18
-            && person.Tags.Has(
-                "state.parents_divorced");
-
-        var weighted =
-            _randomIllnesses
-                .Select(
-                    definition =>
-                        new
-                        {
-                            Definition =
-                                definition,
-
-                            Weight =
-                                definition.Weight
-                                * (
-                                    parentsDivorced
-                                    && (
-                                        definition.Id.Equals(
-                                            "depression",
-                                            StringComparison.OrdinalIgnoreCase)
-                                        || definition.Id.Equals(
-                                            "anxiety",
-                                            StringComparison.OrdinalIgnoreCase)
-                                    )
-                                        ? 3
-                                        : 1
-                                )
-                                * PersonalityInfluence.Multiplier(
-                                    person,
-                                    melancholic:
-                                        IsEmotionalCondition(definition.Id)
-                                            ? 0.20
-                                            : 0,
-                                    choleric:
-                                        definition.Id.Equals(
-                                            "alcoholism",
-                                            StringComparison.OrdinalIgnoreCase)
-                                            ? 0.20
-                                            : 0)
-                        })
-                .ToList();
-
-        var totalWeight =
-            weighted.Sum(
-                entry =>
-                    entry.Weight);
-
-        var roll =
-            _random.NextDouble()
-            * totalWeight;
-
-        foreach (var entry in weighted)
-        {
-            if (roll
-                < entry.Weight)
-            {
-                return entry.Definition;
-            }
-
-            roll -=
-                entry.Weight;
-        }
-
-        return weighted[^1].Definition;
-    }
-
-
-    private static bool IsEmotionalCondition(
-        string conditionId)
-    {
-        return conditionId.Equals(
-                "depression",
-                StringComparison.OrdinalIgnoreCase)
-            || conditionId.Equals(
-                "anxiety",
-                StringComparison.OrdinalIgnoreCase)
-            || conditionId.Equals(
-                "alcoholism",
-                StringComparison.OrdinalIgnoreCase);
     }
 
     private HealthComponent GetRequired(IPerson person)
     {
         EnsureHealth(person);
-
-        return person.Components.Get<HealthComponent>()
-            ?? throw new InvalidOperationException(
-                "Health component could not be created.");
+        return person.Components.Get<HealthComponent>() ?? throw new InvalidOperationException("Health component could not be created.");
     }
 
-    private static bool ShouldRetain(
-        HealthConditionState condition)
+    private bool ShouldRetain(HealthConditionState condition)
     {
-        if (condition.Type.Equals(
-            "permanent",
-            StringComparison.OrdinalIgnoreCase))
-        {
-            return true;
-        }
-
-        if (condition.Type.Equals(
-            "terminal",
-            StringComparison.OrdinalIgnoreCase))
-        {
-            return true;
-        }
-
-        if (condition.Type.Equals(
-            "birth_defect",
-            StringComparison.OrdinalIgnoreCase))
-        {
-            return true;
-        }
-
-        if (condition.Type.Equals(
-            "childhood",
-            StringComparison.OrdinalIgnoreCase))
-        {
-            return true;
-        }
-
+        var definition = GetDefinition(condition.Id);
+        if (IsPersistent(definition, condition)) return true;
         return condition.RemainingYears is > 0;
     }
 
-    private static void ValidateDefinitions(
-        IReadOnlyList<HealthConditionDefinition> definitions)
+    private static bool IsPersistent(HealthConditionDefinition? definition, HealthConditionState condition)
     {
-        if (definitions.Count == 0)
+        if (definition is not null)
         {
-            throw new InvalidDataException(
-                "Health condition data is empty.");
+            return definition.Course.Equals("Chronic", StringComparison.OrdinalIgnoreCase)
+                || definition.Course.Equals("Terminal", StringComparison.OrdinalIgnoreCase)
+                || definition.Category.Equals("Birth", StringComparison.OrdinalIgnoreCase)
+                || definition.Category.Equals("Childhood", StringComparison.OrdinalIgnoreCase);
         }
 
-        var ids =
-            new HashSet<string>(
-                StringComparer.OrdinalIgnoreCase);
+        // Unknown legacy conditions retain their serialized behavior.
+        return condition.Type.Equals("permanent", StringComparison.OrdinalIgnoreCase)
+               || condition.Type.Equals("terminal", StringComparison.OrdinalIgnoreCase)
+               || condition.Type.Equals("birth_defect", StringComparison.OrdinalIgnoreCase)
+               || condition.Type.Equals("childhood", StringComparison.OrdinalIgnoreCase);
+    }
 
-        foreach (var definition in definitions)
+    private static void ValidateDefinitions(IReadOnlyList<HealthConditionDefinition> definitions)
+    {
+        if (definitions.Count == 0) throw new InvalidDataException("Health condition data is empty.");
+        var ids = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        foreach (var d in definitions)
         {
-            if (string.IsNullOrWhiteSpace(definition.Id)
-                || string.IsNullOrWhiteSpace(definition.Name)
-                || string.IsNullOrWhiteSpace(definition.Type))
+            if (string.IsNullOrWhiteSpace(d.Id)
+                || string.IsNullOrWhiteSpace(d.Name)
+                || string.IsNullOrWhiteSpace(d.Type)
+                || string.IsNullOrWhiteSpace(d.Category)
+                || string.IsNullOrWhiteSpace(d.Course))
             {
                 throw new InvalidDataException(
-                    "Every health condition needs id, name and type.");
+                    "Every health condition needs id, name, type, category and course.");
             }
-
-            if (!ids.Add(definition.Id))
+            if (!ids.Add(d.Id)) throw new InvalidDataException($"Duplicate health condition ID '{d.Id}'.");
+            if (d.DurationMin.HasValue != d.DurationMax.HasValue) throw new InvalidDataException($"Condition '{d.Id}' must specify both durationMin and durationMax, or neither.");
+            if (d.DurationMin.HasValue && (d.DurationMin <= 0 || d.DurationMax < d.DurationMin)) throw new InvalidDataException($"Condition '{d.Id}' has an invalid duration.");
+            if ((d.Category.Equals("Mild", StringComparison.OrdinalIgnoreCase)
+                 || d.Category.Equals("Serious", StringComparison.OrdinalIgnoreCase))
+                && d.Weight <= 0)
             {
                 throw new InvalidDataException(
-                    $"Duplicate health condition ID '{definition.Id}'.");
-            }
-
-            if (definition.DurationMin.HasValue
-                != definition.DurationMax.HasValue)
-            {
-                throw new InvalidDataException(
-                    $"Condition '{definition.Id}' must specify both " +
-                    "durationMin and durationMax, or neither.");
-            }
-
-            if (definition.DurationMin.HasValue
-                && (definition.DurationMin <= 0
-                    || definition.DurationMax < definition.DurationMin))
-            {
-                throw new InvalidDataException(
-                    $"Condition '{definition.Id}' has an invalid duration.");
-            }
-
-            if (definition.RandomIllness
-                && definition.Weight <= 0)
-            {
-                throw new InvalidDataException(
-                    $"Random condition '{definition.Id}' needs a positive weight.");
+                    $"Condition '{d.Id}' needs a positive selection weight.");
             }
         }
     }

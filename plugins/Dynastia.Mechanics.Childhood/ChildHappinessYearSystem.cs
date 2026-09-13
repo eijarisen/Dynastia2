@@ -79,23 +79,6 @@ public sealed class ChildHappinessYearSystem : IYearSystem
             if (child.Age < 5 || current > 2)
                 continue;
 
-            var distressChance = current == 1 ? 0.10 : 0.05;
-            distressChance = PersonalityInfluence.AdjustProbability(
-                distressChance,
-                child,
-                melancholic: 0.25,
-                phlegmatic: -0.20,
-                sanguine: -0.10,
-                choleric: 0.20);
-
-            if (_random.NextDouble() < distressChance)
-            {
-                var condition = _random.NextDouble() < 0.5
-                    ? "anxiety"
-                    : "depression";
-                _health.AddCondition(child, condition);
-            }
-
             var moralsDownChance = current == 1 ? 0.04 : 0.02;
             moralsDownChance = PersonalityInfluence.AdjustProbability(
                 moralsDownChance,

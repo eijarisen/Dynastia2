@@ -29,6 +29,9 @@ public sealed class MarriageSatisfactionYearSystem :
     private const double BrokePenalty =
         15;
 
+    private const double ImprisonmentPenalty =
+        10;
+
     private const double AutomaticDivorceThreshold =
         35;
 
@@ -269,6 +272,13 @@ public sealed class MarriageSatisfactionYearSystem :
 
             issues.Add(
                 "husband unemployed");
+        }
+
+        if (husband.Tags.Has("state.imprisoned")
+            || wife.Tags.Has("state.imprisoned"))
+        {
+            total += ImprisonmentPenalty;
+            issues.Add("imprisonment");
         }
 
         var householdHead =

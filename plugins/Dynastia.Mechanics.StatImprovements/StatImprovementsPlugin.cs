@@ -18,7 +18,7 @@ public sealed class StatImprovementsPlugin :
                 Label:
                     "Gym Membership",
                 Cost:
-                    5000m,
+                    12000m,
                 Description:
                     "Fund an intensive long-term fitness program, coaching, equipment and diet. Guaranteed Strength +1. The improvement is acquired rather than hereditary.",
                 Narrative:
@@ -34,7 +34,7 @@ public sealed class StatImprovementsPlugin :
                 Label:
                     "Intelligence Training",
                 Cost:
-                    7000m,
+                    12500m,
                 Description:
                     "Fund intensive intelligence training, private instruction and demanding mental exercises. Guaranteed Intellect +1. Education level is unchanged.",
                 Narrative:
@@ -50,7 +50,7 @@ public sealed class StatImprovementsPlugin :
                 Label:
                     "Immune Therapy",
                 Cost:
-                    8000m,
+                    13000m,
                 Description:
                     "Fund an extensive specialist medical program intended to strengthen resistance to illness. Guaranteed Immunity +1.",
                 Narrative:
@@ -66,7 +66,7 @@ public sealed class StatImprovementsPlugin :
                 Label:
                     "Plastic Surgery",
                 Cost:
-                    8000m,
+                    13500m,
                 Description:
                     "Pay for substantial cosmetic surgery. Guaranteed Appeal +1. The acquired improvement affects future relationship calculations but is not inherited.",
                 Narrative:
@@ -82,7 +82,7 @@ public sealed class StatImprovementsPlugin :
                 Label:
                     "Preventive Medicine",
                 Cost:
-                    9000m,
+                    14000m,
                 Description:
                     "Fund prolonged preventive medicine, specialist monitoring, rehabilitation and risk-factor treatment. Guaranteed Longevity +1.",
                 Narrative:
@@ -98,7 +98,7 @@ public sealed class StatImprovementsPlugin :
                 Label:
                     "Fertility Treatment",
                 Cost:
-                    10000m,
+                    15000m,
                 Description:
                     "Pay for specialist fertility diagnosis and treatment. Guaranteed Fertility +1, including Fertility 0 → 1. Hereditary Fertility is unchanged.",
                 Narrative:

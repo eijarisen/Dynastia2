@@ -60,6 +60,9 @@ public sealed class EconomyPlugin : IGamePlugin
         context.AddService<IEconomyService>(
             economy);
 
+        context.AddService<IEconomyBalanceService>(
+            economy);
+
         systems.Register(
             new EconomyYearSystem(
                 economy,

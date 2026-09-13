@@ -5,9 +5,6 @@ namespace Dynastia.Mechanics.Economy;
 public sealed class EconomyYearSystem :
     IYearSystem
 {
-    private const decimal LivingExpense =
-        250m;
-
     private const decimal RentalIncomePerHouse =
         250m;
 
@@ -218,7 +215,7 @@ public sealed class EconomyYearSystem :
 
         var livingCosts =
             members.Count
-            * LivingExpense;
+            * _economy.OrdinaryLivingCostUnit;
 
         if (HasExceptionalIntellect(head))
         {

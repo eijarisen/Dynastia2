@@ -912,11 +912,11 @@ public sealed class CareerPlugin : IGamePlugin
                             target,
                             2);
 
-                        // Source behavior: immediate +20 may temporarily
-                        // exceed max health; annual health later caps it.
+                        // Requested recovery restores 15 health immediately.
+                        // Annual health processing later caps any overflow.
                         health.ChangeHealthUnclamped(
                             target,
-                            20);
+                            15);
 
                         foreach (var tag in target.Tags.All
                             .Where(tag => tag.StartsWith(

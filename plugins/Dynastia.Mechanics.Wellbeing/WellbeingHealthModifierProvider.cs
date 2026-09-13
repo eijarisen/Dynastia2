@@ -6,7 +6,7 @@ public sealed class WellbeingHealthModifierProvider :
     IAnnualHealthModifierProvider
 {
     private const double RecoverHealthBonus =
-        20;
+        15;
 
     public string Id =>
         "wellbeing.recover";

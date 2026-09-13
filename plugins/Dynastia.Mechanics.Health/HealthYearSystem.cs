@@ -4,10 +4,7 @@ namespace Dynastia.Mechanics.Health;
 
 public sealed class HealthYearSystem : IYearSystem
 {
-    private const double BaseIllnessChance = 0.15;
-    private const double IllnessHealthFactorDivisor = 150.0;
     private const double NaturalRecoveryChance = 0.03;
-
     private readonly StandardHealthService _health;
     private readonly IStatsService _stats;
     private readonly IFamilyService _family;
@@ -15,239 +12,105 @@ public sealed class HealthYearSystem : IYearSystem
     private readonly IGameEventBus _events;
     private readonly IAnnualHealthModifierRegistry _modifiers;
 
-    public HealthYearSystem(
-        StandardHealthService health,
-        IStatsService stats,
-        IFamilyService family,
-        IGameRandom random,
-        IGameEventBus events,
-        IAnnualHealthModifierRegistry modifiers)
+    public HealthYearSystem(StandardHealthService health, IStatsService stats, IFamilyService family, IGameRandom random, IGameEventBus events, IAnnualHealthModifierRegistry modifiers)
     {
-        _health = health;
-        _stats = stats;
-        _family = family;
-        _random = random;
-        _events = events;
-        _modifiers = modifiers;
+        _health = health; _stats = stats; _family = family; _random = random; _events = events; _modifiers = modifiers;
     }
 
     public string Id => "health.annual";
-
     public YearPhase Phase => YearPhase.Health;
-
-    public IReadOnlyCollection<string> Before =>
-        Array.Empty<string>();
-
-    public IReadOnlyCollection<string> After =>
-        Array.Empty<string>();
+    public IReadOnlyCollection<string> Before => Array.Empty<string>();
+    public IReadOnlyCollection<string> After => Array.Empty<string>();
 
     public void Execute(IGameState gameState)
     {
         foreach (var person in gameState.People)
         {
-            if (person.Tags.Has("state.dead")
-                || SimulationState.IsInactive(person))
-            {
-                continue;
-            }
-
+            if (person.Tags.Has("state.dead") || SimulationState.IsInactive(person)) continue;
             _health.EnsureHealth(person);
+            var longevity = GetStat(person, "longevity");
+            var immunity = GetStat(person, "immunity");
 
-            var longevity =
-                GetStat(person, "longevity");
-
-            var immunity =
-                GetStat(person, "immunity");
-
-            var healthChange =
-                longevity * 0.5;
-
-            // Household pressure, retired-wife support, divorced-parent
-            // penalties and other registered annual effects all remain
-            // part of the normal Health pipeline.
-            healthChange +=
-                _modifiers.GetAnnualHealthChange(
-                    person);
-
-            healthChange +=
-                _health.ApplyAnnualConditionEffects(
-                    person);
-
-            _health.ChangeHealth(
-                person,
-                healthChange);
-
-            TryNaturalRecovery(
-                gameState,
-                person,
-                immunity);
-
-            var currentHealth =
-                _health.GetHealth(
-                    person)
-                .Current;
-
-            var illnessChance =
-                (BaseIllnessChance / immunity)
-                * (
-                    1
-                    - currentHealth
-                    / IllnessHealthFactorDivisor
-                );
-
-            if (_random.NextDouble()
-                >= illnessChance)
-            {
-                continue;
-            }
-
-            if (!_health.TryAddRandomIllness(
-                    person,
-                    out var condition)
-                || condition is null)
-            {
-                continue;
-            }
-
-            var familyNews =
-                _health.IsFamilyNewsCondition(
-                    condition.Id);
-
-            var serious =
-                familyNews
-                || condition.Type.Equals(
-                    "terminal",
-                    StringComparison.OrdinalIgnoreCase)
-                || condition.Type.Equals(
-                    "permanent",
-                    StringComparison.OrdinalIgnoreCase);
-
-            _events.Publish(
-                new GameEvent
-                {
-                    Type =
-                        serious
-                            ? "health.serious_illness"
-                            : "health.illness",
-
-                    Year =
-                        gameState.Year,
-
-                    SubjectId =
-                        person.Id,
-
-                    Data =
-                        new Dictionary<string, string>
-                        {
-                            ["conditionId"] =
-                                condition.Id,
-
-                            ["condition"] =
-                                condition.Name,
-
-                            ["conditionType"] =
-                                condition.Type,
-
-                            ["familyNews"] =
-                                familyNews
-                                    .ToString()
-                                    .ToLowerInvariant(),
-
-                            ["text"] =
-                                $"{_family.GetDisplayName(person)} " +
-                                $"fell ill with {condition.Name}."
-                        }
-                });
+            var change = longevity * 0.5 + _modifiers.GetAnnualHealthChange(person) + _health.ApplyAnnualConditionEffects(person);
+            _health.ChangeHealth(person, change);
+            TryNaturalRecovery(gameState, person, immunity);
+            TryMildCondition(gameState, person, immunity);
+            TrySeriousCondition(gameState, person, longevity);
         }
     }
 
-
-    private void TryNaturalRecovery(
-        IGameState gameState,
-        IPerson person,
-        int immunity)
+    private void TryMildCondition(IGameState state, IPerson person, int immunity)
     {
-        if (immunity != 5)
-            return;
+        var chance = immunity switch { 1 => .28, 2 => .20, 3 => .14, 4 => .09, _ => .05 };
+        if (_random.NextDouble() >= chance) return;
+        if (!_health.TryAddWeightedCondition(person, "Mild", person.Age, d => d.GeneticTag is not null && person.Tags.Has(d.GeneticTag) ? 2.75 : 1.0, out _, out var definition) || definition is null) return;
+        PublishCondition(state, person, definition, serious: false);
+    }
 
-        var eligible =
-            _health.GetHealth(person)
-                .Conditions
-                .Where(condition =>
-                    !condition.Type.Equals(
-                        "permanent",
-                        StringComparison.OrdinalIgnoreCase)
-                    && !condition.Type.Equals(
-                        "birth_defect",
-                        StringComparison.OrdinalIgnoreCase)
-                    && !IsMentalHealthCondition(condition.Id)
-                    && (condition.Type.Equals(
-                            "terminal",
-                            StringComparison.OrdinalIgnoreCase)
-                        || _health.IsFamilyNewsCondition(
-                            condition.Id)))
-                .ToList();
+    private void TrySeriousCondition(IGameState state, IPerson person, int longevity)
+    {
+        var baseChance = person.Age switch { < 18 => .002, < 40 => .004, < 60 => .010, < 75 => .020, _ => .035 };
+        var multiplier = longevity switch { 1 => 1.80, 2 => 1.40, 3 => 1.00, 4 => .70, _ => .45 };
+        if (_random.NextDouble() >= baseChance * multiplier) return;
 
-        foreach (var condition in eligible)
+        double Weight(HealthConditionDefinition d)
         {
-            if (_random.NextDouble()
-                >= NaturalRecoveryChance)
-            {
-                continue;
-            }
+            var weight = 1.0;
+            if (d.GeneticTag is not null && person.Tags.Has(d.GeneticTag)) weight *= 2.75;
+            if (d.Id.Equals("heart_attack", StringComparison.OrdinalIgnoreCase) && (person.Tags.Has("genetic.heart") || _health.HasCondition(person, "heart_disease"))) weight *= 2.5;
+            if (d.Id.Equals("stroke", StringComparison.OrdinalIgnoreCase) && (person.Tags.Has("genetic.heart") || _health.HasCondition(person, "hypertension"))) weight *= 2.5;
+            return weight;
+        }
 
-            if (!_health.RemoveCondition(
-                person,
-                condition.Id))
-            {
-                continue;
-            }
+        if (!_health.TryAddWeightedCondition(person, "Serious", person.Age, Weight, out _, out var definition) || definition is null) return;
+        _health.ApplyImmediateImpact(person, definition);
+        PublishCondition(state, person, definition, serious: true);
+    }
 
-            _events.Publish(
-                new GameEvent
+    private void PublishCondition(IGameState state, IPerson person, HealthConditionDefinition definition, bool serious)
+    {
+        var familyNews = serious && definition.Newsworthy;
+        _events.Publish(new GameEvent
+        {
+            Type = familyNews ? "health.serious_illness" : "health.illness",
+            Year = state.Year,
+            SubjectId = person.Id,
+            Data = new Dictionary<string, string>
+            {
+                ["conditionId"] = definition.Id,
+                ["condition"] = definition.Name,
+                ["conditionType"] = definition.Type,
+                ["familyNews"] = familyNews.ToString().ToLowerInvariant(),
+                ["text"] = $"{_family.GetDisplayName(person)} fell ill with {definition.Name}."
+            }
+        });
+    }
+
+    private void TryNaturalRecovery(IGameState state, IPerson person, int immunity)
+    {
+        if (immunity != 5) return;
+        var eligible = _health.GetHealth(person).Conditions
+            .Select(c => (Condition: c, Definition: _health.GetDefinition(c.Id)))
+            .Where(x => x.Definition is not null
+                        && x.Definition.Category.Equals("Serious", StringComparison.OrdinalIgnoreCase)
+                        && !x.Definition.Course.Equals("Chronic", StringComparison.OrdinalIgnoreCase))
+            .ToList();
+        foreach (var entry in eligible)
+        {
+            if (_random.NextDouble() >= NaturalRecoveryChance || !_health.RemoveCondition(person, entry.Condition.Id)) continue;
+            _events.Publish(new GameEvent
+            {
+                Type = "health.natural_recovery", Year = state.Year, SubjectId = person.Id,
+                Data = new Dictionary<string, string>
                 {
-                    Type = "health.natural_recovery",
-                    Year = gameState.Year,
-                    SubjectId = person.Id,
-                    Data = new Dictionary<string, string>
-                    {
-                        ["conditionId"] = condition.Id,
-                        ["condition"] = condition.Name,
-                        ["familyNews"] = "true",
-                        ["text"] =
-                            $"Against expectations, {person.Name} " +
-                            $"recovered from {condition.Name}."
-                    }
-                });
+                    ["conditionId"] = entry.Condition.Id,
+                    ["condition"] = entry.Condition.Name,
+                    ["familyNews"] = "true",
+                    ["text"] = $"Against expectations, {person.Name} recovered from {entry.Condition.Name}."
+                }
+            });
         }
     }
 
-    private static bool IsMentalHealthCondition(
-        string conditionId)
-    {
-        return conditionId.Equals(
-                "depression",
-                StringComparison.OrdinalIgnoreCase)
-            || conditionId.Equals(
-                "anxiety",
-                StringComparison.OrdinalIgnoreCase)
-            || conditionId.Equals(
-                "alcoholism",
-                StringComparison.OrdinalIgnoreCase);
-    }
-
-    private int GetStat(
-        IPerson person,
-        string id)
-    {
-        return _stats
-            .GetStats(
-                person)
-            .First(
-                stat =>
-                    stat.Id.Equals(
-                        id,
-                        StringComparison.OrdinalIgnoreCase))
-            .Value;
-    }
+    private int GetStat(IPerson person, string id) => _stats.GetStats(person).First(s => s.Id.Equals(id, StringComparison.OrdinalIgnoreCase)).Value;
 }

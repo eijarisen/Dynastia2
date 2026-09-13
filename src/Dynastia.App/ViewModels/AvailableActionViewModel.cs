@@ -8,6 +8,7 @@ public sealed class AvailableActionViewModel
 
     public AvailableActionViewModel(
         GameActionDefinition definition,
+        IReadOnlySet<ActionCategory> categories,
         Action execute)
     {
         Id =
@@ -27,6 +28,8 @@ public sealed class AvailableActionViewModel
         Mode =
             definition.Mode;
 
+        Categories = categories;
+
         _execute =
             execute;
 
@@ -44,6 +47,8 @@ public sealed class AvailableActionViewModel
     public string Description { get; }
 
     public ActionExecutionMode Mode { get; }
+
+    public IReadOnlySet<ActionCategory> Categories { get; }
 
     public string ModeText =>
         "Next year";

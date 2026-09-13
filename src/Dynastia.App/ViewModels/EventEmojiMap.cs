@@ -114,6 +114,7 @@ public static class EventEmojiMap
                 ["career.ask_recover_success"] = "✅",
                 ["career.ask_recover_failure"] = "🚫",
                 ["justice.crime"] = "⛓️",
+                ["justice.crime_uncaught"] = "🕵️",
                 ["career.fired"] = "💥",
                 ["career.promotion"] = "✨",
                 ["relationship.partnered"] = "👩‍❤️‍👩",

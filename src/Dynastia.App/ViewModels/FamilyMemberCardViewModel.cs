@@ -107,11 +107,27 @@ public sealed class FamilyMemberCardViewModel
             }
         }
 
+        var educationLevel =
+            education?.GetEducationLevel(person)
+            ?? 0;
+
         var educationTooltip =
             education is null
                 ? "Unknown"
-                : $"Level " +
-                  $"{education.GetEducationLevel(person)}";
+                : $"Level {educationLevel}";
+
+        ShowChildEducation =
+            IsLiving
+            && person.Age < 18
+            && education is not null;
+
+        ChildEducationLevel =
+            educationLevel;
+
+        ChildEducationTooltipText =
+            educationLevel <= 0
+                ? "Education: None"
+                : $"Education: Level {educationLevel}";
 
         var satisfactionTooltip =
             "N/A";
@@ -363,6 +379,13 @@ public sealed class FamilyMemberCardViewModel
 
     public string HealthTooltipText { get; } =
         string.Empty;
+
+    public int ChildEducationLevel { get; }
+
+    public string ChildEducationTooltipText { get; } =
+        string.Empty;
+
+    public bool ShowChildEducation { get; }
 
     public string ChildHappinessLabel { get; } = string.Empty;
     public string ChildHappinessTooltipText { get; } = string.Empty;

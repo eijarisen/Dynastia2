@@ -11,7 +11,7 @@ public sealed class WellbeingPlugin : IGamePlugin
         1000m;
 
     private const double HealAmount =
-        25;
+        30;
 
     private const double DrinkHealthPenalty =
         10;
@@ -147,7 +147,7 @@ public sealed class WellbeingPlugin : IGamePlugin
                     "Recover",
 
                 Description =
-                    "Take the year easier. Improves job satisfaction and adds +20 to this year's health calculation, but reduces salary by 10-50% for the year. May slightly improve children's Happiness.",
+                    "Take the year easier. Improves job satisfaction and adds +15 to this year's health calculation, but reduces salary by 10-50% for the year. May slightly improve children's Happiness.",
 
                 Mode =
                     ActionExecutionMode.Queued,
@@ -337,9 +337,12 @@ public sealed class WellbeingPlugin : IGamePlugin
                             PersonalityInfluence.AdjustProbability(
                                 AlcoholismChanceFromDrinking,
                                 actor,
-                                melancholic: 0.15,
-                                choleric: 0.15,
-                                good: -0.10);
+                                melancholic: 0.20,
+                                phlegmatic: -0.15,
+                                sanguine: -0.10,
+                                choleric: 0.20,
+                                good: -0.10,
+                                evil: 0.10);
 
                         if (random.NextDouble()
                             < alcoholismChance
@@ -576,7 +579,7 @@ public sealed class WellbeingPlugin : IGamePlugin
 
                 Description =
                     "Pay 1,000 zł for medical treatment for the selected " +
-                    "living person. Restores 25 health. Available whenever " +
+                    "living person. Restores 30 health. Available whenever " +
                     "their health is below maximum.",
 
                 Mode =

@@ -68,6 +68,13 @@
                                     Text="{Binding HealthTooltipText}" />
 
                                 <TextBlock
+                                    IsVisible="{Binding ShowChildEducation}"
+                                    FontSize="12"
+                                    FontWeight="SemiBold"
+                                    Foreground="{Binding ChildEducationLevel, Converter={StaticResource StatValueBrushConverter}}"
+                                    Text="{Binding ChildEducationTooltipText}" />
+
+                                <TextBlock
                                     IsVisible="{Binding ShowChildHappiness}"
                                     FontSize="12"
                                     FontWeight="SemiBold"
@@ -463,12 +470,45 @@
                         <Grid
                             Margin="50,74,48,34"
                             RowDefinitions="Auto,Auto,*"
-                            RowSpacing="9">
+                            RowSpacing="7">
 
-                            <TextBlock
-                                FontSize="25"
-                                FontWeight="Bold"
-                                Text="Actions" />
+                            <Grid
+                                ColumnDefinitions="Auto,*"
+                                ColumnSpacing="10">
+
+                                <TextBlock
+                                    VerticalAlignment="Center"
+                                    FontSize="25"
+                                    FontWeight="Bold"
+                                    Text="Actions" />
+
+                                <ItemsControl
+                                    Grid.Column="1"
+                                    HorizontalAlignment="Right"
+                                    VerticalAlignment="Center"
+                                    ItemsSource="{Binding ActionFilters}">
+
+                                    <ItemsControl.ItemsPanel>
+                                        <ItemsPanelTemplate>
+                                            <WrapPanel Orientation="Horizontal" HorizontalAlignment="Right" />
+                                        </ItemsPanelTemplate>
+                                    </ItemsControl.ItemsPanel>
+
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate x:DataType="vm:ActionFilterViewModel">
+                                            <Button
+                                                Margin="6,0,0,0"
+                                                Classes="familyToggle"
+                                                Classes.active="{Binding IsActive}"
+                                                Command="{Binding ToggleCommand}">
+                                                <TextBlock
+                                                    Foreground="#F1E3C4"
+                                                    Text="{Binding Label}" />
+                                            </Button>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </Grid>
 
                             <Grid
                                 Grid.Row="1"
@@ -499,7 +539,7 @@
                                 HorizontalScrollBarVisibility="Disabled"
                                 VerticalScrollBarVisibility="Auto">
 
-                                <Grid>
+                                <StackPanel>
                                     <TextBlock
                                         Opacity="0.82"
                                         TextWrapping="Wrap"
@@ -548,7 +588,8 @@
                                             </DataTemplate>
                                         </ItemsControl.ItemTemplate>
                                     </ItemsControl>
-                                </Grid>
+
+                                </StackPanel>
                             </ScrollViewer>
                         </Grid>
                     </Grid>
@@ -583,6 +624,8 @@
                                 <Grid
                                     Grid.Column="1"
                                     Width="132"
+                                    Height="34"
+                                    VerticalAlignment="Center"
                                     ColumnDefinitions="40,52,40">
 
                                     <Button
@@ -600,7 +643,12 @@
 
                                     <Button
                                         Grid.Column="1"
+                                        Margin="0"
                                         Padding="0"
+                                        HorizontalAlignment="Stretch"
+                                        VerticalAlignment="Stretch"
+                                        HorizontalContentAlignment="Center"
+                                        VerticalContentAlignment="Center"
                                         Background="Transparent"
                                         BorderThickness="0"
                                         Command="{Binding ShowAlbumYearSummaryCommand}">
@@ -978,7 +1026,7 @@
                             </StackPanel>
 
                             <ScrollViewer
-                                Grid.Row="3"
+                                Grid.Row="2"
                                 HorizontalScrollBarVisibility="Disabled"
                                 VerticalScrollBarVisibility="Auto">
 

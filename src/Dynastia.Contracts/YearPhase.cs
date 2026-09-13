@@ -10,9 +10,14 @@ public enum YearPhase
     Health = 500,
     Death = 600,
     LifeEvents = 700,
+    MarriageEvaluation = 720,
+    MarriageRepair = 730,
+    MarriageDivorce = 740,
+    LateMortality = 750,
     Inheritance = 800,
     Succession = 900,
     DerivedState = 1000,
     PostYear = 1100,
+    MoralsReflection = 1150,
     Thoughts = 1200
 }

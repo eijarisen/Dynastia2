@@ -44,15 +44,19 @@ public sealed class PassiveEducationYearSystem : IYearSystem
 
             var current = _education.GetEducationLevel(person);
 
-            if (current >= 5)
-                continue;
-
             var intellect = _stats.GetStats(person)
                 .First(stat =>
                     stat.Id.Equals(
                         "intellect",
                         StringComparison.OrdinalIgnoreCase))
                 .Value;
+
+            var passiveCeiling =
+                EducationProgressionRules.GetPassiveChildhoodCeiling(
+                    intellect);
+
+            if (current >= passiveCeiling)
+                continue;
 
             var health = _health.GetHealth(person).Current;
 

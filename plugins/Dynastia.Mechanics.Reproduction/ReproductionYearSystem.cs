@@ -632,26 +632,18 @@ public sealed class ReproductionYearSystem : IYearSystem
         var roll =
             _random.NextDouble();
 
-        var cumulative =
-            0.0;
+        var longevity =
+            stats.TryGetValue(
+                "longevity",
+                out var inheritedLongevity)
+                ? inheritedLongevity
+                : 3;
 
-        BirthConditionDefinition? condition =
-            null;
-
-        foreach (var definition in
-            _birthConditions)
-        {
-            cumulative +=
-                definition.Probability;
-
-            if (roll < cumulative)
-            {
-                condition =
-                    definition;
-
-                break;
-            }
-        }
+        var condition =
+            BirthConditionRules.SelectCondition(
+                _birthConditions,
+                roll,
+                longevity);
 
         if (condition is null)
             return null;

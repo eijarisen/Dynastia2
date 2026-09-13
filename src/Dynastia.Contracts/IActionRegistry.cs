@@ -5,6 +5,9 @@ public interface IActionRegistry
     void Register(
         GameActionDefinition action);
 
+    void RegisterDynamicProvider(
+        Func<IPerson, IPerson, IEnumerable<GameActionDefinition>> provider);
+
     IReadOnlyList<GameActionDefinition> GetAvailableActions(
         IPerson actor,
         IPerson target);
@@ -17,12 +20,14 @@ public interface IActionRegistry
     GameActionResult Execute(
         string actionId,
         IPerson actor,
-        IPerson target);
+        IPerson target,
+        IReadOnlyDictionary<string, string>? parameters = null);
 
     GameActionResult ExecuteAutonomous(
         string actionId,
         IPerson actor,
-        IPerson target);
+        IPerson target,
+        IReadOnlyDictionary<string, string>? parameters = null);
 
     IReadOnlyList<QueuedActionInfo> GetQueuedActions(
         IPerson actor);

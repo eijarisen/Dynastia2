@@ -460,7 +460,7 @@
                         Canvas.Left="8"
                         Canvas.Top="118"
                         Width="820"
-                        Height="300.5">
+                        Height="295.5">
 
                         <Image
                             IsHitTestVisible="False"
@@ -535,7 +535,7 @@
                             </Grid>
 
                             <ScrollViewer
-                                Grid.Row="2"
+                                Grid.Row="3"
                                 HorizontalScrollBarVisibility="Disabled"
                                 VerticalScrollBarVisibility="Auto">
 
@@ -1026,7 +1026,7 @@
                             </StackPanel>
 
                             <ScrollViewer
-                                Grid.Row="2"
+                                Grid.Row="3"
                                 HorizontalScrollBarVisibility="Disabled"
                                 VerticalScrollBarVisibility="Auto">
 

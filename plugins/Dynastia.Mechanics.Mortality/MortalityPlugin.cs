@@ -46,15 +46,27 @@ public sealed class MortalityPlugin : IGamePlugin
             ?? throw new InvalidOperationException(
                 "Game event bus is unavailable.");
 
-        systems.Register(
-            new MortalityYearSystem(
+        var deaths =
+            new MortalityDeathService(
                 stats,
                 health,
                 family,
                 economy,
                 random,
                 calendar,
-                events));
+                events);
+
+        systems.Register(
+            new MortalityYearSystem(
+                stats,
+                health,
+                random,
+                deaths));
+
+        systems.Register(
+            new ZeroHealthResolutionYearSystem(
+                health,
+                deaths));
 
         context.Log("Mortality mechanics registered.");
     }

@@ -14,9 +14,8 @@ public interface IHealthService
         IPerson person,
         double amount);
 
-    // Used only when the source intentionally allows health
-    // to temporarily exceed max health before the annual
-    // health pass performs its final cap.
+    // Used only when a mechanic intentionally bypasses the upper cap.
+    // The lower bound remains a hard invariant: health can never be negative.
     void ChangeHealthUnclamped(
         IPerson person,
         double amount);

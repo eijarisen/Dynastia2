@@ -22,6 +22,8 @@ public partial class MainWindow : Window
     private bool _persistenceDialogOpen;
     private bool _genealogyDialogOpen;
     private bool _instructionsDialogOpen;
+    private bool _actionSelectionDialogOpen;
+    private MainWindowViewModel? _subscribedViewModel;
 
     public GameGenealogyDataSource? GenealogyDataSource
     {
@@ -39,11 +41,81 @@ public partial class MainWindow : Window
     {
         InitializeComponent();
 
+        DataContextChanged += OnDataContextChanged;
+
         AddHandler(
             InputElement.KeyDownEvent,
             OnWindowKeyDown,
             RoutingStrategies.Tunnel,
             handledEventsToo: true);
+    }
+
+    private void OnDataContextChanged(object? sender, EventArgs e)
+    {
+        if (_subscribedViewModel is not null)
+        {
+            _subscribedViewModel.ActionSelectionRequested -=
+                OnActionSelectionRequested;
+        }
+
+        _subscribedViewModel =
+            DataContext as MainWindowViewModel;
+
+        if (_subscribedViewModel is not null)
+        {
+            _subscribedViewModel.ActionSelectionRequested +=
+                OnActionSelectionRequested;
+        }
+    }
+
+    private async void OnActionSelectionRequested(
+        object? sender,
+        ActionSelectionRequestedEventArgs e)
+    {
+        if (_actionSelectionDialogOpen
+            || DataContext is not MainWindowViewModel viewModel)
+        {
+            return;
+        }
+
+        var options = viewModel.GetPropertySelectionOptions(e.ActionId);
+        if (options.Count == 0)
+        {
+            viewModel.ReportPersistenceStatus(
+                "No valid property options are currently available.");
+            return;
+        }
+
+        var isBuy = e.ActionId.Equals(
+            "household.buy_house",
+            StringComparison.OrdinalIgnoreCase);
+
+        _actionSelectionDialogOpen = true;
+        try
+        {
+            var window = new PropertySelectionWindow(
+                isBuy ? "Select Town" : "Select Property",
+                isBuy ? "Buy" : "Sell",
+                options);
+
+            var selectedId = await window.ShowDialog<string?>(this);
+            if (!string.IsNullOrWhiteSpace(selectedId))
+            {
+                viewModel.QueueActionWithSelection(
+                    e.ActionId,
+                    selectedId);
+            }
+        }
+        catch (Exception exception)
+        {
+            Console.Error.WriteLine(exception);
+            viewModel.ReportPersistenceStatus(
+                $"Property selection failed: {exception.Message}");
+        }
+        finally
+        {
+            _actionSelectionDialogOpen = false;
+        }
     }
 
     private async void OnWindowKeyDown(
@@ -53,7 +125,7 @@ public partial class MainWindow : Window
         if (_persistenceDialogOpen
             || _genealogyDialogOpen
             || _instructionsDialogOpen
-            || e.Key != Key.Enter)
+            || _actionSelectionDialogOpen)
         {
             return;
         }
@@ -63,6 +135,18 @@ public partial class MainWindow : Window
         {
             return;
         }
+
+        if (viewModel.IsYearSummaryVisible
+            && (e.Key == Key.Enter
+                || e.Key == Key.Escape))
+        {
+            e.Handled = true;
+            viewModel.HideYearSummaryCommand.Execute(null);
+            return;
+        }
+
+        if (e.Key != Key.Enter)
+            return;
 
         if (!viewModel.IsGameStarted)
         {
@@ -81,7 +165,6 @@ public partial class MainWindow : Window
 
         if (viewModel.IsMainMenuPromptVisible
             || viewModel.IsStatusMessageVisible
-            || viewModel.IsYearSummaryVisible
             || !viewModel.NextYearCommand.CanExecute(null))
         {
             return;

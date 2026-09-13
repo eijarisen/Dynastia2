@@ -264,6 +264,18 @@ internal sealed class AutonomousHouseholdDecisionSystem :
                         ? 100
                         : 82,
 
+                "career.find_another_job" =>
+                    broke
+                        ? 68
+                        : 46,
+
+                "personality.religious_study" =>
+                    head.Tags.Has("morals.evil")
+                        ? 42
+                        : head.Tags.Has("morals.neutral")
+                            ? 34
+                            : 20,
+
                 "career.help_seek_employment" =>
                     broke
                         ? 95
@@ -283,8 +295,12 @@ internal sealed class AutonomousHouseholdDecisionSystem :
                         : 20,
 
                 "wellbeing.heal_relative" =>
-                    88 + HealthUrgency(
-                        targetHealth.Percentage),
+                    95
+                    + HealthUrgency(
+                        targetHealth.Percentage)
+                    + (target.Age < 18
+                        ? 25
+                        : 0),
 
                 "wellbeing.therapy" =>
                     92 + MentalHealthUrgency(
@@ -322,10 +338,11 @@ internal sealed class AutonomousHouseholdDecisionSystem :
                         ? 84
                         : 50,
 
+                // Property selection now requires an explicit player
+                // choice of a particular asset. Autonomous households do
+                // not buy/sell/move property in this extension pass.
                 "household.sell_house" =>
-                    broke
-                        ? 86
-                        : 22,
+                    0,
 
                 "relationship.find_spouse" =>
                     62,
@@ -347,9 +364,7 @@ internal sealed class AutonomousHouseholdDecisionSystem :
                     56,
 
                 "household.buy_house" =>
-                    finance?.Wealth >= 20000m
-                        ? 42
-                        : 10,
+                    0,
 
                 "relationship.marry_off_daughter" =>
                     44,
@@ -387,8 +402,7 @@ internal sealed class AutonomousHouseholdDecisionSystem :
 
 
         if (broke
-            && (id is "household.sell_house"
-                or "family_support.ask_parents"
+            && (id is "family_support.ask_parents"
                 or "family_support.ask_child"
                 or "career.seek_employment"
                 or "career.help_seek_employment"))
@@ -456,7 +470,12 @@ internal sealed class AutonomousHouseholdDecisionSystem :
 
         if (mainlyHelpsAnother)
         {
-            good += 0.10;
+            good +=
+                id == "wellbeing.heal_relative"
+                    && target.Age < 18
+                        ? 0.20
+                        : 0.10;
+
             evil -= 0.10;
         }
 

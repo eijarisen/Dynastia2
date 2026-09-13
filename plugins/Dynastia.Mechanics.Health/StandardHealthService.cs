@@ -35,9 +35,20 @@ public sealed class StandardHealthService : IHealthService
             health.Conditions.Select(c => new HealthConditionInfo(c.Id, c.Name, c.Type, c.HealthImpact, c.RemainingYears)).ToList());
     }
 
-    public void SetHealth(IPerson person, double value) => GetRequired(person).Current = Math.Min(value, GetRequired(person).Maximum);
-    public void ChangeHealth(IPerson person, double amount) => SetHealth(person, GetRequired(person).Current + amount);
-    public void ChangeHealthUnclamped(IPerson person, double amount) => GetRequired(person).Current += amount;
+    public void SetHealth(IPerson person, double value)
+    {
+        var health = GetRequired(person);
+        health.Current = Math.Clamp(value, 0, health.Maximum);
+    }
+
+    public void ChangeHealth(IPerson person, double amount) =>
+        SetHealth(person, GetRequired(person).Current + amount);
+
+    public void ChangeHealthUnclamped(IPerson person, double amount)
+    {
+        var health = GetRequired(person);
+        health.Current = Math.Max(0, health.Current + amount);
+    }
     public bool HasCondition(IPerson person, string conditionId) => GetRequired(person).Conditions.Any(x => x.Id.Equals(conditionId, StringComparison.OrdinalIgnoreCase));
     public bool AddCondition(IPerson person, string conditionId) => TryAddCondition(person, conditionId, out _);
     public bool RemoveCondition(IPerson person, string conditionId) => GetRequired(person).Conditions.RemoveAll(x => x.Id.Equals(conditionId, StringComparison.OrdinalIgnoreCase)) > 0;
@@ -145,7 +156,12 @@ public sealed class StandardHealthService : IHealthService
     private HealthComponent GetRequired(IPerson person)
     {
         EnsureHealth(person);
-        return person.Components.Get<HealthComponent>() ?? throw new InvalidOperationException("Health component could not be created.");
+        var health = person.Components.Get<HealthComponent>()
+            ?? throw new InvalidOperationException("Health component could not be created.");
+
+        health.Maximum = Math.Max(0, health.Maximum);
+        health.Current = Math.Clamp(health.Current, 0, health.Maximum);
+        return health;
     }
 
     private bool ShouldRetain(HealthConditionState condition)

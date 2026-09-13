@@ -8,4 +8,8 @@ public interface IPersonalityService
     void ReconcileAll();
 
     bool ShiftMorals(IPerson person, int steps);
+
+    bool HasMoralsProtection(IPerson person);
+
+    void GrantMoralsProtection(IPerson person);
 }

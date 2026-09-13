@@ -91,6 +91,7 @@ public static class EventEmojiMap
                 ["health.natural_recovery"] = "❤️‍🩹",
                 ["health.second_wind"] = "❤️‍🔥",
                 ["economy.careful_management"] = "💰",
+                ["personality.religious_study"] = "📖",
                 ["relationship.divorce_refused"] = "💍",
                 ["life.death"] = "💀",
                 ["career.quit"] = "🚶",
@@ -127,6 +128,7 @@ public static class EventEmojiMap
 
                 ["household.house_bought"] = "🏠",
                 ["household.house_sold"] = "💵",
+                ["household.moved"] = "🚚",
                 ["household.house_rented"] = "🏘️",
                 ["household.house_given"] = "🎁",
 

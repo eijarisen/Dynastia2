@@ -106,10 +106,33 @@ internal sealed class MentalHealthYearSystem : IYearSystem
             }
             else if (e.Type.Contains("divorce", StringComparison.OrdinalIgnoreCase) || e.Type.Equals("relationship.affair", StringComparison.OrdinalIgnoreCase))
             {
-                var related = e.RelatedPersonIds.Contains(person.Id);
-                if (subject.Id == person.Id || related) stress += 4;
-                else if (person.Age < 18 && IsParentOf(person, subject) && e.RelatedPersonIds.Any(id => IsParentId(person, id))) stress += 4;
-                else if (IsCloseRelative(person, subject)) stress += 1;
+                var partner =
+                    e.RelatedPersonIds
+                        .Select(id => Find(state, id))
+                        .FirstOrDefault(candidate => candidate is not null && candidate.Id != subject.Id);
+
+                if (subject.Id == person.Id || partner?.Id == person.Id)
+                {
+                    stress += 4;
+                }
+                else if (partner is not null && IsSharedBiologicalChild(person, subject, partner))
+                {
+                    // Shared minors receive the full parental-divorce shock.
+                    // Shared adult children hear about the breakup but do not
+                    // move or receive the child divorce state.
+                    stress += person.Age < 18 ? 4 : 1;
+                }
+                else if (IsBiologicalChildOf(person, subject)
+                         || (partner is not null && IsBiologicalChildOf(person, partner)))
+                {
+                    // A child from either person's previous relationship is
+                    // not a child of this marriage and receives no divorce
+                    // stress from this couple's breakup.
+                }
+                else if (IsCloseRelative(person, subject))
+                {
+                    stress += 1;
+                }
             }
             else if (e.Type.Equals("justice.crime", StringComparison.OrdinalIgnoreCase))
             {
@@ -164,6 +187,15 @@ internal sealed class MentalHealthYearSystem : IYearSystem
     private bool BothParentsDead(IPerson p) => (_family.GetFather(p) is not { } f || f.Tags.Has("state.dead")) && (_family.GetMother(p) is not { } m || m.Tags.Has("state.dead"));
     private bool IsParentOf(IPerson p, IPerson other) => _family.GetFather(p)?.Id == other.Id || _family.GetMother(p)?.Id == other.Id;
     private bool IsParentId(IPerson p, Guid id) => _family.GetFather(p)?.Id == id || _family.GetMother(p)?.Id == id;
+    private bool IsBiologicalChildOf(IPerson child, IPerson parent) => IsParentId(child, parent.Id);
+    private bool IsSharedBiologicalChild(IPerson child, IPerson firstParent, IPerson secondParent)
+    {
+        var fatherId = _family.GetFather(child)?.Id;
+        var motherId = _family.GetMother(child)?.Id;
+
+        return (fatherId == firstParent.Id && motherId == secondParent.Id)
+            || (fatherId == secondParent.Id && motherId == firstParent.Id);
+    }
     private bool IsChildOf(IPerson p, IPerson other) => _family.GetChildren(p).Any(c => c.Id == other.Id);
     private bool IsCloseRelative(IPerson p, IPerson other) => IsParentOf(p, other) || IsChildOf(p, other) || AreSiblings(p, other);
     private bool AreSiblings(IPerson a, IPerson b)

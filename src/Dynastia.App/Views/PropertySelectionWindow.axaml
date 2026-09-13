@@ -1,0 +1,143 @@
+<Window
+    xmlns="https://github.com/avaloniaui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:vm="using:Dynastia.App.ViewModels"
+    x:Class="Dynastia.App.Views.PropertySelectionWindow"
+    Width="1000"
+    Height="760"
+    MinWidth="840"
+    MinHeight="650"
+    CanResize="True"
+    WindowStartupLocation="CenterOwner"
+    Background="#00000000"
+    Title="Select Property">
+
+    <Window.Styles>
+        <Style Selector="Button.paperAction">
+            <Setter Property="MinWidth" Value="120" />
+            <Setter Property="Padding" Value="18,9" />
+            <Setter Property="Foreground" Value="#3F2714" />
+            <Setter Property="Background" Value="#E8D5AF" />
+            <Setter Property="BorderBrush" Value="#9D6F35" />
+            <Setter Property="BorderThickness" Value="1.5" />
+            <Setter Property="FontFamily" Value="Georgia" />
+            <Setter Property="FontSize" Value="15" />
+            <Setter Property="FontWeight" Value="Bold" />
+        </Style>
+
+        <Style Selector="Button.paperAction:pointerover">
+            <Setter Property="Background" Value="#D4B178" />
+            <Setter Property="Foreground" Value="#2D1A0E" />
+        </Style>
+
+        <Style Selector="TextBox.paperSearch">
+            <Setter Property="Background" Value="#B8F4E4C5" />
+            <Setter Property="Foreground" Value="#352110" />
+            <Setter Property="BorderBrush" Value="#8F6A34" />
+            <Setter Property="BorderThickness" Value="1.5" />
+            <Setter Property="FontFamily" Value="Georgia" />
+            <Setter Property="FontSize" Value="14" />
+            <Setter Property="Padding" Value="10,8" />
+        </Style>
+    </Window.Styles>
+
+    <Grid>
+        <Image
+            Source="/Assets/UI/instructions_paper.png"
+            Stretch="Fill" />
+
+        <Grid
+            Margin="80,72,80,58"
+            RowDefinitions="Auto,Auto,*,Auto"
+            RowSpacing="14">
+
+            <TextBlock
+                x:Name="TitleText"
+                HorizontalAlignment="Center"
+                FontFamily="avares://Dynastia.App/Assets/Fonts#UnifrakturCook"
+                FontSize="42"
+                Foreground="#2F1D0E"
+                Text="Select Property" />
+
+            <TextBox
+                x:Name="SearchBox"
+                Grid.Row="1"
+                Classes="paperSearch"
+                Watermark="Search town, county, region or opportunity..."
+                TextChanged="OnSearchTextChanged" />
+
+            <Border
+                Grid.Row="2"
+                Padding="8"
+                Background="#0FFFFFFF"
+                BorderBrush="#8F6A34"
+                BorderThickness="1.5"
+                CornerRadius="6">
+
+                <ListBox
+                    x:Name="OptionsList"
+                    Background="Transparent"
+                    BorderThickness="0">
+                    <ListBox.ItemTemplate>
+                        <DataTemplate x:DataType="vm:PropertySelectionOption">
+                            <Border
+                                Margin="3"
+                                Padding="12,9"
+                                Background="#28FFF8E8"
+                                BorderBrush="#A78959"
+                                BorderThickness="0,0,0,1">
+                                <Grid ColumnDefinitions="*,Auto" ColumnSpacing="18">
+                                    <StackPanel Spacing="3">
+                                        <TextBlock
+                                            FontFamily="Georgia"
+                                            FontSize="16"
+                                            FontWeight="Bold"
+                                            Foreground="#352615"
+                                            Text="{Binding PrimaryText}" />
+                                        <TextBlock
+                                            FontFamily="Georgia"
+                                            FontSize="12"
+                                            Foreground="#6B5434"
+                                            Text="{Binding SecondaryText}" />
+                                        <TextBlock
+                                            Margin="0,4,0,0"
+                                            FontFamily="Georgia"
+                                            FontSize="12"
+                                            LineHeight="17"
+                                            Foreground="#46351F"
+                                            TextWrapping="Wrap"
+                                            Text="{Binding DetailsText}" />
+                                    </StackPanel>
+                                    <TextBlock
+                                        Grid.Column="1"
+                                        VerticalAlignment="Center"
+                                        FontFamily="Georgia"
+                                        FontSize="15"
+                                        FontWeight="Bold"
+                                        Foreground="#694914"
+                                        Text="{Binding PriceText}" />
+                                </Grid>
+                            </Border>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+            </Border>
+
+            <StackPanel
+                Grid.Row="3"
+                HorizontalAlignment="Center"
+                Orientation="Horizontal"
+                Spacing="12">
+                <Button
+                    Classes="paperAction"
+                    Content="Cancel"
+                    Click="OnCancelClick" />
+                <Button
+                    x:Name="ConfirmButton"
+                    Classes="paperAction"
+                    Content="Confirm"
+                    Click="OnConfirmClick" />
+            </StackPanel>
+        </Grid>
+    </Grid>
+</Window>

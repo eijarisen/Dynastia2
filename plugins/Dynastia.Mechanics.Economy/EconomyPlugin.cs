@@ -52,7 +52,8 @@ public sealed class EconomyPlugin : IGamePlugin
             new StandardEconomyService(
                 gameState,
                 family,
-                locations);
+                locations,
+                incomeRegistry);
 
         context.AddService<IIncomeProviderRegistry>(
             incomeRegistry);
@@ -70,7 +71,8 @@ public sealed class EconomyPlugin : IGamePlugin
                 stats,
                 incomeRegistry,
                 random,
-                events));
+                events,
+                locations));
 
         events.EventPublished +=
             (_, gameEvent) =>

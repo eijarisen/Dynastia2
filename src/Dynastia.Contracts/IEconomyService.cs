@@ -13,6 +13,12 @@ public interface IEconomyService
     HouseholdFinanceSnapshot? GetHousehold(
         IPerson person);
 
+    decimal GetProjectedAnnualIncome(
+        IPerson person);
+
+    IReadOnlyList<FinanceBreakdownItem> GetProjectedIncomeBreakdown(
+        IPerson person);
+
     Guid? GetHouseholdId(
         IPerson person);
 
@@ -49,6 +55,13 @@ public interface IEconomyService
     void DissolveHousehold(
         IPerson householdRepresentative);
 
+    TownInfo GetResidenceTown(
+        IPerson person);
+
+    void SetResidenceTown(
+        IPerson person,
+        TownInfo town);
+
     void SetWealth(
         IPerson person,
         decimal wealth);
@@ -78,6 +91,20 @@ public interface IEconomyService
 
     HousePropertyInfo? TakeAdditionalHouse(
         IPerson person);
+
+    HousePropertyInfo? TakeHouse(
+        IPerson person,
+        Guid propertyId);
+
+    decimal GetHousePrice(TownInfo town);
+
+    decimal GetHouseSaleValue(TownInfo town);
+
+    decimal GetLivingCostPerPerson(TownInfo town);
+
+    decimal GetResidenceRent(TownInfo town);
+
+    decimal GetRentalIncome(TownInfo town);
 
     IReadOnlyList<HousePropertyInfo> TakeAllHouses(
         IPerson person);

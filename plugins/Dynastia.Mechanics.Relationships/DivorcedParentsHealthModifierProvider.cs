@@ -6,7 +6,7 @@ internal sealed class DivorcedParentsHealthModifierProvider :
     IAnnualHealthModifierProvider
 {
     private const double AnnualPenalty =
-        1;
+        0.5;
 
     public string Id =>
         "relationships.parents_divorced_health";

@@ -22,6 +22,32 @@ public sealed record TownInfo(
             _ => Dynastia.Contracts.SettlementClass.MajorCity
         };
 
+    public string SettlementClassDisplayName =>
+        SettlementClass switch
+        {
+            Dynastia.Contracts.SettlementClass.SmallTown => "Small Town",
+            Dynastia.Contracts.SettlementClass.MajorCity => "Major City",
+            _ => SettlementClass.ToString()
+        };
+
+    public decimal HousingIndex =>
+        SettlementClass switch
+        {
+            Dynastia.Contracts.SettlementClass.SmallTown => 0.75m,
+            Dynastia.Contracts.SettlementClass.Town => 0.90m,
+            Dynastia.Contracts.SettlementClass.City => 1.10m,
+            _ => 1.35m
+        };
+
+    public decimal LivingCostIndex =>
+        SettlementClass switch
+        {
+            Dynastia.Contracts.SettlementClass.SmallTown => 0.85m,
+            Dynastia.Contracts.SettlementClass.Town => 0.95m,
+            Dynastia.Contracts.SettlementClass.City => 1.05m,
+            _ => 1.20m
+        };
+
     public string DisplayName =>
         string.Equals(
             Town,

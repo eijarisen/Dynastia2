@@ -13,12 +13,6 @@ public sealed class CareerAdvancementYearSystem :
     private const int PromotionMinAge =
         21;
 
-    private const double WorkHarderBaseBonus =
-        0.15;
-
-    private const double WorkHarderIntellectBonus =
-        0.05;
-
     private readonly StandardCareerService _career;
     private readonly IEducationService _education;
     private readonly IStatsService _stats;
@@ -110,18 +104,18 @@ public sealed class CareerAdvancementYearSystem :
             (intellect / 5.0)
             * 0.02;
 
+        var education =
+            _education.GetEducationLevel(
+                person);
+
         if (person.Tags.Has(
             "modifier.work_harder"))
         {
             promotionChance +=
-                WorkHarderBaseBonus
-                + intellect
-                    * WorkHarderIntellectBonus;
+                CareerBalanceRules.GetWorkHarderPromotionBonus(
+                    intellect,
+                    education);
         }
-
-        var education =
-            _education.GetEducationLevel(
-                person);
 
         if (career.JobLevel >= 2
             && education < 3)

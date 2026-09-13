@@ -97,10 +97,16 @@ public sealed class StandardLocalCareerOpportunityService :
         ArgumentNullException.ThrowIfNull(
             person);
 
-        var town =
-            _locations.GetLocation(
-                person)
-            .HomeTown;
+        return GetOpportunitySnapshot(
+            _locations.GetLocation(person).HomeTown);
+    }
+
+    public LocationOpportunitySnapshot
+        GetOpportunitySnapshot(
+            TownInfo town)
+    {
+        ArgumentNullException.ThrowIfNull(
+            town);
 
         var region =
             ResolveRegion(

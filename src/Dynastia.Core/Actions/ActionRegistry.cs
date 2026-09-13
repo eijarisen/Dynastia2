@@ -11,6 +11,10 @@ public sealed class ActionRegistry : IActionRegistry
             new(
                 StringComparer.OrdinalIgnoreCase);
 
+    private readonly List<
+        Func<IPerson, IPerson, IEnumerable<GameActionDefinition>>>
+        _dynamicProviders = [];
+
     private readonly List<QueuedAction>
         _queued = [];
 
@@ -55,6 +59,13 @@ public sealed class ActionRegistry : IActionRegistry
         }
     }
 
+    public void RegisterDynamicProvider(
+        Func<IPerson, IPerson, IEnumerable<GameActionDefinition>> provider)
+    {
+        ArgumentNullException.ThrowIfNull(provider);
+        _dynamicProviders.Add(provider);
+    }
+
     public IReadOnlyList<GameActionDefinition>
         GetAvailableActions(
             IPerson actor,
@@ -77,7 +88,7 @@ public sealed class ActionRegistry : IActionRegistry
                 actor,
                 target);
 
-        return _actions.Values
+        return GetActionCandidates(actor, target)
             .Where(
                 action =>
                     (
@@ -126,11 +137,15 @@ public sealed class ActionRegistry : IActionRegistry
     public GameActionResult Execute(
         string actionId,
         IPerson actor,
-        IPerson target)
+        IPerson target,
+        IReadOnlyDictionary<string, string>? parameters = null)
     {
-        if (!_actions.TryGetValue(
+        var action = ResolveAction(
             actionId,
-            out var action))
+            actor,
+            target);
+
+        if (action is null)
         {
             return new GameActionResult(
                 false,
@@ -153,7 +168,8 @@ public sealed class ActionRegistry : IActionRegistry
         var context =
             CreateContext(
                 actor,
-                target);
+                target,
+                parameters);
 
         if (!action.IsAvailable(
             context))
@@ -179,7 +195,8 @@ public sealed class ActionRegistry : IActionRegistry
                 actor.Id,
                 target.Id,
                 ResolveQueuePhase(
-                    action)));
+                    action),
+                CloneParameters(parameters)));
 
         return new GameActionResult(
             true,
@@ -189,11 +206,15 @@ public sealed class ActionRegistry : IActionRegistry
     public GameActionResult ExecuteAutonomous(
         string actionId,
         IPerson actor,
-        IPerson target)
+        IPerson target,
+        IReadOnlyDictionary<string, string>? parameters = null)
     {
-        if (!_actions.TryGetValue(
+        var action = ResolveAction(
             actionId,
-            out var action))
+            actor,
+            target);
+
+        if (action is null)
         {
             return new GameActionResult(
                 false,
@@ -238,7 +259,8 @@ public sealed class ActionRegistry : IActionRegistry
             var context =
                 CreateContext(
                     actor,
-                    target);
+                    target,
+                    parameters);
 
             if (!action.IsAvailable(
                 context))
@@ -254,7 +276,8 @@ public sealed class ActionRegistry : IActionRegistry
                     actor.Id,
                     target.Id,
                     ResolveQueuePhase(
-                        action));
+                        action),
+                    CloneParameters(parameters));
 
             _queued.Add(
                 queued);
@@ -291,19 +314,13 @@ public sealed class ActionRegistry : IActionRegistry
             .Select(
                 queued =>
                 {
-                    var label =
-                        _actions.TryGetValue(
-                            queued.ActionId,
-                            out var action)
-                            ? action.Label
-                            : queued.ActionId;
-
-                    var description =
-                        _actions.TryGetValue(
-                            queued.ActionId,
-                            out var definition)
-                            ? definition.Description
-                            : null;
+                    var target = _gameState.People.FirstOrDefault(
+                        person => person.Id == queued.TargetId);
+                    var definition = target is null
+                        ? null
+                        : ResolveAction(queued.ActionId, actor, target);
+                    var label = definition?.Label ?? queued.ActionId;
+                    var description = definition?.Description;
 
                     return new QueuedActionInfo(
                         queued.ActionId,
@@ -311,7 +328,8 @@ public sealed class ActionRegistry : IActionRegistry
                         queued.Phase,
                         queued.ActorId,
                         queued.TargetId,
-                        description);
+                        description,
+                        queued.Parameters);
                 })
             .ToList();
     }
@@ -323,19 +341,15 @@ public sealed class ActionRegistry : IActionRegistry
             .Select(
                 queued =>
                 {
-                    var label =
-                        _actions.TryGetValue(
-                            queued.ActionId,
-                            out var action)
-                            ? action.Label
-                            : queued.ActionId;
-
-                    var description =
-                        _actions.TryGetValue(
-                            queued.ActionId,
-                            out var definition)
-                            ? definition.Description
-                            : null;
+                    var actor = _gameState.People.FirstOrDefault(
+                        person => person.Id == queued.ActorId);
+                    var target = _gameState.People.FirstOrDefault(
+                        person => person.Id == queued.TargetId);
+                    var definition = actor is null || target is null
+                        ? null
+                        : ResolveAction(queued.ActionId, actor, target);
+                    var label = definition?.Label ?? queued.ActionId;
+                    var description = definition?.Description;
 
                     return new QueuedActionInfo(
                         queued.ActionId,
@@ -343,7 +357,8 @@ public sealed class ActionRegistry : IActionRegistry
                         queued.Phase,
                         queued.ActorId,
                         queued.TargetId,
-                        description);
+                        description,
+                        queued.Parameters);
                 })
             .ToList();
     }
@@ -378,15 +393,6 @@ public sealed class ActionRegistry : IActionRegistry
         foreach (var saved in
             queuedActions)
         {
-            if (!_actions.TryGetValue(
-                saved.ActionId,
-                out var definition))
-            {
-                throw new InvalidDataException(
-                    $"Save file references unknown action " +
-                    $"'{saved.ActionId}'.");
-            }
-
             if (!actors.Add(
                 saved.ActorId))
             {
@@ -409,6 +415,12 @@ public sealed class ActionRegistry : IActionRegistry
                     "references a missing person.");
             }
 
+            var actor = _gameState.People.First(person => person.Id == saved.ActorId);
+            var target = _gameState.People.First(person => person.Id == saved.TargetId);
+            var definition = ResolveAction(saved.ActionId, actor, target)
+                ?? throw new InvalidDataException(
+                    $"Save file references unknown action '{saved.ActionId}'.");
+
             // Queue phase is owned by the current action definition.
             // This keeps old save files compatible if only display
             // metadata changed, while rejecting removed action IDs.
@@ -418,7 +430,8 @@ public sealed class ActionRegistry : IActionRegistry
                     saved.ActorId,
                     saved.TargetId,
                     ResolveQueuePhase(
-                        definition)));
+                        definition),
+                    CloneParameters(saved.Parameters)));
         }
 
         _queued.Clear();
@@ -447,13 +460,6 @@ public sealed class ActionRegistry : IActionRegistry
         foreach (var queued in
             pending)
         {
-            if (!_actions.TryGetValue(
-                queued.ActionId,
-                out var action))
-            {
-                continue;
-            }
-
             var actor =
                 _gameState.People
                     .FirstOrDefault(
@@ -473,6 +479,10 @@ public sealed class ActionRegistry : IActionRegistry
             {
                 continue;
             }
+
+            var action = ResolveAction(queued.ActionId, actor, target);
+            if (action is null)
+                continue;
 
             var guardResult =
                 _guards.Evaluate(
@@ -510,7 +520,8 @@ public sealed class ActionRegistry : IActionRegistry
                 var context =
                     CreateContext(
                         actor,
-                        target);
+                        target,
+                        queued.Parameters);
 
                 if (!action.IsAvailable(
                     context))
@@ -545,6 +556,51 @@ public sealed class ActionRegistry : IActionRegistry
             : result.Reason;
     }
 
+    private IReadOnlyList<GameActionDefinition> GetActionCandidates(
+        IPerson actor,
+        IPerson target)
+    {
+        var result = new Dictionary<string, GameActionDefinition>(
+            _actions,
+            StringComparer.OrdinalIgnoreCase);
+
+        foreach (var provider in _dynamicProviders)
+        {
+            foreach (var action in provider(actor, target) ?? Array.Empty<GameActionDefinition>())
+            {
+                if (result.ContainsKey(action.Id))
+                {
+                    throw new InvalidOperationException(
+                        $"Dynamic action provider produced duplicate action ID '{action.Id}'.");
+                }
+                result[action.Id] = action;
+            }
+        }
+
+        return result.Values.ToList();
+    }
+
+    private GameActionDefinition? ResolveAction(
+        string actionId,
+        IPerson actor,
+        IPerson target)
+    {
+        if (_actions.TryGetValue(actionId, out var action))
+            return action;
+
+        foreach (var provider in _dynamicProviders)
+        {
+            var resolved = (provider(actor, target) ?? Array.Empty<GameActionDefinition>())
+                .FirstOrDefault(candidate => candidate.Id.Equals(
+                    actionId,
+                    StringComparison.OrdinalIgnoreCase));
+            if (resolved is not null)
+                return resolved;
+        }
+
+        return null;
+    }
+
     private static YearPhase ResolveQueuePhase(
         GameActionDefinition action)
     {
@@ -559,21 +615,34 @@ public sealed class ActionRegistry : IActionRegistry
 
     private GameActionContext CreateContext(
         IPerson actor,
-        IPerson target)
+        IPerson target,
+        IReadOnlyDictionary<string, string>? parameters = null)
     {
         return new GameActionContext(
             _gameState,
             actor,
             target,
             _eventBus,
-            _random);
+            _random,
+            parameters);
+    }
+
+    private static IReadOnlyDictionary<string, string> CloneParameters(
+        IReadOnlyDictionary<string, string>? parameters)
+    {
+        return parameters is null
+            ? new Dictionary<string, string>()
+            : new Dictionary<string, string>(
+                parameters,
+                StringComparer.OrdinalIgnoreCase);
     }
 
     private sealed record QueuedAction(
         string ActionId,
         Guid ActorId,
         Guid TargetId,
-        YearPhase Phase);
+        YearPhase Phase,
+        IReadOnlyDictionary<string, string> Parameters);
 
     private sealed record AutonomousQueuedAction(
         string ActionId,

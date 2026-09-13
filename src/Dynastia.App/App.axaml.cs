@@ -77,6 +77,18 @@ public partial class App : Application
                     YearPhase.LifeEvents,
                     "actions.queued.life_events"));
 
+            registry.Register(
+                new QueuedActionYearSystem(
+                    actionRegistry,
+                    YearPhase.MarriageRepair,
+                    "actions.queued.marriage_repair"));
+
+            registry.Register(
+                new QueuedActionYearSystem(
+                    actionRegistry,
+                    YearPhase.MoralsReflection,
+                    "actions.queued.morals_reflection"));
+
             var pluginContext =
                 new GamePluginContext();
 
@@ -156,6 +168,9 @@ public partial class App : Application
 
             var locationService =
                 pluginContext.GetService<ILocationService>();
+
+            var localCareerOpportunityService =
+                pluginContext.GetService<ILocalCareerOpportunityService>();
 
             var marriageSatisfactionService =
                 pluginContext.GetService<
@@ -240,6 +255,7 @@ public partial class App : Application
                             householdService,
                             adoptionService,
                             locationService,
+                            localCareerOpportunityService,
                             marriageSatisfactionService,
                             thoughtService,
                             personalityService,

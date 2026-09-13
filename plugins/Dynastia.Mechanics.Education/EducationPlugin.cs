@@ -68,6 +68,7 @@ public sealed class EducationPlugin : IGamePlugin
             CreateHelpLearningAction(
                 education,
                 family,
+                stats,
                 random,
                 events));
 
@@ -318,6 +319,7 @@ public sealed class EducationPlugin : IGamePlugin
     private static GameActionDefinition CreateHelpLearningAction(
         IEducationService education,
         IFamilyService family,
+        IStatsService stats,
         IGameRandom random,
         IGameEventBus events)
     {
@@ -331,9 +333,11 @@ public sealed class EducationPlugin : IGamePlugin
 
             Description =
                 "Spend the year helping the selected child study. " +
-                "Available from age 6 through 17. Success depends on " +
-                "the father's Education level: 10%, 25%, 40%, 55%, " +
-                "70% or 85% at levels 0-5.",
+                "Available from age 6 through 17. Natural childhood Education " +
+                "now broadly follows Intellect; parental help can raise a child " +
+                "one level beyond that natural ceiling. Success depends on the " +
+                "father's Education level: 10%, 25%, 40%, 55%, 70% or 85% " +
+                "at levels 0-5.",
 
             Mode =
                 ActionExecutionMode.Queued,
@@ -358,9 +362,22 @@ public sealed class EducationPlugin : IGamePlugin
                             "state.alive")
                         || child.Id == father.Id
                         || child.Age < HelpLearningMinimumAge
-                        || child.Age >= HelpLearningAdultAge
-                        || education.GetEducationLevel(
-                            child) >= 5)
+                        || child.Age >= HelpLearningAdultAge)
+                    {
+                        return false;
+                    }
+
+                    var childIntellect =
+                        stats.GetStats(child)
+                            .First(stat =>
+                                stat.Id.Equals(
+                                    "intellect",
+                                    StringComparison.OrdinalIgnoreCase))
+                            .Value;
+
+                    if (education.GetEducationLevel(child)
+                        >= EducationProgressionRules.GetHelpedChildhoodCeiling(
+                            childIntellect))
                     {
                         return false;
                     }
@@ -389,8 +406,6 @@ public sealed class EducationPlugin : IGamePlugin
                             "state.alive")
                         || child.Age < HelpLearningMinimumAge
                         || child.Age >= HelpLearningAdultAge
-                        || education.GetEducationLevel(
-                            child) >= 5
                         || !family
                             .GetChildren(
                                 father)
@@ -402,6 +417,23 @@ public sealed class EducationPlugin : IGamePlugin
                         return new GameActionResult(
                             false,
                             "Help in Learning is no longer available.");
+                    }
+
+                    var childIntellect =
+                        stats.GetStats(child)
+                            .First(stat =>
+                                stat.Id.Equals(
+                                    "intellect",
+                                    StringComparison.OrdinalIgnoreCase))
+                            .Value;
+
+                    if (education.GetEducationLevel(child)
+                        >= EducationProgressionRules.GetHelpedChildhoodCeiling(
+                            childIntellect))
+                    {
+                        return new GameActionResult(
+                            false,
+                            "The child has reached the Education level that parental help can currently support.");
                     }
 
                     var fatherEducation =

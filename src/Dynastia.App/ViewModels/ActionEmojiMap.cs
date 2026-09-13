@@ -19,6 +19,7 @@ public static class ActionEmojiMap
                 ["career.quit_job"] = "🚶",
                 ["career.work_harder"] = "✨",
                 ["career.seek_employment"] = "✅",
+                ["career.find_another_job"] = "🔎",
                 ["career.use_family_connections"] = "🤝",
                 ["career.help_seek_employment"] = "✅",
                 ["career.ask_to_recover"] = "🧘",
@@ -26,6 +27,7 @@ public static class ActionEmojiMap
 
                 ["wellbeing.drink"] = "🍺",
                 ["wellbeing.therapy"] = "😊",
+                ["personality.religious_study"] = "📖",
                 ["wellbeing.heal_relative"] = "❤️‍🩹",
 
                 ["education.get_education"] = "🎓",
@@ -42,6 +44,9 @@ public static class ActionEmojiMap
                 ["household.buy_house"] = "🏠",
                 ["household.sell_house"] = "💵",
                 ["household.give_house_to_son"] = "🎁",
+                ["household.ask_parents_house"] = "🙏",
+                ["household.ask_father_house"] = "🙏",
+                ["household.ask_mother_house"] = "🙏",
                 ["household.hire_nanny"] = "🧑‍🍼",
                 ["household.ask_daughter_nanny"] = "🧑‍🍼",
                 ["household.fire_nanny"] = "👋",
@@ -57,6 +62,13 @@ public static class ActionEmojiMap
         string actionId,
         string label)
     {
+        if (actionId.StartsWith(
+            "household.move.",
+            StringComparison.OrdinalIgnoreCase))
+        {
+            return $"🚚 {label}";
+        }
+
         if (!Emojis.TryGetValue(
             actionId,
             out var emoji))

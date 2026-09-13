@@ -8,6 +8,14 @@ public interface ILocationService
     TownInfo ChoosePropertyTown(
         IPerson householdHead);
 
+    IReadOnlyList<TownInfo> GetTowns();
+
+    TownInfo? FindTown(string townId);
+
+    void SetPersonHomeTown(
+        IPerson person,
+        TownInfo town);
+
     void SetHouseholdHomeTown(
         IPerson householdHead,
         TownInfo town);

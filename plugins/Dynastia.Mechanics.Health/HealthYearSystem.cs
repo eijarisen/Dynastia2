@@ -42,6 +42,7 @@ public sealed class HealthYearSystem : IYearSystem
     private void TryMildCondition(IGameState state, IPerson person, int immunity)
     {
         var chance = immunity switch { 1 => .28, 2 => .20, 3 => .14, 4 => .09, _ => .05 };
+        chance = HealthIncidenceRules.ScaleMildConditionChance(chance);
         if (_random.NextDouble() >= chance) return;
         if (!_health.TryAddWeightedCondition(person, "Mild", person.Age, d => d.GeneticTag is not null && person.Tags.Has(d.GeneticTag) ? 2.75 : 1.0, out _, out var definition) || definition is null) return;
         PublishCondition(state, person, definition, serious: false);
@@ -51,7 +52,8 @@ public sealed class HealthYearSystem : IYearSystem
     {
         var baseChance = person.Age switch { < 18 => .002, < 40 => .004, < 60 => .010, < 75 => .020, _ => .035 };
         var multiplier = longevity switch { 1 => 1.80, 2 => 1.40, 3 => 1.00, 4 => .70, _ => .45 };
-        if (_random.NextDouble() >= baseChance * multiplier) return;
+        var chance = HealthIncidenceRules.ScaleSeriousConditionChance(baseChance * multiplier);
+        if (_random.NextDouble() >= chance) return;
 
         double Weight(HealthConditionDefinition d)
         {

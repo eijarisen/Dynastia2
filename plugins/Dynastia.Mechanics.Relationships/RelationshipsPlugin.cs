@@ -186,7 +186,13 @@ public sealed class RelationshipsPlugin : IGamePlugin
                 stats,
                 health,
                 career,
-                households,
+                households));
+
+        systems.Register(
+            new MarriageDivorceYearSystem(
+                marriageSatisfaction,
+                family,
+                stats,
                 random,
                 breakups));
 
@@ -632,13 +638,14 @@ public sealed class RelationshipsPlugin : IGamePlugin
 
             Description =
                 "Spend the year working on the marriage. " +
-                "This raises Marriage Satisfaction by 20 points.",
+                "This raises Marriage Satisfaction by 20 points after this year's " +
+                "marriage pressures are applied and before automatic divorce is decided.",
 
             Mode =
                 ActionExecutionMode.Queued,
 
             QueuePhase =
-                YearPhase.LifeEvents,
+                YearPhase.MarriageRepair,
 
             IsAvailable =
                 actionContext =>

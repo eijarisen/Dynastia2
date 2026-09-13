@@ -5,12 +5,6 @@ namespace Dynastia.Mechanics.Economy;
 public sealed class EconomyYearSystem :
     IYearSystem
 {
-    private const decimal RentalIncomePerHouse =
-        250m;
-
-    private const decimal RentExpense =
-        250m;
-
     private const decimal NannyExpense =
         250m;
 
@@ -29,6 +23,7 @@ public sealed class EconomyYearSystem :
     private readonly IIncomeProviderRegistry _income;
     private readonly IGameRandom _random;
     private readonly IGameEventBus _events;
+    private readonly ILocationService _locations;
 
     public EconomyYearSystem(
         StandardEconomyService economy,
@@ -36,7 +31,8 @@ public sealed class EconomyYearSystem :
         IStatsService stats,
         IIncomeProviderRegistry income,
         IGameRandom random,
-        IGameEventBus events)
+        IGameEventBus events,
+        ILocationService locations)
     {
         _economy =
             economy;
@@ -55,6 +51,9 @@ public sealed class EconomyYearSystem :
 
         _events =
             events;
+
+        _locations =
+            locations;
     }
 
     public string Id =>
@@ -141,15 +140,10 @@ public sealed class EconomyYearSystem :
                     member);
         }
 
-        var rentalHouses =
-            Math.Max(
-                0,
-                household.HousesOwned
-                - 1);
-
         var rentalIncome =
-            rentalHouses
-            * RentalIncomePerHouse;
+            _economy.GetHouses(head)
+                .Where(house => house.IsRented)
+                .Sum(house => _economy.GetRentalIncome(house.Town));
 
         if (rentalIncome > 0)
         {
@@ -213,9 +207,11 @@ public sealed class EconomyYearSystem :
 
         household.LastExpenseBreakdown.Clear();
 
+        var homeTown = _locations.GetLocation(head).HomeTown;
+
         var livingCosts =
             members.Count
-            * _economy.OrdinaryLivingCostUnit;
+            * _economy.GetLivingCostPerPerson(homeTown);
 
         if (HasExceptionalIntellect(head))
         {
@@ -239,19 +235,20 @@ public sealed class EconomyYearSystem :
         var expenses =
             livingCosts;
 
-        if (household.HousesOwned == 0)
+        var ownsLocalResidence = household.Houses.Any(house =>
+            house.Town is not null
+            && house.Town.Id.Equals(homeTown.Id, StringComparison.OrdinalIgnoreCase));
+
+        if (!ownsLocalResidence)
         {
-            expenses +=
-                RentExpense;
+            var localRent = _economy.GetResidenceRent(homeTown);
+            expenses += localRent;
 
             household.LastExpenseBreakdown.Add(
                 new LedgerLineState
                 {
-                    Label =
-                        "rented home",
-
-                    Amount =
-                        RentExpense
+                    Label = "rented home",
+                    Amount = localRent
                 });
         }
 

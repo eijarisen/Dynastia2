@@ -2,49 +2,22 @@ using Dynastia.Contracts;
 
 namespace Dynastia.Mechanics.Relationships;
 
-public sealed class MarriageSatisfactionYearSystem :
-    IYearSystem
+public sealed class MarriageSatisfactionYearSystem : IYearSystem
 {
-    private const double NoIssuesRecovery =
-        5;
+    private const double HealthIssuePenalty = 1.5;
+    private const double LowFertilityPenalty = 1;
+    private const double LowFemaleAppealPenalty = 0.5;
+    private const double LowIntellectPenalty = 0.75;
+    private const double UnemployedHusbandPenalty = 4;
+    private const double HouseholdStrainPenalty = 2;
+    private const double ImprisonmentPenalty = 8;
 
-    private const double HealthIssuePenalty =
-        2;
-
-    private const double LowFertilityPenalty =
-        2;
-
-    private const double LowFemaleAppealPenalty =
-        6;
-
-    private const double LowIntellectPenalty =
-        5;
-
-    private const double UnemployedHusbandPenalty =
-        6;
-
-    private const double HouseholdStrainPenalty =
-        3;
-
-    private const double BrokePenalty =
-        15;
-
-    private const double ImprisonmentPenalty =
-        10;
-
-    private const double AutomaticDivorceThreshold =
-        35;
-
-    private readonly StandardMarriageSatisfactionService
-        _satisfaction;
-
+    private readonly StandardMarriageSatisfactionService _satisfaction;
     private readonly IFamilyService _family;
     private readonly IStatsService _stats;
     private readonly IHealthService _health;
     private readonly ICareerService _career;
     private readonly IHouseholdService _households;
-    private readonly IGameRandom _random;
-    private readonly RelationshipBreakupService _breakups;
 
     public MarriageSatisfactionYearSystem(
         StandardMarriageSatisfactionService satisfaction,
@@ -52,9 +25,7 @@ public sealed class MarriageSatisfactionYearSystem :
         IStatsService stats,
         IHealthService health,
         ICareerService career,
-        IHouseholdService households,
-        IGameRandom random,
-        RelationshipBreakupService breakups)
+        IHouseholdService households)
     {
         _satisfaction = satisfaction;
         _family = family;
@@ -62,120 +33,51 @@ public sealed class MarriageSatisfactionYearSystem :
         _health = health;
         _career = career;
         _households = households;
-        _random = random;
-        _breakups = breakups;
     }
 
-    public string Id =>
-        "relationships.marriage_satisfaction";
+    public string Id => "relationships.marriage_satisfaction";
+    public YearPhase Phase => YearPhase.MarriageEvaluation;
+    public IReadOnlyCollection<string> Before => Array.Empty<string>();
+    public IReadOnlyCollection<string> After => Array.Empty<string>();
 
-    public YearPhase Phase =>
-        YearPhase.LifeEvents;
-
-    public IReadOnlyCollection<string> Before =>
-        Array.Empty<string>();
-
-    public IReadOnlyCollection<string> After =>
-        [
-            "reproduction.births",
-            "relationships.female_remarriage"
-        ];
-
-    public void Execute(
-        IGameState gameState)
+    public void Execute(IGameState gameState)
     {
-        var husbands =
-            gameState.People
-                .Where(
-                    person =>
-                        person.Tags.Has(
-                            "state.alive")
-                        && _family.GetSex(
-                            person)
-                            == Sex.Male)
-                .ToList();
+        var husbands = gameState.People
+            .Where(person =>
+                person.Tags.Has("state.alive")
+                && _family.GetSex(person) == Sex.Male)
+            .ToList();
 
         foreach (var husband in husbands)
         {
-            var wife =
-                _family.GetSpouse(
-                    husband);
-
+            var wife = _family.GetSpouse(husband);
             if (wife is null
-                || !wife.Tags.Has(
-                    "state.alive")
-                || _family.GetSex(
-                    wife)
-                    != Sex.Female)
+                || !wife.Tags.Has("state.alive")
+                || _family.GetSex(wife) != Sex.Female)
             {
                 continue;
             }
 
-            var before =
-                _satisfaction.GetSatisfaction(
-                    husband);
-
-            if (before is null)
+            var before = _satisfaction.GetSatisfaction(husband);
+            if (before is null || before.StartYear >= gameState.Year)
                 continue;
 
-            // A marriage created during this year's life-event pass starts
-            // high and gets a grace year before annual stress is applied.
-            if (before.StartYear
-                >= gameState.Year)
-            {
-                continue;
-            }
+            var issues = new List<string>();
+            var penalty = CalculatePenalty(husband, wife, issues);
 
-            var issues =
-                new List<string>();
-
-            var penalty =
-                CalculatePenalty(
-                    husband,
-                    wife,
-                    issues);
-
+            // Ordinary married life has a stabilizing baseline. Minor or
+            // permanent disadvantages should not make every marriage decay
+            // inexorably; only pressure that exceeds this recovery produces
+            // a net annual decline.
             var change =
-                issues.Count == 0
-                    ? NoIssuesRecovery
-                    : -penalty;
+                MarriageBalanceRules.GetAnnualSatisfactionChange(
+                    penalty);
 
             _satisfaction.ApplyAnnualEvaluation(
                 husband,
                 wife,
                 change,
                 issues);
-
-            var after =
-                _satisfaction.GetSatisfaction(
-                    husband);
-
-            if (after is null
-                || after.Value
-                    >= AutomaticDivorceThreshold)
-            {
-                continue;
-            }
-
-            var divorceChance =
-                RelationshipPersonalityRules.AdjustAutonomousDivorceChance(
-                    ResolveAutomaticDivorceChance(
-                        after.Value),
-                    husband,
-                    wife,
-                    _stats);
-
-            if (_random.NextDouble()
-                >= divorceChance)
-            {
-                continue;
-            }
-
-            _breakups.LowSatisfactionDivorce(
-                gameState,
-                husband,
-                wife,
-                after.Value);
         }
     }
 
@@ -184,94 +86,51 @@ public sealed class MarriageSatisfactionYearSystem :
         IPerson wife,
         List<string> issues)
     {
-        var total =
-            0.0;
+        var total = 0.0;
 
-        if (HasHealthIssue(
-            husband))
+        if (HasHealthIssue(husband))
         {
-            total +=
-                HealthIssuePenalty;
-
-            issues.Add(
-                "husband's health");
+            total += HealthIssuePenalty;
+            issues.Add("husband's health");
         }
 
-        if (HasHealthIssue(
-            wife))
+        if (HasHealthIssue(wife))
         {
-            total +=
-                HealthIssuePenalty;
-
-            issues.Add(
-                "wife's health");
+            total += HealthIssuePenalty;
+            issues.Add("wife's health");
         }
 
-        var wifeFertility =
-            GetStat(
-                wife,
-                "fertility");
-
-        if (wifeFertility <= 2)
+        if (GetStat(wife, "fertility") <= 2)
         {
-            total +=
-                LowFertilityPenalty;
-
-            issues.Add(
-                "low fertility");
+            total += LowFertilityPenalty;
+            issues.Add("low fertility");
         }
 
-        var wifeAppeal =
-            GetStat(
-                wife,
-                "appeal");
-
-        if (wifeAppeal <= 2)
+        if (GetStat(wife, "appeal") <= 2)
         {
-            total +=
-                LowFemaleAppealPenalty;
-
-            issues.Add(
-                "low appeal");
+            total += LowFemaleAppealPenalty;
+            issues.Add("low appeal");
         }
 
-        if (GetStat(
-                husband,
-                "intellect")
-            <= 2)
+        if (GetStat(husband, "intellect") <= 2)
         {
-            total +=
-                LowIntellectPenalty;
-
-            issues.Add(
-                "husband's low intellect");
+            total += LowIntellectPenalty;
+            issues.Add("husband's low intellect");
         }
 
-        if (GetStat(
-                wife,
-                "intellect")
-            <= 2)
+        if (GetStat(wife, "intellect") <= 2)
         {
-            total +=
-                LowIntellectPenalty;
-
-            issues.Add(
-                "wife's low intellect");
+            total += LowIntellectPenalty;
+            issues.Add("wife's low intellect");
         }
 
-        var husbandCareer =
-            _career.GetCareer(
-                husband);
-
+        var husbandCareer = _career.GetCareer(husband);
         if (!husbandCareer.IsRetired
             && husband.Age >= 18
             && husbandCareer.JobLevel <= 0)
         {
-            total +=
-                UnemployedHusbandPenalty;
-
-            issues.Add(
-                "husband unemployed");
+            total += UnemployedHusbandPenalty;
+            issues.Add("husband unemployed");
         }
 
         if (husband.Tags.Has("state.imprisoned")
@@ -282,86 +141,47 @@ public sealed class MarriageSatisfactionYearSystem :
         }
 
         var householdHead =
-            _households.ResolveHouseholdHead(
-                husband)
-            ?? _households.ResolveHouseholdHead(
-                wife);
+            _households.ResolveHouseholdHead(husband)
+            ?? _households.ResolveHouseholdHead(wife);
 
-        var household =
-            householdHead is null
-                ? null
-                : _households.GetStatus(
-                    householdHead);
+        var household = householdHead is null
+            ? null
+            : _households.GetStatus(householdHead);
 
-        if (household?.IsLargeFamilyStrained
-            == true)
+        if (household?.IsLargeFamilyStrained == true)
         {
-            total +=
-                HouseholdStrainPenalty;
-
-            issues.Add(
-                "household strain");
+            total += HouseholdStrainPenalty;
+            issues.Add("household strain");
         }
 
-        if (household?.IsBroke
-            == true)
+        if (household?.IsBroke == true)
         {
-            total +=
-                BrokePenalty;
+            var wifeCareer =
+                _career.GetCareer(wife);
 
-            issues.Add(
-                "being broke");
+            var hasWorkingSpouse =
+                husbandCareer.JobLevel > 0
+                || wifeCareer.JobLevel > 0;
+
+            total +=
+                MarriageBalanceRules.GetFinancialPressurePenalty(
+                    isBroke: true,
+                    hasWorkingSpouse: hasWorkingSpouse);
+
+            issues.Add("financial pressure");
         }
 
         return total;
     }
 
-    private bool HasHealthIssue(
-        IPerson person)
+    private bool HasHealthIssue(IPerson person)
     {
-        var health =
-            _health.GetHealth(
-                person);
-
-        return health.Percentage < 60
-            || health.Conditions.Count > 0;
+        var health = _health.GetHealth(person);
+        return health.Percentage < 60 || health.Conditions.Count > 0;
     }
 
-    private int GetStat(
-        IPerson person,
-        string id)
-    {
-        return _stats
-            .GetStats(
-                person)
-            .First(
-                stat =>
-                    stat.Id.Equals(
-                        id,
-                        StringComparison.OrdinalIgnoreCase))
+    private int GetStat(IPerson person, string id) =>
+        _stats.GetStats(person)
+            .First(stat => stat.Id.Equals(id, StringComparison.OrdinalIgnoreCase))
             .Value;
-    }
-
-    private static double
-        ResolveAutomaticDivorceChance(
-            double satisfaction)
-    {
-        return satisfaction switch
-        {
-            < 10 =>
-                0.50,
-
-            < 20 =>
-                0.30,
-
-            < 30 =>
-                0.15,
-
-            < 35 =>
-                0.05,
-
-            _ =>
-                0
-        };
-    }
 }

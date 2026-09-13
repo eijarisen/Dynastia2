@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
@@ -20,6 +20,12 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\Dynastia.Core\Dynastia.Core.csproj" />
+    <ProjectReference Include="..\..\plugins\Dynastia.Mechanics.Career\Dynastia.Mechanics.Career.csproj" />
+    <ProjectReference Include="..\..\plugins\Dynastia.Mechanics.Education\Dynastia.Mechanics.Education.csproj" />
+    <ProjectReference Include="..\..\plugins\Dynastia.Mechanics.Health\Dynastia.Mechanics.Health.csproj" />
+    <ProjectReference Include="..\..\plugins\Dynastia.Mechanics.Mortality\Dynastia.Mechanics.Mortality.csproj" />
+    <ProjectReference Include="..\..\plugins\Dynastia.Mechanics.Reproduction\Dynastia.Mechanics.Reproduction.csproj" />
+    <ProjectReference Include="..\..\plugins\Dynastia.Mechanics.Relationships\Dynastia.Mechanics.Relationships.csproj" />
   </ItemGroup>
 
 </Project>

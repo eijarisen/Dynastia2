@@ -7,13 +7,15 @@ public sealed class GameActionContext
         IPerson actor,
         IPerson target,
         IGameEventBus eventBus,
-        IGameRandom random)
+        IGameRandom random,
+        IReadOnlyDictionary<string, string>? parameters = null)
     {
         GameState = gameState;
         Actor = actor;
         Target = target;
         EventBus = eventBus;
         Random = random;
+        Parameters = parameters ?? new Dictionary<string, string>();
     }
 
     public IGameState GameState { get; }
@@ -21,4 +23,5 @@ public sealed class GameActionContext
     public IPerson Target { get; }
     public IGameEventBus EventBus { get; }
     public IGameRandom Random { get; }
+    public IReadOnlyDictionary<string, string> Parameters { get; }
 }

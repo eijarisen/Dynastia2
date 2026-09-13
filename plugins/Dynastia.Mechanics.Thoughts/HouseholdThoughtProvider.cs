@@ -216,6 +216,34 @@ internal sealed class HouseholdThoughtProvider :
             }
 
             if (gameEvent.Type.Equals(
+                    "household.moved",
+                    StringComparison.OrdinalIgnoreCase))
+            {
+                yield return new ThoughtCandidate(
+                    "household.moved",
+                    "household.move",
+                    "household.move",
+                    76,
+                    "🚚",
+                    "event",
+                    gameEvent.Type,
+                    "household.moved",
+                    new Dictionary<string, string>
+                    {
+                        ["fromTown"] = gameEvent.Data.TryGetValue(
+                            "fromTown",
+                            out var fromTown)
+                                ? fromTown
+                                : "our old town",
+                        ["toTown"] = gameEvent.Data.TryGetValue(
+                            "toTown",
+                            out var toTown)
+                                ? toTown
+                                : "our new town"
+                    });
+            }
+
+            if (gameEvent.Type.Equals(
                     "family_support.parents_success",
                     StringComparison.OrdinalIgnoreCase)
                 || gameEvent.Type.Equals(

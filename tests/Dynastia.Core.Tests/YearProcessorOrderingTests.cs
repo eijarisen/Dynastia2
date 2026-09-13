@@ -63,6 +63,17 @@ public sealed class YearProcessorOrderingTests
                     .AdvanceYear());
     }
 
+
+    [Fact]
+    public void MarriageRepairAndLateMortalityHaveExplicitOrdering()
+    {
+        Assert.True(YearPhase.LifeEvents < YearPhase.MarriageEvaluation);
+        Assert.True(YearPhase.MarriageEvaluation < YearPhase.MarriageRepair);
+        Assert.True(YearPhase.MarriageRepair < YearPhase.MarriageDivorce);
+        Assert.True(YearPhase.MarriageDivorce < YearPhase.LateMortality);
+        Assert.True(YearPhase.LateMortality < YearPhase.Inheritance);
+    }
+
     private sealed class TestSystem : IYearSystem
     {
         private readonly IList<string> _executed;

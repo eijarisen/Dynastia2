@@ -8,4 +8,7 @@ public interface ILocalCareerOpportunityService
 
     LocationOpportunitySnapshot GetOpportunitySnapshot(
         IPerson person);
+
+    LocationOpportunitySnapshot GetOpportunitySnapshot(
+        TownInfo town);
 }

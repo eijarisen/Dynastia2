@@ -56,20 +56,18 @@ internal sealed class DivorcedParentsTracker
             return;
         }
 
-        var secondChildIds =
-            _family.GetChildren(
-                second)
-            .Select(
-                child =>
-                    child.Id)
-            .ToHashSet();
-
         foreach (var child in
             _family.GetChildren(
                 first))
         {
-            if (!secondChildIds.Contains(
-                    child.Id)
+            var sharedBiologicalChild =
+                DivorceCustodyRules.IsSharedBiologicalChild(
+                    _family.GetFather(child)?.Id,
+                    _family.GetMother(child)?.Id,
+                    first.Id,
+                    second.Id);
+
+            if (!sharedBiologicalChild
                 || child.Age >= 18
                 || child.Tags.Has(
                     "state.dead"))

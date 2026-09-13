@@ -67,10 +67,20 @@ public sealed class HouseholdHealthModifierProvider :
                     var immunity =
                         GetImmunity(person);
 
-                    change -=
+                    var povertyPenalty =
                         BrokeBase
                         + (BrokeModifier
                            - immunity * 2);
+
+                    // Poverty still matters for children, but it should not
+                    // routinely become a direct death spiral while a surviving
+                    // parent is trying to rebuild the household.
+                    if (person.Age < 18)
+                    {
+                        povertyPenalty *= 0.50;
+                    }
+
+                    change -= povertyPenalty;
                 }
             }
 

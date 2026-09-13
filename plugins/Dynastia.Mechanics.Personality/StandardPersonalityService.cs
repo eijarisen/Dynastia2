@@ -347,6 +347,21 @@ public sealed class StandardPersonalityService :
             return false;
         }
 
+        if (steps < 0
+            && component!.LastMoralsDeclineYear == _gameState.Year)
+        {
+            return false;
+        }
+
+        if (steps < 0
+            && component!.Morals == "Good"
+            && component.HasMoralsProtection)
+        {
+            component.HasMoralsProtection = false;
+            person.Components.Set(component);
+            return false;
+        }
+
         var index = component!.Morals switch
         {
             "Good" => 2,
@@ -366,8 +381,28 @@ public sealed class StandardPersonalityService :
             _ => "Evil"
         };
 
+        if (steps < 0)
+            component.LastMoralsDeclineYear = _gameState.Year;
+
         ApplyTags(person, component);
         return true;
+    }
+
+    public bool HasMoralsProtection(IPerson person)
+    {
+        var component = person.Components.Get<PersonalityComponent>();
+        return IsComplete(component)
+            && component!.HasMoralsProtection;
+    }
+
+    public void GrantMoralsProtection(IPerson person)
+    {
+        var component = person.Components.Get<PersonalityComponent>();
+        if (!IsComplete(component))
+            return;
+
+        component!.HasMoralsProtection = true;
+        person.Components.Set(component);
     }
 
     private double Roll(

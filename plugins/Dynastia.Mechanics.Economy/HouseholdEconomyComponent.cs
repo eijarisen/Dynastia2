@@ -17,6 +17,8 @@ public sealed class HouseholdEconomyComponent
     // without repeatedly re-importing adult children on every reconciliation.
     public bool LegacyMembershipSeeded { get; set; }
 
+    public string? ResidenceTownId { get; set; }
+
     public decimal Wealth { get; set; }
 
     // Retained for backward save compatibility. The Houses collection

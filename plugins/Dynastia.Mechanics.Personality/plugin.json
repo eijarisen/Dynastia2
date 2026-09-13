@@ -6,6 +6,7 @@
   "assembly": "Dynastia.Mechanics.Personality.dll",
   "entryType": "Dynastia.Mechanics.Personality.PersonalityPlugin",
   "dependencies": [
-    "dynastia.family"
+    "dynastia.family",
+    "dynastia.economy"
   ]
 }

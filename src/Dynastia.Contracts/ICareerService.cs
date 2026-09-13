@@ -9,4 +9,8 @@ public interface ICareerService
     void ChangeJobSatisfaction(IPerson person, int amount);
     void Retire(IPerson person);
     decimal GetAnnualIncome(IPerson person);
+
+    bool TryFindBetterJob(IPerson person);
+
+    bool RelocateEmployment(IPerson person);
 }

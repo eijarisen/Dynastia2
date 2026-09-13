@@ -38,11 +38,15 @@ public sealed class PersonRowViewModel
 
         if (economy is not null)
         {
+            var projectedIncome =
+                economyService?.GetProjectedAnnualIncome(person)
+                ?? economy.LastIncome;
+
             ShowHousehold = true;
             BudgetText = $"${economy.Wealth:N0}";
             HousesText = $"Houses: {economy.HousesOwned}";
             IncomeExpensesText =
-                $"+${economy.LastIncome:N0} / -${economy.LastExpenses:N0}";
+                $"+${projectedIncome:N0} / -${economy.LastExpenses:N0}";
 
             var status =
                 householdService?.GetStatus(person);

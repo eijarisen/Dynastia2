@@ -161,7 +161,9 @@ internal static class RelationshipPersonalityRules
                 melancholic: 0.15,
                 phlegmatic: -0.10,
                 sanguine: positive ? 0.10 : 0,
-                choleric: 0.15);
+                choleric: 0.15,
+                good: positive ? 0.10 : -0.15,
+                evil: positive ? -0.10 : 0.15);
 
         var secondMultiplier =
             PersonalityInfluence.Multiplier(
@@ -169,7 +171,9 @@ internal static class RelationshipPersonalityRules
                 melancholic: 0.15,
                 phlegmatic: -0.10,
                 sanguine: positive ? 0.10 : 0,
-                choleric: 0.15);
+                choleric: 0.15,
+                good: positive ? 0.10 : -0.15,
+                evil: positive ? -0.10 : 0.15);
 
         var multiplier =
             (firstMultiplier + secondMultiplier) / 2.0;

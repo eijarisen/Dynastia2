@@ -113,6 +113,12 @@ public sealed class RelationshipBreakupService
             gameState.Year,
             "divorce");
 
+        ResolvePostDivorceHouseholds(
+            gameState,
+            actor,
+            spouse,
+            settlement);
+
         _events.Publish(
             new GameEvent
             {
@@ -201,6 +207,12 @@ public sealed class RelationshipBreakupService
             gameState.Year,
             "divorce");
 
+        ResolvePostDivorceHouseholds(
+            gameState,
+            husband,
+            wife,
+            settlement);
+
         _events.Publish(
             new GameEvent
             {
@@ -269,13 +281,6 @@ public sealed class RelationshipBreakupService
                     actor,
                     -settlement);
 
-                if (_family.GetSex(spouse)
-                    == Sex.Female)
-                {
-                    _economy.ChangePendingInheritance(
-                        spouse,
-                        settlement);
-                }
             }
         }
 
@@ -304,6 +309,22 @@ public sealed class RelationshipBreakupService
             spouse,
             gameState.Year,
             "divorce");
+
+        var settlementTransferred =
+            ResolvePostDivorceHouseholds(
+                gameState,
+                actor,
+                spouse,
+                settlement);
+
+        if (settlement > 0
+            && !settlementTransferred
+            && _family.GetSex(wife) == Sex.Female)
+        {
+            _economy.ChangePendingInheritance(
+                wife,
+                settlement);
+        }
 
         var pronoun =
             _family.GetSex(actor)
@@ -360,15 +381,32 @@ public sealed class RelationshipBreakupService
             directPenalty,
             extendedRelative: false);
 
+        // Divorce consequences apply only to the couple's shared biological
+        // minor children. Children from earlier relationships are not part of
+        // this breakup and must not receive the child health shock.
+        foreach (var child in GetSharedBiologicalChildren(first, second)
+            .Where(child =>
+                child.Tags.Has("state.alive")
+                && child.Age < 18))
+        {
+            ApplyEmotionalHealthLoss(
+                child,
+                first,
+                childPenalty,
+                extendedRelative: true);
+        }
+
+        // Preserve the smaller legacy shock for the divorcing adults' parents
+        // and siblings, but deliberately exclude every non-shared child.
         var relatives =
             new Dictionary<Guid, (IPerson Person, IPerson Reference, double Penalty)>();
 
-        AddExtendedRelatives(
+        AddAdultExtendedRelatives(
             first,
             childPenalty,
             relatives);
 
-        AddExtendedRelatives(
+        AddAdultExtendedRelatives(
             second,
             childPenalty,
             relatives);
@@ -386,20 +424,11 @@ public sealed class RelationshipBreakupService
         }
     }
 
-    private void AddExtendedRelatives(
+    private void AddAdultExtendedRelatives(
         IPerson subject,
         double childPenalty,
         IDictionary<Guid, (IPerson Person, IPerson Reference, double Penalty)> relatives)
     {
-        foreach (var child in _family.GetChildren(subject))
-        {
-            AddRelative(
-                child,
-                subject,
-                childPenalty,
-                relatives);
-        }
-
         var familyPenalty =
             childPenalty * 0.70;
 
@@ -452,6 +481,213 @@ public sealed class RelationshipBreakupService
                 }
             }
         }
+    }
+
+    private bool ResolvePostDivorceHouseholds(
+        IGameState gameState,
+        IPerson first,
+        IPerson second,
+        decimal settlement)
+    {
+        var firstHeadBefore = FindHouseholdHead(gameState, first);
+        var secondHeadBefore = FindHouseholdHead(gameState, second);
+
+        var sourceHead = firstHeadBefore ?? secondHeadBefore;
+        var sourceHouseholdId = sourceHead is null
+            ? null
+            : _economy.GetHouseholdId(sourceHead);
+        var residenceTown = sourceHead is null
+            ? null
+            : _economy.GetResidenceTown(sourceHead);
+
+        var sharedMinors = GetSharedBiologicalChildren(first, second)
+            .Where(child =>
+                child.Tags.Has("state.alive")
+                && child.Age < 18)
+            .ToList();
+
+        var custody = new Dictionary<Guid, IPerson>();
+        foreach (var child in sharedMinors)
+        {
+            var father = _family.GetFather(child);
+            var mother = _family.GetMother(child);
+            if (father is null || mother is null)
+                continue;
+
+            custody[child.Id] =
+                DivorceCustodyRules.AssignToFather(
+                    _random.NextDouble())
+                    ? father
+                    : mother;
+        }
+
+        var createdHeads = new List<IPerson>();
+        EnsureDivorcedParentResidence(
+            gameState,
+            first,
+            custody,
+            residenceTown,
+            createdHeads);
+        EnsureDivorcedParentResidence(
+            gameState,
+            second,
+            custody,
+            residenceTown,
+            createdHeads);
+
+        foreach (var child in sharedMinors)
+        {
+            if (!custody.TryGetValue(child.Id, out var custodian))
+                continue;
+
+            var custodianHead =
+                FindHouseholdHead(gameState, custodian);
+
+            if (custodianHead is not null)
+            {
+                _economy.AddHouseholdMember(
+                    custodianHead,
+                    child);
+            }
+        }
+
+        if (residenceTown is not null)
+        {
+            foreach (var createdHead in createdHeads
+                .DistinctBy(person => person.Id))
+            {
+                _economy.SetResidenceTown(
+                    createdHead,
+                    residenceTown);
+            }
+        }
+
+        var wife = _family.GetSex(first) == Sex.Female
+            ? first
+            : _family.GetSex(second) == Sex.Female
+                ? second
+                : null;
+
+        if (wife is null || settlement <= 0)
+            return false;
+
+        var wifeHead = FindHouseholdHead(gameState, wife);
+        if (wifeHead is null
+            || !HouseholdContainsLivingBloodline(gameState, wifeHead))
+        {
+            return false;
+        }
+
+        var wifeHouseholdId = _economy.GetHouseholdId(wifeHead);
+        if (sourceHouseholdId is not null
+            && wifeHouseholdId == sourceHouseholdId)
+        {
+            return false;
+        }
+
+        _economy.ChangeWealth(
+            wifeHead,
+            settlement);
+
+        return true;
+    }
+
+    private void EnsureDivorcedParentResidence(
+        IGameState gameState,
+        IPerson parent,
+        IReadOnlyDictionary<Guid, IPerson> custody,
+        TownInfo? residenceTown,
+        ICollection<IPerson> createdHeads)
+    {
+        var assignedBloodlineChildren =
+            custody
+                .Where(pair => pair.Value.Id == parent.Id)
+                .Select(pair =>
+                    gameState.People.FirstOrDefault(person => person.Id == pair.Key))
+                .Where(child =>
+                    child is not null
+                    && _family.IsBloodline(child))
+                .Cast<IPerson>()
+                .ToList();
+
+        var requiresBloodlineHousehold =
+            _family.IsBloodline(parent)
+            || assignedBloodlineChildren.Count > 0;
+
+        var currentHead = FindHouseholdHead(gameState, parent);
+        if (currentHead?.Id == parent.Id)
+        {
+            return;
+        }
+
+        if (!requiresBloodlineHousehold)
+        {
+            _economy.RemoveHouseholdMember(parent);
+            return;
+        }
+
+        var dynastyAnchor = _family.IsBloodline(parent)
+            ? parent
+            : assignedBloodlineChildren[0];
+
+        _economy.EnsureIndependentHousehold(
+            parent,
+            dynastyAnchor);
+
+        createdHeads.Add(parent);
+
+        if (residenceTown is not null)
+        {
+            _economy.SetResidenceTown(
+                parent,
+                residenceTown);
+        }
+    }
+
+    private IReadOnlyList<IPerson> GetSharedBiologicalChildren(
+        IPerson first,
+        IPerson second)
+    {
+        return _family.GetChildren(first)
+            .Where(child =>
+            {
+                var fatherId = _family.GetFather(child)?.Id;
+                var motherId = _family.GetMother(child)?.Id;
+
+                return DivorceCustodyRules.IsSharedBiologicalChild(
+                    fatherId,
+                    motherId,
+                    first.Id,
+                    second.Id);
+            })
+            .DistinctBy(child => child.Id)
+            .ToList();
+    }
+
+    private IPerson? FindHouseholdHead(
+        IGameState gameState,
+        IPerson person)
+    {
+        var householdId = _economy.GetHouseholdId(person);
+        if (householdId is null)
+            return null;
+
+        return gameState.People.FirstOrDefault(candidate =>
+            _economy.HasHousehold(candidate)
+            && _economy.GetHouseholdId(candidate) == householdId);
+    }
+
+    private bool HouseholdContainsLivingBloodline(
+        IGameState gameState,
+        IPerson householdHead)
+    {
+        return _economy.GetHouseholdMemberIds(householdHead)
+            .Select(id => gameState.People.FirstOrDefault(person => person.Id == id))
+            .Where(person => person is not null)
+            .Cast<IPerson>()
+            .Any(person =>
+                person.Tags.Has("state.alive")
+                && _family.IsBloodline(person));
     }
 
     private static void AddRelative(

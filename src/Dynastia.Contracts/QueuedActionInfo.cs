@@ -6,4 +6,5 @@ public sealed record QueuedActionInfo(
     YearPhase Phase,
     Guid ActorId,
     Guid TargetId,
-    string? Description = null);
+    string? Description = null,
+    IReadOnlyDictionary<string, string>? Parameters = null);

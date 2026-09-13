@@ -14,13 +14,15 @@ public sealed class StandardCareerService :
     private readonly CareerCatalog _catalog;
     private readonly ILocalCareerOpportunityService
         _localOpportunities;
+    private readonly IStatsService _stats;
 
     internal StandardCareerService(
         IGameState gameState,
         IFamilyService family,
         IGameRandom random,
         CareerCatalog catalog,
-        ILocalCareerOpportunityService localOpportunities)
+        ILocalCareerOpportunityService localOpportunities,
+        IStatsService stats)
     {
         _gameState = gameState;
         _family = family;
@@ -28,6 +30,9 @@ public sealed class StandardCareerService :
         _catalog = catalog;
         _localOpportunities =
             localOpportunities;
+
+        _stats =
+            stats;
     }
 
     public void EnsureCareer(
@@ -290,6 +295,87 @@ public sealed class StandardCareerService :
             true;
     }
 
+    public bool TryFindBetterJob(
+        IPerson person)
+    {
+        var current = GetRequired(person);
+        if (current.IsRetired || current.JobLevel is < 1 or > 2)
+            return false;
+
+        var oldDefinition = ResolveDefinition(person, current);
+        var oldSalary = GetActiveSalary(person, current);
+        var opportunity = CreateEmploymentOpportunity(person, _stats);
+        var offeredSalary = opportunity.Career.BaseSalary * current.JobLevel;
+
+        if (oldDefinition is not null
+            && opportunity.Career.Id.Equals(oldDefinition.Id, StringComparison.OrdinalIgnoreCase))
+        {
+            return false;
+        }
+
+        var successChance =
+            PersonalityInfluence.AdjustProbability(
+                opportunity.SuccessChance,
+                person,
+                sanguine: 0.10);
+
+        if (offeredSalary <= oldSalary
+            || _random.NextDouble() >= successChance)
+        {
+            return false;
+        }
+
+        current.CareerId = opportunity.Career.Id;
+        UpdatePeakCareer(current);
+        return true;
+    }
+
+    public bool RelocateEmployment(
+        IPerson person)
+    {
+        var career = GetRequired(person);
+        if (career.IsRetired || career.JobLevel <= 0)
+            return false;
+
+        var previousDefinition = ResolveDefinition(person, career);
+        var previousLevel = career.JobLevel;
+
+        if (_random.NextDouble() < 0.10)
+        {
+            career.JobLevel = 0;
+            career.CareerId = null;
+            career.JobSatisfaction = 3;
+            return false;
+        }
+
+        CareerDefinition replacement;
+        try
+        {
+            replacement = SelectRelocationReplacement(
+                person,
+                previousDefinition);
+        }
+        catch (InvalidOperationException)
+        {
+            // A destination can legitimately have no career compatible
+            // with this worker in the current historical period.
+            career.JobLevel = 0;
+            career.CareerId = null;
+            career.JobSatisfaction = 3;
+            return false;
+        }
+
+        var targetLevel = previousLevel;
+        if (_random.NextDouble() >= 0.70)
+            targetLevel = Math.Max(1, previousLevel - 1);
+
+        career.CareerId = replacement.Id;
+        career.JobLevel = targetLevel;
+        career.JobSatisfaction = 3;
+        UpdatePeakCareer(career);
+        return true;
+    }
+
     public decimal GetAnnualIncome(
         IPerson person)
     {
@@ -346,33 +432,13 @@ public sealed class StandardCareerService :
                 person,
                 definition.LocationRequirement);
 
-        // Employment search should remain uncertain, but a strong
-        // aptitude now matters more than in the legacy 10-50% curve.
-        // Stat values 1-5 produce 20%, 30%, 40%, 52.5% and 65%
-        // before location and personality effects.
+        // Job hunting is still uncertain, but a person well suited to the
+        // careers actually available in the local labour market should not
+        // routinely spend three or four years looking for entry-level work.
         var successChance =
-            0.10
-            + statValue * 0.10;
-
-        if (statValue >= 4)
-        {
-            successChance +=
-                (statValue - 3)
-                * 0.025;
-        }
-
-        successChance +=
-            locationEvaluation.Strength switch
-            {
-                CareerOpportunityStrength.Regional => 0.05,
-                CareerOpportunityStrength.Town => 0.10,
-                _ => 0.0
-            };
-
-        successChance =
-            Math.Min(
-                0.80,
-                successChance);
+            CareerBalanceRules.GetEmploymentSearchChance(
+                statValue,
+                locationEvaluation.Strength);
 
         return new EmploymentOpportunity(
             definition,
@@ -760,6 +826,68 @@ public sealed class StandardCareerService :
             career.PeakCareerId =
                 career.CareerId;
         }
+    }
+
+    private CareerDefinition SelectRelocationReplacement(
+        IPerson person,
+        CareerDefinition? previous)
+    {
+        if (previous is not null
+            && previous.IsOpenForEntry(_gameState.Year)
+            && IsLocallyAvailable(person, previous))
+        {
+            return previous;
+        }
+
+        CareerDefinition? TryPreferred(
+            Func<CareerDefinition, bool> predicate)
+        {
+            try
+            {
+                return _catalog.SelectForEntry(
+                    _family.GetSex(person),
+                    _gameState.Year,
+                    _random,
+                    definition =>
+                    {
+                        if (!predicate(definition))
+                            return 0;
+
+                        var evaluation = _localOpportunities.Evaluate(
+                            person,
+                            definition.LocationRequirement);
+                        return evaluation.IsEligible
+                            ? evaluation.WeightMultiplier
+                            : 0;
+                    });
+            }
+            catch (InvalidOperationException)
+            {
+                return null;
+            }
+        }
+
+        if (previous is not null
+            && previous.RequiredOpportunityTags.Count > 0)
+        {
+            var tags = previous.RequiredOpportunityTags.ToHashSet(
+                StringComparer.OrdinalIgnoreCase);
+            var sameIndustry = TryPreferred(definition =>
+                definition.RequiredOpportunityTags.Any(tags.Contains));
+            if (sameIndustry is not null)
+                return sameIndustry;
+        }
+
+        if (previous is not null)
+        {
+            var aptitude = CareerEntryAptitudeClassifier.Get(previous);
+            var samePrimarySkill = TryPreferred(definition =>
+                CareerEntryAptitudeClassifier.Get(definition) == aptitude);
+            if (samePrimarySkill is not null)
+                return samePrimarySkill;
+        }
+
+        return SelectCareerForEntry(person);
     }
 
     private CareerDefinition SelectCareerForEntry(

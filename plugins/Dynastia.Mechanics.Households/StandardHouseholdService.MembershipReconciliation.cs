@@ -1,0 +1,454 @@
+using Dynastia.Contracts;
+
+namespace Dynastia.Mechanics.Households;
+
+public sealed partial class StandardHouseholdService
+{
+    private void EnsureAdultBloodlineHouseholds()
+    {
+        foreach (var person in
+            _gameState.People
+                .Where(
+                    person =>
+                        person.Tags.Has(
+                            "state.alive")
+                        && _family.IsBloodline(
+                            person)
+                        && person.Age >= 18
+                        && _family.GetSex(
+                            person) == Sex.Male)
+                .ToList())
+        {
+            if (_economy.HasHousehold(
+                person))
+            {
+                continue;
+            }
+
+            var currentHead =
+                ResolveHouseholdHead(
+                    person);
+
+            var spouse =
+                _family.GetSpouse(
+                    person);
+
+            var explicitlyIndependent =
+                person.Tags.Has(
+                    "residence.independent")
+                || person.Tags.Has(
+                    "household.independent_orphan");
+
+            // Newly reaching adulthood still creates the autonomous
+            // household required by the new design. Older adults loaded
+            // from a pre-rework save are not retroactively split from
+            // their parents unless the old state already marks them as
+            // independent or they have since married.
+            var shouldBecomeIndependent =
+                currentHead is null
+                || person.Age == 18
+                || explicitlyIndependent
+                || spouse is not null;
+
+            if (!shouldBecomeIndependent)
+            {
+                continue;
+            }
+
+            if (currentHead is not null)
+            {
+                _economy.RemoveHouseholdMember(
+                    person);
+
+                if (spouse is not null
+                    && ResolveHouseholdHead(
+                        spouse)?.Id
+                        == currentHead.Id)
+                {
+                    _economy.RemoveHouseholdMember(
+                        spouse);
+                }
+            }
+
+            _economy.EnsureIndependentHousehold(
+                person,
+                person);
+
+            if (spouse is not null
+                && spouse.Tags.Has(
+                    "state.alive"))
+            {
+                _economy.AddHouseholdMember(
+                    person,
+                    spouse);
+            }
+        }
+    }
+
+    private void ReconcileMarriedBloodlineWomen()
+    {
+        foreach (var woman in
+            _gameState.People
+                .Where(
+                    person =>
+                        person.Tags.Has(
+                            "state.alive")
+                        && _family.IsBloodline(
+                            person)
+                        && _family.GetSex(
+                            person) == Sex.Female
+                        && person.Age >= 18)
+                .ToList())
+        {
+            var husband =
+                _family.GetSpouse(
+                    woman);
+
+            if (husband is null
+                || !husband.Tags.Has(
+                    "state.alive"))
+            {
+                continue;
+            }
+
+            var womanHouseholdIdBefore =
+                _economy.GetHouseholdId(
+                    woman);
+
+            var womanHead =
+                ResolveHouseholdHead(
+                    woman);
+
+            var husbandHead =
+                ResolveHouseholdHead(
+                    husband);
+
+            if (womanHead is not null
+                && womanHead.Id == woman.Id
+                && !_family.IsMaleLineage(
+                    woman)
+                && husbandHead is null)
+            {
+                _economy.TransferHouseholdHead(
+                    woman,
+                    husband);
+
+                _economy.AddHouseholdMember(
+                    husband,
+                    woman);
+
+                AttachUnmarriedChildrenToMarriedHousehold(
+                    woman,
+                    husband,
+                    womanHouseholdIdBefore);
+
+                continue;
+            }
+
+            if (womanHead is not null
+                && husbandHead?.Id
+                    == womanHead.Id)
+            {
+                AttachUnmarriedChildrenToMarriedHousehold(
+                    woman,
+                    womanHead,
+                    womanHouseholdIdBefore);
+
+                continue;
+            }
+
+            if (husbandHead is not null
+                && husbandHead.Id
+                    == husband.Id)
+            {
+                _economy.AddHouseholdMember(
+                    husband,
+                    woman);
+
+                AttachUnmarriedChildrenToMarriedHousehold(
+                    woman,
+                    husband,
+                    womanHouseholdIdBefore);
+
+                continue;
+            }
+
+            _economy.RemoveHouseholdMember(
+                woman);
+
+            _economy.RemoveHouseholdMember(
+                husband);
+
+            _economy.EnsureIndependentHousehold(
+                husband,
+                woman);
+
+            _economy.AddHouseholdMember(
+                husband,
+                woman);
+
+            AttachUnmarriedChildrenToMarriedHousehold(
+                woman,
+                husband,
+                womanHouseholdIdBefore);
+        }
+    }
+
+    private void AttachUnmarriedChildrenToMarriedHousehold(
+        IPerson bloodlineWoman,
+        IPerson householdHead,
+        Guid? womanHouseholdIdBeforeMarriage)
+    {
+        var targetHouseholdId =
+            _economy.GetHouseholdId(
+                householdHead);
+
+        foreach (var child in
+            _family.GetChildren(
+                bloodlineWoman)
+            .Where(
+                child =>
+                    child.Tags.Has(
+                        "state.alive")
+                    && _family.GetSpouse(
+                        child) is null)
+            .OrderBy(
+                BirthSortKey)
+            .ThenBy(
+                child =>
+                    child.Id))
+        {
+            var childHouseholdId =
+                _economy.GetHouseholdId(
+                    child);
+
+            if (childHouseholdId is not null
+                && childHouseholdId != targetHouseholdId
+                && (womanHouseholdIdBeforeMarriage is null
+                    || childHouseholdId != womanHouseholdIdBeforeMarriage))
+            {
+                // Custody/residence membership is authoritative. Remarriage
+                // can carry along children who were actually living with the
+                // woman, but it must never reclaim children resident with an
+                // ex-partner merely because she is their biological mother.
+                continue;
+            }
+
+            if (_economy.HasHousehold(
+                child))
+            {
+                if (!TryCollapseSyntheticLegacyChildHousehold(
+                    child,
+                    householdHead))
+                {
+                    continue;
+                }
+            }
+
+            if (ResolveHouseholdHead(
+                    child)?.Id
+                == householdHead.Id)
+            {
+                continue;
+            }
+
+            _economy.AddHouseholdMember(
+                householdHead,
+                child);
+        }
+    }
+
+    private bool TryCollapseSyntheticLegacyChildHousehold(
+        IPerson child,
+        IPerson parentHouseholdHead)
+    {
+        if (_family.IsMaleLineage(
+                child)
+            || _family.GetSex(
+                child) != Sex.Male
+            || child.Age <= 18
+            || _family.GetSpouse(
+                child) is not null
+            || child.Tags.Has(
+                "residence.independent")
+            || child.Tags.Has(
+                "household.independent_orphan"))
+        {
+            return false;
+        }
+
+        var finance =
+            _economy.GetHousehold(
+                child);
+
+        if (finance is null
+            || finance.Wealth != 0
+            || finance.HousesOwned != 0
+            || finance.NannyId is not null
+            || _economy
+                .GetHostedDependentIds(
+                    child)
+                .Count > 0
+            || _economy
+                .GetHouseholdMemberIds(
+                    child)
+                .Count > 1)
+        {
+            return false;
+        }
+
+        _economy.DissolveHousehold(
+            child);
+
+        _economy.AddHouseholdMember(
+            parentHouseholdHead,
+            child);
+
+        return true;
+    }
+
+    private void ReconcileCurrentSpouses()
+    {
+        foreach (var bloodline in
+            _gameState.People
+                .Where(
+                    person =>
+                        person.Tags.Has(
+                            "state.alive")
+                        && _family.IsBloodline(
+                            person))
+                .ToList())
+        {
+            var spouse =
+                _family.GetSpouse(
+                    bloodline);
+
+            if (spouse is null
+                || !spouse.Tags.Has(
+                    "state.alive"))
+            {
+                continue;
+            }
+
+            var head =
+                ResolveHouseholdHead(
+                    bloodline);
+
+            if (head is null)
+                continue;
+
+            _economy.AddHouseholdMember(
+                head,
+                spouse);
+        }
+    }
+
+    private void ReconcileBloodlineDependents()
+    {
+        foreach (var person in
+            _gameState.People
+                .Where(
+                    person =>
+                        person.Tags.Has(
+                            "state.alive")
+                        && _family.IsBloodline(
+                            person))
+                .ToList())
+        {
+            if (_economy.HasHousehold(
+                person))
+            {
+                continue;
+            }
+
+            if (person.Age >= 18
+                && _family.GetSex(
+                    person) == Sex.Male)
+            {
+                continue;
+            }
+
+            if (person.Age >= 18
+                && _family.GetSex(
+                    person) == Sex.Female
+                && _family.GetSpouse(
+                    person) is not null)
+            {
+                continue;
+            }
+
+            var current =
+                ResolveHouseholdHead(
+                    person);
+
+            if (current is not null
+                && current.Tags.Has(
+                    "state.alive"))
+            {
+                continue;
+            }
+
+            var mother =
+                _family.GetMother(
+                    person);
+
+            var father =
+                _family.GetFather(
+                    person);
+
+            var parentHead =
+                mother is not null
+                && mother.Tags.Has(
+                    "state.alive")
+                    ? ResolveHouseholdHead(
+                        mother)
+                    : null;
+
+            parentHead ??=
+                father is not null
+                && father.Tags.Has(
+                    "state.alive")
+                    ? ResolveHouseholdHead(
+                        father)
+                    : null;
+
+            if (parentHead is not null)
+            {
+                _economy.AddHouseholdMember(
+                    parentHead,
+                    person);
+
+                continue;
+            }
+
+            var host =
+                _gameState.People
+                    .FirstOrDefault(
+                        candidate =>
+                            _economy.HasHousehold(
+                                candidate)
+                            && _economy
+                                .GetHostedDependentIds(
+                                    candidate)
+                                .Contains(
+                                    person.Id));
+
+            if (host is not null)
+            {
+                _economy.AddHouseholdMember(
+                    host,
+                    person);
+
+                continue;
+            }
+
+            if (person.Age >= 18)
+            {
+                _economy.EnsureIndependentHousehold(
+                    person,
+                    person);
+            }
+        }
+    }
+
+}

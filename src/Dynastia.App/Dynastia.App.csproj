@@ -7,7 +7,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Folder Include="Models\" />
     <AvaloniaResource Include="Assets\**" />
   </ItemGroup>
 
@@ -39,6 +38,5 @@
     <ProjectReference Include="..\Dynastia.Contracts\Dynastia.Contracts.csproj" />
     <ProjectReference Include="..\Dynastia.Core\Dynastia.Core.csproj" />
     <ProjectReference Include="..\Dynastia.PluginHost\Dynastia.PluginHost.csproj" />
-    <ProjectReference Include="..\Dynastia.StandardUI\Dynastia.StandardUI.csproj" />
   </ItemGroup>
 </Project>

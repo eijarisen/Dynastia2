@@ -727,14 +727,8 @@ public sealed class StandardBiographyService :
             "relationship.repair_marriage" => "❤️‍🩹 ",
             "relationship.prison_divorce" => "💔 ",
             "career.employment" => "✅ ",
-            "career.changed_job" => "💼 ",
-            "career.relocated" => "🧳 ",
             "family_support.parents_success" => "🙏 ",
             "family_support.parents_failure" => "🚫 ",
-            "family_support.house_received" => "🏠 ",
-            "family_support.house_refused" => "🚫 ",
-            "personality.religious_study_success" => "🙏 ",
-            "personality.religious_study_failure" => "🕯️ ",
 
             "family_support.child_success" => "🙏 ",
             "family_support.child_failure" => "🚫 ",
@@ -755,8 +749,6 @@ public sealed class StandardBiographyService :
 
             "household.house_bought" => "🏠 ",
             "household.house_sold" => "💵 ",
-            "household.house_purchase_failed" => "🚫 ",
-            "household.moved" => "🧳 ",
             "household.house_rented" => "🏘️ ",
             "household.house_given" => "🎁 ",
 

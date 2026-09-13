@@ -19,7 +19,6 @@ public sealed class MainWindowViewModel : ViewModelBase
     private readonly IHouseholdService? _householdService;
     private readonly IAdoptionService? _adoptionService;
     private readonly ILocationService? _locationService;
-    private readonly IPropertyActionService? _propertyActionService;
     private readonly IMarriageSatisfactionService?
         _marriageSatisfactionService;
     private readonly IThoughtService? _thoughtService;
@@ -53,13 +52,6 @@ public sealed class MainWindowViewModel : ViewModelBase
     private bool _isMainMenuPromptVisible;
     private bool _isYearSummaryVisible;
     private int _yearSummaryEventYear = 1900;
-    private bool _isPurchaseTownSelectorVisible;
-    private bool _isPropertySaleSelectorVisible;
-    private string _propertyTownSearchText = string.Empty;
-    private PropertyTownOption? _selectedPurchaseTown;
-    private PropertySaleOption? _selectedSaleProperty;
-    private Guid? _propertyActionActorId;
-    private List<PropertyTownOption> _allPurchaseTownOptions = [];
     private HouseholdViewMode _householdViewMode =
         HouseholdViewMode.Lineage;
 
@@ -87,7 +79,6 @@ public sealed class MainWindowViewModel : ViewModelBase
         IHouseholdService? householdService,
         IAdoptionService? adoptionService,
         ILocationService? locationService,
-        IPropertyActionService? propertyActionService,
         IMarriageSatisfactionService? marriageSatisfactionService,
         IThoughtService? thoughtService,
         IPersonalityService? personalityService,
@@ -112,7 +103,6 @@ public sealed class MainWindowViewModel : ViewModelBase
         _householdService = householdService;
         _adoptionService = adoptionService;
         _locationService = locationService;
-        _propertyActionService = propertyActionService;
         _marriageSatisfactionService =
             marriageSatisfactionService;
         _thoughtService =
@@ -175,20 +165,6 @@ public sealed class MainWindowViewModel : ViewModelBase
         HideYearSummaryCommand =
             new RelayCommand(
                 HideYearSummary);
-
-        ConfirmHousePurchaseCommand =
-            new RelayCommand(
-                ConfirmHousePurchase,
-                () => SelectedPurchaseTown is not null);
-
-        ConfirmHouseSaleCommand =
-            new RelayCommand(
-                ConfirmHouseSale,
-                () => SelectedSaleProperty is not null);
-
-        CancelPropertySelectionCommand =
-            new RelayCommand(
-                ClosePropertySelectors);
 
         ShowLivingFamilyCommand =
             new RelayCommand(
@@ -500,16 +476,26 @@ public sealed class MainWindowViewModel : ViewModelBase
     {
         get
         {
+            var head =
+                _succession.ActiveController;
+
             var finance =
                 GetDisplayedHouseholdFinance();
 
-            if (finance is null)
+            if (head is null
+                || finance is null)
+            {
                 return string.Empty;
+            }
 
             if (finance.Houses.Count == 0)
             {
                 var homeTown =
-                    finance.ResidenceTown?.Town;
+                    _locationService?
+                        .GetLocation(
+                            head)
+                        .HomeTown
+                        .Town;
 
                 return string.IsNullOrWhiteSpace(
                     homeTown)
@@ -1024,90 +1010,6 @@ public sealed class MainWindowViewModel : ViewModelBase
     public bool IsStatusMessageVisible =>
         HasPersistenceStatus;
 
-    public bool IsPurchaseTownSelectorVisible
-    {
-        get => _isPurchaseTownSelectorVisible;
-        private set
-        {
-            if (_isPurchaseTownSelectorVisible == value)
-                return;
-
-            _isPurchaseTownSelectorVisible = value;
-            OnPropertyChanged();
-            OnPropertyChanged(nameof(IsPropertySelectorVisible));
-        }
-    }
-
-    public bool IsPropertySaleSelectorVisible
-    {
-        get => _isPropertySaleSelectorVisible;
-        private set
-        {
-            if (_isPropertySaleSelectorVisible == value)
-                return;
-
-            _isPropertySaleSelectorVisible = value;
-            OnPropertyChanged();
-            OnPropertyChanged(nameof(IsPropertySelectorVisible));
-        }
-    }
-
-    public bool IsPropertySelectorVisible =>
-        IsPurchaseTownSelectorVisible
-        || IsPropertySaleSelectorVisible;
-
-    public string PropertyTownSearchText
-    {
-        get => _propertyTownSearchText;
-        set
-        {
-            if (_propertyTownSearchText == value)
-                return;
-
-            _propertyTownSearchText = value ?? string.Empty;
-            OnPropertyChanged();
-            FilterPurchaseTownOptions();
-        }
-    }
-
-    public ObservableCollection<PropertyTownOption>
-        PropertyTownOptions { get; } = [];
-
-    public ObservableCollection<PropertySaleOption>
-        PropertySaleOptions { get; } = [];
-
-    public PropertyTownOption? SelectedPurchaseTown
-    {
-        get => _selectedPurchaseTown;
-        set
-        {
-            if (_selectedPurchaseTown == value)
-                return;
-
-            _selectedPurchaseTown = value;
-            OnPropertyChanged();
-            ConfirmHousePurchaseCommand.RaiseCanExecuteChanged();
-        }
-    }
-
-    public PropertySaleOption? SelectedSaleProperty
-    {
-        get => _selectedSaleProperty;
-        set
-        {
-            if (_selectedSaleProperty == value)
-                return;
-
-            _selectedSaleProperty = value;
-            OnPropertyChanged();
-            ConfirmHouseSaleCommand.RaiseCanExecuteChanged();
-        }
-    }
-
-    public RelayCommand ConfirmHousePurchaseCommand { get; }
-    public RelayCommand ConfirmHouseSaleCommand { get; }
-    public RelayCommand CancelPropertySelectionCommand { get; }
-
     public RelayCommand StartGameCommand { get; }
     public RelayCommand NextYearCommand { get; }
     public RelayCommand CancelQueuedActionCommand { get; }
@@ -1166,8 +1068,6 @@ public sealed class MainWindowViewModel : ViewModelBase
 
         IsYearSummaryVisible =
             false;
-
-        ClosePropertySelectors();
 
         IsGameStarted =
             true;
@@ -1236,8 +1136,6 @@ public sealed class MainWindowViewModel : ViewModelBase
 
         IsYearSummaryVisible =
             false;
-
-        ClosePropertySelectors();
 
         IsGameStarted = true;
         AlbumYear = _gameState.Year;
@@ -1512,8 +1410,6 @@ public sealed class MainWindowViewModel : ViewModelBase
 
         IsYearSummaryVisible =
             false;
-
-        ClosePropertySelectors();
 
         IsGameStarted =
             false;
@@ -3003,35 +2899,6 @@ public sealed class MainWindowViewModel : ViewModelBase
             return;
         }
 
-        if (_propertyActionService is not null
-            && actionId.Equals(
-                "household.buy_house",
-                StringComparison.OrdinalIgnoreCase))
-        {
-            OpenPurchaseTownSelector(actor);
-            return;
-        }
-
-        if (_propertyActionService is not null
-            && actionId.Equals(
-                "household.sell_house",
-                StringComparison.OrdinalIgnoreCase))
-        {
-            OpenPropertySaleSelector(actor);
-            return;
-        }
-
-        ExecuteActionCore(
-            actionId,
-            actor,
-            target);
-    }
-
-    private void ExecuteActionCore(
-        string actionId,
-        IPerson actor,
-        IPerson target)
-    {
         var result =
             _actionRegistry.Execute(
                 actionId,
@@ -3058,147 +2925,6 @@ public sealed class MainWindowViewModel : ViewModelBase
         RefreshJustice();
         RefreshNarrative();
         RefreshActions();
-    }
-
-    private void OpenPurchaseTownSelector(
-        IPerson actor)
-    {
-        if (_propertyActionService is null)
-            return;
-
-        _propertyActionActorId = actor.Id;
-        _allPurchaseTownOptions =
-            _propertyActionService
-                .GetPurchaseOptions(actor)
-                .ToList();
-
-        PropertyTownSearchText = string.Empty;
-        FilterPurchaseTownOptions();
-        SelectedPurchaseTown = null;
-        IsPropertySaleSelectorVisible = false;
-        IsPurchaseTownSelectorVisible = true;
-    }
-
-    private void OpenPropertySaleSelector(
-        IPerson actor)
-    {
-        if (_propertyActionService is null)
-            return;
-
-        _propertyActionActorId = actor.Id;
-        PropertySaleOptions.Clear();
-
-        foreach (var property in
-            _propertyActionService.GetSaleOptions(actor))
-        {
-            PropertySaleOptions.Add(property);
-        }
-
-        SelectedSaleProperty = null;
-        IsPurchaseTownSelectorVisible = false;
-        IsPropertySaleSelectorVisible = true;
-    }
-
-    private void FilterPurchaseTownOptions()
-    {
-        PropertyTownOptions.Clear();
-
-        var search =
-            PropertyTownSearchText.Trim();
-
-        foreach (var option in
-            _allPurchaseTownOptions)
-        {
-            if (search.Length > 0
-                && !MatchesPropertyTownSearch(
-                    option,
-                    search))
-            {
-                continue;
-            }
-
-            PropertyTownOptions.Add(option);
-        }
-    }
-
-    private static bool MatchesPropertyTownSearch(
-        PropertyTownOption option,
-        string search)
-    {
-        return option.Town.Town.Contains(
-                search,
-                StringComparison.CurrentCultureIgnoreCase)
-            || option.Town.County.Contains(
-                search,
-                StringComparison.CurrentCultureIgnoreCase)
-            || option.RegionName.Contains(
-                search,
-                StringComparison.CurrentCultureIgnoreCase)
-            || option.OpportunityDescription.Contains(
-                search,
-                StringComparison.CurrentCultureIgnoreCase);
-    }
-
-    private void ConfirmHousePurchase()
-    {
-        if (_propertyActionService is null
-            || SelectedPurchaseTown is null
-            || FindPropertyActionActor() is not IPerson actor)
-        {
-            return;
-        }
-
-        _propertyActionService.PreparePurchase(
-            actor,
-            SelectedPurchaseTown.Town.Id);
-
-        ClosePropertySelectors();
-        ExecuteActionCore(
-            "household.buy_house",
-            actor,
-            actor);
-    }
-
-    private void ConfirmHouseSale()
-    {
-        if (_propertyActionService is null
-            || SelectedSaleProperty is null
-            || FindPropertyActionActor() is not IPerson actor)
-        {
-            return;
-        }
-
-        _propertyActionService.PrepareSale(
-            actor,
-            SelectedSaleProperty.PropertyId);
-
-        ClosePropertySelectors();
-        ExecuteActionCore(
-            "household.sell_house",
-            actor,
-            actor);
-    }
-
-    private IPerson? FindPropertyActionActor()
-    {
-        if (_propertyActionActorId is not Guid id)
-            return null;
-
-        return _gameState.People
-            .FirstOrDefault(
-                person => person.Id == id);
-    }
-
-    private void ClosePropertySelectors()
-    {
-        IsPurchaseTownSelectorVisible = false;
-        IsPropertySaleSelectorVisible = false;
-        _propertyActionActorId = null;
-        SelectedPurchaseTown = null;
-        SelectedSaleProperty = null;
-        _allPurchaseTownOptions.Clear();
-        PropertyTownOptions.Clear();
-        PropertySaleOptions.Clear();
     }
 
     private IPerson? FindSelectedPerson()

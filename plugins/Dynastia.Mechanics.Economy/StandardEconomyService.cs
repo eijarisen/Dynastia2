@@ -4,21 +4,18 @@ namespace Dynastia.Mechanics.Economy;
 
 public sealed class StandardEconomyService :
     IEconomyService,
-    IEconomyBalanceService,
-    IPropertyEconomyService
+    IEconomyBalanceService
 {
     public decimal OrdinaryLivingCostUnit => 250m;
 
     private readonly IGameState _gameState;
     private readonly IFamilyService _family;
     private readonly ILocationService _locations;
-    private readonly ITownDirectoryService _towns;
 
     public StandardEconomyService(
         IGameState gameState,
         IFamilyService family,
-        ILocationService locations,
-        ITownDirectoryService towns)
+        ILocationService locations)
     {
         _gameState =
             gameState;
@@ -28,9 +25,6 @@ public sealed class StandardEconomyService :
 
         _locations =
             locations;
-
-        _towns =
-            towns;
     }
 
     public bool HasHousehold(
@@ -124,28 +118,21 @@ public sealed class StandardEconomyService :
             person,
             claim);
 
-        var residenceTown =
-            ResolveResidenceTown(
-                owner,
-                household);
-
-        var residenceHouseId =
-            GetResidenceHouseId(
-                household);
-
         var houses =
             household.Houses
                 .Select(
-                    house =>
+                    (house, index) =>
                         ToInfo(
                             house,
-                            residenceHouseId == house.Id))
+                            index))
                 .ToList();
 
         return new HouseholdFinanceSnapshot(
             household.Wealth,
             houses.Count,
-            household.RentedHouses,
+            Math.Max(
+                0,
+                houses.Count - 1),
             claim.PendingInheritance,
             claim.PendingHouseProperties.Count,
             household.NannyId,
@@ -165,11 +152,7 @@ public sealed class StandardEconomyService :
                             line.Label,
                             line.Amount))
                 .ToList(),
-            houses)
-        {
-            ResidenceTown =
-                residenceTown
-        };
+            houses);
     }
 
     public Guid? GetHouseholdId(
@@ -523,119 +506,13 @@ public sealed class StandardEconomyService :
             GetHead(household),
             household);
 
-        var residenceHouseId =
-            GetResidenceHouseId(
-                household);
-
         return household.Houses
             .Select(
-                house =>
+                (house, index) =>
                     ToInfo(
                         house,
-                        residenceHouseId == house.Id))
+                        index))
             .ToList();
-    }
-
-    public TownInfo? GetResidenceTown(
-        IPerson person)
-    {
-        var household =
-            GetRequiredHousehold(
-                person);
-
-        var head =
-            GetHead(
-                household);
-
-        MigrateHousehold(
-            head,
-            household);
-
-        return ResolveResidenceTown(
-            head,
-            household);
-    }
-
-    public void SetResidenceTown(
-        IPerson person,
-        TownInfo town)
-    {
-        ArgumentNullException.ThrowIfNull(town);
-
-        var household =
-            GetRequiredHousehold(
-                person);
-
-        var head =
-            GetHead(
-                household);
-
-        household.ResidenceTownId =
-            town.Id;
-
-        _locations.SetHouseholdHomeTown(
-            head,
-            town);
-
-        SynchronizeDerivedHouseCounts(
-            household);
-    }
-
-    public bool HasHouseInTown(
-        IPerson person,
-        string townId)
-    {
-        if (string.IsNullOrWhiteSpace(townId))
-            return false;
-
-        return GetHouses(person)
-            .Any(
-                house =>
-                    house.Town.Id.Equals(
-                        townId,
-                        StringComparison.OrdinalIgnoreCase));
-    }
-
-    public HousePropertyInfo? TakeHouse(
-        IPerson person,
-        Guid propertyId)
-    {
-        var household =
-            GetRequiredHousehold(
-                person);
-
-        var head =
-            GetHead(
-                household);
-
-        SynchronizeHouses(
-            head,
-            household);
-
-        var residenceHouseId =
-            GetResidenceHouseId(
-                household);
-
-        var index =
-            household.Houses.FindIndex(
-                house =>
-                    house.Id == propertyId);
-
-        if (index < 0)
-            return null;
-
-        var state =
-            household.Houses[index];
-
-        var info =
-            ToInfo(
-                state,
-                residenceHouseId == state.Id);
-
-        household.Houses.RemoveAt(index);
-        SynchronizeDerivedHouseCounts(household);
-
-        return info;
     }
 
     public HousePropertyInfo AddHouse(
@@ -661,9 +538,10 @@ public sealed class StandardEconomyService :
             town
             ?? (
                 firstHouse
-                    ? ResolveResidenceTown(
-                        head,
-                        household)
+                    ? _locations
+                        .GetLocation(
+                            head)
+                        .HomeTown
                     : _locations
                         .ChoosePropertyTown(
                             head)
@@ -682,12 +560,19 @@ public sealed class StandardEconomyService :
         household.Houses.Add(
             state);
 
+        if (firstHouse)
+        {
+            _locations.SetHouseholdHomeTown(
+                head,
+                assignedTown);
+        }
+
         SynchronizeDerivedHouseCounts(
             household);
 
         return ToInfo(
             state,
-            GetResidenceHouseId(household) == state.Id);
+            household.Houses.Count - 1);
     }
 
     public void AddExistingHouse(
@@ -717,6 +602,9 @@ public sealed class StandardEconomyService :
             return;
         }
 
+        var firstHouse =
+            household.Houses.Count == 0;
+
         household.Houses.Add(
             new HousePropertyState
             {
@@ -726,6 +614,13 @@ public sealed class StandardEconomyService :
                 Town =
                     house.Town
             });
+
+        if (firstHouse)
+        {
+            _locations.SetHouseholdHomeTown(
+                head,
+                house.Town);
+        }
 
         SynchronizeDerivedHouseCounts(
             household);
@@ -742,17 +637,11 @@ public sealed class StandardEconomyService :
             GetHead(household),
             household);
 
-        var residenceHouseId =
-            GetResidenceHouseId(
-                household);
+        if (household.Houses.Count <= 1)
+            return null;
 
         var index =
-            household.Houses.FindLastIndex(
-                house =>
-                    house.Id != residenceHouseId);
-
-        if (index < 0)
-            return null;
+            household.Houses.Count - 1;
 
         var state =
             household.Houses[index];
@@ -760,10 +649,13 @@ public sealed class StandardEconomyService :
         var info =
             ToInfo(
                 state,
-                false);
+                index);
 
-        household.Houses.RemoveAt(index);
-        SynchronizeDerivedHouseCounts(household);
+        household.Houses.RemoveAt(
+            index);
+
+        SynchronizeDerivedHouseCounts(
+            household);
 
         return info;
     }
@@ -779,17 +671,13 @@ public sealed class StandardEconomyService :
             GetHead(household),
             household);
 
-        var residenceHouseId =
-            GetResidenceHouseId(
-                household);
-
         var houses =
             household.Houses
                 .Select(
-                    house =>
+                    (house, index) =>
                         ToInfo(
                             house,
-                            residenceHouseId == house.Id))
+                            index))
                 .ToList();
 
         household.Houses.Clear();
@@ -943,10 +831,10 @@ public sealed class StandardEconomyService :
         var result =
             claim.PendingHouseProperties
                 .Select(
-                    house =>
+                    (house, index) =>
                         ToInfo(
                             house,
-                            false))
+                            index))
                 .ToList();
 
         claim.PendingHouseProperties.Clear();
@@ -1079,13 +967,7 @@ public sealed class StandardEconomyService :
                         dynastyAnchor),
 
                 LegacyMembershipSeeded =
-                    true,
-
-                ResidenceTownId =
-                    _locations.GetLocation(
-                        head)
-                    .HomeTown
-                    .Id
+                    true
             };
 
         component.MemberIds.Add(
@@ -1210,16 +1092,6 @@ public sealed class StandardEconomyService :
                 0,
                 household.HeadId);
         }
-
-        if (string.IsNullOrWhiteSpace(
-            household.ResidenceTownId))
-        {
-            household.ResidenceTownId =
-                _locations.GetLocation(
-                    owner)
-                .HomeTown
-                .Id;
-        }
     }
 
     private IPerson GetHead(
@@ -1267,12 +1139,6 @@ public sealed class StandardEconomyService :
             }
         }
 
-        var fallbackTown =
-            _locations
-                .GetLocation(
-                    head)
-                .HomeTown;
-
         foreach (var house in
             household.Houses)
         {
@@ -1281,10 +1147,11 @@ public sealed class StandardEconomyService :
                     ? Guid.NewGuid()
                     : house.Id;
 
-            house.Town =
-                NormalizeTown(
-                    house.Town,
-                    fallbackTown);
+            house.Town ??=
+                _locations
+                    .GetLocation(
+                        head)
+                    .HomeTown;
         }
 
         SynchronizeDerivedHouseCounts(
@@ -1309,12 +1176,6 @@ public sealed class StandardEconomyService :
             }
         }
 
-        var fallbackTown =
-            _locations
-                .GetLocation(
-                    person)
-                .HomeTown;
-
         foreach (var house in
             claim.PendingHouseProperties)
         {
@@ -1323,10 +1184,11 @@ public sealed class StandardEconomyService :
                     ? Guid.NewGuid()
                     : house.Id;
 
-            house.Town =
-                NormalizeTown(
-                    house.Town,
-                    fallbackTown);
+            house.Town ??=
+                _locations
+                    .GetLocation(
+                        person)
+                    .HomeTown;
         }
 
         claim.PendingHouses =
@@ -1357,96 +1219,22 @@ public sealed class StandardEconomyService :
         };
     }
 
-    private void SynchronizeDerivedHouseCounts(
+    private static void SynchronizeDerivedHouseCounts(
         HouseholdEconomyComponent household)
     {
         household.HousesOwned =
             household.Houses.Count;
 
-        var residenceHouseId =
-            GetResidenceHouseId(
-                household);
-
         household.RentedHouses =
-            household.Houses.Count
-            - (residenceHouseId is null ? 0 : 1);
-    }
-
-    private TownInfo ResolveResidenceTown(
-        IPerson head,
-        HouseholdEconomyComponent household)
-    {
-        if (!string.IsNullOrWhiteSpace(
-                household.ResidenceTownId))
-        {
-            var configured =
-                _towns.FindTown(
-                    household.ResidenceTownId);
-
-            if (configured is not null)
-                return configured;
-        }
-
-        var fallback =
-            _locations.GetLocation(
-                head)
-            .HomeTown;
-
-        household.ResidenceTownId =
-            fallback.Id;
-
-        return fallback;
-    }
-
-    private Guid? GetResidenceHouseId(
-        HouseholdEconomyComponent household)
-    {
-        if (string.IsNullOrWhiteSpace(
-                household.ResidenceTownId))
-        {
-            return null;
-        }
-
-        return household.Houses
-            .FirstOrDefault(
-                house =>
-                    house.Town is not null
-                    && house.Town.Id.Equals(
-                        household.ResidenceTownId,
-                        StringComparison.OrdinalIgnoreCase))
-            ?.Id;
-    }
-
-    private TownInfo NormalizeTown(
-        TownInfo? town,
-        TownInfo fallback)
-    {
-        if (town is null)
-            return fallback;
-
-        if (!string.IsNullOrWhiteSpace(town.Id)
-            && _towns.FindTown(town.Id) is TownInfo byId)
-        {
-            return byId;
-        }
-
-        var match =
-            _towns.GetAllTowns()
-                .FirstOrDefault(
-                    candidate =>
-                        candidate.Town.Equals(
-                            town.Town,
-                            StringComparison.OrdinalIgnoreCase)
-                        && candidate.County.Equals(
-                            town.County,
-                            StringComparison.OrdinalIgnoreCase));
-
-        return match ?? fallback;
+            Math.Max(
+                0,
+                household.Houses.Count
+                - 1);
     }
 
     private static HousePropertyInfo ToInfo(
         HousePropertyState house,
-        bool isResidence)
+        int index)
     {
         var town =
             house.Town
@@ -1457,9 +1245,9 @@ public sealed class StandardEconomyService :
             house.Id,
             town,
             IsResidence:
-                isResidence,
+                index == 0,
             IsRented:
-                !isResidence);
+                index > 0);
     }
 
     private static PersonalEstateComponent

@@ -7,7 +7,6 @@
   "entryType": "Dynastia.Mechanics.FamilySupport.FamilySupportPlugin",
   "dependencies": [
     "dynastia.family",
-    "dynastia.economy",
-    "dynastia.households"
+    "dynastia.economy"
   ]
 }

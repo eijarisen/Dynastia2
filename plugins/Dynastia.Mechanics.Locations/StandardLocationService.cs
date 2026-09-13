@@ -4,8 +4,7 @@ using Dynastia.Contracts;
 namespace Dynastia.Mechanics.Locations;
 
 public sealed class StandardLocationService :
-    ILocationService,
-    ITownDirectoryService
+    ILocationService
 {
     private const string TownsPath =
         "Towns/towns.csv";
@@ -109,22 +108,6 @@ public sealed class StandardLocationService :
 
         _events.EventPublished +=
             OnEventPublished;
-    }
-
-    public IReadOnlyList<TownInfo> GetAllTowns() =>
-        _towns;
-
-    public TownInfo? FindTown(
-        string townId)
-    {
-        if (string.IsNullOrWhiteSpace(townId))
-            return null;
-
-        return _townsById.TryGetValue(
-            townId,
-            out var town)
-                ? town
-                : null;
     }
 
     public LocationSnapshot GetLocation(

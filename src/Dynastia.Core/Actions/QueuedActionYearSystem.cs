@@ -5,30 +5,26 @@ namespace Dynastia.Core.Actions;
 public sealed class QueuedActionYearSystem : IYearSystem
 {
     private readonly IActionRegistry _actions;
-    private readonly IReadOnlyCollection<string> _before;
-    private readonly IReadOnlyCollection<string> _after;
 
     public QueuedActionYearSystem(
         IActionRegistry actions,
         YearPhase phase,
-        string id,
-        IReadOnlyCollection<string>? before = null,
-        IReadOnlyCollection<string>? after = null)
+        string id)
     {
         _actions = actions;
         Phase = phase;
         Id = id;
-        _before = before ?? Array.Empty<string>();
-        _after = after ?? Array.Empty<string>();
     }
 
     public string Id { get; }
 
     public YearPhase Phase { get; }
 
-    public IReadOnlyCollection<string> Before => _before;
+    public IReadOnlyCollection<string> Before =>
+        Array.Empty<string>();
 
-    public IReadOnlyCollection<string> After => _after;
+    public IReadOnlyCollection<string> After =>
+        Array.Empty<string>();
 
     public void Execute(IGameState gameState)
     {

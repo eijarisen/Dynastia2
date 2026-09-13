@@ -77,14 +77,6 @@ public partial class App : Application
                     YearPhase.LifeEvents,
                     "actions.queued.life_events"));
 
-            registry.Register(
-                new QueuedActionYearSystem(
-                    actionRegistry,
-                    YearPhase.PostYear,
-                    "actions.queued.post_year",
-                    after:
-                        ["personality.morals_deterioration"]));
-
             var pluginContext =
                 new GamePluginContext();
 
@@ -164,9 +156,6 @@ public partial class App : Application
 
             var locationService =
                 pluginContext.GetService<ILocationService>();
-
-            var propertyActionService =
-                pluginContext.GetService<IPropertyActionService>();
 
             var marriageSatisfactionService =
                 pluginContext.GetService<
@@ -251,7 +240,6 @@ public partial class App : Application
                             householdService,
                             adoptionService,
                             locationService,
-                            propertyActionService,
                             marriageSatisfactionService,
                             thoughtService,
                             personalityService,

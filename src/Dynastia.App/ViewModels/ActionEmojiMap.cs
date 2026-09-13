@@ -20,7 +20,6 @@ public static class ActionEmojiMap
                 ["career.work_harder"] = "✨",
                 ["career.seek_employment"] = "✅",
                 ["career.use_family_connections"] = "🤝",
-                ["career.find_another_job"] = "💼",
                 ["career.help_seek_employment"] = "✅",
                 ["career.ask_to_recover"] = "🧘",
                 ["career.ask_to_quit"] = "🚶",
@@ -32,7 +31,6 @@ public static class ActionEmojiMap
                 ["education.get_education"] = "🎓",
                 ["education.help_learning"] = "📚",
                 ["childhood.raise_child"] = "🫂",
-                ["personality.religious_study"] = "🙏",
 
                 ["stats.improve_strength"] = "🏋️",
                 ["stats.improve_intellect"] = "🧠",
@@ -49,9 +47,6 @@ public static class ActionEmojiMap
                 ["household.fire_nanny"] = "👋",
 
                 ["family_support.ask_parents"] = "🙏",
-                ["family_support.ask_parents_house"] = "🏠",
-                ["family_support.ask_father_house"] = "🏠",
-                ["family_support.ask_mother_house"] = "🏠",
 
                 // One of the two missing action-family emojis:
                 // use the same original money-request symbol as parents.
@@ -66,16 +61,7 @@ public static class ActionEmojiMap
             actionId,
             out var emoji))
         {
-            if (actionId.StartsWith(
-                "household.move.",
-                StringComparison.OrdinalIgnoreCase))
-            {
-                emoji = "🧳";
-            }
-            else
-            {
-                return $"🔹 {label}";
-            }
+            return $"🔹 {label}";
         }
 
         return $"{emoji} {label}";

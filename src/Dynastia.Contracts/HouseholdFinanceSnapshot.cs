@@ -13,8 +13,6 @@ public sealed record HouseholdFinanceSnapshot(
     IReadOnlyList<FinanceBreakdownItem> LastExpenseBreakdown,
     IReadOnlyList<HousePropertyInfo> Houses)
 {
-    public TownInfo? ResidenceTown { get; init; }
-
     public decimal LastNet =>
         LastIncome - LastExpenses;
 }

@@ -44,12 +44,22 @@ public sealed class LocationsPlugin :
         context.AddService<ILocationService>(
             locations);
 
+        context.AddService<ITownDirectoryService>(
+            locations);
+
+        context.AddService<ITownEconomyService>(
+            new StandardTownEconomyService(
+                locations));
+
         var localCareers =
             new StandardLocalCareerOpportunityService(
                 locations,
                 data);
 
         context.AddService<ILocalCareerOpportunityService>(
+            localCareers);
+
+        context.AddService<ITownCareerOpportunityService>(
             localCareers);
 
         context.Log(

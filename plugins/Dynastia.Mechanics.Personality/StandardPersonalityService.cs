@@ -6,7 +6,8 @@ using Dynastia.Contracts;
 namespace Dynastia.Mechanics.Personality;
 
 public sealed class StandardPersonalityService :
-    IPersonalityService
+    IPersonalityService,
+    IMoralsDevelopmentService
 {
     public const int AssignmentAge = 5;
 
@@ -359,6 +360,24 @@ public sealed class StandardPersonalityService :
         if (next == index)
             return false;
 
+        if (steps < 0)
+        {
+            if (component.LastDownwardMoralsAttemptYear
+                == _gameState.Year)
+            {
+                return false;
+            }
+
+            component.LastDownwardMoralsAttemptYear =
+                _gameState.Year;
+
+            if (component.MoralsProtection > 0)
+            {
+                component.MoralsProtection--;
+                return false;
+            }
+        }
+
         component.Morals = next switch
         {
             2 => "Good",
@@ -368,6 +387,22 @@ public sealed class StandardPersonalityService :
 
         ApplyTags(person, component);
         return true;
+    }
+
+
+    public void GrantMoralsProtection(
+        IPerson person)
+    {
+        var component =
+            person.Components.Get<PersonalityComponent>();
+
+        if (!IsComplete(component))
+            return;
+
+        component!.MoralsProtection =
+            Math.Max(
+                1,
+                component.MoralsProtection);
     }
 
     private double Roll(

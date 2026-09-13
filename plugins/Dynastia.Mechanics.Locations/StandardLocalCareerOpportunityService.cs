@@ -3,7 +3,8 @@ using Dynastia.Contracts;
 namespace Dynastia.Mechanics.Locations;
 
 public sealed class StandardLocalCareerOpportunityService :
-    ILocalCareerOpportunityService
+    ILocalCareerOpportunityService,
+    ITownCareerOpportunityService
 {
     private const string RegionOpportunitiesPath =
         "Towns/region_opportunities.csv";
@@ -101,6 +102,17 @@ public sealed class StandardLocalCareerOpportunityService :
             _locations.GetLocation(
                 person)
             .HomeTown;
+
+        return GetOpportunitySnapshot(
+            town);
+    }
+
+    public LocationOpportunitySnapshot
+        GetOpportunitySnapshot(
+            TownInfo town)
+    {
+        ArgumentNullException.ThrowIfNull(
+            town);
 
         var region =
             ResolveRegion(

@@ -56,10 +56,12 @@ public sealed class CareerPlugin : IGamePlugin
                 gameState,
                 family,
                 random,
+                stats,
                 catalog,
                 localOpportunities);
 
         context.AddService<ICareerService>(career);
+        context.AddService<ICareerMobilityService>(career);
 
         InitializeFromEvents(
             gameState,
@@ -261,6 +263,66 @@ public sealed class CareerPlugin : IGamePlugin
 
                                 ["text"] =
                                     $"{family.GetDisplayName(actor)} quit their job as {current.JobTitle}."
+                            }
+                        });
+
+                    return new GameActionResult(true);
+                }
+            });
+
+        actions.Register(
+            new GameActionDefinition
+            {
+                Id = "career.find_another_job",
+                Label = "Find Another Job",
+                Description =
+                    "Search the current local job market while keeping your present job. " +
+                    "Only a better-paying suitable offer is accepted.",
+                Mode = ActionExecutionMode.Queued,
+                QueuePhase = YearPhase.LifeEvents,
+
+                IsAvailable = actionContext =>
+                {
+                    if (actionContext.Actor.Id != actionContext.Target.Id
+                        || !actionContext.Actor.Tags.Has("state.alive")
+                        || !actionContext.Actor.Tags.Has("control.playable")
+                        || actionContext.Actor.Age < 18)
+                    {
+                        return false;
+                    }
+
+                    var current =
+                        career.GetCareer(
+                            actionContext.Actor);
+
+                    return !current.IsRetired
+                        && current.JobLevel is 1 or 2;
+                },
+
+                Execute = actionContext =>
+                {
+                    var actor = actionContext.Actor;
+                    var result =
+                        career.FindAnotherJob(
+                            actor);
+
+                    if (!result.Success)
+                        return new GameActionResult(false);
+
+                    events.Publish(
+                        new GameEvent
+                        {
+                            Type = result.ChangedCareer
+                                ? "career.changed_job"
+                                : "career.job_search",
+                            Year = actionContext.GameState.Year,
+                            SubjectId = actor.Id,
+                            Data = new Dictionary<string, string>
+                            {
+                                ["suppressChronicle"] = result.ChangedCareer ? "false" : "true",
+                                ["text"] = result.ChangedCareer
+                                    ? $"{family.GetDisplayName(actor)} left {result.PreviousCareerName} for a better-paying position in {result.NewCareerName}."
+                                    : $"{family.GetDisplayName(actor)} looked for a better job but found no worthwhile offer."
                             }
                         });
 

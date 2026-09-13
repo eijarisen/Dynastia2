@@ -19,12 +19,14 @@ public sealed class HouseholdEconomyComponent
 
     public decimal Wealth { get; set; }
 
+    public string ResidenceTownId { get; set; } = string.Empty;
+
     // Retained for backward save compatibility. The Houses collection
     // becomes authoritative once it exists.
     public int HousesOwned { get; set; }
 
-    // Retained for backward save compatibility. This is always derived
-    // as max(0, HousesOwned - 1).
+    // Retained for backward save compatibility. This is derived from the
+    // number of properties that are not the current-town residence.
     public int RentedHouses { get; set; }
 
     public List<HousePropertyState> Houses { get; } = [];

@@ -241,6 +241,13 @@ internal sealed class AutonomousHouseholdDecisionSystem :
         var id =
             actionId.ToLowerInvariant();
 
+        if (id.StartsWith(
+            "household.move.",
+            StringComparison.OrdinalIgnoreCase))
+        {
+            return 0;
+        }
+
         var baseScore =
             id switch
             {
@@ -323,9 +330,7 @@ internal sealed class AutonomousHouseholdDecisionSystem :
                         : 50,
 
                 "household.sell_house" =>
-                    broke
-                        ? 86
-                        : 22,
+                    0,
 
                 "relationship.find_spouse" =>
                     62,
@@ -347,9 +352,21 @@ internal sealed class AutonomousHouseholdDecisionSystem :
                     56,
 
                 "household.buy_house" =>
-                    finance?.Wealth >= 20000m
-                        ? 42
-                        : 10,
+                    0,
+
+                "career.find_another_job" =>
+                    headCareer.JobLevel is 1 or 2
+                        ? headCareer.JobSatisfaction <= 2
+                            ? 72
+                            : 48
+                        : 0,
+
+                "personality.religious_study" =>
+                    head.Tags.Has("morals.evil")
+                        ? 54
+                        : head.Tags.Has("morals.neutral")
+                            ? 42
+                            : 28,
 
                 "relationship.marry_off_daughter" =>
                     44,
@@ -387,8 +404,7 @@ internal sealed class AutonomousHouseholdDecisionSystem :
 
 
         if (broke
-            && (id is "household.sell_house"
-                or "family_support.ask_parents"
+            && (id is "family_support.ask_parents"
                 or "family_support.ask_child"
                 or "career.seek_employment"
                 or "career.help_seek_employment"))

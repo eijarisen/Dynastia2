@@ -3,7 +3,8 @@ using Dynastia.Contracts;
 namespace Dynastia.Mechanics.Career;
 
 public sealed class StandardCareerService :
-    ICareerService
+    ICareerService,
+    ICareerMobilityService
 {
     public const decimal DefaultBaseIncomePerLevel =
         500m;
@@ -11,6 +12,7 @@ public sealed class StandardCareerService :
     private readonly IGameState _gameState;
     private readonly IFamilyService _family;
     private readonly IGameRandom _random;
+    private readonly IStatsService _stats;
     private readonly CareerCatalog _catalog;
     private readonly ILocalCareerOpportunityService
         _localOpportunities;
@@ -19,12 +21,14 @@ public sealed class StandardCareerService :
         IGameState gameState,
         IFamilyService family,
         IGameRandom random,
+        IStatsService stats,
         CareerCatalog catalog,
         ILocalCareerOpportunityService localOpportunities)
     {
         _gameState = gameState;
         _family = family;
         _random = random;
+        _stats = stats;
         _catalog = catalog;
         _localOpportunities =
             localOpportunities;
@@ -290,6 +294,229 @@ public sealed class StandardCareerService :
             true;
     }
 
+    public CareerMobilityResult FindAnotherJob(
+        IPerson person)
+    {
+        var career =
+            GetRequired(
+                person);
+
+        var currentDefinition =
+            ResolveDefinition(
+                person,
+                career);
+
+        if (career.IsRetired
+            || career.JobLevel is < 1 or > 2
+            || currentDefinition is null)
+        {
+            return new CareerMobilityResult(
+                false,
+                false,
+                currentDefinition?.Name,
+                currentDefinition?.Name,
+                career.JobLevel,
+                career.JobLevel,
+                "No alternative-job search was available.");
+        }
+
+        var candidate =
+            SelectCareerForEntry(
+                person);
+
+        var opportunity =
+            CreateEmploymentOpportunityForDefinition(
+                person,
+                candidate);
+
+        var successChance =
+            PersonalityInfluence.AdjustProbability(
+                opportunity.SuccessChance,
+                person,
+                sanguine: 0.10);
+
+        if (_random.NextDouble()
+            >= successChance)
+        {
+            return new CareerMobilityResult(
+                true,
+                false,
+                currentDefinition.Name,
+                currentDefinition.Name,
+                career.JobLevel,
+                career.JobLevel,
+                "No suitable better-paid offer was secured.");
+        }
+
+        var currentSalary =
+            currentDefinition.BaseSalary
+            * career.JobLevel;
+
+        var candidateSalary =
+            candidate.BaseSalary
+            * career.JobLevel;
+
+        if (candidate.Id.Equals(
+                currentDefinition.Id,
+                StringComparison.OrdinalIgnoreCase)
+            || candidateSalary <= currentSalary)
+        {
+            return new CareerMobilityResult(
+                true,
+                false,
+                currentDefinition.Name,
+                currentDefinition.Name,
+                career.JobLevel,
+                career.JobLevel,
+                "No better-paying suitable job was found.");
+        }
+
+        career.CareerId =
+            candidate.Id;
+
+        return new CareerMobilityResult(
+            true,
+            true,
+            currentDefinition.Name,
+            candidate.Name,
+            career.JobLevel,
+            career.JobLevel);
+    }
+
+    public CareerMobilityResult ReestablishCareerAfterMove(
+        IPerson person)
+    {
+        var career =
+            GetRequired(
+                person);
+
+        var previousLevel =
+            career.JobLevel;
+
+        var previousDefinition =
+            ResolveDefinition(
+                person,
+                career);
+
+        if (career.IsRetired
+            || previousLevel <= 0)
+        {
+            return new CareerMobilityResult(
+                true,
+                false,
+                previousDefinition?.Name,
+                previousDefinition?.Name,
+                previousLevel,
+                previousLevel);
+        }
+
+        if (_random.NextDouble() < 0.10)
+        {
+            career.JobLevel = 0;
+            career.CareerId = null;
+            career.JobSatisfaction = 3;
+
+            return new CareerMobilityResult(
+                true,
+                true,
+                previousDefinition?.Name,
+                null,
+                previousLevel,
+                0,
+                "Replacement employment was not found after the move.");
+        }
+
+        CareerDefinition replacement;
+
+        if (previousDefinition is not null
+            && previousDefinition.IsOpenForEntry(
+                _gameState.Year)
+            && IsLocallyAvailable(
+                person,
+                previousDefinition))
+        {
+            replacement =
+                previousDefinition;
+        }
+        else
+        {
+            var previousAptitude =
+                previousDefinition is null
+                    ? (CareerEntryAptitude?)null
+                    : CareerEntryAptitudeClassifier.Get(
+                        previousDefinition);
+
+            replacement =
+                _catalog.SelectForEntry(
+                    _family.GetSex(person),
+                    _gameState.Year,
+                    _random,
+                    candidate =>
+                    {
+                        var location =
+                            _localOpportunities.Evaluate(
+                                person,
+                                candidate.LocationRequirement);
+
+                        if (!location.IsEligible)
+                            return 0;
+
+                        var preference = 1.0;
+
+                        if (previousDefinition is not null
+                            && candidate.RequiredOpportunityTags
+                                .Intersect(
+                                    previousDefinition.RequiredOpportunityTags,
+                                    StringComparer.OrdinalIgnoreCase)
+                                .Any())
+                        {
+                            preference *= 4.0;
+                        }
+                        else if (previousDefinition is not null
+                            && candidate.LocationType
+                                == previousDefinition.LocationType)
+                        {
+                            preference *= 2.5;
+                        }
+
+                        if (previousAptitude is not null
+                            && CareerEntryAptitudeClassifier.Get(candidate)
+                                == previousAptitude)
+                        {
+                            preference *= 2.0;
+                        }
+
+                        return location.WeightMultiplier
+                            * preference;
+                    });
+        }
+
+        var newLevel =
+            _random.NextDouble() < 0.70
+                ? previousLevel
+                : Math.Max(
+                    1,
+                    previousLevel - 1);
+
+        career.CareerId =
+            replacement.Id;
+
+        career.JobLevel =
+            Math.Min(
+                previousLevel,
+                newLevel);
+
+        career.JobSatisfaction = 3;
+
+        return new CareerMobilityResult(
+            true,
+            true,
+            previousDefinition?.Name,
+            replacement.Name,
+            previousLevel,
+            career.JobLevel);
+    }
+
     public decimal GetAnnualIncome(
         IPerson person)
     {
@@ -323,6 +550,16 @@ public sealed class StandardCareerService :
             SelectCareerForEntry(
                 person);
 
+        return CreateEmploymentOpportunityForDefinition(
+            person,
+            definition);
+    }
+
+    private EmploymentOpportunity
+        CreateEmploymentOpportunityForDefinition(
+            IPerson person,
+            CareerDefinition definition)
+    {
         var aptitude =
             CareerEntryAptitudeClassifier.Get(
                 definition);
@@ -332,7 +569,7 @@ public sealed class StandardCareerService :
                 aptitude);
 
         var statValue =
-            stats.GetStats(
+            _stats.GetStats(
                 person)
             .First(
                 stat =>

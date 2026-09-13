@@ -1026,7 +1026,8 @@
                             </StackPanel>
 
                             <ScrollViewer
-                                Grid.Row="2"
+                                Grid.Row="3"
+                                Margin="0,4,0,0"
                                 HorizontalScrollBarVisibility="Disabled"
                                 VerticalScrollBarVisibility="Auto">
 
@@ -1544,6 +1545,257 @@
                         FallbackText="Next Year"
                         Command="{Binding NextYearCommand}" />
                 </Canvas>
+
+                <!-- PROPERTY PURCHASE -->
+                <Grid
+                    IsVisible="{Binding IsPurchaseTownSelectorVisible}"
+                    Background="#B0000000">
+
+                    <Grid
+                        Width="1120"
+                        Height="860"
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Center">
+
+                        <Image
+                            Source="/Assets/UI/instructions_paper.png"
+                            Stretch="Fill" />
+
+                        <Grid
+                            Margin="82,66,82,58"
+                            RowDefinitions="Auto,Auto,*,Auto"
+                            RowSpacing="12">
+
+                            <TextBlock
+                                HorizontalAlignment="Center"
+                                FontFamily="avares://Dynastia.App/Assets/Fonts#UnifrakturCook"
+                                FontSize="42"
+                                Foreground="#301E0E"
+                                Text="Select Town" />
+
+                            <TextBox
+                                Grid.Row="1"
+                                Width="720"
+                                HorizontalAlignment="Center"
+                                VerticalContentAlignment="Center"
+                                Watermark="Search town, county, region or local opportunity"
+                                Text="{Binding PropertyTownSearchText, Mode=TwoWay}" />
+
+                            <ListBox
+                                Grid.Row="2"
+                                ItemsSource="{Binding PropertyTownOptions}"
+                                SelectedItem="{Binding SelectedPurchaseTown, Mode=TwoWay}"
+                                HorizontalContentAlignment="Stretch"
+                                Background="#18FFFFFF"
+                                BorderBrush="#8C6239"
+                                BorderThickness="1"
+                                CornerRadius="3">
+
+                                <ListBox.ItemTemplate>
+                                    <DataTemplate
+                                        x:DataType="contracts:PropertyTownOption">
+
+                                        <Grid
+                                            MinHeight="72"
+                                            Margin="5,3"
+                                            ColumnDefinitions="2.2*,1.3*,1.1*,1.15*"
+                                            ColumnSpacing="12">
+
+                                            <StackPanel Spacing="2">
+                                                <TextBlock
+                                                    FontSize="15"
+                                                    FontWeight="Bold"
+                                                    Foreground="#3B2715"
+                                                    Text="{Binding Town.DisplayName}" />
+                                                <TextBlock
+                                                    FontSize="12"
+                                                    Foreground="#5C422A"
+                                                    Text="{Binding RegionName, StringFormat='Region: {0}'}" />
+                                                <TextBlock
+                                                    FontSize="11.5"
+                                                    Foreground="#6A5037"
+                                                    TextWrapping="Wrap"
+                                                    Text="{Binding OpportunityDescription}" />
+                                            </StackPanel>
+
+                                            <StackPanel
+                                                Grid.Column="1"
+                                                VerticalAlignment="Center"
+                                                Spacing="3">
+                                                <TextBlock
+                                                    FontSize="12.5"
+                                                    Foreground="#4A331E"
+                                                    Text="{Binding Town.Population, StringFormat='Population: {0:N0}'}" />
+                                                <TextBlock
+                                                    FontSize="12.5"
+                                                    Foreground="#4A331E"
+                                                    Text="{Binding SettlementClassLabel, StringFormat='Class: {0}'}" />
+                                            </StackPanel>
+
+                                            <StackPanel
+                                                Grid.Column="2"
+                                                VerticalAlignment="Center"
+                                                Spacing="3">
+                                                <TextBlock
+                                                    FontSize="13"
+                                                    FontWeight="SemiBold"
+                                                    Foreground="#4A331E"
+                                                    Text="{Binding HousePrice, StringFormat='House: {0:N0} zł'}" />
+                                                <TextBlock
+                                                    FontSize="12.5"
+                                                    Foreground="#4A331E"
+                                                    Text="{Binding LivingCostLevel, StringFormat='Living costs: {0}'}" />
+                                            </StackPanel>
+
+                                            <TextBlock
+                                                Grid.Column="3"
+                                                VerticalAlignment="Center"
+                                                FontSize="12"
+                                                Foreground="#5C422A"
+                                                TextWrapping="Wrap"
+                                                Text="{Binding Town.County, StringFormat='County: {0}'}" />
+                                        </Grid>
+                                    </DataTemplate>
+                                </ListBox.ItemTemplate>
+                            </ListBox>
+
+                            <StackPanel
+                                Grid.Row="3"
+                                HorizontalAlignment="Center"
+                                Orientation="Horizontal"
+                                Spacing="16">
+
+                                <ui:ImageStateButton
+                                    Width="172"
+                                    Height="56"
+                                    IdleSource="avares://Dynastia.App/Assets/UI/b_start_idle.png"
+                                    HoverSource="avares://Dynastia.App/Assets/UI/b_start_hover.png"
+                                    FallbackText="Buy"
+                                    Command="{Binding ConfirmHousePurchaseCommand}" />
+
+                                <ui:ImageStateButton
+                                    Width="172"
+                                    Height="56"
+                                    IdleSource="avares://Dynastia.App/Assets/UI/b_close_idle.png"
+                                    HoverSource="avares://Dynastia.App/Assets/UI/b_close_hover.png"
+                                    FallbackText="Cancel"
+                                    Command="{Binding CancelPropertySelectionCommand}" />
+                            </StackPanel>
+                        </Grid>
+                    </Grid>
+                </Grid>
+
+                <!-- PROPERTY SALE -->
+                <Grid
+                    IsVisible="{Binding IsPropertySaleSelectorVisible}"
+                    Background="#B0000000">
+
+                    <Grid
+                        Width="980"
+                        Height="720"
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Center">
+
+                        <Image
+                            Source="/Assets/UI/instructions_paper.png"
+                            Stretch="Fill" />
+
+                        <Grid
+                            Margin="80,68,80,58"
+                            RowDefinitions="Auto,*,Auto"
+                            RowSpacing="16">
+
+                            <TextBlock
+                                HorizontalAlignment="Center"
+                                FontFamily="avares://Dynastia.App/Assets/Fonts#UnifrakturCook"
+                                FontSize="42"
+                                Foreground="#301E0E"
+                                Text="Select Property" />
+
+                            <ListBox
+                                Grid.Row="1"
+                                ItemsSource="{Binding PropertySaleOptions}"
+                                SelectedItem="{Binding SelectedSaleProperty, Mode=TwoWay}"
+                                HorizontalContentAlignment="Stretch"
+                                Background="#18FFFFFF"
+                                BorderBrush="#8C6239"
+                                BorderThickness="1"
+                                CornerRadius="3">
+
+                                <ListBox.ItemTemplate>
+                                    <DataTemplate
+                                        x:DataType="contracts:PropertySaleOption">
+
+                                        <Grid
+                                            MinHeight="70"
+                                            Margin="5,3"
+                                            ColumnDefinitions="2*,1.2*,1.15*,1.15*"
+                                            ColumnSpacing="12">
+
+                                            <StackPanel Spacing="2">
+                                                <TextBlock
+                                                    FontSize="15"
+                                                    FontWeight="Bold"
+                                                    Foreground="#3B2715"
+                                                    Text="{Binding Town.DisplayName}" />
+                                                <TextBlock
+                                                    FontSize="12"
+                                                    Foreground="#5C422A"
+                                                    Text="{Binding RegionName, StringFormat='Region: {0}'}" />
+                                            </StackPanel>
+
+                                            <TextBlock
+                                                Grid.Column="1"
+                                                VerticalAlignment="Center"
+                                                FontSize="13"
+                                                FontWeight="SemiBold"
+                                                Foreground="#4A331E"
+                                                Text="{Binding Status}" />
+
+                                            <TextBlock
+                                                Grid.Column="2"
+                                                VerticalAlignment="Center"
+                                                FontSize="12.5"
+                                                Foreground="#4A331E"
+                                                Text="{Binding CurrentHousePrice, StringFormat='Local value: {0:N0} zł'}" />
+
+                                            <TextBlock
+                                                Grid.Column="3"
+                                                VerticalAlignment="Center"
+                                                FontSize="13"
+                                                FontWeight="Bold"
+                                                Foreground="#4A331E"
+                                                Text="{Binding SaleValue, StringFormat='Sale: {0:N0} zł'}" />
+                                        </Grid>
+                                    </DataTemplate>
+                                </ListBox.ItemTemplate>
+                            </ListBox>
+
+                            <StackPanel
+                                Grid.Row="2"
+                                HorizontalAlignment="Center"
+                                Orientation="Horizontal"
+                                Spacing="16">
+
+                                <ui:ImageStateButton
+                                    Width="172"
+                                    Height="56"
+                                    IdleSource="avares://Dynastia.App/Assets/UI/b_start_idle.png"
+                                    HoverSource="avares://Dynastia.App/Assets/UI/b_start_hover.png"
+                                    FallbackText="Sell"
+                                    Command="{Binding ConfirmHouseSaleCommand}" />
+
+                                <ui:ImageStateButton
+                                    Width="172"
+                                    Height="56"
+                                    IdleSource="avares://Dynastia.App/Assets/UI/b_close_idle.png"
+                                    HoverSource="avares://Dynastia.App/Assets/UI/b_close_hover.png"
+                                    FallbackText="Cancel"
+                                    Command="{Binding CancelPropertySelectionCommand}" />
+                            </StackPanel>
+                        </Grid>
+                    </Grid>
+                </Grid>
 
                 <!-- STATUS MESSAGE -->
                 <Grid

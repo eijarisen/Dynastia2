@@ -8,9 +8,6 @@ public sealed class EconomyYearSystem :
     private const decimal RentalIncomePerHouse =
         250m;
 
-    private const decimal RentExpense =
-        250m;
-
     private const decimal NannyExpense =
         250m;
 
@@ -29,6 +26,7 @@ public sealed class EconomyYearSystem :
     private readonly IIncomeProviderRegistry _income;
     private readonly IGameRandom _random;
     private readonly IGameEventBus _events;
+    private readonly ITownEconomyService _townEconomy;
 
     public EconomyYearSystem(
         StandardEconomyService economy,
@@ -36,7 +34,8 @@ public sealed class EconomyYearSystem :
         IStatsService stats,
         IIncomeProviderRegistry income,
         IGameRandom random,
-        IGameEventBus events)
+        IGameEventBus events,
+        ITownEconomyService townEconomy)
     {
         _economy =
             economy;
@@ -55,6 +54,9 @@ public sealed class EconomyYearSystem :
 
         _events =
             events;
+
+        _townEconomy =
+            townEconomy;
     }
 
     public string Id =>
@@ -144,8 +146,7 @@ public sealed class EconomyYearSystem :
         var rentalHouses =
             Math.Max(
                 0,
-                household.HousesOwned
-                - 1);
+                household.RentedHouses);
 
         var rentalIncome =
             rentalHouses
@@ -213,9 +214,19 @@ public sealed class EconomyYearSystem :
 
         household.LastExpenseBreakdown.Clear();
 
+        var residenceTown =
+            _economy.GetResidenceTown(
+                head)
+            ?? throw new InvalidOperationException(
+                "Household residence town is unavailable.");
+
+        var localEconomy =
+            _townEconomy.GetProfile(
+                residenceTown);
+
         var livingCosts =
             members.Count
-            * _economy.OrdinaryLivingCostUnit;
+            * localEconomy.LivingCostUnit;
 
         if (HasExceptionalIntellect(head))
         {
@@ -239,19 +250,21 @@ public sealed class EconomyYearSystem :
         var expenses =
             livingCosts;
 
-        if (household.HousesOwned == 0)
+        if (!_economy.HasHouseInTown(
+                head,
+                residenceTown.Id))
         {
             expenses +=
-                RentExpense;
+                localEconomy.RentCost;
 
             household.LastExpenseBreakdown.Add(
                 new LedgerLineState
                 {
                     Label =
-                        "rented home",
+                        $"rented home ({residenceTown.Town})",
 
                     Amount =
-                        RentExpense
+                        localEconomy.RentCost
                 });
         }
 

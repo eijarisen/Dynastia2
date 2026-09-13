@@ -100,10 +100,16 @@ public static class EventEmojiMap
                 ["relationship.repair_marriage"] = "❤️‍🩹",
                 ["relationship.prison_divorce"] = "💔",
                 ["career.employment"] = "✅",
+                ["career.changed_job"] = "💼",
+                ["career.relocated"] = "🧳",
                 ["career.family_connections_success"] = "🤝",
                 ["career.family_connections_failure"] = "🚫",
                 ["family_support.parents_success"] = "🙏",
                 ["family_support.parents_failure"] = "🚫",
+                ["family_support.house_received"] = "🏠",
+                ["family_support.house_refused"] = "🚫",
+                ["personality.religious_study_success"] = "🙏",
+                ["personality.religious_study_failure"] = "🕯️",
 
                 // Filled missing family-support event emojis.
                 ["family_support.child_success"] = "🙏",
@@ -127,6 +133,8 @@ public static class EventEmojiMap
 
                 ["household.house_bought"] = "🏠",
                 ["household.house_sold"] = "💵",
+                ["household.house_purchase_failed"] = "🚫",
+                ["household.moved"] = "🧳",
                 ["household.house_rented"] = "🏘️",
                 ["household.house_given"] = "🎁",
 

@@ -35,6 +35,16 @@ public sealed class EconomyPlugin : IGamePlugin
             ?? throw new InvalidOperationException(
                 "Location service is unavailable.");
 
+        var townDirectory =
+            context.GetService<ITownDirectoryService>()
+            ?? throw new InvalidOperationException(
+                "Town directory service is unavailable.");
+
+        var townEconomy =
+            context.GetService<ITownEconomyService>()
+            ?? throw new InvalidOperationException(
+                "Town economy service is unavailable.");
+
         var events =
             context.GetService<IGameEventBus>()
             ?? throw new InvalidOperationException(
@@ -52,7 +62,8 @@ public sealed class EconomyPlugin : IGamePlugin
             new StandardEconomyService(
                 gameState,
                 family,
-                locations);
+                locations,
+                townDirectory);
 
         context.AddService<IIncomeProviderRegistry>(
             incomeRegistry);
@@ -63,6 +74,9 @@ public sealed class EconomyPlugin : IGamePlugin
         context.AddService<IEconomyBalanceService>(
             economy);
 
+        context.AddService<IPropertyEconomyService>(
+            economy);
+
         systems.Register(
             new EconomyYearSystem(
                 economy,
@@ -70,7 +84,8 @@ public sealed class EconomyPlugin : IGamePlugin
                 stats,
                 incomeRegistry,
                 random,
-                events));
+                events,
+                townEconomy));
 
         events.EventPublished +=
             (_, gameEvent) =>

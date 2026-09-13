@@ -40,6 +40,21 @@ internal sealed class MentalHealthYearSystem : IYearSystem
                 else if (person.Tags.Has("child.happiness.unhappy")) stress += 1;
             }
 
+            if (person.Age >= 5)
+            {
+                _events.Publish(new GameEvent
+                {
+                    Type = "health.life_stress_evaluated",
+                    Year = gameState.Year,
+                    SubjectId = person.Id,
+                    Data = new Dictionary<string, string>
+                    {
+                        ["lifeStress"] = stress.ToString(),
+                        ["suppressChronicle"] = "true"
+                    }
+                });
+            }
+
             if (stress <= 0 || person.Age < 5)
                 continue;
 

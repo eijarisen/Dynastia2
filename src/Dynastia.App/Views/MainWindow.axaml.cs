@@ -82,6 +82,7 @@ public partial class MainWindow : Window
         if (viewModel.IsMainMenuPromptVisible
             || viewModel.IsStatusMessageVisible
             || viewModel.IsYearSummaryVisible
+            || viewModel.IsPropertySelectorVisible
             || !viewModel.NextYearCommand.CanExecute(null))
         {
             return;

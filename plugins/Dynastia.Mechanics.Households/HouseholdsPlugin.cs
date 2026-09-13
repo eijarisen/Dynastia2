@@ -4,8 +4,6 @@ namespace Dynastia.Mechanics.Households;
 
 public sealed class HouseholdsPlugin : IGamePlugin
 {
-    private const decimal HousePurchasePrice = 10000m;
-    private const decimal HouseSalePrice = 8000m;
     private const decimal NannyCost = 250m;
 
     private const string FemaleNamesPath =
@@ -87,6 +85,31 @@ public sealed class HouseholdsPlugin : IGamePlugin
             ?? throw new InvalidOperationException(
                 "Game calendar service is unavailable.");
 
+        var propertyEconomy =
+            context.GetService<IPropertyEconomyService>()
+            ?? throw new InvalidOperationException(
+                "Property economy service is unavailable.");
+
+        var townDirectory =
+            context.GetService<ITownDirectoryService>()
+            ?? throw new InvalidOperationException(
+                "Town directory service is unavailable.");
+
+        var townEconomy =
+            context.GetService<ITownEconomyService>()
+            ?? throw new InvalidOperationException(
+                "Town economy service is unavailable.");
+
+        var townOpportunities =
+            context.GetService<ITownCareerOpportunityService>()
+            ?? throw new InvalidOperationException(
+                "Town career opportunity service is unavailable.");
+
+        var careerMobility =
+            context.GetService<ICareerMobilityService>()
+            ?? throw new InvalidOperationException(
+                "Career mobility service is unavailable.");
+
         var households =
             new StandardHouseholdService(
                 gameState,
@@ -97,6 +120,22 @@ public sealed class HouseholdsPlugin : IGamePlugin
 
         context.AddService<IHouseholdService>(
             households);
+
+        var propertyActions =
+            new StandardPropertyActionService(
+                gameState,
+                economy,
+                propertyEconomy,
+                townDirectory,
+                townEconomy,
+                townOpportunities,
+                careerMobility,
+                career,
+                family,
+                events);
+
+        context.AddService<IPropertyActionService>(
+            propertyActions);
 
         systems.Register(
             new HouseholdReconcileYearSystem(
@@ -199,6 +238,8 @@ public sealed class HouseholdsPlugin : IGamePlugin
             actions,
             family,
             economy,
+            propertyActions,
+            townDirectory,
             events);
 
         RegisterNannyActions(
@@ -224,189 +265,78 @@ public sealed class HouseholdsPlugin : IGamePlugin
         IActionRegistry actions,
         IFamilyService family,
         IEconomyService economy,
+        StandardPropertyActionService propertyActions,
+        ITownDirectoryService townDirectory,
         IGameEventBus events)
     {
         actions.Register(
             new GameActionDefinition
             {
-                Id =
-                    "household.buy_house",
-
-                Label =
-                    "Buy a House (10,000 zł)",
-
+                Id = "household.buy_house",
+                Label = "Buy a House",
                 Description =
-                    "Purchase one house immediately. If this is the " +
-                    "household's first owned house, it becomes the residence. " +
-                    "Every additional house is rented automatically.",
+                    "Choose a town and queue a property purchase. The local house price is charged next year when the action resolves. Buying elsewhere does not move the household.",
+                Mode = ActionExecutionMode.Queued,
+                QueuePhase = YearPhase.QueuedActionsEarly,
+                IsAvailable = actionContext =>
+                {
+                    if (!CanActOnSelf(actionContext))
+                        return false;
 
-                Mode =
-                    ActionExecutionMode.Immediate,
-
-                IsAvailable =
-                    actionContext =>
-                    {
-                        if (!CanActOnSelf(
-                            actionContext))
-                        {
-                            return false;
-                        }
-
-                        var household =
-                            economy.GetHousehold(
-                                actionContext.Actor);
-
-                        return household is not null
-                            && household.Wealth
-                                >= HousePurchasePrice;
-                    },
-
-                Execute =
-                    actionContext =>
-                    {
-                        var actor =
-                            actionContext.Actor;
-
-                        var household =
-                            economy.GetHousehold(
-                                actor);
-
-                        if (household is null
-                            || household.Wealth
-                                < HousePurchasePrice)
-                        {
-                            return new GameActionResult(
-                                false);
-                        }
-
-                        economy.ChangeWealth(
-                            actor,
-                            -HousePurchasePrice);
-
-                        var house =
-                            economy.AddHouse(
-                                actor);
-
-                        events.Publish(
-                            new GameEvent
-                            {
-                                Type =
-                                    "household.house_bought",
-
-                                Year =
-                                    actionContext.GameState.Year,
-
-                                SubjectId =
-                                    actor.Id,
-
-                                Data =
-                                    new Dictionary<string, string>
-                                    {
-                                        ["amount"] =
-                                            HousePurchasePrice.ToString(),
-
-                                        ["town"] =
-                                            house.Town.Town,
-
-                                        ["text"] =
-                                            $"{family.GetDisplayName(actor)} " +
-                                            $"bought a house in " +
-                                            $"{house.Town.Town} for " +
-                                            $"{HousePurchasePrice:N0} zł."
-                                    }
-                            });
-
-                        return new GameActionResult(
-                            true);
-                    }
+                    var household = economy.GetHousehold(actionContext.Actor);
+                    return household is not null
+                        && propertyActions.GetPurchaseOptions(actionContext.Actor)
+                            .Any(option => option.HousePrice <= household.Wealth);
+                },
+                Execute = actionContext =>
+                    propertyActions.ExecutePreparedPurchase(
+                        actionContext.Actor,
+                        actionContext.GameState.Year)
             });
 
         actions.Register(
             new GameActionDefinition
             {
-                Id =
-                    "household.sell_house",
-
-                Label =
-                    "Sell a House (8,000 zł)",
-
+                Id = "household.sell_house",
+                Label = "Sell a House",
                 Description =
-                    "Sell one rented investment house immediately for " +
-                    "8,000 zł. The household's residence cannot be sold.",
-
-                Mode =
-                    ActionExecutionMode.Immediate,
-
-                IsAvailable =
-                    actionContext =>
-                    {
-                        if (!CanActOnSelf(
-                            actionContext))
-                        {
-                            return false;
-                        }
-
-                        var household =
-                            economy.GetHousehold(
-                                actionContext.Actor);
-
-                        return household is not null
-                            && household.HousesOwned > 1;
-                    },
-
-                Execute =
-                    actionContext =>
-                    {
-                        var actor =
-                            actionContext.Actor;
-
-                        var sold =
-                            economy.TakeAdditionalHouse(
-                                actor);
-
-                        if (sold is null)
-                        {
-                            return new GameActionResult(
-                                false);
-                        }
-
-                        economy.ChangeWealth(
-                            actor,
-                            HouseSalePrice);
-
-                        events.Publish(
-                            new GameEvent
-                            {
-                                Type =
-                                    "household.house_sold",
-
-                                Year =
-                                    actionContext.GameState.Year,
-
-                                SubjectId =
-                                    actor.Id,
-
-                                Data =
-                                    new Dictionary<string, string>
-                                    {
-                                        ["amount"] =
-                                            HouseSalePrice.ToString(),
-
-                                        ["town"] =
-                                            sold.Town.Town,
-
-                                        ["text"] =
-                                            $"{family.GetDisplayName(actor)} " +
-                                            $"sold the house in " +
-                                            $"{sold.Town.Town} for " +
-                                            $"{HouseSalePrice:N0} zł."
-                                    }
-                            });
-
-                        return new GameActionResult(
-                            true);
-                    }
+                    "Choose one owned property to sell next year. Sale value is 80% of the property's current local house price. Selling the residence makes the household rent locally unless another local property can become the residence.",
+                Mode = ActionExecutionMode.Queued,
+                QueuePhase = YearPhase.QueuedActionsEarly,
+                IsAvailable = actionContext =>
+                    CanActOnSelf(actionContext)
+                    && economy.GetHouses(actionContext.Actor).Count > 0,
+                Execute = actionContext =>
+                    propertyActions.ExecutePreparedSale(
+                        actionContext.Actor,
+                        actionContext.GameState.Year)
             });
+
+        foreach (var town in townDirectory.GetAllTowns())
+        {
+            var destination = town;
+
+            actions.Register(
+                new GameActionDefinition
+                {
+                    Id = $"household.move.{destination.Id}",
+                    Label = $"Move to {destination.Town}",
+                    Description =
+                        $"Move the household to its owned property in {destination.DisplayName}. Current jobs end and employed household members try to establish replacement careers in the destination labour market.",
+                    Mode = ActionExecutionMode.Queued,
+                    QueuePhase = YearPhase.QueuedActionsEarly,
+                    IsAvailable = actionContext =>
+                        CanActOnSelf(actionContext)
+                        && propertyActions.CanMoveTo(
+                            actionContext.Actor,
+                            destination.Id),
+                    Execute = actionContext =>
+                        propertyActions.MoveHousehold(
+                            actionContext.Actor,
+                            destination.Id,
+                            actionContext.GameState.Year)
+                });
+        }
 
         actions.Register(
             new GameActionDefinition
@@ -463,7 +393,8 @@ public sealed class HouseholdsPlugin : IGamePlugin
                                 actor);
 
                         return household is not null
-                            && household.HousesOwned > 1;
+                            && household.Houses.Any(
+                                house => house.IsRented);
                     },
 
                 Execute =

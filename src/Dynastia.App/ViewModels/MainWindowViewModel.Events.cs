@@ -103,6 +103,9 @@ public sealed partial class MainWindowViewModel
             nameof(ActiveHouseholdText));
 
         OnPropertyChanged(
+            nameof(HasFamilyRelations));
+
+        OnPropertyChanged(
             nameof(SelectedPersonEmoji));
 
         RefreshFamilySection();
@@ -124,6 +127,9 @@ public sealed partial class MainWindowViewModel
 
         OnPropertyChanged(
             nameof(ActiveHouseholdText));
+
+        OnPropertyChanged(
+            nameof(HasFamilyRelations));
 
         OnPropertyChanged(
             nameof(SelectedPersonEmoji));

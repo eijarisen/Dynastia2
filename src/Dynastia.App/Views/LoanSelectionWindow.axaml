@@ -6,7 +6,7 @@
     Height="610"
     CanResize="False"
     ShowInTaskbar="False"
-    SystemDecorations="None"
+    WindowDecorations="None"
     TransparencyLevelHint="Transparent"
     WindowStartupLocation="CenterOwner"
     Background="#00000000"
@@ -96,6 +96,7 @@
                             Foreground="#745A38"
                             Text="1,000 zł" />
                         <TextBlock
+                            x:Name="AmountMaximumText"
                             Grid.Column="2"
                             FontFamily="Georgia"
                             FontSize="11"

@@ -22,7 +22,7 @@ internal static class ActionPresentationPolicy
             StringComparison.OrdinalIgnoreCase))
         {
             categories.Add(
-                ActionCategory.Skills);
+                ActionCategory.Personal);
 
             return categories;
         }
@@ -48,7 +48,6 @@ internal static class ActionPresentationPolicy
             categories.UnionWith(
                 new[]
                 {
-                    ActionCategory.Personal,
                     ActionCategory.Career,
                     ActionCategory.Finances
                 });
@@ -80,9 +79,6 @@ internal static class ActionPresentationPolicy
                 ActionCategory.Personal);
 
             if (actionId.Equals(
-                    "wellbeing.heal_relative",
-                    StringComparison.OrdinalIgnoreCase)
-                || actionId.Equals(
                     "wellbeing.therapy",
                     StringComparison.OrdinalIgnoreCase))
             {

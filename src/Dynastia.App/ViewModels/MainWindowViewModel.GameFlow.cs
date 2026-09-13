@@ -425,6 +425,9 @@ public sealed partial class MainWindowViewModel
             nameof(IsDeceasedFamilyView));
 
         OnPropertyChanged(
+            nameof(HasFamilyRelations));
+
+        OnPropertyChanged(
             nameof(ActionsEmptyText));
     }
 

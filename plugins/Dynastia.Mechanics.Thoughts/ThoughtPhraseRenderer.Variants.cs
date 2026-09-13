@@ -102,6 +102,51 @@ internal sealed partial class ThoughtPhraseRenderer
                         ]
                 },
 
+            "family_relation.close" =>
+                voice switch
+                {
+                    ThoughtVoice.Child =>
+                        [$"I really like being with my {relation}.", $"My {relation} and I get along really well."],
+                    ThoughtVoice.Adolescent =>
+                        [$"My {relation} and I have always been close.", $"I can usually count on my {relation}."],
+                    ThoughtVoice.AdultRough =>
+                        [$"Me and my {relation} are close.", $"I can count on my {relation}."],
+                    ThoughtVoice.AdultElaborate =>
+                        [$"My {relation} and I have maintained a genuinely close bond.", $"I value how dependable my relationship with my {relation} has become."],
+                    _ =>
+                        [$"My {relation} and I have always been close.", $"I'm glad my {relation} and I can rely on each other."]
+                },
+
+            "family_relation.strained" =>
+                voice switch
+                {
+                    ThoughtVoice.Child =>
+                        [$"I don't really get along with my {relation}.", $"Things feel bad between me and my {relation}."],
+                    ThoughtVoice.Adolescent =>
+                        [$"My {relation} and I never seem to get along.", $"Things are still tense with my {relation}."],
+                    ThoughtVoice.AdultRough =>
+                        [$"Me and my {relation} don't get along.", $"Still can't stand dealing with my {relation}."],
+                    ThoughtVoice.AdultElaborate =>
+                        [$"My relationship with my {relation} remains painfully strained.", $"There is still too much hostility between my {relation} and me."],
+                    _ =>
+                        [$"My {relation} and I never seem to get along.", $"Things are still strained between me and my {relation}."]
+                },
+
+            "family_relation.improved" =>
+                voice switch
+                {
+                    ThoughtVoice.Child =>
+                        [$"It was nice spending time with my {relation} again."],
+                    ThoughtVoice.Adolescent =>
+                        [$"It was actually good spending time with my {relation} again."],
+                    ThoughtVoice.AdultRough =>
+                        [$"Good to spend some time with my {relation} again."],
+                    ThoughtVoice.AdultElaborate =>
+                        [$"It was genuinely good to spend time with my {relation} again and mend things a little."],
+                    _ =>
+                        [$"It was good spending time with my {relation} again."]
+                },
+
             "family.loss.current" =>
                 voice switch
                 {

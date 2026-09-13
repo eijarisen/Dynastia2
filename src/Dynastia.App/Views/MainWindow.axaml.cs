@@ -21,6 +21,7 @@ public partial class MainWindow : Window
 
     private bool _persistenceDialogOpen;
     private bool _genealogyDialogOpen;
+    private bool _familyRelationsDialogOpen;
     private bool _instructionsDialogOpen;
     private bool _actionSelectionDialogOpen;
     private MainWindowViewModel? _subscribedViewModel;
@@ -84,6 +85,38 @@ public partial class MainWindow : Window
         try
         {
             if (e.ActionId.Equals(
+                    "ui.self_improvement",
+                    StringComparison.OrdinalIgnoreCase))
+            {
+                var selfImprovementOptions =
+                    viewModel.GetSelfImprovementOptions();
+
+                if (!selfImprovementOptions.Any(option => option.IsAvailable))
+                {
+                    viewModel.ReportPersistenceStatus(
+                        "No self-improvement option is currently available.");
+                    return;
+                }
+
+                var selfImprovementWindow =
+                    new SelfImprovementWindow(
+                        viewModel.GetSelfImprovementTargetName(),
+                        selfImprovementOptions);
+
+                var selectedActionId =
+                    await selfImprovementWindow
+                        .ShowDialog<string?>(this);
+
+                if (!string.IsNullOrWhiteSpace(selectedActionId))
+                {
+                    viewModel.QueueSelfImprovementAction(
+                        selectedActionId);
+                }
+
+                return;
+            }
+
+            if (e.ActionId.Equals(
                     "loan.take",
                     StringComparison.OrdinalIgnoreCase)
                 || e.ActionId.Equals(
@@ -98,7 +131,8 @@ public partial class MainWindow : Window
                 var loanWindow =
                     new LoanSelectionWindow(
                         isGivingLoan,
-                        viewModel.GetLoanTerms);
+                        viewModel.GetLoanTerms,
+                        viewModel.GetMaximumLoanPrincipal(e.ActionId));
 
                 var selection =
                     await loanWindow.ShowDialog<LoanSelectionResult?>(this);
@@ -162,6 +196,7 @@ public partial class MainWindow : Window
     {
         if (_persistenceDialogOpen
             || _genealogyDialogOpen
+            || _familyRelationsDialogOpen
             || _instructionsDialogOpen
             || _actionSelectionDialogOpen)
         {
@@ -419,6 +454,38 @@ public partial class MainWindow : Window
         }
     }
 
+
+    private async void OnRelationsClick(
+        object? sender,
+        RoutedEventArgs e)
+    {
+        if (_familyRelationsDialogOpen
+            || DataContext is not MainWindowViewModel viewModel
+            || !viewModel.HasFamilyRelations)
+        {
+            return;
+        }
+
+        _familyRelationsDialogOpen = true;
+        SetPaperDialogBackdrop(true);
+
+        try
+        {
+            var window = new FamilyRelationsWindow(viewModel);
+            await window.ShowDialog(this);
+        }
+        catch (Exception exception)
+        {
+            Console.Error.WriteLine(exception);
+            viewModel.ReportPersistenceStatus(
+                $"Family Relations failed: {exception.Message}");
+        }
+        finally
+        {
+            SetPaperDialogBackdrop(false);
+            _familyRelationsDialogOpen = false;
+        }
+    }
 
     private async void OnViewTreeClick(
         object? sender,

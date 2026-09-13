@@ -730,7 +730,7 @@
                             RowSpacing="8">
 
                             <Grid
-                                ColumnDefinitions="Auto,Auto,*,Auto,Auto,Auto"
+                                ColumnDefinitions="Auto,Auto,Auto,*,Auto,Auto,Auto"
                                 ColumnSpacing="7">
 
                                 <TextBlock
@@ -773,7 +773,39 @@
                                 </Button>
 
                                 <Button
-                                    Grid.Column="3"
+                                    Grid.Column="2"
+                                    Margin="0,7,8,0"
+                                    Padding="12,6"
+                                    MinWidth="82"
+                                    FontSize="10.5"
+                                    Classes="gameAction"
+                                    IsVisible="{Binding HasFamilyRelations}"
+                                    Click="OnRelationsClick">
+
+                                    <ToolTip.Tip>
+                                        <Border
+                                            MaxWidth="390"
+                                            Padding="10,7"
+                                            Background="#F20A1514"
+                                            BorderBrush="#B88934"
+                                            BorderThickness="1"
+                                            CornerRadius="4">
+                                            <TextBlock
+                                                FontSize="10.5"
+                                                LineHeight="17"
+                                                Foreground="#F5E6C6"
+                                                TextWrapping="Wrap"
+                                                Text="Open persistent relationships with parents, siblings, adult children and former spouses." />
+                                        </Border>
+                                    </ToolTip.Tip>
+
+                                    <TextBlock
+                                        Foreground="#F8E9C8"
+                                        Text="Relations" />
+                                </Button>
+
+                                <Button
+                                    Grid.Column="4"
                                     Margin="0,8,5,0"
                                     Classes="familyToggle"
                                     Classes.active="{Binding IsLineageFamilyView}"
@@ -785,7 +817,7 @@
                                 </Button>
 
                                 <Button
-                                    Grid.Column="4"
+                                    Grid.Column="5"
                                     Margin="0,8,5,0"
                                     Classes="familyToggle"
                                     Classes.active="{Binding IsBloodlineFamilyView}"
@@ -797,7 +829,7 @@
                                 </Button>
 
                                 <Button
-                                    Grid.Column="5"
+                                    Grid.Column="6"
                                     Margin="0,8,18,0"
                                     Classes="familyToggle"
                                     Classes.active="{Binding IsDeceasedFamilyView}"
@@ -1024,16 +1056,6 @@
                                     </ToolTip.Tip>
                                 </TextBlock>
 
-                                <TextBlock
-                                    MaxWidth="650"
-                                    HorizontalAlignment="Center"
-                                    IsVisible="{Binding HasHouseholdLoans}"
-                                    FontSize="10.5"
-                                    LineHeight="15"
-                                    Foreground="#DCCBA7"
-                                    TextAlignment="Center"
-                                    TextWrapping="Wrap"
-                                    Text="{Binding HouseholdLoansText}" />
                             </StackPanel>
 
                             <ScrollViewer

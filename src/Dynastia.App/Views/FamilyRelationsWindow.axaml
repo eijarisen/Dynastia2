@@ -1,0 +1,177 @@
+<Window
+    xmlns="https://github.com/avaloniaui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:vm="using:Dynastia.App.ViewModels"
+    x:Class="Dynastia.App.Views.FamilyRelationsWindow"
+    x:DataType="vm:FamilyRelationsWindowViewModel"
+    Width="1100"
+    Height="840"
+    MinWidth="920"
+    MinHeight="700"
+    CanResize="False"
+    ShowInTaskbar="False"
+    WindowDecorations="None"
+    TransparencyLevelHint="Transparent"
+    WindowStartupLocation="CenterOwner"
+    Background="#00000000"
+    Title="Family Relations">
+
+    <Window.Styles>
+        <Style Selector="Button.relationAction">
+            <Setter Property="Padding" Value="12,7" />
+            <Setter Property="MinWidth" Value="112" />
+            <Setter Property="Background" Value="#E6D2AA" />
+            <Setter Property="Foreground" Value="#3A2413" />
+            <Setter Property="BorderBrush" Value="#93662F" />
+            <Setter Property="BorderThickness" Value="1.3" />
+            <Setter Property="FontFamily" Value="Georgia" />
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="FontWeight" Value="Bold" />
+        </Style>
+        <Style Selector="Button.relationAction:pointerover">
+            <Setter Property="Background" Value="#D4AF73" />
+        </Style>
+        <Style Selector="Button.closePaper">
+            <Setter Property="Padding" Value="20,9" />
+            <Setter Property="MinWidth" Value="120" />
+            <Setter Property="Background" Value="#E8D5AF" />
+            <Setter Property="Foreground" Value="#3F2714" />
+            <Setter Property="BorderBrush" Value="#9D6F35" />
+            <Setter Property="BorderThickness" Value="1.5" />
+            <Setter Property="FontFamily" Value="Georgia" />
+            <Setter Property="FontSize" Value="15" />
+            <Setter Property="FontWeight" Value="Bold" />
+        </Style>
+        <Style Selector="Button.closePaper:pointerover">
+            <Setter Property="Background" Value="#D4B178" />
+        </Style>
+    </Window.Styles>
+
+    <Grid>
+        <Image Source="/Assets/UI/instructions_paper.png" Stretch="Fill" />
+
+        <Grid Margin="80,72,80,58" RowDefinitions="Auto,Auto,*,Auto" RowSpacing="12">
+            <TextBlock
+                HorizontalAlignment="Center"
+                FontFamily="avares://Dynastia.App/Assets/Fonts#UnifrakturCook"
+                FontSize="42"
+                Foreground="#2F1D0E"
+                Text="Family Relations" />
+
+            <TextBlock
+                Grid.Row="1"
+                HorizontalAlignment="Center"
+                FontFamily="Georgia"
+                FontSize="14"
+                Foreground="#5B4024"
+                Text="Close relatives living beyond the active household. Relationship history persists across generations." />
+
+            <Border
+                Grid.Row="2"
+                Padding="8"
+                Background="#0FFFFFFF"
+                BorderBrush="#8F6A34"
+                BorderThickness="1.5"
+                CornerRadius="6">
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <ItemsControl ItemsSource="{Binding Households}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate x:DataType="vm:FamilyRelationHouseholdViewModel">
+                                <Border
+                                    Margin="6,5"
+                                    Padding="16,13"
+                                    Background="#35FFF4D9"
+                                    BorderBrush="#A17A43"
+                                    BorderThickness="1"
+                                    CornerRadius="4">
+                                    <Grid RowDefinitions="Auto,Auto,Auto,Auto,Auto" RowSpacing="5">
+                                        <TextBlock
+                                            FontFamily="Georgia"
+                                            FontSize="18"
+                                            FontWeight="Bold"
+                                            Foreground="#352110"
+                                            Text="{Binding HouseholdTitle}" />
+                                        <TextBlock
+                                            Grid.Row="1"
+                                            FontFamily="Georgia"
+                                            FontSize="13"
+                                            LineHeight="19"
+                                            Foreground="#46321C"
+                                            TextWrapping="Wrap"
+                                            Text="{Binding RelativesText}" />
+                                        <StackPanel Grid.Row="2" Orientation="Horizontal" Spacing="18">
+                                            <TextBlock
+                                                FontFamily="Georgia"
+                                                FontSize="13"
+                                                FontWeight="Bold"
+                                                Foreground="#5A3A18"
+                                                Text="{Binding RelationshipText}" />
+                                            <TextBlock
+                                                FontFamily="Georgia"
+                                                FontSize="13"
+                                                Foreground="#5A3A18"
+                                                Text="{Binding WealthText}" />
+                                            <TextBlock
+                                                FontFamily="Georgia"
+                                                FontSize="13"
+                                                Foreground="#5A3A18"
+                                                Text="{Binding LocationText}" />
+                                        </StackPanel>
+                                        <ItemsControl Grid.Row="4" Margin="0,7,0,0" ItemsSource="{Binding Actions}">
+                                            <ItemsControl.ItemsPanel>
+                                                <ItemsPanelTemplate>
+                                                    <WrapPanel Orientation="Horizontal" />
+                                                </ItemsPanelTemplate>
+                                            </ItemsControl.ItemsPanel>
+                                            <ItemsControl.ItemTemplate>
+                                                <DataTemplate x:DataType="vm:FamilyRelationActionViewModel">
+                                                    <Button
+                                                        Margin="0,0,8,7"
+                                                        Classes="relationAction"
+                                                        Content="{Binding Label}"
+                                                        Click="OnActionClick">
+                                                        <ToolTip.Tip>
+                                                            <Border
+                                                                MaxWidth="390"
+                                                                Padding="9,7"
+                                                                Background="#F20A1514"
+                                                                BorderBrush="#B88934"
+                                                                BorderThickness="1"
+                                                                CornerRadius="4">
+                                                                <TextBlock
+                                                                    FontSize="10.5"
+                                                                    LineHeight="17"
+                                                                    Foreground="#F5E6C6"
+                                                                    TextWrapping="Wrap"
+                                                                    Text="{Binding Description}" />
+                                                            </Border>
+                                                        </ToolTip.Tip>
+                                                    </Button>
+                                                </DataTemplate>
+                                            </ItemsControl.ItemTemplate>
+                                        </ItemsControl>
+                                    </Grid>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </ScrollViewer>
+            </Border>
+
+            <Grid Grid.Row="3" ColumnDefinitions="*,Auto" Margin="4,0">
+                <TextBlock
+                    VerticalAlignment="Center"
+                    IsVisible="{Binding HasStatus}"
+                    FontFamily="Georgia"
+                    FontSize="12"
+                    Foreground="#6B4521"
+                    Text="{Binding StatusText}" />
+                <Button
+                    Grid.Column="1"
+                    Classes="closePaper"
+                    Content="Close"
+                    Click="OnCloseClick" />
+            </Grid>
+        </Grid>
+    </Grid>
+</Window>

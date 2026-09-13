@@ -12,6 +12,11 @@ public interface IActionRegistry
         IPerson actor,
         IPerson target);
 
+    IReadOnlyList<GameActionDefinition> GetAvailableActions(
+        IPerson actor,
+        IPerson target,
+        IReadOnlyDictionary<string, string>? parameters);
+
     IReadOnlyList<GameActionDefinition>
         GetMechanicallyAvailableActions(
             IPerson actor,

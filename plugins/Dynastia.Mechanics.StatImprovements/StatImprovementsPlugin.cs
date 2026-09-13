@@ -18,7 +18,7 @@ public sealed class StatImprovementsPlugin :
                 Label:
                     "Gym Membership",
                 Cost:
-                    12000m,
+                    10000m,
                 Description:
                     "Fund an intensive long-term fitness program, coaching, equipment and diet. Guaranteed Strength +1. The improvement is acquired rather than hereditary.",
                 Narrative:
@@ -34,7 +34,7 @@ public sealed class StatImprovementsPlugin :
                 Label:
                     "Intelligence Training",
                 Cost:
-                    12500m,
+                    10000m,
                 Description:
                     "Fund intensive intelligence training, private instruction and demanding mental exercises. Guaranteed Intellect +1. Education level is unchanged.",
                 Narrative:
@@ -50,7 +50,7 @@ public sealed class StatImprovementsPlugin :
                 Label:
                     "Immune Therapy",
                 Cost:
-                    13000m,
+                    10000m,
                 Description:
                     "Fund an extensive specialist medical program intended to strengthen resistance to illness. Guaranteed Immunity +1.",
                 Narrative:
@@ -66,7 +66,7 @@ public sealed class StatImprovementsPlugin :
                 Label:
                     "Plastic Surgery",
                 Cost:
-                    13500m,
+                    10000m,
                 Description:
                     "Pay for substantial cosmetic surgery. Guaranteed Appeal +1. The acquired improvement affects future relationship calculations but is not inherited.",
                 Narrative:
@@ -82,7 +82,7 @@ public sealed class StatImprovementsPlugin :
                 Label:
                     "Preventive Medicine",
                 Cost:
-                    14000m,
+                    10000m,
                 Description:
                     "Fund prolonged preventive medicine, specialist monitoring, rehabilitation and risk-factor treatment. Guaranteed Longevity +1.",
                 Narrative:
@@ -98,7 +98,7 @@ public sealed class StatImprovementsPlugin :
                 Label:
                     "Fertility Treatment",
                 Cost:
-                    15000m,
+                    10000m,
                 Description:
                     "Pay for specialist fertility diagnosis and treatment. Guaranteed Fertility +1, including Fertility 0 → 1. Hereditary Fertility is unchanged.",
                 Narrative:
@@ -175,10 +175,11 @@ public sealed class StatImprovementsPlugin :
             Description =
                 definition.Description,
 
-            // These purchases are deliberately immediate. They do not
-            // occupy the actor's one queued annual action slot.
             Mode =
-                ActionExecutionMode.Immediate,
+                ActionExecutionMode.Queued,
+
+            QueuePhase =
+                YearPhase.QueuedActionsEarly,
 
             IsAvailable =
                 actionContext =>
@@ -228,10 +229,6 @@ public sealed class StatImprovementsPlugin :
                     economy.ChangeWealth(
                         actor,
                         -definition.Cost);
-
-                    MarkUsedThisYear(
-                        target,
-                        actionContext.GameState.Year);
 
                     var after =
                         GetEffectiveStat(
@@ -374,13 +371,6 @@ public sealed class StatImprovementsPlugin :
         if (finance is null
             || finance.Wealth
                 < definition.Cost)
-        {
-            return false;
-        }
-
-        if (WasUsedThisYear(
-            target,
-            actionContext.GameState.Year))
         {
             return false;
         }

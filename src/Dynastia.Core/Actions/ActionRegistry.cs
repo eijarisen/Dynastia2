@@ -71,6 +71,15 @@ public sealed class ActionRegistry : IActionRegistry
             IPerson actor,
             IPerson target)
     {
+        return GetAvailableActions(actor, target, null);
+    }
+
+    public IReadOnlyList<GameActionDefinition>
+        GetAvailableActions(
+            IPerson actor,
+            IPerson target,
+            IReadOnlyDictionary<string, string>? parameters)
+    {
         var guardResult =
             _guards.Evaluate(
                 actor);
@@ -86,7 +95,8 @@ public sealed class ActionRegistry : IActionRegistry
         var context =
             CreateContext(
                 actor,
-                target);
+                target,
+                parameters);
 
         return GetActionCandidates(actor, target)
             .Where(

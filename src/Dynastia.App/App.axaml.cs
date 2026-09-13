@@ -89,6 +89,12 @@ public partial class App : Application
                     YearPhase.MoralsReflection,
                     "actions.queued.morals_reflection"));
 
+            registry.Register(
+                new QueuedActionYearSystem(
+                    actionRegistry,
+                    YearPhase.FamilyRelationActions,
+                    "actions.queued.family_relations"));
+
             var pluginContext =
                 new GamePluginContext();
 
@@ -179,6 +185,10 @@ public partial class App : Application
                 pluginContext.GetService<
                     IMarriageSatisfactionService>();
 
+            var familyRelationService =
+                pluginContext.GetService<
+                    IFamilyRelationService>();
+
             var thoughtService =
                 pluginContext.GetService<
                     IThoughtService>();
@@ -261,6 +271,7 @@ public partial class App : Application
                             locationService,
                             localCareerOpportunityService,
                             marriageSatisfactionService,
+                            familyRelationService,
                             thoughtService,
                             personalityService,
                             childHappinessService,

@@ -56,6 +56,9 @@ public sealed partial class MainWindowViewModel
             }
             else
             {
+                var selfImprovementAdded =
+                    false;
+
                 foreach (var action in
                     ActionPresentationPolicy.Order(
                         _actionRegistry
@@ -65,6 +68,30 @@ public sealed partial class MainWindowViewModel
                 {
                     var actionId =
                         action.Id;
+
+                    if (IsStatImprovementAction(actionId))
+                    {
+                        if (!selfImprovementAdded)
+                        {
+                            selfImprovementAdded = true;
+
+                            var selfImprovement =
+                                CreateSelfImprovementPresentationAction();
+
+                            _allAvailableActions.Add(
+                                new AvailableActionViewModel(
+                                    selfImprovement,
+                                    new HashSet<ActionCategory>
+                                    {
+                                        ActionCategory.Personal
+                                    },
+                                    () =>
+                                        ExecuteAction(
+                                            SelfImprovementUiActionId)));
+                        }
+
+                        continue;
+                    }
 
                     var categories =
                         ActionPresentationPolicy.GetCategories(
@@ -201,6 +228,9 @@ public sealed partial class MainWindowViewModel
         }
 
         if (actionId.Equals(
+                SelfImprovementUiActionId,
+                StringComparison.OrdinalIgnoreCase)
+            || actionId.Equals(
                 "household.buy_house",
                 StringComparison.OrdinalIgnoreCase)
             || actionId.Equals(
@@ -349,6 +379,34 @@ public sealed partial class MainWindowViewModel
         RefreshJustice();
         RefreshNarrative();
         RefreshActions();
+    }
+
+    public decimal GetMaximumLoanPrincipal(
+        string actionId)
+    {
+        if (!actionId.Equals(
+                "loan.give",
+                StringComparison.OrdinalIgnoreCase))
+        {
+            return 10000m;
+        }
+
+        var actor =
+            _succession.ActiveController;
+
+        var wealth =
+            actor is null
+                ? 0m
+                : _economyService?.GetHousehold(actor)?.Wealth
+                    ?? 0m;
+
+        var wholeThousands =
+            Math.Floor(wealth / 1000m) * 1000m;
+
+        return Math.Clamp(
+            wholeThousands,
+            0m,
+            10000m);
     }
 
     public LoanTermsInfo? GetLoanTerms(

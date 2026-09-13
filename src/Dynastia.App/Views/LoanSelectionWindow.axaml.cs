@@ -16,13 +16,15 @@ public partial class LoanSelectionWindow :
     public LoanSelectionWindow()
         : this(
             false,
-            (_, _) => null)
+            (_, _) => null,
+            10000m)
     {
     }
 
     public LoanSelectionWindow(
         bool isGivingLoan,
-        Func<decimal, int, LoanTermsInfo?> calculateTerms)
+        Func<decimal, int, LoanTermsInfo?> calculateTerms,
+        decimal maximumPrincipal)
     {
         InitializeComponent();
 
@@ -44,6 +46,21 @@ public partial class LoanSelectionWindow :
             isGivingLoan
                 ? "Give Loan"
                 : "Take Loan";
+
+        var maximumWholeThousands =
+            Math.Clamp(
+                Math.Floor(maximumPrincipal / 1000m),
+                1m,
+                10m);
+
+        AmountSlider.Maximum =
+            (double)maximumWholeThousands;
+
+        AmountMaximumText.Text =
+            $"{maximumWholeThousands * 1000m:N0} zł";
+
+        if (AmountSlider.Value > AmountSlider.Maximum)
+            AmountSlider.Value = AmountSlider.Maximum;
 
         RefreshTerms();
     }

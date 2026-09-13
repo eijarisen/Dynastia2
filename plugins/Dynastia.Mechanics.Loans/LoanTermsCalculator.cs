@@ -36,8 +36,8 @@ public static class LoanTermsCalculator
             / (MaximumDurationYears - MinimumDurationYears);
 
         var totalInterestRate =
-            0.10m
-            + (0.90m * progress);
+            0.05m
+            + (0.45m * progress);
 
         // Loan money is expressed in whole zł. Scheduled payments and the
         // final rounding remainder must therefore never introduce grosze.

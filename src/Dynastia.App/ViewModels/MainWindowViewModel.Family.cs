@@ -284,11 +284,6 @@ public sealed partial class MainWindowViewModel
         OnPropertyChanged(
             nameof(HouseholdHousesDetailsText));
 
-        OnPropertyChanged(
-            nameof(HasHouseholdLoans));
-
-        OnPropertyChanged(
-            nameof(HouseholdLoansText));
 
         OnPropertyChanged(
             nameof(HouseholdIncomeText));

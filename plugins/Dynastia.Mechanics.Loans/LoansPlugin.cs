@@ -152,7 +152,7 @@ public sealed class LoansPlugin :
                 Id = "loan.give",
                 Label = "Give a Loan",
                 Description =
-                    "Lend 1,000-10,000 zł to an outside customer for 1-50 years. " +
+                    "Lend a whole-thousand amount to an outside customer for 1-50 years, up to 10,000 zł or the cash currently available to the household. " +
                     "The customer is not a simulated household. Repayments begin one year after the loan is issued and return to your household.",
                 Mode = ActionExecutionMode.Queued,
                 QueuePhase = YearPhase.QueuedActionsEarly,
@@ -173,9 +173,6 @@ public sealed class LoansPlugin :
                     if (finance is null)
                         return false;
 
-                    // The action appears only for comfortably funded households,
-                    // but a queued loan only needs enough cash for its selected
-                    // principal when the action actually resolves.
                     if (actionContext.Parameters.TryGetValue(
                             "principal",
                             out var principalText)
@@ -188,7 +185,7 @@ public sealed class LoansPlugin :
                         return finance.Wealth >= queuedPrincipal;
                     }
 
-                    return finance.Wealth > 10000m;
+                    return finance.Wealth >= 1000m;
                 },
                 Execute = actionContext =>
                 {

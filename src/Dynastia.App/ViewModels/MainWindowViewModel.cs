@@ -23,6 +23,8 @@ public sealed partial class MainWindowViewModel : ViewModelBase
     private readonly ILocalCareerOpportunityService? _localCareerOpportunityService;
     private readonly IMarriageSatisfactionService?
         _marriageSatisfactionService;
+    private readonly IFamilyRelationService?
+        _familyRelationService;
     private readonly IThoughtService? _thoughtService;
     private readonly IPersonalityService? _personalityService;
     private readonly IChildHappinessService? _childHappinessService;
@@ -84,6 +86,7 @@ public sealed partial class MainWindowViewModel : ViewModelBase
         ILocationService? locationService,
         ILocalCareerOpportunityService? localCareerOpportunityService,
         IMarriageSatisfactionService? marriageSatisfactionService,
+        IFamilyRelationService? familyRelationService,
         IThoughtService? thoughtService,
         IPersonalityService? personalityService,
         IChildHappinessService? childHappinessService,
@@ -111,6 +114,8 @@ public sealed partial class MainWindowViewModel : ViewModelBase
         _localCareerOpportunityService = localCareerOpportunityService;
         _marriageSatisfactionService =
             marriageSatisfactionService;
+        _familyRelationService =
+            familyRelationService;
         _thoughtService =
             thoughtService;
         _personalityService =
@@ -233,6 +238,8 @@ public sealed partial class MainWindowViewModel : ViewModelBase
             OnPropertyChanged();
             OnPropertyChanged(
                 nameof(IsStartScreenVisible));
+            OnPropertyChanged(
+                nameof(HasFamilyRelations));
 
             NextYearCommand
                 .RaiseCanExecuteChanged();
@@ -565,80 +572,6 @@ public sealed partial class MainWindowViewModel : ViewModelBase
                         0,
                         $"{homeTown} — Renting");
                 }
-            }
-
-            return string.Join(
-                Environment.NewLine,
-                lines);
-        }
-    }
-
-    public bool HasHouseholdLoans
-    {
-        get
-        {
-            var head =
-                GetDisplayedHouseholdHead();
-
-            if (head is null
-                || _loanService is null)
-            {
-                return false;
-            }
-
-            return _loanService.GetDebts(head).Count > 0
-                || _loanService.GetLoansGiven(head).Count > 0;
-        }
-    }
-
-    public string HouseholdLoansText
-    {
-        get
-        {
-            var head =
-                GetDisplayedHouseholdHead();
-
-            if (head is null
-                || _loanService is null)
-            {
-                return string.Empty;
-            }
-
-            var lines =
-                new List<string>();
-
-            var debts =
-                _loanService.GetDebts(head);
-
-            if (debts.Count > 0)
-            {
-                lines.Add("Debts");
-
-                lines.AddRange(
-                    debts.Select(debt =>
-                        $"{debt.CreditorName} — " +
-                        $"{debt.RemainingAmount:N0} remaining — " +
-                        $"{debt.AnnualPayment:N0}/year — " +
-                        $"{debt.YearsRemaining} " +
-                        $"{(debt.YearsRemaining == 1 ? "year" : "years")}"));
-            }
-
-            var receivables =
-                _loanService.GetLoansGiven(head);
-
-            if (receivables.Count > 0)
-            {
-                if (lines.Count > 0)
-                    lines.Add(string.Empty);
-
-                lines.Add("Loans Given");
-
-                lines.AddRange(
-                    receivables.Select(loan =>
-                        $"{loan.RemainingAmount:N0} remaining — " +
-                        $"{loan.AnnualPayment:N0}/year — " +
-                        $"{loan.YearsRemaining} " +
-                        $"{(loan.YearsRemaining == 1 ? "year" : "years")}"));
             }
 
             return string.Join(

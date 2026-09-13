@@ -12,5 +12,9 @@ public interface ICareerService
 
     bool TryFindBetterJob(IPerson person);
 
+    bool TryFindEmployment(
+        IPerson person,
+        double chanceBonus = 0);
+
     bool RelocateEmployment(IPerson person);
 }

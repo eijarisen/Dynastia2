@@ -9,11 +9,13 @@
     <Project Path="plugins/Dynastia.Mechanics.Education/Dynastia.Mechanics.Education.csproj" />
     <Project Path="plugins/Dynastia.Mechanics.Family/Dynastia.Mechanics.Family.csproj" />
     <Project Path="plugins/Dynastia.Mechanics.FamilySupport/Dynastia.Mechanics.FamilySupport.csproj" />
+    <Project Path="plugins/Dynastia.Mechanics.FamilyRelations/Dynastia.Mechanics.FamilyRelations.csproj" />
     <Project Path="plugins/Dynastia.Mechanics.Health/Dynastia.Mechanics.Health.csproj" />
     <Project Path="plugins/Dynastia.Mechanics.Households/Dynastia.Mechanics.Households.csproj" />
     <Project Path="plugins/Dynastia.Mechanics.Inheritance/Dynastia.Mechanics.Inheritance.csproj" />
     <Project Path="plugins/Dynastia.Mechanics.Justice/Dynastia.Mechanics.Justice.csproj" />
     <Project Path="plugins/Dynastia.Mechanics.Locations/Dynastia.Mechanics.Locations.csproj" />
+    <Project Path="plugins/Dynastia.Mechanics.Loans/Dynastia.Mechanics.Loans.csproj" />
     <Project Path="plugins/Dynastia.Mechanics.Mortality/Dynastia.Mechanics.Mortality.csproj" />
     <Project Path="plugins/Dynastia.Mechanics.Personality/Dynastia.Mechanics.Personality.csproj" />
     <Project Path="plugins/Dynastia.Mechanics.RareEvents/Dynastia.Mechanics.RareEvents.csproj" />
@@ -32,5 +34,7 @@
     <Project Path="src/Dynastia.Core/Dynastia.Core.csproj" />
     <Project Path="src/Dynastia.PluginHost/Dynastia.PluginHost.csproj" />
   </Folder>
-  <Folder Name="/tests/" />
+  <Folder Name="/tests/">
+    <Project Path="tests/Dynastia.Core.Tests/Dynastia.Core.Tests.csproj" />
+  </Folder>
 </Solution>

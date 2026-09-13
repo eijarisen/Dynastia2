@@ -9,7 +9,7 @@
     MinHeight="650"
     CanResize="False"
     ShowInTaskbar="False"
-    SystemDecorations="None"
+    WindowDecorations="None"
     TransparencyLevelHint="Transparent"
     WindowStartupLocation="CenterOwner"
     Background="#00000000"
@@ -66,7 +66,7 @@
                 x:Name="SearchBox"
                 Grid.Row="1"
                 Classes="paperSearch"
-                Watermark="Search town, county, region or opportunity..."
+                PlaceholderText="Search town, county, region or opportunity..."
                 TextChanged="OnSearchTextChanged" />
 
             <Border

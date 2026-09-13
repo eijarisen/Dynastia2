@@ -330,6 +330,42 @@ public sealed class StandardCareerService :
         return true;
     }
 
+    public bool TryFindEmployment(
+        IPerson person,
+        double chanceBonus = 0)
+    {
+        var current = GetRequired(person);
+        if (current.IsRetired
+            || current.JobLevel != 0
+            || person.Age < 18
+            || !person.Tags.Has("state.alive")
+            || person.Tags.Has("state.imprisoned"))
+        {
+            return false;
+        }
+
+        EmploymentOpportunity opportunity;
+        try
+        {
+            opportunity = CreateEmploymentOpportunity(person, _stats);
+        }
+        catch (InvalidOperationException)
+        {
+            return false;
+        }
+
+        var chance = PersonalityInfluence.AdjustProbability(
+            Math.Clamp(opportunity.SuccessChance + chanceBonus, 0, 0.98),
+            person,
+            sanguine: 0.10);
+
+        if (_random.NextDouble() >= chance)
+            return false;
+
+        AcceptEmploymentOpportunity(person, opportunity);
+        return true;
+    }
+
     public bool RelocateEmployment(
         IPerson person)
     {

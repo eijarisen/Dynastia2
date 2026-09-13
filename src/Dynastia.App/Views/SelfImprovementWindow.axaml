@@ -1,0 +1,168 @@
+<Window
+    xmlns="https://github.com/avaloniaui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:vm="using:Dynastia.App.ViewModels"
+    x:Class="Dynastia.App.Views.SelfImprovementWindow"
+    Width="1000"
+    Height="760"
+    MinWidth="860"
+    MinHeight="650"
+    CanResize="False"
+    ShowInTaskbar="False"
+    WindowDecorations="None"
+    TransparencyLevelHint="Transparent"
+    WindowStartupLocation="CenterOwner"
+    Background="#00000000"
+    KeyDown="OnWindowKeyDown"
+    Title="Self Improvement">
+
+    <Window.Styles>
+        <Style Selector="Button.paperAction">
+            <Setter Property="MinWidth" Value="110" />
+            <Setter Property="Padding" Value="16,8" />
+            <Setter Property="Foreground" Value="#3F2714" />
+            <Setter Property="Background" Value="#E8D5AF" />
+            <Setter Property="BorderBrush" Value="#9D6F35" />
+            <Setter Property="BorderThickness" Value="1.5" />
+            <Setter Property="FontFamily" Value="Georgia" />
+            <Setter Property="FontSize" Value="14" />
+            <Setter Property="FontWeight" Value="Bold" />
+        </Style>
+
+        <Style Selector="Button.paperAction:pointerover">
+            <Setter Property="Background" Value="#D4B178" />
+            <Setter Property="Foreground" Value="#2D1A0E" />
+        </Style>
+    </Window.Styles>
+
+    <Grid>
+        <Image
+            Source="/Assets/UI/instructions_paper.png"
+            Stretch="Fill" />
+
+        <Grid
+            Margin="80,72,80,58"
+            RowDefinitions="Auto,Auto,*,Auto"
+            RowSpacing="13">
+
+            <TextBlock
+                HorizontalAlignment="Center"
+                FontFamily="avares://Dynastia.App/Assets/Fonts#UnifrakturCook"
+                FontSize="42"
+                Foreground="#2F1D0E"
+                Text="Self Improvement" />
+
+            <StackPanel
+                Grid.Row="1"
+                Spacing="4">
+                <TextBlock
+                    x:Name="TargetText"
+                    HorizontalAlignment="Center"
+                    FontFamily="Georgia"
+                    FontSize="16"
+                    FontWeight="Bold"
+                    Foreground="#3A2615"
+                    TextAlignment="Center" />
+                <TextBlock
+                    HorizontalAlignment="Center"
+                    FontFamily="Georgia"
+                    FontSize="13"
+                    Foreground="#6A5131"
+                    Text="Choose one improvement. Every option costs 10,000 zł and is queued as this year's action." />
+            </StackPanel>
+
+            <Border
+                Grid.Row="2"
+                Padding="8"
+                Background="#0FFFFFFF"
+                BorderBrush="#8F6A34"
+                BorderThickness="1.5"
+                CornerRadius="6">
+
+                <ScrollViewer
+                    HorizontalScrollBarVisibility="Disabled"
+                    VerticalScrollBarVisibility="Auto">
+                    <ItemsControl x:Name="OptionsList">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate x:DataType="vm:SelfImprovementOption">
+                                <Border
+                                    Margin="3"
+                                    Padding="13,10"
+                                    Background="#28FFF8E8"
+                                    BorderBrush="#A78959"
+                                    BorderThickness="0,0,0,1">
+                                    <Grid ColumnDefinitions="150,*,Auto" ColumnSpacing="18">
+                                        <StackPanel Spacing="3">
+                                            <TextBlock
+                                                FontFamily="Georgia"
+                                                FontSize="17"
+                                                FontWeight="Bold"
+                                                Foreground="#352615"
+                                                Text="{Binding StatName}" />
+                                            <TextBlock
+                                                FontFamily="Georgia"
+                                                FontSize="13"
+                                                Foreground="#6B5434"
+                                                Text="{Binding CurrentValueText, StringFormat='Current: {0}'}" />
+                                        </StackPanel>
+
+                                        <StackPanel
+                                            Grid.Column="1"
+                                            Spacing="3">
+                                            <TextBlock
+                                                FontFamily="Georgia"
+                                                FontSize="15"
+                                                FontWeight="Bold"
+                                                Foreground="#4B321B"
+                                                Text="{Binding ActionLabel}" />
+                                            <TextBlock
+                                                FontFamily="Georgia"
+                                                FontSize="12"
+                                                LineHeight="17"
+                                                Foreground="#46351F"
+                                                TextWrapping="Wrap"
+                                                Text="{Binding Description}" />
+                                        </StackPanel>
+
+                                        <StackPanel
+                                            Grid.Column="2"
+                                            MinWidth="130"
+                                            VerticalAlignment="Center"
+                                            HorizontalAlignment="Right"
+                                            Spacing="5">
+                                            <TextBlock
+                                                HorizontalAlignment="Center"
+                                                FontFamily="Georgia"
+                                                FontSize="14"
+                                                FontWeight="Bold"
+                                                Foreground="#694914"
+                                                Text="{Binding CostText}" />
+                                            <TextBlock
+                                                HorizontalAlignment="Center"
+                                                FontFamily="Georgia"
+                                                FontSize="11"
+                                                Foreground="#745A38"
+                                                Text="{Binding AvailabilityText}" />
+                                            <Button
+                                                Classes="paperAction"
+                                                IsEnabled="{Binding IsAvailable}"
+                                                Content="Queue"
+                                                Click="OnQueueClick" />
+                                        </StackPanel>
+                                    </Grid>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </ScrollViewer>
+            </Border>
+
+            <Button
+                Grid.Row="3"
+                HorizontalAlignment="Center"
+                Classes="paperAction"
+                Content="Close"
+                Click="OnCloseClick" />
+        </Grid>
+    </Grid>
+</Window>

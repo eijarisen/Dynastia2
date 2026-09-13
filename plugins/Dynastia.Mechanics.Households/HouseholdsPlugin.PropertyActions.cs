@@ -202,17 +202,6 @@ public sealed partial class HouseholdsPlugin
                     .ToList();
             });
 
-        RegisterAskParentHouseActions(
-            actions,
-            gameState,
-            family,
-            households,
-            economy,
-            locations,
-            career,
-            random,
-            events);
-
         actions.Register(
             new GameActionDefinition
             {

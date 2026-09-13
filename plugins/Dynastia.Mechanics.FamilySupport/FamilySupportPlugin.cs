@@ -17,47 +17,11 @@ public sealed class FamilySupportPlugin :
     public void Initialize(
         IGamePluginContext context)
     {
-        var family =
-            context.GetService<IFamilyService>()
-            ?? throw new InvalidOperationException(
-                "Family service is unavailable.");
-
-        var economy =
-            context.GetService<IEconomyService>()
-            ?? throw new InvalidOperationException(
-                "Economy service is unavailable.");
-
-        var events =
-            context.GetService<IGameEventBus>()
-            ?? throw new InvalidOperationException(
-                "Game event bus is unavailable.");
-
-        var random =
-            context.GetService<IGameRandom>()
-            ?? throw new InvalidOperationException(
-                "Random service is unavailable.");
-
-        var actions =
-            context.GetService<IActionRegistry>()
-            ?? throw new InvalidOperationException(
-                "Action registry is unavailable.");
-
-        actions.Register(
-            CreateAskParentsAction(
-                family,
-                economy,
-                events,
-                random));
-
-        actions.Register(
-            CreateAskChildAction(
-                family,
-                economy,
-                events,
-                random));
-
+        // Cross-household requests moved to the Family Relations surface.
+        // Keep this legacy plugin installed so old deployments/manifests remain
+        // compatible, but it no longer registers competing actions.
         context.Log(
-            "Family financial-support mechanics registered.");
+            "Legacy family-support actions are provided by Family Relations.");
     }
 
     private static GameActionDefinition

@@ -575,12 +575,11 @@ public sealed class WellbeingPlugin : IGamePlugin
                     "wellbeing.heal_relative",
 
                 Label =
-                    "Medical Treatment (1,000 zł)",
+                    "Improve Health (1,000 zł)",
 
                 Description =
-                    "Pay 1,000 zł for medical treatment for the selected " +
-                    "living person. Restores 30 health. Available whenever " +
-                    "their health is below maximum.",
+                    "Pay 1,000 zł to improve the selected living person’s health. " +
+                    "Restores 30 health. Available whenever their health is below maximum.",
 
                 Mode =
                     ActionExecutionMode.Queued,

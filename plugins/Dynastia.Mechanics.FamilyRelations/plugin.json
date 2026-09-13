@@ -1,0 +1,17 @@
+{
+  "id": "dynastia.family_relations",
+  "name": "Family Relations",
+  "version": "0.1.0",
+  "apiVersion": 1,
+  "assembly": "Dynastia.Mechanics.FamilyRelations.dll",
+  "entryType": "Dynastia.Mechanics.FamilyRelations.FamilyRelationsPlugin",
+  "dependencies": [
+    "dynastia.family",
+    "dynastia.economy",
+    "dynastia.households",
+    "dynastia.career",
+    "dynastia.relationships",
+    "dynastia.personality",
+    "dynastia.thoughts"
+  ]
+}

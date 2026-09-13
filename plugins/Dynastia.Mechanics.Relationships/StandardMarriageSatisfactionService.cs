@@ -67,6 +67,24 @@ public sealed class StandardMarriageSatisfactionService :
             component);
     }
 
+    public MarriageSatisfactionSnapshot? GetSatisfactionBetween(
+        IPerson first,
+        IPerson second)
+    {
+        var firstComponent =
+            first.Components.Get<MarriageSatisfactionComponent>();
+
+        if (firstComponent?.SpouseId == second.Id)
+            return ToSnapshot(firstComponent);
+
+        var secondComponent =
+            second.Components.Get<MarriageSatisfactionComponent>();
+
+        return secondComponent?.SpouseId == first.Id
+            ? ToSnapshot(secondComponent)
+            : null;
+    }
+
     public void InitializeMarriage(
         IPerson first,
         IPerson second,

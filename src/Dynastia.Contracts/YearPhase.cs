@@ -19,5 +19,7 @@ public enum YearPhase
     DerivedState = 1000,
     PostYear = 1100,
     MoralsReflection = 1150,
+    FamilyRelations = 1160,
+    FamilyRelationActions = 1170,
     Thoughts = 1200
 }

@@ -217,7 +217,7 @@ public sealed class AdoptionYearSystem :
                 child,
                 component,
                 AdoptionPlacementKind.Mother,
-                mother.Id,
+                mother!.Id,
                 father?.Id);
 
             if (changed)

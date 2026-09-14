@@ -512,7 +512,15 @@ public partial class MainWindow : Window
             var window =
                 new GenealogyWindow(
                     GenealogyDataSource,
-                    GenealogySelection);
+                    GenealogySelection,
+                    personId =>
+                    {
+                        if (DataContext is MainWindowViewModel viewModel)
+                        {
+                            viewModel.SelectHouseholdFromTree(
+                                personId);
+                        }
+                    });
 
             await window.ShowDialog(
                 this);

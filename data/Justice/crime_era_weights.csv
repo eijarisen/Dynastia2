@@ -1,0 +1,17 @@
+﻿CrimeId,StartYear,EndYear,WeightMultiplier
+smuggling,1700,1799,1.6
+smuggling,1800,1849,1.4
+smuggling,1850,1913,1.2
+smuggling,1914,1945,1.1
+smuggling,1946,1989,0.9
+smuggling,1990,,0.8
+fraud,1700,1799,0.55
+fraud,1800,1849,0.7
+fraud,1850,1945,1.0
+fraud,1946,1989,1.2
+fraud,1990,,1.4
+embezzlement,1700,1799,0.5
+embezzlement,1800,1849,0.7
+embezzlement,1850,1945,1.0
+embezzlement,1946,1989,1.2
+embezzlement,1990,,1.3

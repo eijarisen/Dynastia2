@@ -7,6 +7,7 @@ public interface ICareerService
     void InitializeCareer(IPerson person, int jobLevel, int jobSatisfaction);
     void SetJobLevel(IPerson person, int jobLevel);
     void ChangeJobSatisfaction(IPerson person, int amount);
+    string GetStatusLabel(string statusId);
     void Retire(IPerson person);
     decimal GetAnnualIncome(IPerson person);
 

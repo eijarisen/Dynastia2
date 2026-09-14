@@ -8,6 +8,7 @@ internal sealed class NannyNeedReconcileYearSystem :
     private readonly IHouseholdService _households;
     private readonly IEconomyService _economy;
     private readonly IFamilyService _family;
+    private readonly ICareerService _career;
     private readonly IGameEventBus _events;
     private readonly string _id;
     private readonly YearPhase _phase;
@@ -18,6 +19,7 @@ internal sealed class NannyNeedReconcileYearSystem :
         IHouseholdService households,
         IEconomyService economy,
         IFamilyService family,
+        ICareerService career,
         IGameEventBus events,
         string id,
         YearPhase phase,
@@ -27,6 +29,7 @@ internal sealed class NannyNeedReconcileYearSystem :
         _households = households;
         _economy = economy;
         _family = family;
+        _career = career;
         _events = events;
         _id = id;
         _phase = phase;
@@ -113,12 +116,11 @@ internal sealed class NannyNeedReconcileYearSystem :
                                 "the household no longer needed nanny help",
 
                             ["text"] =
-                                nanny is null
-                                    ? $"The household of {_family.GetDisplayName(head)} " +
-                                      "ended its nanny service because the family was no longer strained by young children."
-                                    : familyNanny
-                                        ? $"{_family.GetDisplayName(nanny)} stopped helping as the family nanny because the household was no longer strained by young children."
-                                        : $"The household of {_family.GetDisplayName(head)} ended the nanny service because the family was no longer strained by young children."
+                                nanny is not null && familyNanny
+                                    ? $"{_family.GetDisplayName(nanny)}'s " +
+                                      $"{_career.GetStatusLabel(FamilyNannyTracker.FamilyNannyTag)} role ended because the household was no longer strained by young children."
+                                    : $"The household of {_family.GetDisplayName(head)} ended its " +
+                                      $"{_career.GetStatusLabel("role.nanny")} arrangement because the family was no longer strained by young children."
                         }
                 });
         }

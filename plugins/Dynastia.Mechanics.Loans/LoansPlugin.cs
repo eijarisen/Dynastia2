@@ -21,6 +21,14 @@ public sealed class LoansPlugin :
         var succession =
             Require<ISuccessionService>(context, "Succession service");
 
+        var data =
+            Require<IGameDataService>(context, "Game data service");
+
+        var historical =
+            Require<IHistoricalActionVariantService>(
+                context,
+                "Historical action variant service");
+
         var actions =
             Require<IActionRegistry>(context, "Action registry");
 
@@ -33,11 +41,16 @@ public sealed class LoansPlugin :
         var thoughtProviders =
             Require<IThoughtProviderRegistry>(context, "Thought provider registry");
 
+        var loanEras =
+            LoanEraCatalog.Load(
+                data);
+
         var loans =
             new StandardLoanService(
                 gameState,
                 family,
-                economy);
+                economy,
+                loanEras);
 
         context.AddService<ILoanService>(
             loans);
@@ -47,7 +60,10 @@ public sealed class LoansPlugin :
             loans,
             family,
             economy,
-            events);
+            events,
+            gameState,
+            historical,
+            loanEras);
 
         systems.Register(
             new LoanPaymentYearSystem(
@@ -77,10 +93,16 @@ public sealed class LoansPlugin :
         StandardLoanService loans,
         IFamilyService family,
         IEconomyService economy,
-        IGameEventBus events)
+        IGameEventBus events,
+        IGameState gameState,
+        IHistoricalActionVariantService historical,
+        LoanEraCatalog loanEras)
     {
-        actions.Register(
-            new GameActionDefinition
+        actions.RegisterDynamicProvider(
+            (_, _) =>
+                [
+                    WithHistoricalPresentation(
+                        new GameActionDefinition
             {
                 Id = "loan.take",
                 Label = "Take a Loan",
@@ -124,6 +146,10 @@ public sealed class LoansPlugin :
                         actor,
                         terms.Principal);
 
+                    var era =
+                        loanEras.GetRule(
+                            actionContext.GameState.Year);
+
                     events.Publish(
                         new GameEvent
                         {
@@ -138,16 +164,23 @@ public sealed class LoansPlugin :
                                     ["totalRepayment"] = terms.TotalRepayment.ToString(CultureInfo.InvariantCulture),
                                     ["annualPayment"] = terms.AnnualPayment.ToString(CultureInfo.InvariantCulture),
                                     ["text"] =
-                                        $"{family.GetDisplayName(actor)} took a {terms.Principal:N0} zł bank loan for {terms.DurationYears} years."
+                                        $"{family.GetDisplayName(actor)} {era.TakeLoanEventPhrase}: " +
+                                        $"{terms.Principal:N0} zł for {terms.DurationYears} years."
                                 }
                         });
 
                     return new GameActionResult(true);
                 }
-            });
+                        },
+                        historical,
+                        gameState.Year)
+                ]);
 
-        actions.Register(
-            new GameActionDefinition
+        actions.RegisterDynamicProvider(
+            (_, _) =>
+                [
+                    WithHistoricalPresentation(
+                        new GameActionDefinition
             {
                 Id = "loan.give",
                 Label = "Give a Loan",
@@ -222,6 +255,12 @@ public sealed class LoansPlugin :
                         terms.DurationYears,
                         actionContext.GameState.Year);
 
+                    var wording =
+                        RequireHistoricalVariant(
+                            historical,
+                            "loan.give",
+                            actionContext.GameState.Year);
+
                     events.Publish(
                         new GameEvent
                         {
@@ -236,13 +275,50 @@ public sealed class LoansPlugin :
                                     ["totalRepayment"] = terms.TotalRepayment.ToString(CultureInfo.InvariantCulture),
                                     ["annualPayment"] = terms.AnnualPayment.ToString(CultureInfo.InvariantCulture),
                                     ["text"] =
-                                        $"{family.GetDisplayName(lender)} lent {terms.Principal:N0} zł to an outside customer for {terms.DurationYears} years."
+                                        $"{family.GetDisplayName(lender)} {wording.Narrative}: " +
+                                        $"{terms.Principal:N0} zł for {terms.DurationYears} years."
                                 }
                         });
 
                     return new GameActionResult(true);
                 }
-            });
+                        },
+                        historical,
+                        gameState.Year)
+                ]);
+    }
+
+    private static GameActionDefinition WithHistoricalPresentation(
+        GameActionDefinition action,
+        IHistoricalActionVariantService historical,
+        int year)
+    {
+        var variant = RequireHistoricalVariant(
+            historical,
+            action.Id,
+            year);
+
+        return new GameActionDefinition
+        {
+            Id = action.Id,
+            Label = variant.Label,
+            Description = variant.Description,
+            Mode = action.Mode,
+            QueuePhase = action.QueuePhase,
+            BypassGuards = action.BypassGuards,
+            IsAvailable = action.IsAvailable,
+            Execute = action.Execute
+        };
+    }
+
+    private static HistoricalActionVariant RequireHistoricalVariant(
+        IHistoricalActionVariantService historical,
+        string actionId,
+        int year)
+    {
+        return historical.GetVariant(actionId, year)
+            ?? throw new InvalidDataException(
+                $"Missing historical action data for '{actionId}' in {year}.");
     }
 
     private static bool CanInitiateLoan(

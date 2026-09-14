@@ -565,6 +565,36 @@ public sealed partial class MainWindowViewModel
             SelectedPerson = row;
     }
 
+    internal void SelectHouseholdFromTree(
+        Guid personId)
+    {
+        var person =
+            _gameState.People.FirstOrDefault(
+                candidate => candidate.Id == personId);
+
+        var household = person is null
+            ? null
+            : _householdService?.GetHouseholdInfo(
+                person);
+
+        if (household is null)
+        {
+            SelectFamilyMember(
+                personId);
+            return;
+        }
+
+        if (household.Class == HouseholdClass.Lineage)
+        {
+            SwitchActiveHousehold(
+                household.HeadId);
+            return;
+        }
+
+        InspectBloodlineHousehold(
+            household.HeadId);
+    }
+
     private void SwitchActiveHousehold(
         Guid personId)
     {

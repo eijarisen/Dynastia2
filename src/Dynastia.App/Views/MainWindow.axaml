@@ -248,7 +248,7 @@
             <Setter Property="Foreground" Value="#F4E8CB" />
             <Setter Property="BorderBrush" Value="#715722" />
             <Setter Property="BorderThickness" Value="1" />
-            <Setter Property="FontSize" Value="10.5" />
+            <Setter Property="FontSize" Value="13.5" />
             <Setter Property="FontWeight" Value="SemiBold" />
         </Style>
 
@@ -274,7 +274,7 @@
             <Setter Property="Foreground" Value="#F1E3C4" />
             <Setter Property="BorderBrush" Value="#8A6728" />
             <Setter Property="BorderThickness" Value="1" />
-            <Setter Property="FontSize" Value="10.5" />
+            <Setter Property="FontSize" Value="13.5" />
             <Setter Property="FontWeight" Value="SemiBold" />
         </Style>
 
@@ -414,21 +414,23 @@
                                 PlaceholderText="e.g. Nowak"
                                 Text="{Binding SurnameInput, Mode=TwoWay}" />
 
-                            <StackPanel Spacing="4">
+                            <Grid ColumnDefinitions="Auto,*" ColumnSpacing="14">
                                 <TextBlock
-                                    HorizontalAlignment="Center"
+                                    VerticalAlignment="Center"
                                     FontSize="14"
                                     FontWeight="SemiBold"
                                     Foreground="#49341C"
                                     Text="{Binding SelectedStartYearText}" />
 
                                 <Slider
+                                    Grid.Column="1"
+                                    VerticalAlignment="Center"
                                     Minimum="1700"
                                     Maximum="1900"
                                     TickFrequency="10"
                                     IsSnapToTickEnabled="True"
                                     Value="{Binding SelectedStartYear, Mode=TwoWay}" />
-                            </StackPanel>
+                            </Grid>
 
                             <StackPanel
                                 HorizontalAlignment="Center"
@@ -518,6 +520,7 @@
                                                 Classes.active="{Binding IsActive}"
                                                 Command="{Binding ToggleCommand}">
                                                 <TextBlock
+                                                    FontSize="13.5"
                                                     Foreground="#F1E3C4"
                                                     Text="{Binding Label}" />
                                             </Button>
@@ -742,7 +745,7 @@
 
                         <Grid
                             Margin="54,58,49,46"
-                            RowDefinitions="Auto,Auto,Auto,*"
+                            RowDefinitions="Auto,*"
                             RowSpacing="8">
 
                             <Grid
@@ -760,8 +763,10 @@
                                     Grid.Column="1"
                                     Margin="16,7,8,0"
                                     Padding="12,6"
-                                    MinWidth="82"
-                                    FontSize="10.5"
+                                    MinWidth="96"
+                                    FontSize="13.5"
+                                    HorizontalContentAlignment="Center"
+                                    VerticalContentAlignment="Center"
                                     Classes="gameAction"
                                     Click="OnViewTreeClick">
 
@@ -784,6 +789,9 @@
                                     </ToolTip.Tip>
 
                                     <TextBlock
+                                        HorizontalAlignment="Center"
+                                        TextAlignment="Center"
+                                        FontSize="13.5"
                                         Foreground="#F8E9C8"
                                         Text="View Tree" />
                                 </Button>
@@ -792,8 +800,10 @@
                                     Grid.Column="2"
                                     Margin="0,7,8,0"
                                     Padding="12,6"
-                                    MinWidth="82"
-                                    FontSize="10.5"
+                                    MinWidth="96"
+                                    FontSize="13.5"
+                                    HorizontalContentAlignment="Center"
+                                    VerticalContentAlignment="Center"
                                     Classes="gameAction"
                                     IsVisible="{Binding HasFamilyRelations}"
                                     Click="OnRelationsClick">
@@ -816,6 +826,9 @@
                                     </ToolTip.Tip>
 
                                     <TextBlock
+                                        HorizontalAlignment="Center"
+                                        TextAlignment="Center"
+                                        FontSize="13.5"
                                         Foreground="#F8E9C8"
                                         Text="Relations" />
                                 </Button>
@@ -828,6 +841,7 @@
                                     Command="{Binding ShowLivingFamilyCommand}">
 
                                     <TextBlock
+                                        FontSize="13.5"
                                         Foreground="#F1E3C4"
                                         Text="Lineage" />
                                 </Button>
@@ -840,6 +854,7 @@
                                     Command="{Binding ShowBloodlineFamilyCommand}">
 
                                     <TextBlock
+                                        FontSize="13.5"
                                         Foreground="#F1E3C4"
                                         Text="Bloodline" />
                                 </Button>
@@ -852,294 +867,269 @@
                                     Command="{Binding ShowDeceasedFamilyCommand}">
 
                                     <TextBlock
+                                        FontSize="13.5"
                                         Foreground="#F1E3C4"
                                         Text="Deceased" />
                                 </Button>
                             </Grid>
 
-                            <ItemsControl
-                                Grid.Row="1"
-                                IsVisible="{Binding IsLineageFamilyView}"
-                                ItemsSource="{Binding PlayableTabs}">
-
-                                <ItemsControl.ItemsPanel>
-                                    <ItemsPanelTemplate>
-                                        <WrapPanel Orientation="Horizontal" />
-                                    </ItemsPanelTemplate>
-                                </ItemsControl.ItemsPanel>
-
-                                <ItemsControl.ItemTemplate>
-                                    <DataTemplate
-                                        x:DataType="vm:PlayablePersonTabViewModel">
-
-                                        <StackPanel
-                                            Orientation="Horizontal"
-                                            Spacing="3">
-
-                                            <TextBlock
-                                                VerticalAlignment="Center"
-                                                FontSize="8.5"
-                                                FontWeight="Bold"
-                                                Foreground="#B79A5D"
-                                                Text="{Binding GenerationText}" />
-
-                                            <Button
-                                                Classes="playableTab"
-                                                Classes.active="{Binding IsActive}"
-                                                Classes.queued="{Binding HasQueuedAction}"
-                                                Command="{Binding SwitchCommand}">
-
-                                                <ToolTip.Tip>
-                                                    <Border
-                                                        MaxWidth="390"
-                                                        Padding="10,7"
-                                                        Background="#F20A1514"
-                                                        BorderBrush="#B88934"
-                                                        BorderThickness="1"
-                                                        CornerRadius="4">
-
-                                                        <TextBlock
-                                                            FontSize="10.5"
-                                                            LineHeight="17"
-                                                            Foreground="#F5E6C6"
-                                                            TextWrapping="Wrap"
-                                                            Text="{Binding ActionSummaryText}" />
-                                                    </Border>
-                                                </ToolTip.Tip>
-
-                                                <TextBlock
-                                                    HorizontalAlignment="Center"
-                                                    Foreground="#F4E8CB"
-                                                    Text="{Binding Label}" />
-                                            </Button>
-                                        </StackPanel>
-                                    </DataTemplate>
-                                </ItemsControl.ItemTemplate>
-                            </ItemsControl>
-
-                            <ItemsControl
-                                Grid.Row="1"
-                                IsVisible="{Binding IsBloodlineFamilyView}"
-                                ItemsSource="{Binding BloodlineTabs}">
-
-                                <ItemsControl.ItemsPanel>
-                                    <ItemsPanelTemplate>
-                                        <WrapPanel Orientation="Horizontal" />
-                                    </ItemsPanelTemplate>
-                                </ItemsControl.ItemsPanel>
-
-                                <ItemsControl.ItemTemplate>
-                                    <DataTemplate
-                                        x:DataType="vm:PlayablePersonTabViewModel">
-
-                                        <StackPanel
-                                            Orientation="Horizontal"
-                                            Spacing="3">
-
-                                            <TextBlock
-                                                VerticalAlignment="Center"
-                                                FontSize="8.5"
-                                                FontWeight="Bold"
-                                                Foreground="#B79A5D"
-                                                Text="{Binding GenerationText}" />
-
-                                            <Button
-                                                Classes="playableTab"
-                                                Classes.active="{Binding IsActive}"
-                                                Classes.queued="{Binding HasQueuedAction}"
-                                                Command="{Binding SwitchCommand}">
-
-                                                <ToolTip.Tip>
-                                                    <Border
-                                                        MaxWidth="390"
-                                                        Padding="10,7"
-                                                        Background="#F20A1514"
-                                                        BorderBrush="#B88934"
-                                                        BorderThickness="1"
-                                                        CornerRadius="4">
-
-                                                        <TextBlock
-                                                            FontSize="10.5"
-                                                            LineHeight="17"
-                                                            Foreground="#F5E6C6"
-                                                            TextWrapping="Wrap"
-                                                            Text="{Binding ActionSummaryText}" />
-                                                    </Border>
-                                                </ToolTip.Tip>
-
-                                                <TextBlock
-                                                    HorizontalAlignment="Center"
-                                                    Foreground="#F4E8CB"
-                                                    Text="{Binding Label}" />
-                                            </Button>
-                                        </StackPanel>
-                                    </DataTemplate>
-                                </ItemsControl.ItemTemplate>
-                            </ItemsControl>
-
-                            <StackPanel
-                                Grid.Row="2"
-                                IsVisible="{Binding IsLivingFamilyView}"
-                                HorizontalAlignment="Center"
-                                Spacing="4">
-
-                                <TextBlock
-                                    HorizontalAlignment="Center"
-                                    FontSize="16"
-                                    FontWeight="Bold"
-                                    Foreground="#E3C36D"
-                                    Text="{Binding HouseholdBudgetText}" />
-
-                                <StackPanel
-                                    HorizontalAlignment="Center"
-                                    Orientation="Horizontal"
-                                    Spacing="18">
-
-                                    <TextBlock
-                                        FontSize="11.5"
-                                        FontWeight="SemiBold"
-                                        Foreground="#E8DDC2"
-                                        Text="{Binding HouseholdIncomeText}">
-
-                                        <ToolTip.Tip>
-                                            <Border
-                                                MaxWidth="360"
-                                                Padding="10,7"
-                                                Background="#F20A1514"
-                                                BorderBrush="#B88934"
-                                                BorderThickness="1"
-                                                CornerRadius="4">
-
-                                                <TextBlock
-                                                    FontSize="11"
-                                                    LineHeight="17"
-                                                    Foreground="#F5E6C6"
-                                                    TextWrapping="Wrap"
-                                                    Text="{Binding HouseholdIncomeDetailsText}" />
-                                            </Border>
-                                        </ToolTip.Tip>
-                                    </TextBlock>
-
-                                    <TextBlock
-                                        FontSize="11.5"
-                                        FontWeight="SemiBold"
-                                        Foreground="#E8DDC2"
-                                        Text="{Binding HouseholdExpensesText}">
-
-                                        <ToolTip.Tip>
-                                            <Border
-                                                MaxWidth="360"
-                                                Padding="10,7"
-                                                Background="#F20A1514"
-                                                BorderBrush="#B88934"
-                                                BorderThickness="1"
-                                                CornerRadius="4">
-
-                                                <TextBlock
-                                                    FontSize="11"
-                                                    LineHeight="17"
-                                                    Foreground="#F5E6C6"
-                                                    TextWrapping="Wrap"
-                                                    Text="{Binding HouseholdExpenseDetailsText}" />
-                                            </Border>
-                                        </ToolTip.Tip>
-                                    </TextBlock>
-                                </StackPanel>
-
-                                <TextBlock
-                                    HorizontalAlignment="Center"
-                                    FontSize="12.5"
-                                    FontWeight="Bold"
-                                    Foreground="#D5B45D"
-                                    Text="{Binding HouseholdHousesText}">
-
-                                    <ToolTip.Tip>
-                                        <Border
-                                            MaxWidth="360"
-                                            Padding="10,7"
-                                            Background="#F20A1514"
-                                            BorderBrush="#B88934"
-                                            BorderThickness="1"
-                                            CornerRadius="4">
-
-                                            <TextBlock
-                                                FontSize="11"
-                                                LineHeight="17"
-                                                Foreground="#F5E6C6"
-                                                TextWrapping="Wrap"
-                                                Text="{Binding HouseholdHousesDetailsText}" />
-                                        </Border>
-                                    </ToolTip.Tip>
-                                </TextBlock>
-
-                            </StackPanel>
-
                             <ScrollViewer
-                                Grid.Row="3"
+                                Grid.Row="1"
                                 HorizontalScrollBarVisibility="Disabled"
                                 VerticalScrollBarVisibility="Auto">
 
-                                <Grid>
+                                <Grid RowDefinitions="Auto,Auto,Auto" RowSpacing="8">
+                                    <ItemsControl
+                                        Grid.Row="0"
+                                        IsVisible="{Binding IsLineageFamilyView}"
+                                        ItemsSource="{Binding PlayableTabs}">
+
+                                        <ItemsControl.ItemsPanel>
+                                            <ItemsPanelTemplate>
+                                                <WrapPanel Orientation="Horizontal" />
+                                            </ItemsPanelTemplate>
+                                        </ItemsControl.ItemsPanel>
+
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate x:DataType="vm:PlayablePersonTabViewModel">
+                                                <StackPanel Orientation="Horizontal" Spacing="3">
+                                                    <TextBlock
+                                                        VerticalAlignment="Center"
+                                                        FontSize="10"
+                                                        FontWeight="Bold"
+                                                        Foreground="#B79A5D"
+                                                        Text="{Binding GenerationText}" />
+
+                                                    <Button
+                                                        Classes="playableTab"
+                                                        Classes.active="{Binding IsActive}"
+                                                        Classes.queued="{Binding HasQueuedAction}"
+                                                        Command="{Binding SwitchCommand}">
+                                                        <ToolTip.Tip>
+                                                            <Border
+                                                                MaxWidth="390"
+                                                                Padding="10,7"
+                                                                Background="#F20A1514"
+                                                                BorderBrush="#B88934"
+                                                                BorderThickness="1"
+                                                                CornerRadius="4">
+                                                                <TextBlock
+                                                                    FontSize="10.5"
+                                                                    LineHeight="17"
+                                                                    Foreground="#F5E6C6"
+                                                                    TextWrapping="Wrap"
+                                                                    Text="{Binding ActionSummaryText}" />
+                                                            </Border>
+                                                        </ToolTip.Tip>
+                                                        <TextBlock
+                                                            HorizontalAlignment="Center"
+                                                            FontSize="13.5"
+                                                            Foreground="#F4E8CB"
+                                                            Text="{Binding Label}" />
+                                                    </Button>
+                                                </StackPanel>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+
+                                    <ItemsControl
+                                        Grid.Row="0"
+                                        IsVisible="{Binding IsBloodlineFamilyView}"
+                                        ItemsSource="{Binding BloodlineTabs}">
+
+                                        <ItemsControl.ItemsPanel>
+                                            <ItemsPanelTemplate>
+                                                <WrapPanel Orientation="Horizontal" />
+                                            </ItemsPanelTemplate>
+                                        </ItemsControl.ItemsPanel>
+
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate x:DataType="vm:PlayablePersonTabViewModel">
+                                                <StackPanel Orientation="Horizontal" Spacing="3">
+                                                    <TextBlock
+                                                        VerticalAlignment="Center"
+                                                        FontSize="10"
+                                                        FontWeight="Bold"
+                                                        Foreground="#B79A5D"
+                                                        Text="{Binding GenerationText}" />
+
+                                                    <Button
+                                                        Classes="playableTab"
+                                                        Classes.active="{Binding IsActive}"
+                                                        Classes.queued="{Binding HasQueuedAction}"
+                                                        Command="{Binding SwitchCommand}">
+                                                        <ToolTip.Tip>
+                                                            <Border
+                                                                MaxWidth="390"
+                                                                Padding="10,7"
+                                                                Background="#F20A1514"
+                                                                BorderBrush="#B88934"
+                                                                BorderThickness="1"
+                                                                CornerRadius="4">
+                                                                <TextBlock
+                                                                    FontSize="10.5"
+                                                                    LineHeight="17"
+                                                                    Foreground="#F5E6C6"
+                                                                    TextWrapping="Wrap"
+                                                                    Text="{Binding ActionSummaryText}" />
+                                                            </Border>
+                                                        </ToolTip.Tip>
+                                                        <TextBlock
+                                                            HorizontalAlignment="Center"
+                                                            FontSize="13.5"
+                                                            Foreground="#F4E8CB"
+                                                            Text="{Binding Label}" />
+                                                    </Button>
+                                                </StackPanel>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+
                                     <StackPanel
+                                        Grid.Row="1"
                                         IsVisible="{Binding IsLivingFamilyView}"
+                                        HorizontalAlignment="Center"
                                         Spacing="4">
-
                                         <TextBlock
                                             HorizontalAlignment="Center"
-                                            TextAlignment="Center"
-                                            TextWrapping="Wrap"
-                                            FontSize="10.5"
-                                            FontWeight="SemiBold"
-                                            Foreground="#E1B546"
-                                            Text="{Binding HouseholdWarningText}" />
-
-                                        <ItemsControl
-                                            HorizontalAlignment="Center"
-                                            ItemsSource="{Binding HouseholdMembers}"
-                                            ItemTemplate="{StaticResource FamilyCardTemplate}">
-
-                                            <ItemsControl.ItemsPanel>
-                                                <ItemsPanelTemplate>
-                                                    <WrapPanel
-                                                        Orientation="Horizontal"
-                                                        HorizontalAlignment="Center" />
-                                                </ItemsPanelTemplate>
-                                            </ItemsControl.ItemsPanel>
-                                        </ItemsControl>
-
-                                    </StackPanel>
-
-                                    <StackPanel
-                                        IsVisible="{Binding IsDeceasedFamilyView}"
-                                        Spacing="6">
-
-                                        <TextBlock
-                                            HorizontalAlignment="Center"
-                                            FontSize="11"
+                                            FontSize="16"
                                             FontWeight="Bold"
-                                            Foreground="#C6AA69"
-                                            Text="Deceased Family" />
+                                            Foreground="#E3C36D"
+                                            Text="{Binding HouseholdBudgetText}" />
 
-                                        <ItemsControl
+                                        <StackPanel
                                             HorizontalAlignment="Center"
-                                            ItemsSource="{Binding DeceasedFamilyMembers}"
-                                            ItemTemplate="{StaticResource FamilyCardTemplate}">
+                                            Orientation="Horizontal"
+                                            Spacing="18">
+                                            <TextBlock
+                                                FontSize="11.5"
+                                                FontWeight="SemiBold"
+                                                Foreground="#E8DDC2"
+                                                Text="{Binding HouseholdIncomeText}">
+                                                <ToolTip.Tip>
+                                                    <Border
+                                                        MaxWidth="360"
+                                                        Padding="10,7"
+                                                        Background="#F20A1514"
+                                                        BorderBrush="#B88934"
+                                                        BorderThickness="1"
+                                                        CornerRadius="4">
+                                                        <TextBlock
+                                                            FontSize="11"
+                                                            LineHeight="17"
+                                                            Foreground="#F5E6C6"
+                                                            TextWrapping="Wrap"
+                                                            Text="{Binding HouseholdIncomeDetailsText}" />
+                                                    </Border>
+                                                </ToolTip.Tip>
+                                            </TextBlock>
 
-                                            <ItemsControl.ItemsPanel>
-                                                <ItemsPanelTemplate>
-                                                    <WrapPanel
-                                                        Orientation="Horizontal"
-                                                        HorizontalAlignment="Center" />
-                                                </ItemsPanelTemplate>
-                                            </ItemsControl.ItemsPanel>
-                                        </ItemsControl>
+                                            <TextBlock
+                                                FontSize="11.5"
+                                                FontWeight="SemiBold"
+                                                Foreground="#E8DDC2"
+                                                Text="{Binding HouseholdExpensesText}">
+                                                <ToolTip.Tip>
+                                                    <Border
+                                                        MaxWidth="360"
+                                                        Padding="10,7"
+                                                        Background="#F20A1514"
+                                                        BorderBrush="#B88934"
+                                                        BorderThickness="1"
+                                                        CornerRadius="4">
+                                                        <TextBlock
+                                                            FontSize="11"
+                                                            LineHeight="17"
+                                                            Foreground="#F5E6C6"
+                                                            TextWrapping="Wrap"
+                                                            Text="{Binding HouseholdExpenseDetailsText}" />
+                                                    </Border>
+                                                </ToolTip.Tip>
+                                            </TextBlock>
+                                        </StackPanel>
 
                                         <TextBlock
                                             HorizontalAlignment="Center"
-                                            FontSize="8.5"
-                                            Opacity="0.55"
-                                            Text="{Binding DeceasedFamilyEmptyText}" />
+                                            FontSize="12.5"
+                                            FontWeight="Bold"
+                                            Foreground="#D5B45D"
+                                            Text="{Binding HouseholdHousesText}">
+                                            <ToolTip.Tip>
+                                                <Border
+                                                    MaxWidth="360"
+                                                    Padding="10,7"
+                                                    Background="#F20A1514"
+                                                    BorderBrush="#B88934"
+                                                    BorderThickness="1"
+                                                    CornerRadius="4">
+                                                    <TextBlock
+                                                        FontSize="11"
+                                                        LineHeight="17"
+                                                        Foreground="#F5E6C6"
+                                                        TextWrapping="Wrap"
+                                                        Text="{Binding HouseholdHousesDetailsText}" />
+                                                </Border>
+                                            </ToolTip.Tip>
+                                        </TextBlock>
                                     </StackPanel>
+
+                                    <Grid Grid.Row="2" Margin="0,4,0,0">
+                                        <StackPanel
+                                            IsVisible="{Binding IsLivingFamilyView}"
+                                            Spacing="4">
+                                            <TextBlock
+                                                HorizontalAlignment="Center"
+                                                TextAlignment="Center"
+                                                TextWrapping="Wrap"
+                                                FontSize="10.5"
+                                                FontWeight="SemiBold"
+                                                Foreground="#E1B546"
+                                                Text="{Binding HouseholdWarningText}" />
+
+                                            <ItemsControl
+                                                HorizontalAlignment="Center"
+                                                ItemsSource="{Binding HouseholdMembers}"
+                                                ItemTemplate="{StaticResource FamilyCardTemplate}">
+                                                <ItemsControl.ItemsPanel>
+                                                    <ItemsPanelTemplate>
+                                                        <WrapPanel
+                                                            Orientation="Horizontal"
+                                                            HorizontalAlignment="Center" />
+                                                    </ItemsPanelTemplate>
+                                                </ItemsControl.ItemsPanel>
+                                            </ItemsControl>
+                                        </StackPanel>
+
+                                        <StackPanel
+                                            IsVisible="{Binding IsDeceasedFamilyView}"
+                                            Spacing="6">
+                                            <TextBlock
+                                                HorizontalAlignment="Center"
+                                                FontSize="11"
+                                                FontWeight="Bold"
+                                                Foreground="#C6AA69"
+                                                Text="Deceased Family" />
+
+                                            <ItemsControl
+                                                HorizontalAlignment="Center"
+                                                ItemsSource="{Binding DeceasedFamilyMembers}"
+                                                ItemTemplate="{StaticResource FamilyCardTemplate}">
+                                                <ItemsControl.ItemsPanel>
+                                                    <ItemsPanelTemplate>
+                                                        <WrapPanel
+                                                            Orientation="Horizontal"
+                                                            HorizontalAlignment="Center" />
+                                                    </ItemsPanelTemplate>
+                                                </ItemsControl.ItemsPanel>
+                                            </ItemsControl>
+
+                                            <TextBlock
+                                                HorizontalAlignment="Center"
+                                                FontSize="8.5"
+                                                Opacity="0.55"
+                                                Text="{Binding DeceasedFamilyEmptyText}" />
+                                        </StackPanel>
+                                    </Grid>
                                 </Grid>
                             </ScrollViewer>
                         </Grid>

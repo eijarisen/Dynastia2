@@ -227,7 +227,15 @@ public sealed partial class WellbeingPlugin
                         {
                             health.AddCondition(
                                 actor,
-                                "alcoholism");
+                                "alcoholism",
+                                actionContext.GameState.Year);
+
+                            var alcoholismName =
+                                health.GetHealth(actor).Conditions
+                                    .First(condition => condition.Id.Equals(
+                                        "alcoholism",
+                                        StringComparison.OrdinalIgnoreCase))
+                                    .Name;
 
                             events.Publish(
                                 new GameEvent
@@ -248,11 +256,11 @@ public sealed partial class WellbeingPlugin
                                                 "alcoholism",
 
                                             ["condition"] =
-                                                "Alcoholism",
+                                                alcoholismName,
 
                                             ["text"] =
                                                 $"{family.GetDisplayName(actor)} " +
-                                                "has developed alcoholism."
+                                                $"has developed {alcoholismName}."
                                         }
                                 });
                         }

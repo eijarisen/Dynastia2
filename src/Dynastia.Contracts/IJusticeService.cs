@@ -15,5 +15,6 @@ public interface IJusticeService
         IPerson person,
         int sentence,
         string reasonId,
-        string reasonName);
+        string reasonName,
+        string? reasonDescription = null);
 }

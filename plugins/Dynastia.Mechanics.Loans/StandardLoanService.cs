@@ -8,15 +8,18 @@ public sealed partial class StandardLoanService :
     private readonly IGameState _gameState;
     private readonly IFamilyService _family;
     private readonly IEconomyService _economy;
+    private readonly LoanEraCatalog _loanEras;
 
     public StandardLoanService(
         IGameState gameState,
         IFamilyService family,
-        IEconomyService economy)
+        IEconomyService economy,
+        LoanEraCatalog loanEras)
     {
         _gameState = gameState;
         _family = family;
         _economy = economy;
+        _loanEras = loanEras;
     }
 
     public LoanTermsInfo CalculateTerms(
@@ -343,13 +346,17 @@ public sealed partial class StandardLoanService :
         return false;
     }
 
+    internal string GetExternalCreditorLabel(int year) =>
+        _loanEras.GetRule(year).ExternalCreditorLabel;
+
     internal string GetCreditorName(
         LoanContractState contract)
     {
         if (contract.CreditorType
             == LoanCreditorType.Bank)
         {
-            return "Bank";
+            return GetExternalCreditorLabel(
+                _gameState.Year);
         }
 
         var owners =

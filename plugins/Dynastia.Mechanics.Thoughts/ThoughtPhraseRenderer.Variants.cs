@@ -508,37 +508,32 @@ internal sealed partial class ThoughtPhraseRenderer
                 {
                     ThoughtVoice.Child =>
                         [
-                            "Everything feels sad lately.",
-                            "I don't feel happy like I used to.",
-                            "I just feel sad a lot."
+                            $"This {condition} makes everything feel sad lately.",
+                            $"I don't feel happy when this {condition} gets bad."
                         ],
 
                     ThoughtVoice.Adolescent =>
                         [
-                            "I don't feel like myself anymore. Everything feels heavy.",
-                            "Everything feels harder than it should.",
-                            "I can't seem to get out of this low mood."
+                            $"This {condition} makes everything feel heavier than it should.",
+                            $"I can't seem to get out from under this {condition}."
                         ],
 
                     ThoughtVoice.AdultRough =>
                         [
-                            "Everything feels bad. Don't want to do much.",
-                            "Feel low all the time.",
-                            "Can't shake this feeling."
+                            $"This {condition} is bad. Don't want to do much.",
+                            $"Can't shake this {condition}."
                         ],
 
                     ThoughtVoice.AdultElaborate =>
                         [
-                            "A persistent heaviness has settled over almost everything I do.",
-                            "The depression colors even ordinary days with an exhausting sense of weight.",
-                            "I find it increasingly difficult to summon interest in things that once felt natural."
+                            $"The {condition} colors even ordinary days with an exhausting sense of weight.",
+                            $"Living with {condition} has made it increasingly difficult to summon interest in ordinary things."
                         ],
 
                     _ =>
                         [
-                            "I can't seem to shake this depression.",
-                            "Everything has felt heavy lately.",
-                            "I haven't felt like myself for a while."
+                            $"I can't seem to shake this {condition}.",
+                            $"This {condition} has made everything feel heavy lately."
                         ]
                 },
 
@@ -547,37 +542,32 @@ internal sealed partial class ThoughtPhraseRenderer
                 {
                     ThoughtVoice.Child =>
                         [
-                            "I keep worrying something bad will happen.",
-                            "I feel worried even when nothing is wrong.",
-                            "I can't stop thinking about bad things happening."
+                            $"This {condition} keeps making me worry something bad will happen.",
+                            $"I feel worried a lot because of this {condition}."
                         ],
 
                     ThoughtVoice.Adolescent =>
                         [
-                            "I can't stop worrying about everything.",
-                            "My mind keeps finding new things to worry about.",
-                            "I feel tense all the time lately."
+                            $"This {condition} keeps my mind finding new things to worry about.",
+                            $"I feel tense all the time with this {condition}."
                         ],
 
                     ThoughtVoice.AdultRough =>
                         [
-                            "Can't stop worrying.",
-                            "Always worried lately.",
-                            "My head won't settle down."
+                            $"This {condition} won't let my head settle down.",
+                            $"Can't stop worrying with this {condition}."
                         ],
 
                     ThoughtVoice.AdultElaborate =>
                         [
-                            "My mind keeps returning to every possible thing that might go wrong.",
-                            "Anxiety has turned even ordinary uncertainties into persistent concerns.",
-                            "I find myself anticipating problems long before there is any reason to expect them."
+                            $"The {condition} keeps turning ordinary uncertainties into persistent concerns.",
+                            $"Living with {condition} leaves me anticipating problems long before there is reason to expect them."
                         ],
 
                     _ =>
                         [
-                            "I keep worrying about everything that could go wrong.",
-                            "I can't seem to stop worrying.",
-                            "I've been anxious about almost everything lately."
+                            $"This {condition} keeps me worrying about everything that could go wrong.",
+                            $"I can't seem to stop worrying while this {condition} persists."
                         ]
                 },
 
@@ -586,23 +576,20 @@ internal sealed partial class ThoughtPhraseRenderer
                 {
                     ThoughtVoice.AdultRough =>
                         [
-                            "Been drinking too much. Hard to stop.",
-                            "Drinking again. Can't seem to stop.",
-                            "Need to cut back. Not easy."
+                            $"This {condition} is hard to stop.",
+                            $"The {condition} keeps getting worse."
                         ],
 
                     ThoughtVoice.AdultElaborate =>
                         [
-                            "I know how much I've been drinking, yet stopping has proved much harder than I expected.",
-                            "My reliance on alcohol is becoming increasingly difficult to ignore.",
-                            "I understand what the drinking is doing to me, but changing it remains painfully difficult."
+                            $"The {condition} is becoming increasingly difficult to ignore or control.",
+                            $"I understand what this {condition} is doing to me, but changing it remains painfully difficult."
                         ],
 
                     _ =>
                         [
-                            "I've been drinking too much, but it's hard to stop.",
-                            "I know I need to drink less.",
-                            "The drinking is getting harder to control."
+                            $"This {condition} is getting harder to control.",
+                            $"I know I need to get this {condition} under control."
                         ]
                 },
 

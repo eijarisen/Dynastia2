@@ -5,12 +5,6 @@ namespace Dynastia.Mechanics.Family;
 
 public sealed class StandardNewGameService : INewGameService
 {
-    private const string MaleNamesPath =
-        "Names/polish_male.csv";
-
-    private const string FemaleNamesPath =
-        "Names/polish_female.csv";
-
     private const string SurnamesPath =
         "Names/polish_surnames.csv";
 
@@ -18,6 +12,7 @@ public sealed class StandardNewGameService : INewGameService
     private readonly IFamilyService _family;
     private readonly ISelectionService _selection;
     private readonly IGameDataService _data;
+    private readonly IHistoricalNameService _historicalNames;
     private readonly IGameRandom _random;
     private readonly IGameCalendar _calendar;
     private readonly IGameEventBus _events;
@@ -27,6 +22,7 @@ public sealed class StandardNewGameService : INewGameService
         IFamilyService family,
         ISelectionService selection,
         IGameDataService data,
+        IHistoricalNameService historicalNames,
         IGameRandom random,
         IGameCalendar calendar,
         IGameEventBus events)
@@ -35,6 +31,7 @@ public sealed class StandardNewGameService : INewGameService
         _family = family;
         _selection = selection;
         _data = data;
+        _historicalNames = historicalNames;
         _random = random;
         _calendar = calendar;
         _events = events;
@@ -66,12 +63,18 @@ public sealed class StandardNewGameService : INewGameService
         var parentDeathDate =
             RandomDateInYear(parentDeathYear);
 
+        const int fatherAge = 45;
+        var fatherBirthYear =
+            startYear - fatherAge;
+
         var father =
             _gameState.CreatePerson(
-                RandomWeightedFrom(
-                    MaleNamesPath),
+                _historicalNames.GetRandomFirstName(
+                    Sex.Male,
+                    fatherBirthYear,
+                    _random),
                 surname,
-                45);
+                fatherAge);
 
         father.BirthDate =
             RandomDateInYear(
@@ -98,12 +101,18 @@ public sealed class StandardNewGameService : INewGameService
         father.Tags.Add(
             "sexuality.heterosexual");
 
+        const int motherAge = 42;
+        var motherBirthYear =
+            startYear - motherAge;
+
         var mother =
             _gameState.CreatePerson(
-                RandomWeightedFrom(
-                    FemaleNamesPath),
+                _historicalNames.GetRandomFirstName(
+                    Sex.Female,
+                    motherBirthYear,
+                    _random),
                 surname,
-                42);
+                motherAge);
 
         mother.MaidenName =
             RandomWeightedDifferentFrom(
@@ -146,13 +155,25 @@ public sealed class StandardNewGameService : INewGameService
             clearFirst: false,
             clearSecond: false);
 
+        var olderSiblingNameSample =
+            _random.NextDouble();
+
+        var olderSiblingAge =
+            _random.NextInt(20, 24);
+
+        var olderSiblingBirthYear =
+            startYear - olderSiblingAge;
+
         var olderSibling =
             _gameState.CreatePerson(
-                RandomWeightedDifferentFrom(
-                    FemaleNamesPath,
-                    mother.Name),
+                _historicalNames.GetRandomDifferentFirstName(
+                    Sex.Female,
+                    olderSiblingBirthYear,
+                    mother.Name,
+                    new FixedSampleGameRandom(
+                        olderSiblingNameSample)),
                 surname,
-                _random.NextInt(20, 24));
+                olderSiblingAge);
 
         olderSibling.MaidenName =
             surname;
@@ -187,12 +208,18 @@ public sealed class StandardNewGameService : INewGameService
             father,
             mother);
 
+        const int founderAge = 18;
+        var founderBirthYear =
+            startYear - founderAge;
+
         var founder =
             _gameState.CreatePerson(
-                RandomWeightedFrom(
-                    MaleNamesPath),
+                _historicalNames.GetRandomFirstName(
+                    Sex.Male,
+                    founderBirthYear,
+                    _random),
                 surname,
-                18);
+                founderAge);
 
         founder.BirthDate =
             RandomDateInYear(

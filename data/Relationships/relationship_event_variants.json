@@ -1,0 +1,26 @@
+[
+  {
+    "eventId": "relationship.same_sex_union",
+    "startYear": 1700,
+    "endYear": 1899,
+    "eventType": "relationship.partnered",
+    "textTemplate": "{person} formed a lasting companionship with {spouse}.",
+    "biographyTemplate": "formed a lasting companionship with {spouse}"
+  },
+  {
+    "eventId": "relationship.same_sex_union",
+    "startYear": 1900,
+    "endYear": 1989,
+    "eventType": "relationship.partnered",
+    "textTemplate": "{person} formed a private partnership with {spouse}.",
+    "biographyTemplate": "formed a private partnership with {spouse}"
+  },
+  {
+    "eventId": "relationship.same_sex_union",
+    "startYear": 1990,
+    "endYear": null,
+    "eventType": "relationship.partnered",
+    "textTemplate": "{person} entered a partnership with {spouse}.",
+    "biographyTemplate": "entered a partnership with {spouse}"
+  }
+]

@@ -30,7 +30,8 @@ public sealed class StandardJusticeService :
             justice.PrisonSentence,
             justice.PrisonSentence >= 50,
             justice.CrimeId,
-            justice.CrimeName);
+            justice.CrimeName,
+            justice.CrimeDescription);
     }
 
     public bool IsImprisoned(
@@ -45,7 +46,8 @@ public sealed class StandardJusticeService :
         IPerson person,
         int sentence,
         string reasonId,
-        string reasonName)
+        string reasonName,
+        string? reasonDescription = null)
     {
         var justice =
             GetRequired(
@@ -61,6 +63,9 @@ public sealed class StandardJusticeService :
 
         justice.CrimeName =
             reasonName;
+
+        justice.CrimeDescription =
+            reasonDescription;
 
         if (justice.PrisonSentence > 0)
         {
@@ -83,7 +88,8 @@ public sealed class StandardJusticeService :
             person,
             sentence,
             crime.Id,
-            crime.Name);
+            crime.Name,
+            crime.Description);
     }
 
     internal bool AdvanceSentence(
@@ -108,6 +114,7 @@ public sealed class StandardJusticeService :
 
         justice.CrimeId = null;
         justice.CrimeName = null;
+        justice.CrimeDescription = null;
 
         return true;
     }

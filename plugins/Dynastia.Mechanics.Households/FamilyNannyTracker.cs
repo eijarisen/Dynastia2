@@ -10,12 +10,14 @@ internal sealed class FamilyNannyTracker
     private readonly IGameState _gameState;
     private readonly IFamilyService _family;
     private readonly IEconomyService _economy;
+    private readonly ICareerService _career;
     private readonly IGameEventBus _events;
 
     public FamilyNannyTracker(
         IGameState gameState,
         IFamilyService family,
         IEconomyService economy,
+        ICareerService career,
         IGameEventBus events)
     {
         _gameState =
@@ -26,6 +28,9 @@ internal sealed class FamilyNannyTracker
 
         _economy =
             economy;
+
+        _career =
+            career;
 
         _events =
             events;
@@ -110,9 +115,9 @@ internal sealed class FamilyNannyTracker
                                 reason,
 
                             ["text"] =
-                                $"{_family.GetDisplayName(daughter)} " +
-                                $"stopped helping as the family nanny " +
-                                $"because {reason}."
+                                $"{_family.GetDisplayName(daughter)}'s " +
+                                $"{_career.GetStatusLabel(FamilyNannyTag)} role " +
+                                $"ended because {reason}."
                         }
                 });
         }

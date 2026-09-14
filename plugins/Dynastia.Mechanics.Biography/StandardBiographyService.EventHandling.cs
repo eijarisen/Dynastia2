@@ -390,10 +390,15 @@ public sealed partial class StandardBiographyService
                     "married"),
 
             "relationship.partnered" =>
-                RelatedName(
-                    gameEvent,
-                    0,
-                    "entered a partnership with"),
+                gameEvent.Data.TryGetValue(
+                    "biographyVerb",
+                    out var biographyVerb)
+                    && !string.IsNullOrWhiteSpace(biographyVerb)
+                        ? biographyVerb
+                        : RelatedName(
+                            gameEvent,
+                            0,
+                            "entered a partnership with"),
 
             "relationship.remarried" =>
                 RelatedName(

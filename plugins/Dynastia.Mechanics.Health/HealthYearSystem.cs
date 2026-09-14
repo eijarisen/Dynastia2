@@ -44,8 +44,20 @@ public sealed class HealthYearSystem : IYearSystem
         var chance = immunity switch { 1 => .28, 2 => .20, 3 => .14, 4 => .09, _ => .05 };
         chance = HealthIncidenceRules.ScaleMildConditionChance(chance);
         if (_random.NextDouble() >= chance) return;
-        if (!_health.TryAddWeightedCondition(person, "Mild", person.Age, d => d.GeneticTag is not null && person.Tags.Has(d.GeneticTag) ? 2.75 : 1.0, out _, out var definition) || definition is null) return;
-        PublishCondition(state, person, definition, serious: false);
+        if (!_health.TryAddWeightedCondition(
+                person,
+                "Mild",
+                person.Age,
+                state.Year,
+                d => d.GeneticTag is not null && person.Tags.Has(d.GeneticTag) ? 2.75 : 1.0,
+                out var added,
+                out var definition)
+            || definition is null
+            || added is null)
+        {
+            return;
+        }
+        PublishCondition(state, person, definition, added, serious: false);
     }
 
     private void TrySeriousCondition(IGameState state, IPerson person, int longevity)
@@ -64,12 +76,29 @@ public sealed class HealthYearSystem : IYearSystem
             return weight;
         }
 
-        if (!_health.TryAddWeightedCondition(person, "Serious", person.Age, Weight, out _, out var definition) || definition is null) return;
+        if (!_health.TryAddWeightedCondition(
+                person,
+                "Serious",
+                person.Age,
+                state.Year,
+                Weight,
+                out var added,
+                out var definition)
+            || definition is null
+            || added is null)
+        {
+            return;
+        }
         _health.ApplyImmediateImpact(person, definition);
-        PublishCondition(state, person, definition, serious: true);
+        PublishCondition(state, person, definition, added, serious: true);
     }
 
-    private void PublishCondition(IGameState state, IPerson person, HealthConditionDefinition definition, bool serious)
+    private void PublishCondition(
+        IGameState state,
+        IPerson person,
+        HealthConditionDefinition definition,
+        HealthConditionState condition,
+        bool serious)
     {
         var familyNews = serious && definition.Newsworthy;
         _events.Publish(new GameEvent
@@ -80,10 +109,10 @@ public sealed class HealthYearSystem : IYearSystem
             Data = new Dictionary<string, string>
             {
                 ["conditionId"] = definition.Id,
-                ["condition"] = definition.Name,
+                ["condition"] = condition.Name,
                 ["conditionType"] = definition.Type,
                 ["familyNews"] = familyNews.ToString().ToLowerInvariant(),
-                ["text"] = $"{_family.GetDisplayName(person)} fell ill with {definition.Name}."
+                ["text"] = $"{_family.GetDisplayName(person)} fell ill with {condition.Name}."
             }
         });
     }

@@ -5,6 +5,7 @@ using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Layout;
 using Avalonia.Media;
+using Dynastia.App.Controls;
 using Dynastia.StandardUI.Genealogy.Contracts;
 
 public sealed class GenealogyWindow :
@@ -29,7 +30,8 @@ public sealed class GenealogyWindow :
 
     public GenealogyWindow(
         IGenealogyDataSource data,
-        IGlobalSelectionService selection)
+        IGlobalSelectionService selection,
+        Action<Guid>? personDoubleClicked = null)
     {
         Title =
             "Family Tree";
@@ -60,6 +62,14 @@ public sealed class GenealogyWindow :
                 data,
                 selection);
 
+        _panel.PersonDoubleClicked +=
+            personId =>
+            {
+                personDoubleClicked?.Invoke(
+                    personId);
+                Close();
+            };
+
         var title =
             new TextBlock
             {
@@ -80,49 +90,13 @@ public sealed class GenealogyWindow :
             };
 
         var close =
-            new Button
+            new ImageStateButton
             {
-                Content =
-                    new TextBlock
-                    {
-                        Text =
-                            "Close",
-
-                        Foreground =
-                            new SolidColorBrush(
-                                Color.FromRgb(
-                                    244,
-                                    230,
-                                    195)),
-
-                        FontWeight =
-                            FontWeight.SemiBold
-                    },
-
-                Background =
-                    new SolidColorBrush(
-                        Color.FromRgb(
-                            9,
-                            31,
-                            27)),
-
-                BorderBrush =
-                    new SolidColorBrush(
-                        Color.FromRgb(
-                            143,
-                            105,
-                            37)),
-
-                BorderThickness =
-                    new Thickness(1),
-
-                Padding =
-                    new Thickness(
-                        15,
-                        7),
-
-                CornerRadius =
-                    new CornerRadius(4)
+                Width = 170,
+                Height = 70,
+                IdleSource = "avares://Dynastia.App/Assets/UI/b_close_idle.png",
+                HoverSource = "avares://Dynastia.App/Assets/UI/b_close_hover.png",
+                FallbackText = "Close"
             };
 
         close.Click +=

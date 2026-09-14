@@ -107,41 +107,52 @@ public sealed partial class StandardCareerService
     private string? ResolvePeakJobTitle(
         CareerComponent career)
     {
-        if (career.PeakJobLevel > 0
+        CareerDefinition? definition = null;
+        var level = career.PeakJobLevel;
+
+        if (level > 0
             && !string.IsNullOrWhiteSpace(
                 career.PeakCareerId))
         {
-            return _catalog
-                .Find(
-                    career.PeakCareerId)
-                ?.GetTitle(
-                    career.PeakJobLevel);
+            definition = _catalog.Find(
+                career.PeakCareerId);
         }
 
         // Compatibility fallback for older retired saves that predate
         // peak-career tracking but still retain the career and last salary.
-        var definition =
-            _catalog.Find(
+        if (definition is null)
+        {
+            definition = _catalog.Find(
                 career.CareerId);
 
-        if (career.IsRetired
-            && definition is not null
-            && definition.BaseSalary > 0
-            && career.LastIncome > 0)
-        {
-            var inferredLevel =
-                Math.Clamp(
+            if (career.IsRetired
+                && definition is not null
+                && definition.BaseSalary > 0
+                && career.LastIncome > 0)
+            {
+                level = Math.Clamp(
                     (int)Math.Round(
                         career.LastIncome
                         / definition.BaseSalary),
                     1,
                     5);
-
-            return definition.GetTitle(
-                inferredLevel);
+            }
         }
 
-        return null;
+        if (definition is null
+            || level <= 0)
+        {
+            return null;
+        }
+
+        var baseTitle = definition.GetTitle(
+            level);
+
+        return _presentation.ResolveCareerTitle(
+            definition.Id,
+            level,
+            baseTitle,
+            _gameState.Year);
     }
 
     private decimal GetActiveSalary(
@@ -169,11 +180,16 @@ public sealed partial class StandardCareerService
         CareerComponent career,
         CareerDefinition? definition)
     {
+        var year = _gameState.Year;
+
         // Existing special-status precedence is intentionally preserved.
         if (person.Tags.Has(
             "role.nanny"))
         {
-            return "Nanny";
+            return _presentation.ResolveStatus(
+                "role.nanny",
+                "Nanny",
+                year);
         }
 
         if (person.Tags.Has(
@@ -185,6 +201,15 @@ public sealed partial class StandardCareerService
         if (career.IsRetired)
             return "Retired";
 
+        if (person.Tags.Has(
+            "role.family_nanny"))
+        {
+            return _presentation.ResolveStatus(
+                "role.family_nanny",
+                "Family Nanny",
+                year);
+        }
+
         if (_family.GetSex(
                 person)
                 == Sex.Female
@@ -193,30 +218,105 @@ public sealed partial class StandardCareerService
                 person)
                 .Count > 0)
         {
-            return "Housewife";
+            return _presentation.ResolveStatus(
+                "status.housewife",
+                "Housewife",
+                year);
         }
 
         if (person.Age < 6)
-            return "Preschool";
+        {
+            return _presentation.ResolveStatus(
+                "status.preschool",
+                "Preschool",
+                year);
+        }
 
         if (person.Age < 18)
-            return "Student";
+        {
+            return _presentation.ResolveStatus(
+                "status.student",
+                "Student",
+                year);
+        }
 
         if (career.JobLevel <= 0)
-            return "Unemployed";
+        {
+            return _presentation.ResolveStatus(
+                "status.unemployed",
+                "Unemployed",
+                year);
+        }
 
-        return definition?
-            .GetTitle(
-                career.JobLevel)
-            ?? career.JobLevel switch
-            {
-                1 => "Laborer",
-                2 => "Clerk",
-                3 => "Manager",
-                4 => "Director",
-                5 => "Magnate",
-                _ => "Unemployed"
-            };
+        if (definition is not null)
+        {
+            var baseTitle = definition.GetTitle(
+                career.JobLevel);
+
+            return _presentation.ResolveCareerTitle(
+                definition.Id,
+                career.JobLevel,
+                baseTitle,
+                year);
+        }
+
+        return career.JobLevel switch
+        {
+            1 => "Laborer",
+            2 => "Clerk",
+            3 => "Manager",
+            4 => "Director",
+            5 => "Magnate",
+            _ => _presentation.ResolveStatus(
+                "status.unemployed",
+                "Unemployed",
+                year)
+        };
+    }
+
+    private string? ResolveStatusId(
+        IPerson person,
+        CareerComponent career)
+    {
+        if (person.Tags.Has(
+            "role.nanny"))
+        {
+            return "role.nanny";
+        }
+
+        if (person.Tags.Has(
+                "state.imprisoned")
+            || career.IsRetired)
+        {
+            return null;
+        }
+
+        if (person.Tags.Has(
+            "role.family_nanny"))
+        {
+            return "role.family_nanny";
+        }
+
+        if (_family.GetSex(
+                person)
+                == Sex.Female
+            && career.JobLevel == 0
+            && _family.GetChildren(
+                person)
+                .Count > 0)
+        {
+            return "status.housewife";
+        }
+
+        if (person.Age < 6)
+            return "status.preschool";
+
+        if (person.Age < 18)
+            return "status.student";
+
+        return career.JobLevel <= 0
+            ? "status.unemployed"
+            : null;
     }
 
 }

@@ -51,23 +51,23 @@ public sealed partial class MainWindowViewModel
                 if (finance is null)
                     return null;
 
-                var title = householdInfo is null
-                    ? relative.Surname
-                    : householdInfo.Generation.HasValue
-                        ? $"G{householdInfo.Generation.Value} {householdInfo.Surname}"
-                        : householdInfo.Surname;
+                var otherMembers = householdInfo is null
+                    ? Array.Empty<IPerson>()
+                    : householdInfo.MemberIds
+                        .Where(id => id != relative.Id)
+                        .Select(id => _gameState.People.FirstOrDefault(person => person.Id == id))
+                        .Where(person => person is not null && person.Tags.Has("state.alive"))
+                        .Cast<IPerson>()
+                        .OrderBy(person => person.Id == targetHead.Id ? 0 : 1)
+                        .ThenBy(person => _familyService.GetDisplayName(person), StringComparer.OrdinalIgnoreCase)
+                        .ToArray();
 
-                var relativesText = string.Join(
-                    Environment.NewLine,
-                    info.Relations.Select(link =>
-                    {
-                        var person = _gameState.People.FirstOrDefault(p => p.Id == link.RelativeId);
-                        return person is null
-                            ? $"{link.Kinship} ({link.State})"
-                            : $"{link.Kinship} — {_familyService.GetDisplayName(person)} ({link.State})";
-                    }));
+                var otherMembersText = otherMembers.Length == 0
+                    ? "No other household members."
+                    : "Household members: " + string.Join(
+                        ", ",
+                        otherMembers.Select(_familyService.GetDisplayName));
 
-                var relationshipText = $"Relationship: {primary.State}";
                 var wealthText = $"Wealth: {finance.Wealth:N0} zł";
 
                 var locationPerson = targetHead ?? relative;
@@ -96,9 +96,10 @@ public sealed partial class MainWindowViewModel
                     .ToList();
 
                 return new FamilyRelationHouseholdViewModel(
-                    title,
-                    relativesText,
-                    relationshipText,
+                    primary.Kinship,
+                    _familyService.GetDisplayName(relative),
+                    primary.State,
+                    otherMembersText,
                     wealthText,
                     locationText,
                     actionModels);

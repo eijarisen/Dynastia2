@@ -1,0 +1,10 @@
+﻿ConditionId,StartYear,EndYear,WeightMultiplier
+tuberculosis,1700,1849,2.5
+tuberculosis,1850,1913,2.0
+tuberculosis,1914,1945,1.2
+tuberculosis,1946,1989,0.35
+tuberculosis,1990,,0.15
+pneumonia,1700,1849,1.3
+pneumonia,1850,1913,1.2
+pneumonia,1914,1945,1.1
+pneumonia,1946,,1.0

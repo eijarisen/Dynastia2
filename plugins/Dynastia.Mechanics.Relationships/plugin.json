@@ -12,6 +12,7 @@
     "dynastia.economy",
     "dynastia.education",
     "dynastia.career",
-    "dynastia.households"
+    "dynastia.households",
+    "dynastia.historical"
   ]
 }

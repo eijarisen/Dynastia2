@@ -1,0 +1,4 @@
+StartYear,EndYear,ExternalCreditorLabel,TakeLoanEventPhrase
+1700,1799,Moneylender,borrowed money from a private moneylender
+1800,1849,Lender,took a loan from a private lender
+1850,,Bank,took a bank loan

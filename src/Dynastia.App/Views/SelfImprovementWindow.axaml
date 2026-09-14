@@ -1,6 +1,7 @@
 <Window
     xmlns="https://github.com/avaloniaui"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:ui="using:Dynastia.App.Controls"
     xmlns:vm="using:Dynastia.App.ViewModels"
     x:Class="Dynastia.App.Views.SelfImprovementWindow"
     Width="960"
@@ -150,11 +151,14 @@
                                                 Foreground="#745A38"
                                                 Text="{Binding AvailabilityText}" />
                                         </StackPanel>
-                                        <Button
+                                        <ui:ImageStateButton
                                             Grid.Column="1"
-                                            Classes="paperAction"
+                                            Width="128"
+                                            Height="53"
                                             IsEnabled="{Binding IsAvailable}"
-                                            Content="Queue"
+                                            IdleSource="avares://Dynastia.App/Assets/UI/b_queue_idle.png"
+                                            HoverSource="avares://Dynastia.App/Assets/UI/b_queue_hover.png"
+                                            FallbackText="Queue"
                                             Click="OnQueueClick" />
                                     </Grid>
                                 </Grid>
@@ -164,11 +168,14 @@
                 </ItemsControl>
             </Border>
 
-            <Button
+            <ui:ImageStateButton
                 Grid.Row="3"
+                Width="170"
+                Height="70"
                 HorizontalAlignment="Center"
-                Classes="paperAction"
-                Content="Close"
+                IdleSource="avares://Dynastia.App/Assets/UI/b_close_idle.png"
+                HoverSource="avares://Dynastia.App/Assets/UI/b_close_hover.png"
+                FallbackText="Close"
                 Click="OnCloseClick" />
         </Grid>
     </Grid>

@@ -31,7 +31,10 @@ public sealed class JusticeViewModel
             string.IsNullOrWhiteSpace(
                 snapshot.CrimeName)
                 ? string.Empty
-                : $"Conviction: {snapshot.CrimeName}";
+                : string.IsNullOrWhiteSpace(
+                    snapshot.CrimeDescription)
+                    ? $"Conviction: {snapshot.CrimeName}"
+                    : $"Conviction: {snapshot.CrimeName} — {snapshot.CrimeDescription}";
     }
 
     public bool IsImprisoned { get; }

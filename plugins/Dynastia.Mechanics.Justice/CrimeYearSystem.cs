@@ -15,6 +15,7 @@ public sealed class CrimeYearSystem : IYearSystem
     private readonly IGameRandom _random;
     private readonly IGameEventBus _events;
     private readonly IReadOnlyList<CrimeDefinition> _crimes;
+    private readonly CrimeHistoricalCatalog _historical;
 
     public CrimeYearSystem(
         StandardJusticeService justice,
@@ -25,7 +26,8 @@ public sealed class CrimeYearSystem : IYearSystem
         IEconomyBalanceService economyBalance,
         IGameRandom random,
         IGameEventBus events,
-        IReadOnlyList<CrimeDefinition> crimes)
+        IReadOnlyList<CrimeDefinition> crimes,
+        CrimeHistoricalCatalog historical)
     {
         _justice = justice;
         _family = family;
@@ -36,6 +38,7 @@ public sealed class CrimeYearSystem : IYearSystem
         _random = random;
         _events = events;
         _crimes = crimes;
+        _historical = historical;
     }
 
     public string Id => "justice.crime";
@@ -72,9 +75,20 @@ public sealed class CrimeYearSystem : IYearSystem
         var intellect = GetStat(person, "intellect");
         var career = _career.GetCareer(person);
         var hasHousehold = _economy.GetHousehold(person) is not null;
-        var crime = SelectCrime(person, intellect, broke, career.JobLevel > 0, hasHousehold);
+        var crime = SelectCrime(
+            person,
+            intellect,
+            broke,
+            career.JobLevel > 0,
+            hasHousehold,
+            state.Year);
         if (crime is null)
             return;
+
+        var presentation =
+            _historical.Resolve(
+                crime,
+                state.Year);
 
         var success = !crime.IsProfitCrime || _random.NextDouble() < ResolveSuccessChance(crime, intellect);
         decimal proceeds = 0;
@@ -97,21 +111,46 @@ public sealed class CrimeYearSystem : IYearSystem
         {
             var sentence = _random.NextInt(crime.SentenceMin, crime.SentenceMax);
             _career.SetJobLevel(person, 0);
-            _justice.Imprison(person, crime, sentence);
-            PublishCaughtEvent(state, person, crime, sentence, success, proceeds, confiscated);
+            _justice.Imprison(
+                person,
+                sentence,
+                crime.Id,
+                presentation.DisplayName,
+                presentation.Description);
+            PublishCaughtEvent(
+                state,
+                person,
+                crime,
+                presentation,
+                sentence,
+                success,
+                proceeds,
+                confiscated);
             return;
         }
 
         if (ShouldRevealUncaughtCrime(state, person))
-            PublishUncaughtEvent(state, person, crime, success, proceeds);
+            PublishUncaughtEvent(state, person, crime, presentation, success, proceeds);
     }
 
-    private CrimeDefinition? SelectCrime(IPerson person, int intellect, bool broke, bool employed, bool hasHousehold)
+    private CrimeDefinition? SelectCrime(
+        IPerson person,
+        int intellect,
+        bool broke,
+        bool employed,
+        bool hasHousehold,
+        int year)
     {
         var weighted = _crimes
             .Where(c => (!c.RequiresEmployment || employed)
                         && (hasHousehold || !c.IsProfitCrime))
-            .Select(c => new { Crime = c, Weight = c.Weight * CircumstanceWeight(c, person, intellect, broke) })
+            .Select(c => new
+            {
+                Crime = c,
+                Weight = c.Weight
+                    * _historical.GetWeightMultiplier(c.Id, year)
+                    * CircumstanceWeight(c, person, intellect, broke)
+            })
             .Where(x => x.Weight > 0)
             .ToList();
         if (weighted.Count == 0) return null;
@@ -160,7 +199,15 @@ public sealed class CrimeYearSystem : IYearSystem
         return Math.Clamp(crime.DetectionBase + intellectEffect, 0.10, 0.98);
     }
 
-    private void PublishCaughtEvent(IGameState state, IPerson person, CrimeDefinition crime, int sentence, bool success, decimal proceeds, decimal confiscated)
+    private void PublishCaughtEvent(
+        IGameState state,
+        IPerson person,
+        CrimeDefinition crime,
+        CrimePresentation presentation,
+        int sentence,
+        bool success,
+        decimal proceeds,
+        decimal confiscated)
     {
         var sentenceText = sentence >= 50 ? "life" : sentence == 1 ? "1 year" : $"{sentence} years";
         var moneyText = crime.IsProfitCrime
@@ -177,18 +224,25 @@ public sealed class CrimeYearSystem : IYearSystem
             Data = new Dictionary<string, string>
             {
                 ["crimeId"] = crime.Id,
-                ["crime"] = crime.Name,
+                ["crime"] = presentation.DisplayName,
+                ["description"] = presentation.Description,
                 ["category"] = crime.Category,
                 ["sentence"] = sentence.ToString(),
                 ["success"] = success.ToString().ToLowerInvariant(),
                 ["caught"] = "true",
                 ["proceeds"] = proceeds.ToString(),
-                ["text"] = $"{_family.GetDisplayName(person)} was caught after {crime.Description} and sentenced to {sentenceText} in prison.{moneyText}"
+                ["text"] = $"{_family.GetDisplayName(person)} was caught after {presentation.Description} and sentenced to {sentenceText} in prison.{moneyText}"
             }
         });
     }
 
-    private void PublishUncaughtEvent(IGameState state, IPerson person, CrimeDefinition crime, bool success, decimal proceeds)
+    private void PublishUncaughtEvent(
+        IGameState state,
+        IPerson person,
+        CrimeDefinition crime,
+        CrimePresentation presentation,
+        bool success,
+        decimal proceeds)
     {
         var outcome = crime.IsProfitCrime
             ? success ? $" and brought {proceeds:N0} zł home" : " but gained nothing"
@@ -201,12 +255,13 @@ public sealed class CrimeYearSystem : IYearSystem
             Data = new Dictionary<string, string>
             {
                 ["crimeId"] = crime.Id,
-                ["crime"] = crime.Name,
+                ["crime"] = presentation.DisplayName,
+                ["description"] = presentation.Description,
                 ["category"] = crime.Category,
                 ["success"] = success.ToString().ToLowerInvariant(),
                 ["caught"] = "false",
                 ["proceeds"] = proceeds.ToString(),
-                ["text"] = $"{_family.GetDisplayName(person)} committed {crime.Name}{outcome} and escaped arrest."
+                ["text"] = $"{_family.GetDisplayName(person)} committed {presentation.DisplayName}{outcome} and escaped arrest."
             }
         });
     }

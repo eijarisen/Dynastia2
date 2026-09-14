@@ -8,6 +8,7 @@ public sealed class StandardHealthService : IHealthService
     private const string ConditionsPath = "Common/health_conditions.json";
     private readonly IGameRandom _random;
     private readonly Dictionary<string, HealthConditionDefinition> _definitions;
+    private HistoricalHealthCatalog? _historical;
 
     public StandardHealthService(IGameDataService data, IGameRandom random)
     {
@@ -50,8 +51,14 @@ public sealed class StandardHealthService : IHealthService
         health.Current = Math.Max(0, health.Current + amount);
     }
     public bool HasCondition(IPerson person, string conditionId) => GetRequired(person).Conditions.Any(x => x.Id.Equals(conditionId, StringComparison.OrdinalIgnoreCase));
-    public bool AddCondition(IPerson person, string conditionId) => TryAddCondition(person, conditionId, out _);
+    public bool AddCondition(IPerson person, string conditionId) => TryAddCondition(person, conditionId, null, out _);
+    public bool AddCondition(IPerson person, string conditionId, int year) => TryAddCondition(person, conditionId, year, out _);
     public bool RemoveCondition(IPerson person, string conditionId) => GetRequired(person).Conditions.RemoveAll(x => x.Id.Equals(conditionId, StringComparison.OrdinalIgnoreCase)) > 0;
+
+    internal IReadOnlyCollection<string> ConditionIds => _definitions.Keys;
+
+    public void ConfigureHistoricalCatalog(HistoricalHealthCatalog historical) =>
+        _historical = historical ?? throw new ArgumentNullException(nameof(historical));
 
     internal HealthConditionDefinition? GetDefinition(string conditionId) => _definitions.TryGetValue(conditionId, out var d) ? d : null;
     internal bool IsFamilyNewsCondition(string conditionId) => GetDefinition(conditionId)?.Newsworthy == true || GetDefinition(conditionId)?.FamilyNews == true;
@@ -88,6 +95,7 @@ public sealed class StandardHealthService : IHealthService
         IPerson person,
         string category,
         int age,
+        int year,
         Func<HealthConditionDefinition, double>? weightModifier,
         out HealthConditionState? added,
         out HealthConditionDefinition? selected)
@@ -97,7 +105,13 @@ public sealed class StandardHealthService : IHealthService
                         && age >= d.MinimumAge
                         && d.Weight > 0
                         && !HasCondition(person, d.Id))
-            .Select(d => new { Definition = d, Weight = d.Weight * Math.Max(0, weightModifier?.Invoke(d) ?? 1) })
+            .Select(d => new
+            {
+                Definition = d,
+                Weight = d.Weight
+                    * (_historical?.GetWeightMultiplier(d.Id, year) ?? 1.0)
+                    * Math.Max(0, weightModifier?.Invoke(d) ?? 1)
+            })
             .Where(x => x.Weight > 0)
             .ToList();
 
@@ -117,7 +131,7 @@ public sealed class StandardHealthService : IHealthService
             roll -= entry.Weight;
         }
 
-        return TryAddCondition(person, selected.Id, out added);
+        return TryAddCondition(person, selected.Id, year, out added);
     }
 
     internal void ApplyImmediateImpact(IPerson person, HealthConditionDefinition definition)
@@ -126,7 +140,7 @@ public sealed class StandardHealthService : IHealthService
             ChangeHealth(person, definition.ImmediateHealthImpact);
     }
 
-    private bool TryAddCondition(IPerson person, string conditionId, out HealthConditionState? added)
+    private bool TryAddCondition(IPerson person, string conditionId, int? year, out HealthConditionState? added)
     {
         var health = GetRequired(person);
         if (health.Conditions.Any(x => x.Id.Equals(conditionId, StringComparison.OrdinalIgnoreCase)))
@@ -144,7 +158,10 @@ public sealed class StandardHealthService : IHealthService
         added = new HealthConditionState
         {
             Id = definition.Id,
-            Name = definition.Name,
+            Name = year.HasValue
+                ? _historical?.GetDisplayName(definition.Id, definition.Name, year.Value)
+                    ?? definition.Name
+                : definition.Name,
             Type = definition.Type,
             HealthImpact = definition.HealthImpact,
             RemainingYears = remaining

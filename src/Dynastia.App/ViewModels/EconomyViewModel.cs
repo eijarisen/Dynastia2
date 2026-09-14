@@ -19,10 +19,17 @@ public sealed class EconomyViewModel
             ?? snapshot.LastIncome;
         LastExpenses = snapshot.LastExpenses;
 
+        var nannyRoleLabel =
+            status?.NannyRoleLabel
+            ?? string.Empty;
+
         NannyText =
-            status?.HasNannyReference == true
-                ? $"Nanny: {status.NannyName ?? "Unknown"}"
-                : "Nanny: None";
+            string.IsNullOrWhiteSpace(
+                nannyRoleLabel)
+                ? string.Empty
+                : status?.HasNannyReference == true
+                    ? $"{nannyRoleLabel}: {status.NannyName ?? "Unknown"}"
+                    : $"{nannyRoleLabel}: None";
 
         WarningText =
             status is null

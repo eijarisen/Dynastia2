@@ -58,7 +58,8 @@ internal sealed class DivorcedParentsStateYearSystem :
 
                 _health.AddCondition(
                     person,
-                    "parents_divorced");
+                    "parents_divorced",
+                    gameState.Year);
             }
         }
     }

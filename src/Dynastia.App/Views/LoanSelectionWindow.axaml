@@ -1,6 +1,7 @@
 <Window
     xmlns="https://github.com/avaloniaui"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:ui="using:Dynastia.App.Controls"
     x:Class="Dynastia.App.Views.LoanSelectionWindow"
     Width="760"
     Height="610"
@@ -204,14 +205,20 @@
                 HorizontalAlignment="Center"
                 Orientation="Horizontal"
                 Spacing="12">
-                <Button
+                <ui:ImageStateButton
                     x:Name="ConfirmButton"
-                    Classes="paperAction"
-                    Content="Take Loan"
+                    Width="190"
+                    Height="79"
+                    IdleSource="avares://Dynastia.App/Assets/UI/b_takeloan_idle.png"
+                    HoverSource="avares://Dynastia.App/Assets/UI/b_takeloan_hover.png"
+                    FallbackText="Take Loan"
                     Click="OnConfirmClick" />
-                <Button
-                    Classes="paperAction"
-                    Content="Close"
+                <ui:ImageStateButton
+                    Width="190"
+                    Height="79"
+                    IdleSource="avares://Dynastia.App/Assets/UI/b_close_idle.png"
+                    HoverSource="avares://Dynastia.App/Assets/UI/b_close_hover.png"
+                    FallbackText="Close"
                     Click="OnCancelClick" />
             </StackPanel>
         </Grid>

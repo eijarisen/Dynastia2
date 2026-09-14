@@ -1,13 +1,13 @@
 <Window
     xmlns="https://github.com/avaloniaui"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:ui="using:Dynastia.App.Controls"
     xmlns:vm="using:Dynastia.App.ViewModels"
     x:Class="Dynastia.App.Views.FamilyRelationsWindow"
-    x:DataType="vm:FamilyRelationsWindowViewModel"
-    Width="1100"
-    Height="840"
-    MinWidth="920"
-    MinHeight="700"
+    Width="1000"
+    Height="760"
+    MinWidth="900"
+    MinHeight="650"
     CanResize="False"
     ShowInTaskbar="False"
     WindowDecorations="None"
@@ -18,8 +18,8 @@
 
     <Window.Styles>
         <Style Selector="Button.relationAction">
+            <Setter Property="Width" Value="170" />
             <Setter Property="Padding" Value="12,7" />
-            <Setter Property="MinWidth" Value="112" />
             <Setter Property="Background" Value="#E6D2AA" />
             <Setter Property="Foreground" Value="#3A2413" />
             <Setter Property="BorderBrush" Value="#93662F" />
@@ -30,20 +30,6 @@
         </Style>
         <Style Selector="Button.relationAction:pointerover">
             <Setter Property="Background" Value="#D4AF73" />
-        </Style>
-        <Style Selector="Button.closePaper">
-            <Setter Property="Padding" Value="20,9" />
-            <Setter Property="MinWidth" Value="120" />
-            <Setter Property="Background" Value="#E8D5AF" />
-            <Setter Property="Foreground" Value="#3F2714" />
-            <Setter Property="BorderBrush" Value="#9D6F35" />
-            <Setter Property="BorderThickness" Value="1.5" />
-            <Setter Property="FontFamily" Value="Georgia" />
-            <Setter Property="FontSize" Value="15" />
-            <Setter Property="FontWeight" Value="Bold" />
-        </Style>
-        <Style Selector="Button.closePaper:pointerover">
-            <Setter Property="Background" Value="#D4B178" />
         </Style>
     </Window.Styles>
 
@@ -84,69 +70,132 @@
                                     BorderBrush="#A17A43"
                                     BorderThickness="1"
                                     CornerRadius="4">
-                                    <Grid RowDefinitions="Auto,Auto,Auto,Auto,Auto" RowSpacing="5">
-                                        <TextBlock
-                                            FontFamily="Georgia"
-                                            FontSize="18"
-                                            FontWeight="Bold"
-                                            Foreground="#352110"
-                                            Text="{Binding HouseholdTitle}" />
-                                        <TextBlock
-                                            Grid.Row="1"
-                                            FontFamily="Georgia"
-                                            FontSize="13"
-                                            LineHeight="19"
-                                            Foreground="#46321C"
-                                            TextWrapping="Wrap"
-                                            Text="{Binding RelativesText}" />
-                                        <StackPanel Grid.Row="2" Orientation="Horizontal" Spacing="18">
+                                    <Grid ColumnDefinitions="*,190" ColumnSpacing="18">
+                                        <StackPanel Spacing="7">
+                                            <StackPanel Orientation="Horizontal" Spacing="0">
+                                                <TextBlock
+                                                    FontFamily="Georgia"
+                                                    FontSize="18"
+                                                    FontWeight="Bold"
+                                                    Foreground="#352110"
+                                                    Text="{Binding Kinship}" />
+                                                <TextBlock
+                                                    FontFamily="Georgia"
+                                                    FontSize="18"
+                                                    FontWeight="Bold"
+                                                    Foreground="#352110"
+                                                    Text=" — " />
+                                                <TextBlock
+                                                    FontFamily="Georgia"
+                                                    FontSize="18"
+                                                    FontWeight="Bold"
+                                                    Foreground="#352110"
+                                                    Text="{Binding RelativeName}" />
+                                                <TextBlock
+                                                    FontFamily="Georgia"
+                                                    FontSize="18"
+                                                    FontWeight="Bold"
+                                                    Foreground="#352110"
+                                                    Text=" (" />
+                                                <TextBlock
+                                                    FontFamily="Georgia"
+                                                    FontSize="18"
+                                                    FontWeight="Bold"
+                                                    Foreground="{Binding StateBrush}"
+                                                    Text="{Binding State}" />
+                                                <TextBlock
+                                                    FontFamily="Georgia"
+                                                    FontSize="18"
+                                                    FontWeight="Bold"
+                                                    Foreground="#352110"
+                                                    Text=")" />
+                                            </StackPanel>
+
                                             <TextBlock
                                                 FontFamily="Georgia"
                                                 FontSize="13"
-                                                FontWeight="Bold"
-                                                Foreground="#5A3A18"
-                                                Text="{Binding RelationshipText}" />
-                                            <TextBlock
-                                                FontFamily="Georgia"
-                                                FontSize="13"
-                                                Foreground="#5A3A18"
-                                                Text="{Binding WealthText}" />
-                                            <TextBlock
-                                                FontFamily="Georgia"
-                                                FontSize="13"
-                                                Foreground="#5A3A18"
-                                                Text="{Binding LocationText}" />
+                                                LineHeight="19"
+                                                Foreground="#46321C"
+                                                TextWrapping="Wrap"
+                                                Text="{Binding OtherMembersText}" />
+
+                                            <StackPanel Orientation="Horizontal" Spacing="18">
+                                                <TextBlock
+                                                    FontFamily="Georgia"
+                                                    FontSize="13"
+                                                    FontWeight="Bold"
+                                                    Foreground="#5A3A18"
+                                                    Text="{Binding WealthText}" />
+                                                <TextBlock
+                                                    FontFamily="Georgia"
+                                                    FontSize="13"
+                                                    Foreground="#5A3A18"
+                                                    Text="{Binding LocationText}" />
+                                            </StackPanel>
                                         </StackPanel>
-                                        <ItemsControl Grid.Row="4" Margin="0,7,0,0" ItemsSource="{Binding Actions}">
+
+                                        <ItemsControl
+                                            Grid.Column="1"
+                                            HorizontalAlignment="Right"
+                                            VerticalAlignment="Center"
+                                            ItemsSource="{Binding Actions}">
                                             <ItemsControl.ItemsPanel>
                                                 <ItemsPanelTemplate>
-                                                    <WrapPanel Orientation="Horizontal" />
+                                                    <StackPanel Orientation="Vertical" Spacing="6" />
                                                 </ItemsPanelTemplate>
                                             </ItemsControl.ItemsPanel>
                                             <ItemsControl.ItemTemplate>
                                                 <DataTemplate x:DataType="vm:FamilyRelationActionViewModel">
-                                                    <Button
-                                                        Margin="0,0,8,7"
-                                                        Classes="relationAction"
-                                                        Content="{Binding Label}"
-                                                        Click="OnActionClick">
-                                                        <ToolTip.Tip>
-                                                            <Border
-                                                                MaxWidth="390"
-                                                                Padding="9,7"
-                                                                Background="#F20A1514"
-                                                                BorderBrush="#B88934"
-                                                                BorderThickness="1"
-                                                                CornerRadius="4">
-                                                                <TextBlock
-                                                                    FontSize="10.5"
-                                                                    LineHeight="17"
-                                                                    Foreground="#F5E6C6"
-                                                                    TextWrapping="Wrap"
-                                                                    Text="{Binding Description}" />
-                                                            </Border>
-                                                        </ToolTip.Tip>
-                                                    </Button>
+                                                    <Grid>
+                                                        <ui:ImageStateButton
+                                                            Width="170"
+                                                            Height="70"
+                                                            IsVisible="{Binding IsImproveRelations}"
+                                                            IdleSource="avares://Dynastia.App/Assets/UI/b_relations_idle.png"
+                                                            HoverSource="avares://Dynastia.App/Assets/UI/b_relations_hover.png"
+                                                            FallbackText="Improve Relations"
+                                                            Click="OnActionClick">
+                                                            <ToolTip.Tip>
+                                                                <Border
+                                                                    MaxWidth="390"
+                                                                    Padding="9,7"
+                                                                    Background="#F20A1514"
+                                                                    BorderBrush="#B88934"
+                                                                    BorderThickness="1"
+                                                                    CornerRadius="4">
+                                                                    <TextBlock
+                                                                        FontSize="10.5"
+                                                                        LineHeight="17"
+                                                                        Foreground="#F5E6C6"
+                                                                        TextWrapping="Wrap"
+                                                                        Text="{Binding Description}" />
+                                                                </Border>
+                                                            </ToolTip.Tip>
+                                                        </ui:ImageStateButton>
+
+                                                        <Button
+                                                            Classes="relationAction"
+                                                            IsVisible="{Binding IsStandardAction}"
+                                                            Content="{Binding Label}"
+                                                            Click="OnActionClick">
+                                                            <ToolTip.Tip>
+                                                                <Border
+                                                                    MaxWidth="390"
+                                                                    Padding="9,7"
+                                                                    Background="#F20A1514"
+                                                                    BorderBrush="#B88934"
+                                                                    BorderThickness="1"
+                                                                    CornerRadius="4">
+                                                                    <TextBlock
+                                                                        FontSize="10.5"
+                                                                        LineHeight="17"
+                                                                        Foreground="#F5E6C6"
+                                                                        TextWrapping="Wrap"
+                                                                        Text="{Binding Description}" />
+                                                                </Border>
+                                                            </ToolTip.Tip>
+                                                        </Button>
+                                                    </Grid>
                                                 </DataTemplate>
                                             </ItemsControl.ItemTemplate>
                                         </ItemsControl>
@@ -166,10 +215,13 @@
                     FontSize="12"
                     Foreground="#6B4521"
                     Text="{Binding StatusText}" />
-                <Button
+                <ui:ImageStateButton
                     Grid.Column="1"
-                    Classes="closePaper"
-                    Content="Close"
+                    Width="170"
+                    Height="70"
+                    IdleSource="avares://Dynastia.App/Assets/UI/b_close_idle.png"
+                    HoverSource="avares://Dynastia.App/Assets/UI/b_close_hover.png"
+                    FallbackText="Close"
                     Click="OnCloseClick" />
             </Grid>
         </Grid>

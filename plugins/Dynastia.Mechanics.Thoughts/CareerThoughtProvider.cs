@@ -205,9 +205,9 @@ internal sealed class CareerThoughtProvider :
                 .GetStatus(
                     person)
                 .IsImprisoned
-            || career.JobTitle.Equals(
-                "Housewife",
-                StringComparison.OrdinalIgnoreCase)
+            || career.StatusId?.Equals(
+                "status.housewife",
+                StringComparison.OrdinalIgnoreCase) == true
             || person.Tags.Has(
                 "role.nanny")
             || person.Tags.Has(

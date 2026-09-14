@@ -106,6 +106,9 @@ internal sealed class CareerCatalog
                 StringComparer.OrdinalIgnoreCase);
     }
 
+    internal IReadOnlyCollection<string> CareerIds =>
+        _byId.Keys.ToArray();
+
     public static CareerCatalog Load(
         IGameDataService data)
     {

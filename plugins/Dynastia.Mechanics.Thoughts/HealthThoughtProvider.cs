@@ -58,7 +58,12 @@ internal sealed class HealthThoughtProvider :
                 "😥",
                 "state",
                 depression.Id,
-                "depression");
+                "depression",
+                ThoughtProviderUtilities.Context(
+                    (
+                        "condition",
+                        depression.Name
+                    )));
         }
 
         var anxiety =
@@ -82,7 +87,12 @@ internal sealed class HealthThoughtProvider :
                 "😟",
                 "state",
                 anxiety.Id,
-                "anxiety");
+                "anxiety",
+                ThoughtProviderUtilities.Context(
+                    (
+                        "condition",
+                        anxiety.Name
+                    )));
         }
 
         if (person.Age >= 18)
@@ -108,7 +118,12 @@ internal sealed class HealthThoughtProvider :
                     "🥴",
                     "state",
                     alcoholism.Id,
-                    "alcoholism");
+                    "alcoholism",
+                    ThoughtProviderUtilities.Context(
+                        (
+                            "condition",
+                            alcoholism.Name
+                        )));
             }
         }
 

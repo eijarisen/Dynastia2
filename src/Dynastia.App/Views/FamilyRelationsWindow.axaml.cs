@@ -73,10 +73,13 @@ public partial class FamilyRelationsWindow : Window
                 return;
         }
 
-        _viewModel.Queue(
+        if (_viewModel.Queue(
             action,
             propertyId,
-            moneyAmount);
+            moneyAmount))
+        {
+            Close();
+        }
     }
 
     private void OnCloseClick(object? sender, RoutedEventArgs e) => Close();

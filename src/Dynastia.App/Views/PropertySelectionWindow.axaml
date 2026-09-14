@@ -1,6 +1,7 @@
 <Window
     xmlns="https://github.com/avaloniaui"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:ui="using:Dynastia.App.Controls"
     xmlns:vm="using:Dynastia.App.ViewModels"
     x:Class="Dynastia.App.Views.PropertySelectionWindow"
     Width="1000"
@@ -127,6 +128,29 @@
             </Border>
 
             <StackPanel
+                x:Name="ImageActionPanel"
+                Grid.Row="3"
+                HorizontalAlignment="Center"
+                Orientation="Horizontal"
+                Spacing="12"
+                IsVisible="False">
+                <ui:ImageStateButton
+                    x:Name="ImageConfirmButton"
+                    Width="190"
+                    Height="79"
+                    FallbackText="Confirm"
+                    Click="OnConfirmClick" />
+                <ui:ImageStateButton
+                    Width="190"
+                    Height="79"
+                    IdleSource="avares://Dynastia.App/Assets/UI/b_close_idle.png"
+                    HoverSource="avares://Dynastia.App/Assets/UI/b_close_hover.png"
+                    FallbackText="Close"
+                    Click="OnCancelClick" />
+            </StackPanel>
+
+            <StackPanel
+                x:Name="GenericActionPanel"
                 Grid.Row="3"
                 HorizontalAlignment="Center"
                 Orientation="Horizontal"

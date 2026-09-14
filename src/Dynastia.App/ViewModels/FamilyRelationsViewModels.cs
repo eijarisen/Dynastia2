@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using Avalonia.Media;
 
 namespace Dynastia.App.ViewModels;
 
@@ -8,15 +9,35 @@ public sealed record FamilyRelationActionViewModel(
     string Description,
     Guid RelativeId,
     bool RequiresPropertySelection,
-    bool RequiresMoneySelection);
+    bool RequiresMoneySelection)
+{
+    public bool IsImproveRelations =>
+        Id.Equals(
+            "family_relations.improve",
+            StringComparison.OrdinalIgnoreCase);
+
+    public bool IsStandardAction =>
+        !IsImproveRelations;
+}
 
 public sealed record FamilyRelationHouseholdViewModel(
-    string HouseholdTitle,
-    string RelativesText,
-    string RelationshipText,
+    string Kinship,
+    string RelativeName,
+    string State,
+    string OtherMembersText,
     string WealthText,
     string LocationText,
-    IReadOnlyList<FamilyRelationActionViewModel> Actions);
+    IReadOnlyList<FamilyRelationActionViewModel> Actions)
+{
+    public IBrush StateBrush => State switch
+    {
+        "Hostile" => new SolidColorBrush(Color.Parse("#9B2F2F")),
+        "Poor" => new SolidColorBrush(Color.Parse("#B56432")),
+        "Good" => new SolidColorBrush(Color.Parse("#4D7844")),
+        "Close" => new SolidColorBrush(Color.Parse("#2F6938")),
+        _ => new SolidColorBrush(Color.Parse("#806633"))
+    };
+}
 
 public sealed class FamilyRelationsWindowViewModel : ViewModelBase
 {
@@ -61,7 +82,7 @@ public sealed class FamilyRelationsWindowViewModel : ViewModelBase
             action.RelativeId,
             action.Id);
 
-    public void Queue(
+    public bool Queue(
         FamilyRelationActionViewModel action,
         string? propertyId = null,
         decimal? moneyAmount = null)
@@ -72,6 +93,8 @@ public sealed class FamilyRelationsWindowViewModel : ViewModelBase
             propertyId,
             moneyAmount);
         StatusText = result.Message ?? (result.Success ? "Action queued." : "The action could not be queued.");
-        Refresh();
+        if (!result.Success)
+            Refresh();
+        return result.Success;
     }
 }

@@ -1,0 +1,5 @@
+﻿CrimeId,StartYear,EndYear,DisplayName,Description
+vandalism,1700,1793,property destruction,deliberately damaging property
+vandalism,1794,,vandalism,vandalizing public property
+aggravated_assault,1700,1899,violent assault,committing a violent assault
+aggravated_assault,1900,,aggravated assault,committing aggravated assault

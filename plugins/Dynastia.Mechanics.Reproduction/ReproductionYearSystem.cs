@@ -4,12 +4,6 @@ namespace Dynastia.Mechanics.Reproduction;
 
 public sealed class ReproductionYearSystem : IYearSystem
 {
-    private const string MaleNamesPath =
-        "Names/polish_male.csv";
-
-    private const string FemaleNamesPath =
-        "Names/polish_female.csv";
-
     private const int MinimumChildbearingAge =
         18;
 
@@ -58,7 +52,7 @@ public sealed class ReproductionYearSystem : IYearSystem
     private readonly IFamilyService _family;
     private readonly IStatsService _stats;
     private readonly IHealthService _health;
-    private readonly IGameDataService _data;
+    private readonly IHistoricalNameService _historicalNames;
     private readonly IGameRandom _random;
     private readonly IGameCalendar _calendar;
     private readonly IGameEventBus _events;
@@ -71,7 +65,7 @@ public sealed class ReproductionYearSystem : IYearSystem
         IFamilyService family,
         IStatsService stats,
         IHealthService health,
-        IGameDataService data,
+        IHistoricalNameService historicalNames,
         IGameRandom random,
         IGameCalendar calendar,
         IGameEventBus events,
@@ -82,7 +76,7 @@ public sealed class ReproductionYearSystem : IYearSystem
         _family = family;
         _stats = stats;
         _health = health;
-        _data = data;
+        _historicalNames = historicalNames;
         _random = random;
         _calendar = calendar;
         _events = events;
@@ -336,15 +330,11 @@ public sealed class ReproductionYearSystem : IYearSystem
                 ? Sex.Female
                 : Sex.Male;
 
-        var entries =
-            _data.GetWeightedStringList(
-                sex == Sex.Male
-                    ? MaleNamesPath
-                    : FemaleNamesPath);
-
         var childName =
-            RandomWeightedFrom(
-                entries);
+            _historicalNames.GetRandomFirstName(
+                sex,
+                gameState.Year,
+                _random);
 
         var birthDate =
             RandomDateInYear(
@@ -481,7 +471,8 @@ public sealed class ReproductionYearSystem : IYearSystem
         var childName =
             GenerateUniqueChildName(
                 father,
-                sex);
+                sex,
+                birthDate.Year);
 
         var child =
             gameState.CreatePerson(
@@ -671,7 +662,8 @@ public sealed class ReproductionYearSystem : IYearSystem
 
     private string GenerateUniqueChildName(
         IPerson father,
-        Sex sex)
+        Sex sex,
+        int birthYear)
     {
         var usedNames =
             _family
@@ -683,58 +675,11 @@ public sealed class ReproductionYearSystem : IYearSystem
                 .ToHashSet(
                     StringComparer.OrdinalIgnoreCase);
 
-        var path =
-            sex == Sex.Male
-                ? MaleNamesPath
-                : FemaleNamesPath;
-
-        var candidates =
-            _data
-                .GetWeightedStringList(
-                    path)
-                .Where(
-                    entry =>
-                        !usedNames.Contains(
-                            entry.Value))
-                .ToList();
-
-        if (candidates.Count == 0)
-        {
-            throw new InvalidOperationException(
-                "No unused first names remain " +
-                "for this father's children.");
-        }
-
-        return RandomWeightedFrom(
-            candidates);
-    }
-
-    private string RandomWeightedFrom(
-        IReadOnlyList<
-            WeightedStringEntry> entries)
-    {
-        var totalWeight =
-            entries.Sum(
-                entry =>
-                    (double)entry.Weight);
-
-        var roll =
-            _random.NextDouble()
-            * totalWeight;
-
-        foreach (var entry in entries)
-        {
-            if (roll
-                < entry.Weight)
-            {
-                return entry.Value;
-            }
-
-            roll -=
-                entry.Weight;
-        }
-
-        return entries[^1].Value;
+        return _historicalNames.GetRandomFirstNameExcluding(
+            sex,
+            birthYear,
+            usedNames,
+            _random);
     }
 
     private GameDate RandomDateInYear(

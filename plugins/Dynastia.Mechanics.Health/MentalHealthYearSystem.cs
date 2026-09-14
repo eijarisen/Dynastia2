@@ -63,10 +63,13 @@ internal sealed class MentalHealthYearSystem : IYearSystem
             if ((condition == "depression" && hasDepression) || (condition == "anxiety" && hasAnxiety))
                 condition = condition == "depression" ? "anxiety" : "depression";
 
-            if (!_health.AddCondition(person, condition))
+            if (!_health.AddCondition(person, condition, gameState.Year))
                 continue;
 
-            var info = _health.GetDefinition(condition);
+            var conditionName =
+                _health.GetHealth(person).Conditions
+                    .First(entry => entry.Id.Equals(condition, StringComparison.OrdinalIgnoreCase))
+                    .Name;
             _events.Publish(new GameEvent
             {
                 Type = "health.illness",
@@ -75,10 +78,10 @@ internal sealed class MentalHealthYearSystem : IYearSystem
                 Data = new Dictionary<string, string>
                 {
                     ["conditionId"] = condition,
-                    ["condition"] = info?.Name ?? condition,
+                    ["condition"] = conditionName,
                     ["familyNews"] = "false",
                     ["lifeStress"] = stress.ToString(),
-                    ["text"] = $"{_family.GetDisplayName(person)} developed {info?.Name ?? condition} after a difficult period."
+                    ["text"] = $"{_family.GetDisplayName(person)} developed {conditionName} after a difficult period."
                 }
             });
         }

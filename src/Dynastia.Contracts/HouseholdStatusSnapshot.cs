@@ -11,4 +11,5 @@ public sealed record HouseholdStatusSnapshot(
     bool IsLargeFamilyStrained,
     bool IsAtCapacityWarning,
     bool IsBroke,
-    IReadOnlyList<string> Warnings);
+    IReadOnlyList<string> Warnings,
+    string? NannyRoleLabel = null);

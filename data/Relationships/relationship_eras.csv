@@ -1,0 +1,7 @@
+StartYear,EndYear,MarriageChanceMultiplier,ArrangedMarriageMultiplier,AutomaticDivorceMultiplier
+1700,1799,1.10,1.25,0.20
+1800,1849,1.08,1.20,0.25
+1850,1913,1.05,1.15,0.35
+1914,1945,1.03,1.10,0.50
+1946,1989,1.00,1.05,0.75
+1990,,1.00,1.00,1.00

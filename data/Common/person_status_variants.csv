@@ -1,0 +1,14 @@
+StatusId,StartYear,EndYear,Label
+status.preschool,1700,1945,Young Child
+status.preschool,1946,,Preschool
+status.student,1700,1849,Pupil
+status.student,1850,1945,Schoolchild
+status.student,1946,,Student
+status.unemployed,1700,1849,Without Occupation
+status.unemployed,1850,,Unemployed
+status.housewife,1700,1899,Keeping House
+status.housewife,1900,,Housewife
+role.nanny,1700,1849,Nursemaid
+role.nanny,1850,,Nanny
+role.family_nanny,1700,1849,Caring for Children
+role.family_nanny,1850,,Family Nanny

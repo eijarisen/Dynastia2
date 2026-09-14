@@ -26,11 +26,16 @@ public sealed class JusticePlugin : IGamePlugin
             ?? throw new InvalidDataException($"Could not read {CrimesPath}.");
         ValidateCrimes(crimes);
 
+        var historicalCrimes =
+            CrimeHistoricalCatalog.Load(
+                data,
+                crimes.Select(crime => crime.Id));
+
         var justice = new StandardJusticeService();
         context.AddService<IJusticeService>(justice);
         guards.Register(new PrisonActionGuard(justice));
         systems.Register(new PrisonStatusYearSystem(justice, family, events));
-        systems.Register(new CrimeYearSystem(justice, family, stats, career, economy, economyBalance, random, events, crimes));
+        systems.Register(new CrimeYearSystem(justice, family, stats, career, economy, economyBalance, random, events, crimes, historicalCrimes));
         context.Log("Justice mechanics registered.");
     }
 

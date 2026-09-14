@@ -37,10 +37,15 @@ public sealed class FamilyPlugin : IGamePlugin
             ?? throw new InvalidOperationException(
                 "Game event bus is unavailable.");
 
+        var historicalNames =
+            StandardHistoricalNameService.Load(
+                data);
+
         var familyService =
             new StandardFamilyService(
                 gameState,
-                data);
+                data,
+                historicalNames);
 
         var newGameService =
             new StandardNewGameService(
@@ -48,9 +53,13 @@ public sealed class FamilyPlugin : IGamePlugin
                 familyService,
                 selection,
                 data,
+                historicalNames,
                 random,
                 calendar,
                 events);
+
+        context.AddService<IHistoricalNameService>(
+            historicalNames);
 
         context.AddService<IFamilyService>(
             familyService);

@@ -5,4 +5,5 @@ public sealed record JusticeSnapshot(
     int RemainingYears,
     bool IsLifeSentence,
     string? CrimeId,
-    string? CrimeName);
+    string? CrimeName,
+    string? CrimeDescription = null);

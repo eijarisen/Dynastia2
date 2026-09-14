@@ -9,19 +9,22 @@ internal sealed class MarriageDivorceYearSystem : IYearSystem
     private readonly IStatsService _stats;
     private readonly IGameRandom _random;
     private readonly RelationshipBreakupService _breakups;
+    private readonly IRelationshipEraService _relationshipEras;
 
     public MarriageDivorceYearSystem(
         StandardMarriageSatisfactionService satisfaction,
         IFamilyService family,
         IStatsService stats,
         IGameRandom random,
-        RelationshipBreakupService breakups)
+        RelationshipBreakupService breakups,
+        IRelationshipEraService relationshipEras)
     {
         _satisfaction = satisfaction;
         _family = family;
         _stats = stats;
         _random = random;
         _breakups = breakups;
+        _relationshipEras = relationshipEras;
     }
 
     public string Id => "relationships.automatic_divorce";
@@ -58,9 +61,15 @@ internal sealed class MarriageDivorceYearSystem : IYearSystem
             if (baseChance <= 0)
                 continue;
 
+            var historicalChance =
+                _relationshipEras
+                    .GetRule(gameState.Year)
+                    .ApplyAutomaticDivorceChance(
+                        baseChance);
+
             var divorceChance =
                 RelationshipPersonalityRules.AdjustAutonomousDivorceChance(
-                    baseChance,
+                    historicalChance,
                     husband,
                     wife,
                     _stats);

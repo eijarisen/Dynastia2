@@ -56,25 +56,40 @@ public sealed partial class RelationshipsPlugin
         IEducationService education,
         ICareerService career,
         IGameDataService data,
+        IHistoricalNameService historicalNames,
         IGameRandom random,
         IGameCalendar calendar,
         IGameEventBus events,
-        double chance)
+        double chance,
+        HistoricalActionVariant variant)
     {
+        var husbandNameSample =
+            random.NextDouble();
+
+        var husbandSurname =
+            RandomWeightedFrom(
+                data,
+                random,
+                SurnamesPath);
+
+        var husbandAge =
+            RelationshipPersonalityRules.ChoosePartnerAge(
+                daughter,
+                Sex.Male,
+                random);
+
+        var husbandBirthYear =
+            gameState.Year - husbandAge;
+
         var husband =
             gameState.CreatePerson(
-                RandomWeightedFrom(
-                    data,
-                    random,
-                    MaleNamesPath),
-                RandomWeightedFrom(
-                    data,
-                    random,
-                    SurnamesPath),
-                RelationshipPersonalityRules.ChoosePartnerAge(
-                    daughter,
+                historicalNames.GetRandomFirstName(
                     Sex.Male,
-                    random));
+                    husbandBirthYear,
+                    new FixedSampleGameRandom(
+                        husbandNameSample)),
+                husbandSurname,
+                husbandAge);
 
         husband.BirthDate =
             RandomDateInYear(
@@ -105,7 +120,7 @@ public sealed partial class RelationshipsPlugin
             husband,
             husband.Surname,
             family,
-            data,
+            historicalNames,
             random);
 
         stats.EnsureStats(
@@ -177,8 +192,8 @@ public sealed partial class RelationshipsPlugin
 
                         ["text"] =
                             $"{family.GetDisplayName(father)} " +
-                            $"found a husband for {daughterEventName}. " +
-                            $"She married {husbandEventName}."
+                            $"{variant.Narrative}. " +
+                            $"{daughterEventName} married {husbandEventName}."
                     }
             });
 
@@ -246,7 +261,8 @@ public sealed partial class RelationshipsPlugin
         CreateRepairMarriageAction(
             IFamilyService family,
             IMarriageSatisfactionService satisfaction,
-            IGameEventBus events)
+            IGameEventBus events,
+            HistoricalActionVariant variant)
     {
         return new GameActionDefinition
         {
@@ -254,12 +270,10 @@ public sealed partial class RelationshipsPlugin
                 "relationship.repair_marriage",
 
             Label =
-                "Repair Marriage",
+                variant.Label,
 
             Description =
-                "Spend the year working on the marriage. " +
-                "This raises Marriage Satisfaction by 20 points after this year's " +
-                "marriage pressures are applied and before automatic divorce is decided.",
+                variant.Description,
 
             Mode =
                 ActionExecutionMode.Queued,
@@ -360,8 +374,7 @@ public sealed partial class RelationshipsPlugin
 
                                     ["text"] =
                                         $"{family.GetDisplayName(actor)} " +
-                                        $"and {family.GetDisplayName(wife)} " +
-                                        "worked on their marriage."
+                                        $"{variant.Narrative}."
                                 }
                         });
 

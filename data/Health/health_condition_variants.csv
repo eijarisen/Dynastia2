@@ -1,0 +1,29 @@
+﻿ConditionId,StartYear,EndYear,DisplayName
+tuberculosis,1700,1849,Consumption
+tuberculosis,1850,,Tuberculosis
+bronchitis,1700,1807,Chest Catarrh
+bronchitis,1808,,Bronchitis
+appendicitis,1700,1885,Abdominal Inflammation
+appendicitis,1886,,Appendicitis
+stroke,1700,1945,Apoplexy
+stroke,1946,,Stroke
+heart_attack,1700,1899,Sudden Heart Seizure
+heart_attack,1900,,Heart Attack
+hypertension,1700,1899,Circulatory Complaint
+hypertension,1900,,Hypertension
+gastroenteritis,1700,1899,Stomach Illness
+gastroenteritis,1900,,Gastroenteritis
+sinus_infection,1700,1899,Catarrh
+sinus_infection,1900,,Sinus Infection
+urinary_tract_infection,1700,1899,Urinary Complaint
+urinary_tract_infection,1900,,Urinary Tract Infection
+chronic_kidney_disease,1700,1899,Kidney Disease
+chronic_kidney_disease,1900,,Chronic Kidney Disease
+seasonal_allergies,1700,1899,Seasonal Catarrh
+seasonal_allergies,1900,,Seasonal Allergies
+depression,1700,1899,Melancholia
+depression,1900,,Depression
+anxiety,1700,1899,Nervous Distress
+anxiety,1900,,Anxiety
+alcoholism,1700,1848,Habitual Drunkenness
+alcoholism,1849,,Alcoholism

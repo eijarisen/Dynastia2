@@ -1,11 +1,171 @@
 [
   {
-    "actionId": "stats.improve_strength",
+    "actionId": "household.ask_daughter_nanny",
+    "startYear": 1700,
+    "endYear": 1849,
+    "label": "Ask Daughter to Care for Children",
+    "description": "Ask the selected adult unmarried and unemployed daughter to take responsibility for caring for the younger children. The family-nanny mechanics are unchanged.",
+    "narrative": "asked their daughter to take responsibility for the younger children"
+  },
+  {
+    "actionId": "household.ask_daughter_nanny",
+    "startYear": 1850,
+    "endYear": null,
+    "label": "Ask to Become Nanny",
+    "description": "Ask the selected adult unmarried and unemployed daughter to care for the younger children for free. The family-nanny mechanics are unchanged.",
+    "narrative": "asked their daughter to become the family nanny"
+  },
+  {
+    "actionId": "household.fire_nanny",
+    "startYear": 1700,
+    "endYear": 1849,
+    "label": "Dismiss Nursemaid",
+    "description": "End the household nursemaid's service.",
+    "narrative": "dismissed the household nursemaid"
+  },
+  {
+    "actionId": "household.fire_nanny",
+    "startYear": 1850,
+    "endYear": null,
+    "label": "Fire Nanny",
+    "description": "End the household nanny's service.",
+    "narrative": "ended the household nanny's service"
+  },
+  {
+    "actionId": "household.hire_nanny",
+    "startYear": 1700,
+    "endYear": 1849,
+    "label": "Hire a Nursemaid (250 zł/year)",
+    "description": "Hire a nursemaid to help care for the household's children. Cost and household-strain mechanics are unchanged.",
+    "narrative": "hired a nursemaid to help care for the children"
+  },
+  {
+    "actionId": "household.hire_nanny",
+    "startYear": 1850,
+    "endYear": null,
+    "label": "Hire a Nanny (250 zł/year)",
+    "description": "Hire a nanny to help care for the household's children. Cost and household-strain mechanics are unchanged.",
+    "narrative": "hired a nanny to help care for the children"
+  },
+  {
+    "actionId": "loan.give",
     "startYear": 1700,
     "endYear": null,
-    "label": "Physical Training",
-    "description": "Fund prolonged physical training, coaching and a strict regimen. Guaranteed Strength +1. The improvement is acquired rather than hereditary.",
-    "narrative": "completed an intensive physical training regimen and became considerably stronger"
+    "label": "Give a Loan",
+    "description": "Lend household money to an outside borrower for a fixed term and receive scheduled repayments with interest. The borrower is not otherwise simulated.",
+    "narrative": "lent money to an outside borrower"
+  },
+  {
+    "actionId": "loan.take",
+    "startYear": 1700,
+    "endYear": 1799,
+    "label": "Take a Loan",
+    "description": "Borrow 1,000-10,000 zł from a private moneylender for 1-50 years. Longer loans have smaller annual payments but more total interest.",
+    "narrative": "borrowed money from a private moneylender"
+  },
+  {
+    "actionId": "loan.take",
+    "startYear": 1800,
+    "endYear": 1849,
+    "label": "Take a Loan",
+    "description": "Borrow 1,000-10,000 zł from a lender for 1-50 years. Longer loans have smaller annual payments but more total interest.",
+    "narrative": "took a loan from a private lender"
+  },
+  {
+    "actionId": "loan.take",
+    "startYear": 1850,
+    "endYear": null,
+    "label": "Take a Loan",
+    "description": "Borrow 1,000-10,000 zł from a bank for 1-50 years. Longer loans have smaller annual payments but more total interest.",
+    "narrative": "took a bank loan"
+  },
+  {
+    "actionId": "relationship.find_spouse",
+    "startYear": 1700,
+    "endYear": 1899,
+    "label": "Seek a Match",
+    "description": "Devote the coming year to finding a suitable spouse. Appeal still matters, but actively seeking a match greatly improves the chance of forming a marriage.",
+    "narrative": "actively sought a suitable marriage match"
+  },
+  {
+    "actionId": "relationship.find_spouse",
+    "startYear": 1900,
+    "endYear": null,
+    "label": "Find a Spouse",
+    "description": "Devote the coming year to finding a spouse. Appeal still matters, but actively searching greatly improves the chance of forming a marriage.",
+    "narrative": "actively looked for a spouse"
+  },
+  {
+    "actionId": "relationship.marry_off_daughter",
+    "startYear": 1700,
+    "endYear": 1945,
+    "label": "Arrange a Marriage for Daughter",
+    "description": "Use family contacts to seek a suitable husband for the selected adult unmarried daughter. Her Appeal still matters, and success is not guaranteed.",
+    "narrative": "used family contacts to arrange a marriage for their daughter"
+  },
+  {
+    "actionId": "relationship.marry_off_daughter",
+    "startYear": 1946,
+    "endYear": null,
+    "label": "Marry Off Daughter",
+    "description": "Help the selected adult unmarried daughter find a husband. Her Appeal still matters, and success is not guaranteed.",
+    "narrative": "helped their daughter look for a husband"
+  },
+  {
+    "actionId": "relationship.repair_marriage",
+    "startYear": 1700,
+    "endYear": 1945,
+    "label": "Reconcile with Spouse",
+    "description": "Devote the coming year to restoring harmony with the spouse before the marriage deteriorates further. The underlying Marriage Satisfaction effect is unchanged.",
+    "narrative": "made a deliberate effort to reconcile with their spouse"
+  },
+  {
+    "actionId": "relationship.repair_marriage",
+    "startYear": 1946,
+    "endYear": null,
+    "label": "Repair Marriage",
+    "description": "Devote the coming year to improving the relationship with the spouse before the marriage deteriorates further.",
+    "narrative": "made a deliberate effort to repair their marriage"
+  },
+  {
+    "actionId": "reproduction.try_for_baby",
+    "startYear": 1700,
+    "endYear": 1945,
+    "label": "Try for a Child",
+    "description": "Make having a child a particular priority during the coming year. The fertility mechanics are unchanged.",
+    "narrative": "made having a child a priority"
+  },
+  {
+    "actionId": "reproduction.try_for_baby",
+    "startYear": 1946,
+    "endYear": null,
+    "label": "Try for a Baby",
+    "description": "Make having a baby a particular priority during the coming year. The fertility mechanics are unchanged.",
+    "narrative": "made having a baby a priority"
+  },
+  {
+    "actionId": "stats.improve_appeal",
+    "startYear": 1920,
+    "endYear": null,
+    "label": "Plastic Surgery",
+    "description": "Pay for substantial cosmetic surgery. Guaranteed Appeal +1. The acquired improvement affects future relationship calculations but is not inherited.",
+    "narrative": "underwent cosmetic surgery that noticeably improved their appearance"
+  },
+  {
+    "actionId": "stats.improve_fertility",
+    "startYear": 1950,
+    "endYear": null,
+    "label": "Fertility Treatment",
+    "description": "Pay for specialist fertility diagnosis and treatment. Guaranteed Fertility +1, including Fertility 0 → 1. Hereditary Fertility is unchanged.",
+    "narrative": "underwent an extensive course of fertility treatment"
+  },
+  {
+    "actionId": "stats.improve_immunity",
+    "startYear": 1850,
+    "endYear": null,
+    "label": "Constitutional Treatment",
+    "description": "Fund prolonged specialist treatment intended to strengthen resistance to illness. Guaranteed Immunity +1.",
+    "narrative": "underwent an extensive course of treatment intended to strengthen their resistance to illness"
   },
   {
     "actionId": "stats.improve_intellect",
@@ -24,12 +184,36 @@
     "narrative": "completed a prolonged health regimen intended to improve their long-term resilience"
   },
   {
-    "actionId": "stats.improve_immunity",
-    "startYear": 1850,
+    "actionId": "stats.improve_strength",
+    "startYear": 1700,
     "endYear": null,
-    "label": "Constitutional Treatment",
-    "description": "Fund prolonged specialist treatment intended to strengthen resistance to illness. Guaranteed Immunity +1.",
-    "narrative": "underwent an extensive course of treatment intended to strengthen their resistance to illness"
+    "label": "Physical Training",
+    "description": "Fund prolonged physical training, coaching and a strict regimen. Guaranteed Strength +1. The improvement is acquired rather than hereditary.",
+    "narrative": "completed an intensive physical training regimen and became considerably stronger"
+  },
+  {
+    "actionId": "wellbeing.heal_relative",
+    "startYear": 1700,
+    "endYear": 1849,
+    "label": "Summon a Physician (1,000 zł)",
+    "description": "Pay for a physician, medicines and convalescence appropriate to the period. Restores 20 health.",
+    "narrative": "paid for a physician and a period of convalescence"
+  },
+  {
+    "actionId": "wellbeing.heal_relative",
+    "startYear": 1850,
+    "endYear": 1945,
+    "label": "Medical Treatment (1,000 zł)",
+    "description": "Pay for professional medical treatment. Restores 25 health.",
+    "narrative": "paid for medical treatment"
+  },
+  {
+    "actionId": "wellbeing.heal_relative",
+    "startYear": 1946,
+    "endYear": null,
+    "label": "Improve Health (1,000 zł)",
+    "description": "Pay 1,000 zł for modern medical treatment. Restores 30 health.",
+    "narrative": "paid for medical treatment that substantially improved their health"
   },
   {
     "actionId": "wellbeing.therapy",
@@ -38,21 +222,5 @@
     "label": "Psychotherapy",
     "description": "Seek professional treatment for Alcoholism, Depression and Anxiety. The fee is paid even if treatment fails.",
     "narrative": "underwent psychotherapy"
-  },
-  {
-    "actionId": "stats.improve_appeal",
-    "startYear": 1920,
-    "endYear": null,
-    "label": "Plastic Surgery",
-    "description": "Pay for substantial cosmetic surgery. Guaranteed Appeal +1. The acquired improvement affects future relationship calculations but is not inherited.",
-    "narrative": "underwent cosmetic surgery that noticeably improved their appearance"
-  },
-  {
-    "actionId": "stats.improve_fertility",
-    "startYear": 1950,
-    "endYear": null,
-    "label": "Fertility Treatment",
-    "description": "Pay for specialist fertility diagnosis and treatment. Guaranteed Fertility +1, including Fertility 0 → 1. Hereditary Fertility is unchanged.",
-    "narrative": "underwent an extensive course of fertility treatment"
   }
 ]

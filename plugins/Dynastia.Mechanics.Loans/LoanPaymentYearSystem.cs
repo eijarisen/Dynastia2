@@ -282,7 +282,10 @@ internal sealed class LoanPaymentYearSystem :
                         new Dictionary<string, string>
                         {
                             ["text"] =
-                                $"{_family.GetDisplayName(portfolioOwner)} finished repaying a loan."
+                                contract.CreditorType == LoanCreditorType.Bank
+                                    ? $"{_family.GetDisplayName(portfolioOwner)} finished repaying the loan to the " +
+                                      $"{_loans.GetExternalCreditorLabel(gameState.Year).ToLowerInvariant()}."
+                                    : $"{_family.GetDisplayName(portfolioOwner)} finished repaying a loan."
                         }
                 });
         }

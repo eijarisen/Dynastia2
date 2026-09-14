@@ -12,6 +12,7 @@ public sealed partial class StandardCareerService :
     private readonly IFamilyService _family;
     private readonly IGameRandom _random;
     private readonly CareerCatalog _catalog;
+    private readonly HistoricalCareerPresentationCatalog _presentation;
     private readonly RetirementRuleCatalog
         _retirementRules;
     private readonly ILocalCareerOpportunityService
@@ -23,6 +24,7 @@ public sealed partial class StandardCareerService :
         IFamilyService family,
         IGameRandom random,
         CareerCatalog catalog,
+        HistoricalCareerPresentationCatalog presentation,
         RetirementRuleCatalog retirementRules,
         ILocalCareerOpportunityService localOpportunities,
         IStatsService stats)
@@ -31,6 +33,7 @@ public sealed partial class StandardCareerService :
         _family = family;
         _random = random;
         _catalog = catalog;
+        _presentation = presentation;
         _retirementRules =
             retirementRules;
         _localOpportunities =
@@ -110,6 +113,8 @@ public sealed partial class StandardCareerService :
                 person,
                 career);
 
+        var year = _gameState.Year;
+
         return new CareerSnapshot(
             career.JobLevel,
             ResolveJobTitle(
@@ -124,13 +129,45 @@ public sealed partial class StandardCareerService :
                 person),
             career.IsRetired,
             definition?.Id,
-            definition?.Name,
+            definition is null
+                ? null
+                : _presentation.ResolveCareerName(
+                    definition.Id,
+                    definition.Name,
+                    year),
             definition?.BaseSalary
                 ?? 0,
             career.PeakJobLevel,
             career.PeakCareerId,
             ResolvePeakJobTitle(
+                career),
+            ResolveStatusId(
+                person,
                 career));
+    }
+
+
+    public string GetStatusLabel(
+        string statusId)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(
+            statusId);
+
+        var fallback = statusId switch
+        {
+            "status.preschool" => "Preschool",
+            "status.student" => "Student",
+            "status.unemployed" => "Unemployed",
+            "status.housewife" => "Housewife",
+            "role.nanny" => "Nanny",
+            "role.family_nanny" => "Family Nanny",
+            _ => statusId
+        };
+
+        return _presentation.ResolveStatus(
+            statusId,
+            fallback,
+            _gameState.Year);
     }
 
     public void InitializeCareer(

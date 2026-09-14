@@ -6,9 +6,6 @@ public sealed partial class HouseholdsPlugin : IGamePlugin
 {
     private const decimal NannyCost = 250m;
 
-    private const string FemaleNamesPath =
-        "Names/polish_female.csv";
-
     private const string SurnamesPath =
         "Names/polish_surnames.csv";
 
@@ -80,6 +77,16 @@ public sealed partial class HouseholdsPlugin : IGamePlugin
             ?? throw new InvalidOperationException(
                 "Game data service is unavailable.");
 
+        var historical =
+            context.GetService<IHistoricalActionVariantService>()
+            ?? throw new InvalidOperationException(
+                "Historical action variant service is unavailable.");
+
+        var historicalNames =
+            context.GetService<IHistoricalNameService>()
+            ?? throw new InvalidOperationException(
+                "Historical name service is unavailable.");
+
         var random =
             context.GetService<IGameRandom>()
             ?? throw new InvalidOperationException(
@@ -136,6 +143,7 @@ public sealed partial class HouseholdsPlugin : IGamePlugin
                 households,
                 economy,
                 family,
+                career,
                 events,
                 "households.nanny_need_prefinance",
                 YearPhase.QueuedActionsEarly,
@@ -149,6 +157,7 @@ public sealed partial class HouseholdsPlugin : IGamePlugin
                 households,
                 economy,
                 family,
+                career,
                 events,
                 "households.nanny_need_postyear",
                 YearPhase.DerivedState,
@@ -196,6 +205,7 @@ public sealed partial class HouseholdsPlugin : IGamePlugin
                 gameState,
                 family,
                 economy,
+                career,
                 events);
 
         RegisterPropertyActions(
@@ -221,8 +231,10 @@ public sealed partial class HouseholdsPlugin : IGamePlugin
             households,
             events,
             data,
+            historicalNames,
             random,
-            calendar);
+            calendar,
+            historical);
 
         context.Log(
             "Household mechanics registered.");

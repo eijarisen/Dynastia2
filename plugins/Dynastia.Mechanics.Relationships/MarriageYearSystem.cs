@@ -4,12 +4,6 @@ namespace Dynastia.Mechanics.Relationships;
 
 public sealed class MarriageYearSystem : IYearSystem
 {
-    private const string MaleNamesPath =
-        "Names/polish_male.csv";
-
-    private const string FemaleNamesPath =
-        "Names/polish_female.csv";
-
     private const string SurnamesPath =
         "Names/polish_surnames.csv";
 
@@ -20,26 +14,35 @@ public sealed class MarriageYearSystem : IYearSystem
     private readonly IStatsService _stats;
     private readonly ICareerService _career;
     private readonly IGameDataService _data;
+    private readonly IHistoricalNameService _historicalNames;
     private readonly IGameRandom _random;
     private readonly IGameCalendar _calendar;
     private readonly IGameEventBus _events;
+    private readonly IRelationshipEraService _relationshipEras;
+    private readonly RelationshipEventVariantCatalog _eventVariants;
 
     public MarriageYearSystem(
         IFamilyService family,
         IStatsService stats,
         ICareerService career,
         IGameDataService data,
+        IHistoricalNameService historicalNames,
         IGameRandom random,
         IGameCalendar calendar,
-        IGameEventBus events)
+        IGameEventBus events,
+        IRelationshipEraService relationshipEras,
+        RelationshipEventVariantCatalog eventVariants)
     {
         _family = family;
         _stats = stats;
         _career = career;
         _data = data;
+        _historicalNames = historicalNames;
         _random = random;
         _calendar = calendar;
         _events = events;
+        _relationshipEras = relationshipEras;
+        _eventVariants = eventVariants;
     }
 
     public string Id =>
@@ -78,8 +81,11 @@ public sealed class MarriageYearSystem : IYearSystem
                     "appeal");
 
             var marriageChance =
-                AppealMarriageChance[
-                    Math.Clamp(appeal, 1, 5)];
+                _relationshipEras
+                    .GetRule(gameState.Year)
+                    .ApplyMarriageChance(
+                        AppealMarriageChance[
+                            Math.Clamp(appeal, 1, 5)]);
 
             if (person.Tags.Has(
                 "modifier.find_spouse"))
@@ -129,11 +135,8 @@ public sealed class MarriageYearSystem : IYearSystem
                 ? Sex.Male
                 : Sex.Female;
 
-        var spouseName =
-            RandomWeightedFrom(
-                spouseSex == Sex.Male
-                    ? MaleNamesPath
-                    : FemaleNamesPath);
+        var spouseNameSample =
+            _random.NextDouble();
 
         var originalSurname =
             RandomWeightedFrom(
@@ -144,6 +147,16 @@ public sealed class MarriageYearSystem : IYearSystem
                 person,
                 spouseSex,
                 _random);
+
+        var spouseBirthYear =
+            gameState.Year - spouseAge;
+
+        var spouseName =
+            _historicalNames.GetRandomFirstName(
+                spouseSex,
+                spouseBirthYear,
+                new FixedSampleGameRandom(
+                    spouseNameSample));
 
         var spouse =
             gameState.CreatePerson(
@@ -192,7 +205,7 @@ public sealed class MarriageYearSystem : IYearSystem
             spouse,
             originalSurname,
             _family,
-            _data,
+            _historicalNames,
             _random);
 
         if (!homosexual)
@@ -215,16 +228,23 @@ public sealed class MarriageYearSystem : IYearSystem
         var spouseDisplayName =
             spouseEventName;
 
-        var eventType =
+        var sameSexVariant =
             homosexual
-                ? "relationship.partnered"
-                : "relationship.married";
+                ? _eventVariants.GetVariant(
+                    "relationship.same_sex_union",
+                    gameState.Year)
+                : null;
+
+        var eventType =
+            sameSexVariant?.EventType
+            ?? "relationship.married";
 
         var text =
-            homosexual
-                ? $"{personName} came out as homosexual and " +
-                  $"entered a partnership with {spouseDisplayName}."
-                : $"{personName} married {spouseDisplayName}.";
+            sameSexVariant is null
+                ? $"{personName} married {spouseDisplayName}."
+                : sameSexVariant.FormatText(
+                    personName,
+                    spouseDisplayName);
 
         _events.Publish(
             new GameEvent
@@ -239,7 +259,11 @@ public sealed class MarriageYearSystem : IYearSystem
                     {
                         ["spouseId"] =
                             spouse.Id.ToString(),
-                        ["text"] = text
+                        ["text"] = text,
+                        ["biographyVerb"] =
+                            sameSexVariant?.FormatBiographyVerb(
+                                spouseDisplayName)
+                            ?? string.Empty
                     }
             });
 

@@ -16,11 +16,16 @@ public sealed partial class HouseholdsPlugin
         IHouseholdService households,
         IGameEventBus events,
         IGameDataService data,
+        IHistoricalNameService historicalNames,
         IGameRandom random,
-        IGameCalendar calendar)
+        IGameCalendar calendar,
+        IHistoricalActionVariantService historical)
     {
-        actions.Register(
-            new GameActionDefinition
+        actions.RegisterDynamicProvider(
+            (_, _) =>
+                [
+                    WithHistoricalPresentation(
+                        new GameActionDefinition
             {
                 Id = "household.hire_nanny",
                 Label = "Hire a Nanny (250 zł/year)",
@@ -74,17 +79,30 @@ public sealed partial class HouseholdsPlugin
                         return new GameActionResult(false);
                     }
 
+                    var nannyNameSample =
+                        random.NextDouble();
+
+                    var nannySurname =
+                        RandomWeightedFrom(
+                            data,
+                            random,
+                            SurnamesPath);
+
+                    var nannyAge =
+                        random.NextInt(25, 45);
+
+                    var nannyBirthYear =
+                        gameState.Year - nannyAge;
+
                     var nanny =
                         gameState.CreatePerson(
-                            RandomWeightedFrom(
-                                data,
-                                random,
-                                FemaleNamesPath),
-                            RandomWeightedFrom(
-                                data,
-                                random,
-                                SurnamesPath),
-                            random.NextInt(25, 45));
+                            historicalNames.GetRandomFirstName(
+                                Sex.Female,
+                                nannyBirthYear,
+                                new FixedSampleGameRandom(
+                                    nannyNameSample)),
+                            nannySurname,
+                            nannyAge);
 
                     nanny.MaidenName =
                         nanny.Surname;
@@ -120,6 +138,12 @@ public sealed partial class HouseholdsPlugin
                         actor,
                         nanny.Id);
 
+                    var wording =
+                        RequireHistoricalVariant(
+                            historical,
+                            "household.hire_nanny",
+                            actionContext.GameState.Year);
+
                     events.Publish(
                         new GameEvent
                         {
@@ -130,18 +154,23 @@ public sealed partial class HouseholdsPlugin
                             Data = new Dictionary<string, string>
                             {
                                 ["text"] =
-                                    $"The {actor.Surname} family hired " +
-                                    $"a nanny, {family.GetDisplayName(nanny)}, " +
-                                    "to help with the children."
+                                    $"The {actor.Surname} family {wording.Narrative}: " +
+                                    $"{family.GetDisplayName(nanny)}."
                             }
                         });
 
                     return new GameActionResult(true);
                 }
-            });
+                        },
+                        historical,
+                        gameState.Year)
+                ]);
 
-        actions.Register(
-            new GameActionDefinition
+        actions.RegisterDynamicProvider(
+            (_, _) =>
+                [
+                    WithHistoricalPresentation(
+                        new GameActionDefinition
             {
                 Id =
                     "household.ask_daughter_nanny",
@@ -264,6 +293,12 @@ public sealed partial class HouseholdsPlugin
                             actor,
                             daughter.Id);
 
+                        var wording =
+                            RequireHistoricalVariant(
+                                historical,
+                                "household.ask_daughter_nanny",
+                                actionContext.GameState.Year);
+
                         events.Publish(
                             new GameEvent
                             {
@@ -283,19 +318,26 @@ public sealed partial class HouseholdsPlugin
                                     new Dictionary<string, string>
                                     {
                                         ["text"] =
-                                            $"{family.GetDisplayName(daughter)} " +
-                                            "agreed to care for the younger children " +
-                                            "as the family's nanny without pay."
+                                            $"{family.GetDisplayName(actor)} " +
+                                            $"{wording.Narrative}. " +
+                                            $"{family.GetDisplayName(daughter)} agreed and " +
+                                            "began caring for the younger children without pay."
                                     }
                             });
 
                         return new GameActionResult(
                             true);
                     }
-            });
+                        },
+                        historical,
+                        gameState.Year)
+                ]);
 
-        actions.Register(
-            new GameActionDefinition
+        actions.RegisterDynamicProvider(
+            (_, _) =>
+                [
+                    WithHistoricalPresentation(
+                        new GameActionDefinition
             {
                 Id = "household.fire_nanny",
                 Label = "Fire Nanny",
@@ -359,6 +401,12 @@ public sealed partial class HouseholdsPlugin
                         actor,
                         null);
 
+                    var wording =
+                        RequireHistoricalVariant(
+                            historical,
+                            "household.fire_nanny",
+                            actionContext.GameState.Year);
+
                     events.Publish(
                         new GameEvent
                         {
@@ -379,17 +427,53 @@ public sealed partial class HouseholdsPlugin
 
                                 ["text"] =
                                     familyNanny
-                                        ? $"{family.GetDisplayName(nanny)} " +
-                                          "stopped helping as the family nanny."
+                                        ? $"{family.GetDisplayName(nanny)}'s " +
+                                          $"{career.GetStatusLabel(FamilyNannyTracker.FamilyNannyTag)} role ended."
                                         : $"{family.GetDisplayName(actor)} " +
-                                          $"fired the nanny, " +
+                                          $"{wording.Narrative}: " +
                                           $"{family.GetDisplayName(nanny)}."
                             }
                         });
 
                     return new GameActionResult(true);
                 }
-            });
+                        },
+                        historical,
+                        gameState.Year)
+                ]);
+    }
+
+    private static GameActionDefinition WithHistoricalPresentation(
+        GameActionDefinition action,
+        IHistoricalActionVariantService historical,
+        int year)
+    {
+        var variant = RequireHistoricalVariant(
+            historical,
+            action.Id,
+            year);
+
+        return new GameActionDefinition
+        {
+            Id = action.Id,
+            Label = variant.Label,
+            Description = variant.Description,
+            Mode = action.Mode,
+            QueuePhase = action.QueuePhase,
+            BypassGuards = action.BypassGuards,
+            IsAvailable = action.IsAvailable,
+            Execute = action.Execute
+        };
+    }
+
+    private static HistoricalActionVariant RequireHistoricalVariant(
+        IHistoricalActionVariantService historical,
+        string actionId,
+        int year)
+    {
+        return historical.GetVariant(actionId, year)
+            ?? throw new InvalidDataException(
+                $"Missing historical action data for '{actionId}' in {year}.");
     }
 
 }

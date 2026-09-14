@@ -69,8 +69,16 @@ public sealed partial class GenealogyCanvas
 
         if (hit is Guid personId)
         {
-            PersonClicked?.Invoke(
-                personId);
+            if (e.ClickCount >= 2)
+            {
+                PersonDoubleClicked?.Invoke(
+                    personId);
+            }
+            else
+            {
+                PersonClicked?.Invoke(
+                    personId);
+            }
 
             e.Handled =
                 true;

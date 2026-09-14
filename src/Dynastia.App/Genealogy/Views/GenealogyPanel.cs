@@ -72,6 +72,9 @@ public sealed class GenealogyPanel :
         _canvas.PersonClicked +=
             OnPersonClicked;
 
+        _canvas.PersonDoubleClicked +=
+            OnPersonDoubleClicked;
+
         var fit =
             CreateToolButton(
                 "Fit Tree");
@@ -126,7 +129,7 @@ public sealed class GenealogyPanel :
             new TextBlock
             {
                 Text =
-                    "Mouse wheel: zoom · Drag empty space: pan · Hover: details · Click: select",
+                    "Mouse wheel: zoom · Drag empty space: pan · Hover: details · Click: select · Double-click: open household",
 
                 VerticalAlignment =
                     VerticalAlignment.Center,
@@ -242,6 +245,9 @@ public sealed class GenealogyPanel :
         RefreshTopology();
     }
 
+    public event Action<Guid>?
+        PersonDoubleClicked;
+
     public void FitTree()
     {
         _canvas.FitTree();
@@ -260,6 +266,9 @@ public sealed class GenealogyPanel :
 
         _canvas.PersonClicked -=
             OnPersonClicked;
+
+        _canvas.PersonDoubleClicked -=
+            OnPersonDoubleClicked;
 
         _canvas.Dispose();
     }
@@ -313,6 +322,16 @@ public sealed class GenealogyPanel :
         Guid personId)
     {
         _selection.SelectPerson(
+            personId);
+    }
+
+    private void OnPersonDoubleClicked(
+        Guid personId)
+    {
+        _selection.SelectPerson(
+            personId);
+
+        PersonDoubleClicked?.Invoke(
             personId);
     }
 

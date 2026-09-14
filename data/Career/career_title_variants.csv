@@ -1,0 +1,33 @@
+CareerId,StartYear,EndYear,DisplayName,Level1Title,Level2Title,Level3Title,Level4Title,Level5Title
+agriculture_and_farm_estates,1700,1849,Agriculture & Estates,Farm Labourer,Tenant Farmer,Farm Steward,Estate Steward,Landed Proprietor
+horse_and_carriage_trade,1700,1849,Horse & Carriage Trade,Stable Hand,Groom,Stable Master,Stud Proprietor,Horse Merchant
+blacksmithing,1700,1849,Blacksmithing,Smithy Apprentice,Blacksmith,Master Blacksmith,Smithy Proprietor,Metal Merchant
+coal_mining,1750,1849,Coal Mining,Pit Labourer,Miner,Mine Overseer,Mine Manager,Mine Proprietor
+timber_and_sawmills,1700,1849,Timber & Sawmills,Timber Labourer,Sawyer,Master Sawyer,Sawmill Proprietor,Timber Merchant
+construction,1700,1849,Building Trades,Labourer,Craftsman,Master Builder,Building Contractor,Building Proprietor
+shipping_and_ports,1700,1849,Shipping & Ports,Dock Labourer,Shipping Clerk,Dockmaster,Shipping House Proprietor,Shipping Proprietor
+traditional_printworks,1700,1849,Printing & Printworks,Printer's Assistant,Typesetter,Master Printer,Printing House Proprietor,Printing Proprietor
+retail_trade,1700,1849,Commerce & Trade,Shop Assistant,Shopkeeper,Merchant,Merchant House Proprietor,Trade Magnate
+hotels_and_restaurants,1700,1849,Inns & Hospitality,Kitchen Servant,Inn Servant,Innkeeper,Inn Proprietor,Hospitality Proprietor
+baking_and_confectionery,1700,1849,Baking & Confectionery,Baker's Assistant,Baker,Master Baker,Bakery Proprietor,Baking Proprietor
+meat_trade,1700,1849,Meat Trade,Butcher's Assistant,Butcher,Master Butcher,Butcher Shop Proprietor,Meat Merchant
+tailoring_and_fashion,1700,1849,Tailoring & Dressmaking,Tailor's Assistant,Tailor,Master Tailor,Workshop Proprietor,Clothing Merchant
+leather_and_shoemaking,1700,1849,Leather & Shoemaking,Tannery Hand,Shoemaker,Master Leatherworker,Workshop Proprietor,Leather Merchant
+furniture_and_carpentry,1700,1849,Carpentry & Furniture,Carpenter's Assistant,Carpenter,Master Carpenter,Workshop Proprietor,Furniture Merchant
+glass_and_ceramics,1700,1849,Glass & Ceramics,Kiln Hand,Glassworker,Master Craftsman,Workshop Proprietor,Glass & Ceramics Merchant
+jewellery_and_watchmaking,1700,1849,Jewellery & Watchmaking,Jeweller's Assistant,Jeweller,Master Jeweller,Workshop Proprietor,Jewellery Merchant
+domestic_service,1700,1849,Domestic Service,Household Servant,Senior Servant,House Steward,Chief Steward,Household Service Proprietor
+funeral_services,1700,1849,Undertaking,Undertaker's Assistant,Undertaker,Master Undertaker,Funeral Proprietor,Funeral Services Proprietor
+accounting,1700,1849,Bookkeeping,Clerk,Bookkeeper,Senior Bookkeeper,Accounting Partner,Accounting Proprietor
+legal_services,1700,1849,Legal Profession,Legal Clerk,Law Apprentice,Advocate,Senior Advocate,Legal Practice Proprietor
+healthcare_services,1700,1849,Medicine,Medical Attendant,Medical Apprentice,Physician,Senior Physician,Medical Practice Proprietor
+pharmacy,1700,1849,Apothecary,Apothecary Assistant,Apothecary,Senior Apothecary,Apothecary Proprietor,Pharmacy Proprietor
+education,1700,1849,Education & Tutoring,Tutor's Assistant,Tutor,Teacher,School Head,Education Patron
+textile_mills,1790,1849,Textile Mills,Mill Hand,Weaver,Mill Overseer,Mill Proprietor,Textile Proprietor
+steel_and_foundry,1800,1849,Iron Foundry,Foundry Hand,Ironworker,Foundry Overseer,Ironworks Proprietor,Iron Magnate
+mass_factory_manufacturing,1820,1849,Factory Manufacturing,Factory Hand,Machine Worker,Floor Overseer,Factory Proprietor,Industrial Proprietor
+newspapers_and_publishing,1800,1849,Newspapers & Publishing,Print Runner,Reporter,Editor,Publisher,Press Proprietor
+banking,1800,1849,Banking,Bank Messenger,Bank Clerk,Banker,Banking House Partner,Banking House Proprietor
+insurance,1800,1849,Insurance,Office Runner,Insurance Clerk,Insurance Agent,Insurance Office Proprietor,Insurance Proprietor
+railways,1840,1849,Railways,Track Labourer,Railway Clerk,Station Master,Railway Superintendent,Railway Proprietor
+photography,1840,1849,Photography,Studio Assistant,Photographer,Studio Proprietor,Photographic House Proprietor,Photography Proprietor

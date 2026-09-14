@@ -32,6 +32,6 @@ internal sealed class HealthInjuryEventTracker
         var condition = damage >= 25 && _random.NextDouble() < 0.04 ? "paraplegia"
             : damage >= 18 ? (_random.NextDouble() < 0.5 ? "broken_leg" : "concussion")
             : (_random.NextDouble() < 0.5 ? "broken_arm" : "concussion");
-        _health.AddCondition(person, condition);
+        _health.AddCondition(person, condition, e.Year);
     }
 }

@@ -41,21 +41,35 @@ public sealed class CareerViewModel
             isAlive
             && !snapshot.IsRetired
             && snapshot.JobLevel <= 0
-            && snapshot.JobTitle.Equals(
-                "Unemployed",
-                StringComparison.OrdinalIgnoreCase);
+            && snapshot.StatusId?.Equals(
+                "status.unemployed",
+                StringComparison.OrdinalIgnoreCase) == true;
 
         var housewife =
             isAlive
             && !snapshot.IsRetired
             && snapshot.JobLevel <= 0
-            && snapshot.JobTitle.Equals(
-                "Housewife",
-                StringComparison.OrdinalIgnoreCase);
+            && snapshot.StatusId?.Equals(
+                "status.housewife",
+                StringComparison.OrdinalIgnoreCase) == true;
+
+        var householdRole =
+            isAlive
+            && !snapshot.IsRetired
+            && snapshot.JobLevel <= 0
+            && (
+                snapshot.StatusId?.Equals(
+                    "role.family_nanny",
+                    StringComparison.OrdinalIgnoreCase) == true
+                || snapshot.StatusId?.Equals(
+                    "role.nanny",
+                    StringComparison.OrdinalIgnoreCase) == true
+            );
 
         var nonWorkingAdult =
             unemployedAdult
-            || housewife;
+            || housewife
+            || householdRole;
 
         SatisfactionLabel =
             isAlive

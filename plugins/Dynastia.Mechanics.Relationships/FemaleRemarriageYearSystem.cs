@@ -14,9 +14,6 @@ public sealed class FemaleRemarriageYearSystem :
     private const int RemarriageMaxAge =
         50;
 
-    private const string MaleNamesPath =
-        "Names/polish_male.csv";
-
     private const string SurnamesPath =
         "Names/polish_surnames.csv";
 
@@ -26,6 +23,7 @@ public sealed class FemaleRemarriageYearSystem :
     private readonly IEducationService _education;
     private readonly ICareerService _career;
     private readonly IGameDataService _data;
+    private readonly IHistoricalNameService _historicalNames;
     private readonly IGameRandom _random;
     private readonly IGameCalendar _calendar;
     private readonly IGameEventBus _events;
@@ -37,6 +35,7 @@ public sealed class FemaleRemarriageYearSystem :
         IEducationService education,
         ICareerService career,
         IGameDataService data,
+        IHistoricalNameService historicalNames,
         IGameRandom random,
         IGameCalendar calendar,
         IGameEventBus events)
@@ -47,6 +46,7 @@ public sealed class FemaleRemarriageYearSystem :
         _education = education;
         _career = career;
         _data = data;
+        _historicalNames = historicalNames;
         _random = random;
         _calendar = calendar;
         _events = events;
@@ -136,16 +136,31 @@ public sealed class FemaleRemarriageYearSystem :
         IGameState gameState,
         IPerson woman)
     {
+        var husbandNameSample =
+            _random.NextDouble();
+
+        var husbandSurname =
+            RandomWeightedFrom(
+                SurnamesPath);
+
+        var husbandAge =
+            RelationshipPersonalityRules.ChoosePartnerAge(
+                woman,
+                Sex.Male,
+                _random);
+
+        var husbandBirthYear =
+            gameState.Year - husbandAge;
+
         var husband =
             gameState.CreatePerson(
-                RandomWeightedFrom(
-                    MaleNamesPath),
-                RandomWeightedFrom(
-                    SurnamesPath),
-                RelationshipPersonalityRules.ChoosePartnerAge(
-                    woman,
+                _historicalNames.GetRandomFirstName(
                     Sex.Male,
-                    _random));
+                    husbandBirthYear,
+                    new FixedSampleGameRandom(
+                        husbandNameSample)),
+                husbandSurname,
+                husbandAge);
 
         husband.BirthDate =
             RandomDateInYear(
@@ -180,7 +195,7 @@ public sealed class FemaleRemarriageYearSystem :
             husband,
             husband.Surname,
             _family,
-            _data,
+            _historicalNames,
             _random);
 
         // No lineage.male and no family.bloodline:

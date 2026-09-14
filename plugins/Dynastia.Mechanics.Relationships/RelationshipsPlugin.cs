@@ -4,9 +4,6 @@ namespace Dynastia.Mechanics.Relationships;
 
 public sealed partial class RelationshipsPlugin : IGamePlugin
 {
-    private const string MaleNamesPath =
-        "Names/polish_male.csv";
-
     private const string SurnamesPath =
         "Names/polish_surnames.csv";
 
@@ -62,6 +59,16 @@ public sealed partial class RelationshipsPlugin : IGamePlugin
             ?? throw new InvalidOperationException(
                 "Game data service is unavailable.");
 
+        var historical =
+            context.GetService<IHistoricalActionVariantService>()
+            ?? throw new InvalidOperationException(
+                "Historical action variant service is unavailable.");
+
+        var historicalNames =
+            context.GetService<IHistoricalNameService>()
+            ?? throw new InvalidOperationException(
+                "Historical name service is unavailable.");
+
         var random =
             context.GetService<IGameRandom>()
             ?? throw new InvalidOperationException(
@@ -86,6 +93,17 @@ public sealed partial class RelationshipsPlugin : IGamePlugin
             context.GetService<IActionRegistry>()
             ?? throw new InvalidOperationException(
                 "Action registry is unavailable.");
+
+        var relationshipEras =
+            StandardRelationshipEraService.Load(
+                data);
+
+        var relationshipEventVariants =
+            RelationshipEventVariantCatalog.Load(
+                data);
+
+        context.AddService<IRelationshipEraService>(
+            relationshipEras);
 
         var breakups =
             new RelationshipBreakupService(
@@ -118,33 +136,56 @@ public sealed partial class RelationshipsPlugin : IGamePlugin
                 family,
                 health));
 
-        actions.Register(
-            CreateFindSpouseAction(
-                family));
+        actions.RegisterDynamicProvider(
+            (_, _) =>
+                [
+                    CreateFindSpouseAction(
+                        family,
+                        RequireHistoricalVariant(
+                            historical,
+                            "relationship.find_spouse",
+                            gameState.Year))
+                ]);
 
-        actions.Register(
-            CreateMarryOffDaughterAction(
-                family,
-                households,
-                stats,
-                health,
-                education,
-                career,
-                data,
-                random,
-                calendar,
-                events));
+        actions.RegisterDynamicProvider(
+            (_, _) =>
+                [
+                    CreateMarryOffDaughterAction(
+                        family,
+                        households,
+                        stats,
+                        health,
+                        education,
+                        career,
+                        data,
+                        historicalNames,
+                        random,
+                        calendar,
+                        events,
+                        relationshipEras,
+                        RequireHistoricalVariant(
+                            historical,
+                            "relationship.marry_off_daughter",
+                            gameState.Year))
+                ]);
 
         actions.Register(
             CreateDivorceAction(
                 family,
                 breakups));
 
-        actions.Register(
-            CreateRepairMarriageAction(
-                family,
-                marriageSatisfaction,
-                events));
+        actions.RegisterDynamicProvider(
+            (_, _) =>
+                [
+                    CreateRepairMarriageAction(
+                        family,
+                        marriageSatisfaction,
+                        events,
+                        RequireHistoricalVariant(
+                            historical,
+                            "relationship.repair_marriage",
+                            gameState.Year))
+                ]);
 
         systems.Register(
             new SexualityYearSystem(
@@ -157,9 +198,12 @@ public sealed partial class RelationshipsPlugin : IGamePlugin
                 stats,
                 career,
                 data,
+                historicalNames,
                 random,
                 calendar,
-                events));
+                events,
+                relationshipEras,
+                relationshipEventVariants));
 
         systems.Register(
             new AffairYearSystem(
@@ -175,6 +219,7 @@ public sealed partial class RelationshipsPlugin : IGamePlugin
                 education,
                 career,
                 data,
+                historicalNames,
                 random,
                 calendar,
                 events));
@@ -194,7 +239,8 @@ public sealed partial class RelationshipsPlugin : IGamePlugin
                 family,
                 stats,
                 random,
-                breakups));
+                breakups,
+                relationshipEras));
 
         context.Log(
             "Relationship mechanics registered.");
@@ -202,7 +248,8 @@ public sealed partial class RelationshipsPlugin : IGamePlugin
 
     private static GameActionDefinition
         CreateFindSpouseAction(
-            IFamilyService family)
+            IFamilyService family,
+            HistoricalActionVariant variant)
     {
         return new GameActionDefinition
         {
@@ -210,11 +257,10 @@ public sealed partial class RelationshipsPlugin : IGamePlugin
                 "relationship.find_spouse",
 
             Label =
-                "Find a Spouse",
+                variant.Label,
 
             Description =
-                "Attempt to find a suitable spouse next year. " +
-                "Success depends on Appeal.",
+                variant.Description,
 
             Mode =
                 ActionExecutionMode.Queued,
@@ -255,9 +301,12 @@ public sealed partial class RelationshipsPlugin : IGamePlugin
             IEducationService education,
             ICareerService career,
             IGameDataService data,
+            IHistoricalNameService historicalNames,
             IGameRandom random,
             IGameCalendar calendar,
-            IGameEventBus events)
+            IGameEventBus events,
+            IRelationshipEraService relationshipEras,
+            HistoricalActionVariant variant)
     {
         return new GameActionDefinition
         {
@@ -265,12 +314,10 @@ public sealed partial class RelationshipsPlugin : IGamePlugin
                 "relationship.marry_off_daughter",
 
             Label =
-                "Marry Off",
+                variant.Label,
 
             Description =
-                "Try to find a husband for the selected adult " +
-                "unmarried daughter who still belongs to this " +
-                "household. Success depends on her Appeal.",
+                variant.Description,
 
             Mode =
                 ActionExecutionMode.Queued,
@@ -317,11 +364,15 @@ public sealed partial class RelationshipsPlugin : IGamePlugin
                         .Value;
 
                     var chance =
-                        ArrangedMarriageChanceByAppeal[
-                            Math.Clamp(
-                                appeal,
-                                1,
-                                5)];
+                        relationshipEras
+                            .GetRule(
+                                actionContext.GameState.Year)
+                            .ApplyArrangedMarriageChance(
+                                ArrangedMarriageChanceByAppeal[
+                                    Math.Clamp(
+                                        appeal,
+                                        1,
+                                        5)]);
 
                     if (random.NextDouble()
                         >= chance)
@@ -353,9 +404,8 @@ public sealed partial class RelationshipsPlugin : IGamePlugin
 
                                         ["text"] =
                                             $"{family.GetDisplayName(father)} " +
-                                            $"tried to find a husband for " +
-                                            $"{family.GetDisplayName(daughter)}, " +
-                                            "but no suitable match was found."
+                                            $"{variant.Narrative}, but no suitable match " +
+                                            $"was found for {family.GetDisplayName(daughter)}."
                                     }
                             });
 
@@ -373,15 +423,27 @@ public sealed partial class RelationshipsPlugin : IGamePlugin
                         education,
                         career,
                         data,
+                        historicalNames,
                         random,
                         calendar,
                         events,
-                        chance);
+                        chance,
+                        variant);
 
                     return new GameActionResult(
                         true);
                 }
         };
+    }
+
+    private static HistoricalActionVariant RequireHistoricalVariant(
+        IHistoricalActionVariantService historical,
+        string actionId,
+        int year)
+    {
+        return historical.GetVariant(actionId, year)
+            ?? throw new InvalidDataException(
+                $"Missing historical action data for '{actionId}' in {year}.");
     }
 
 }

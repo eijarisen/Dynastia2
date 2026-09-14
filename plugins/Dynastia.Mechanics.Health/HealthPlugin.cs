@@ -19,6 +19,10 @@ public sealed class HealthPlugin : IGamePlugin
         context.AddService<IAnnualHealthModifierRegistry>(modifiers);
 
         var health = new StandardHealthService(data, random);
+        health.ConfigureHistoricalCatalog(
+            HistoricalHealthCatalog.Load(
+                data,
+                health.ConditionIds));
         context.AddService<IHealthService>(health);
 
         var genetics = new GeneticPredispositionService(state, family);

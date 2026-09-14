@@ -7,4 +7,6 @@ public sealed class JusticeComponent
     public string? CrimeId { get; set; }
 
     public string? CrimeName { get; set; }
+
+    public string? CrimeDescription { get; set; }
 }

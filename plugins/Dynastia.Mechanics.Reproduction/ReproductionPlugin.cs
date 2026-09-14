@@ -31,6 +31,21 @@ public sealed class ReproductionPlugin : IGamePlugin
             ?? throw new InvalidOperationException(
                 "Game data service is unavailable.");
 
+        var historical =
+            context.GetService<IHistoricalActionVariantService>()
+            ?? throw new InvalidOperationException(
+                "Historical action variant service is unavailable.");
+
+        var historicalNames =
+            context.GetService<IHistoricalNameService>()
+            ?? throw new InvalidOperationException(
+                "Historical name service is unavailable.");
+
+        var gameState =
+            context.GetService<IGameState>()
+            ?? throw new InvalidOperationException(
+                "Game state is unavailable.");
+
         var random =
             context.GetService<IGameRandom>()
             ?? throw new InvalidOperationException(
@@ -71,16 +86,23 @@ public sealed class ReproductionPlugin : IGamePlugin
         ValidateBirthConditions(
             birthConditions);
 
-        actions.Register(
-            CreateTryForBabyAction(
-                family));
+        actions.RegisterDynamicProvider(
+            (_, _) =>
+                [
+                    CreateTryForBabyAction(
+                        family,
+                        RequireHistoricalVariant(
+                            historical,
+                            "reproduction.try_for_baby",
+                            gameState.Year))
+                ]);
 
         systems.Register(
             new ReproductionYearSystem(
                 family,
                 stats,
                 health,
-                data,
+                historicalNames,
                 random,
                 calendar,
                 events,
@@ -92,7 +114,8 @@ public sealed class ReproductionPlugin : IGamePlugin
 
     private static GameActionDefinition
         CreateTryForBabyAction(
-            IFamilyService family)
+            IFamilyService family,
+            HistoricalActionVariant variant)
     {
         return new GameActionDefinition
         {
@@ -100,13 +123,10 @@ public sealed class ReproductionPlugin : IGamePlugin
                 "reproduction.try_for_baby",
 
             Label =
-                "Try for a Baby",
+                variant.Label,
 
             Description =
-                "Attempt to have a child with your spouse. " +
-                "Success depends on both partners' Fertility " +
-                "and the woman's age. Pregnancy remains possible " +
-                "through age 45, but becomes rare after 40.",
+                variant.Description,
 
             Mode =
                 ActionExecutionMode.Queued,
@@ -159,6 +179,17 @@ public sealed class ReproductionPlugin : IGamePlugin
                         true);
                 }
         };
+    }
+
+
+    private static HistoricalActionVariant RequireHistoricalVariant(
+        IHistoricalActionVariantService historical,
+        string actionId,
+        int year)
+    {
+        return historical.GetVariant(actionId, year)
+            ?? throw new InvalidDataException(
+                $"Missing historical action data for '{actionId}' in {year}.");
     }
 
     private static void ValidateBirthConditions(

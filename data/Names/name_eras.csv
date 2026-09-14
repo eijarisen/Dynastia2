@@ -1,0 +1,6 @@
+StartYear,EndYear,MaleFile,FemaleFile
+1700,1799,Names/polish_male_1700.csv,Names/polish_female_1700.csv
+1800,1899,Names/polish_male_1800.csv,Names/polish_female_1800.csv
+1900,1949,Names/polish_male_1900.csv,Names/polish_female_1900.csv
+1950,1989,Names/polish_male_1950.csv,Names/polish_female_1950.csv
+1990,,Names/polish_male.csv,Names/polish_female.csv

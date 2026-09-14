@@ -55,12 +55,18 @@ public sealed partial class CareerPlugin : IGamePlugin
             RetirementRuleCatalog.Load(
                 data);
 
+        var presentation =
+            HistoricalCareerPresentationCatalog.Load(
+                data,
+                catalog.CareerIds);
+
         var career =
             new StandardCareerService(
                 gameState,
                 family,
                 random,
                 catalog,
+                presentation,
                 retirementRules,
                 localOpportunities,
                 stats);

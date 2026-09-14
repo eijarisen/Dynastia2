@@ -89,9 +89,9 @@ internal sealed class HouseholdThoughtProvider :
             else if (context.Career
                 .GetCareer(
                     person)
-                .JobTitle.Equals(
-                    "Housewife",
-                    StringComparison.OrdinalIgnoreCase))
+                .StatusId?.Equals(
+                    "status.housewife",
+                    StringComparison.OrdinalIgnoreCase) == true)
             {
                 yield return new ThoughtCandidate(
                     "role.housewife",

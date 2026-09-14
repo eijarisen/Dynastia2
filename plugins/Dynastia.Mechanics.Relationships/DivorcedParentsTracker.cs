@@ -80,7 +80,8 @@ internal sealed class DivorcedParentsTracker
 
             _health.AddCondition(
                 child,
-                "parents_divorced");
+                "parents_divorced",
+                gameEvent.Year);
         }
     }
 

@@ -587,11 +587,11 @@ public sealed class GameGenealogyDataSource :
                 : career.PeakJobTitle;
         }
 
-        if (career.JobTitle.Equals(
-                "Housewife",
-                StringComparison.OrdinalIgnoreCase))
+        if (career.StatusId?.Equals(
+                "status.housewife",
+                StringComparison.OrdinalIgnoreCase) == true)
         {
-            return "Housewife";
+            return career.JobTitle;
         }
 
         return "None";

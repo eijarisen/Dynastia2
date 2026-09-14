@@ -8,6 +8,7 @@
   "dependencies": [
     "dynastia.family",
     "dynastia.stats",
-    "dynastia.health"
+    "dynastia.health",
+    "dynastia.historical"
   ]
 }

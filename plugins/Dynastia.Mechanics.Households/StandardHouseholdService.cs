@@ -105,9 +105,9 @@ public sealed partial class StandardHouseholdService :
             spouse is not null
             && _career.GetCareer(
                     spouse)
-                .JobTitle.Equals(
-                    "Housewife",
-                    StringComparison.OrdinalIgnoreCase);
+                .StatusId?.Equals(
+                    "status.housewife",
+                    StringComparison.OrdinalIgnoreCase) == true;
 
         var baseCapacity =
             isHousewife
@@ -178,7 +178,9 @@ public sealed partial class StandardHouseholdService :
             strained,
             atCapacity,
             broke,
-            warnings);
+            warnings,
+            _career.GetStatusLabel(
+                "role.nanny"));
     }
 
     public IPerson? GetNanny(

@@ -42,7 +42,17 @@ public partial class LoanSelectionWindow :
         TitleText.Text =
             Title;
 
-        ConfirmButton.Content =
+        ConfirmButton.IdleSource =
+            isGivingLoan
+                ? "avares://Dynastia.App/Assets/UI/b_giveloan_idle.png"
+                : "avares://Dynastia.App/Assets/UI/b_takeloan_idle.png";
+
+        ConfirmButton.HoverSource =
+            isGivingLoan
+                ? "avares://Dynastia.App/Assets/UI/b_giveloan_hover.png"
+                : "avares://Dynastia.App/Assets/UI/b_takeloan_hover.png";
+
+        ConfirmButton.FallbackText =
             isGivingLoan
                 ? "Give Loan"
                 : "Take Loan";

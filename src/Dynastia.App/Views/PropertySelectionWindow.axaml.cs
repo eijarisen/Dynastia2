@@ -23,6 +23,31 @@ public partial class PropertySelectionWindow : Window
         Title = title;
         TitleText.Text = title;
         ConfirmButton.Content = confirmLabel;
+
+        var isBuy = confirmLabel.Equals(
+            "Buy",
+            StringComparison.OrdinalIgnoreCase);
+        var isSell = confirmLabel.Equals(
+            "Sell",
+            StringComparison.OrdinalIgnoreCase);
+        var useHouseArtwork = isBuy || isSell;
+
+        ImageActionPanel.IsVisible = useHouseArtwork;
+        GenericActionPanel.IsVisible = !useHouseArtwork;
+
+        if (useHouseArtwork)
+        {
+            ImageConfirmButton.IdleSource = isBuy
+                ? "avares://Dynastia.App/Assets/UI/b_buyhouse_idle.png"
+                : "avares://Dynastia.App/Assets/UI/b_sellhouse_idle.png";
+            ImageConfirmButton.HoverSource = isBuy
+                ? "avares://Dynastia.App/Assets/UI/b_buyhouse_hover.png"
+                : "avares://Dynastia.App/Assets/UI/b_sellhouse_hover.png";
+            ImageConfirmButton.FallbackText = isBuy
+                ? "Buy a House"
+                : "Sell a House";
+        }
+
         RefreshFilter();
     }
 

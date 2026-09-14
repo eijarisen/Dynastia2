@@ -28,6 +28,11 @@ public interface IHealthService
         IPerson person,
         string conditionId);
 
+    bool AddCondition(
+        IPerson person,
+        string conditionId,
+        int year);
+
     bool RemoveCondition(
         IPerson person,
         string conditionId);

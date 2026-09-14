@@ -10,9 +10,6 @@ public sealed partial class WellbeingPlugin : IGamePlugin
     private const decimal HealCost =
         1000m;
 
-    private const double HealAmount =
-        30;
-
     private const double DrinkHealthPenalty =
         10;
 
@@ -28,6 +25,11 @@ public sealed partial class WellbeingPlugin : IGamePlugin
     public void Initialize(
         IGamePluginContext context)
     {
+        var gameState =
+            context.GetService<IGameState>()
+            ?? throw new InvalidOperationException(
+                "Game state is unavailable.");
+
         var family =
             context.GetService<IFamilyService>()
             ?? throw new InvalidOperationException(
@@ -92,6 +94,10 @@ public sealed partial class WellbeingPlugin : IGamePlugin
             RecoveryActivityCatalog.Load(
                 data);
 
+        var healthcareEras =
+            HealthcareEraCatalog.Load(
+                data);
+
         healthModifiers.Register(
             new WellbeingHealthModifierProvider());
 
@@ -126,7 +132,10 @@ public sealed partial class WellbeingPlugin : IGamePlugin
             family,
             health,
             economy,
-            events);
+            events,
+            gameState,
+            historical,
+            healthcareEras);
 
         systems.Register(
             new WellbeingCleanupYearSystem());

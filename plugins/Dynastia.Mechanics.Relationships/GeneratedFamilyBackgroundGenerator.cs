@@ -4,25 +4,32 @@ namespace Dynastia.Mechanics.Relationships;
 
 internal static class GeneratedFamilyBackgroundGenerator
 {
-    private const string MaleNamesPath =
-        "Names/polish_male.csv";
-
-    private const string FemaleNamesPath =
-        "Names/polish_female.csv";
-
     public static void Assign(
         IPerson person,
         string familySurname,
         IFamilyService family,
-        IGameDataService data,
+        IHistoricalNameService historicalNames,
         IGameRandom random)
     {
+        var personBirthYear =
+            person.BirthDate?.Year
+            ?? throw new InvalidOperationException(
+                "Generated adults must have a birth date before family background generation.");
+
+        var fatherBirthYear =
+            personBirthYear
+            - (20 + DeterministicOffset(person.Id, 7, 16));
+
+        var motherBirthYear =
+            personBirthYear
+            - (20 + DeterministicOffset(person.Id, 11, 16));
+
         var fatherName =
-            $"{RandomWeightedFrom(data, random, MaleNamesPath)} " +
+            $"{historicalNames.GetRandomFirstName(Sex.Male, fatherBirthYear, random)} " +
             familySurname;
 
         var motherName =
-            $"{RandomWeightedFrom(data, random, FemaleNamesPath)} " +
+            $"{historicalNames.GetRandomFirstName(Sex.Female, motherBirthYear, random)} " +
             family.FormatSurname(
                 familySurname,
                 Sex.Female);
@@ -40,13 +47,19 @@ internal static class GeneratedFamilyBackgroundGenerator
                     ? Sex.Male
                     : Sex.Female;
 
+            var siblingBirthYear =
+                personBirthYear
+                + DeterministicOffset(
+                    person.Id,
+                    19 + i,
+                    17)
+                - 8;
+
             var name =
-                RandomWeightedFrom(
-                    data,
-                    random,
-                    sex == Sex.Male
-                        ? MaleNamesPath
-                        : FemaleNamesPath);
+                historicalNames.GetRandomFirstName(
+                    sex,
+                    siblingBirthYear,
+                    random);
 
             siblings.Add(
                 $"{name} " +
@@ -63,32 +76,23 @@ internal static class GeneratedFamilyBackgroundGenerator
                 siblings));
     }
 
-    private static string RandomWeightedFrom(
-        IGameDataService data,
-        IGameRandom random,
-        string relativePath)
+    private static int DeterministicOffset(
+        Guid id,
+        int salt,
+        int range)
     {
-        var entries =
-            data.GetWeightedStringList(
-                relativePath);
+        var bytes = id.ToByteArray();
 
-        var totalWeight =
-            entries.Sum(
-                entry =>
-                    (double)entry.Weight);
+        var first =
+            bytes[salt % bytes.Length];
 
-        var roll =
-            random.NextDouble()
-            * totalWeight;
+        var second =
+            bytes[(salt * 5 + 3)
+                % bytes.Length];
 
-        foreach (var entry in entries)
-        {
-            if (roll < entry.Weight)
-                return entry.Value;
-
-            roll -= entry.Weight;
-        }
-
-        return entries[^1].Value;
+        return (first * 31
+                + second
+                + salt * 17)
+            % range;
     }
 }

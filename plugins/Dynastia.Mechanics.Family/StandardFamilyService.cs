@@ -7,24 +7,21 @@ public sealed class StandardFamilyService : IFamilyService
     private const string SurnamesPath =
         "Names/polish_surnames.csv";
 
-    private const string MaleNamesPath =
-        "Names/polish_male.csv";
-
-    private const string FemaleNamesPath =
-        "Names/polish_female.csv";
-
     private readonly IGameState _gameState;
     private readonly IGameDataService _data;
+    private readonly IHistoricalNameService _historicalNames;
 
     private IPerson? _reconciledFounderReference;
     private bool _reconcilingFounderParents;
 
     public StandardFamilyService(
         IGameState gameState,
-        IGameDataService data)
+        IGameDataService data,
+        IHistoricalNameService historicalNames)
     {
         _gameState = gameState;
         _data = data;
+        _historicalNames = historicalNames;
     }
 
     public void InitializePerson(
@@ -459,12 +456,24 @@ public sealed class StandardFamilyService : IFamilyService
                 ? person.MaidenName!
                 : person.Surname;
 
+        var personBirthYear =
+            person.BirthDate?.Year
+            ?? (_gameState.Year - person.Age);
+
+        var fatherBirthYear =
+            personBirthYear
+            - (20 + DeterministicByte(person.Id, 7) % 16);
+
+        var motherBirthYear =
+            personBirthYear
+            - (20 + DeterministicByte(person.Id, 9) % 16);
+
         var fatherName =
-            $"{SelectDeterministicValue(MaleNamesPath, person.Id, 11)} " +
+            $"{SelectDeterministicFirstName(Sex.Male, fatherBirthYear, person.Id, 11)} " +
             familySurname;
 
         var motherName =
-            $"{SelectDeterministicValue(FemaleNamesPath, person.Id, 23)} " +
+            $"{SelectDeterministicFirstName(Sex.Female, motherBirthYear, person.Id, 23)} " +
             FormatSurname(
                 familySurname,
                 Sex.Female);
@@ -493,11 +502,18 @@ public sealed class StandardFamilyService : IFamilyService
                     ? Sex.Male
                     : Sex.Female;
 
+            var siblingBirthYear =
+                personBirthYear
+                + (DeterministicByte(
+                        person.Id,
+                        47 + index)
+                    % 11)
+                - 5;
+
             var name =
-                SelectDeterministicValue(
-                    male
-                        ? MaleNamesPath
-                        : FemaleNamesPath,
+                SelectDeterministicFirstName(
+                    sex,
+                    siblingBirthYear,
                     person.Id,
                     53 + index);
 
@@ -514,25 +530,21 @@ public sealed class StandardFamilyService : IFamilyService
             siblings);
     }
 
-    private string SelectDeterministicValue(
-        string path,
+    private string SelectDeterministicFirstName(
+        Sex sex,
+        int birthYear,
         Guid id,
         int salt)
     {
-        var entries =
-            _data.GetWeightedStringList(
-                path);
+        var sample =
+            (DeterministicByte(id, salt)
+                % 1_000_000)
+            / 1_000_000d;
 
-        if (entries.Count == 0)
-            return "Unknown";
-
-        var index =
-            DeterministicByte(
-                id,
-                salt)
-            % entries.Count;
-
-        return entries[index].Value;
+        return _historicalNames.GetRandomFirstName(
+            sex,
+            birthYear,
+            new FixedSampleGameRandom(sample));
     }
 
     private static int DeterministicByte(

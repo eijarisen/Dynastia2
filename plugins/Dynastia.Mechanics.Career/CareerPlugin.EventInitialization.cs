@@ -7,6 +7,7 @@ public sealed partial class CareerPlugin
     private static void InitializeFromEvents(
         IGameState gameState,
         ICareerService career,
+        IFamilyService family,
         IGameRandom random,
         IGameEventBus events)
     {
@@ -57,6 +58,16 @@ public sealed partial class CareerPlugin
                             spouse,
                             random.NextInt(0, 3),
                             random.NextInt(1, 5));
+
+                        var retirementAge =
+                            family.GetSex(spouse) == Sex.Male
+                                ? 65
+                                : 60;
+
+                        if (spouse.Age >= retirementAge)
+                        {
+                            career.Retire(spouse);
+                        }
                     }
 
                     return;

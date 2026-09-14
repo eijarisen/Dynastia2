@@ -65,6 +65,7 @@ public sealed partial class CareerPlugin : IGamePlugin
         InitializeFromEvents(
             gameState,
             career,
+            family,
             random,
             events);
 

@@ -7,7 +7,8 @@ public sealed record FamilyRelationActionViewModel(
     string Label,
     string Description,
     Guid RelativeId,
-    bool RequiresPropertySelection);
+    bool RequiresPropertySelection,
+    bool RequiresMoneySelection);
 
 public sealed record FamilyRelationHouseholdViewModel(
     string HouseholdTitle,
@@ -55,9 +56,21 @@ public sealed class FamilyRelationsWindowViewModel : ViewModelBase
     public IReadOnlyList<PropertySelectionOption> GetGiveHouseOptions(Guid relativeId) =>
         _main.GetFamilyRelationGiveHouseOptions(relativeId);
 
-    public void Queue(FamilyRelationActionViewModel action, string? propertyId = null)
+    public decimal GetMoneyMaximum(FamilyRelationActionViewModel action) =>
+        _main.GetFamilyRelationMoneyMaximum(
+            action.RelativeId,
+            action.Id);
+
+    public void Queue(
+        FamilyRelationActionViewModel action,
+        string? propertyId = null,
+        decimal? moneyAmount = null)
     {
-        var result = _main.QueueFamilyRelationAction(action.RelativeId, action.Id, propertyId);
+        var result = _main.QueueFamilyRelationAction(
+            action.RelativeId,
+            action.Id,
+            propertyId,
+            moneyAmount);
         StatusText = result.Message ?? (result.Success ? "Action queued." : "The action could not be queued.");
         Refresh();
     }

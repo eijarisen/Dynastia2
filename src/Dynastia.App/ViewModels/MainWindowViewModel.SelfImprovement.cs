@@ -105,12 +105,12 @@ public sealed partial class MainWindowViewModel
                     SelfImprovementCost,
                     definition.Description,
                     isAvailable,
-                    currentValue >= 5
-                        ? "Maximum reached"
-                        : isAvailable
-                            ? "Available"
-                            : "Unavailable");
+                    isAvailable
+                        ? "Available"
+                        : "Unavailable");
             })
+            .Where(option =>
+                option.CurrentValue < 5)
             .ToList();
     }
 

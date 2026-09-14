@@ -55,7 +55,8 @@ public sealed partial class MainWindowViewModel : ViewModelBase
     private bool _isGameOverOverlayVisible;
     private bool _isMainMenuPromptVisible;
     private bool _isYearSummaryVisible;
-    private int _yearSummaryEventYear = 1900;
+    private int _yearSummaryEventYear =
+        GameCalendarConfiguration.GameStartYear;
     private HouseholdViewMode _householdViewMode =
         HouseholdViewMode.Lineage;
 
@@ -131,7 +132,8 @@ public sealed partial class MainWindowViewModel : ViewModelBase
         _actionRegistry = actionRegistry;
         _saveService = saveService;
 
-        _albumYear = 1900;
+        _albumYear =
+            GameCalendarConfiguration.GameStartYear;
 
         StartGameCommand =
             new RelayCommand(StartGame);
@@ -194,7 +196,8 @@ public sealed partial class MainWindowViewModel : ViewModelBase
                 PreviousAlbumYear,
                 () =>
                     IsGameStarted
-                    && AlbumYear > 1901);
+                    && AlbumYear >
+                        GameCalendarConfiguration.GameStartYear + 1);
 
         NextAlbumYearCommand =
             new RelayCommand(
@@ -690,8 +693,8 @@ public sealed partial class MainWindowViewModel : ViewModelBase
             : string.Empty;
 
     public int AlbumDisplayYear =>
-        AlbumYear <= 1900
-            ? 1900
+        AlbumYear <= GameCalendarConfiguration.GameStartYear
+            ? GameCalendarConfiguration.GameStartYear
             : AlbumYear - 1;
 
     public bool IsYearSummaryVisible
@@ -708,7 +711,9 @@ public sealed partial class MainWindowViewModel : ViewModelBase
     }
 
     public string YearSummaryTitle =>
-        $"Year {Math.Max(1900, _yearSummaryEventYear - 1)}";
+        $"Year {Math.Max(
+            GameCalendarConfiguration.GameStartYear,
+            _yearSummaryEventYear - 1)}";
 
     public string YearSummaryEmptyText =>
         YearSummaryHouseholds.Count == 0

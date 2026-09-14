@@ -179,12 +179,34 @@ public sealed class StandardBiographyService :
         if (!string.IsNullOrWhiteSpace(
             message))
         {
+            var formatted =
+                FormatWithEmoji(
+                    gameEvent.Type,
+                    message);
+
             AddEntry(
                 subject,
                 gameEvent.Year,
-                FormatWithEmoji(
-                    gameEvent.Type,
-                    message));
+                formatted);
+
+            if (IsFamilyMoneyEvent(
+                gameEvent.Type))
+            {
+                foreach (var related in
+                    gameEvent.RelatedPersonIds
+                        .Select(id => FindPerson(id))
+                        .Where(person =>
+                            person is not null
+                            && person.Id != subject.Id)
+                        .Cast<IPerson>()
+                        .DistinctBy(person => person.Id))
+                {
+                    AddEntry(
+                        related,
+                        gameEvent.Year,
+                        formatted);
+                }
+            }
         }
 
         if (gameEvent.Type.Equals(
@@ -639,6 +661,18 @@ public sealed class StandardBiographyService :
             .TrimEnd('.');
     }
 
+    private static bool IsFamilyMoneyEvent(
+        string type) =>
+        type.Equals(
+            "family_relations.money_received",
+            StringComparison.OrdinalIgnoreCase)
+        || type.Equals(
+            "family_relations.money_given",
+            StringComparison.OrdinalIgnoreCase)
+        || type.Equals(
+            "family_relations.money_refused",
+            StringComparison.OrdinalIgnoreCase);
+
     private static bool IsImportantForRelatives(
         string type)
     {
@@ -737,6 +771,9 @@ public sealed class StandardBiographyService :
 
             "family_support.child_success" => "🙏 ",
             "family_support.child_failure" => "🚫 ",
+            "family_relations.money_received" => "💰 ",
+            "family_relations.money_given" => "🎁 ",
+            "family_relations.money_refused" => "🚫 ",
 
             "career.ask_quit_success" => "✅ ",
             "career.ask_quit_failure" => "🚫 ",

@@ -12,7 +12,7 @@ public sealed class GameState : IGameState
         string.Empty;
 
     public int Year { get; set; } =
-        1900;
+        GameCalendarConfiguration.GameStartYear;
 
     public IReadOnlyList<IPerson> People =>
         _people;

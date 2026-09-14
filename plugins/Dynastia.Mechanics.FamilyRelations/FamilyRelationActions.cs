@@ -4,7 +4,8 @@ namespace Dynastia.Mechanics.FamilyRelations;
 
 internal static class FamilyRelationActions
 {
-    private const decimal MoneyGift = 2000m;
+    private const decimal MinimumMoneyTransfer = 1000m;
+    private const decimal LegacyMoneyGift = 2000m;
     private const double JobConnectionBonus = 0.20;
 
     public static void Register(
@@ -63,42 +64,74 @@ internal static class FamilyRelationActions
     {
         Id = "family_relations.ask_money",
         Label = "Ask for Money",
-        Description = "Ask this autonomous relative's household for 2,000 zł. Their current relationship and ability to afford the gift determine whether they agree.",
+        Description = "Ask this autonomous relative's household for financial help. Choose the amount in full thousands; relationship and the burden on their household determine whether they agree.",
         Mode = ActionExecutionMode.Queued,
         QueuePhase = YearPhase.FamilyRelationActions,
         IsAvailable = c => IsRelationsContext(c)
             && IsValidRelation(c, relations)
             && TryGetAutonomousTargetHead(c.Target, households, out var targetHead)
-            && economy.GetHousehold(targetHead!)?.Wealth >= MoneyGift,
+            && targetHead is not null
+            && economy.GetHousehold(targetHead) is { } targetFinance
+            && CanAffordMoneySelection(c, targetFinance.Wealth),
         Execute = c =>
         {
             if (!TryGetAutonomousTargetHead(c.Target, households, out var targetHead) || targetHead is null)
                 return new(false);
-            var targetFinance = economy.GetHousehold(targetHead);
-            if (targetFinance is null || targetFinance.Wealth < MoneyGift)
-                return new(false, "That household can no longer afford to help.");
 
-            var ability = targetFinance.Wealth switch
+            var targetFinance = economy.GetHousehold(targetHead);
+            var amount = ResolveMoneyAmount(c);
+
+            if (!IsValidMoneyAmount(amount)
+                || targetFinance is null
+                || targetFinance.Wealth < amount)
+            {
+                return new(false, "That household can no longer afford the selected amount.");
+            }
+
+            var baseAbility = targetFinance.Wealth switch
             {
                 < 5000m => 0.75,
                 < 10000m => 0.90,
                 < 20000m => 1.00,
                 _ => 1.10
             };
-            var accepted = random.NextDouble() < relations.EvaluateRequestWillingness(c.Actor, c.Target, ability);
+
+            var burdenFactor =
+                Math.Clamp(
+                    (double)(targetFinance.Wealth / amount) / 3.0,
+                    0.35,
+                    1.15);
+
+            var accepted =
+                random.NextDouble()
+                < relations.EvaluateRequestWillingness(
+                    c.Actor,
+                    c.Target,
+                    baseAbility * burdenFactor);
+
             if (!accepted)
             {
                 relations.ModifyRelation(c.Actor, c.Target, -5);
-                Publish(events, c, "family_relations.money_refused", family,
-                    $"{family.GetDisplayName(c.Target)} declined {family.GetDisplayName(c.Actor)}'s request for financial help.");
+                Publish(
+                    events,
+                    c,
+                    "family_relations.money_refused",
+                    family,
+                    $"{family.GetDisplayName(c.Target)} declined {family.GetDisplayName(c.Actor)}'s request for {amount:N0} zł in family support.",
+                    suppressChronicle: false);
                 return new(true);
             }
 
-            economy.ChangeWealth(targetHead, -MoneyGift);
-            economy.ChangeWealth(c.Actor, MoneyGift);
+            economy.ChangeWealth(targetHead, -amount);
+            economy.ChangeWealth(c.Actor, amount);
             relations.ModifyRelation(c.Actor, c.Target, 5);
-            Publish(events, c, "family_relations.money_received", family,
-                $"{family.GetDisplayName(c.Target)} gave {family.GetDisplayName(c.Actor)} {MoneyGift:N0} zł in family support.");
+            Publish(
+                events,
+                c,
+                "family_relations.money_received",
+                family,
+                $"{family.GetDisplayName(c.Target)} gave {family.GetDisplayName(c.Actor)} {amount:N0} zł in family support.",
+                suppressChronicle: false);
             return new(true);
         }
     };
@@ -112,23 +145,36 @@ internal static class FamilyRelationActions
     {
         Id = "family_relations.give_money",
         Label = "Give Money",
-        Description = "Give 2,000 zł to this relative's household. No approval roll is needed and the gift improves the relationship.",
+        Description = "Give money to this relative's household in full-thousand increments. No approval roll is needed and the gift improves the relationship.",
         Mode = ActionExecutionMode.Queued,
         QueuePhase = YearPhase.FamilyRelationActions,
         IsAvailable = c => IsRelationsContext(c)
             && IsValidRelation(c, relations)
             && ResolveTargetHead(c.Target, households) is not null
-            && economy.GetHousehold(c.Actor)?.Wealth >= MoneyGift,
+            && economy.GetHousehold(c.Actor) is { } actorFinance
+            && CanAffordMoneySelection(c, actorFinance.Wealth),
         Execute = c =>
         {
             var targetHead = ResolveTargetHead(c.Target, households);
-            if (targetHead is null || economy.GetHousehold(c.Actor)?.Wealth < MoneyGift)
-                return new(false);
-            economy.ChangeWealth(c.Actor, -MoneyGift);
-            economy.ChangeWealth(targetHead, MoneyGift);
+            var amount = ResolveMoneyAmount(c);
+
+            if (targetHead is null
+                || !IsValidMoneyAmount(amount)
+                || economy.GetHousehold(c.Actor)?.Wealth < amount)
+            {
+                return new(false, "The selected gift can no longer be afforded.");
+            }
+
+            economy.ChangeWealth(c.Actor, -amount);
+            economy.ChangeWealth(targetHead, amount);
             relations.ModifyRelation(c.Actor, c.Target, 5);
-            Publish(events, c, "family_relations.money_given", family,
-                $"{family.GetDisplayName(c.Actor)} gave {family.GetDisplayName(c.Target)} {MoneyGift:N0} zł.");
+            Publish(
+                events,
+                c,
+                "family_relations.money_given",
+                family,
+                $"{family.GetDisplayName(c.Actor)} gave {family.GetDisplayName(c.Target)} {amount:N0} zł.",
+                suppressChronicle: false);
             return new(true);
         }
     };
@@ -312,6 +358,51 @@ internal static class FamilyRelationActions
         }
     };
 
+    private static bool CanAffordMoneySelection(
+        GameActionContext context,
+        decimal availableWealth)
+    {
+        if (!context.Parameters.TryGetValue(
+                "amount",
+                out var rawAmount))
+        {
+            return availableWealth >= MinimumMoneyTransfer;
+        }
+
+        return decimal.TryParse(
+                rawAmount,
+                System.Globalization.NumberStyles.Number,
+                System.Globalization.CultureInfo.InvariantCulture,
+                out var amount)
+            && IsValidMoneyAmount(amount)
+            && availableWealth >= amount;
+    }
+
+    private static decimal ResolveMoneyAmount(
+        GameActionContext context)
+    {
+        if (context.Parameters.TryGetValue(
+                "amount",
+                out var rawAmount)
+            && decimal.TryParse(
+                rawAmount,
+                System.Globalization.NumberStyles.Number,
+                System.Globalization.CultureInfo.InvariantCulture,
+                out var amount))
+        {
+            return amount;
+        }
+
+        // Compatibility for a save made while family money support used
+        // the original fixed 2,000 zł transfer and stored no amount.
+        return LegacyMoneyGift;
+    }
+
+    private static bool IsValidMoneyAmount(
+        decimal amount) =>
+        amount >= MinimumMoneyTransfer
+        && amount % 1000m == 0m;
+
     private static bool IsRelationsContext(GameActionContext c) =>
         c.Parameters.TryGetValue("familyRelations", out var value)
         && value.Equals("true", StringComparison.OrdinalIgnoreCase)
@@ -423,19 +514,36 @@ internal static class FamilyRelationActions
         });
     }
 
-    private static void Publish(IGameEventBus events, GameActionContext c, string type, IFamilyService family, string text)
+    private static void Publish(
+        IGameEventBus events,
+        GameActionContext c,
+        string type,
+        IFamilyService family,
+        string text,
+        bool suppressChronicle = true)
     {
+        var data =
+            new Dictionary<string, string>
+            {
+                ["text"] = text
+            };
+
+        if (suppressChronicle)
+        {
+            data["suppressChronicle"] = "true";
+        }
+        else
+        {
+            data["familyNews"] = "true";
+        }
+
         events.Publish(new GameEvent
         {
             Type = type,
             Year = c.GameState.Year,
             SubjectId = c.Actor.Id,
             RelatedPersonIds = [c.Target.Id],
-            Data = new Dictionary<string, string>
-            {
-                ["suppressChronicle"] = "true",
-                ["text"] = text
-            }
+            Data = data
         });
     }
 }

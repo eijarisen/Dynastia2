@@ -114,6 +114,9 @@ public static class EventEmojiMap
                 // Filled missing family-support event emojis.
                 ["family_support.child_success"] = "🙏",
                 ["family_support.child_failure"] = "🚫",
+                ["family_relations.money_received"] = "💰",
+                ["family_relations.money_given"] = "🎁",
+                ["family_relations.money_refused"] = "🚫",
 
                 ["career.ask_quit_success"] = "✅",
                 ["career.ask_quit_failure"] = "🚫",

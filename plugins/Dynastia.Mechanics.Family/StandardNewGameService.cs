@@ -48,12 +48,16 @@ public sealed class StandardNewGameService : INewGameService
                 dynastySurname);
 
         _gameState.ClearPeople();
-        _gameState.Year = 1900;
+        _gameState.Year =
+            GameCalendarConfiguration.GameStartYear;
         _gameState.DynastySurname =
             surname;
 
+        var parentDeathYear =
+            GameCalendarConfiguration.GameStartYear - 1;
+
         var parentDeathDate =
-            RandomDateInYear(1899);
+            RandomDateInYear(parentDeathYear);
 
         var father =
             _gameState.CreatePerson(
@@ -124,12 +128,13 @@ public sealed class StandardNewGameService : INewGameService
         _family.SetSpouses(
             father,
             mother,
-            startYear: 1880);
+            startYear:
+                GameCalendarConfiguration.GameStartYear - 20);
 
         _family.EndRelationship(
             father,
             mother,
-            endYear: 1899,
+            endYear: parentDeathYear,
             endReason: "death",
             clearFirst: false,
             clearSecond: false);

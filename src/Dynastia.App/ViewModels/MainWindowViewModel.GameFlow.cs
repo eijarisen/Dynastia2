@@ -433,8 +433,11 @@ public sealed partial class MainWindowViewModel
 
     private void PreviousAlbumYear()
     {
-        if (AlbumYear > 1901)
+        if (AlbumYear
+            > GameCalendarConfiguration.GameStartYear + 1)
+        {
             AlbumYear--;
+        }
     }
 
     private void NextAlbumYear()

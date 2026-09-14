@@ -57,7 +57,7 @@ public sealed partial class MainWindowViewModel
         AlbumYear =
             Math.Clamp(
                 loadedUiState.AlbumYear,
-                1900,
+                GameCalendarConfiguration.GameStartYear,
                 _gameState.Year);
 
         IsGameOverOverlayVisible =

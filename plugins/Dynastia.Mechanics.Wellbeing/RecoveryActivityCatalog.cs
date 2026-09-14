@@ -143,11 +143,12 @@ internal sealed class RecoveryActivityCatalog
                     "without an ID or text.");
             }
 
-            if (activity.StartYear < 1900)
+            if (activity.StartYear
+                < GameCalendarConfiguration.GameStartYear)
             {
                 throw new InvalidDataException(
                     $"{activity.Id}: startYear may not " +
-                    "precede 1900.");
+                    $"precede {GameCalendarConfiguration.GameStartYear}.");
             }
 
             if (activity.EndYear is int endYear
@@ -169,7 +170,7 @@ internal sealed class RecoveryActivityCatalog
         foreach (var probeYear in
             new[]
             {
-                1900,
+                GameCalendarConfiguration.GameStartYear,
                 1905,
                 1925,
                 1943,

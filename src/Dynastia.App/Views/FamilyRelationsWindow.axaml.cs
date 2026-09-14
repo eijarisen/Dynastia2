@@ -36,6 +36,8 @@ public partial class FamilyRelationsWindow : Window
             return;
 
         string? propertyId = null;
+        decimal? moneyAmount = null;
+
         if (action.RequiresPropertySelection)
         {
             var options = _viewModel.GetGiveHouseOptions(action.RelativeId);
@@ -51,7 +53,30 @@ public partial class FamilyRelationsWindow : Window
                 return;
         }
 
-        _viewModel.Queue(action, propertyId);
+        if (action.RequiresMoneySelection)
+        {
+            var maximum =
+                _viewModel.GetMoneyMaximum(action);
+
+            if (maximum < 1000m)
+                return;
+
+            var selector =
+                new FamilyMoneySelectionWindow(
+                    action.Label,
+                    maximum);
+
+            moneyAmount =
+                await selector.ShowDialog<decimal?>(this);
+
+            if (moneyAmount is null)
+                return;
+        }
+
+        _viewModel.Queue(
+            action,
+            propertyId,
+            moneyAmount);
     }
 
     private void OnCloseClick(object? sender, RoutedEventArgs e) => Close();

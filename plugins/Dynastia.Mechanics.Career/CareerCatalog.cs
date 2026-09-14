@@ -284,7 +284,8 @@ internal sealed class CareerCatalog
 
         foreach (var career in careers)
         {
-            if (career.StartYear < 1900
+            if (career.StartYear
+                < GameCalendarConfiguration.GameStartYear
                 || career.StartYear
                     > CareerDefinition
                         .TechnologyFreezeYear)

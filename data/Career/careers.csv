@@ -1,40 +1,40 @@
 Number,Id,Name,StartYear,EndYear,MaleEarly,FemaleEarly,MaleLate,FemaleLate,BaseSalary,Level1Title,Level2Title,Level3Title,Level4Title,Level5Title,LocationType,MinimumSettlementClass,RequiredOpportunityTags
-1,agriculture_and_farm_estates,Agriculture & Farm Estates,1900,,60,40,55,45,400,Farm Hand,Farm Worker,Farm Foreman,Estate Manager,Agricultural Magnate,Generic,SmallTown,-
-2,horse_and_carriage_trade,Horse & Carriage Trade,1900,1955,95,5,90,10,450,Stable Hand,Groom,Stable Master,Stud Manager,Horse-Trade Magnate,Generic,SmallTown,-
-3,blacksmithing,Blacksmithing,1900,1970,99,1,95,5,600,Smithy Helper,Blacksmith,Master Blacksmith,Smithy Proprietor,Metalcraft Magnate,Generic,SmallTown,-
-4,coal_mining,Coal Mining,1900,,99,1,95,5,700,Pit Hand,Miner,Mine Foreman,Colliery Director,Coal Magnate,Specialist,SmallTown,coal
-5,oil_and_refining,Oil & Refining,1900,,95,5,80,20,850,Drilling Hand,Rig Operator,Field Supervisor,Refinery Director,Oil Magnate,Specialist,SmallTown,oil
-6,steel_and_foundry,Steel & Foundry,1900,,98,2,85,15,700,Foundry Hand,Steelworker,Mill Foreman,Steelworks Director,Steel Magnate,Specialist,Town,steel;heavy_industry
-7,textile_mills,Textile Mills,1900,2005,30,70,40,60,450,Mill Hand,Weaver,Floor Supervisor,Mill Director,Textile Magnate,Specialist,Town,textiles
-8,timber_and_sawmills,Timber & Sawmills,1900,,95,5,85,15,600,Logging Hand,Sawyer,Logging Foreman,Timber Director,Timber Magnate,Specialist,SmallTown,forestry
-9,construction,Construction,1900,,98,2,85,15,600,Construction Laborer,Tradesman,Site Foreman,Construction Director,Construction Magnate,Generic,SmallTown,-
-10,railways,Railways,1900,,95,5,75,25,650,Track Hand,Railway Clerk,Station Master,Regional Director,Railway Magnate,Generic,Town,-
-11,shipping_and_ports,Shipping & Ports,1900,,98,2,85,15,650,Dock Hand,Shipping Clerk,Dockmaster,Shipping Director,Shipping Magnate,Specialist,Town,port;shipping
-12,mass_factory_manufacturing,Mass Factory Manufacturing,1900,2000,65,35,55,45,500,Factory Hand,Machine Operator,Shift Foreman,Factory Director,Industrial Magnate,Specialist,Town,manufacturing
-13,traditional_printworks,Traditional Printworks,1900,2015,80,20,55,45,550,Press Hand,Typesetter,Press Foreman,Printing House Director,Printing Magnate,Generic,Town,-
-14,newspapers_and_publishing,Newspapers & Publishing,1900,,85,15,50,50,600,Copy Runner,Reporter,Editor,Publisher,Press Magnate,Urban,City,-
-15,retail_trade,Retail Trade,1900,,40,60,45,55,500,Stockroom Hand,Shop Assistant,Store Manager,Chain Director,Retail Magnate,Generic,SmallTown,-
-16,banking,Banking,1900,,85,15,45,55,700,Bank Messenger,Bank Clerk,Branch Manager,Bank Director,Banking Magnate,Urban,City,-
-17,insurance,Insurance,1900,,80,20,45,55,650,Office Runner,Insurance Clerk,Branch Manager,Company Director,Insurance Magnate,Urban,City,-
-18,hotels_and_restaurants,Hotels & Restaurants,1900,,45,55,45,55,450,Kitchen Porter,Waiter,Establishment Manager,Hotel Director,Hospitality Magnate,Generic,SmallTown,-
-19,food_processing,Food Processing,1900,,45,55,50,50,500,Packing Hand,Production Worker,Floor Manager,Plant Director,Food Industry Magnate,Generic,Town,-
-20,baking_and_confectionery,Baking & Confectionery,1900,,60,40,45,55,500,Bakery Hand,Baker,Master Baker,Bakery Proprietor,Bakery Magnate,Generic,SmallTown,-
-21,meat_trade,Meat Trade,1900,,90,10,70,30,550,Slaughterhouse Hand,Butcher,Master Butcher,Meatworks Director,Meat Industry Magnate,Generic,SmallTown,-
-22,tailoring_and_fashion,Tailoring & Fashion,1900,,35,65,30,70,500,Workshop Hand,Tailor,Master Tailor,Fashion House Director,Fashion Magnate,Generic,SmallTown,-
-23,leather_and_shoemaking,Leather & Shoemaking,1900,2010,80,20,60,40,500,Tannery Hand,Shoemaker,Master Leatherworker,Leatherworks Director,Leather Magnate,Generic,SmallTown,-
-24,furniture_and_carpentry,Furniture & Carpentry,1900,,95,5,85,15,550,Workshop Hand,Carpenter,Master Carpenter,Furniture Works Director,Furniture Magnate,Generic,SmallTown,-
-25,glass_and_ceramics,Glass & Ceramics,1900,,70,30,60,40,550,Kiln Hand,Glassworker,Workshop Master,Works Director,Glass & Ceramics Magnate,Generic,Town,-
-26,jewellery_and_watchmaking,Jewellery & Watchmaking,1900,,85,15,65,35,700,Shop Assistant,Jeweller,Master Jeweller,Jewellery House Director,Luxury Goods Magnate,Generic,Town,-
-27,photography,Photography,1900,,90,10,55,45,650,Studio Assistant,Photographer,Studio Manager,Agency Director,Photography Magnate,Generic,Town,-
-28,domestic_service,Domestic Service,1900,1975,20,80,25,75,350,Domestic Servant,Senior Servant,House Steward,Service Agency Director,Domestic Services Magnate,Generic,SmallTown,-
-29,laundry_and_dry_cleaning,Laundry & Dry Cleaning,1900,,20,80,35,65,400,Laundry Hand,Presser,Shop Manager,Chain Director,Laundry Magnate,Generic,Town,-
-30,funeral_services,Funeral Services,1900,,85,15,60,40,600,Undertaker's Assistant,Mortuary Worker,Funeral Manager,Company Director,Funeral Services Magnate,Generic,SmallTown,-
-31,real_estate,Real Estate,1900,,90,10,50,50,650,Office Runner,Property Clerk,Estate Agent,Agency Director,Property Magnate,Generic,Town,-
-32,accounting,Accounting,1900,,75,25,35,65,700,Office Runner,Bookkeeper,Senior Accountant,Firm Director,Accounting Magnate,Generic,Town,-
-33,legal_services,Legal Services,1900,,95,5,50,50,800,Office Runner,Legal Clerk,Solicitor,Firm Partner,Legal Magnate,Urban,City,-
-34,healthcare_services,Healthcare Services,1900,,40,60,30,70,750,Hospital Orderly,Medical Assistant,Practitioner,Clinic Director,Healthcare Magnate,Generic,SmallTown,-
-35,pharmacy,Pharmacy,1900,,60,40,25,75,750,Shop Assistant,Pharmacy Technician,Pharmacist,Pharmacy Director,Pharmacy Magnate,Generic,Town,-
-36,education,Education,1900,,40,60,25,75,550,School Attendant,Teacher,Head Teacher,School Director,Education Magnate,Generic,SmallTown,-
+1,agriculture_and_farm_estates,Agriculture & Farm Estates,1700,,60,40,55,45,400,Farm Hand,Farm Worker,Farm Foreman,Estate Manager,Agricultural Magnate,Generic,SmallTown,-
+2,horse_and_carriage_trade,Horse & Carriage Trade,1700,1955,95,5,90,10,450,Stable Hand,Groom,Stable Master,Stud Manager,Horse-Trade Magnate,Generic,SmallTown,-
+3,blacksmithing,Blacksmithing,1700,1970,99,1,95,5,600,Smithy Helper,Blacksmith,Master Blacksmith,Smithy Proprietor,Metalcraft Magnate,Generic,SmallTown,-
+4,coal_mining,Coal Mining,1700,,99,1,95,5,700,Pit Hand,Miner,Mine Foreman,Colliery Director,Coal Magnate,Specialist,SmallTown,coal
+5,oil_and_refining,Oil & Refining,1700,,95,5,80,20,850,Drilling Hand,Rig Operator,Field Supervisor,Refinery Director,Oil Magnate,Specialist,SmallTown,oil
+6,steel_and_foundry,Steel & Foundry,1700,,98,2,85,15,700,Foundry Hand,Steelworker,Mill Foreman,Steelworks Director,Steel Magnate,Specialist,Town,steel;heavy_industry
+7,textile_mills,Textile Mills,1700,2005,30,70,40,60,450,Mill Hand,Weaver,Floor Supervisor,Mill Director,Textile Magnate,Specialist,Town,textiles
+8,timber_and_sawmills,Timber & Sawmills,1700,,95,5,85,15,600,Logging Hand,Sawyer,Logging Foreman,Timber Director,Timber Magnate,Specialist,SmallTown,forestry
+9,construction,Construction,1700,,98,2,85,15,600,Construction Laborer,Tradesman,Site Foreman,Construction Director,Construction Magnate,Generic,SmallTown,-
+10,railways,Railways,1700,,95,5,75,25,650,Track Hand,Railway Clerk,Station Master,Regional Director,Railway Magnate,Generic,Town,-
+11,shipping_and_ports,Shipping & Ports,1700,,98,2,85,15,650,Dock Hand,Shipping Clerk,Dockmaster,Shipping Director,Shipping Magnate,Specialist,Town,port;shipping
+12,mass_factory_manufacturing,Mass Factory Manufacturing,1700,2000,65,35,55,45,500,Factory Hand,Machine Operator,Shift Foreman,Factory Director,Industrial Magnate,Specialist,Town,manufacturing
+13,traditional_printworks,Traditional Printworks,1700,2015,80,20,55,45,550,Press Hand,Typesetter,Press Foreman,Printing House Director,Printing Magnate,Generic,Town,-
+14,newspapers_and_publishing,Newspapers & Publishing,1700,,85,15,50,50,600,Copy Runner,Reporter,Editor,Publisher,Press Magnate,Urban,City,-
+15,retail_trade,Retail Trade,1700,,40,60,45,55,500,Stockroom Hand,Shop Assistant,Store Manager,Chain Director,Retail Magnate,Generic,SmallTown,-
+16,banking,Banking,1700,,85,15,45,55,700,Bank Messenger,Bank Clerk,Branch Manager,Bank Director,Banking Magnate,Urban,City,-
+17,insurance,Insurance,1700,,80,20,45,55,650,Office Runner,Insurance Clerk,Branch Manager,Company Director,Insurance Magnate,Urban,City,-
+18,hotels_and_restaurants,Hotels & Restaurants,1700,,45,55,45,55,450,Kitchen Porter,Waiter,Establishment Manager,Hotel Director,Hospitality Magnate,Generic,SmallTown,-
+19,food_processing,Food Processing,1700,,45,55,50,50,500,Packing Hand,Production Worker,Floor Manager,Plant Director,Food Industry Magnate,Generic,Town,-
+20,baking_and_confectionery,Baking & Confectionery,1700,,60,40,45,55,500,Bakery Hand,Baker,Master Baker,Bakery Proprietor,Bakery Magnate,Generic,SmallTown,-
+21,meat_trade,Meat Trade,1700,,90,10,70,30,550,Slaughterhouse Hand,Butcher,Master Butcher,Meatworks Director,Meat Industry Magnate,Generic,SmallTown,-
+22,tailoring_and_fashion,Tailoring & Fashion,1700,,35,65,30,70,500,Workshop Hand,Tailor,Master Tailor,Fashion House Director,Fashion Magnate,Generic,SmallTown,-
+23,leather_and_shoemaking,Leather & Shoemaking,1700,2010,80,20,60,40,500,Tannery Hand,Shoemaker,Master Leatherworker,Leatherworks Director,Leather Magnate,Generic,SmallTown,-
+24,furniture_and_carpentry,Furniture & Carpentry,1700,,95,5,85,15,550,Workshop Hand,Carpenter,Master Carpenter,Furniture Works Director,Furniture Magnate,Generic,SmallTown,-
+25,glass_and_ceramics,Glass & Ceramics,1700,,70,30,60,40,550,Kiln Hand,Glassworker,Workshop Master,Works Director,Glass & Ceramics Magnate,Generic,Town,-
+26,jewellery_and_watchmaking,Jewellery & Watchmaking,1700,,85,15,65,35,700,Shop Assistant,Jeweller,Master Jeweller,Jewellery House Director,Luxury Goods Magnate,Generic,Town,-
+27,photography,Photography,1700,,90,10,55,45,650,Studio Assistant,Photographer,Studio Manager,Agency Director,Photography Magnate,Generic,Town,-
+28,domestic_service,Domestic Service,1700,1975,20,80,25,75,350,Domestic Servant,Senior Servant,House Steward,Service Agency Director,Domestic Services Magnate,Generic,SmallTown,-
+29,laundry_and_dry_cleaning,Laundry & Dry Cleaning,1700,,20,80,35,65,400,Laundry Hand,Presser,Shop Manager,Chain Director,Laundry Magnate,Generic,Town,-
+30,funeral_services,Funeral Services,1700,,85,15,60,40,600,Undertaker's Assistant,Mortuary Worker,Funeral Manager,Company Director,Funeral Services Magnate,Generic,SmallTown,-
+31,real_estate,Real Estate,1700,,90,10,50,50,650,Office Runner,Property Clerk,Estate Agent,Agency Director,Property Magnate,Generic,Town,-
+32,accounting,Accounting,1700,,75,25,35,65,700,Office Runner,Bookkeeper,Senior Accountant,Firm Director,Accounting Magnate,Generic,Town,-
+33,legal_services,Legal Services,1700,,95,5,50,50,800,Office Runner,Legal Clerk,Solicitor,Firm Partner,Legal Magnate,Urban,City,-
+34,healthcare_services,Healthcare Services,1700,,40,60,30,70,750,Hospital Orderly,Medical Assistant,Practitioner,Clinic Director,Healthcare Magnate,Generic,SmallTown,-
+35,pharmacy,Pharmacy,1700,,60,40,25,75,750,Shop Assistant,Pharmacy Technician,Pharmacist,Pharmacy Director,Pharmacy Magnate,Generic,Town,-
+36,education,Education,1700,,40,60,25,75,550,School Attendant,Teacher,Head Teacher,School Director,Education Magnate,Generic,SmallTown,-
 37,electric_power,Electric Power,1910,,99,1,90,10,700,Line Hand,Electrician,Grid Supervisor,Utility Director,Power Magnate,Generic,Town,-
 38,cinema_and_film,Cinema & Film,1910,,85,15,55,45,600,Studio Hand,Film Technician,Production Manager,Studio Director,Film Magnate,Urban,City,-
 39,advertising,Advertising,1920,,75,25,45,55,650,Office Runner,Copywriter,Account Manager,Agency Director,Advertising Magnate,Urban,City,-

@@ -84,7 +84,15 @@ public sealed partial class MainWindowViewModel
                         action.Label,
                         action.Description,
                         relative.Id,
-                        action.Id.Equals("family_relations.give_house", StringComparison.OrdinalIgnoreCase)))
+                        action.Id.Equals(
+                            "family_relations.give_house",
+                            StringComparison.OrdinalIgnoreCase),
+                        action.Id.Equals(
+                            "family_relations.ask_money",
+                            StringComparison.OrdinalIgnoreCase)
+                        || action.Id.Equals(
+                            "family_relations.give_money",
+                            StringComparison.OrdinalIgnoreCase)))
                     .ToList();
 
                 return new FamilyRelationHouseholdViewModel(
@@ -118,10 +126,63 @@ public sealed partial class MainWindowViewModel
             .ToList();
     }
 
+
+    internal decimal GetFamilyRelationMoneyMaximum(
+        Guid relativeId,
+        string actionId)
+    {
+        var actor = _succession.ActiveController;
+        var relative =
+            _gameState.People.FirstOrDefault(
+                person => person.Id == relativeId);
+
+        if (actor is null
+            || relative is null
+            || _economyService is null
+            || _householdService is null)
+        {
+            return 0m;
+        }
+
+        IPerson? payingHead;
+
+        if (actionId.Equals(
+            "family_relations.ask_money",
+            StringComparison.OrdinalIgnoreCase))
+        {
+            payingHead =
+                _householdService.ResolveHouseholdHead(
+                    relative);
+        }
+        else if (actionId.Equals(
+            "family_relations.give_money",
+            StringComparison.OrdinalIgnoreCase))
+        {
+            payingHead = actor;
+        }
+        else
+        {
+            return 0m;
+        }
+
+        var finance =
+            payingHead is null
+                ? null
+                : _economyService.GetHousehold(
+                    payingHead);
+
+        if (finance is null)
+            return 0m;
+
+        return Math.Floor(
+            Math.Max(0m, finance.Wealth) / 1000m)
+            * 1000m;
+    }
     internal GameActionResult QueueFamilyRelationAction(
         Guid relativeId,
         string actionId,
-        string? propertyId)
+        string? propertyId,
+        decimal? moneyAmount)
     {
         var actor = _succession.ActiveController;
         var relative = _gameState.People.FirstOrDefault(p => p.Id == relativeId);
@@ -134,6 +195,13 @@ public sealed partial class MainWindowViewModel
         };
         if (!string.IsNullOrWhiteSpace(propertyId))
             parameters["propertyId"] = propertyId;
+
+        if (moneyAmount is decimal amount)
+        {
+            parameters["amount"] =
+                amount.ToString(
+                    System.Globalization.CultureInfo.InvariantCulture);
+        }
 
         var result = _actionRegistry.Execute(actionId, actor, relative, parameters);
         RefreshActions();

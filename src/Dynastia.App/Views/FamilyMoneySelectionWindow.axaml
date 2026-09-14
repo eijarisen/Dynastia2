@@ -1,0 +1,122 @@
+<Window
+    xmlns="https://github.com/avaloniaui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    x:Class="Dynastia.App.Views.FamilyMoneySelectionWindow"
+    Width="650"
+    Height="430"
+    CanResize="False"
+    ShowInTaskbar="False"
+    WindowDecorations="None"
+    TransparencyLevelHint="Transparent"
+    WindowStartupLocation="CenterOwner"
+    Background="#00000000"
+    KeyDown="OnWindowKeyDown"
+    Title="Family Money">
+
+    <Window.Styles>
+        <Style Selector="Button.paperAction">
+            <Setter Property="MinWidth" Value="115" />
+            <Setter Property="Padding" Value="16,8" />
+            <Setter Property="Foreground" Value="#3F2714" />
+            <Setter Property="Background" Value="#E8D5AF" />
+            <Setter Property="BorderBrush" Value="#9D6F35" />
+            <Setter Property="BorderThickness" Value="1.5" />
+            <Setter Property="FontFamily" Value="Georgia" />
+            <Setter Property="FontSize" Value="14" />
+            <Setter Property="FontWeight" Value="Bold" />
+        </Style>
+        <Style Selector="Button.paperAction:pointerover">
+            <Setter Property="Background" Value="#D4B178" />
+        </Style>
+    </Window.Styles>
+
+    <Grid>
+        <Image Source="/Assets/UI/instructions_paper.png" Stretch="Fill" />
+
+        <Grid Margin="72,62,72,48" RowDefinitions="Auto,*,Auto" RowSpacing="18">
+            <TextBlock
+                x:Name="TitleText"
+                HorizontalAlignment="Center"
+                FontFamily="avares://Dynastia.App/Assets/Fonts#UnifrakturCook"
+                FontSize="38"
+                Foreground="#2F1D0E"
+                Text="Give Money" />
+
+            <Border
+                Grid.Row="1"
+                Padding="20,18"
+                Background="#22FFF8E8"
+                BorderBrush="#9D7544"
+                BorderThickness="1.5"
+                CornerRadius="6">
+                <StackPanel Spacing="12">
+                    <Grid ColumnDefinitions="*,Auto">
+                        <TextBlock
+                            FontFamily="Georgia"
+                            FontSize="15"
+                            FontWeight="Bold"
+                            Foreground="#4B321B"
+                            Text="Amount" />
+                        <TextBlock
+                            x:Name="AmountText"
+                            Grid.Column="1"
+                            FontFamily="Georgia"
+                            FontSize="16"
+                            FontWeight="Bold"
+                            Foreground="#6A451A"
+                            Text="1,000 zł" />
+                    </Grid>
+
+                    <Slider
+                        x:Name="AmountSlider"
+                        Minimum="1"
+                        Maximum="10"
+                        Value="1"
+                        SmallChange="1"
+                        LargeChange="5"
+                        TickFrequency="1"
+                        IsSnapToTickEnabled="True"
+                        ValueChanged="OnAmountChanged" />
+
+                    <Grid ColumnDefinitions="Auto,*,Auto">
+                        <TextBlock
+                            FontFamily="Georgia"
+                            FontSize="11"
+                            Foreground="#745A38"
+                            Text="1,000 zł" />
+                        <TextBlock
+                            x:Name="MaximumText"
+                            Grid.Column="2"
+                            FontFamily="Georgia"
+                            FontSize="11"
+                            Foreground="#745A38" />
+                    </Grid>
+
+                    <TextBlock
+                        x:Name="ExplanationText"
+                        FontFamily="Georgia"
+                        FontSize="12"
+                        FontStyle="Italic"
+                        Foreground="#6B5434"
+                        TextWrapping="Wrap" />
+                </StackPanel>
+            </Border>
+
+            <StackPanel
+                Grid.Row="2"
+                HorizontalAlignment="Center"
+                Orientation="Horizontal"
+                Spacing="12">
+                <Button
+                    x:Name="ConfirmButton"
+                    Classes="paperAction"
+                    Content="Give Money"
+                    Click="OnConfirmClick" />
+                <Button
+                    Classes="paperAction"
+                    Content="Close"
+                    Click="OnCloseClick" />
+            </StackPanel>
+        </Grid>
+    </Grid>
+</Window>

@@ -2,112 +2,112 @@
   {
     "id": "family_illness",
     "text": "took extended leave to care for a seriously ill family member",
-    "startYear": 1900,
+    "startYear": 1700,
     "endYear": null,
     "weight": 5
   },
   {
     "id": "bereavement",
     "text": "withdrew from work for several months after a death in the family",
-    "startYear": 1900,
+    "startYear": 1700,
     "endYear": null,
     "weight": 4
   },
   {
     "id": "own_health",
     "text": "took an extended period of rest to recover their health",
-    "startYear": 1900,
+    "startYear": 1700,
     "endYear": null,
     "weight": 5
   },
   {
     "id": "country_relatives",
     "text": "spent several months staying with relatives in the countryside to rest and recuperate",
-    "startYear": 1900,
+    "startYear": 1700,
     "endYear": null,
     "weight": 4
   },
   {
     "id": "family_matters",
     "text": "took prolonged leave to settle difficult family matters",
-    "startYear": 1900,
+    "startYear": 1700,
     "endYear": null,
     "weight": 4
   },
   {
     "id": "care_children",
     "text": "took extended leave to care for children during a difficult period at home",
-    "startYear": 1900,
+    "startYear": 1700,
     "endYear": null,
     "weight": 4
   },
   {
     "id": "exhaustion_rest",
     "text": "took several months away from regular duties after a period of severe exhaustion",
-    "startYear": 1900,
+    "startYear": 1700,
     "endYear": null,
     "weight": 5
   },
   {
     "id": "quiet_home",
     "text": "spent an extended period at home resting and putting neglected personal affairs in order",
-    "startYear": 1900,
+    "startYear": 1700,
     "endYear": null,
     "weight": 4
   },
   {
     "id": "relative_household",
     "text": "spent several months helping to run a relative's household during a family emergency",
-    "startYear": 1900,
+    "startYear": 1700,
     "endYear": null,
     "weight": 3
   },
   {
     "id": "doctor_ordered_rest",
     "text": "followed a doctor's advice to abandon regular work for several months of complete rest",
-    "startYear": 1900,
+    "startYear": 1700,
     "endYear": 1965,
     "weight": 4
   },
   {
     "id": "spa_cure_early",
     "text": "spent several months taking the waters and resting at a health resort",
-    "startYear": 1900,
+    "startYear": 1700,
     "endYear": 1939,
     "weight": 4
   },
   {
     "id": "sanatorium_early",
     "text": "spent an extended period recuperating at a sanatorium",
-    "startYear": 1900,
+    "startYear": 1700,
     "endYear": 1945,
     "weight": 4
   },
   {
     "id": "rural_rest_early",
     "text": "left town for several months of quiet convalescence in the countryside",
-    "startYear": 1900,
+    "startYear": 1700,
     "endYear": 1945,
     "weight": 4
   },
   {
     "id": "nervous_exhaustion",
     "text": "withdrew from work for a prolonged rest after suffering nervous exhaustion",
-    "startYear": 1900,
+    "startYear": 1700,
     "endYear": 1955,
     "weight": 3
   },
   {
     "id": "seaside_cure",
     "text": "spent several months by the sea for rest and recuperation",
-    "startYear": 1900,
+    "startYear": 1700,
     "endYear": 1939,
     "weight": 3
   },
   {
     "id": "pilgrimage_simple",
     "text": "took a long religious retreat and pilgrimage after a difficult period in life",
-    "startYear": 1900,
+    "startYear": 1700,
     "endYear": 1965,
     "weight": 2
   },

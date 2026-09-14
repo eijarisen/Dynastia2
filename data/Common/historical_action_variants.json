@@ -1,0 +1,58 @@
+[
+  {
+    "actionId": "stats.improve_strength",
+    "startYear": 1700,
+    "endYear": null,
+    "label": "Physical Training",
+    "description": "Fund prolonged physical training, coaching and a strict regimen. Guaranteed Strength +1. The improvement is acquired rather than hereditary.",
+    "narrative": "completed an intensive physical training regimen and became considerably stronger"
+  },
+  {
+    "actionId": "stats.improve_intellect",
+    "startYear": 1700,
+    "endYear": null,
+    "label": "Private Instruction",
+    "description": "Fund prolonged one-to-one scholarly instruction and demanding mental exercises. Guaranteed Intellect +1. Education level is unchanged.",
+    "narrative": "completed a prolonged course of private instruction that substantially developed their intellectual abilities"
+  },
+  {
+    "actionId": "stats.improve_longevity",
+    "startYear": 1700,
+    "endYear": null,
+    "label": "Health Regimen",
+    "description": "Fund a prolonged health regimen focused on rest, diet, exercise and medical supervision appropriate to the period. Guaranteed Longevity +1.",
+    "narrative": "completed a prolonged health regimen intended to improve their long-term resilience"
+  },
+  {
+    "actionId": "stats.improve_immunity",
+    "startYear": 1850,
+    "endYear": null,
+    "label": "Constitutional Treatment",
+    "description": "Fund prolonged specialist treatment intended to strengthen resistance to illness. Guaranteed Immunity +1.",
+    "narrative": "underwent an extensive course of treatment intended to strengthen their resistance to illness"
+  },
+  {
+    "actionId": "wellbeing.therapy",
+    "startYear": 1900,
+    "endYear": null,
+    "label": "Psychotherapy",
+    "description": "Seek professional treatment for Alcoholism, Depression and Anxiety. The fee is paid even if treatment fails.",
+    "narrative": "underwent psychotherapy"
+  },
+  {
+    "actionId": "stats.improve_appeal",
+    "startYear": 1920,
+    "endYear": null,
+    "label": "Plastic Surgery",
+    "description": "Pay for substantial cosmetic surgery. Guaranteed Appeal +1. The acquired improvement affects future relationship calculations but is not inherited.",
+    "narrative": "underwent cosmetic surgery that noticeably improved their appearance"
+  },
+  {
+    "actionId": "stats.improve_fertility",
+    "startYear": 1950,
+    "endYear": null,
+    "label": "Fertility Treatment",
+    "description": "Pay for specialist fertility diagnosis and treatment. Guaranteed Fertility +1, including Fertility 0 → 1. Hereditary Fertility is unchanged.",
+    "narrative": "underwent an extensive course of fertility treatment"
+  }
+]

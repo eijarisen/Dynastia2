@@ -41,20 +41,27 @@ public sealed class StandardNewGameService : INewGameService
     }
 
     public IPerson StartNewGame(
-        string dynastySurname)
+        string dynastySurname,
+        int startYear = GameCalendarConfiguration.GameStartYear)
     {
         var surname =
             NormalizeOrGenerateSurname(
                 dynastySurname);
 
+        startYear =
+            GameCalendarConfiguration.NormalizeSelectableStartYear(
+                startYear);
+
         _gameState.ClearPeople();
+        _gameState.StartYear =
+            startYear;
         _gameState.Year =
-            GameCalendarConfiguration.GameStartYear;
+            startYear;
         _gameState.DynastySurname =
             surname;
 
         var parentDeathYear =
-            GameCalendarConfiguration.GameStartYear - 1;
+            startYear - 1;
 
         var parentDeathDate =
             RandomDateInYear(parentDeathYear);
@@ -129,7 +136,7 @@ public sealed class StandardNewGameService : INewGameService
             father,
             mother,
             startYear:
-                GameCalendarConfiguration.GameStartYear - 20);
+                startYear - 20);
 
         _family.EndRelationship(
             father,

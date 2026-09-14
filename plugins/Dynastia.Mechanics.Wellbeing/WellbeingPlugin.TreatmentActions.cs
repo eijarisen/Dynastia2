@@ -1,0 +1,374 @@
+using Dynastia.Contracts;
+
+namespace Dynastia.Mechanics.Wellbeing;
+
+public sealed partial class WellbeingPlugin
+{
+    private static void RegisterTherapy(
+        IActionRegistry actions,
+        IFamilyService family,
+        IHealthService health,
+        IEconomyService economy,
+        IStatsService stats,
+        IGameRandom random,
+        IGameEventBus events,
+        IHistoricalActionVariantService historical)
+    {
+        var canonical =
+            historical.GetCanonicalVariant(
+                "wellbeing.therapy")
+            ?? throw new InvalidDataException(
+                "Missing historical action data for 'wellbeing.therapy'.");
+
+        actions.Register(
+            new GameActionDefinition
+            {
+                Id =
+                    "wellbeing.therapy",
+
+                Label =
+                    canonical.Label,
+
+                Description =
+                    canonical.Description,
+
+                Mode =
+                    ActionExecutionMode.Queued,
+
+                QueuePhase =
+                    YearPhase.QueuedActionsEarly,
+
+                IsAvailable =
+                    actionContext =>
+                    {
+                        var historicallyAvailable =
+                            historical.GetVariant(
+                                "wellbeing.therapy",
+                                actionContext.GameState.Year)
+                            is not null;
+
+                        if (!historicallyAvailable
+                            && !ActionCompatibilityParameters.IsRestoredQueuedAction(
+                                actionContext.Parameters))
+                        {
+                            return false;
+                        }
+
+                        if (!CanActorAct(
+                            actionContext.Actor)
+                            || !actionContext.Target.Tags.Has(
+                                "state.alive"))
+                        {
+                            return false;
+                        }
+
+                        if (!HasTherapyCondition(
+                            health,
+                            actionContext.Target))
+                        {
+                            return false;
+                        }
+
+                        return economy.GetHousehold(
+                            actionContext.Actor)
+                            ?.Wealth >= TherapyCost;
+                    },
+
+                Execute =
+                    actionContext =>
+                    {
+                        var actor =
+                            actionContext.Actor;
+
+                        var target =
+                            actionContext.Target;
+
+                        var historicallyAvailable =
+                            historical.GetVariant(
+                                "wellbeing.therapy",
+                                actionContext.GameState.Year)
+                            is not null;
+
+                        if (!historicallyAvailable
+                            && !ActionCompatibilityParameters.IsRestoredQueuedAction(
+                                actionContext.Parameters))
+                        {
+                            return new GameActionResult(false);
+                        }
+
+                        var household =
+                            economy.GetHousehold(
+                                actor);
+
+                        if (household is null
+                            || household.Wealth < TherapyCost
+                            || !target.Tags.Has(
+                                "state.alive")
+                            || !HasTherapyCondition(
+                                health,
+                                target))
+                        {
+                            return new GameActionResult(
+                                false);
+                        }
+
+                        economy.ChangeWealth(
+                            actor,
+                            -TherapyCost);
+
+                        var intellect =
+                            stats.GetStats(target)
+                                .First(
+                                    stat =>
+                                        stat.Id.Equals(
+                                            "intellect",
+                                            StringComparison.OrdinalIgnoreCase))
+                                .Value;
+
+                        var successChance =
+                            (TherapySuccessIntellectFactor
+                             - intellect)
+                            / TherapySuccessDivisor;
+
+                        var success =
+                            random.NextDouble()
+                            < successChance;
+
+                        var variant =
+                            historical.GetVariant(
+                                "wellbeing.therapy",
+                                actionContext.GameState.Year)
+                            ?? canonical;
+
+                        if (success)
+                        {
+                            health.RemoveCondition(
+                                target,
+                                "alcoholism");
+
+                            health.RemoveCondition(
+                                target,
+                                "depression");
+
+                            health.RemoveCondition(
+                                target,
+                                "anxiety");
+
+                            events.Publish(
+                                new GameEvent
+                                {
+                                    Type =
+                                        "wellbeing.therapy_success",
+
+                                    Year =
+                                        actionContext.GameState.Year,
+
+                                    SubjectId =
+                                        target.Id,
+
+                                    RelatedPersonIds =
+                                        actor.Id == target.Id
+                                            ? []
+                                            : [actor.Id],
+
+                                    Data =
+                                        new Dictionary<string, string>
+                                        {
+                                            ["text"] =
+                                                $"{family.GetDisplayName(target)} " +
+                                                $"{variant.Narrative}; the treatment was successful."
+                                        }
+                                });
+                        }
+                        else
+                        {
+                            events.Publish(
+                                new GameEvent
+                                {
+                                    Type =
+                                        "wellbeing.therapy_failure",
+
+                                    Year =
+                                        actionContext.GameState.Year,
+
+                                    SubjectId =
+                                        target.Id,
+
+                                    RelatedPersonIds =
+                                        actor.Id == target.Id
+                                            ? []
+                                            : [actor.Id],
+
+                                    Data =
+                                        new Dictionary<string, string>
+                                        {
+                                            ["text"] =
+                                                $"{family.GetDisplayName(target)} " +
+                                                $"{variant.Narrative}, but the treatment was unproductive."
+                                        }
+                                });
+                        }
+
+                        return new GameActionResult(
+                            true);
+                    }
+            });
+    }
+
+    private static void RegisterHeal(
+        IActionRegistry actions,
+        IFamilyService family,
+        IHealthService health,
+        IEconomyService economy,
+        IGameEventBus events)
+    {
+        actions.Register(
+            new GameActionDefinition
+            {
+                Id =
+                    "wellbeing.heal_relative",
+
+                Label =
+                    "Improve Health (1,000 zł)",
+
+                Description =
+                    "Pay 1,000 zł to improve the selected living person’s health. " +
+                    "Restores 30 health. Available whenever their health is below maximum.",
+
+                Mode =
+                    ActionExecutionMode.Queued,
+
+                QueuePhase =
+                    YearPhase.QueuedActionsEarly,
+
+                IsAvailable =
+                    actionContext =>
+                    {
+                        var actor =
+                            actionContext.Actor;
+
+                        var target =
+                            actionContext.Target;
+
+                        if (!CanActorAct(actor)
+                            || !target.Tags.Has(
+                                "state.alive"))
+                        {
+                            return false;
+                        }
+
+                        var targetHealth =
+                            health.GetHealth(target);
+
+                        if (targetHealth.Current
+                            >= targetHealth.Maximum)
+                        {
+                            return false;
+                        }
+
+                        return economy.GetHousehold(actor)
+                            ?.Wealth >= HealCost;
+                    },
+
+                Execute =
+                    actionContext =>
+                    {
+                        var actor =
+                            actionContext.Actor;
+
+                        var target =
+                            actionContext.Target;
+
+                        var household =
+                            economy.GetHousehold(actor);
+
+                        var targetHealth =
+                            health.GetHealth(target);
+
+                        if (household is null
+                            || household.Wealth < HealCost
+                            || !target.Tags.Has(
+                                "state.alive")
+                            || targetHealth.Current
+                                >= targetHealth.Maximum)
+                        {
+                            return new GameActionResult(
+                                false);
+                        }
+
+                        economy.ChangeWealth(
+                            actor,
+                            -HealCost);
+
+                        health.ChangeHealth(
+                            target,
+                            HealAmount);
+
+                        events.Publish(
+                            new GameEvent
+                            {
+                                Type =
+                                    "wellbeing.heal",
+
+                                Year =
+                                    actionContext.GameState.Year,
+
+                                SubjectId =
+                                    actor.Id,
+
+                                RelatedPersonIds =
+                                    [target.Id],
+
+                                Data =
+                                    new Dictionary<string, string>
+                                    {
+                                        ["text"] =
+                                            $"{family.GetDisplayName(actor)} " +
+                                            $"paid for medical treatment for " +
+                                            $"{family.GetDisplayName(target)}, " +
+                                            "improving their health."
+                                    }
+                            });
+
+                        return new GameActionResult(
+                            true);
+                    }
+            });
+    }
+
+    private static bool HasTherapyCondition(
+        IHealthService health,
+        IPerson target)
+    {
+        return health.HasCondition(
+                target,
+                "alcoholism")
+            || health.HasCondition(
+                target,
+                "depression")
+            || health.HasCondition(
+                target,
+                "anxiety");
+    }
+
+    private static bool CanActorActOnSelf(
+        GameActionContext context)
+    {
+        return context.Actor.Id
+                == context.Target.Id
+            && CanActorAct(
+                context.Actor);
+    }
+
+    private static bool CanActorAct(
+        IPerson actor)
+    {
+        return actor.Tags.Has(
+                "state.alive")
+            && actor.Tags.Has(
+                "control.playable")
+            && !actor.Tags.Has(
+                "state.imprisoned");
+    }
+
+}

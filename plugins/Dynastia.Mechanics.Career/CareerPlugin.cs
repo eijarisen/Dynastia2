@@ -51,12 +51,17 @@ public sealed partial class CareerPlugin : IGamePlugin
             CareerCatalog.Load(
                 data);
 
+        var retirementRules =
+            RetirementRuleCatalog.Load(
+                data);
+
         var career =
             new StandardCareerService(
                 gameState,
                 family,
                 random,
                 catalog,
+                retirementRules,
                 localOpportunities,
                 stats);
 
@@ -66,6 +71,7 @@ public sealed partial class CareerPlugin : IGamePlugin
             gameState,
             career,
             family,
+            retirementRules,
             random,
             events);
 
@@ -96,6 +102,7 @@ public sealed partial class CareerPlugin : IGamePlugin
             new CareerRetirementYearSystem(
                 career,
                 family,
+                retirementRules,
                 events));
 
         systems.Register(
@@ -105,6 +112,7 @@ public sealed partial class CareerPlugin : IGamePlugin
                 stats,
                 random,
                 family,
+                retirementRules,
                 events));
 
         systems.Register(

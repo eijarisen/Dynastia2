@@ -13,17 +13,20 @@ public sealed class PassiveEducationYearSystem : IYearSystem
     private readonly IStatsService _stats;
     private readonly IHealthService _health;
     private readonly IGameRandom _random;
+    private readonly EducationEraCatalog _eras;
 
     public PassiveEducationYearSystem(
         IEducationService education,
         IStatsService stats,
         IHealthService health,
-        IGameRandom random)
+        IGameRandom random,
+        EducationEraCatalog eras)
     {
         _education = education;
         _stats = stats;
         _health = health;
         _random = random;
+        _eras = eras;
     }
 
     public string Id => "education.passive";
@@ -33,6 +36,8 @@ public sealed class PassiveEducationYearSystem : IYearSystem
 
     public void Execute(IGameState gameState)
     {
+        var era = _eras.GetRule(gameState.Year);
+
         foreach (var person in gameState.People)
         {
             if (person.Tags.Has("state.dead")
@@ -53,7 +58,8 @@ public sealed class PassiveEducationYearSystem : IYearSystem
 
             var passiveCeiling =
                 EducationProgressionRules.GetPassiveChildhoodCeiling(
-                    intellect);
+                    intellect,
+                    era.PassiveMaxLevel);
 
             if (current >= passiveCeiling)
                 continue;
@@ -64,12 +70,16 @@ public sealed class PassiveEducationYearSystem : IYearSystem
                 intellect / IntellectDivisor
                 + health / HealthDivisor;
 
+            chance = PersonalityInfluence.AdjustProbability(
+                chance,
+                person,
+                melancholic: 0.10,
+                choleric: -0.10);
+
             chance =
-                PersonalityInfluence.AdjustProbability(
+                EducationProgressionRules.ApplyPassiveChanceMultiplier(
                     chance,
-                    person,
-                    melancholic: 0.10,
-                    choleric: -0.10);
+                    era);
 
             if (_random.NextDouble() < chance)
                 _education.IncreaseEducation(person);

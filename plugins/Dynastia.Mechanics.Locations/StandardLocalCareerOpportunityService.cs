@@ -1,3 +1,4 @@
+using System.Globalization;
 using Dynastia.Contracts;
 
 namespace Dynastia.Mechanics.Locations;
@@ -5,6 +6,9 @@ namespace Dynastia.Mechanics.Locations;
 public sealed class StandardLocalCareerOpportunityService :
     ILocalCareerOpportunityService
 {
+    private const string OpportunityTagsPath =
+        "Towns/opportunity_tags.csv";
+
     private const string RegionOpportunitiesPath =
         "Towns/region_opportunities.csv";
 
@@ -17,7 +21,13 @@ public sealed class StandardLocalCareerOpportunityService :
     private const double TownSpecialistMultiplier =
         2.25;
 
+    private readonly IGameState _gameState;
     private readonly ILocationService _locations;
+
+    private readonly IReadOnlyDictionary<
+        string,
+        OpportunityTagInfo>
+        _opportunityTags;
 
     private readonly IReadOnlyDictionary<
         string,
@@ -26,14 +36,21 @@ public sealed class StandardLocalCareerOpportunityService :
 
     private readonly IReadOnlyDictionary<
         string,
-        IReadOnlyList<string>>
+        IReadOnlyList<TimedOpportunity>>
         _townOpportunities;
 
     public StandardLocalCareerOpportunityService(
+        IGameState gameState,
         ILocationService locations,
         IGameDataService data)
     {
+        _gameState = gameState;
         _locations = locations;
+
+        _opportunityTags =
+            ParseOpportunityTags(
+                data.ReadText(
+                    OpportunityTagsPath));
 
         _regions =
             ParseRegions(
@@ -44,21 +61,19 @@ public sealed class StandardLocalCareerOpportunityService :
             ParseTownOpportunities(
                 data.ReadText(
                     TownOpportunitiesPath));
+
+        ValidateReferences();
     }
 
     public CareerLocationEvaluation Evaluate(
         IPerson person,
         CareerLocationRequirement requirement)
     {
-        ArgumentNullException.ThrowIfNull(
-            person);
-
-        ArgumentNullException.ThrowIfNull(
-            requirement);
+        ArgumentNullException.ThrowIfNull(person);
+        ArgumentNullException.ThrowIfNull(requirement);
 
         var profile =
-            GetOpportunitySnapshot(
-                person);
+            GetOpportunitySnapshot(person);
 
         var townClass =
             profile.Town.SettlementClass;
@@ -94,8 +109,7 @@ public sealed class StandardLocalCareerOpportunityService :
         GetOpportunitySnapshot(
             IPerson person)
     {
-        ArgumentNullException.ThrowIfNull(
-            person);
+        ArgumentNullException.ThrowIfNull(person);
 
         return GetOpportunitySnapshot(
             _locations.GetLocation(person).HomeTown);
@@ -105,21 +119,27 @@ public sealed class StandardLocalCareerOpportunityService :
         GetOpportunitySnapshot(
             TownInfo town)
     {
-        ArgumentNullException.ThrowIfNull(
-            town);
+        ArgumentNullException.ThrowIfNull(town);
+
+        var effectiveYear =
+            Math.Min(
+                _gameState.Year,
+                GameCalendarConfiguration.TechnologyFreezeYear);
 
         var region =
             ResolveRegion(
-                town.RegionId);
+                town.RegionId,
+                effectiveYear);
 
         var townTags =
-            !string.IsNullOrWhiteSpace(
-                    town.Id)
-                && _townOpportunities.TryGetValue(
-                    town.Id,
-                    out var configuredTownTags)
-                    ? configuredTownTags
-                    : Array.Empty<string>();
+            !string.IsNullOrWhiteSpace(town.Id)
+            && _townOpportunities.TryGetValue(
+                town.Id,
+                out var configuredTownTags)
+                ? GetActiveTags(
+                    configuredTownTags,
+                    effectiveYear)
+                : Array.Empty<string>();
 
         var description =
             BuildDescription(
@@ -143,9 +163,6 @@ public sealed class StandardLocalCareerOpportunityService :
             (int)actual
             - (int)minimum;
 
-        // Generic work exists almost everywhere. Larger settlements
-        // modestly broaden the pool without making local trades
-        // irrelevant in smaller places.
         var multiplier =
             1.0
             + Math.Min(
@@ -176,8 +193,6 @@ public sealed class StandardLocalCareerOpportunityService :
                 _ => 1.00
             };
 
-        // A career whose minimum is already a major city should not
-        // receive a further bonus simply for meeting that threshold.
         if (minimum == SettlementClass.MajorCity)
         {
             multiplier = 1.0;
@@ -222,28 +237,44 @@ public sealed class StandardLocalCareerOpportunityService :
         return Unavailable();
     }
 
-    private RegionOpportunityInfo ResolveRegion(
-        string regionId)
+    private RegionOpportunitySnapshot ResolveRegion(
+        string regionId,
+        int effectiveYear)
     {
-        if (!string.IsNullOrWhiteSpace(
-                regionId)
+        if (!string.IsNullOrWhiteSpace(regionId)
             && _regions.TryGetValue(
                 regionId,
                 out var region))
         {
-            return region;
+            return new RegionOpportunitySnapshot(
+                region.Name,
+                GetActiveTags(
+                    region.Opportunities,
+                    effectiveYear));
         }
 
-        return new RegionOpportunityInfo(
-            string.IsNullOrWhiteSpace(
-                regionId)
-                ? "unknown"
-                : regionId,
+        return new RegionOpportunitySnapshot(
             "Unknown region",
             Array.Empty<string>());
     }
 
-    private static string BuildDescription(
+    private IReadOnlyList<string> GetActiveTags(
+        IReadOnlyList<TimedOpportunity> opportunities,
+        int effectiveYear)
+    {
+        return opportunities
+            .Where(opportunity =>
+                opportunity.IsActive(effectiveYear)
+                && _opportunityTags[opportunity.Tag]
+                    .IsActive(effectiveYear))
+            .Select(opportunity =>
+                opportunity.Tag)
+            .Distinct(
+                StringComparer.OrdinalIgnoreCase)
+            .ToArray();
+    }
+
+    private string BuildDescription(
         IReadOnlyList<string> regionTags,
         IReadOnlyList<string> townTags)
     {
@@ -277,33 +308,14 @@ public sealed class StandardLocalCareerOpportunityService :
             "Employment is dominated by general local work and services.";
     }
 
-    private static string FormatOpportunityTag(
+    private string FormatOpportunityTag(
         string tag)
     {
-        return tag switch
-        {
-            "coal" => "coal mining",
-            "steel" => "steel",
-            "heavy_industry" => "heavy industry",
-            "manufacturing" => "manufacturing",
-            "agriculture" => "agriculture",
-            "forestry" => "forestry",
-            "port" => "port work",
-            "shipping" => "shipping",
-            "shipbuilding" => "shipbuilding",
-            "textiles" => "textiles",
-            "automotive" => "automotive manufacturing",
-            "chemicals" => "chemicals",
-            "aviation" => "aviation",
-            "technology" => "technology",
-            "oil" => "oil and refining",
-            "tourism" => "tourism",
-            "finance" => "finance",
-            "media" => "media",
-            "food" => "food production",
-            "electric_power" => "electric power",
-            _ => tag.Replace('_', ' ')
-        };
+        return _opportunityTags.TryGetValue(
+            tag,
+            out var info)
+                ? info.DisplayName
+                : tag.Replace('_', ' ');
     }
 
     private static string JoinNatural(
@@ -317,139 +329,352 @@ public sealed class StandardLocalCareerOpportunityService :
             _ =>
                 string.Join(
                     ", ",
-                    values.Take(
-                        values.Count - 1))
+                    values.Take(values.Count - 1))
                 + $" and {values[^1]}"
         };
     }
 
-    private static IReadOnlyDictionary<
+    private IReadOnlyDictionary<
         string,
-        RegionOpportunityInfo>
-        ParseRegions(
+        OpportunityTagInfo>
+        ParseOpportunityTags(
             string text)
     {
-        var lines =
-            text.Split(
-                ['\r', '\n'],
-                StringSplitOptions.RemoveEmptyEntries);
+        var lines = SplitLines(text);
 
-        if (lines.Length < 2)
-        {
-            throw new InvalidDataException(
-                $"{RegionOpportunitiesPath} is empty.");
-        }
+        ValidateHeader(
+            lines,
+            OpportunityTagsPath,
+            "Tag,DisplayName,DefaultStartYear,EndYear");
 
         var result =
-            new Dictionary<
-                string,
-                RegionOpportunityInfo>(
+            new Dictionary<string, OpportunityTagInfo>(
                 StringComparer.OrdinalIgnoreCase);
 
         for (var index = 1;
             index < lines.Length;
             index++)
         {
-            var fields =
-                lines[index].Split(',');
+            var fields = lines[index].Split(',');
 
-            if (fields.Length != 3)
+            if (fields.Length != 4)
+                InvalidRow(OpportunityTagsPath, index, 4);
+
+            var tag = fields[0].Trim();
+            var displayName = fields[1].Trim();
+            var startYear = ParseYear(fields[2], OpportunityTagsPath, index);
+            var endYear = ParseOptionalYear(fields[3], OpportunityTagsPath, index);
+
+            ValidatePeriod(
+                OpportunityTagsPath,
+                index,
+                startYear,
+                endYear);
+
+            if (tag.Length == 0
+                || displayName.Length == 0
+                || !result.TryAdd(
+                    tag,
+                    new OpportunityTagInfo(
+                        tag,
+                        displayName,
+                        startYear,
+                        endYear)))
             {
                 throw new InvalidDataException(
-                    $"Invalid {RegionOpportunitiesPath} row "
-                    + $"{index + 1}: expected 3 fields.");
-            }
-
-            var id = fields[0].Trim();
-            var name = fields[1].Trim();
-            var tags = ParseTags(fields[2]);
-
-            if (id.Length == 0
-                || name.Length == 0)
-            {
-                throw new InvalidDataException(
-                    $"Invalid {RegionOpportunitiesPath} row "
-                    + $"{index + 1}: region ID and name are required.");
-            }
-
-            if (!result.TryAdd(
-                    id,
-                    new RegionOpportunityInfo(
-                        id,
-                        name,
-                        tags)))
-            {
-                throw new InvalidDataException(
-                    $"Duplicate region ID '{id}'.");
+                    $"Invalid or duplicate opportunity tag in " +
+                    $"{OpportunityTagsPath} row {index + 1}.");
             }
         }
 
         return result;
     }
 
-    private static IReadOnlyDictionary<
+    private IReadOnlyDictionary<
         string,
-        IReadOnlyList<string>>
-        ParseTownOpportunities(
+        RegionOpportunityInfo>
+        ParseRegions(
             string text)
     {
-        var lines =
-            text.Split(
-                ['\r', '\n'],
-                StringSplitOptions.RemoveEmptyEntries);
+        var lines = SplitLines(text);
 
-        var result =
+        ValidateHeader(
+            lines,
+            RegionOpportunitiesPath,
+            "RegionId,RegionName,OpportunityTag,StartYear,EndYear");
+
+        var working =
             new Dictionary<
                 string,
-                IReadOnlyList<string>>(
+                (string Name, List<TimedOpportunity> Opportunities)>(
                 StringComparer.OrdinalIgnoreCase);
 
         for (var index = 1;
             index < lines.Length;
             index++)
         {
-            var fields =
-                lines[index].Split(',');
+            var fields = lines[index].Split(',');
 
-            if (fields.Length != 2)
+            if (fields.Length != 5)
+                InvalidRow(RegionOpportunitiesPath, index, 5);
+
+            var id = fields[0].Trim();
+            var name = fields[1].Trim();
+            var opportunity = ParseTimedOpportunity(
+                fields[2],
+                fields[3],
+                fields[4],
+                RegionOpportunitiesPath,
+                index);
+
+            if (id.Length == 0
+                || name.Length == 0)
             {
                 throw new InvalidDataException(
-                    $"Invalid {TownOpportunitiesPath} row "
-                    + $"{index + 1}: expected 2 fields.");
+                    $"Invalid {RegionOpportunitiesPath} row " +
+                    $"{index + 1}: region ID and name are required.");
             }
+
+            if (!working.TryGetValue(id, out var entry))
+            {
+                entry = (name, []);
+                working[id] = entry;
+            }
+            else if (!entry.Name.Equals(
+                name,
+                StringComparison.Ordinal))
+            {
+                throw new InvalidDataException(
+                    $"Region '{id}' has inconsistent names in " +
+                    $"{RegionOpportunitiesPath}.");
+            }
+
+            entry.Opportunities.Add(opportunity);
+        }
+
+        return working.ToDictionary(
+            pair => pair.Key,
+            pair => new RegionOpportunityInfo(
+                pair.Key,
+                pair.Value.Name,
+                pair.Value.Opportunities.ToArray()),
+            StringComparer.OrdinalIgnoreCase);
+    }
+
+    private IReadOnlyDictionary<
+        string,
+        IReadOnlyList<TimedOpportunity>>
+        ParseTownOpportunities(
+            string text)
+    {
+        var lines = SplitLines(text);
+
+        ValidateHeader(
+            lines,
+            TownOpportunitiesPath,
+            "TownId,OpportunityTag,StartYear,EndYear");
+
+        var working =
+            new Dictionary<string, List<TimedOpportunity>>(
+                StringComparer.OrdinalIgnoreCase);
+
+        for (var index = 1;
+            index < lines.Length;
+            index++)
+        {
+            var fields = lines[index].Split(',');
+
+            if (fields.Length != 4)
+                InvalidRow(TownOpportunitiesPath, index, 4);
 
             var townId = fields[0].Trim();
 
             if (townId.Length == 0)
             {
                 throw new InvalidDataException(
-                    $"Invalid {TownOpportunitiesPath} row "
-                    + $"{index + 1}: town ID is required.");
+                    $"Invalid {TownOpportunitiesPath} row " +
+                    $"{index + 1}: town ID is required.");
             }
 
-            if (!result.TryAdd(
-                    townId,
-                    ParseTags(fields[1])))
+            var opportunity = ParseTimedOpportunity(
+                fields[1],
+                fields[2],
+                fields[3],
+                TownOpportunitiesPath,
+                index);
+
+            if (!working.TryGetValue(townId, out var entries))
+            {
+                entries = [];
+                working[townId] = entries;
+            }
+
+            entries.Add(opportunity);
+        }
+
+        return working.ToDictionary(
+            pair => pair.Key,
+            pair => (IReadOnlyList<TimedOpportunity>)pair.Value.ToArray(),
+            StringComparer.OrdinalIgnoreCase);
+    }
+
+    private TimedOpportunity ParseTimedOpportunity(
+        string tagField,
+        string startField,
+        string endField,
+        string path,
+        int rowIndex)
+    {
+        var tag = tagField.Trim();
+
+        if (!_opportunityTags.ContainsKey(tag))
+        {
+            throw new InvalidDataException(
+                $"Unknown opportunity tag '{tag}' in " +
+                $"{path} row {rowIndex + 1}.");
+        }
+
+        var startYear =
+            ParseYear(startField, path, rowIndex);
+
+        var endYear =
+            ParseOptionalYear(endField, path, rowIndex);
+
+        ValidatePeriod(
+            path,
+            rowIndex,
+            startYear,
+            endYear);
+
+        return new TimedOpportunity(
+            tag,
+            startYear,
+            endYear);
+    }
+
+    private void ValidateReferences()
+    {
+        var towns =
+            _locations.GetTowns();
+
+        var knownTownIds =
+            towns.Select(town => town.Id)
+                .ToHashSet(
+                    StringComparer.OrdinalIgnoreCase);
+
+        var knownRegionIds =
+            towns.Select(town => town.RegionId)
+                .Where(id =>
+                    !string.IsNullOrWhiteSpace(id))
+                .ToHashSet(
+                    StringComparer.OrdinalIgnoreCase);
+
+        foreach (var townId in _townOpportunities.Keys)
+        {
+            if (!knownTownIds.Contains(townId))
             {
                 throw new InvalidDataException(
-                    $"Duplicate town opportunity entry '{townId}'.");
+                    $"{TownOpportunitiesPath} references unknown " +
+                    $"town '{townId}'.");
             }
         }
 
-        return result;
+        foreach (var regionId in _regions.Keys)
+        {
+            if (!knownRegionIds.Contains(regionId))
+            {
+                throw new InvalidDataException(
+                    $"{RegionOpportunitiesPath} references unknown " +
+                    $"region '{regionId}'.");
+            }
+        }
     }
 
-    private static IReadOnlyList<string> ParseTags(
-        string value)
+    private static string[] SplitLines(
+        string text)
     {
-        return value
-            .Split(
-                ';',
-                StringSplitOptions.RemoveEmptyEntries
-                | StringSplitOptions.TrimEntries)
-            .Distinct(
-                StringComparer.OrdinalIgnoreCase)
-            .ToArray();
+        return text.Split(
+            ['\r', '\n'],
+            StringSplitOptions.RemoveEmptyEntries);
+    }
+
+    private static void ValidateHeader(
+        IReadOnlyList<string> lines,
+        string path,
+        string expectedHeader)
+    {
+        if (lines.Count < 2)
+        {
+            throw new InvalidDataException(
+                $"{path} is empty.");
+        }
+
+        if (!lines[0].Equals(
+                expectedHeader,
+                StringComparison.Ordinal))
+        {
+            throw new InvalidDataException(
+                $"{path} has an unexpected header.");
+        }
+    }
+
+    private static int ParseYear(
+        string value,
+        string path,
+        int rowIndex)
+    {
+        if (!int.TryParse(
+                value,
+                NumberStyles.Integer,
+                CultureInfo.InvariantCulture,
+                out var year))
+        {
+            throw new InvalidDataException(
+                $"Invalid year in {path} row {rowIndex + 1}.");
+        }
+
+        return year;
+    }
+
+    private static int? ParseOptionalYear(
+        string value,
+        string path,
+        int rowIndex)
+    {
+        return string.IsNullOrWhiteSpace(value)
+            ? null
+            : ParseYear(value, path, rowIndex);
+    }
+
+    private static void ValidatePeriod(
+        string path,
+        int rowIndex,
+        int startYear,
+        int? endYear)
+    {
+        if (startYear < GameCalendarConfiguration.GameStartYear)
+        {
+            throw new InvalidDataException(
+                $"{path} row {rowIndex + 1} starts before " +
+                $"{GameCalendarConfiguration.GameStartYear}.");
+        }
+
+        if (endYear is int end
+            && end < startYear)
+        {
+            throw new InvalidDataException(
+                $"{path} row {rowIndex + 1} ends before it starts.");
+        }
+    }
+
+    private static void InvalidRow(
+        string path,
+        int rowIndex,
+        int expectedFields)
+    {
+        throw new InvalidDataException(
+            $"Invalid {path} row {rowIndex + 1}: expected " +
+            $"{expectedFields} fields.");
     }
 
     private static CareerLocationEvaluation Unavailable()
@@ -460,8 +685,35 @@ public sealed class StandardLocalCareerOpportunityService :
             CareerOpportunityStrength.None);
     }
 
+    private sealed record OpportunityTagInfo(
+        string Tag,
+        string DisplayName,
+        int StartYear,
+        int? EndYear)
+    {
+        public bool IsActive(int year) =>
+            year >= StartYear
+            && (EndYear is null
+                || year <= EndYear.Value);
+    }
+
+    private sealed record TimedOpportunity(
+        string Tag,
+        int StartYear,
+        int? EndYear)
+    {
+        public bool IsActive(int year) =>
+            year >= StartYear
+            && (EndYear is null
+                || year <= EndYear.Value);
+    }
+
     private sealed record RegionOpportunityInfo(
         string Id,
+        string Name,
+        IReadOnlyList<TimedOpportunity> Opportunities);
+
+    private sealed record RegionOpportunitySnapshot(
         string Name,
         IReadOnlyList<string> OpportunityTags);
 }

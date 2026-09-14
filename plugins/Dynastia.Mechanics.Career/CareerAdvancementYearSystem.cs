@@ -18,6 +18,8 @@ public sealed class CareerAdvancementYearSystem :
     private readonly IStatsService _stats;
     private readonly IGameRandom _random;
     private readonly IFamilyService _family;
+    private readonly RetirementRuleCatalog
+        _retirementRules;
     private readonly IGameEventBus _events;
 
     public CareerAdvancementYearSystem(
@@ -26,6 +28,7 @@ public sealed class CareerAdvancementYearSystem :
         IStatsService stats,
         IGameRandom random,
         IFamilyService family,
+        RetirementRuleCatalog retirementRules,
         IGameEventBus events)
     {
         _career = career;
@@ -33,6 +36,7 @@ public sealed class CareerAdvancementYearSystem :
         _stats = stats;
         _random = random;
         _family = family;
+        _retirementRules = retirementRules;
         _events = events;
     }
 
@@ -82,7 +86,9 @@ public sealed class CareerAdvancementYearSystem :
                 person);
 
         if (career.IsRetired
-            || IsAtOrPastRetirementAge(person)
+            || IsAtOrPastRetirementAge(
+                person,
+                gameState.Year)
             || career.JobLevel <= 0
             || person.Age <= PromotionMinAge
             || career.JobLevel >= 5)
@@ -230,13 +236,15 @@ public sealed class CareerAdvancementYearSystem :
     }
 
     private bool IsAtOrPastRetirementAge(
-        IPerson person)
+        IPerson person,
+        int gameYear)
     {
         var retirementAge =
-            _family.GetSex(person)
-                == Sex.Male
-                ? 65
-                : 60;
+            _retirementRules
+                .GetRule(
+                    gameYear)
+                .GetRetirementAge(
+                    _family.GetSex(person));
 
         return person.Age >= retirementAge;
     }

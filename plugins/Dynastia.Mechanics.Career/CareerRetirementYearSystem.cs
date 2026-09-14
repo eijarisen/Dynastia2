@@ -4,20 +4,21 @@ namespace Dynastia.Mechanics.Career;
 
 public sealed class CareerRetirementYearSystem : IYearSystem
 {
-    private const int MaleRetirementAge = 65;
-    private const int FemaleRetirementAge = 60;
-
     private readonly ICareerService _career;
     private readonly IFamilyService _family;
+    private readonly RetirementRuleCatalog
+        _retirementRules;
     private readonly IGameEventBus _events;
 
     public CareerRetirementYearSystem(
         ICareerService career,
         IFamilyService family,
+        RetirementRuleCatalog retirementRules,
         IGameEventBus events)
     {
         _career = career;
         _family = family;
+        _retirementRules = retirementRules;
         _events = events;
     }
 
@@ -38,13 +39,15 @@ public sealed class CareerRetirementYearSystem : IYearSystem
             }
 
             var retirementAge =
-                _family.GetSex(person) == Sex.Male
-                    ? MaleRetirementAge
-                    : FemaleRetirementAge;
+                _retirementRules
+                    .GetRule(
+                        gameState.Year)
+                    .GetRetirementAge(
+                        _family.GetSex(person));
 
             var career = _career.GetCareer(person);
 
-            if (person.Age != retirementAge
+            if (person.Age < retirementAge
                 || career.IsRetired
                 || career.JobLevel >= 5)
             {

@@ -14,6 +14,9 @@ public sealed class GameState : IGameState
     public int Year { get; set; } =
         GameCalendarConfiguration.GameStartYear;
 
+    public int StartYear { get; set; } =
+        GameCalendarConfiguration.GameStartYear;
+
     public IReadOnlyList<IPerson> People =>
         _people;
 

@@ -11,6 +11,7 @@
     <Project Path="plugins/Dynastia.Mechanics.FamilySupport/Dynastia.Mechanics.FamilySupport.csproj" />
     <Project Path="plugins/Dynastia.Mechanics.FamilyRelations/Dynastia.Mechanics.FamilyRelations.csproj" />
     <Project Path="plugins/Dynastia.Mechanics.Health/Dynastia.Mechanics.Health.csproj" />
+    <Project Path="plugins/Dynastia.Mechanics.Historical/Dynastia.Mechanics.Historical.csproj" />
     <Project Path="plugins/Dynastia.Mechanics.Households/Dynastia.Mechanics.Households.csproj" />
     <Project Path="plugins/Dynastia.Mechanics.Inheritance/Dynastia.Mechanics.Inheritance.csproj" />
     <Project Path="plugins/Dynastia.Mechanics.Justice/Dynastia.Mechanics.Justice.csproj" />

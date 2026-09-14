@@ -42,6 +42,12 @@ internal sealed partial class RareEventYearSystem
                         BurglaryChance));
             }
 
+            candidates.RemoveAll(
+                candidate =>
+                    !_availability.IsAvailable(
+                        GetEventId(candidate.Event),
+                        gameState.Year));
+
             var selected =
                 SelectEvent(
                     candidates);
@@ -131,8 +137,7 @@ internal sealed partial class RareEventYearSystem
                     WorkplaceAccidentChance));
         }
 
-        if (gameState.Year >= 1920
-            && person.Age >= 10)
+        if (person.Age >= 10)
         {
             candidates.Add(
                 new PersonalEventCandidate(
@@ -156,13 +161,10 @@ internal sealed partial class RareEventYearSystem
         if (person.Age >= 18
             && finance is not null)
         {
-            if (gameState.Year >= 1957)
-            {
-                candidates.Add(
-                    new PersonalEventCandidate(
-                        PersonalRareEvent.LotteryWin,
-                        LotteryChance));
-            }
+            candidates.Add(
+                new PersonalEventCandidate(
+                    PersonalRareEvent.LotteryWin,
+                    LotteryChance));
 
             candidates.Add(
                 new PersonalEventCandidate(
@@ -192,6 +194,12 @@ internal sealed partial class RareEventYearSystem
                     PersonalRareEvent.WrongfulArrest,
                     WrongfulArrestChance));
         }
+
+        candidates.RemoveAll(
+            candidate =>
+                !_availability.IsAvailable(
+                    GetEventId(candidate.Event),
+                    gameState.Year));
 
         var selected =
             SelectEvent(

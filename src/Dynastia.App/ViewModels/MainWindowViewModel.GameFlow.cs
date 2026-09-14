@@ -14,7 +14,8 @@ public sealed partial class MainWindowViewModel
             string.Empty;
 
         _newGameService.StartNewGame(
-            SurnameInput);
+            SurnameInput,
+            (int)SelectedStartYear);
 
         _succession.Refresh();
 
@@ -434,7 +435,7 @@ public sealed partial class MainWindowViewModel
     private void PreviousAlbumYear()
     {
         if (AlbumYear
-            > GameCalendarConfiguration.GameStartYear + 1)
+            > _gameState.StartYear + 1)
         {
             AlbumYear--;
         }

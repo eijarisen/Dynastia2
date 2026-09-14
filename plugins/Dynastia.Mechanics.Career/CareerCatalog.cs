@@ -8,6 +8,83 @@ internal sealed class CareerCatalog
     private const string DataPath =
         "Career/careers.csv";
 
+    private const string OpportunityTagsPath =
+        "Towns/opportunity_tags.csv";
+
+
+    private static readonly IReadOnlySet<string>
+        ExpectedCareerIds =
+            new HashSet<string>(
+                new[]
+                {
+                    "agriculture_and_farm_estates",
+                    "horse_and_carriage_trade",
+                    "blacksmithing",
+                    "coal_mining",
+                    "oil_and_refining",
+                    "steel_and_foundry",
+                    "textile_mills",
+                    "timber_and_sawmills",
+                    "construction",
+                    "railways",
+                    "shipping_and_ports",
+                    "mass_factory_manufacturing",
+                    "traditional_printworks",
+                    "newspapers_and_publishing",
+                    "retail_trade",
+                    "banking",
+                    "insurance",
+                    "hotels_and_restaurants",
+                    "food_processing",
+                    "baking_and_confectionery",
+                    "meat_trade",
+                    "tailoring_and_fashion",
+                    "leather_and_shoemaking",
+                    "furniture_and_carpentry",
+                    "glass_and_ceramics",
+                    "jewellery_and_watchmaking",
+                    "photography",
+                    "domestic_service",
+                    "laundry_and_dry_cleaning",
+                    "funeral_services",
+                    "real_estate",
+                    "accounting",
+                    "legal_services",
+                    "healthcare_services",
+                    "pharmacy",
+                    "education",
+                    "electric_power",
+                    "cinema_and_film",
+                    "advertising",
+                    "automotive_industry",
+                    "chemical_industry",
+                    "beauty_and_cosmetics",
+                    "radio_broadcasting",
+                    "aviation",
+                    "road_haulage",
+                    "consumer_goods_and_appliances",
+                    "tourism_and_travel",
+                    "plastics_industry",
+                    "electronics_manufacturing",
+                    "pharmaceuticals",
+                    "television",
+                    "telecommunications",
+                    "engineering_services",
+                    "logistics_and_warehousing",
+                    "computing_and_it_services",
+                    "investment_and_financial_services",
+                    "private_security",
+                    "biotechnology",
+                    "software_industry",
+                    "video_game_industry",
+                    "business_process_outsourcing",
+                    "e_commerce",
+                    "digital_media",
+                    "cybersecurity",
+                    "renewable_energy",
+                },
+                StringComparer.OrdinalIgnoreCase);
+
     private readonly IReadOnlyList<CareerDefinition>
         _careers;
 
@@ -40,8 +117,14 @@ internal sealed class CareerCatalog
                 data.ReadText(
                     DataPath));
 
+        var knownOpportunityTags =
+            ParseOpportunityTags(
+                data.ReadText(
+                    OpportunityTagsPath));
+
         Validate(
-            careers);
+            careers,
+            knownOpportunityTags);
 
         return new CareerCatalog(
             careers);
@@ -260,7 +343,8 @@ internal sealed class CareerCatalog
     }
 
     private static void Validate(
-        IReadOnlyList<CareerDefinition> careers)
+        IReadOnlyList<CareerDefinition> careers,
+        IReadOnlySet<string> knownOpportunityTags)
     {
         if (careers.Count != 65)
         {
@@ -280,6 +364,20 @@ internal sealed class CareerCatalog
         {
             throw new InvalidDataException(
                 $"{DataPath} contains duplicate career IDs.");
+        }
+
+        var actualCareerIds =
+            careers
+                .Select(career => career.Id)
+                .ToHashSet(
+                    StringComparer.OrdinalIgnoreCase);
+
+        if (!actualCareerIds.SetEquals(
+                ExpectedCareerIds))
+        {
+            throw new InvalidDataException(
+                $"{DataPath} must preserve the existing " +
+                "65 career IDs for save compatibility.");
         }
 
         foreach (var career in careers)
@@ -303,18 +401,6 @@ internal sealed class CareerCatalog
                     "start year.");
             }
 
-            if (career.MaleEarly
-                    + career.FemaleEarly
-                    != 100
-                || career.MaleLate
-                    + career.FemaleLate
-                    != 100)
-            {
-                throw new InvalidDataException(
-                    $"{career.Name}: M/F entry weights " +
-                    "must sum to 100.");
-            }
-
             if (career.MaleEarly <= 0
                 || career.FemaleEarly <= 0
                 || career.MaleLate <= 0
@@ -333,6 +419,20 @@ internal sealed class CareerCatalog
                 throw new InvalidDataException(
                     $"{career.Name}: specialist careers require "
                     + "at least one opportunity tag.");
+            }
+
+            if (career.RequiredOpportunityTags
+                .Any(tag =>
+                    !knownOpportunityTags.Contains(tag)))
+            {
+                var unknown =
+                    career.RequiredOpportunityTags
+                        .First(tag =>
+                            !knownOpportunityTags.Contains(tag));
+
+                throw new InvalidDataException(
+                    $"{career.Name}: unknown opportunity tag " +
+                    $"'{unknown}'.");
             }
 
             if (career.LocationType
@@ -420,6 +520,47 @@ internal sealed class CareerCatalog
             .Distinct(
                 StringComparer.OrdinalIgnoreCase)
             .ToArray();
+    }
+
+    private static IReadOnlySet<string>
+        ParseOpportunityTags(
+            string text)
+    {
+        var lines =
+            text.Split(
+                ['\r', '\n'],
+                StringSplitOptions.RemoveEmptyEntries);
+
+        if (lines.Length < 2)
+        {
+            throw new InvalidDataException(
+                $"{OpportunityTagsPath} is empty.");
+        }
+
+        var result =
+            new HashSet<string>(
+                StringComparer.OrdinalIgnoreCase);
+
+        for (var index = 1;
+            index < lines.Length;
+            index++)
+        {
+            var fields =
+                lines[index].Split(',');
+
+            if (fields.Length != 4
+                || string.IsNullOrWhiteSpace(fields[0]))
+            {
+                throw new InvalidDataException(
+                    $"Invalid {OpportunityTagsPath} row " +
+                    $"{index + 1}.");
+            }
+
+            result.Add(
+                fields[0].Trim());
+        }
+
+        return result;
     }
 
     private static int ParseInt(

@@ -62,6 +62,9 @@ public sealed partial class GameSaveService
             Year =
                 _gameState.Year,
 
+            StartYear =
+                _gameState.StartYear,
+
             SelectedPersonId =
                 uiState.SelectedPersonId,
 

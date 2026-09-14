@@ -13,6 +13,11 @@ public sealed class RareEventsPlugin :
             ?? throw new InvalidOperationException(
                 "Game state is unavailable.");
 
+        var data =
+            context.GetService<IGameDataService>()
+            ?? throw new InvalidOperationException(
+                "Game data service is unavailable.");
+
         var family =
             context.GetService<IFamilyService>()
             ?? throw new InvalidOperationException(
@@ -78,6 +83,9 @@ public sealed class RareEventsPlugin :
                 calendar,
                 events);
 
+        var availability =
+            RareEventAvailabilityCatalog.Load(data);
+
         systems.Register(
             new RecentLifeEventCleanupYearSystem(
                 recent));
@@ -93,7 +101,8 @@ public sealed class RareEventsPlugin :
                 random,
                 events,
                 recent,
-                death));
+                death,
+                availability));
 
         context.Log(
             "Rare life events registered.");

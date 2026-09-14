@@ -117,6 +117,9 @@ public sealed partial class MainWindowViewModel
             nameof(Year));
 
         OnPropertyChanged(
+            nameof(HistoricalEraName));
+
+        OnPropertyChanged(
             nameof(DynastyTitle));
 
         OnPropertyChanged(

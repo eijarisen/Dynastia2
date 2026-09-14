@@ -39,6 +39,9 @@ public sealed partial class MainWindowViewModel
         SurnameInput =
             _gameState.DynastySurname;
 
+        SelectedStartYear =
+            _gameState.StartYear;
+
         IsLivingFamilyView =
             loadedUiState.IsLivingFamilyView;
 
@@ -57,7 +60,7 @@ public sealed partial class MainWindowViewModel
         AlbumYear =
             Math.Clamp(
                 loadedUiState.AlbumYear,
-                GameCalendarConfiguration.GameStartYear,
+                _gameState.StartYear,
                 _gameState.Year);
 
         IsGameOverOverlayVisible =

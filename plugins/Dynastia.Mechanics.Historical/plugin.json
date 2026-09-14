@@ -1,0 +1,8 @@
+{
+  "id": "dynastia.historical",
+  "name": "Historical Data",
+  "version": "0.1.0",
+  "apiVersion": 1,
+  "assembly": "Dynastia.Mechanics.Historical.dll",
+  "entryType": "Dynastia.Mechanics.Historical.HistoricalPlugin"
+}

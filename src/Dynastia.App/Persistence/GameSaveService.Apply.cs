@@ -26,6 +26,10 @@ public sealed partial class GameSaveService
         _gameState.Year =
             envelope.Year;
 
+        _gameState.StartYear =
+            ResolveStartYear(
+                envelope);
+
         foreach (var savedPerson in
             envelope.People)
         {
@@ -139,6 +143,35 @@ public sealed partial class GameSaveService
         }
     }
 
+    private static int ResolveStartYear(
+        DesktopSaveEnvelope envelope)
+    {
+        if (envelope.StartYear >= GameCalendarConfiguration.GameStartYear
+            && envelope.StartYear <= envelope.Year)
+        {
+            return envelope.StartYear;
+        }
+
+        var gameStartedYear =
+            envelope.Events
+                .Where(gameEvent =>
+                    gameEvent.Type.Equals(
+                        "game.started",
+                        StringComparison.OrdinalIgnoreCase))
+                .Select(gameEvent =>
+                    gameEvent.Year)
+                .DefaultIfEmpty(
+                    Math.Min(
+                        GameCalendarConfiguration.LegacyDesktopStartYear,
+                        envelope.Year))
+                .Min();
+
+        return Math.Clamp(
+            gameStartedYear,
+            GameCalendarConfiguration.GameStartYear,
+            envelope.Year);
+    }
+
     private static void ValidateEnvelope(
         DesktopSaveEnvelope envelope)
     {
@@ -173,10 +206,18 @@ public sealed partial class GameSaveService
                 "The save file has no dynasty surname.");
         }
 
-        if (envelope.Year < 1)
+        if (envelope.Year < GameCalendarConfiguration.GameStartYear)
         {
             throw new InvalidDataException(
                 "The save file contains an invalid year.");
+        }
+
+        if (envelope.StartYear != 0
+            && (envelope.StartYear < GameCalendarConfiguration.GameStartYear
+                || envelope.StartYear > envelope.Year))
+        {
+            throw new InvalidDataException(
+                "The save file contains an invalid dynasty start year.");
         }
 
         if (envelope.People.Count == 0)

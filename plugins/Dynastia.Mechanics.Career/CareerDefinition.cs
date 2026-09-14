@@ -22,7 +22,7 @@ internal sealed record CareerDefinition(
     IReadOnlyList<string> RequiredOpportunityTags)
 {
     public const int TechnologyFreezeYear =
-        2026;
+        GameCalendarConfiguration.TechnologyFreezeYear;
 
     public CareerLocationRequirement LocationRequirement =>
         new(

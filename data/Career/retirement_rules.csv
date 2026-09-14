@@ -1,0 +1,5 @@
+StartYear,EndYear,MaleRetirementAge,FemaleRetirementAge,PensionRate
+1700,1849,70,65,0.0
+1850,1917,68,63,0.0
+1918,1945,65,60,0.05
+1946,,65,60,0.1

@@ -63,6 +63,27 @@
     "weight": 3
   },
   {
+    "id": "country_estate_recovery",
+    "text": "spent a season recuperating away from town in quieter country surroundings",
+    "startYear": 1700,
+    "endYear": 1849,
+    "weight": 4
+  },
+  {
+    "id": "religious_retreat_early",
+    "text": "spent an extended period in religious retreat and contemplation after a difficult period",
+    "startYear": 1700,
+    "endYear": 1899,
+    "weight": 3
+  },
+  {
+    "id": "quiet_household_early",
+    "text": "withdrew from regular duties for a prolonged period and kept to a quiet household routine",
+    "startYear": 1700,
+    "endYear": 1849,
+    "weight": 4
+  },
+  {
     "id": "doctor_ordered_rest",
     "text": "followed a doctor's advice to abandon regular work for several months of complete rest",
     "startYear": 1700,
@@ -79,7 +100,7 @@
   {
     "id": "sanatorium_early",
     "text": "spent an extended period recuperating at a sanatorium",
-    "startYear": 1700,
+    "startYear": 1840,
     "endYear": 1945,
     "weight": 4
   },
@@ -93,14 +114,14 @@
   {
     "id": "nervous_exhaustion",
     "text": "withdrew from work for a prolonged rest after suffering nervous exhaustion",
-    "startYear": 1700,
+    "startYear": 1850,
     "endYear": 1955,
     "weight": 3
   },
   {
     "id": "seaside_cure",
     "text": "spent several months by the sea for rest and recuperation",
-    "startYear": 1700,
+    "startYear": 1800,
     "endYear": 1939,
     "weight": 3
   },
@@ -114,7 +135,7 @@
   {
     "id": "mountain_resort",
     "text": "spent an extended period resting at a mountain health resort",
-    "startYear": 1919,
+    "startYear": 1850,
     "endYear": 1939,
     "weight": 3
   },

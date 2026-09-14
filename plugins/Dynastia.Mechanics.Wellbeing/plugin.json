@@ -10,6 +10,7 @@
     "dynastia.stats",
     "dynastia.health",
     "dynastia.economy",
-    "dynastia.career"
+    "dynastia.career",
+    "dynastia.historical"
   ]
 }

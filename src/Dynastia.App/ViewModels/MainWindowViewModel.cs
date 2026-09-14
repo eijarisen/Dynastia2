@@ -1,5 +1,3 @@
-using System.Collections.ObjectModel;
-using Avalonia.Threading;
 using Dynastia.App.Persistence;
 using Dynastia.Contracts;
 using Dynastia.Core.Simulation;
@@ -49,6 +47,8 @@ public sealed partial class MainWindowViewModel : ViewModelBase
 
     private int _albumYear;
     private string _surnameInput = string.Empty;
+    private double _selectedStartYear =
+        GameCalendarConfiguration.GameStartYear;
     private bool _isGameStarted;
     private string _queuedActionText = string.Empty;
     private bool _hasQueuedAction;
@@ -197,7 +197,7 @@ public sealed partial class MainWindowViewModel : ViewModelBase
                 () =>
                     IsGameStarted
                     && AlbumYear >
-                        GameCalendarConfiguration.GameStartYear + 1);
+                        _gameState.StartYear + 1);
 
         NextAlbumYearCommand =
             new RelayCommand(
@@ -228,6 +228,34 @@ public sealed partial class MainWindowViewModel : ViewModelBase
             OnPropertyChanged();
         }
     }
+
+    public double SelectedStartYear
+    {
+        get => _selectedStartYear;
+        set
+        {
+            var normalized =
+                GameCalendarConfiguration.NormalizeSelectableStartYear(
+                    (int)Math.Round(value));
+
+            if (Math.Abs(
+                    _selectedStartYear - normalized)
+                < 0.001)
+            {
+                return;
+            }
+
+            _selectedStartYear =
+                normalized;
+
+            OnPropertyChanged();
+            OnPropertyChanged(
+                nameof(SelectedStartYearText));
+        }
+    }
+
+    public string SelectedStartYearText =>
+        $"Starting year: {(int)SelectedStartYear}";
 
     public bool IsGameStarted
     {
@@ -285,6 +313,10 @@ public sealed partial class MainWindowViewModel : ViewModelBase
 
     public int Year =>
         _gameState.Year;
+
+    public string HistoricalEraName =>
+        HistoricalEraConfiguration.GetDisplayName(
+            _gameState.Year);
 
     public bool IsGameOver =>
         _succession.IsGameOver;
@@ -401,269 +433,6 @@ public sealed partial class MainWindowViewModel : ViewModelBase
         is not null;
 
 
-    public string HouseholdBudgetText
-    {
-        get
-        {
-            var finance =
-                GetDisplayedHouseholdFinance();
-
-            return finance is null
-                ? "No active adult household."
-                : $"Family Budget: " +
-                  $"{finance.Wealth:N0} zł";
-        }
-    }
-
-    public string HouseholdIncomeText
-    {
-        get
-        {
-            var finance =
-                GetDisplayedHouseholdFinance();
-
-            if (finance is null)
-                return string.Empty;
-
-            var head =
-                GetDisplayedHouseholdHead();
-
-            var projected =
-                head is null
-                    ? finance.LastIncome
-                    : (_economyService?.GetProjectedAnnualIncome(head)
-                        ?? finance.LastIncome)
-                      + GetProjectedLoanIncome(head);
-
-            return $"Income: {projected:N0} zł";
-        }
-    }
-
-    public string HouseholdIncomeDetailsText
-    {
-        get
-        {
-            var finance =
-                GetDisplayedHouseholdFinance();
-
-            if (finance is null)
-                return string.Empty;
-
-            var head =
-                GetDisplayedHouseholdHead();
-
-            var projected =
-                (head is null
-                    ? finance.LastIncomeBreakdown
-                    : _economyService?.GetProjectedIncomeBreakdown(head)
-                        ?? finance.LastIncomeBreakdown)
-                .ToList();
-
-            if (head is not null)
-            {
-                var loanIncome =
-                    GetProjectedLoanIncome(head);
-
-                if (loanIncome > 0)
-                {
-                    projected.Add(
-                        new FinanceBreakdownItem(
-                            "loan repayments",
-                            loanIncome));
-                }
-            }
-
-            return FormatFinanceBreakdown(
-                projected,
-                "No current recurring income.");
-        }
-    }
-
-    public string HouseholdExpensesText
-    {
-        get
-        {
-            var finance =
-                GetDisplayedHouseholdFinance();
-
-            return finance is null
-                ? string.Empty
-                : $"Expenses: " +
-                  $"{finance.LastExpenses:N0} zł";
-        }
-    }
-
-    public string HouseholdExpenseDetailsText
-    {
-        get
-        {
-            var finance =
-                GetDisplayedHouseholdFinance();
-
-            if (finance is null)
-                return string.Empty;
-
-            return FormatFinanceBreakdown(
-                finance.LastExpenseBreakdown,
-                "No expenses were recorded in the last annual finance pass.");
-        }
-    }
-
-    public string HouseholdHousesText
-    {
-        get
-        {
-            var finance =
-                GetDisplayedHouseholdFinance();
-
-            return finance is null
-                ? string.Empty
-                : $"Houses: {finance.Houses.Count}";
-        }
-    }
-
-    public string HouseholdHousesDetailsText
-    {
-        get
-        {
-            var head =
-                _succession.ActiveController;
-
-            var finance =
-                GetDisplayedHouseholdFinance();
-
-            if (head is null
-                || finance is null)
-            {
-                return string.Empty;
-            }
-
-            if (finance.Houses.Count == 0)
-            {
-                var homeTown =
-                    _locationService?
-                        .GetLocation(
-                            head)
-                        .HomeTown
-                        .Town;
-
-                return string.IsNullOrWhiteSpace(
-                    homeTown)
-                        ? "No owned houses. The household rents its residence."
-                        : $"{homeTown} — Renting";
-            }
-
-            var lines =
-                finance.Houses
-                    .Select(
-                        house =>
-                            $"{house.Town.Town} — " +
-                            $"{house.Status}")
-                    .ToList();
-
-            if (!finance.Houses.Any(house => house.IsResidence))
-            {
-                var homeTown =
-                    _locationService?
-                        .GetLocation(head)
-                        .HomeTown
-                        .Town;
-
-                if (!string.IsNullOrWhiteSpace(homeTown))
-                {
-                    lines.Insert(
-                        0,
-                        $"{homeTown} — Renting");
-                }
-            }
-
-            return string.Join(
-                Environment.NewLine,
-                lines);
-        }
-    }
-
-    // Retained for compatibility with older bindings/packages.
-    public string HouseholdIncomeExpensesText =>
-        string.Join(
-            " | ",
-            new[]
-            {
-                HouseholdIncomeText,
-                HouseholdExpensesText
-            }
-            .Where(
-                value =>
-                    !string.IsNullOrWhiteSpace(
-                        value)));
-
-    private decimal GetProjectedLoanIncome(
-        IPerson householdRepresentative)
-    {
-        return _loanService?
-            .GetLoansGiven(householdRepresentative)
-            .Sum(loan => loan.AnnualPayment)
-            ?? 0m;
-    }
-
-    private HouseholdFinanceSnapshot?
-        GetDisplayedHouseholdFinance()
-    {
-        var head =
-            GetDisplayedHouseholdHead();
-
-        return head is null
-            ? null
-            : _economyService?.GetHousehold(
-                head);
-    }
-
-    private static string FormatFinanceBreakdown(
-        IReadOnlyList<FinanceBreakdownItem> items,
-        string emptyText)
-    {
-        if (items.Count == 0)
-            return emptyText;
-
-        return string.Join(
-            Environment.NewLine,
-            items.Select(
-                item =>
-                    $"{item.Amount:N0} zł — " +
-                    $"{item.Label}"));
-    }
-
-    public string HouseholdWarningText
-    {
-        get
-        {
-            var head =
-                GetDisplayedHouseholdHead();
-
-            var status =
-                head is null
-                    ? null
-                    : _householdService?.GetStatus(
-                        head);
-
-            return status is null
-                ? string.Empty
-                : string.Join(
-                    Environment.NewLine,
-                    status.Warnings);
-        }
-    }
-
-    public string ExtendedFamilyEmptyText =>
-        ExtendedFamilyMembers.Count == 0
-            ? "No extended family members in this household."
-            : string.Empty;
-
-    public string DeceasedFamilyEmptyText =>
-        DeceasedFamilyMembers.Count == 0
-            ? "No deceased family members."
-            : string.Empty;
-
     public int AlbumYear
     {
         get => _albumYear;
@@ -693,8 +462,8 @@ public sealed partial class MainWindowViewModel : ViewModelBase
             : string.Empty;
 
     public int AlbumDisplayYear =>
-        AlbumYear <= GameCalendarConfiguration.GameStartYear
-            ? GameCalendarConfiguration.GameStartYear
+        AlbumYear <= _gameState.StartYear
+            ? _gameState.StartYear
             : AlbumYear - 1;
 
     public bool IsYearSummaryVisible
@@ -712,7 +481,7 @@ public sealed partial class MainWindowViewModel : ViewModelBase
 
     public string YearSummaryTitle =>
         $"Year {Math.Max(
-            GameCalendarConfiguration.GameStartYear,
+            _gameState.StartYear,
             _yearSummaryEventYear - 1)}";
 
     public string YearSummaryEmptyText =>
@@ -786,312 +555,6 @@ public sealed partial class MainWindowViewModel : ViewModelBase
         }
     }
 
-    public ObservableCollection<AlbumEventViewModel>
-        AlbumEvents { get; } = [];
-
-    public ObservableCollection<YearSummaryHouseholdViewModel>
-        YearSummaryHouseholds { get; } = [];
-
-    public ObservableCollection<PersonRowViewModel>
-        People { get; } = [];
-
-    public ObservableCollection<PlayablePersonTabViewModel>
-        PlayableTabs { get; } = [];
-
-    public ObservableCollection<PlayablePersonTabViewModel>
-        BloodlineTabs { get; } = [];
-
-    public ObservableCollection<FamilyMemberCardViewModel>
-        HouseholdMembers { get; } = [];
-
-    public ObservableCollection<FamilyMemberCardViewModel>
-        ExtendedFamilyMembers { get; } = [];
-
-    public ObservableCollection<FamilyMemberCardViewModel>
-        DeceasedFamilyMembers { get; } = [];
-
-    public ObservableCollection<StatValue>
-        SelectedStats { get; } = [];
-
-    public ObservableCollection<BiographyEntryViewModel>
-        SelectedBiography { get; } = [];
-
-    public ObservableCollection<AvailableActionViewModel>
-        AvailableActions { get; } = [];
-
-    public ObservableCollection<AvailableActionViewModel>
-        PassActions { get; } = [];
-
-    public ObservableCollection<ActionFilterViewModel>
-        ActionFilters { get; } = [];
-
-    public PersonRowViewModel? SelectedPerson
-    {
-        get => _selectedPerson;
-        set
-        {
-            if (ReferenceEquals(
-                _selectedPerson,
-                value))
-            {
-                return;
-            }
-
-            _selectedPerson = value;
-
-            _selectionService.SelectedPersonId =
-                value?.Id;
-
-            RefreshSelectedStats();
-            RefreshFamilyDetails();
-            RefreshHealth();
-            RefreshEconomy();
-            RefreshEducation();
-            RefreshCareer();
-            RefreshMarriageSatisfaction();
-            RefreshChildHappiness();
-            RefreshJustice();
-            RefreshNarrative();
-            RefreshActions();
-            RefreshFamilySection();
-
-            OnPropertyChanged();
-            OnPropertyChanged(
-                nameof(SelectedPersonEmoji));
-        }
-    }
-
-    public FamilyDetailsViewModel? SelectedFamily
-    {
-        get => _selectedFamily;
-        private set
-        {
-            _selectedFamily = value;
-            OnPropertyChanged();
-        }
-    }
-
-    public HealthViewModel? SelectedHealth
-    {
-        get => _selectedHealth;
-        private set
-        {
-            _selectedHealth = value;
-            OnPropertyChanged();
-        }
-    }
-
-    public EconomyViewModel? SelectedEconomy
-    {
-        get => _selectedEconomy;
-        private set
-        {
-            _selectedEconomy = value;
-            OnPropertyChanged();
-            OnPropertyChanged(
-                nameof(HasSelectedEconomy));
-        }
-    }
-
-    public EducationViewModel? SelectedEducation
-    {
-        get => _selectedEducation;
-        private set
-        {
-            _selectedEducation = value;
-            OnPropertyChanged();
-        }
-    }
-
-    public CareerViewModel? SelectedCareer
-    {
-        get => _selectedCareer;
-        private set
-        {
-            _selectedCareer = value;
-            OnPropertyChanged();
-        }
-    }
-
-    public string SelectedMarriageSatisfactionText
-    {
-        get
-        {
-            var person =
-                FindSelectedPerson();
-
-            var snapshot =
-                person is null
-                    ? null
-                    : _marriageSatisfactionService?
-                        .GetSatisfaction(
-                            person);
-
-            return snapshot is null
-                ? string.Empty
-                : $"Marriage: {snapshot.Label}";
-        }
-    }
-
-    public string SelectedMarriageSatisfactionLabel
-    {
-        get
-        {
-            var person =
-                FindSelectedPerson();
-
-            var snapshot =
-                person is null
-                    ? null
-                    : _marriageSatisfactionService?
-                        .GetSatisfaction(
-                            person);
-
-            return snapshot?.Label
-                ?? string.Empty;
-        }
-    }
-
-    public string SelectedMarriageSatisfactionDetailsText
-    {
-        get
-        {
-            var person =
-                FindSelectedPerson();
-
-            var snapshot =
-                person is null
-                    ? null
-                    : _marriageSatisfactionService?
-                        .GetSatisfaction(
-                            person);
-
-            if (snapshot is null)
-                return string.Empty;
-
-            return snapshot.CurrentIssues.Count == 0
-                ? "No current marriage strains."
-                : "Current strains:" +
-                  Environment.NewLine +
-                  string.Join(
-                      Environment.NewLine,
-                      snapshot.CurrentIssues.Select(
-                          issue =>
-                              $"• {issue}"));
-        }
-    }
-
-    public bool HasSelectedMarriageSatisfaction =>
-        !string.IsNullOrWhiteSpace(
-            SelectedMarriageSatisfactionText);
-
-    public string SelectedChildHappinessText
-    {
-        get
-        {
-            var person = FindSelectedPerson();
-            var snapshot = person is null
-                ? null
-                : _childHappinessService?.GetHappiness(person);
-            return snapshot is null ? string.Empty : $"Happiness: {snapshot.Label}";
-        }
-    }
-
-    public string SelectedChildHappinessLabel
-    {
-        get
-        {
-            var person = FindSelectedPerson();
-            return person is null
-                ? string.Empty
-                : _childHappinessService?.GetHappiness(person)?.Label ?? string.Empty;
-        }
-    }
-
-    public bool HasSelectedChildHappiness =>
-        !string.IsNullOrWhiteSpace(SelectedChildHappinessText);
-
-    public JusticeViewModel? SelectedJustice
-    {
-        get => _selectedJustice;
-
-        private set
-        {
-            _selectedJustice = value;
-            OnPropertyChanged();
-        }
-    }
-
-    public bool HasSelectedEconomy =>
-        SelectedEconomy is not null;
-
-    public string SelectedAboutText
-    {
-        get => _selectedAboutText;
-
-        private set
-        {
-            if (_selectedAboutText == value)
-                return;
-
-            _selectedAboutText = value;
-            OnPropertyChanged();
-        }
-    }
-
-    public string BiographyEmptyText =>
-        SelectedBiography.Count == 0
-            ? "No significant events recorded."
-            : string.Empty;
-
-    public int DetailsTabIndex
-    {
-        get => _detailsTabIndex;
-
-        set
-        {
-            var clamped =
-                Math.Clamp(
-                    value,
-                    0,
-                    3);
-
-            if (_detailsTabIndex == clamped)
-                return;
-
-            _detailsTabIndex =
-                clamped;
-
-            OnPropertyChanged();
-        }
-    }
-
-    public string PersistenceStatusText
-    {
-        get => _persistenceStatusText;
-
-        private set
-        {
-            if (_persistenceStatusText == value)
-                return;
-
-            _persistenceStatusText = value;
-
-            OnPropertyChanged();
-            OnPropertyChanged(
-                nameof(HasPersistenceStatus));
-            OnPropertyChanged(
-                nameof(IsStatusMessageVisible));
-        }
-    }
-
-    public bool HasPersistenceStatus =>
-        !string.IsNullOrWhiteSpace(
-            PersistenceStatusText);
-
-    public bool IsStatusMessageVisible =>
-        HasPersistenceStatus;
-
     public RelayCommand StartGameCommand { get; }
     public RelayCommand NextYearCommand { get; }
     public RelayCommand CancelQueuedActionCommand { get; }
@@ -1107,6 +570,5 @@ public sealed partial class MainWindowViewModel : ViewModelBase
     public RelayCommand ShowDeceasedFamilyCommand { get; }
     public RelayCommand PreviousAlbumYearCommand { get; }
     public RelayCommand NextAlbumYearCommand { get; }
-
 
 }

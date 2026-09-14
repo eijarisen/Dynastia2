@@ -32,6 +32,8 @@ public sealed partial class GameSaveService
 
         public int Year { get; set; }
 
+        public int StartYear { get; set; }
+
         public Guid? SelectedPersonId { get; set; }
 
         public Guid? ActiveControllerId { get; set; }

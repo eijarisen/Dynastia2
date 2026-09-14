@@ -8,6 +8,7 @@ public sealed partial class CareerPlugin
         IGameState gameState,
         ICareerService career,
         IFamilyService family,
+        RetirementRuleCatalog retirementRules,
         IGameRandom random,
         IGameEventBus events)
     {
@@ -60,9 +61,11 @@ public sealed partial class CareerPlugin
                             random.NextInt(1, 5));
 
                         var retirementAge =
-                            family.GetSex(spouse) == Sex.Male
-                                ? 65
-                                : 60;
+                            retirementRules
+                                .GetRule(
+                                    gameState.Year)
+                                .GetRetirementAge(
+                                    family.GetSex(spouse));
 
                         if (spouse.Age >= retirementAge)
                         {

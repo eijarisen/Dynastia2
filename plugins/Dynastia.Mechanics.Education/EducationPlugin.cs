@@ -19,6 +19,9 @@ public sealed class EducationPlugin : IGamePlugin
         var gameState = context.GetService<IGameState>()
             ?? throw new InvalidOperationException("Game state is unavailable.");
 
+        var data = context.GetService<IGameDataService>()
+            ?? throw new InvalidOperationException("Game data service is unavailable.");
+
         var family = context.GetService<IFamilyService>()
             ?? throw new InvalidOperationException("Family service is unavailable.");
 
@@ -46,6 +49,8 @@ public sealed class EducationPlugin : IGamePlugin
         var education = new StandardEducationService(
             family);
 
+        var eras = EducationEraCatalog.Load(data);
+
         context.AddService<IEducationService>(education);
 
         InitializeFromEvents(
@@ -53,7 +58,8 @@ public sealed class EducationPlugin : IGamePlugin
             education,
             family,
             random,
-            events);
+            events,
+            eras);
 
         actions.Register(
             CreateEducationAction(
@@ -70,14 +76,16 @@ public sealed class EducationPlugin : IGamePlugin
                 family,
                 stats,
                 random,
-                events));
+                events,
+                eras));
 
         systems.Register(
             new PassiveEducationYearSystem(
                 education,
                 stats,
                 health,
-                random));
+                random,
+                eras));
 
         context.Log("Education mechanics registered.");
     }
@@ -87,7 +95,8 @@ public sealed class EducationPlugin : IGamePlugin
         IEducationService education,
         IFamilyService family,
         IGameRandom random,
-        IGameEventBus events)
+        IGameEventBus events,
+        EducationEraCatalog eras)
     {
         events.EventPublished +=
             (_, gameEvent) =>
@@ -107,9 +116,13 @@ public sealed class EducationPlugin : IGamePlugin
 
                         if (founder is not null)
                         {
+                            var era = eras.GetRule(gameEvent.Year);
+
                             education.SetEducationLevel(
                                 founder,
-                                random.NextInt(1, 2));
+                                random.NextInt(
+                                    era.FounderMinLevel,
+                                    era.FounderMaxLevel));
 
                             var father =
                                 family.GetFather(
@@ -123,14 +136,18 @@ public sealed class EducationPlugin : IGamePlugin
                             {
                                 education.SetEducationLevel(
                                     father,
-                                    random.NextInt(1, 3));
+                                    random.NextInt(
+                                        era.GeneratedAdultMinLevel,
+                                        era.GeneratedAdultMaxLevel));
                             }
 
                             if (mother is not null)
                             {
                                 education.SetEducationLevel(
                                     mother,
-                                    random.NextInt(1, 3));
+                                    random.NextInt(
+                                        era.GeneratedAdultMinLevel,
+                                        era.GeneratedAdultMaxLevel));
                             }
                         }
                     }
@@ -152,9 +169,36 @@ public sealed class EducationPlugin : IGamePlugin
 
                     if (spouse is not null)
                     {
+                        var era = eras.GetRule(gameEvent.Year);
+
                         education.SetEducationLevel(
                             spouse,
-                            random.NextInt(1, 3));
+                            random.NextInt(
+                                era.GeneratedAdultMinLevel,
+                                era.GeneratedAdultMaxLevel));
+                    }
+
+                    return;
+                }
+
+                if (gameEvent.Type.Equals(
+                        "household.nanny_hired",
+                        StringComparison.OrdinalIgnoreCase))
+                {
+                    var nanny =
+                        FindFirstRelatedPerson(
+                            gameState,
+                            gameEvent);
+
+                    if (nanny is not null)
+                    {
+                        var era = eras.GetRule(gameEvent.Year);
+
+                        education.SetEducationLevel(
+                            nanny,
+                            random.NextInt(
+                                era.GeneratedAdultMinLevel,
+                                era.GeneratedAdultMaxLevel));
                     }
 
                     return;
@@ -188,8 +232,9 @@ public sealed class EducationPlugin : IGamePlugin
             Id = "education.get_education",
             Label = "Get Education (2,000 zł)",
             Description =
-                "Pay for a course. The cost is paid whether the course succeeds or fails. " +
-                "Success depends on the target's Intellect.",
+                "Pay for private instruction or formal study appropriate to the period. " +
+                "The cost is paid whether the attempt succeeds or fails. " +
+                "Success depends on Intellect.",
             Mode = ActionExecutionMode.Queued,
             QueuePhase = YearPhase.QueuedActionsEarly,
 
@@ -321,7 +366,8 @@ public sealed class EducationPlugin : IGamePlugin
         IFamilyService family,
         IStatsService stats,
         IGameRandom random,
-        IGameEventBus events)
+        IGameEventBus events,
+        EducationEraCatalog eras)
     {
         return new GameActionDefinition
         {
@@ -375,9 +421,14 @@ public sealed class EducationPlugin : IGamePlugin
                                     StringComparison.OrdinalIgnoreCase))
                             .Value;
 
+                    var era =
+                        eras.GetRule(
+                            actionContext.GameState.Year);
+
                     if (education.GetEducationLevel(child)
                         >= EducationProgressionRules.GetHelpedChildhoodCeiling(
-                            childIntellect))
+                            childIntellect,
+                            era.HelpedMaxLevel))
                     {
                         return false;
                     }
@@ -427,9 +478,14 @@ public sealed class EducationPlugin : IGamePlugin
                                     StringComparison.OrdinalIgnoreCase))
                             .Value;
 
+                    var era =
+                        eras.GetRule(
+                            actionContext.GameState.Year);
+
                     if (education.GetEducationLevel(child)
                         >= EducationProgressionRules.GetHelpedChildhoodCeiling(
-                            childIntellect))
+                            childIntellect,
+                            era.HelpedMaxLevel))
                     {
                         return new GameActionResult(
                             false,

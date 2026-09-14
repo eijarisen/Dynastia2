@@ -434,6 +434,15 @@ public sealed class ActionRegistry : IActionRegistry
             // Queue phase is owned by the current action definition.
             // This keeps old save files compatible if only display
             // metadata changed, while rejecting removed action IDs.
+            var restoredParameters =
+                new Dictionary<string, string>(
+                    CloneParameters(saved.Parameters),
+                    StringComparer.OrdinalIgnoreCase)
+                {
+                    [ActionCompatibilityParameters.RestoredQueuedAction] =
+                        bool.TrueString
+                };
+
             restored.Add(
                 new QueuedAction(
                     definition.Id,
@@ -441,7 +450,7 @@ public sealed class ActionRegistry : IActionRegistry
                     saved.TargetId,
                     ResolveQueuePhase(
                         definition),
-                    CloneParameters(saved.Parameters)));
+                    restoredParameters));
         }
 
         _queued.Clear();

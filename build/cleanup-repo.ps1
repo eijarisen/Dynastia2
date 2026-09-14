@@ -1,44 +1,71 @@
+param(
+    [switch]$IncludeArchives
+)
+
 $ErrorActionPreference = "Stop"
 
 $RepoRoot = Split-Path -Parent $PSScriptRoot
 
-Write-Host "Removing generated build output..."
+$GeneratedDirectoryNames = @(
+    ".vs",
+    "bin",
+    "obj",
+    "artifacts",
+    "releases",
+    "TestResults",
+    "test-results",
+    "logs"
+)
+
+$GeneratedFilePatterns = @(
+    "*.binlog",
+    "*.user",
+    "*.suo",
+    "*.tmp",
+    "*.bak",
+    "*.orig"
+)
+
+Write-Host "Removing generated development directories..."
 Get-ChildItem $RepoRoot -Directory -Recurse -Force |
-    Where-Object { $_.Name -in @("bin", "obj") } |
+    Where-Object {
+        $RelativePath = [IO.Path]::GetRelativePath($RepoRoot, $_.FullName)
+        $Segments = $RelativePath -split '[\\/]'
+        ($Segments -notcontains ".git") -and
+        ($GeneratedDirectoryNames -contains $_.Name)
+    } |
     Sort-Object FullName -Descending |
     ForEach-Object {
         if (Test-Path $_.FullName) {
             Remove-Item $_.FullName -Recurse -Force
+            Write-Host "Removed $([IO.Path]::GetRelativePath($RepoRoot, $_.FullName))"
         }
     }
 
-$ObsoletePaths = @(
-    "src\Dynastia.StandardUI",
-    "tests\Dynastia.IntegrationTests",
-    "src\Dynastia.Core\Class1.cs",
-    "tests\Dynastia.Core.Tests\UnitTest1.cs",
-    "docs\Architecture.md",
-    "docs\GameplaySpecification.md",
-    "docs\LegacyQuirks.md",
-    "docs\PluginAPI.md",
-    "data\Names\weighted_format_example.csv",
-    "data\Common\recovery_activities.json",
-    "build\remove-sample-plugin.ps1",
-    "src\Dynastia.App\Models"
-)
-
-Write-Host "Removing obsolete placeholders and unused data..."
-foreach ($RelativePath in $ObsoletePaths) {
-    $Path = Join-Path $RepoRoot $RelativePath
-    if (Test-Path $Path) {
-        Remove-Item $Path -Recurse -Force
-        Write-Host "Removed $RelativePath"
-    }
+Write-Host "Removing generated development files..."
+foreach ($Pattern in $GeneratedFilePatterns) {
+    Get-ChildItem $RepoRoot -File -Recurse -Force -Filter $Pattern |
+        Where-Object {
+            $RelativePath = [IO.Path]::GetRelativePath($RepoRoot, $_.FullName)
+            ($RelativePath -split '[\\/]') -notcontains ".git"
+        } |
+        ForEach-Object {
+            Remove-Item $_.FullName -Force
+            Write-Host "Removed $([IO.Path]::GetRelativePath($RepoRoot, $_.FullName))"
+        }
 }
 
-$Docs = Join-Path $RepoRoot "docs"
-if ((Test-Path $Docs) -and -not (Get-ChildItem $Docs -Force)) {
-    Remove-Item $Docs -Force
+if ($IncludeArchives) {
+    Write-Host "Removing local ZIP archives..."
+    Get-ChildItem $RepoRoot -File -Recurse -Force -Filter "*.zip" |
+        Where-Object {
+            $RelativePath = [IO.Path]::GetRelativePath($RepoRoot, $_.FullName)
+            ($RelativePath -split '[\\/]') -notcontains ".git"
+        } |
+        ForEach-Object {
+            Remove-Item $_.FullName -Force
+            Write-Host "Removed $([IO.Path]::GetRelativePath($RepoRoot, $_.FullName))"
+        }
 }
 
-Write-Host "Repository cleanup complete."
+Write-Host "Repository cleanup complete. Source, data, documentation and saves were preserved."

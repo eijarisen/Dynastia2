@@ -6,6 +6,8 @@ public interface IGameState
 
     int Year { get; set; }
 
+    int StartYear { get; set; }
+
     IReadOnlyList<IPerson> People { get; }
 
     IPerson CreatePerson(

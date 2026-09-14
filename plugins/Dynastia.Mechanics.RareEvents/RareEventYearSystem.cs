@@ -82,6 +82,7 @@ internal sealed partial class RareEventYearSystem :
     private readonly IGameEventBus _events;
     private readonly RecentLifeEventTracker _recent;
     private readonly RareEventDeathService _death;
+    private readonly RareEventAvailabilityCatalog _availability;
 
     public RareEventYearSystem(
         IFamilyService family,
@@ -93,7 +94,8 @@ internal sealed partial class RareEventYearSystem :
         IGameRandom random,
         IGameEventBus events,
         RecentLifeEventTracker recent,
-        RareEventDeathService death)
+        RareEventDeathService death,
+        RareEventAvailabilityCatalog availability)
     {
         _family = family;
         _health = health;
@@ -105,6 +107,7 @@ internal sealed partial class RareEventYearSystem :
         _events = events;
         _recent = recent;
         _death = death;
+        _availability = availability;
     }
 
     public string Id =>

@@ -8,101 +8,12 @@ public sealed class StatImprovementsPlugin :
     private static readonly PaidStatImprovementDefinition[]
         Definitions =
         [
-            new(
-                ActionId:
-                    "stats.improve_strength",
-                StatId:
-                    "strength",
-                StatName:
-                    "Strength",
-                Label:
-                    "Gym Membership",
-                Cost:
-                    10000m,
-                Description:
-                    "Fund an intensive long-term fitness program, coaching, equipment and diet. Guaranteed Strength +1. The improvement is acquired rather than hereditary.",
-                Narrative:
-                    "completed an intensive physical training program and became considerably stronger"),
-
-            new(
-                ActionId:
-                    "stats.improve_intellect",
-                StatId:
-                    "intellect",
-                StatName:
-                    "Intellect",
-                Label:
-                    "Intelligence Training",
-                Cost:
-                    10000m,
-                Description:
-                    "Fund intensive intelligence training, private instruction and demanding mental exercises. Guaranteed Intellect +1. Education level is unchanged.",
-                Narrative:
-                    "completed intensive intelligence training that substantially developed their intellectual abilities"),
-
-            new(
-                ActionId:
-                    "stats.improve_immunity",
-                StatId:
-                    "immunity",
-                StatName:
-                    "Immunity",
-                Label:
-                    "Immune Therapy",
-                Cost:
-                    10000m,
-                Description:
-                    "Fund an extensive specialist medical program intended to strengthen resistance to illness. Guaranteed Immunity +1.",
-                Narrative:
-                    "underwent an extensive course of treatment intended to strengthen their resistance to illness"),
-
-            new(
-                ActionId:
-                    "stats.improve_appeal",
-                StatId:
-                    "appeal",
-                StatName:
-                    "Appeal",
-                Label:
-                    "Plastic Surgery",
-                Cost:
-                    10000m,
-                Description:
-                    "Pay for substantial cosmetic surgery. Guaranteed Appeal +1. The acquired improvement affects future relationship calculations but is not inherited.",
-                Narrative:
-                    "underwent cosmetic surgery that noticeably improved their appearance"),
-
-            new(
-                ActionId:
-                    "stats.improve_longevity",
-                StatId:
-                    "longevity",
-                StatName:
-                    "Longevity",
-                Label:
-                    "Preventive Medicine",
-                Cost:
-                    10000m,
-                Description:
-                    "Fund prolonged preventive medicine, specialist monitoring, rehabilitation and risk-factor treatment. Guaranteed Longevity +1.",
-                Narrative:
-                    "completed an extensive preventive medicine program intended to improve their long-term health"),
-
-            new(
-                ActionId:
-                    "stats.improve_fertility",
-                StatId:
-                    "fertility",
-                StatName:
-                    "Fertility",
-                Label:
-                    "Fertility Treatment",
-                Cost:
-                    10000m,
-                Description:
-                    "Pay for specialist fertility diagnosis and treatment. Guaranteed Fertility +1, including Fertility 0 → 1. Hereditary Fertility is unchanged.",
-                Narrative:
-                    "underwent an extensive course of fertility treatment")
+            new("stats.improve_strength", "strength", "Strength", 10000m),
+            new("stats.improve_intellect", "intellect", "Intellect", 10000m),
+            new("stats.improve_immunity", "immunity", "Immunity", 10000m),
+            new("stats.improve_appeal", "appeal", "Appeal", 10000m),
+            new("stats.improve_longevity", "longevity", "Longevity", 10000m),
+            new("stats.improve_fertility", "fertility", "Fertility", 10000m)
         ];
 
     public void Initialize(
@@ -133,6 +44,11 @@ public sealed class StatImprovementsPlugin :
             ?? throw new InvalidOperationException(
                 "Health service is unavailable.");
 
+        var historical =
+            context.GetService<IHistoricalActionVariantService>()
+            ?? throw new InvalidOperationException(
+                "Historical action variant service is unavailable.");
+
         var actions =
             context.GetService<IActionRegistry>()
             ?? throw new InvalidOperationException(
@@ -148,7 +64,8 @@ public sealed class StatImprovementsPlugin :
                     family,
                     economy,
                     households,
-                    health));
+                    health,
+                    historical));
         }
 
         context.Log(
@@ -161,19 +78,25 @@ public sealed class StatImprovementsPlugin :
         IFamilyService family,
         IEconomyService economy,
         IHouseholdService households,
-        IHealthService health)
+        IHealthService health,
+        IHistoricalActionVariantService historical)
     {
+        var canonical =
+            historical.GetCanonicalVariant(
+                definition.ActionId)
+            ?? throw new InvalidDataException(
+                $"Missing historical action data for '{definition.ActionId}'.");
+
         return new GameActionDefinition
         {
             Id =
                 definition.ActionId,
 
             Label =
-                $"{definition.Label} " +
-                $"({definition.Cost:N0} zł)",
+                canonical.Label,
 
             Description =
-                definition.Description,
+                canonical.Description,
 
             Mode =
                 ActionExecutionMode.Queued,
@@ -188,7 +111,8 @@ public sealed class StatImprovementsPlugin :
                         definition,
                         stats,
                         economy,
-                        households),
+                        households,
+                        historical),
 
             Execute =
                 actionContext =>
@@ -204,7 +128,8 @@ public sealed class StatImprovementsPlugin :
                         definition,
                         stats,
                         economy,
-                        households))
+                        households,
+                        historical))
                     {
                         return new GameActionResult(
                             false,
@@ -260,15 +185,21 @@ public sealed class StatImprovementsPlugin :
                         family.GetDisplayName(
                             target);
 
+                    var variant =
+                        historical.GetVariant(
+                            definition.ActionId,
+                            actionContext.GameState.Year)
+                        ?? canonical;
+
                     var narrative =
                         definition.StatId.Equals(
                                 "fertility",
                                 StringComparison.OrdinalIgnoreCase)
                             && before == 0
                             && after == 1
-                                ? $"{displayName} {definition.Narrative} " +
+                                ? $"{displayName} {variant.Narrative} " +
                                   "and overcame infertility."
-                                : $"{displayName} {definition.Narrative} " +
+                                : $"{displayName} {variant.Narrative} " +
                                   $"and improved their {definition.StatName}.";
 
                     actionContext.EventBus.Publish(
@@ -325,7 +256,8 @@ public sealed class StatImprovementsPlugin :
         PaidStatImprovementDefinition definition,
         IStatsService stats,
         IEconomyService economy,
-        IHouseholdService households)
+        IHouseholdService households,
+        IHistoricalActionVariantService historical)
     {
         var actor =
             actionContext.Actor;
@@ -340,6 +272,19 @@ public sealed class StatImprovementsPlugin :
             || !target.Tags.Has(
                 "state.alive")
             || target.Age < 18)
+        {
+            return false;
+        }
+
+        var historicallyAvailable =
+            historical.GetVariant(
+                definition.ActionId,
+                actionContext.GameState.Year)
+            is not null;
+
+        if (!historicallyAvailable
+            && !ActionCompatibilityParameters.IsRestoredQueuedAction(
+                actionContext.Parameters))
         {
             return false;
         }

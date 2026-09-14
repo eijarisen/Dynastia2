@@ -46,6 +46,7 @@ public sealed class LocationsPlugin :
 
         var localCareers =
             new StandardLocalCareerOpportunityService(
+                gameState,
                 locations,
                 data);
 

@@ -311,7 +311,9 @@ internal sealed class LoanPaymentYearSystem :
         {
             var text =
                 contract.IsExternalReceivable
-                    ? $"The outside-customer loan was fully repaid to {_family.GetDisplayName(owner)}."
+                    ? string.IsNullOrWhiteSpace(contract.ExternalBorrowerName)
+                        ? $"The outside-customer loan was fully repaid to {_family.GetDisplayName(owner)}."
+                        : $"The loan to {contract.ExternalBorrowerName} was fully repaid to {_family.GetDisplayName(owner)}."
                     : $"The private loan was fully repaid to {_family.GetDisplayName(owner)}.";
 
             _events.Publish(

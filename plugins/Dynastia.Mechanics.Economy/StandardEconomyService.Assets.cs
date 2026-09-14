@@ -286,7 +286,10 @@ public sealed partial class StandardEconomyService
                     house.Id,
 
                 Town =
-                    house.Town
+                    house.Town,
+
+                AssignedHeirId =
+                    house.AssignedHeirId
             });
 
         SynchronizeDerivedHouseCounts(
@@ -331,6 +334,36 @@ public sealed partial class StandardEconomyService
         household.Houses.RemoveAt(index);
         SynchronizeDerivedHouseCounts(household);
         return info;
+    }
+
+    public bool SetHouseInheritanceHeir(
+        IPerson person,
+        Guid propertyId,
+        Guid? heirId)
+    {
+        var household = GetRequiredHousehold(person);
+        var head = GetHead(household);
+        SynchronizeHouses(head, household);
+
+        var house = household.Houses
+            .FirstOrDefault(candidate => candidate.Id == propertyId);
+
+        if (house is null)
+            return false;
+
+        if (heirId is Guid selectedHeirId)
+        {
+            var validChild = _family.GetChildren(person)
+                .Any(child =>
+                    child.Id == selectedHeirId
+                    && child.Tags.Has("state.alive"));
+
+            if (!validChild)
+                return false;
+        }
+
+        house.AssignedHeirId = heirId;
+        return true;
     }
 
     public decimal GetHousePrice(TownInfo town) =>
@@ -499,7 +532,10 @@ public sealed partial class StandardEconomyService
                         house.Id,
 
                     Town =
-                        house.Town
+                        house.Town,
+
+                    AssignedHeirId =
+                        house.AssignedHeirId
                 });
         }
 

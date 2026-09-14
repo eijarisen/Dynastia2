@@ -23,7 +23,6 @@ public sealed partial class MainWindowViewModel
         }
 
         _familyRelationService.ReconcileAll();
-        var householdInfos = _householdService.GetActiveHouseholds();
         var parameters = new Dictionary<string, string>
         {
             ["familyRelations"] = "true"
@@ -40,10 +39,6 @@ public sealed partial class MainWindowViewModel
                 var targetHead = info.HeadId.HasValue
                     ? _gameState.People.FirstOrDefault(p => p.Id == info.HeadId.Value)
                     : null;
-                var householdInfo = info.HouseholdId.HasValue
-                    ? householdInfos.FirstOrDefault(h => h.HouseholdId == info.HouseholdId.Value)
-                    : null;
-
                 if (targetHead is null)
                     return null;
 
@@ -51,29 +46,28 @@ public sealed partial class MainWindowViewModel
                 if (finance is null)
                     return null;
 
-                var otherMembers = householdInfo is null
-                    ? Array.Empty<IPerson>()
-                    : householdInfo.MemberIds
-                        .Where(id => id != relative.Id)
-                        .Select(id => _gameState.People.FirstOrDefault(person => person.Id == id))
-                        .Where(person => person is not null && person.Tags.Has("state.alive"))
-                        .Cast<IPerson>()
-                        .OrderBy(person => person.Id == targetHead.Id ? 0 : 1)
-                        .ThenBy(person => _familyService.GetDisplayName(person), StringComparer.OrdinalIgnoreCase)
-                        .ToArray();
+                var members = _economyService.GetHouseholdMemberIds(targetHead)
+                    .Select(id => _gameState.People.FirstOrDefault(person => person.Id == id))
+                    .Where(person => person is not null
+                        && person.Tags.Has("state.alive")
+                        && !person.Tags.Has("role.nanny")
+                        && !person.Tags.Has("role.family_nanny"))
+                    .Cast<IPerson>()
+                    .OrderBy(person => person.Id == targetHead.Id ? 0 : 1)
+                    .ThenBy(person => person.Id == relative.Id ? 0 : 1)
+                    .ThenBy(person => person.Age)
+                    .ThenBy(person => person.Id)
+                    .ToArray();
 
-                var otherMembersText = otherMembers.Length == 0
-                    ? "No other household members."
-                    : "Household members: " + string.Join(
-                        ", ",
-                        otherMembers.Select(_familyService.GetDisplayName));
+                var memberText = members.Length == 0
+                    ? "No household members."
+                    : string.Join(
+                        Environment.NewLine,
+                        members.Select(member =>
+                            FormatRelationHouseholdMember(member, info)));
 
                 var wealthText = $"Wealth: {finance.Wealth:N0} zł";
-
-                var locationPerson = targetHead ?? relative;
-                var locationText = _locationService is null
-                    ? string.Empty
-                    : FormatRelationLocation(_locationService.GetLocation(locationPerson).HomeTown);
+                var housesText = $"Houses: {_economyService.GetHouses(targetHead).Count}";
 
                 var actionModels = _actionRegistry
                     .GetAvailableActions(actor, relative, parameters)
@@ -99,9 +93,9 @@ public sealed partial class MainWindowViewModel
                     primary.Kinship,
                     _familyService.GetDisplayName(relative),
                     primary.State,
-                    otherMembersText,
+                    memberText,
                     wealthText,
-                    locationText,
+                    housesText,
                     actionModels);
             })
             .Where(item => item is not null)
@@ -122,20 +116,17 @@ public sealed partial class MainWindowViewModel
                 house.Town.Town,
                 house.Town.County,
                 $"{house.Town.SettlementClassDisplayName} — rented investment",
-                $"Value { _economyService.GetHouseSaleValue(house.Town):N0} zł",
+                $"Value {_economyService.GetHouseSaleValue(house.Town):N0} zł",
                 $"{house.Town.Town} {house.Town.County} {house.Town.RegionId}"))
             .ToList();
     }
-
 
     internal decimal GetFamilyRelationMoneyMaximum(
         Guid relativeId,
         string actionId)
     {
         var actor = _succession.ActiveController;
-        var relative =
-            _gameState.People.FirstOrDefault(
-                person => person.Id == relativeId);
+        var relative = _gameState.People.FirstOrDefault(person => person.Id == relativeId);
 
         if (actor is null
             || relative is null
@@ -147,17 +138,11 @@ public sealed partial class MainWindowViewModel
 
         IPerson? payingHead;
 
-        if (actionId.Equals(
-            "family_relations.ask_money",
-            StringComparison.OrdinalIgnoreCase))
+        if (actionId.Equals("family_relations.ask_money", StringComparison.OrdinalIgnoreCase))
         {
-            payingHead =
-                _householdService.ResolveHouseholdHead(
-                    relative);
+            payingHead = _householdService.ResolveHouseholdHead(relative);
         }
-        else if (actionId.Equals(
-            "family_relations.give_money",
-            StringComparison.OrdinalIgnoreCase))
+        else if (actionId.Equals("family_relations.give_money", StringComparison.OrdinalIgnoreCase))
         {
             payingHead = actor;
         }
@@ -166,19 +151,16 @@ public sealed partial class MainWindowViewModel
             return 0m;
         }
 
-        var finance =
-            payingHead is null
-                ? null
-                : _economyService.GetHousehold(
-                    payingHead);
+        var finance = payingHead is null
+            ? null
+            : _economyService.GetHousehold(payingHead);
 
         if (finance is null)
             return 0m;
 
-        return Math.Floor(
-            Math.Max(0m, finance.Wealth) / 1000m)
-            * 1000m;
+        return Math.Floor(Math.Max(0m, finance.Wealth) / 1000m) * 1000m;
     }
+
     internal GameActionResult QueueFamilyRelationAction(
         Guid relativeId,
         string actionId,
@@ -199,30 +181,87 @@ public sealed partial class MainWindowViewModel
 
         if (moneyAmount is decimal amount)
         {
-            parameters["amount"] =
-                amount.ToString(
-                    System.Globalization.CultureInfo.InvariantCulture);
+            parameters["amount"] = amount.ToString(
+                System.Globalization.CultureInfo.InvariantCulture);
         }
 
         var result = _actionRegistry.Execute(actionId, actor, relative, parameters);
         RefreshActions();
+        RefreshFamilySection();
         OnPropertyChanged(nameof(HasQueuedAction));
         OnPropertyChanged(nameof(QueuedActionText));
         return result;
     }
 
-    private static string FormatRelationLocation(TownInfo town) =>
-        town.DisplayName;
+    private string FormatRelationHouseholdMember(
+        IPerson member,
+        RelatedFamilyHouseholdInfo info)
+    {
+        var kinship = ResolveRelationHouseholdKinship(member, info);
+        var name = _familyService?.GetDisplayName(member) ?? $"{member.Name} {member.Surname}";
+        var career = _careerService?.GetCareer(member);
+        var careerText = career is null
+            ? string.Empty
+            : career.JobLevel > 0
+                ? $"{career.JobTitle} ({career.JobLevel})"
+                : career.JobTitle;
+
+        return string.IsNullOrWhiteSpace(careerText)
+            ? $"{kinship} — {name}"
+            : $"{kinship} — {name} — {careerText}";
+    }
+
+    private string ResolveRelationHouseholdKinship(
+        IPerson member,
+        RelatedFamilyHouseholdInfo info)
+    {
+        var direct = info.Relations.FirstOrDefault(link => link.RelativeId == member.Id);
+        if (direct is not null)
+            return direct.Kinship;
+
+        if (_familyService is null)
+            return "Household member";
+
+        foreach (var link in info.Relations)
+        {
+            var relative = _gameState.People.FirstOrDefault(person => person.Id == link.RelativeId);
+            if (relative is null)
+                continue;
+
+            if (_familyService.GetSpouse(relative)?.Id == member.Id)
+                return ResolveInLawKinship(link.Kinship, _familyService.GetSex(member));
+
+            if (_familyService.GetChildren(relative).Any(child => child.Id == member.Id))
+                return ResolveDescendantKinship(link.Kinship, _familyService.GetSex(member));
+        }
+
+        return "Household member";
+    }
+
+    private static string ResolveInLawKinship(string directKinship, Sex sex) => directKinship switch
+    {
+        "Son" or "Daughter" => sex == Sex.Male ? "Son-in-law" : "Daughter-in-law",
+        "Brother" or "Sister" => sex == Sex.Male ? "Brother-in-law" : "Sister-in-law",
+        "Father" or "Mother" => sex == Sex.Male ? "Stepfather" : "Stepmother",
+        _ => sex == Sex.Male ? "Male relative by marriage" : "Female relative by marriage"
+    };
+
+    private static string ResolveDescendantKinship(string directKinship, Sex sex) => directKinship switch
+    {
+        "Son" or "Daughter" => sex == Sex.Male ? "Grandson" : "Granddaughter",
+        "Brother" or "Sister" => sex == Sex.Male ? "Nephew" : "Niece",
+        _ => sex == Sex.Male ? "Male relative" : "Female relative"
+    };
 
     private static int RelationActionOrder(string id) => id switch
     {
         "family_relations.improve" => 0,
-        "family_relations.ask_money" => 10,
-        "family_relations.ask_house" => 20,
-        "family_relations.ask_job_help" => 30,
-        "family_relations.give_money" => 40,
-        "family_relations.give_house" => 50,
-        "family_relations.give_job_help" => 60,
+        "family_relations.give_money" => 10,
+        "family_relations.ask_money" => 20,
+        "family_relations.give_house" => 30,
+        "family_relations.ask_house" => 40,
+        "family_relations.give_job_help" => 50,
+        "family_relations.ask_job_help" => 60,
         _ => 100
     };
 }

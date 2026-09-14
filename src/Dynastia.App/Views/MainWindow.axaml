@@ -478,7 +478,7 @@
                         Canvas.Left="8"
                         Canvas.Top="118"
                         Width="820"
-                        Height="295.5">
+                        Height="307.5">
 
                         <Image
                             IsHitTestVisible="False"
@@ -486,17 +486,19 @@
                             Stretch="Fill" />
 
                         <Grid
-                            Margin="50,74,48,34"
-                            RowDefinitions="Auto,Auto,*"
-                            RowSpacing="7">
+                            Margin="50,76,48,36"
+                            RowDefinitions="Auto,*"
+                            RowSpacing="9"
+                            ClipToBounds="True">
 
                             <Grid
+                                Height="34"
                                 ColumnDefinitions="Auto,*"
                                 ColumnSpacing="10">
 
                                 <TextBlock
                                     VerticalAlignment="Center"
-                                    FontSize="25"
+                                    FontSize="24"
                                     FontWeight="Bold"
                                     Text="Actions" />
 
@@ -520,7 +522,7 @@
                                                 Classes.active="{Binding IsActive}"
                                                 Command="{Binding ToggleCommand}">
                                                 <TextBlock
-                                                    FontSize="13.5"
+                                                    FontSize="12.5"
                                                     Foreground="#F1E3C4"
                                                     Text="{Binding Label}" />
                                             </Button>
@@ -529,36 +531,36 @@
                                 </ItemsControl>
                             </Grid>
 
-                            <Grid
-                                Grid.Row="1"
-                                ColumnDefinitions="*,Auto"
-                                ColumnSpacing="8"
-                                IsVisible="{Binding HasQueuedAction}">
-
-                                <TextBlock
-                                    VerticalAlignment="Center"
-                                    FontSize="14"
-                                    FontWeight="SemiBold"
-                                    Foreground="#E8C96E"
-                                    Text="{Binding QueuedActionText}" />
-
-                                <Button
-                                    Grid.Column="1"
-                                    Classes="gameAction"
-                                    Command="{Binding CancelQueuedActionCommand}">
-
-                                    <TextBlock
-                                        Foreground="#F8E9C8"
-                                        Text="Cancel" />
-                                </Button>
-                            </Grid>
-
                             <ScrollViewer
-                                Grid.Row="3"
+                                Grid.Row="1"
                                 HorizontalScrollBarVisibility="Disabled"
                                 VerticalScrollBarVisibility="Auto">
 
                                 <StackPanel>
+                                    <Grid
+                                        Margin="0,0,0,7"
+                                        ColumnDefinitions="*,Auto"
+                                        ColumnSpacing="8"
+                                        IsVisible="{Binding HasQueuedAction}">
+
+                                        <TextBlock
+                                            VerticalAlignment="Center"
+                                            FontSize="14"
+                                            FontWeight="SemiBold"
+                                            Foreground="#E8C96E"
+                                            Text="{Binding QueuedActionText}" />
+
+                                        <Button
+                                            Grid.Column="1"
+                                            Classes="gameAction"
+                                            Command="{Binding CancelQueuedActionCommand}">
+
+                                            <TextBlock
+                                                Foreground="#F8E9C8"
+                                                Text="Cancel" />
+                                        </Button>
+                                    </Grid>
+
                                     <TextBlock
                                         Opacity="0.82"
                                         TextWrapping="Wrap"
@@ -584,6 +586,7 @@
                                                     Command="{Binding ExecuteCommand}">
 
                                                     <TextBlock
+                                                        FontSize="13.5"
                                                         Foreground="#F8E9C8"
                                                         Text="{Binding Label}" />
 
@@ -841,7 +844,7 @@
                                     Command="{Binding ShowLivingFamilyCommand}">
 
                                     <TextBlock
-                                        FontSize="13.5"
+                                        FontSize="12.5"
                                         Foreground="#F1E3C4"
                                         Text="Lineage" />
                                 </Button>
@@ -854,7 +857,7 @@
                                     Command="{Binding ShowBloodlineFamilyCommand}">
 
                                     <TextBlock
-                                        FontSize="13.5"
+                                        FontSize="12.5"
                                         Foreground="#F1E3C4"
                                         Text="Bloodline" />
                                 </Button>
@@ -867,7 +870,7 @@
                                     Command="{Binding ShowDeceasedFamilyCommand}">
 
                                     <TextBlock
-                                        FontSize="13.5"
+                                        FontSize="12.5"
                                         Foreground="#F1E3C4"
                                         Text="Deceased" />
                                 </Button>
@@ -989,7 +992,8 @@
                                         Grid.Row="1"
                                         IsVisible="{Binding IsLivingFamilyView}"
                                         HorizontalAlignment="Center"
-                                        Spacing="4">
+                                        Spacing="4"
+                                        PointerPressed="OnFamilyInventoryClick">
                                         <TextBlock
                                             HorizontalAlignment="Center"
                                             FontSize="16"
@@ -1103,13 +1107,6 @@
                                         <StackPanel
                                             IsVisible="{Binding IsDeceasedFamilyView}"
                                             Spacing="6">
-                                            <TextBlock
-                                                HorizontalAlignment="Center"
-                                                FontSize="11"
-                                                FontWeight="Bold"
-                                                Foreground="#C6AA69"
-                                                Text="Deceased Family" />
-
                                             <ItemsControl
                                                 HorizontalAlignment="Center"
                                                 ItemsSource="{Binding DeceasedFamilyMembers}"
@@ -1724,8 +1721,8 @@
                     Background="#B0000000">
 
                     <Grid
-                        Width="1120"
-                        Height="860"
+                        Width="1000"
+                        Height="760"
                         HorizontalAlignment="Center"
                         VerticalAlignment="Center">
 
@@ -1735,80 +1732,110 @@
 
                         <Grid
                             Margin="80,72,80,58"
-                            RowDefinitions="Auto,*,Auto"
-                            RowSpacing="16">
+                            RowDefinitions="Auto,Auto,*,Auto"
+                            RowSpacing="12">
 
                             <TextBlock
                                 HorizontalAlignment="Center"
                                 FontFamily="avares://Dynastia.App/Assets/Fonts#UnifrakturCook"
                                 FontSize="42"
-                                Foreground="#301E0E"
+                                Foreground="#2F1D0E"
                                 Text="{Binding YearSummaryTitle}" />
 
-                            <ScrollViewer
+                            <TextBlock
                                 Grid.Row="1"
-                                HorizontalScrollBarVisibility="Disabled"
-                                VerticalScrollBarVisibility="Auto">
-
-                                <Grid>
-                                    <TextBlock
-                                        HorizontalAlignment="Center"
-                                        Opacity="0.7"
-                                        FontStyle="Italic"
-                                        FontSize="15"
-                                        Foreground="#362616"
-                                        Text="{Binding YearSummaryEmptyText}" />
-
-                                    <ItemsControl
-                                        ItemsSource="{Binding YearSummaryHouseholds}">
-
-                                        <ItemsControl.ItemTemplate>
-                                            <DataTemplate
-                                                x:DataType="vm:YearSummaryHouseholdViewModel">
-
-                                                <StackPanel
-                                                    Margin="0,0,0,18"
-                                                    Spacing="5">
-
-                                                    <TextBlock
-                                                        FontSize="18"
-                                                        FontWeight="Bold"
-                                                        Foreground="#4D2D13"
-                                                        Text="{Binding Title}" />
-
-                                                    <ItemsControl
-                                                        ItemsSource="{Binding Events}">
-
-                                                        <ItemsControl.ItemTemplate>
-                                                            <DataTemplate
-                                                                x:DataType="vm:AlbumEventViewModel">
-
-                                                                <TextBlock
-                                                                    Margin="10,2,0,3"
-                                                                    FontSize="15"
-                                                                    LineHeight="21"
-                                                                    Foreground="#362616"
-                                                                    TextWrapping="Wrap"
-                                                                    Text="{Binding Text}" />
-                                                            </DataTemplate>
-                                                        </ItemsControl.ItemTemplate>
-                                                    </ItemsControl>
-                                                </StackPanel>
-                                            </DataTemplate>
-                                        </ItemsControl.ItemTemplate>
-                                    </ItemsControl>
-                                </Grid>
-                            </ScrollViewer>
-
-                            <ui:ImageStateButton
-                                Grid.Row="2"
-                                Width="190"
-                                Height="62"
                                 HorizontalAlignment="Center"
-                                IdleSource="avares://Dynastia.App/Assets/UI/b_close_idle.png"
-                                HoverSource="avares://Dynastia.App/Assets/UI/b_close_hover.png"
-                                FallbackText="Close"
-                                Command="{Binding HideYearSummaryCommand}" />
+                                FontFamily="Georgia"
+                                FontSize="14"
+                                Foreground="#5B4024"
+                                Text="Notable events grouped by household." />
+
+                            <Border
+                                Grid.Row="2"
+                                Padding="8"
+                                Background="#0FFFFFFF"
+                                BorderBrush="#8F6A34"
+                                BorderThickness="1.5"
+                                CornerRadius="6">
+
+                                <ScrollViewer
+                                    HorizontalScrollBarVisibility="Disabled"
+                                    VerticalScrollBarVisibility="Auto">
+
+                                    <Grid>
+                                        <TextBlock
+                                            HorizontalAlignment="Center"
+                                            Opacity="0.7"
+                                            FontFamily="Georgia"
+                                            FontStyle="Italic"
+                                            FontSize="15"
+                                            Foreground="#362616"
+                                            Text="{Binding YearSummaryEmptyText}" />
+
+                                        <ItemsControl
+                                            ItemsSource="{Binding YearSummaryHouseholds}">
+
+                                            <ItemsControl.ItemTemplate>
+                                                <DataTemplate
+                                                    x:DataType="vm:YearSummaryHouseholdViewModel">
+
+                                                    <Border
+                                                        Margin="6,5"
+                                                        Padding="16,13"
+                                                        Background="#35FFF4D9"
+                                                        BorderBrush="#A17A43"
+                                                        BorderThickness="1"
+                                                        CornerRadius="4">
+
+                                                        <StackPanel Spacing="7">
+                                                            <TextBlock
+                                                                FontFamily="Georgia"
+                                                                FontSize="18"
+                                                                FontWeight="Bold"
+                                                                Foreground="#352110"
+                                                                Text="{Binding Title}" />
+
+                                                            <ItemsControl
+                                                                ItemsSource="{Binding Events}">
+
+                                                                <ItemsControl.ItemTemplate>
+                                                                    <DataTemplate
+                                                                        x:DataType="vm:AlbumEventViewModel">
+
+                                                                        <TextBlock
+                                                                            Margin="10,2,0,3"
+                                                                            FontFamily="Georgia"
+                                                                            FontSize="14"
+                                                                            LineHeight="20"
+                                                                            Foreground="#46321C"
+                                                                            TextWrapping="Wrap"
+                                                                            Text="{Binding Text}" />
+                                                                    </DataTemplate>
+                                                                </ItemsControl.ItemTemplate>
+                                                            </ItemsControl>
+                                                        </StackPanel>
+                                                    </Border>
+                                                </DataTemplate>
+                                            </ItemsControl.ItemTemplate>
+                                        </ItemsControl>
+                                    </Grid>
+                                </ScrollViewer>
+                            </Border>
+
+                            <Grid
+                                Grid.Row="3"
+                                ColumnDefinitions="*,Auto"
+                                Margin="4,0">
+
+                                <ui:ImageStateButton
+                                    Grid.Column="1"
+                                    Width="170"
+                                    Height="70"
+                                    IdleSource="avares://Dynastia.App/Assets/UI/b_close_idle.png"
+                                    HoverSource="avares://Dynastia.App/Assets/UI/b_close_hover.png"
+                                    FallbackText="Close"
+                                    Command="{Binding HideYearSummaryCommand}" />
+                            </Grid>
                         </Grid>
                     </Grid>
                 </Grid>

@@ -181,6 +181,8 @@ public sealed partial class MainWindowViewModel
                         Event = gameEvent,
                         household.Key,
                         household.Title,
+                        household.ClassOrder,
+                        household.Generation,
                         Severity =
                             ChronicleEventOrdering.GetSeverity(
                                 gameEvent)
@@ -191,13 +193,15 @@ public sealed partial class MainWindowViewModel
                 {
                     Key = group.Key,
                     Title = group.First().Title,
-                    Severity = group.Min(item => item.Severity),
+                    ClassOrder = group.First().ClassOrder,
+                    Generation = group.First().Generation,
                     Events = group
                         .OrderBy(item => item.Severity)
                         .Select(item => item.Event)
                         .ToList()
                 })
-                .OrderBy(group => group.Severity)
+                .OrderBy(group => group.ClassOrder)
+                .ThenBy(group => group.Generation)
                 .ThenBy(group => group.Title, StringComparer.OrdinalIgnoreCase)
                 .ToList();
 
@@ -205,7 +209,9 @@ public sealed partial class MainWindowViewModel
         {
             YearSummaryHouseholds.Add(
                 new YearSummaryHouseholdViewModel(
-                    group.Title,
+                    group.Generation == int.MaxValue
+                        ? group.Title
+                        : $"Generation {group.Generation} — {group.Title}",
                     group.Events.Select(
                         gameEvent =>
                             new AlbumEventViewModel(
@@ -234,8 +240,9 @@ public sealed partial class MainWindowViewModel
         }
     }
 
-    private (Guid Key, string Title) ResolveChronicleHousehold(
-        GameEvent gameEvent)
+    private (Guid Key, string Title, int ClassOrder, int Generation)
+        ResolveChronicleHousehold(
+            GameEvent gameEvent)
     {
         var personIds =
             new List<Guid>();
@@ -265,12 +272,19 @@ public sealed partial class MainWindowViewModel
 
             return (
                 household.HouseholdId,
-                $"{household.HeadName}'s household");
+                $"{household.HeadName}'s household",
+                household.Class == HouseholdClass.Lineage
+                    ? 0
+                    : 1,
+                household.Generation
+                    ?? int.MaxValue);
         }
 
         return (
             Guid.Empty,
-            "Extended family");
+            "Extended family",
+            2,
+            int.MaxValue);
     }
 
     private void HideGameOver()

@@ -46,7 +46,7 @@ public partial class FamilyRelationsWindow : Window
 
             var selector = new PropertySelectionWindow(
                 "Select Property",
-                "Give House",
+                action.Label,
                 options);
             propertyId = await selector.ShowDialog<string?>(this);
             if (string.IsNullOrWhiteSpace(propertyId))

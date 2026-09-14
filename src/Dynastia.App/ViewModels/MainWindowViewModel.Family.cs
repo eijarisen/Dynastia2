@@ -588,11 +588,15 @@ public sealed partial class MainWindowViewModel
         {
             SwitchActiveHousehold(
                 household.HeadId);
+            SelectFamilyMember(
+                personId);
             return;
         }
 
         InspectBloodlineHousehold(
             household.HeadId);
+        SelectFamilyMember(
+            personId);
     }
 
     private void SwitchActiveHousehold(

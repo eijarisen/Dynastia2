@@ -4,7 +4,8 @@ public sealed record HousePropertyInfo(
     Guid Id,
     TownInfo Town,
     bool IsResidence,
-    bool IsRented)
+    bool IsRented,
+    Guid? AssignedHeirId = null)
 {
     public string Status =>
         IsResidence

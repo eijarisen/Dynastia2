@@ -13,19 +13,21 @@ internal static partial class FamilyRelationActions
         IFamilyService family) => new()
     {
         Id = "family_relations.ask_money",
-        Label = "Ask for Money",
-        Description = "Ask this autonomous relative's household for financial help. Choose the amount in full thousands; relationship and the burden on their household determine whether they agree.",
+        Label = "Request Money",
+        Description = "Request financial help from this relative's household. The action is offered when their household is at least as wealthy as yours; acceptance depends on the family relationship.",
         Mode = ActionExecutionMode.Queued,
         QueuePhase = YearPhase.FamilyRelationActions,
         IsAvailable = c => IsRelationsContext(c)
             && IsValidRelation(c, relations)
-            && TryGetAutonomousTargetHead(c.Target, households, out var targetHead)
-            && targetHead is not null
+            && ResolveTargetHead(c.Target, households) is { } targetHead
             && economy.GetHousehold(targetHead) is { } targetFinance
+            && economy.GetHousehold(c.Actor) is { } actorFinance
+            && actorFinance.Wealth <= targetFinance.Wealth
             && CanAffordMoneySelection(c, targetFinance.Wealth),
         Execute = c =>
         {
-            if (!TryGetAutonomousTargetHead(c.Target, households, out var targetHead) || targetHead is null)
+            var targetHead = ResolveTargetHead(c.Target, households);
+            if (targetHead is null)
                 return new(false);
 
             var targetFinance = economy.GetHousehold(targetHead);
@@ -38,26 +40,9 @@ internal static partial class FamilyRelationActions
                 return new(false, "That household can no longer afford the selected amount.");
             }
 
-            var baseAbility = targetFinance.Wealth switch
-            {
-                < 5000m => 0.75,
-                < 10000m => 0.90,
-                < 20000m => 1.00,
-                _ => 1.10
-            };
-
-            var burdenFactor =
-                Math.Clamp(
-                    (double)(targetFinance.Wealth / amount) / 3.0,
-                    0.35,
-                    1.15);
-
             var accepted =
                 random.NextDouble()
-                < relations.EvaluateRequestWillingness(
-                    c.Actor,
-                    c.Target,
-                    baseAbility * burdenFactor);
+                < relations.EvaluateRequestWillingness(c.Actor, c.Target);
 
             if (!accepted)
             {
@@ -94,14 +79,16 @@ internal static partial class FamilyRelationActions
         IFamilyService family) => new()
     {
         Id = "family_relations.give_money",
-        Label = "Give Money",
-        Description = "Give money to this relative's household in full-thousand increments. No approval roll is needed and the gift improves the relationship.",
+        Label = "Send Money",
+        Description = "Send money to this relative's household in full-thousand increments. The action is offered while your household is at least as wealthy as theirs. Gifts always succeed.",
         Mode = ActionExecutionMode.Queued,
         QueuePhase = YearPhase.FamilyRelationActions,
         IsAvailable = c => IsRelationsContext(c)
             && IsValidRelation(c, relations)
-            && ResolveTargetHead(c.Target, households) is not null
+            && ResolveTargetHead(c.Target, households) is { } targetHead
+            && economy.GetHousehold(targetHead) is { } targetFinance
             && economy.GetHousehold(c.Actor) is { } actorFinance
+            && actorFinance.Wealth >= targetFinance.Wealth
             && CanAffordMoneySelection(c, actorFinance.Wealth),
         Execute = c =>
         {
@@ -173,5 +160,4 @@ internal static partial class FamilyRelationActions
         decimal amount) =>
         amount >= MinimumMoneyTransfer
         && amount % 1000m == 0m;
-
 }

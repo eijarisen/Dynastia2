@@ -6,7 +6,6 @@ internal static partial class FamilyRelationActions
 {
     private const decimal MinimumMoneyTransfer = 1000m;
     private const decimal LegacyMoneyGift = 2000m;
-    private const double JobConnectionBonus = 0.20;
 
     public static void Register(
         IActionRegistry actions,
@@ -42,7 +41,10 @@ internal static partial class FamilyRelationActions
         Description = "Spend meaningful time together. The primary family relationship improves by 10, with a small positive spillover to other close ties between the two households.",
         Mode = ActionExecutionMode.Queued,
         QueuePhase = YearPhase.FamilyRelationActions,
-        IsAvailable = c => IsRelationsContext(c) && IsValidRelation(c, relations) && IsDifferentHousehold(c.Actor, c.Target, households, economy),
+        IsAvailable = c => IsRelationsContext(c)
+            && IsValidRelation(c, relations)
+            && relations.GetRelation(c.Actor, c.Target) is { Score: < 100 }
+            && IsDifferentHousehold(c.Actor, c.Target, households, economy),
         Execute = c =>
         {
             if (!IsValidRelation(c, relations)) return new(false);
@@ -75,11 +77,6 @@ internal static partial class FamilyRelationActions
 
     private static IPerson? ResolveTargetHead(IPerson target, IHouseholdService households) => households.ResolveHouseholdHead(target);
 
-    private static bool TryGetAutonomousTargetHead(IPerson target, IHouseholdService households, out IPerson? head)
-    {
-        head = households.ResolveHouseholdHead(target);
-        return head is not null && households.IsAutonomousHousehold(head) && !head.Tags.Has("control.playable");
-    }
 
     private static void ApplySpillover(
         IPerson actor,

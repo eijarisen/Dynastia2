@@ -77,6 +77,15 @@ public sealed class EconomyPlugin : IGamePlugin
         events.EventPublished +=
             (_, gameEvent) =>
             {
+                if (gameEvent.Type.Equals(
+                        "life.death",
+                        StringComparison.OrdinalIgnoreCase)
+                    && gameEvent.SubjectId is Guid deceasedId)
+                {
+                    economy.ClearHouseInheritanceAssignments(
+                        deceasedId);
+                }
+
                 if (!gameEvent.Type.Equals(
                     "game.started",
                     StringComparison.OrdinalIgnoreCase))

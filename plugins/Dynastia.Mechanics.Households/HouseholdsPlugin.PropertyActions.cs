@@ -202,16 +202,26 @@ public sealed partial class HouseholdsPlugin
                     .ToList();
             });
 
+        // Legacy compatibility only. The player-facing action was replaced
+        // by per-property inheritance designations in Family Inventory.
+        // Keeping the definition lets saves with this already queued action
+        // resolve once instead of becoming unloadable.
         actions.Register(
             new GameActionDefinition
             {
                 Id = "household.give_house_to_son",
                 Label = "Give House to Son",
                 Description =
-                    "Give one rented investment house to the selected living son. The property keeps its town. A minor receives the exact same property when he reaches adulthood.",
+                    "Legacy queued house gift.",
                 Mode = ActionExecutionMode.Immediate,
                 IsAvailable = context =>
                 {
+                    if (!ActionCompatibilityParameters.IsRestoredQueuedAction(
+                            context.Parameters))
+                    {
+                        return false;
+                    }
+
                     var actor = context.Actor;
                     var target = context.Target;
                     if (!actor.Tags.Has("state.alive")
@@ -237,7 +247,7 @@ public sealed partial class HouseholdsPlugin
                     if (son.Age >= 18)
                     {
                         economy.EnsureHousehold(son);
-                        economy.AddExistingHouse(son, gifted);
+                        economy.AddExistingHouse(son, gifted with { AssignedHeirId = null });
 
                         events.Publish(new GameEvent
                         {
@@ -254,7 +264,7 @@ public sealed partial class HouseholdsPlugin
                     }
                     else
                     {
-                        economy.AddPendingHouse(son, gifted);
+                        economy.AddPendingHouse(son, gifted with { AssignedHeirId = null });
                         events.Publish(new GameEvent
                         {
                             Type = "household.house_promised",
@@ -415,7 +425,7 @@ public sealed partial class HouseholdsPlugin
                 if (gifted is null)
                     return new GameActionResult(false);
 
-                economy.AddExistingHouse(context.Actor, gifted);
+                economy.AddExistingHouse(context.Actor, gifted with { AssignedHeirId = null });
                 var currentTown = locations.GetLocation(context.Actor).HomeTown;
                 var moved = !currentTown.Id.Equals(gifted.Town.Id, StringComparison.OrdinalIgnoreCase);
 

@@ -401,6 +401,9 @@ public sealed partial class StandardLoanService :
             remainingYears,
             contract.CreditorType,
             contract.Status,
-            contract.IsSelfOriginatedBankLoan);
+            contract.IsSelfOriginatedBankLoan,
+            contract.IsExternalReceivable
+                ? contract.ExternalBorrowerName
+                : null);
     }
 }

@@ -4,6 +4,7 @@
     xmlns:ui="using:Dynastia.App.Controls"
     xmlns:vm="using:Dynastia.App.ViewModels"
     x:Class="Dynastia.App.Views.FamilyRelationsWindow"
+    x:DataType="vm:FamilyRelationsWindowViewModel"
     Width="1000"
     Height="760"
     MinWidth="900"
@@ -111,14 +112,6 @@
                                                     Text=")" />
                                             </StackPanel>
 
-                                            <TextBlock
-                                                FontFamily="Georgia"
-                                                FontSize="13"
-                                                LineHeight="19"
-                                                Foreground="#46321C"
-                                                TextWrapping="Wrap"
-                                                Text="{Binding OtherMembersText}" />
-
                                             <StackPanel Orientation="Horizontal" Spacing="18">
                                                 <TextBlock
                                                     FontFamily="Georgia"
@@ -129,9 +122,19 @@
                                                 <TextBlock
                                                     FontFamily="Georgia"
                                                     FontSize="13"
+                                                    FontWeight="Bold"
                                                     Foreground="#5A3A18"
-                                                    Text="{Binding LocationText}" />
+                                                    Text="{Binding HousesText}" />
                                             </StackPanel>
+
+                                            <TextBlock
+                                                Margin="0,3,0,0"
+                                                FontFamily="Georgia"
+                                                FontSize="13"
+                                                LineHeight="20"
+                                                Foreground="#46321C"
+                                                TextWrapping="Wrap"
+                                                Text="{Binding OtherMembersText}" />
                                         </StackPanel>
 
                                         <ItemsControl
@@ -146,56 +149,27 @@
                                             </ItemsControl.ItemsPanel>
                                             <ItemsControl.ItemTemplate>
                                                 <DataTemplate x:DataType="vm:FamilyRelationActionViewModel">
-                                                    <Grid>
-                                                        <ui:ImageStateButton
-                                                            Width="170"
-                                                            Height="70"
-                                                            IsVisible="{Binding IsImproveRelations}"
-                                                            IdleSource="avares://Dynastia.App/Assets/UI/b_relations_idle.png"
-                                                            HoverSource="avares://Dynastia.App/Assets/UI/b_relations_hover.png"
-                                                            FallbackText="Improve Relations"
-                                                            Click="OnActionClick">
-                                                            <ToolTip.Tip>
-                                                                <Border
-                                                                    MaxWidth="390"
-                                                                    Padding="9,7"
-                                                                    Background="#F20A1514"
-                                                                    BorderBrush="#B88934"
-                                                                    BorderThickness="1"
-                                                                    CornerRadius="4">
-                                                                    <TextBlock
-                                                                        FontSize="10.5"
-                                                                        LineHeight="17"
-                                                                        Foreground="#F5E6C6"
-                                                                        TextWrapping="Wrap"
-                                                                        Text="{Binding Description}" />
-                                                                </Border>
-                                                            </ToolTip.Tip>
-                                                        </ui:ImageStateButton>
-
-                                                        <Button
-                                                            Classes="relationAction"
-                                                            IsVisible="{Binding IsStandardAction}"
-                                                            Content="{Binding Label}"
-                                                            Click="OnActionClick">
-                                                            <ToolTip.Tip>
-                                                                <Border
-                                                                    MaxWidth="390"
-                                                                    Padding="9,7"
-                                                                    Background="#F20A1514"
-                                                                    BorderBrush="#B88934"
-                                                                    BorderThickness="1"
-                                                                    CornerRadius="4">
-                                                                    <TextBlock
-                                                                        FontSize="10.5"
-                                                                        LineHeight="17"
-                                                                        Foreground="#F5E6C6"
-                                                                        TextWrapping="Wrap"
-                                                                        Text="{Binding Description}" />
-                                                                </Border>
-                                                            </ToolTip.Tip>
-                                                        </Button>
-                                                    </Grid>
+                                                    <Button
+                                                        Classes="relationAction"
+                                                        Content="{Binding Label}"
+                                                        Click="OnActionClick">
+                                                        <ToolTip.Tip>
+                                                            <Border
+                                                                MaxWidth="390"
+                                                                Padding="9,7"
+                                                                Background="#F20A1514"
+                                                                BorderBrush="#B88934"
+                                                                BorderThickness="1"
+                                                                CornerRadius="4">
+                                                                <TextBlock
+                                                                    FontSize="10.5"
+                                                                    LineHeight="17"
+                                                                    Foreground="#F5E6C6"
+                                                                    TextWrapping="Wrap"
+                                                                    Text="{Binding Description}" />
+                                                            </Border>
+                                                        </ToolTip.Tip>
+                                                    </Button>
                                                 </DataTemplate>
                                             </ItemsControl.ItemTemplate>
                                         </ItemsControl>

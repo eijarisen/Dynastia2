@@ -350,9 +350,12 @@ public sealed partial class MainWindowViewModel
         string selectedId)
     {
         var actor = _succession.ActiveController;
-        var target = FindSelectedPerson();
-        if (actor is null || target is null || _succession.IsGameOver)
+        if (actor is null || _succession.IsGameOver)
             return;
+
+        // Property inventory actions always belong to the active household,
+        // regardless of which family member is currently selected in the UI.
+        var target = actor;
 
         var key = actionId.Equals("household.buy_house", StringComparison.OrdinalIgnoreCase)
             ? "townId"
@@ -435,15 +438,15 @@ public sealed partial class MainWindowViewModel
         var actor =
             _succession.ActiveController;
 
-        var target =
-            FindSelectedPerson();
-
         if (actor is null
-            || target is null
             || _succession.IsGameOver)
         {
             return;
         }
+
+        // Loan inventory actions always belong to the active household,
+        // regardless of which family member is currently selected in the UI.
+        var target = actor;
 
         var parameters =
             new Dictionary<string, string>(

@@ -103,6 +103,11 @@ public interface IEconomyService
         IPerson person,
         Guid propertyId);
 
+    bool SetHouseInheritanceHeir(
+        IPerson person,
+        Guid propertyId,
+        Guid? heirId);
+
     decimal GetHousePrice(TownInfo town);
 
     decimal GetHouseSaleValue(TownInfo town);

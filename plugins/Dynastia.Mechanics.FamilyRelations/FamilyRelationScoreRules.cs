@@ -19,7 +19,7 @@ public static class FamilyRelationScoreRules
             < 40 => 0.25,
             < 60 => 0.50,
             < 80 => 0.72,
-            _ => 0.90
+            _ => 0.95
         };
 
         return Math.Clamp(

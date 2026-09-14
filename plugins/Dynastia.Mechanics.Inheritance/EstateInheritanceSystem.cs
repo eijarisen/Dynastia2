@@ -368,17 +368,30 @@ public sealed class EstateInheritanceSystem :
                 _ =>
                     new List<HousePropertyInfo>());
 
+        var heirsById =
+            heirs.ToDictionary(
+                heir => heir.Id);
+
+        var recipients =
+            HouseInheritanceAssignmentRules.ResolveRecipients(
+                heirs.Select(heir => heir.Id).ToList(),
+                houses.Select(house => house.AssignedHeirId).ToList());
+
         for (var index = 0;
             index < houses.Count;
             index++)
         {
             var heir =
-                heirs[
-                    index
-                    % heirs.Count];
+                heirsById[recipients[index]];
 
+            // A designation belongs to the deceased household. Once the
+            // property reaches its recipient it becomes ordinary property
+            // in that recipient's estate until they designate an heir.
             var house =
-                houses[index];
+                houses[index] with
+                {
+                    AssignedHeirId = null
+                };
 
             var hasOwnHousehold =
                 HasEstablishedHouseholdOutsideEstate(

@@ -8,4 +8,6 @@ public sealed class HousePropertyState
         Guid.NewGuid();
 
     public TownInfo? Town { get; set; }
+
+    public Guid? AssignedHeirId { get; set; }
 }

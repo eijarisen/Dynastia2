@@ -229,6 +229,20 @@ public sealed partial class StandardEconomyService
                     .GetLocation(
                         head)
                     .HomeTown;
+
+            if (house.AssignedHeirId is Guid assignedHeirId)
+            {
+                var assignedHeir =
+                    _gameState.People
+                        .FirstOrDefault(person =>
+                            person.Id == assignedHeirId);
+
+                if (assignedHeir is null
+                    || !assignedHeir.Tags.Has("state.alive"))
+                {
+                    house.AssignedHeirId = null;
+                }
+            }
         }
 
         SynchronizeDerivedHouseCounts(
@@ -334,7 +348,8 @@ public sealed partial class StandardEconomyService
             house.Id,
             town,
             IsResidence: isResidence,
-            IsRented: !isResidence);
+            IsRented: !isResidence,
+            AssignedHeirId: house.AssignedHeirId);
     }
 
     private static HousePropertyInfo ToInfo(
@@ -352,7 +367,9 @@ public sealed partial class StandardEconomyService
             IsResidence:
                 index == 0,
             IsRented:
-                index > 0);
+                index > 0,
+            AssignedHeirId:
+                house.AssignedHeirId);
     }
 
     private static PersonalEstateComponent

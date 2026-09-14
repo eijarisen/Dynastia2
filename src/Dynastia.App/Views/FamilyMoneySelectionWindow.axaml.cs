@@ -33,9 +33,9 @@ public partial class FamilyMoneySelectionWindow : Window
 
         ExplanationText.Text =
             actionLabel.StartsWith(
-                "Ask",
+                "Request",
                 StringComparison.OrdinalIgnoreCase)
-                ? "A larger request is harder for the other household to accept. The amount is rechecked when the action resolves."
+                ? "Whether the other household agrees depends on the family relationship. The amount is rechecked when the action resolves."
                 : "The gift is paid when the queued action resolves. The amount is rechecked against household wealth at that time.";
 
         RefreshAmount();

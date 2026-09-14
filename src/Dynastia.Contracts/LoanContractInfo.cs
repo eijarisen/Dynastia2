@@ -8,4 +8,5 @@ public sealed record LoanContractInfo(
     int YearsRemaining,
     LoanCreditorType CreditorType,
     LoanStatus Status,
-    bool IsSelfOriginated);
+    bool IsSelfOriginated,
+    string? BorrowerName = null);

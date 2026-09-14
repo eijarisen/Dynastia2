@@ -16,6 +16,7 @@ public sealed class LoanContractState
     public LoanStatus Status { get; set; } = LoanStatus.Active;
     public bool IsSelfOriginatedBankLoan { get; set; }
     public bool IsExternalReceivable { get; set; }
+    public string? ExternalBorrowerName { get; set; }
     public Guid? ServicingHouseholdId { get; set; }
     public List<LoanCreditorShareState> CreditorShares { get; set; } = [];
 }

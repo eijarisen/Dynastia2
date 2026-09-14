@@ -6,6 +6,9 @@ namespace Dynastia.Mechanics.Loans;
 public sealed class LoansPlugin :
     IGamePlugin
 {
+    private const string SurnamesPath =
+        "Names/polish_surnames.csv";
+
     public void Initialize(
         IGamePluginContext context)
     {
@@ -15,6 +18,11 @@ public sealed class LoansPlugin :
         var family =
             Require<IFamilyService>(context, "Family service");
 
+        var historicalNames =
+            Require<IHistoricalNameService>(
+                context,
+                "Historical name service");
+
         var economy =
             Require<IEconomyService>(context, "Economy service");
 
@@ -23,6 +31,10 @@ public sealed class LoansPlugin :
 
         var data =
             Require<IGameDataService>(context, "Game data service");
+
+        var externalBorrowerSurnames =
+            data.GetWeightedStringList(
+                SurnamesPath);
 
         var historical =
             Require<IHistoricalActionVariantService>(
@@ -59,6 +71,8 @@ public sealed class LoansPlugin :
             actions,
             loans,
             family,
+            historicalNames,
+            externalBorrowerSurnames,
             economy,
             events,
             gameState,
@@ -92,6 +106,8 @@ public sealed class LoansPlugin :
         IActionRegistry actions,
         StandardLoanService loans,
         IFamilyService family,
+        IHistoricalNameService historicalNames,
+        IReadOnlyList<WeightedStringEntry> externalBorrowerSurnames,
         IEconomyService economy,
         IGameEventBus events,
         IGameState gameState,
@@ -249,11 +265,23 @@ public sealed class LoansPlugin :
                         lender,
                         -terms.Principal);
 
-                    loans.CreateExternalReceivable(
-                        lender,
-                        terms.Principal,
-                        terms.DurationYears,
-                        actionContext.GameState.Year);
+                    var contract =
+                        loans.CreateExternalReceivable(
+                            lender,
+                            terms.Principal,
+                            terms.DurationYears,
+                            actionContext.GameState.Year);
+
+                    var borrowerName =
+                        GenerateExternalBorrowerName(
+                            contract.ContractId,
+                            actionContext.GameState.Year,
+                            family,
+                            historicalNames,
+                            externalBorrowerSurnames);
+
+                    contract.ExternalBorrowerName =
+                        borrowerName;
 
                     var wording =
                         RequireHistoricalVariant(
@@ -274,8 +302,10 @@ public sealed class LoansPlugin :
                                     ["duration"] = terms.DurationYears.ToString(CultureInfo.InvariantCulture),
                                     ["totalRepayment"] = terms.TotalRepayment.ToString(CultureInfo.InvariantCulture),
                                     ["annualPayment"] = terms.AnnualPayment.ToString(CultureInfo.InvariantCulture),
+                                    ["borrowerName"] = borrowerName,
                                     ["text"] =
-                                        $"{family.GetDisplayName(lender)} {wording.Narrative}: " +
+                                        $"{family.GetDisplayName(lender)} " +
+                                        $"{FormatExternalLoanNarrative(wording.Narrative, borrowerName)}: " +
                                         $"{terms.Principal:N0} zł for {terms.DurationYears} years."
                                 }
                         });
@@ -376,6 +406,157 @@ public sealed class LoansPlugin :
         catch (ArgumentOutOfRangeException)
         {
             return false;
+        }
+    }
+
+    private static string GenerateExternalBorrowerName(
+        Guid contractId,
+        int year,
+        IFamilyService family,
+        IHistoricalNameService historicalNames,
+        IReadOnlyList<WeightedStringEntry> surnames)
+    {
+        var random =
+            new LoanFlavorRandom(
+                contractId);
+
+        var sex =
+            year < 1918
+                ? Sex.Male
+                : random.Chance(0.5)
+                    ? Sex.Male
+                    : Sex.Female;
+
+        var firstName =
+            historicalNames.GetRandomFirstName(
+                sex,
+                year - 30,
+                random);
+
+        var surname =
+            SelectWeighted(
+                surnames,
+                random);
+
+        return
+            $"{firstName} {family.FormatSurname(surname, sex)}";
+    }
+
+    private static string SelectWeighted(
+        IReadOnlyList<WeightedStringEntry> entries,
+        IGameRandom random)
+    {
+        var totalWeight =
+            entries.Sum(
+                entry => (double)entry.Weight);
+
+        var roll =
+            random.NextDouble()
+            * totalWeight;
+
+        foreach (var entry in entries)
+        {
+            if (roll < entry.Weight)
+                return entry.Value;
+
+            roll -= entry.Weight;
+        }
+
+        return entries[^1].Value;
+    }
+
+    private static string FormatExternalLoanNarrative(
+        string narrative,
+        string borrowerName)
+    {
+        const string genericBorrower =
+            "an outside borrower";
+
+        if (narrative.Contains(
+                genericBorrower,
+                StringComparison.OrdinalIgnoreCase))
+        {
+            return narrative.Replace(
+                genericBorrower,
+                borrowerName,
+                StringComparison.OrdinalIgnoreCase);
+        }
+
+        return $"{narrative} ({borrowerName})";
+    }
+
+    private sealed class LoanFlavorRandom :
+        IGameRandom
+    {
+        private ulong _state;
+
+        public LoanFlavorRandom(
+            Guid seed)
+        {
+            const ulong offsetBasis =
+                14695981039346656037UL;
+
+            const ulong prime =
+                1099511628211UL;
+
+            var state =
+                offsetBasis;
+
+            foreach (var value in seed.ToByteArray())
+            {
+                state ^= value;
+                state *= prime;
+            }
+
+            _state =
+                state == 0
+                    ? offsetBasis
+                    : state;
+        }
+
+        public int NextInt(
+            int minInclusive,
+            int maxInclusive)
+        {
+            if (maxInclusive < minInclusive)
+            {
+                throw new ArgumentOutOfRangeException(
+                    nameof(maxInclusive));
+            }
+
+            var range =
+                (ulong)((long)maxInclusive - minInclusive + 1L);
+
+            return minInclusive
+                + (int)(NextUInt64() % range);
+        }
+
+        public double NextDouble()
+        {
+            return (NextUInt64() >> 11)
+                * (1.0 / 9007199254740992.0);
+        }
+
+        public bool Chance(
+            double probability)
+        {
+            return probability switch
+            {
+                <= 0 => false,
+                >= 1 => true,
+                _ => NextDouble() < probability
+            };
+        }
+
+        private ulong NextUInt64()
+        {
+            _state =
+                unchecked(
+                    _state
+                    * 6364136223846793005UL
+                    + 1442695040888963407UL);
+
+            return _state;
         }
     }
 

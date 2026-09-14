@@ -207,15 +207,15 @@
                 Spacing="12">
                 <ui:ImageStateButton
                     x:Name="ConfirmButton"
-                    Width="190"
-                    Height="79"
+                    Width="160"
+                    Height="66"
                     IdleSource="avares://Dynastia.App/Assets/UI/b_takeloan_idle.png"
                     HoverSource="avares://Dynastia.App/Assets/UI/b_takeloan_hover.png"
                     FallbackText="Take Loan"
                     Click="OnConfirmClick" />
                 <ui:ImageStateButton
-                    Width="190"
-                    Height="79"
+                    Width="160"
+                    Height="66"
                     IdleSource="avares://Dynastia.App/Assets/UI/b_close_idle.png"
                     HoverSource="avares://Dynastia.App/Assets/UI/b_close_hover.png"
                     FallbackText="Close"

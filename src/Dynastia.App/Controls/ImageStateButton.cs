@@ -183,6 +183,9 @@ public sealed class ImageStateButton : Button
 
     private void ShowIdleState()
     {
+        // Never substitute hover artwork for a missing idle asset.
+        // A missing idle image should fall back to the normal text button
+        // so the control still has visibly distinct idle/hover states.
         ApplyVisual(
             _idle);
     }

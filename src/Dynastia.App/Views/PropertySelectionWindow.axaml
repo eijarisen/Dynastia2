@@ -136,13 +136,13 @@
                 IsVisible="False">
                 <ui:ImageStateButton
                     x:Name="ImageConfirmButton"
-                    Width="190"
-                    Height="79"
+                    Width="160"
+                    Height="66"
                     FallbackText="Confirm"
                     Click="OnConfirmClick" />
                 <ui:ImageStateButton
-                    Width="190"
-                    Height="79"
+                    Width="160"
+                    Height="66"
                     IdleSource="avares://Dynastia.App/Assets/UI/b_close_idle.png"
                     HoverSource="avares://Dynastia.App/Assets/UI/b_close_hover.png"
                     FallbackText="Close"

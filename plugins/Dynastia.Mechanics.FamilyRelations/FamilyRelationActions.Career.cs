@@ -15,38 +15,48 @@ internal static partial class FamilyRelationActions
         IGameState gameState) => new()
     {
         Id = "family_relations.ask_job_help",
-        Label = "Ask for Job Help",
-        Description = "Ask this autonomous relative to use a useful career connection. Agreement grants a normal local job attempt with a family-connection bonus.",
+        Label = "Use Family Connections",
+        Description = "Ask this relative's household to use its career connections. If they agree, every eligible adult in the active household below job level 3 advances by one level.",
         Mode = ActionExecutionMode.Queued,
         QueuePhase = YearPhase.FamilyRelationActions,
         IsAvailable = c => IsRelationsContext(c)
             && IsValidRelation(c, relations)
-            && TryGetAutonomousTargetHead(c.Target, households, out var targetHead)
-            && targetHead is not null
-            && FindUnemployedAdult(c.Actor, economy, career, gameState) is not null
-            && HasUsefulConnection(targetHead, economy, career, gameState),
+            && ResolveTargetHead(c.Target, households) is { } targetHead
+            && HasDecentCareerConnection(targetHead, economy, career, gameState)
+            && GetCareerHelpCandidates(c.Actor, economy, career, gameState).Count > 0,
         Execute = c =>
         {
-            if (!TryGetAutonomousTargetHead(c.Target, households, out var targetHead) || targetHead is null)
+            var targetHead = ResolveTargetHead(c.Target, households);
+            if (targetHead is null
+                || !HasDecentCareerConnection(targetHead, economy, career, gameState))
+            {
                 return new(false);
-            var worker = FindUnemployedAdult(c.Actor, economy, career, gameState);
-            if (worker is null || !HasUsefulConnection(targetHead, economy, career, gameState))
+            }
+
+            var candidates = GetCareerHelpCandidates(c.Actor, economy, career, gameState);
+            if (candidates.Count == 0)
                 return new(false);
 
             if (random.NextDouble() >= relations.EvaluateRequestWillingness(c.Actor, c.Target))
             {
                 relations.ModifyRelation(c.Actor, c.Target, -5);
-                Publish(events, c, "family_relations.job_help_refused", family,
-                    $"{family.GetDisplayName(c.Target)} declined to help {family.GetDisplayName(worker)} find work.");
+                Publish(
+                    events,
+                    c,
+                    "family_relations.job_help_refused",
+                    family,
+                    $"{family.GetDisplayName(c.Target)} declined to use family connections for {family.GetDisplayName(c.Actor)}'s household.");
                 return new(true);
             }
 
-            var found = career.TryFindEmployment(worker, JobConnectionBonus);
-            relations.ModifyRelation(c.Actor, c.Target, found ? 5 : 2);
-            Publish(events, c, "family_relations.job_help_received", family,
-                found
-                    ? $"{family.GetDisplayName(c.Target)} used family connections to help {family.GetDisplayName(worker)} find work."
-                    : $"{family.GetDisplayName(c.Target)} tried to help {family.GetDisplayName(worker)} find work, but no suitable position was secured.");
+            var helped = ApplyCareerHelp(candidates, career);
+            relations.ModifyRelation(c.Actor, c.Target, 5);
+            Publish(
+                events,
+                c,
+                "family_relations.job_help_received",
+                family,
+                $"{family.GetDisplayName(c.Target)} used family connections to advance the careers of {helped} adult household {(helped == 1 ? "member" : "members")}.");
             return new(true);
         }
     };
@@ -61,33 +71,41 @@ internal static partial class FamilyRelationActions
         IGameState gameState) => new()
     {
         Id = "family_relations.give_job_help",
-        Label = "Give Job Help",
-        Description = "Use this household's career connections to help an unemployed adult relative. No approval roll is needed; the local labour market still decides whether a job is found.",
+        Label = "Help with Careers",
+        Description = "Use the active household's career connections to help this relative's household. Every eligible adult below job level 3 advances by one level. No approval roll is needed.",
         Mode = ActionExecutionMode.Queued,
         QueuePhase = YearPhase.FamilyRelationActions,
         IsAvailable = c => IsRelationsContext(c)
             && IsValidRelation(c, relations)
             && ResolveTargetHead(c.Target, households) is { } targetHead
-            && FindUnemployedAdult(targetHead, economy, career, gameState) is not null
-            && HasUsefulConnection(c.Actor, economy, career, gameState),
+            && HasDecentCareerConnection(c.Actor, economy, career, gameState)
+            && GetCareerHelpCandidates(targetHead, economy, career, gameState).Count > 0,
         Execute = c =>
         {
             var targetHead = ResolveTargetHead(c.Target, households);
-            if (targetHead is null || !HasUsefulConnection(c.Actor, economy, career, gameState))
+            if (targetHead is null
+                || !HasDecentCareerConnection(c.Actor, economy, career, gameState))
+            {
                 return new(false);
-            var worker = FindUnemployedAdult(targetHead, economy, career, gameState);
-            if (worker is null) return new(false);
-            var found = career.TryFindEmployment(worker, JobConnectionBonus);
-            relations.ModifyRelation(c.Actor, c.Target, found ? 5 : 2);
-            Publish(events, c, "family_relations.job_help_given", family,
-                found
-                    ? $"{family.GetDisplayName(c.Actor)} used family connections to help {family.GetDisplayName(worker)} find work."
-                    : $"{family.GetDisplayName(c.Actor)} tried to help {family.GetDisplayName(worker)} find work, but no suitable position was secured.");
+            }
+
+            var candidates = GetCareerHelpCandidates(targetHead, economy, career, gameState);
+            if (candidates.Count == 0)
+                return new(false);
+
+            var helped = ApplyCareerHelp(candidates, career);
+            relations.ModifyRelation(c.Actor, c.Target, 5);
+            Publish(
+                events,
+                c,
+                "family_relations.job_help_given",
+                family,
+                $"{family.GetDisplayName(c.Actor)} used family connections to advance the careers of {helped} adult household {(helped == 1 ? "member" : "members")} in {family.GetDisplayName(c.Target)}'s household.");
             return new(true);
         }
     };
 
-    private static IPerson? FindUnemployedAdult(
+    private static IReadOnlyList<IPerson> GetCareerHelpCandidates(
         IPerson householdRepresentative,
         IEconomyService economy,
         ICareerService career,
@@ -95,14 +113,24 @@ internal static partial class FamilyRelationActions
     {
         var ids = economy.GetHouseholdMemberIds(householdRepresentative).ToHashSet();
         return gameState.People
-            .Where(p => ids.Contains(p.Id) && p.Tags.Has("state.alive") && p.Age >= 18 && !p.Tags.Has("state.imprisoned"))
-            .Where(p => { var c = career.GetCareer(p); return !c.IsRetired && c.JobLevel == 0; })
+            .Where(p => ids.Contains(p.Id)
+                && p.Tags.Has("state.alive")
+                && p.Age >= 18
+                && !p.Tags.Has("state.imprisoned")
+                && !p.Tags.Has("role.nanny")
+                && !p.Tags.Has("role.family_nanny"))
+            .Where(p =>
+            {
+                var snapshot = career.GetCareer(p);
+                return !snapshot.IsRetired && snapshot.JobLevel < 3;
+            })
             .OrderByDescending(p => p.Id == householdRepresentative.Id)
             .ThenBy(p => p.Age)
-            .FirstOrDefault();
+            .ThenBy(p => p.Id)
+            .ToList();
     }
 
-    private static bool HasUsefulConnection(
+    private static bool HasDecentCareerConnection(
         IPerson householdRepresentative,
         IEconomyService economy,
         ICareerService career,
@@ -110,8 +138,27 @@ internal static partial class FamilyRelationActions
     {
         var ids = economy.GetHouseholdMemberIds(householdRepresentative).ToHashSet();
         return gameState.People
-            .Where(p => ids.Contains(p.Id) && p.Tags.Has("state.alive") && p.Age >= 18)
-            .Any(p => { var c = career.GetCareer(p); return !c.IsRetired && c.JobLevel >= 2; });
+            .Where(p => ids.Contains(p.Id)
+                && p.Tags.Has("state.alive")
+                && p.Age >= 18
+                && !p.Tags.Has("state.imprisoned"))
+            .Any(p =>
+            {
+                var snapshot = career.GetCareer(p);
+                return !snapshot.IsRetired && snapshot.JobLevel >= 3;
+            });
     }
 
+    private static int ApplyCareerHelp(
+        IReadOnlyList<IPerson> candidates,
+        ICareerService career)
+    {
+        foreach (var person in candidates)
+        {
+            var current = career.GetCareer(person);
+            career.SetJobLevel(person, Math.Min(3, current.JobLevel + 1));
+        }
+
+        return candidates.Count;
+    }
 }

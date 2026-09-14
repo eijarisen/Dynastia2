@@ -9,16 +9,7 @@ public sealed record FamilyRelationActionViewModel(
     string Description,
     Guid RelativeId,
     bool RequiresPropertySelection,
-    bool RequiresMoneySelection)
-{
-    public bool IsImproveRelations =>
-        Id.Equals(
-            "family_relations.improve",
-            StringComparison.OrdinalIgnoreCase);
-
-    public bool IsStandardAction =>
-        !IsImproveRelations;
-}
+    bool RequiresMoneySelection);
 
 public sealed record FamilyRelationHouseholdViewModel(
     string Kinship,
@@ -26,7 +17,7 @@ public sealed record FamilyRelationHouseholdViewModel(
     string State,
     string OtherMembersText,
     string WealthText,
-    string LocationText,
+    string HousesText,
     IReadOnlyList<FamilyRelationActionViewModel> Actions)
 {
     public IBrush StateBrush => State switch

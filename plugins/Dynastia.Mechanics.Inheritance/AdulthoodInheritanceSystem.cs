@@ -148,7 +148,7 @@ public sealed class AdulthoodInheritanceSystem :
         {
             _economy.AddExistingHouse(
                 person,
-                house);
+                house with { AssignedHeirId = null });
         }
 
         _events.Publish(

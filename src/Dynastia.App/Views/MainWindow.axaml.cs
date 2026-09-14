@@ -22,6 +22,7 @@ public partial class MainWindow : Window
     private bool _persistenceDialogOpen;
     private bool _genealogyDialogOpen;
     private bool _familyRelationsDialogOpen;
+    private bool _familyInventoryDialogOpen;
     private bool _instructionsDialogOpen;
     private bool _actionSelectionDialogOpen;
     private MainWindowViewModel? _subscribedViewModel;
@@ -197,6 +198,7 @@ public partial class MainWindow : Window
         if (_persistenceDialogOpen
             || _genealogyDialogOpen
             || _familyRelationsDialogOpen
+            || _familyInventoryDialogOpen
             || _instructionsDialogOpen
             || _actionSelectionDialogOpen)
         {
@@ -454,6 +456,40 @@ public partial class MainWindow : Window
         }
     }
 
+
+    private async void OnFamilyInventoryClick(
+        object? sender,
+        PointerPressedEventArgs e)
+    {
+        if (!e.GetCurrentPoint(this).Properties.IsLeftButtonPressed
+            || _familyInventoryDialogOpen
+            || DataContext is not MainWindowViewModel viewModel
+            || !viewModel.CanOpenFamilyInventory)
+        {
+            return;
+        }
+
+        e.Handled = true;
+        _familyInventoryDialogOpen = true;
+        SetPaperDialogBackdrop(true);
+
+        try
+        {
+            var window = new FamilyInventoryWindow(viewModel);
+            await window.ShowDialog(this);
+        }
+        catch (Exception exception)
+        {
+            Console.Error.WriteLine(exception);
+            viewModel.ReportPersistenceStatus(
+                $"Family Inventory failed: {exception.Message}");
+        }
+        finally
+        {
+            SetPaperDialogBackdrop(false);
+            _familyInventoryDialogOpen = false;
+        }
+    }
 
     private async void OnRelationsClick(
         object? sender,

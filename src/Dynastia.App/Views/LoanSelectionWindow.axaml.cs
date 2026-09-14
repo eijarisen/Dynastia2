@@ -54,8 +54,8 @@ public partial class LoanSelectionWindow :
 
         ConfirmButton.FallbackText =
             isGivingLoan
-                ? "Give Loan"
-                : "Take Loan";
+                ? "Give a Loan"
+                : "Take a Loan";
 
         var maximumWholeThousands =
             Math.Clamp(

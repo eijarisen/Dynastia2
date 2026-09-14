@@ -29,6 +29,18 @@ public sealed class FamilyRelationsRulesTests
         Assert.True(neutral < close);
     }
 
+
+    [Theory]
+    [InlineData(10, 0.10)]
+    [InlineData(30, 0.25)]
+    [InlineData(50, 0.50)]
+    [InlineData(70, 0.72)]
+    [InlineData(90, 0.95)]
+    public void RequestWillingnessTracksRelationshipBand(double score, double expected)
+    {
+        Assert.Equal(expected, FamilyRelationScoreRules.GetRequestWillingness(score), 6);
+    }
+
     [Fact]
     public void AbilityModifiesButDoesNotReplaceRelationshipWillingness()
     {

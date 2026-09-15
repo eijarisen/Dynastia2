@@ -9,6 +9,7 @@
     "dynastia.family",
     "dynastia.stats",
     "dynastia.health",
+    "dynastia.relationships",
     "dynastia.historical"
   ]
 }

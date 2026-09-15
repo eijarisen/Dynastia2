@@ -106,6 +106,13 @@ public sealed class FemaleRemarriageYearSystem :
                 continue;
             }
 
+            if (!RelationshipPersonalityRules.CanFindPartner(
+                    woman,
+                    Sex.Male))
+            {
+                continue;
+            }
+
             if (_random.NextDouble()
                 >= RemarriageChance)
             {
@@ -143,11 +150,14 @@ public sealed class FemaleRemarriageYearSystem :
             RandomWeightedFrom(
                 SurnamesPath);
 
-        var husbandAge =
-            RelationshipPersonalityRules.ChoosePartnerAge(
+        if (!RelationshipPersonalityRules.TryChoosePartnerAge(
                 woman,
                 Sex.Male,
-                _random);
+                _random,
+                out var husbandAge))
+        {
+            return;
+        }
 
         var husbandBirthYear =
             gameState.Year - husbandAge;

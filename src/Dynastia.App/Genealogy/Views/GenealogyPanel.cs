@@ -2,6 +2,7 @@ namespace Dynastia.StandardUI.Genealogy.Views;
 
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Controls.Primitives;
 using Avalonia.Layout;
 using Avalonia.Media;
 using Dynastia.StandardUI.Genealogy.Contracts;
@@ -50,6 +51,19 @@ public sealed class GenealogyPanel :
         _canvas =
             new();
 
+    private readonly HashSet<Guid>
+        _collapsedPersonIds =
+            [];
+
+    private readonly ToggleButton
+        _showAllSpouses;
+
+    private readonly ToggleButton
+        _daughtersFamilies;
+
+    private readonly ToggleButton
+        _maleLineageOnly;
+
     private long _topologyVersion =
         long.MinValue;
 
@@ -74,6 +88,9 @@ public sealed class GenealogyPanel :
 
         _canvas.PersonDoubleClicked +=
             OnPersonDoubleClicked;
+
+        _canvas.PersonRightClicked +=
+            OnPersonRightClicked;
 
         var fit =
             CreateToolButton(
@@ -125,11 +142,35 @@ public sealed class GenealogyPanel :
                 }
             };
 
+        _showAllSpouses =
+            CreateFilter(
+                "Show All Spouses",
+                isChecked: false);
+
+        _daughtersFamilies =
+            CreateFilter(
+                "Daughters' Families",
+                isChecked: true);
+
+        _maleLineageOnly =
+            CreateFilter(
+                "Male Lineage Only",
+                isChecked: false);
+
+        _showAllSpouses.Click +=
+            OnFilterChanged;
+
+        _daughtersFamilies.Click +=
+            OnFilterChanged;
+
+        _maleLineageOnly.Click +=
+            OnFilterChanged;
+
         var instructions =
             new TextBlock
             {
                 Text =
-                    "Mouse wheel: zoom · Drag empty space: pan · Hover: details · Click: select · Double-click: open household",
+                    "Mouse wheel: zoom · Drag empty space: pan · Hover: details · Click: select · Double-click: open household · Right-click: hide/show branch",
 
                 VerticalAlignment =
                     VerticalAlignment.Center,
@@ -152,13 +193,16 @@ public sealed class GenealogyPanel :
             };
 
         var toolsContent =
-            new StackPanel
+            new WrapPanel
             {
                 Orientation =
                     Orientation.Horizontal,
 
-                Spacing =
-                    7,
+                HorizontalAlignment =
+                    HorizontalAlignment.Left,
+
+                VerticalAlignment =
+                    VerticalAlignment.Center,
 
                 Children =
                 {
@@ -166,6 +210,10 @@ public sealed class GenealogyPanel :
                     reset,
                     selected,
                     founder,
+                    CreateSeparator(),
+                    _showAllSpouses,
+                    _daughtersFamilies,
+                    _maleLineageOnly,
                     instructions
                 }
             };
@@ -270,6 +318,9 @@ public sealed class GenealogyPanel :
         _canvas.PersonDoubleClicked -=
             OnPersonDoubleClicked;
 
+        _canvas.PersonRightClicked -=
+            OnPersonRightClicked;
+
         _canvas.Dispose();
     }
 
@@ -313,8 +364,108 @@ public sealed class GenealogyPanel :
                     11,
                     5),
 
+            Margin =
+                new Thickness(
+                    0,
+                    0,
+                    7,
+                    0),
+
             CornerRadius =
                 new CornerRadius(4)
+        };
+    }
+
+    private static ToggleButton CreateFilter(
+        string text,
+        bool isChecked)
+    {
+        var checkMark =
+            new TextBlock
+            {
+                Text = "✓",
+                Foreground = ToolText,
+                FontSize = 12,
+                FontWeight = FontWeight.Bold,
+                HorizontalAlignment = HorizontalAlignment.Center,
+                VerticalAlignment = VerticalAlignment.Center,
+                IsVisible = isChecked
+            };
+
+        var checkBox =
+            new Border
+            {
+                Width = 15,
+                Height = 15,
+                BorderBrush = ToolText,
+                BorderThickness = new Thickness(1),
+                CornerRadius = new CornerRadius(2),
+                Background = Brushes.Transparent,
+                Child = checkMark
+            };
+
+        var label =
+            new TextBlock
+            {
+                Text = text,
+                Foreground = ToolText,
+                FontSize = 12,
+                VerticalAlignment = VerticalAlignment.Center
+            };
+
+        var filter =
+            new ToggleButton
+            {
+                IsChecked = isChecked,
+                Background = Brushes.Transparent,
+                BorderBrush = Brushes.Transparent,
+                BorderThickness = new Thickness(0),
+                Padding = new Thickness(3, 3),
+                VerticalAlignment = VerticalAlignment.Center,
+                Margin = new Thickness(4, 0, 11, 0),
+                Content =
+                    new StackPanel
+                    {
+                        Orientation = Orientation.Horizontal,
+                        Spacing = 6,
+                        Children =
+                        {
+                            checkBox,
+                            label
+                        }
+                    }
+            };
+
+        filter.Click +=
+            (_, _) =>
+                checkMark.IsVisible =
+                    filter.IsChecked == true;
+
+        return filter;
+    }
+
+    private static Border CreateSeparator()
+    {
+        return new Border
+        {
+            Width =
+                1,
+
+            Height =
+                22,
+
+            Background =
+                ToolBorder,
+
+            Opacity =
+                0.8,
+
+            Margin =
+                new Thickness(
+                    3,
+                    0,
+                    8,
+                    0)
         };
     }
 
@@ -333,6 +484,26 @@ public sealed class GenealogyPanel :
 
         PersonDoubleClicked?.Invoke(
             personId);
+    }
+
+    private void OnPersonRightClicked(
+        Guid personId)
+    {
+        if (!_collapsedPersonIds.Remove(
+                personId))
+        {
+            _collapsedPersonIds.Add(
+                personId);
+        }
+
+        RebuildAndFitTree();
+    }
+
+    private void OnFilterChanged(
+        object? sender,
+        Avalonia.Interactivity.RoutedEventArgs e)
+    {
+        RebuildAndFitTree();
     }
 
     private void OnTopologyChanged(
@@ -357,6 +528,30 @@ public sealed class GenealogyPanel :
             _selection.SelectedPersonId;
 
         _canvas.InvalidateVisual();
+    }
+
+    private void RebuildAndFitTree()
+    {
+        _topologyVersion =
+            long.MinValue;
+
+        RefreshTopology();
+
+        _canvas.FitTree();
+    }
+
+    private GenealogyProjectionOptions
+        GetProjectionOptions()
+    {
+        return new GenealogyProjectionOptions(
+            ShowAllSpouses:
+                _showAllSpouses.IsChecked == true,
+            IncludeDaughtersFamilies:
+                _daughtersFamilies.IsChecked == true,
+            MaleLineageOnly:
+                _maleLineageOnly.IsChecked == true,
+            CollapsedPersonIds:
+                _collapsedPersonIds);
     }
 
     private void RefreshTopology()
@@ -390,7 +585,8 @@ public sealed class GenealogyPanel :
 
         var graph =
             _projection.Build(
-                snapshot);
+                snapshot,
+                GetProjectionOptions());
 
         _canvas.Layout =
             _layoutEngine.Layout(

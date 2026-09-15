@@ -110,6 +110,12 @@ public sealed class MarriageYearSystem : IYearSystem
 
     private bool CanSearch(IPerson person)
     {
+        var partnerSex =
+            person.Tags.Has(
+                "sexuality.homosexual")
+                ? Sex.Male
+                : Sex.Female;
+
         return person.Tags.Has("state.alive")
             && !SimulationState.IsInactive(person)
             && _family.GetSex(person) == Sex.Male
@@ -119,7 +125,10 @@ public sealed class MarriageYearSystem : IYearSystem
                     "simulation.peripheral_ex")
             )
             && _family.GetSpouse(person) is null
-            && person.Age >= 18;
+            && person.Age >= 18
+            && RelationshipPersonalityRules.CanFindPartner(
+                person,
+                partnerSex);
     }
 
     private void CreateRelationship(
@@ -142,11 +151,14 @@ public sealed class MarriageYearSystem : IYearSystem
             RandomWeightedFrom(
                 SurnamesPath);
 
-        var spouseAge =
-            RelationshipPersonalityRules.ChoosePartnerAge(
+        if (!RelationshipPersonalityRules.TryChoosePartnerAge(
                 person,
                 spouseSex,
-                _random);
+                _random,
+                out var spouseAge))
+        {
+            return;
+        }
 
         var spouseBirthYear =
             gameState.Year - spouseAge;

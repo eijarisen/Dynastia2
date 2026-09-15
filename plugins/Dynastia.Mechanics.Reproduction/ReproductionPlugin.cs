@@ -26,6 +26,11 @@ public sealed class ReproductionPlugin : IGamePlugin
             ?? throw new InvalidOperationException(
                 "Health service is unavailable.");
 
+        var marriageSatisfaction =
+            context.GetService<IMarriageSatisfactionService>()
+            ?? throw new InvalidOperationException(
+                "Marriage satisfaction service is unavailable.");
+
         var data =
             context.GetService<IGameDataService>()
             ?? throw new InvalidOperationException(
@@ -102,6 +107,7 @@ public sealed class ReproductionPlugin : IGamePlugin
                 family,
                 stats,
                 health,
+                marriageSatisfaction,
                 historicalNames,
                 random,
                 calendar,

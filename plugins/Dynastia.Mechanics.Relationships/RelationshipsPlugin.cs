@@ -270,15 +270,26 @@ public sealed partial class RelationshipsPlugin : IGamePlugin
 
             IsAvailable =
                 actionContext =>
-                    actionContext.Actor.Id
-                        == actionContext.Target.Id
-                    && actionContext.Actor.Tags.Has(
-                        "state.alive")
-                    && actionContext.Actor.Tags.Has(
-                        "control.playable")
-                    && actionContext.Actor.Age >= 18
-                    && family.GetSpouse(
-                        actionContext.Actor) is null,
+                {
+                    var partnerSex =
+                        actionContext.Actor.Tags.Has(
+                            "sexuality.homosexual")
+                            ? Sex.Male
+                            : Sex.Female;
+
+                    return actionContext.Actor.Id
+                            == actionContext.Target.Id
+                        && actionContext.Actor.Tags.Has(
+                            "state.alive")
+                        && actionContext.Actor.Tags.Has(
+                            "control.playable")
+                        && actionContext.Actor.Age >= 18
+                        && family.GetSpouse(
+                            actionContext.Actor) is null
+                        && RelationshipPersonalityRules.CanFindPartner(
+                            actionContext.Actor,
+                            partnerSex);
+                },
 
             Execute =
                 actionContext =>

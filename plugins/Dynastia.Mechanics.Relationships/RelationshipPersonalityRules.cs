@@ -4,6 +4,8 @@ namespace Dynastia.Mechanics.Relationships;
 
 internal static class RelationshipPersonalityRules
 {
+    public const int MaximumNewPartnerAge = 80;
+
     private static readonly string[] MainStatIds =
     [
         "immunity",
@@ -14,11 +16,34 @@ internal static class RelationshipPersonalityRules
         "intellect"
     ];
 
-    public static int ChoosePartnerAge(
+    public static bool CanFindPartner(
+        IPerson seeker,
+        Sex partnerSex) =>
+        TryGetPartnerAgeRange(
+            seeker,
+            partnerSex,
+            out _,
+            out _,
+            out _);
+
+    public static bool TryChoosePartnerAge(
         IPerson seeker,
         Sex partnerSex,
-        IGameRandom random)
+        IGameRandom random,
+        out int partnerAge)
     {
+        partnerAge = 0;
+
+        if (!TryGetPartnerAgeRange(
+                seeker,
+                partnerSex,
+                out var minimum,
+                out var maximum,
+                out var prefersReproductiveAge))
+        {
+            return false;
+        }
+
         // Female partners are preferably generated while still within
         // the game's normal reproductive age range. Morals continue to
         // define the acceptable age gap: Good +/-10, Neutral +/-20,
@@ -30,72 +55,112 @@ internal static class RelationshipPersonalityRules
                 var first = random.NextInt(18, 45);
                 var second = random.NextInt(18, 45);
 
-                return Math.Min(first, second);
+                partnerAge = Math.Min(first, second);
+                return true;
             }
-
-            var gap =
-                seeker.Tags.Has("morals.good")
-                    ? 10
-                    : 20;
-
-            var minimum =
-                Math.Max(18, seeker.Age - gap);
-
-            var maximum =
-                Math.Max(18, seeker.Age + gap);
-
-            var preferredMinimum =
-                Math.Max(18, minimum);
 
             var preferredMaximum =
                 Math.Min(45, maximum);
 
-            if (preferredMinimum <= preferredMaximum)
+            if (prefersReproductiveAge
+                && minimum <= preferredMaximum)
             {
-                return random.NextInt(
-                    preferredMinimum,
+                partnerAge = random.NextInt(
+                    minimum,
                     preferredMaximum);
+
+                return true;
             }
 
-            return random.NextInt(
+            partnerAge = random.NextInt(
                 minimum,
                 maximum);
+
+            return true;
         }
 
         if (seeker.Tags.Has("morals.good"))
         {
-            return random.NextInt(
-                Math.Max(18, seeker.Age - 10),
-                Math.Max(18, seeker.Age + 10));
+            partnerAge = random.NextInt(
+                minimum,
+                maximum);
+
+            return true;
         }
 
         if (!seeker.Tags.Has("morals.evil"))
         {
-            return random.NextInt(
-                Math.Max(18, seeker.Age - 20),
-                Math.Max(18, seeker.Age + 20));
+            partnerAge = random.NextInt(
+                minimum,
+                maximum);
+
+            return true;
         }
 
         // Evil characters do not use the normal 10/20-year gap cap.
         // For male partners, preserve the existing bias toward older men.
-        var broadUpper =
-            Math.Max(
-                60,
-                seeker.Age + 30);
-
         var firstMaleAge =
             random.NextInt(
-                18,
-                broadUpper);
+                minimum,
+                maximum);
 
         var secondMaleAge =
             random.NextInt(
-                18,
-                broadUpper);
+                minimum,
+                maximum);
 
-        return Math.Max(
+        partnerAge = Math.Max(
             firstMaleAge,
             secondMaleAge);
+
+        return true;
+    }
+
+    private static bool TryGetPartnerAgeRange(
+        IPerson seeker,
+        Sex partnerSex,
+        out int minimum,
+        out int maximum,
+        out bool prefersReproductiveAge)
+    {
+        minimum = 18;
+        maximum = MaximumNewPartnerAge;
+        prefersReproductiveAge = false;
+
+        if (partnerSex == Sex.Female
+            && seeker.Tags.Has("morals.evil"))
+        {
+            maximum = 45;
+            prefersReproductiveAge = true;
+            return true;
+        }
+
+        if (seeker.Tags.Has("morals.evil"))
+        {
+            maximum = Math.Min(
+                MaximumNewPartnerAge,
+                Math.Max(60, seeker.Age + 30));
+
+            return minimum <= maximum;
+        }
+
+        var gap =
+            seeker.Tags.Has("morals.good")
+                ? 10
+                : 20;
+
+        minimum = Math.Max(
+            18,
+            seeker.Age - gap);
+
+        maximum = Math.Min(
+            MaximumNewPartnerAge,
+            seeker.Age + gap);
+
+        prefersReproductiveAge =
+            partnerSex == Sex.Female;
+
+        return minimum <= maximum;
     }
 
     public static bool ApplyExceptionalPartnerStats(

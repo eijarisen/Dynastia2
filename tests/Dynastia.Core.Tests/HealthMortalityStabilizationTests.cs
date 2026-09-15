@@ -64,6 +64,60 @@ public sealed class HealthMortalityStabilizationTests
     }
 
     [Theory]
+    [InlineData(1, 52)]
+    [InlineData(2, 64)]
+    [InlineData(3, 76)]
+    [InlineData(4, 88)]
+    [InlineData(5, 100)]
+    public void NaturalDeathCurveIsCenteredOnLongevityProfile(
+        int longevity,
+        int profileAge)
+    {
+        Assert.Equal(
+            profileAge,
+            MortalityRules.GetLongevityProfileAge(longevity));
+
+        Assert.Equal(
+            MortalityRules.NaturalDeathChanceAtProfileAge,
+            MortalityRules.GetNaturalDeathChance(
+                profileAge,
+                longevity,
+                immunity: 3),
+            6);
+    }
+
+    [Fact]
+    public void LongevityDominatesVeryOldNaturalMortality()
+    {
+        var ordinary =
+            MortalityRules.GetNaturalDeathChance(
+                age: 100,
+                longevity: 3,
+                immunity: 5);
+
+        var strong =
+            MortalityRules.GetNaturalDeathChance(
+                age: 100,
+                longevity: 4,
+                immunity: 5);
+
+        var exceptional =
+            MortalityRules.GetNaturalDeathChance(
+                age: 100,
+                longevity: 5,
+                immunity: 5);
+
+        Assert.Equal(
+            MortalityRules.MaximumNaturalDeathChance,
+            ordinary,
+            6);
+
+        Assert.True(strong > 0.30);
+        Assert.True(exceptional < 0.08);
+        Assert.True(strong > exceptional * 4);
+    }
+
+    [Theory]
     [InlineData(1, 1.20)]
     [InlineData(2, 1.10)]
     [InlineData(3, 1.00)]

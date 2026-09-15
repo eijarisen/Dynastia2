@@ -23,7 +23,10 @@ public sealed partial class RelationshipsPlugin
             || family.GetSex(
                 daughter) != Sex.Female
             || family.GetSpouse(
-                daughter) is not null)
+                daughter) is not null
+            || !RelationshipPersonalityRules.CanFindPartner(
+                daughter,
+                Sex.Male))
         {
             return false;
         }
@@ -72,11 +75,14 @@ public sealed partial class RelationshipsPlugin
                 random,
                 SurnamesPath);
 
-        var husbandAge =
-            RelationshipPersonalityRules.ChoosePartnerAge(
+        if (!RelationshipPersonalityRules.TryChoosePartnerAge(
                 daughter,
                 Sex.Male,
-                random);
+                random,
+                out var husbandAge))
+        {
+            return;
+        }
 
         var husbandBirthYear =
             gameState.Year - husbandAge;

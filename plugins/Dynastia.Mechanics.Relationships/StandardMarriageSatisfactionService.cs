@@ -146,6 +146,40 @@ public sealed class StandardMarriageSatisfactionService :
             component.CurrentIssues);
     }
 
+    public void ChangeSatisfactionExact(
+        IPerson person,
+        double amount)
+    {
+        var spouse =
+            _family.GetSpouse(
+                person);
+
+        if (spouse is null
+            || !TryResolveHusbandAndWife(
+                person,
+                spouse,
+                out _,
+                out _))
+        {
+            return;
+        }
+
+        var component =
+            EnsurePair(
+                person,
+                spouse);
+
+        SetPair(
+            person,
+            spouse,
+            Math.Clamp(
+                component.Satisfaction + amount,
+                0,
+                100),
+            component.StartYear,
+            component.CurrentIssues);
+    }
+
     internal void ApplyAnnualEvaluation(
         IPerson first,
         IPerson second,

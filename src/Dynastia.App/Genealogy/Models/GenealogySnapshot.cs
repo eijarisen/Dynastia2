@@ -14,6 +14,7 @@ public sealed record GenealogyPersonRecord(
     string AvatarText,
     bool IsBloodline,
     bool IsMaleLineage,
+    bool IsFemale,
     bool IsAlive,
     int BirthYear,
     int? DeathYear,

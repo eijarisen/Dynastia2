@@ -298,6 +298,9 @@ public sealed partial class GenealogyCanvas :
     public event Action<Guid>?
         PersonDoubleClicked;
 
+    public event Action<Guid>?
+        PersonRightClicked;
+
     public double Zoom { get; private set; } =
         1;
 

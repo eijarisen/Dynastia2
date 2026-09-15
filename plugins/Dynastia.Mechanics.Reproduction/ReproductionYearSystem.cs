@@ -52,6 +52,7 @@ public sealed class ReproductionYearSystem : IYearSystem
     private readonly IFamilyService _family;
     private readonly IStatsService _stats;
     private readonly IHealthService _health;
+    private readonly IMarriageSatisfactionService _marriageSatisfaction;
     private readonly IHistoricalNameService _historicalNames;
     private readonly IGameRandom _random;
     private readonly IGameCalendar _calendar;
@@ -65,6 +66,7 @@ public sealed class ReproductionYearSystem : IYearSystem
         IFamilyService family,
         IStatsService stats,
         IHealthService health,
+        IMarriageSatisfactionService marriageSatisfaction,
         IHistoricalNameService historicalNames,
         IGameRandom random,
         IGameCalendar calendar,
@@ -76,6 +78,7 @@ public sealed class ReproductionYearSystem : IYearSystem
         _family = family;
         _stats = stats;
         _health = health;
+        _marriageSatisfaction = marriageSatisfaction;
         _historicalNames = historicalNames;
         _random = random;
         _calendar = calendar;
@@ -141,8 +144,11 @@ public sealed class ReproductionYearSystem : IYearSystem
                     father,
                     mother!);
 
-            if (father.Tags.Has(
-                "modifier.try_for_baby"))
+            var activelyTried =
+                father.Tags.Has(
+                    "modifier.try_for_baby");
+
+            if (activelyTried)
             {
                 childChance *=
                     TryForBabyMultiplier;
@@ -151,9 +157,24 @@ public sealed class ReproductionYearSystem : IYearSystem
             father.Tags.Remove(
                 "modifier.try_for_baby");
 
-            if (_random.NextDouble()
-                >= childChance)
+            var conceived =
+                _random.NextDouble()
+                < childChance;
+
+            if (!conceived)
             {
+                var satisfactionChange =
+                    ReproductionBalanceRules.GetMarriageSatisfactionChange(
+                        activelyTried,
+                        conceived: false);
+
+                if (satisfactionChange != 0)
+                {
+                    _marriageSatisfaction.ChangeSatisfactionExact(
+                        father,
+                        satisfactionChange);
+                }
+
                 continue;
             }
 

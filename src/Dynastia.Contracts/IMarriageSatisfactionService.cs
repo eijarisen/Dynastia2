@@ -17,4 +17,8 @@ public interface IMarriageSatisfactionService
     void ChangeSatisfaction(
         IPerson person,
         double amount);
+
+    void ChangeSatisfactionExact(
+        IPerson person,
+        double amount);
 }

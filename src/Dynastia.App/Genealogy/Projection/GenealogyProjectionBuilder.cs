@@ -6,36 +6,37 @@ using Dynastia.StandardUI.Genealogy.Layout;
 public sealed class GenealogyProjectionBuilder
 {
     public GenealogyGraph Build(
-        GenealogySnapshot snapshot)
+        GenealogySnapshot snapshot,
+        GenealogyProjectionOptions? options = null)
     {
+        options ??=
+            new GenealogyProjectionOptions();
+
         var people =
             snapshot.People.ToDictionary(
                 person => person.Id);
 
-        var rootId =
-            snapshot.FounderId
-            ?? snapshot.People
-                .Where(
-                    person =>
-                        person.IsBloodline)
-                .OrderBy(
-                    person =>
-                        person.BirthYear)
-                .ThenBy(
-                    person =>
-                        person.Id)
-                .Select(
-                    person =>
-                        (Guid?)person.Id)
-                .FirstOrDefault()
-            ?? throw new InvalidOperationException(
-                "Genealogy contains no bloodline founder.");
-
-        var nodes =
+        var nodePeople =
             snapshot.People
                 .Where(
                     person =>
                         person.IsBloodline)
+                .Where(
+                    person =>
+                        !options.MaleLineageOnly
+                        || (
+                            person.IsMaleLineage
+                            && !person.IsFemale
+                        ))
+                .ToArray();
+
+        var rootId =
+            ResolveRootId(
+                snapshot,
+                nodePeople);
+
+        var nodes =
+            nodePeople
                 .ToDictionary(
                     person =>
                         person.Id,
@@ -69,6 +70,19 @@ public sealed class GenealogyProjectionBuilder
         foreach (var node in
             nodes.Values)
         {
+            if (options.IsCollapsed(
+                    node.Person.Id))
+            {
+                continue;
+            }
+
+            if (!options.MaleLineageOnly
+                && !options.IncludeDaughtersFamilies
+                && node.Person.IsFemale)
+            {
+                continue;
+            }
+
             var normalizedMarriages =
                 node.Person.MarriageHistory
                     .ToList();
@@ -138,6 +152,63 @@ public sealed class GenealogyProjectionBuilder
                     continue;
                 }
 
+                var bloodlineChildren =
+                    childrenByParent.TryGetValue(
+                        node.Person.Id,
+                        out var candidateChildren)
+                        ? candidateChildren
+                            .Where(
+                                child =>
+                                    child.IsBloodline)
+                            .Where(
+                                child =>
+                                    child.ParentIds.Contains(
+                                        spouse.Id))
+                            .OrderBy(
+                                child =>
+                                    child.BirthYear)
+                            .ThenBy(
+                                child =>
+                                    child.Id)
+                            .ToArray()
+                        : [];
+
+                if (!options.ShowAllSpouses
+                    && IsExPartnerWithoutBloodlineChildren(
+                        marriage,
+                        bloodlineChildren.Length))
+                {
+                    continue;
+                }
+
+                IEnumerable<GenealogyPersonRecord>
+                    visibleChildren =
+                        bloodlineChildren;
+
+                if (options.MaleLineageOnly)
+                {
+                    visibleChildren =
+                        visibleChildren.Where(
+                            child =>
+                                child.IsMaleLineage
+                                && !child.IsFemale);
+
+                    // In this view spouses are shown only when they are the
+                    // mother of a visible male-lineage child.
+                    if (!spouse.IsFemale
+                        || !visibleChildren.Any())
+                    {
+                        continue;
+                    }
+                }
+
+                if (options.IsCollapsed(
+                    spouse.Id))
+                {
+                    visibleChildren =
+                        [];
+                }
+
                 var union =
                     new GenealogyUnion
                     {
@@ -157,25 +228,11 @@ public sealed class GenealogyProjectionBuilder
                             marriage.EndReason
                     };
 
-                if (childrenByParent.TryGetValue(
-                    node.Person.Id,
-                    out var candidateChildren))
+                foreach (var child in
+                    visibleChildren)
                 {
-                    foreach (var child in
-                        candidateChildren
-                            .Where(
-                                child =>
-                                    child.IsBloodline)
-                            .Where(
-                                child =>
-                                    child.ParentIds.Contains(
-                                        spouse.Id))
-                            .OrderBy(
-                                child =>
-                                    child.BirthYear)
-                            .ThenBy(
-                                child =>
-                                    child.Id))
+                    if (nodes.ContainsKey(
+                        child.Id))
                     {
                         union.Children.Add(
                             child.Id);
@@ -202,6 +259,51 @@ public sealed class GenealogyProjectionBuilder
             AllPeople =
                 people
         };
+    }
+
+    private static Guid ResolveRootId(
+        GenealogySnapshot snapshot,
+        IReadOnlyCollection<GenealogyPersonRecord> nodePeople)
+    {
+        if (snapshot.FounderId
+                is Guid preferredRoot
+            && nodePeople.Any(
+                person =>
+                    person.Id == preferredRoot))
+        {
+            return preferredRoot;
+        }
+
+        return nodePeople
+            .OrderBy(
+                person =>
+                    person.BirthYear)
+            .ThenBy(
+                person =>
+                    person.Id)
+            .Select(
+                person =>
+                    (Guid?)person.Id)
+            .FirstOrDefault()
+            ?? throw new InvalidOperationException(
+                "Genealogy contains no visible bloodline founder.");
+    }
+
+    private static bool
+        IsExPartnerWithoutBloodlineChildren(
+            GenealogyMarriageRecord marriage,
+            int bloodlineChildCount)
+    {
+        if (bloodlineChildCount > 0
+            || marriage.EndYear is null)
+        {
+            return false;
+        }
+
+        return !string.Equals(
+            marriage.EndReason,
+            "death",
+            StringComparison.OrdinalIgnoreCase);
     }
 
     private static void AssignDepths(

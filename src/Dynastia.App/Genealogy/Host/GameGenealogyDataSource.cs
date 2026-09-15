@@ -315,19 +315,29 @@ public sealed class GameGenealogyDataSource :
                 _career.GetCareer(
                     person);
 
+            var displayedCareerLevel =
+                career.JobLevel > 0
+                    ? career.JobLevel
+                    : career.IsRetired
+                      && career.PeakJobLevel > 0
+                        ? career.PeakJobLevel
+                        : 0;
+
             occupation =
-                career.JobTitle;
+                displayedCareerLevel > 0
+                    ? $"{career.JobTitle} ({displayedCareerLevel})"
+                    : career.JobTitle;
 
             occupationTooltip =
                 career.IsRetired
                     ? career.AnnualIncome > 0
-                        ? $"{career.JobTitle} — " +
+                        ? $"{occupation} — " +
                           $"{career.AnnualIncome:N0} zł/year pension"
-                        : career.JobTitle
+                        : occupation
                     : career.JobLevel > 0
-                        ? $"{career.JobTitle} — " +
+                        ? $"{occupation} — " +
                           $"{career.AnnualIncome:N0} zł/year"
-                        : career.JobTitle;
+                        : occupation;
 
             satisfactionTooltip =
                 career.JobLevel > 0
@@ -511,6 +521,8 @@ public sealed class GameGenealogyDataSource :
                 person),
             _family.IsMaleLineage(
                 person),
+            _family.GetSex(
+                person) == Sex.Female,
             isAlive,
             birthYear,
             deathYear,

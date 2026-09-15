@@ -57,15 +57,30 @@ public sealed partial class GenealogyCanvas
         _lastPointer =
             point.Position;
 
+        var hit =
+            HitTestPerson(
+                point.Position);
+
+        if (point.Properties
+                .IsRightButtonPressed)
+        {
+            if (hit is Guid rightClickedPersonId)
+            {
+                PersonRightClicked?.Invoke(
+                    rightClickedPersonId);
+
+                e.Handled =
+                    true;
+            }
+
+            return;
+        }
+
         if (!point.Properties
             .IsLeftButtonPressed)
         {
             return;
         }
-
-        var hit =
-            HitTestPerson(
-                point.Position);
 
         if (hit is Guid personId)
         {

@@ -4,14 +4,6 @@ namespace Dynastia.Mechanics.Mortality;
 
 public sealed class MortalityYearSystem : IYearSystem
 {
-    private const int AgeDeathStartAge = 30;
-    private const double AgeDeathFactorThreshold = 0.6;
-    private const double BaseLifespan = 40;
-    private const double LongevityMultiplier = 12;
-    private const double AgeDeathPower = 6;
-    private const double AgeDeathImmunityBase = 6;
-    private const double AgeDeathImmunityDivisor = 5;
-    private const double AgeDeathChanceMultiplier = 0.25;
     private const double TerminalConditionDeathChance = 0.10;
 
     private readonly IStatsService _stats;
@@ -68,28 +60,26 @@ public sealed class MortalityYearSystem : IYearSystem
                 "terminal",
                 StringComparison.OrdinalIgnoreCase));
 
-        var rawRandomDeathChance =
-            terminalCount * TerminalConditionDeathChance;
-
         var longevity = GetStat(person, "longevity");
         var immunity = GetStat(person, "immunity");
 
-        if (person.Age > AgeDeathStartAge)
-        {
-            var baseLifespan = BaseLifespan + longevity * LongevityMultiplier;
-            var ageFactor = person.Age / baseLifespan;
+        var illnessDeathChance =
+            MortalityRules.ScaleRandomMortality(
+                terminalCount
+                * TerminalConditionDeathChance);
 
-            if (ageFactor > AgeDeathFactorThreshold)
-            {
-                rawRandomDeathChance +=
-                    Math.Pow(ageFactor, AgeDeathPower)
-                    * ((AgeDeathImmunityBase - immunity) / AgeDeathImmunityDivisor)
-                    * AgeDeathChanceMultiplier;
-            }
-        }
+        var naturalDeathChance =
+            MortalityRules.GetNaturalDeathChance(
+                person.Age,
+                longevity,
+                immunity);
 
         var deathChance =
-            MortalityRules.ScaleRandomMortality(rawRandomDeathChance);
+            Math.Clamp(
+                illnessDeathChance
+                + naturalDeathChance,
+                0,
+                1);
 
         var accidentChance = PersonalityInfluence.AdjustProbability(
             MortalityRules.GenericAccidentChance,

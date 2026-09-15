@@ -7,8 +7,6 @@ public sealed partial class StandardEconomyService :
     IEconomyBalanceService
 {
     private const decimal BaseHousePrice = 20000m;
-    private const decimal BaseResidenceRent = 250m;
-    private const decimal BaseRentalIncome = 500m;
 
     public decimal OrdinaryLivingCostUnit => 250m;
 

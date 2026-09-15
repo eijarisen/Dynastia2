@@ -29,16 +29,8 @@ public sealed partial class HouseholdsPlugin
                     if (!CanActOnSelf(context))
                         return false;
 
-                    var household = economy.GetHousehold(context.Actor);
-                    if (household is null)
-                        return false;
-
-                    var cheapest = locations.GetTowns()
-                        .Select(economy.GetHousePrice)
-                        .DefaultIfEmpty(decimal.MaxValue)
-                        .Min();
-
-                    return household.Wealth >= cheapest;
+                    return economy.GetHousehold(context.Actor)
+                        is not null;
                 },
                 Execute = context =>
                 {

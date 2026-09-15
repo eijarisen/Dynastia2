@@ -500,7 +500,7 @@ public sealed class GameGenealogyDataSource :
                         $"Parents: {parentsTooltip}",
                         $"Spouse: {spouseTooltip}",
                         $"Children: {childrenTooltip}",
-                        $"Last occupation: {lastOccupationTooltip}"
+                        $"Occupation: {lastOccupationTooltip}"
                     });
 
         var lifeSpan =

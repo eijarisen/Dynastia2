@@ -6,5 +6,9 @@ public sealed record FamilyRelationshipSnapshot(
     FamilyRelationshipType Type,
     double Score,
     string State,
+    double Familiarity,
+    string FamiliarityState,
+    double Sympathy,
+    string SympathyState,
     int CreatedYear,
     int LastMajorInteractionYear);

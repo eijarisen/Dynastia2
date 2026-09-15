@@ -92,9 +92,10 @@ public sealed partial class StandardEconomyService
                 person);
 
         household.Wealth =
-            Math.Max(
-                0,
-                wealth);
+            RoundCurrency(
+                Math.Max(
+                    0,
+                    wealth));
     }
 
     public void ChangeWealth(
@@ -106,9 +107,10 @@ public sealed partial class StandardEconomyService
                 person);
 
         household.Wealth =
-            EconomyBalanceRules.ApplyOrdinaryWealthChange(
-                household.Wealth,
-                amount);
+            RoundCurrency(
+                EconomyBalanceRules.ApplyOrdinaryWealthChange(
+                    household.Wealth,
+                    RoundCurrency(amount)));
     }
 
     public void ChangeWealthAllowDebt(
@@ -119,8 +121,10 @@ public sealed partial class StandardEconomyService
             GetRequiredHousehold(
                 person);
 
-        household.Wealth +=
-            amount;
+        household.Wealth =
+            RoundCurrency(
+                household.Wealth
+                + RoundCurrency(amount));
     }
 
     public void SetHousesOwned(
@@ -367,19 +371,30 @@ public sealed partial class StandardEconomyService
     }
 
     public decimal GetHousePrice(TownInfo town) =>
-        BaseHousePrice * town.HousingIndex;
+        RoundCurrency(
+            BaseHousePrice * town.HousingIndex);
 
     public decimal GetHouseSaleValue(TownInfo town) =>
-        Math.Round(GetHousePrice(town) * 0.80m, 0, MidpointRounding.AwayFromZero);
+        RoundCurrency(
+            GetHousePrice(town) * 0.80m);
 
     public decimal GetLivingCostPerPerson(TownInfo town) =>
-        OrdinaryLivingCostUnit * town.LivingCostIndex;
+        RoundCurrency(
+            OrdinaryLivingCostUnit * town.LivingCostIndex);
 
     public decimal GetResidenceRent(TownInfo town) =>
-        BaseResidenceRent * town.LivingCostIndex;
+        GetRentalIncome(town);
 
     public decimal GetRentalIncome(TownInfo town) =>
-        BaseRentalIncome * town.HousingIndex;
+        RoundCurrency(
+            GetHousePrice(town) / 40m);
+
+    private static decimal RoundCurrency(
+        decimal amount) =>
+        Math.Round(
+            amount,
+            0,
+            MidpointRounding.AwayFromZero);
 
     public IReadOnlyList<HousePropertyInfo> TakeAllHouses(
         IPerson person)
@@ -426,9 +441,10 @@ public sealed partial class StandardEconomyService
         GetClaim(
             person)
             .PendingInheritance =
-                Math.Max(
-                    0,
-                    amount);
+                RoundCurrency(
+                    Math.Max(
+                        0,
+                        amount));
     }
 
     public void ChangePendingInheritance(

@@ -19,11 +19,11 @@ internal static partial class FamilyRelationActions
         IGameRandom random,
         IGameEventBus events)
     {
-        actions.Register(CreateImprove(relations, households, economy, events, family, gameState));
+        actions.Register(CreateImprove(relations, households, economy, random, events, family, gameState));
         actions.Register(CreateAskMoney(relations, households, economy, random, events, family));
-        actions.Register(CreateGiveMoney(relations, households, economy, events, family));
+        actions.Register(CreateGiveMoney(relations, households, economy, random, events, family));
         actions.Register(CreateAskHouse(relations, households, economy, locations, career, random, events, family, gameState));
-        actions.Register(CreateGiveHouse(relations, households, economy, locations, career, events, family, gameState));
+        actions.Register(CreateGiveHouse(relations, households, economy, locations, career, random, events, family, gameState));
         actions.Register(CreateAskJobHelp(relations, households, economy, career, random, events, family, gameState));
         actions.Register(CreateGiveJobHelp(relations, households, economy, career, random, events, family, gameState));
     }
@@ -32,13 +32,14 @@ internal static partial class FamilyRelationActions
         IFamilyRelationService relations,
         IHouseholdService households,
         IEconomyService economy,
+        IGameRandom random,
         IGameEventBus events,
         IFamilyService family,
         IGameState gameState) => new()
     {
         Id = "family_relations.improve",
         Label = "Improve Relations",
-        Description = "Spend meaningful time together. The primary family relationship improves by 10, with a small positive spillover to other close ties between the two households.",
+        Description = "Spend meaningful time together. Successful contact increases Familiarity and Sympathy, with a small positive spillover to other family ties between the two households. Very hostile relatives may refuse.",
         Mode = ActionExecutionMode.Queued,
         QueuePhase = YearPhase.FamilyRelationActions,
         IsAvailable = c => IsRelationsContext(c)
@@ -48,7 +49,15 @@ internal static partial class FamilyRelationActions
         Execute = c =>
         {
             if (!IsValidRelation(c, relations)) return new(false);
-            relations.ModifyRelation(c.Actor, c.Target, 10);
+            if (random.NextDouble() >= relations.EvaluateOfferWillingness(c.Actor, c.Target))
+            {
+                relations.RecordInteraction(c.Actor, c.Target, 1, -3);
+                Publish(events, c, "family_relations.improve_refused", family,
+                    $"{family.GetDisplayName(c.Target)} did not want to spend time rebuilding family ties with {family.GetDisplayName(c.Actor)}.");
+                return new(true);
+            }
+
+            relations.RecordInteraction(c.Actor, c.Target, 8, 7);
             ApplySpillover(c.Actor, c.Target, relations, households, economy, gameState);
             Publish(events, c, "family_relations.improved", family,
                 $"{family.GetDisplayName(c.Actor)} spent time rebuilding family ties with {family.GetDisplayName(c.Target)}.");
@@ -95,7 +104,7 @@ internal static partial class FamilyRelationActions
         foreach (var b in gameState.People.Where(p => targetIds.Contains(p.Id) && p.Tags.Has("state.alive")))
         {
             if ((a.Id == actor.Id && b.Id == target.Id) || relations.GetRelation(a, b) is null) continue;
-            relations.ModifyRelation(a, b, 2, majorInteraction: false);
+            relations.RecordInteraction(a, b, 1, 1, majorInteraction: false);
         }
     }
 
@@ -105,7 +114,7 @@ internal static partial class FamilyRelationActions
         string type,
         IFamilyService family,
         string text,
-        bool suppressChronicle = true)
+        bool suppressChronicle = false)
     {
         var data =
             new Dictionary<string, string>

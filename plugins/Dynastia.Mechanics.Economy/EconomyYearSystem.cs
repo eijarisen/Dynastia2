@@ -219,6 +219,12 @@ public sealed class EconomyYearSystem :
                 EfficientHouseholdMultiplier;
         }
 
+        livingCosts =
+            Math.Round(
+                livingCosts,
+                0,
+                MidpointRounding.AwayFromZero);
+
         if (livingCosts > 0)
         {
             household.LastExpenseBreakdown.Add(
@@ -326,8 +332,11 @@ public sealed class EconomyYearSystem :
         IPerson person)
     {
         var amount =
-            _income.GetAnnualIncome(
-                person);
+            Math.Round(
+                _income.GetAnnualIncome(
+                    person),
+                0,
+                MidpointRounding.AwayFromZero);
 
         if (amount != 0)
         {

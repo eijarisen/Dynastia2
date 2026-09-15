@@ -93,9 +93,13 @@ public sealed partial class MainWindowViewModel
                     .ToList();
 
                 return new FamilyRelationHouseholdViewModel(
+                    targetHead.Id,
+                    relative.Id,
+                    targetHead.Tags.Has("control.playable"),
                     primary.Kinship,
                     _familyService.GetDisplayName(relative),
-                    primary.State,
+                    primary.FamiliarityState,
+                    primary.SympathyState,
                     memberText,
                     townText,
                     wealthText,
@@ -105,6 +109,26 @@ public sealed partial class MainWindowViewModel
             .Where(item => item is not null)
             .Cast<FamilyRelationHouseholdViewModel>()
             .ToList();
+    }
+
+    internal bool SelectPlayableFamilyRelationHousehold(
+        Guid householdHeadId,
+        Guid relativeId)
+    {
+        var head =
+            _gameState.People.FirstOrDefault(
+                person => person.Id == householdHeadId);
+
+        if (head is null
+            || !head.Tags.Has("state.alive")
+            || !head.Tags.Has("control.playable"))
+        {
+            return false;
+        }
+
+        SwitchActiveHousehold(householdHeadId);
+        SelectFamilyMember(relativeId);
+        return _succession.ActiveController?.Id == householdHeadId;
     }
 
     internal IReadOnlyList<PropertySelectionOption> GetFamilyRelationGiveHouseOptions(Guid relativeId)

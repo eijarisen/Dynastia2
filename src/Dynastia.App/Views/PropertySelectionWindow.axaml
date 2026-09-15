@@ -81,12 +81,14 @@
                 <ListBox
                     x:Name="OptionsList"
                     Background="Transparent"
-                    BorderThickness="0">
+                    BorderThickness="0"
+                    SelectionChanged="OnSelectionChanged">
                     <ListBox.ItemTemplate>
                         <DataTemplate x:DataType="vm:PropertySelectionOption">
                             <Border
                                 Margin="3"
                                 Padding="12,9"
+                                Opacity="{Binding DisplayOpacity}"
                                 Background="#28FFF8E8"
                                 BorderBrush="#A78959"
                                 BorderThickness="0,0,0,1">

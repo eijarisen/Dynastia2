@@ -14,7 +14,7 @@ internal static partial class FamilyRelationActions
     {
         Id = "family_relations.ask_money",
         Label = "Request Money",
-        Description = "Request financial help from this relative's household. The action is offered when their household is at least as wealthy as yours; acceptance depends on the family relationship.",
+        Description = "Request financial help from this relative's household. The action is offered when their household is at least as wealthy as yours; acceptance depends on Familiarity and Sympathy.",
         Mode = ActionExecutionMode.Queued,
         QueuePhase = YearPhase.FamilyRelationActions,
         IsAvailable = c => IsRelationsContext(c)
@@ -50,7 +50,7 @@ internal static partial class FamilyRelationActions
 
             if (!accepted)
             {
-                relations.ModifyRelation(c.Actor, c.Target, -5);
+                relations.RecordInteraction(c.Actor, c.Target, 2, -8);
                 Publish(
                     events,
                     c,
@@ -63,7 +63,7 @@ internal static partial class FamilyRelationActions
 
             economy.ChangeWealth(targetHead, -amount);
             economy.ChangeWealth(c.Actor, amount);
-            relations.ModifyRelation(c.Actor, c.Target, 5);
+            relations.RecordInteraction(c.Actor, c.Target, 5, 5);
             Publish(
                 events,
                 c,
@@ -79,12 +79,13 @@ internal static partial class FamilyRelationActions
         IFamilyRelationService relations,
         IHouseholdService households,
         IEconomyService economy,
+        IGameRandom random,
         IGameEventBus events,
         IFamilyService family) => new()
     {
         Id = "family_relations.give_money",
         Label = "Send Money",
-        Description = "Send money to this relative's household in full-thousand increments. The action is offered while your household is at least as wealthy as theirs. Gifts always succeed.",
+        Description = "Offer money to this relative's household in full-thousand increments. The action is offered while your household is at least as wealthy as theirs. Only very hostile relatives are likely to refuse a gift.",
         Mode = ActionExecutionMode.Queued,
         QueuePhase = YearPhase.FamilyRelationActions,
         IsAvailable = c => IsRelationsContext(c)
@@ -106,9 +107,22 @@ internal static partial class FamilyRelationActions
                 return new(false, "The selected gift can no longer be afforded.");
             }
 
+            if (random.NextDouble() >= relations.EvaluateOfferWillingness(c.Actor, c.Target))
+            {
+                relations.RecordInteraction(c.Actor, c.Target, 1, -2);
+                Publish(
+                    events,
+                    c,
+                    "family_relations.money_gift_refused",
+                    family,
+                    $"{family.GetDisplayName(c.Target)} refused {family.GetDisplayName(c.Actor)}'s offer of {amount:N0} zł.",
+                    suppressChronicle: false);
+                return new(true);
+            }
+
             economy.ChangeWealth(c.Actor, -amount);
             economy.ChangeWealth(targetHead, amount);
-            relations.ModifyRelation(c.Actor, c.Target, 5);
+            relations.RecordInteraction(c.Actor, c.Target, 4, 5);
             Publish(
                 events,
                 c,

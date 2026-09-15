@@ -6,6 +6,7 @@ public sealed record RelationshipPersonLineViewModel(
     string DisplayText)
 {
     public bool IsSelectable => PersonId.HasValue;
+    public bool IsPlainText => !PersonId.HasValue;
 }
 
 public sealed record RelationshipHistoryLineViewModel(
@@ -15,6 +16,7 @@ public sealed record RelationshipHistoryLineViewModel(
     string ReasonText)
 {
     public bool IsSelectable => PersonId.HasValue;
+    public bool IsPlainText => !PersonId.HasValue;
 }
 
 public sealed class FamilyDetailsViewModel
@@ -34,6 +36,7 @@ public sealed class FamilyDetailsViewModel
     public IReadOnlyList<RelationshipPersonLineViewModel> RelationshipPeople { get; init; } = [];
     public IReadOnlyList<RelationshipHistoryLineViewModel> RelationshipHistoryItems { get; init; } = [];
     public string RelationshipHistoryEmptyText => RelationshipHistoryItems.Count == 0 ? "None" : string.Empty;
+    public bool ShowRelationshipHistoryEmptyText => RelationshipHistoryItems.Count == 0;
 
     public bool ShowAdultRelationships { get; init; }
 

@@ -37,9 +37,11 @@ public sealed class StandardFamilyRelationService : IFamilyRelationService
     {
         if (first.Id == second.Id)
             return null;
-
         var data = Find(first, second);
-        return data is null ? null : ToSnapshot(data);
+        if (data is null)
+            return null;
+        NormalizeData(data);
+        return ToSnapshot(data);
     }
 
     public FamilyRelationshipSnapshot EnsureRelation(
@@ -57,32 +59,61 @@ public sealed class StandardFamilyRelationService : IFamilyRelationService
         {
             var (owner, a, b) = ResolveCanonical(first, second);
             var component = GetComponent(owner);
+            var sympathy = Math.Clamp(startingScore, 0, 100);
+            var familiarity = DefaultFamiliarity(type);
             existing = new FamilyRelationshipData
             {
                 PersonAId = a.Id,
                 PersonBId = b.Id,
                 Type = (int)type,
-                Score = Math.Clamp(startingScore, 0, 100),
+                Familiarity = familiarity,
+                Sympathy = sympathy,
+                Score = FamilyRelationScoreRules.GetCompositeScore(familiarity, sympathy),
                 CreatedYear = _gameState.Year,
                 LastMajorInteractionYear = majorInteraction ? _gameState.Year : 0
             };
             component.Relationships.Add(existing);
             owner.Components.Set(component);
         }
+        else
+        {
+            NormalizeData(existing);
+        }
 
         return ToSnapshot(existing);
     }
 
+    // Compatibility entry point used by pre-existing mechanics. A generic
+    // relation change now means a Sympathy change; Familiarity never decays.
     public FamilyRelationshipSnapshot ModifyRelation(
         IPerson first,
         IPerson second,
         double amount,
+        bool majorInteraction = true) =>
+        RecordInteraction(first, second, 0, amount, majorInteraction);
+
+    public FamilyRelationshipSnapshot RecordInteraction(
+        IPerson first,
+        IPerson second,
+        double familiarityGain,
+        double sympathyChange,
         bool majorInteraction = true)
     {
         var data = Find(first, second)
             ?? throw new InvalidOperationException("The requested family relationship is not tracked.");
+        NormalizeData(data);
 
-        data.Score = Math.Clamp(data.Score + amount, 0, 100);
+        if (familiarityGain > 0)
+            data.Familiarity = Math.Clamp(data.Familiarity + familiarityGain, 0, 100);
+
+        if (sympathyChange < 0)
+        {
+            var type = (FamilyRelationshipType)data.Type;
+            sympathyChange *= FamilyRelationScoreRules.GetDeteriorationMultiplier(type);
+        }
+
+        data.Sympathy = Math.Clamp(data.Sympathy + sympathyChange, 0, 100);
+        data.Score = FamilyRelationScoreRules.GetCompositeScore(data.Familiarity, data.Sympathy);
         if (majorInteraction)
             data.LastMajorInteractionYear = _gameState.Year;
 
@@ -91,8 +122,9 @@ public sealed class StandardFamilyRelationService : IFamilyRelationService
         return ToSnapshot(data);
     }
 
-    public string GetDisplayState(double score) =>
-        FamilyRelationScoreRules.GetDisplayState(score);
+    public string GetDisplayState(double score) => FamilyRelationScoreRules.GetDisplayState(score);
+    public string GetFamiliarityState(double familiarity) => FamilyRelationScoreRules.GetFamiliarityState(familiarity);
+    public string GetSympathyState(double sympathy) => FamilyRelationScoreRules.GetSympathyState(sympathy);
 
     public IReadOnlyList<RelatedFamilyHouseholdInfo> GetRelatedHouseholds(IPerson activeHouseholdHead)
     {
@@ -100,7 +132,7 @@ public sealed class StandardFamilyRelationService : IFamilyRelationService
         var relatives = GetCloseRelatives(activeHouseholdHead)
             .Where(relative => relative.Person.Tags.Has("state.alive"))
             .GroupBy(relative => relative.Person.Id)
-            .Select(group => group.First())
+            .Select(group => group.OrderBy(x => KinshipPriority(x.Kinship)).First())
             .Select(relative =>
             {
                 var head = _households.ResolveHouseholdHead(relative.Person);
@@ -109,7 +141,7 @@ public sealed class StandardFamilyRelationService : IFamilyRelationService
                     ? null
                     : _households.GetActiveHouseholds().FirstOrDefault(h => h.HouseholdId == householdId);
                 var relation = GetRelation(activeHouseholdHead, relative.Person)
-                    ?? EnsureRelation(activeHouseholdHead, relative.Person, relative.Type, DefaultScore(relative.Type));
+                    ?? EnsureRelation(activeHouseholdHead, relative.Person, relative.Type, DefaultSympathy(relative.Type));
                 return new
                 {
                     relative.Person,
@@ -124,13 +156,14 @@ public sealed class StandardFamilyRelationService : IFamilyRelationService
             .Where(item => item.HouseholdId is null || item.HouseholdId != activeHouseholdId)
             .ToList();
 
-        var grouped = relatives
+        return relatives
             .GroupBy(item => item.HouseholdId?.ToString() ?? $"peripheral:{item.Person.Id}")
             .Select(group =>
             {
                 var ordered = group
                     .OrderBy(item => KinshipPriority(item.Kinship))
-                    .ThenByDescending(item => item.Relation.Score)
+                    .ThenByDescending(item => item.Relation.Sympathy)
+                    .ThenByDescending(item => item.Relation.Familiarity)
                     .ToList();
                 var first = ordered[0];
                 var links = ordered.Select(item => new FamilyRelationLinkInfo(
@@ -138,7 +171,11 @@ public sealed class StandardFamilyRelationService : IFamilyRelationService
                     item.Type,
                     item.Kinship,
                     item.Relation.Score,
-                    item.Relation.State)).ToList();
+                    item.Relation.State,
+                    item.Relation.Familiarity,
+                    item.Relation.FamiliarityState,
+                    item.Relation.Sympathy,
+                    item.Relation.SympathyState)).ToList();
                 return new RelatedFamilyHouseholdInfo(
                     first.HouseholdId,
                     first.Head?.Id,
@@ -146,40 +183,71 @@ public sealed class StandardFamilyRelationService : IFamilyRelationService
                     links);
             })
             .OrderBy(info => KinshipPriority(info.PrimaryRelation.Kinship))
-            .ThenByDescending(info => info.PrimaryRelation.Score)
+            .ThenByDescending(info => info.PrimaryRelation.Sympathy)
+            .ThenByDescending(info => info.PrimaryRelation.Familiarity)
             .ToList();
-
-        return grouped;
     }
 
-    public double EvaluateRequestWillingness(
-        IPerson requester,
-        IPerson relative,
-        double abilityFactor = 1.0)
+    public double EvaluateRequestWillingness(IPerson requester, IPerson relative, double abilityFactor = 1.0)
     {
-        var score = GetRelation(requester, relative)?.Score ?? 50;
-        return FamilyRelationScoreRules.GetRequestWillingness(
-            score,
-            abilityFactor);
+        var relation = GetRelation(requester, relative);
+        return relation is null
+            ? FamilyRelationScoreRules.GetRequestWillingness(50, 50, abilityFactor)
+            : FamilyRelationScoreRules.GetRequestWillingness(relation.Familiarity, relation.Sympathy, abilityFactor);
     }
 
-    internal IReadOnlyList<FamilyRelationshipSnapshot> GetAllRelationships()
+    public double EvaluateOfferWillingness(IPerson giver, IPerson relative)
     {
-        return _gameState.People
-            .SelectMany(person =>
-                person.Components.Get<FamilyRelationsComponent>()?.Relationships
+        var relation = GetRelation(giver, relative);
+        return relation is null
+            ? FamilyRelationScoreRules.GetOfferWillingness(50, 50)
+            : FamilyRelationScoreRules.GetOfferWillingness(relation.Familiarity, relation.Sympathy);
+    }
+
+    internal IReadOnlyList<FamilyRelationshipSnapshot> GetAllRelationships() =>
+        _gameState.People
+            .SelectMany(person => person.Components.Get<FamilyRelationsComponent>()?.Relationships
                 ?? Enumerable.Empty<FamilyRelationshipData>())
-            .Select(ToSnapshot)
+            .Select(data => { NormalizeData(data); return ToSnapshot(data); })
             .ToList();
+
+    internal void DriftSympathyTowardNeutral(IPerson first, IPerson second, double amount = 0.50)
+    {
+        var data = Find(first, second);
+        if (data is null)
+            return;
+        NormalizeData(data);
+        if (Math.Abs(data.Sympathy - 50) < 0.01)
+            return;
+
+        if (data.Sympathy > 50)
+        {
+            var multiplier = FamilyRelationScoreRules.GetDeteriorationMultiplier((FamilyRelationshipType)data.Type);
+            data.Sympathy = Math.Max(50, data.Sympathy - amount * multiplier);
+        }
+        else
+        {
+            data.Sympathy = Math.Min(50, data.Sympathy + amount);
+        }
+        data.Score = FamilyRelationScoreRules.GetCompositeScore(data.Familiarity, data.Sympathy);
+        var owner = ResolveCanonical(first, second).Owner;
+        owner.Components.Set(GetComponent(owner));
     }
 
     public void ReconcileAll()
     {
         foreach (var person in _gameState.People)
         {
+            var component = person.Components.Get<FamilyRelationsComponent>();
+            if (component is not null)
+            {
+                foreach (var data in component.Relationships)
+                    NormalizeData(data);
+                person.Components.Set(component);
+            }
+
             var father = _family.GetFather(person);
             var mother = _family.GetMother(person);
-
             if (father is not null)
                 EnsureRelation(father, person, FamilyRelationshipType.ParentChild, ParentChildStart + CompatibilityStartBonus(father, person));
             if (mother is not null)
@@ -199,9 +267,25 @@ public sealed class StandardFamilyRelationService : IFamilyRelationService
             {
                 if (GetRelation(younger, sibling) is not null)
                     continue;
-
                 var start = 58 + _random.NextInt(-8, 8) + CompatibilityStartBonus(younger, sibling);
                 EnsureRelation(younger, sibling, FamilyRelationshipType.Sibling, start);
+            }
+        }
+
+        // Track the complete supported kin network even before the Relations
+        // window is opened so Sympathy can drift consistently over time.
+        foreach (var person in _gameState.People)
+        {
+            foreach (var relative in GetCloseRelatives(person))
+            {
+                if (relative.Person.Id == person.Id || GetRelation(person, relative.Person) is not null)
+                    continue;
+
+                EnsureRelation(
+                    person,
+                    relative.Person,
+                    relative.Type,
+                    DefaultSympathy(relative.Type) + CompatibilityStartBonus(person, relative.Person));
             }
         }
     }
@@ -209,18 +293,17 @@ public sealed class StandardFamilyRelationService : IFamilyRelationService
     public void ConvertDivorceToExSpouse(IPerson first, IPerson second, double extraDamage)
     {
         var satisfaction = _marriage.GetSatisfactionBetween(first, second)?.Value ?? 50;
-        var relation = EnsureRelation(
-            first,
-            second,
-            FamilyRelationshipType.ExSpouse,
-            Math.Clamp(satisfaction - extraDamage, 0, 100),
-            majorInteraction: true);
+        EnsureRelation(first, second, FamilyRelationshipType.ExSpouse, Math.Clamp(satisfaction - extraDamage, 0, 100), majorInteraction: true);
 
         var data = Find(first, second)!;
+        NormalizeData(data);
         data.Type = (int)FamilyRelationshipType.ExSpouse;
-        data.Score = Math.Clamp(satisfaction - extraDamage, 0, 100);
+        data.Familiarity = Math.Max(data.Familiarity, 75);
+        data.Sympathy = Math.Clamp(satisfaction - extraDamage, 0, 100);
+        data.Score = FamilyRelationScoreRules.GetCompositeScore(data.Familiarity, data.Sympathy);
         data.LastMajorInteractionYear = _gameState.Year;
-        ResolveCanonical(first, second).Owner.Components.Set(GetComponent(ResolveCanonical(first, second).Owner));
+        var owner = ResolveCanonical(first, second).Owner;
+        owner.Components.Set(GetComponent(owner));
     }
 
     public IReadOnlyList<IPerson> GetSiblings(IPerson person)
@@ -247,44 +330,39 @@ public sealed class StandardFamilyRelationService : IFamilyRelationService
         if (mother is not null)
             yield return (mother, FamilyRelationshipType.ParentChild, "Mother");
 
-        foreach (var sibling in GetSiblings(person))
+        var siblings = GetSiblings(person);
+        foreach (var sibling in siblings)
             yield return (sibling, FamilyRelationshipType.Sibling, _family.GetSex(sibling) == Sex.Male ? "Brother" : "Sister");
 
-        foreach (var child in _family.GetChildren(person).Where(child => child.Age >= 18))
+        foreach (var child in _family.GetChildren(person))
             yield return (child, FamilyRelationshipType.ParentChild, _family.GetSex(child) == Sex.Male ? "Son" : "Daughter");
 
         foreach (var grandparent in GetGrandparents(person))
-        {
-            yield return (
-                grandparent,
-                FamilyRelationshipType.GrandparentGrandchild,
+            yield return (grandparent, FamilyRelationshipType.GrandparentGrandchild,
                 _family.GetSex(grandparent) == Sex.Male ? "Grandfather" : "Grandmother");
-        }
 
         foreach (var grandchild in GetGrandchildren(person))
-        {
-            yield return (
-                grandchild,
-                FamilyRelationshipType.GrandparentGrandchild,
+            yield return (grandchild, FamilyRelationshipType.GrandparentGrandchild,
                 _family.GetSex(grandchild) == Sex.Male ? "Grandson" : "Granddaughter");
+
+        foreach (var sibling in siblings)
+        {
+            foreach (var nephew in _family.GetChildren(sibling))
+            {
+                yield return (nephew, FamilyRelationshipType.UncleAuntNieceNephew,
+                    _family.GetSex(nephew) == Sex.Male ? "Nephew" : "Niece");
+            }
         }
 
         foreach (var parentSibling in GetParentSiblings(person))
         {
-            yield return (
-                parentSibling,
-                FamilyRelationshipType.UncleAuntNieceNephew,
+            yield return (parentSibling, FamilyRelationshipType.UncleAuntNieceNephew,
                 _family.GetSex(parentSibling) == Sex.Male ? "Uncle" : "Aunt");
 
             foreach (var cousin in _family.GetChildren(parentSibling))
             {
-                if (cousin.Id == person.Id)
-                    continue;
-
-                yield return (
-                    cousin,
-                    FamilyRelationshipType.FirstCousin,
-                    "First cousin");
+                if (cousin.Id != person.Id)
+                    yield return (cousin, FamilyRelationshipType.FirstCousin, "First cousin");
             }
         }
 
@@ -293,25 +371,22 @@ public sealed class StandardFamilyRelationService : IFamilyRelationService
         {
             var former = FindPerson(history.SpouseId);
             if (former is not null && former.Id != currentSpouseId)
-                yield return (former, FamilyRelationshipType.ExSpouse, _family.GetSex(former) == Sex.Male ? "Ex-husband" : "Ex-wife");
+                yield return (former, FamilyRelationshipType.ExSpouse,
+                    _family.GetSex(former) == Sex.Male ? "Ex-husband" : "Ex-wife");
         }
     }
-
 
     private IReadOnlyList<IPerson> GetGrandparents(IPerson person)
     {
         var result = new Dictionary<Guid, IPerson>();
         foreach (var parent in new[] { _family.GetFather(person), _family.GetMother(person) })
         {
-            if (parent is null)
-                continue;
-
+            if (parent is null) continue;
             var grandfather = _family.GetFather(parent);
             var grandmother = _family.GetMother(parent);
             if (grandfather is not null) result[grandfather.Id] = grandfather;
             if (grandmother is not null) result[grandmother.Id] = grandmother;
         }
-
         return result.Values.ToList();
     }
 
@@ -321,7 +396,6 @@ public sealed class StandardFamilyRelationService : IFamilyRelationService
         foreach (var child in _family.GetChildren(person))
         foreach (var grandchild in _family.GetChildren(child))
             result[grandchild.Id] = grandchild;
-
         return result.Values.ToList();
     }
 
@@ -330,25 +404,19 @@ public sealed class StandardFamilyRelationService : IFamilyRelationService
         var result = new Dictionary<Guid, IPerson>();
         foreach (var parent in new[] { _family.GetFather(person), _family.GetMother(person) })
         {
-            if (parent is null)
-                continue;
-
+            if (parent is null) continue;
             foreach (var sibling in GetSiblings(parent))
                 result[sibling.Id] = sibling;
         }
-
         return result.Values.ToList();
     }
 
     private double CompatibilityStartBonus(IPerson first, IPerson second)
     {
-        if (_personality is null)
-            return 0;
-
+        if (_personality is null) return 0;
         var a = _personality.GetPersonality(first);
         var b = _personality.GetPersonality(second);
-        if (a is null || b is null)
-            return 0;
+        if (a is null || b is null) return 0;
 
         double result = string.Equals(a.Temperament, b.Temperament, StringComparison.OrdinalIgnoreCase) ? 2 : -1;
         if (string.Equals(a.Morals, b.Morals, StringComparison.OrdinalIgnoreCase))
@@ -359,14 +427,25 @@ public sealed class StandardFamilyRelationService : IFamilyRelationService
         return result;
     }
 
-    private static double DefaultScore(FamilyRelationshipType type) => type switch
+    private static double DefaultSympathy(FamilyRelationshipType type) => type switch
     {
-        FamilyRelationshipType.ParentChild => ParentChildStart,
-        FamilyRelationshipType.Sibling => 55,
-        FamilyRelationshipType.GrandparentGrandchild => 60,
+        FamilyRelationshipType.ParentChild => 68,
+        FamilyRelationshipType.Sibling => 56,
+        FamilyRelationshipType.GrandparentGrandchild => 70,
         FamilyRelationshipType.UncleAuntNieceNephew => 52,
-        FamilyRelationshipType.FirstCousin => 48,
+        FamilyRelationshipType.FirstCousin => 50,
         _ => LegacyExSpouseStart
+    };
+
+    private static double DefaultFamiliarity(FamilyRelationshipType type) => type switch
+    {
+        FamilyRelationshipType.ParentChild => 82,
+        FamilyRelationshipType.Sibling => 78,
+        FamilyRelationshipType.GrandparentGrandchild => 72,
+        FamilyRelationshipType.UncleAuntNieceNephew => 42,
+        FamilyRelationshipType.FirstCousin => 36,
+        FamilyRelationshipType.ExSpouse => 75,
+        _ => 50
     };
 
     private static int KinshipPriority(string kinship) => kinship switch
@@ -375,10 +454,26 @@ public sealed class StandardFamilyRelationService : IFamilyRelationService
         "Son" or "Daughter" => 1,
         "Brother" or "Sister" => 2,
         "Grandfather" or "Grandmother" or "Grandson" or "Granddaughter" => 3,
-        "Uncle" or "Aunt" => 4,
+        "Uncle" or "Aunt" or "Nephew" or "Niece" => 4,
         "First cousin" => 5,
         _ => 6
     };
+
+    private void NormalizeData(FamilyRelationshipData data)
+    {
+        var type = Enum.IsDefined(typeof(FamilyRelationshipType), data.Type)
+            ? (FamilyRelationshipType)data.Type
+            : FamilyRelationshipType.ExSpouse;
+
+        if (data.Sympathy < 0)
+            data.Sympathy = Math.Clamp(data.Score, 0, 100);
+        if (data.Familiarity < 0)
+            data.Familiarity = Math.Clamp(Math.Max(DefaultFamiliarity(type), data.Score), 0, 100);
+
+        data.Familiarity = Math.Clamp(data.Familiarity, 0, 100);
+        data.Sympathy = Math.Clamp(data.Sympathy, 0, 100);
+        data.Score = FamilyRelationScoreRules.GetCompositeScore(data.Familiarity, data.Sympathy);
+    }
 
     private FamilyRelationshipData? Find(IPerson first, IPerson second)
     {
@@ -399,15 +494,22 @@ public sealed class StandardFamilyRelationService : IFamilyRelationService
             : (second, second, first);
     }
 
-    private FamilyRelationshipSnapshot ToSnapshot(FamilyRelationshipData data) =>
-        new(
+    private FamilyRelationshipSnapshot ToSnapshot(FamilyRelationshipData data)
+    {
+        NormalizeData(data);
+        return new FamilyRelationshipSnapshot(
             data.PersonAId,
             data.PersonBId,
             (FamilyRelationshipType)data.Type,
             data.Score,
-            GetDisplayState(data.Score),
+            FamilyRelationScoreRules.GetSympathyState(data.Sympathy),
+            data.Familiarity,
+            FamilyRelationScoreRules.GetFamiliarityState(data.Familiarity),
+            data.Sympathy,
+            FamilyRelationScoreRules.GetSympathyState(data.Sympathy),
             data.CreatedYear,
             data.LastMajorInteractionYear);
+    }
 
     private IPerson? FindPerson(Guid id) => _gameState.People.FirstOrDefault(p => p.Id == id);
 }

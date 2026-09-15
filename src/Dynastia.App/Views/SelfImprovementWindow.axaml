@@ -90,7 +90,7 @@
                                 Background="#28FFF8E8"
                                 BorderBrush="#A78959"
                                 BorderThickness="0,0,0,1">
-                                <Grid ColumnDefinitions="125,*,145" ColumnSpacing="13">
+                                <Grid ColumnDefinitions="120,*,220" ColumnSpacing="11">
                                     <StackPanel
                                         VerticalAlignment="Center"
                                         Spacing="1">
@@ -121,7 +121,8 @@
                                             FontFamily="Georgia"
                                             FontSize="10.5"
                                             LineHeight="14"
-                                            MaxLines="2"
+                                            MaxWidth="405"
+                                            MaxLines="3"
                                             TextTrimming="CharacterEllipsis"
                                             Foreground="#46351F"
                                             TextWrapping="Wrap"
@@ -153,8 +154,8 @@
                                         </StackPanel>
                                         <ui:ImageStateButton
                                             Grid.Column="1"
-                                            Width="128"
-                                            Height="53"
+                                            Width="118"
+                                            Height="50"
                                             IsEnabled="{Binding IsAvailable}"
                                             IdleSource="avares://Dynastia.App/Assets/UI/b_queue_idle.png"
                                             HoverSource="avares://Dynastia.App/Assets/UI/b_queue_hover.png"

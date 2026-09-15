@@ -42,7 +42,8 @@ public sealed partial class StandardEconomyService
                 .DistinctBy(candidate => candidate.Id))
         {
             var amount =
-                _income.GetAnnualIncome(member);
+                RoundCurrency(
+                    _income.GetAnnualIncome(member));
 
             if (amount == 0)
                 continue;

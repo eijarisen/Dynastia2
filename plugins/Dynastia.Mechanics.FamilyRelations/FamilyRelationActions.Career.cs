@@ -16,7 +16,7 @@ internal static partial class FamilyRelationActions
     {
         Id = "family_relations.ask_job_help",
         Label = "Use Family Connections",
-        Description = "Ask this relative's household to use its strongest current career connection. Placements are normally two levels below that connection, with a small chance of one level better.",
+        Description = "Ask this relative's household to use its strongest current career connection. Acceptance depends on Familiarity and Sympathy. Placements are normally two levels below that connection, with a small chance of one level better.",
         Mode = ActionExecutionMode.Queued,
         QueuePhase = YearPhase.FamilyRelationActions,
         IsAvailable = c => IsRelationsContext(c)
@@ -58,7 +58,7 @@ internal static partial class FamilyRelationActions
 
             if (random.NextDouble() >= relations.EvaluateRequestWillingness(c.Actor, c.Target))
             {
-                relations.ModifyRelation(c.Actor, c.Target, -5);
+                relations.RecordInteraction(c.Actor, c.Target, 2, -8);
                 Publish(
                     events,
                     c,
@@ -75,7 +75,7 @@ internal static partial class FamilyRelationActions
                     career,
                     random);
 
-            relations.ModifyRelation(c.Actor, c.Target, 5);
+            relations.RecordInteraction(c.Actor, c.Target, 5, 5);
             Publish(
                 events,
                 c,
@@ -98,7 +98,7 @@ internal static partial class FamilyRelationActions
     {
         Id = "family_relations.give_job_help",
         Label = "Help with Careers",
-        Description = "Use the active household's strongest current career connection. Placements are normally two levels below that connection, with a small chance of one level better. No approval roll is needed.",
+        Description = "Offer the active household's strongest current career connection. Placements are normally two levels below that connection, with a small chance of one level better. Very hostile relatives may refuse the help.",
         Mode = ActionExecutionMode.Queued,
         QueuePhase = YearPhase.FamilyRelationActions,
         IsAvailable = c => IsRelationsContext(c)
@@ -134,6 +134,18 @@ internal static partial class FamilyRelationActions
             if (candidates.Count == 0)
                 return new(false);
 
+            if (random.NextDouble() >= relations.EvaluateOfferWillingness(c.Actor, c.Target))
+            {
+                relations.RecordInteraction(c.Actor, c.Target, 1, -2);
+                Publish(
+                    events,
+                    c,
+                    "family_relations.job_help_offer_refused",
+                    family,
+                    $"{family.GetDisplayName(c.Target)} declined career help from {family.GetDisplayName(c.Actor)}'s household.");
+                return new(true);
+            }
+
             var helped =
                 ApplyCareerHelp(
                     candidates,
@@ -141,7 +153,7 @@ internal static partial class FamilyRelationActions
                     career,
                     random);
 
-            relations.ModifyRelation(c.Actor, c.Target, 5);
+            relations.RecordInteraction(c.Actor, c.Target, 5, 6);
             Publish(
                 events,
                 c,

@@ -387,7 +387,9 @@ public sealed partial class MainWindowViewModel
         if (person.Age >= 18)
         {
             result.Add(new(
-                "Current spouse",
+                person.Tags.Has("state.dead")
+                    ? "Spouse"
+                    : "Current spouse",
                 spouse?.Id,
                 spouse is null
                     ? "None"

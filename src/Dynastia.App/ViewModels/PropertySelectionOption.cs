@@ -6,7 +6,12 @@ public sealed record PropertySelectionOption(
     string SecondaryText,
     string DetailsText,
     string PriceText,
-    string SearchText);
+    string SearchText,
+    bool IsEnabled = true)
+{
+    public double DisplayOpacity =>
+        IsEnabled ? 1.0 : 0.42;
+}
 
 public sealed class ActionSelectionRequestedEventArgs : EventArgs
 {

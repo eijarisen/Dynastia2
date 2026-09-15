@@ -209,6 +209,43 @@ internal static class ActionPresentationPolicy
         var actions =
             source.ToList();
 
+        GroupTogether(
+            actions,
+            "wellbeing.recover",
+            "career.work_harder",
+            "career.seek_employment",
+            "career.find_another_job",
+            "career.quit_job");
+
+        GroupTogether(
+            actions,
+            "loan.take",
+            "loan.give");
+
+        GroupTogether(
+            actions,
+            "household.buy_house",
+            "household.sell_house");
+
+        GroupTogether(
+            actions,
+            "reproduction.try_for_baby",
+            "relationship.repair_marriage",
+            "relationship.divorce_spouse");
+
+        GroupTogether(
+            actions,
+            "wellbeing.heal_relative",
+            "wellbeing.therapy",
+            "education.get_education",
+            "stats.improve_strength",
+            "stats.improve_intellect",
+            "stats.improve_immunity",
+            "stats.improve_appeal",
+            "stats.improve_longevity",
+            "stats.improve_fertility",
+            "personality.religious_study");
+
         var connections =
             actions.FirstOrDefault(
                 action =>
@@ -218,8 +255,7 @@ internal static class ActionPresentationPolicy
 
         if (connections is not null)
         {
-            actions.Remove(
-                connections);
+            actions.Remove(connections);
 
             var seekIndex =
                 actions.FindIndex(
@@ -231,17 +267,11 @@ internal static class ActionPresentationPolicy
                             "career.help_seek_employment",
                             StringComparison.OrdinalIgnoreCase));
 
-            if (seekIndex >= 0)
-            {
-                actions.Insert(
-                    seekIndex + 1,
-                    connections);
-            }
-            else
-            {
-                actions.Add(
-                    connections);
-            }
+            actions.Insert(
+                seekIndex >= 0
+                    ? seekIndex + 1
+                    : actions.Count,
+                connections);
         }
 
         var pass =
@@ -253,13 +283,42 @@ internal static class ActionPresentationPolicy
 
         if (pass is not null)
         {
-            actions.Remove(
-                pass);
-
-            actions.Add(
-                pass);
+            actions.Remove(pass);
+            actions.Add(pass);
         }
 
         return actions;
     }
+
+    private static void GroupTogether(
+        List<GameActionDefinition> actions,
+        params string[] orderedIds)
+    {
+        var selected =
+            orderedIds
+                .Select(id =>
+                    actions.FirstOrDefault(action =>
+                        action.Id.Equals(
+                            id,
+                            StringComparison.OrdinalIgnoreCase)))
+                .Where(action => action is not null)
+                .Cast<GameActionDefinition>()
+                .ToList();
+
+        if (selected.Count < 2)
+            return;
+
+        var insertIndex =
+            selected
+                .Select(action => actions.IndexOf(action))
+                .Min();
+
+        foreach (var action in selected)
+            actions.Remove(action);
+
+        actions.InsertRange(
+            insertIndex,
+            selected);
+    }
+
 }

@@ -46,13 +46,13 @@ internal sealed class FamilyRelationThoughtProvider : IThoughtProvider
 
         var strongest = _relations.GetRelatedHouseholds(person)
             .SelectMany(h => h.Relations)
-            .OrderByDescending(r => Math.Abs(r.Score - 50))
+            .OrderByDescending(r => Math.Abs(r.Sympathy - 50))
             .FirstOrDefault();
         if (strongest is null)
             yield break;
 
         var relationWord = strongest.Kinship.ToLowerInvariant();
-        if (strongest.Score >= 80)
+        if (strongest.Sympathy >= 80)
         {
             yield return new ThoughtCandidate(
                 "family_relation.close",
@@ -65,7 +65,7 @@ internal sealed class FamilyRelationThoughtProvider : IThoughtProvider
                 "family_relation.close",
                 new Dictionary<string, string> { ["relation"] = relationWord });
         }
-        else if (strongest.Score < 40)
+        else if (strongest.Sympathy < 40)
         {
             yield return new ThoughtCandidate(
                 "family_relation.strained",

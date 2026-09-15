@@ -294,16 +294,8 @@ public sealed class GenealogyProjectionBuilder
             GenealogyMarriageRecord marriage,
             int bloodlineChildCount)
     {
-        if (bloodlineChildCount > 0
-            || marriage.EndYear is null)
-        {
-            return false;
-        }
-
-        return !string.Equals(
-            marriage.EndReason,
-            "death",
-            StringComparison.OrdinalIgnoreCase);
+        return bloodlineChildCount == 0
+            && marriage.EndYear is not null;
     }
 
     private static void AssignDepths(

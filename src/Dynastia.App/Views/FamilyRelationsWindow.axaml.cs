@@ -30,6 +30,22 @@ public partial class FamilyRelationsWindow : Window
             handledEventsToo: true);
     }
 
+    private void OnHouseholdNameClick(
+        object? sender,
+        RoutedEventArgs e)
+    {
+        if (sender is not Button
+            {
+                DataContext: FamilyRelationHouseholdViewModel household,
+                IsEnabled: true
+            })
+        {
+            return;
+        }
+
+        _viewModel.OpenPlayableHousehold(household);
+    }
+
     private async void OnActionClick(object? sender, RoutedEventArgs e)
     {
         if (sender is not Button { DataContext: FamilyRelationActionViewModel action })

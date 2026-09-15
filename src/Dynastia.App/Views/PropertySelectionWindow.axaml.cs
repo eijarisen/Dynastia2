@@ -49,6 +49,7 @@ public partial class PropertySelectionWindow : Window
         }
 
         RefreshFilter();
+        UpdateConfirmAvailability();
     }
 
     private void OnSearchTextChanged(object? sender, TextChangedEventArgs e)
@@ -71,12 +72,34 @@ public partial class PropertySelectionWindow : Window
         OptionsList.ItemsSource = filtered;
         if (filtered.Count == 1)
             OptionsList.SelectedIndex = 0;
+
+        UpdateConfirmAvailability();
+    }
+
+    private void OnSelectionChanged(
+        object? sender,
+        SelectionChangedEventArgs e)
+    {
+        UpdateConfirmAvailability();
+    }
+
+    private void UpdateConfirmAvailability()
+    {
+        var canConfirm =
+            OptionsList.SelectedItem is PropertySelectionOption selected
+            && selected.IsEnabled;
+
+        ConfirmButton.IsEnabled = canConfirm;
+        ImageConfirmButton.IsEnabled = canConfirm;
     }
 
     private void OnConfirmClick(object? sender, RoutedEventArgs e)
     {
-        if (OptionsList.SelectedItem is PropertySelectionOption selected)
+        if (OptionsList.SelectedItem is PropertySelectionOption selected
+            && selected.IsEnabled)
+        {
             Close(selected.Id);
+        }
     }
 
     private void OnCancelClick(object? sender, RoutedEventArgs e)

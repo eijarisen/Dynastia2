@@ -1038,15 +1038,15 @@ internal sealed class AdvancedAutonomousHouseholdStrategy :
         var relation = _context.GetService<IFamilyRelationService>()?
             .GetRelation(snapshot.Head, option.Target);
 
-        if (relation is null || relation.Score >= 100)
+        if (relation is null || (relation.Familiarity >= 100 && relation.Sympathy >= 100))
             return null;
 
-        var band = relation.Score < 40
+        var band = relation.Sympathy < 40
             ? AutonomousPriorityBands.LongTermImprovement
             : AutonomousPriorityBands.OptionalDevelopment;
 
         return WithScore(option, AutonomyCategory.FamilyRelations,
-            band, relation.Score < 40 ? 58 : 30);
+            band, relation.Sympathy < 40 ? 58 : 30);
     }
 
     private AutonomousActionCandidate? ScoreFamilyGenerosity(

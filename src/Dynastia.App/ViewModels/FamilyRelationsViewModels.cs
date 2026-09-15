@@ -12,21 +12,27 @@ public sealed record FamilyRelationActionViewModel(
     bool RequiresMoneySelection);
 
 public sealed record FamilyRelationHouseholdViewModel(
+    Guid HouseholdHeadId,
+    Guid RelativeId,
+    bool IsPlayableHousehold,
     string Kinship,
     string RelativeName,
-    string State,
+    string FamiliarityState,
+    string SympathyState,
     string OtherMembersText,
     string TownText,
     string WealthText,
     string HousesText,
     IReadOnlyList<FamilyRelationActionViewModel> Actions)
 {
-    public IBrush StateBrush => State switch
+    public string RelationState => $"{FamiliarityState} · {SympathyState}";
+
+    public IBrush StateBrush => SympathyState switch
     {
         "Hostile" => new SolidColorBrush(Color.Parse("#9B2F2F")),
-        "Poor" => new SolidColorBrush(Color.Parse("#B56432")),
-        "Good" => new SolidColorBrush(Color.Parse("#4D7844")),
-        "Close" => new SolidColorBrush(Color.Parse("#2F6938")),
+        "Cold" => new SolidColorBrush(Color.Parse("#B56432")),
+        "Warm" => new SolidColorBrush(Color.Parse("#4D7844")),
+        "Affectionate" => new SolidColorBrush(Color.Parse("#2F6938")),
         _ => new SolidColorBrush(Color.Parse("#806633"))
     };
 }
@@ -70,9 +76,22 @@ public sealed class FamilyRelationsWindowViewModel : ViewModelBase
         _main.GetFamilyRelationGiveHouseOptions(relativeId);
 
     public decimal GetMoneyMaximum(FamilyRelationActionViewModel action) =>
-        _main.GetFamilyRelationMoneyMaximum(
-            action.RelativeId,
-            action.Id);
+        _main.GetFamilyRelationMoneyMaximum(action.RelativeId, action.Id);
+
+    public void OpenPlayableHousehold(
+        FamilyRelationHouseholdViewModel household)
+    {
+        if (!household.IsPlayableHousehold)
+            return;
+
+        if (_main.SelectPlayableFamilyRelationHousehold(
+                household.HouseholdHeadId,
+                household.RelativeId))
+        {
+            StatusText = string.Empty;
+            Refresh();
+        }
+    }
 
     public bool Queue(
         FamilyRelationActionViewModel action,

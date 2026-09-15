@@ -17,7 +17,7 @@ internal static partial class FamilyRelationActions
     {
         Id = "family_relations.ask_house",
         Label = "Request a House",
-        Description = "Request one spare property from this relative's household. The action is available when they own at least two houses; acceptance depends on the family relationship.",
+        Description = "Request one spare property from this relative's household. The action is available when they own at least two houses; acceptance depends on Familiarity and Sympathy.",
         Mode = ActionExecutionMode.Queued,
         QueuePhase = YearPhase.FamilyRelationActions,
         IsAvailable = c => IsRelationsContext(c)
@@ -37,7 +37,7 @@ internal static partial class FamilyRelationActions
 
             if (random.NextDouble() >= relations.EvaluateRequestWillingness(c.Actor, c.Target))
             {
-                relations.ModifyRelation(c.Actor, c.Target, -5);
+                relations.RecordInteraction(c.Actor, c.Target, 2, -8);
                 Publish(events, c, "family_relations.house_refused", family,
                     $"{family.GetDisplayName(c.Target)} declined {family.GetDisplayName(c.Actor)}'s request for a house.");
                 return new(true);
@@ -56,7 +56,7 @@ internal static partial class FamilyRelationActions
                 RelocateHousehold(gameState, c.Actor, house.Town, family, economy, career, events);
             }
 
-            relations.ModifyRelation(c.Actor, c.Target, 10);
+            relations.RecordInteraction(c.Actor, c.Target, 8, 8);
             Publish(events, c, "family_relations.house_received", family,
                 $"{family.GetDisplayName(c.Target)} gave {family.GetDisplayName(c.Actor)} a house in {house.Town.Town}.");
             return new(true);
@@ -69,13 +69,14 @@ internal static partial class FamilyRelationActions
         IEconomyService economy,
         ILocationService locations,
         ICareerService career,
+        IGameRandom random,
         IGameEventBus events,
         IFamilyService family,
         IGameState gameState) => new()
     {
         Id = "family_relations.give_house",
         Label = "Transfer a House",
-        Description = "Transfer one non-residence property to this relative's household. The transfer always succeeds. If they own no home and the property is elsewhere, they relocate there.",
+        Description = "Offer one non-residence property to this relative's household. Very hostile relatives may refuse. If accepted and they own no home, they relocate to the property when it is elsewhere.",
         Mode = ActionExecutionMode.Queued,
         QueuePhase = YearPhase.FamilyRelationActions,
         IsAvailable = c => IsRelationsContext(c)
@@ -99,6 +100,14 @@ internal static partial class FamilyRelationActions
             if (selected is null)
                 return new(false, "That property is no longer available.");
 
+            if (random.NextDouble() >= relations.EvaluateOfferWillingness(c.Actor, c.Target))
+            {
+                relations.RecordInteraction(c.Actor, c.Target, 1, -2);
+                Publish(events, c, "family_relations.house_gift_refused", family,
+                    $"{family.GetDisplayName(c.Target)} refused {family.GetDisplayName(c.Actor)}'s offer of a house.");
+                return new(true);
+            }
+
             var recipientHadHouse = economy.GetHouses(targetHead).Count > 0;
             var house = economy.TakeHouse(c.Actor, propertyId);
             if (house is null)
@@ -112,7 +121,7 @@ internal static partial class FamilyRelationActions
                 RelocateHousehold(gameState, targetHead, house.Town, family, economy, career, events);
             }
 
-            relations.ModifyRelation(c.Actor, c.Target, 10);
+            relations.RecordInteraction(c.Actor, c.Target, 8, 8);
             Publish(events, c, "family_relations.house_given", family,
                 $"{family.GetDisplayName(c.Actor)} gave {family.GetDisplayName(c.Target)} a house in {house.Town.Town}.");
             return new(true);

@@ -49,10 +49,8 @@ public sealed partial class MainWindowViewModel
                     true;
 
                 QueuedActionText =
-                    $"Queued: " +
-                    ActionEmojiMap.Format(
-                        queued[0].ActionId,
-                        queued[0].Label);
+                    BuildQueuedActionText(
+                        queued[0]);
             }
             else
             {
@@ -291,19 +289,22 @@ public sealed partial class MainWindowViewModel
                     .Select(house => house.Town.Id)
                     .ToHashSet(StringComparer.OrdinalIgnoreCase);
 
+            var wealth =
+                _economyService.GetHousehold(actor)?.Wealth
+                ?? 0m;
+
             return _locationService.GetTowns()
                 .Select(town =>
                 {
                     var opportunities = _localCareerOpportunityService?.GetOpportunitySnapshot(town);
                     var price = _economyService.GetHousePrice(town);
                     var livingCost = _economyService.GetLivingCostPerPerson(town);
-                    var residenceRent = _economyService.GetResidenceRent(town);
                     var rentalIncome = _economyService.GetRentalIncome(town);
                     var region = opportunities?.RegionName ?? town.RegionId;
+                    var affordable = wealth >= price;
                     var details = $"Population: {town.Population:N0} • {town.SettlementClassDisplayName}\n"
                         + $"{opportunities?.Description ?? "General local work and services."}\n"
-                        + $"Living costs: {livingCost:N2} zł per person/year\n"
-                        + $"Residential rent: {residenceRent:N2} zł/year • Rental income: {rentalIncome:N2} zł/year";
+                        + $"Living costs: {livingCost:N0} zł per person/year • Rental income: {rentalIncome:N0} zł/year";
                     var search = $"{town.Town} {town.County} {region} {opportunities?.Description}";
                     return new PropertySelectionOption(
                         town.Id,
@@ -311,7 +312,8 @@ public sealed partial class MainWindowViewModel
                         $"{town.County} • {region}",
                         details,
                         $"{price:N0} zł",
-                        search);
+                        search,
+                        affordable);
                 })
                 .OrderByDescending(option => ownedTownIds.Contains(option.Id))
                 .ThenBy(option => option.PrimaryText, StringComparer.CurrentCultureIgnoreCase)
@@ -333,7 +335,7 @@ public sealed partial class MainWindowViewModel
                         house.Id.ToString(),
                         house.Town.Town,
                         $"{house.Town.County} • {region}",
-                        $"{status} • {house.Town.SettlementClassDisplayName}\nLocal house price: {localPrice:N0} zł\nRental income: {rentalIncome:N2} zł/year",
+                        $"{status} • {house.Town.SettlementClassDisplayName}\nLocal house price: {localPrice:N0} zł\nRental income: {rentalIncome:N0} zł/year",
                         $"Sale: {sale:N0} zł",
                         $"{house.Town.Town} {house.Town.County} {region} {status}");
                 })
@@ -484,6 +486,30 @@ public sealed partial class MainWindowViewModel
         RefreshJustice();
         RefreshNarrative();
         RefreshActions();
+    }
+
+    private string BuildQueuedActionText(
+        QueuedActionInfo queued)
+    {
+        var text =
+            $"Queued: {ActionEmojiMap.Format(queued.ActionId, queued.Label)}";
+
+        if (queued.TargetId == queued.ActorId)
+            return text;
+
+        var target =
+            _gameState.People.FirstOrDefault(
+                person => person.Id == queued.TargetId);
+
+        if (target is null)
+            return text;
+
+        var targetName =
+            _familyService is null
+                ? $"{target.Name} {target.Surname}"
+                : _familyService.GetDisplayName(target);
+
+        return $"{text} — Target: {targetName}";
     }
 
     private IPerson? FindSelectedPerson()

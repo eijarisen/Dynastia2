@@ -106,6 +106,21 @@ public sealed partial class StandardEconomyService
         IPerson owner,
         HouseholdEconomyComponent household)
     {
+        household.Wealth =
+            RoundCurrency(household.Wealth);
+
+        household.LastIncome =
+            RoundCurrency(household.LastIncome);
+
+        household.LastExpenses =
+            RoundCurrency(household.LastExpenses);
+
+        foreach (var line in household.LastIncomeBreakdown)
+            line.Amount = RoundCurrency(line.Amount);
+
+        foreach (var line in household.LastExpenseBreakdown)
+            line.Amount = RoundCurrency(line.Amount);
+
         if (household.HouseholdId
             == Guid.Empty)
         {
@@ -381,7 +396,13 @@ public sealed partial class StandardEconomyService
                 PersonalEstateComponent>();
 
         if (claim is not null)
+        {
+            claim.PendingInheritance =
+                RoundCurrency(
+                    claim.PendingInheritance);
+
             return claim;
+        }
 
         claim =
             new PersonalEstateComponent();

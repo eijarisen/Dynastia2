@@ -117,32 +117,13 @@ public sealed class EstateInheritanceSystem :
         var wealth =
             finance.Wealth;
 
-        IReadOnlyList<IPerson> heirs =
-            anchor is null
-                ? Array.Empty<IPerson>()
-                : _family
-                    .GetChildren(
-                        anchor)
-                    .Where(
-                        child =>
-                            child.Tags.Has(
-                                "state.alive"))
-                    .OrderBy(
-                        child =>
-                            child.BirthDate?.Year
-                            ?? int.MaxValue)
-                    .ThenBy(
-                        child =>
-                            child.BirthDate?.Month
-                            ?? 1)
-                    .ThenBy(
-                        child =>
-                            child.BirthDate?.Day
-                            ?? 1)
-                    .ThenBy(
-                        child =>
-                            child.Id)
-                    .ToList();
+        var heirResolution =
+            ResolveEstateHeirs(
+                gameState,
+                anchor);
+
+        var heirs =
+            heirResolution.Heirs;
 
         if (heirs.Count == 0)
         {
@@ -178,7 +159,7 @@ public sealed class EstateInheritanceSystem :
                             ["text"] =
                                 $"The remaining estate of " +
                                 $"{(anchor is null ? _family.GetDisplayName(head) : _family.GetDisplayName(anchor))} " +
-                                "left the dynasty because there were no living children to inherit it."
+                                "was lost because no eligible living relatives remained to inherit it."
                         }
                 });
 
@@ -243,7 +224,7 @@ public sealed class EstateInheritanceSystem :
                         ["text"] =
                             $"The remaining household estate of " +
                             $"{(anchor is null ? _family.GetDisplayName(head) : _family.GetDisplayName(anchor))} " +
-                            "was divided among the living children."
+                            $"was divided among {heirResolution.Description}."
                     }
             });
 
@@ -476,18 +457,15 @@ public sealed class EstateInheritanceSystem :
         if (wealth <= 0)
             return;
 
-        // Dynastia displays and prices money in whole zł units. Divide
-        // those units evenly and hand any remainder to the eldest heirs
-        // first. If an old save somehow contains a fractional zł residue,
-        // preserve it by adding that residue to the eldest share.
+        // Dynastia uses whole zł only. Normalize any legacy fractional
+        // residue before splitting the estate, then hand the indivisible
+        // whole-zł remainder to the eldest heirs first.
         var wholeUnits =
             decimal.ToInt64(
-                decimal.Truncate(
-                    wealth));
-
-        var fractionalResidue =
-            wealth
-            - wholeUnits;
+                Math.Round(
+                    wealth,
+                    0,
+                    MidpointRounding.AwayFromZero));
 
         var baseUnits =
             wholeUnits
@@ -511,11 +489,7 @@ public sealed class EstateInheritanceSystem :
                         ? 1m
                         : 0m
                 )
-                + (
-                    index == 0
-                        ? fractionalResidue
-                        : 0m
-                );
+;
 
             if (amount <= 0)
                 continue;
@@ -558,6 +532,174 @@ public sealed class EstateInheritanceSystem :
             }
         }
     }
+
+
+    private EstateHeirResolution ResolveEstateHeirs(
+        IGameState gameState,
+        IPerson? source)
+    {
+        if (source is null)
+        {
+            return new EstateHeirResolution(
+                Array.Empty<IPerson>(),
+                "no heirs");
+        }
+
+        var children =
+            SortLiving(
+                _family.GetChildren(source));
+
+        if (children.Count > 0)
+        {
+            return new EstateHeirResolution(
+                children,
+                "the living children");
+        }
+
+        var spouse =
+            _family.GetSpouse(source);
+
+        if (spouse is not null
+            && spouse.Tags.Has("state.alive"))
+        {
+            return new EstateHeirResolution(
+                [spouse],
+                "the surviving spouse");
+        }
+
+        var siblings =
+            SortLiving(
+                GetSiblings(
+                    gameState,
+                    source));
+
+        if (siblings.Count > 0)
+        {
+            return new EstateHeirResolution(
+                siblings,
+                "the living siblings");
+        }
+
+        var parents =
+            SortLiving(
+                new[]
+                {
+                    _family.GetFather(source),
+                    _family.GetMother(source)
+                }
+                .Where(person => person is not null)
+                .Cast<IPerson>());
+
+        if (parents.Count > 0)
+        {
+            return new EstateHeirResolution(
+                parents,
+                "the living parents");
+        }
+
+        var parentSiblings =
+            GetParentSiblings(
+                gameState,
+                source);
+
+        var cousins =
+            SortLiving(
+                parentSiblings
+                    .SelectMany(relative => _family.GetChildren(relative))
+                    .Where(relative => relative.Id != source.Id)
+                    .DistinctBy(relative => relative.Id));
+
+        if (cousins.Count > 0)
+        {
+            return new EstateHeirResolution(
+                cousins,
+                "the living first cousins");
+        }
+
+        var unclesAndAunts =
+            SortLiving(
+                parentSiblings);
+
+        if (unclesAndAunts.Count > 0)
+        {
+            return new EstateHeirResolution(
+                unclesAndAunts,
+                "the living uncles and aunts");
+        }
+
+        return new EstateHeirResolution(
+            Array.Empty<IPerson>(),
+            "no heirs");
+    }
+
+    private IReadOnlyList<IPerson> GetSiblings(
+        IGameState gameState,
+        IPerson person)
+    {
+        var father =
+            _family.GetFather(person);
+
+        var mother =
+            _family.GetMother(person);
+
+        if (father is null
+            && mother is null)
+        {
+            return Array.Empty<IPerson>();
+        }
+
+        return gameState.People
+            .Where(candidate => candidate.Id != person.Id)
+            .Where(candidate =>
+                father is not null
+                    && _family.GetFather(candidate)?.Id == father.Id
+                || mother is not null
+                    && _family.GetMother(candidate)?.Id == mother.Id)
+            .DistinctBy(candidate => candidate.Id)
+            .ToList();
+    }
+
+    private IReadOnlyList<IPerson> GetParentSiblings(
+        IGameState gameState,
+        IPerson person)
+    {
+        var result =
+            new Dictionary<Guid, IPerson>();
+
+        foreach (var parent in
+            new[]
+            {
+                _family.GetFather(person),
+                _family.GetMother(person)
+            })
+        {
+            if (parent is null)
+                continue;
+
+            foreach (var sibling in
+                GetSiblings(gameState, parent))
+            {
+                result[sibling.Id] = sibling;
+            }
+        }
+
+        return result.Values.ToList();
+    }
+
+    private static IReadOnlyList<IPerson> SortLiving(
+        IEnumerable<IPerson> people) =>
+        people
+            .Where(person => person.Tags.Has("state.alive"))
+            .DistinctBy(person => person.Id)
+            .OrderBy(person => person.BirthDate?.Year ?? int.MaxValue)
+            .ThenBy(person => person.BirthDate?.Month ?? 1)
+            .ThenBy(person => person.BirthDate?.Day ?? 1)
+            .ThenBy(person => person.Id)
+            .ToList();
+
+    private sealed record EstateHeirResolution(
+        IReadOnlyList<IPerson> Heirs,
+        string Description);
 
     private bool HasEstablishedHouseholdOutsideEstate(
         IPerson person,

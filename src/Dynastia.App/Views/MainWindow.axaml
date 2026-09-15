@@ -1437,9 +1437,19 @@
                                                         <Button
                                                             Grid.Column="1"
                                                             Classes="relationshipLink"
-                                                            IsEnabled="{Binding IsSelectable}"
-                                                            Content="{Binding DisplayText}"
-                                                            Click="OnRelationshipPersonClick" />
+                                                            IsVisible="{Binding IsSelectable}"
+                                                            Click="OnRelationshipPersonClick">
+                                                            <TextBlock
+                                                                FontSize="12"
+                                                                Foreground="#E9D8B3"
+                                                                Text="{Binding DisplayText}" />
+                                                        </Button>
+                                                        <TextBlock
+                                                            Grid.Column="1"
+                                                            IsVisible="{Binding IsPlainText}"
+                                                            FontSize="12"
+                                                            Foreground="#A99D86"
+                                                            Text="{Binding DisplayText}" />
                                                     </Grid>
                                                 </DataTemplate>
                                             </ItemsControl.ItemTemplate>
@@ -1457,6 +1467,7 @@
                                                 Text="Relationship history" />
 
                                             <TextBlock
+                                                IsVisible="{Binding SelectedFamily.ShowRelationshipHistoryEmptyText}"
                                                 FontSize="11.5"
                                                 Opacity="0.65"
                                                 Text="{Binding SelectedFamily.RelationshipHistoryEmptyText}" />
@@ -1470,10 +1481,18 @@
                                                                 Text="{Binding PeriodText}" />
                                                             <Button
                                                                 Classes="relationshipLink"
+                                                                IsVisible="{Binding IsSelectable}"
+                                                                Click="OnRelationshipPersonClick">
+                                                                <TextBlock
+                                                                    FontSize="11.5"
+                                                                    Foreground="#E9D8B3"
+                                                                    Text="{Binding PersonText}" />
+                                                            </Button>
+                                                            <TextBlock
+                                                                IsVisible="{Binding IsPlainText}"
                                                                 FontSize="11.5"
-                                                                IsEnabled="{Binding IsSelectable}"
-                                                                Content="{Binding PersonText}"
-                                                                Click="OnRelationshipPersonClick" />
+                                                                Foreground="#A99D86"
+                                                                Text="{Binding PersonText}" />
                                                             <TextBlock
                                                                 FontSize="11.5"
                                                                 Text="{Binding ReasonText}" />

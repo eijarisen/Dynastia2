@@ -9,19 +9,22 @@ public static class EconomyBalanceRules
         if (amount >= 0)
         {
             // Income and transfers first fill any existing negative balance.
-            return startingWealth + amount;
+            return RoundCurrency(
+                startingWealth + amount);
         }
 
         if (startingWealth <= 0)
         {
             // Ordinary spending cannot deepen debt and must never erase an
             // existing negative balance by clamping it upward to zero.
-            return startingWealth;
+            return RoundCurrency(
+                startingWealth);
         }
 
-        return Math.Max(
-            0,
-            startingWealth + amount);
+        return RoundCurrency(
+            Math.Max(
+                0,
+                startingWealth + amount));
     }
 
     public static decimal ApplyOrdinaryAnnualFinance(
@@ -33,11 +36,19 @@ public static class EconomyBalanceRules
             startingWealth
             + income;
 
-        return afterIncome <= 0
-            ? afterIncome
-            : Math.Max(
-                0,
-                afterIncome
-                - ordinaryExpenses);
+        return RoundCurrency(
+            afterIncome <= 0
+                ? afterIncome
+                : Math.Max(
+                    0,
+                    afterIncome
+                    - ordinaryExpenses));
     }
+
+    private static decimal RoundCurrency(
+        decimal amount) =>
+        Math.Round(
+            amount,
+            0,
+            MidpointRounding.AwayFromZero);
 }

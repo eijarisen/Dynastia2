@@ -1,5 +1,22 @@
 namespace Dynastia.App.ViewModels;
 
+public sealed record RelationshipPersonLineViewModel(
+    string Label,
+    Guid? PersonId,
+    string DisplayText)
+{
+    public bool IsSelectable => PersonId.HasValue;
+}
+
+public sealed record RelationshipHistoryLineViewModel(
+    string PeriodText,
+    Guid? PersonId,
+    string PersonText,
+    string ReasonText)
+{
+    public bool IsSelectable => PersonId.HasValue;
+}
+
 public sealed class FamilyDetailsViewModel
 {
     public string Sex { get; init; } = "";
@@ -13,6 +30,10 @@ public sealed class FamilyDetailsViewModel
     public string Children { get; init; } = "None";
 
     public string RelationshipHistory { get; init; } = "None";
+
+    public IReadOnlyList<RelationshipPersonLineViewModel> RelationshipPeople { get; init; } = [];
+    public IReadOnlyList<RelationshipHistoryLineViewModel> RelationshipHistoryItems { get; init; } = [];
+    public string RelationshipHistoryEmptyText => RelationshipHistoryItems.Count == 0 ? "None" : string.Empty;
 
     public bool ShowAdultRelationships { get; init; }
 

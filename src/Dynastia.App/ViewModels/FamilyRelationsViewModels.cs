@@ -16,6 +16,7 @@ public sealed record FamilyRelationHouseholdViewModel(
     string RelativeName,
     string State,
     string OtherMembersText,
+    string TownText,
     string WealthText,
     string HousesText,
     IReadOnlyList<FamilyRelationActionViewModel> Actions)

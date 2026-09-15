@@ -1002,7 +1002,9 @@ internal sealed class AdvancedAutonomousHouseholdStrategy :
         AutonomousHouseholdSnapshot snapshot)
     {
         if (snapshot.FinancialState != AutonomousFinancialState.Secure
-            || snapshot.HasSeriousMedicalDanger)
+            || snapshot.HasSeriousMedicalDanger
+            || snapshot.Status?.IsLargeFamilyStrained == true
+            || snapshot.LivingChildCount < 2 && snapshot.HasRealisticReproductivePath)
         {
             return null;
         }
@@ -1012,14 +1014,15 @@ internal sealed class AdvancedAutonomousHouseholdStrategy :
             return null;
 
         var price = _economy.GetHousePrice(_economy.GetResidenceTown(snapshot.Head));
-        if (finance.Wealth - price < snapshot.ExpectedExpenses)
+        var reserve = snapshot.HasResidence
+            ? snapshot.ExpectedExpenses * 2m
+            : snapshot.ExpectedExpenses;
+        if (finance.Wealth - price < reserve)
             return null;
 
         return WithScore(option, AutonomyCategory.Property,
-            snapshot.HasResidence
-                ? AutonomousPriorityBands.OptionalDevelopment
-                : AutonomousPriorityBands.LongTermImprovement,
-            snapshot.HasResidence ? 24 : 78);
+            AutonomousPriorityBands.LongTermImprovement,
+            snapshot.HasResidence ? 44 : 78);
     }
 
     private AutonomousActionCandidate? ScoreImproveRelations(
@@ -1066,17 +1069,19 @@ internal sealed class AdvancedAutonomousHouseholdStrategy :
         AutonomousHouseholdSnapshot snapshot)
     {
         if (snapshot.FinancialState != AutonomousFinancialState.Secure
-            || snapshot.HasSeriousMedicalDanger)
+            || snapshot.HasSeriousMedicalDanger
+            || snapshot.Status?.IsLargeFamilyStrained == true
+            || snapshot.LivingChildCount < 2 && snapshot.HasRealisticReproductivePath)
         {
             return null;
         }
 
         var wealth = snapshot.Finance?.Wealth ?? 0m;
-        if (wealth < snapshot.ExpectedExpenses * 2m + 1000m)
+        if (wealth < snapshot.ExpectedExpenses * 3m + 1000m)
             return null;
 
-        return WithScore(option, AutonomyCategory.Optional,
-            AutonomousPriorityBands.OptionalDevelopment, 18);
+        return WithScore(option, AutonomyCategory.Property,
+            AutonomousPriorityBands.LongTermImprovement, 36);
     }
 
     private AutonomousActionCandidate? ScoreMarryOffDaughter(
@@ -1224,7 +1229,10 @@ internal sealed class AdvancedAutonomousHouseholdStrategy :
         if (lending)
         {
             if (snapshot.FinancialState != AutonomousFinancialState.Secure
-                || (snapshot.Finance?.Wealth ?? 0m) < snapshot.ExpectedExpenses * 2m + 1000m)
+                || snapshot.HasSeriousMedicalDanger
+                || snapshot.Status?.IsLargeFamilyStrained == true
+                || snapshot.LivingChildCount < 2 && snapshot.HasRealisticReproductivePath
+                || (snapshot.Finance?.Wealth ?? 0m) < snapshot.ExpectedExpenses * 3m + 1000m)
             {
                 return null;
             }

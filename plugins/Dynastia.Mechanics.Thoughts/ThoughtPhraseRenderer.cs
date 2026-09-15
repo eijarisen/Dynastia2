@@ -19,6 +19,14 @@ internal sealed partial class ThoughtPhraseRenderer
         string dynastyKey,
         int year)
     {
+        if (candidate.Context.TryGetValue(
+                "literalText",
+                out var literalText)
+            && !string.IsNullOrWhiteSpace(literalText))
+        {
+            return literalText;
+        }
+
         var voice =
             ResolveVoice(
                 person);

@@ -127,6 +127,9 @@ public sealed class PersonalityPlugin :
                 Execute = actionContext =>
                 {
                     var actor = actionContext.Actor;
+                    var possessive = family.GetSex(actor) == Sex.Female
+                        ? "her"
+                        : "his";
                     if (random.NextDouble() >= 0.50)
                     {
                         events.Publish(new GameEvent
@@ -137,7 +140,7 @@ public sealed class PersonalityPlugin :
                             Data = new Dictionary<string, string>
                             {
                                 ["success"] = "false",
-                                ["text"] = $"{family.GetDisplayName(actor)} devoted time to religious study, but their outlook did not change."
+                                ["text"] = $"{family.GetDisplayName(actor)} devoted time to religious study, but {possessive} outlook did not change."
                             }
                         });
                         return new GameActionResult(true);
@@ -161,7 +164,7 @@ public sealed class PersonalityPlugin :
                             ["from"] = before ?? string.Empty,
                             ["to"] = after ?? string.Empty,
                             ["text"] = before == "Good"
-                                ? $"{family.GetDisplayName(actor)} deepened their religious convictions."
+                                ? $"{family.GetDisplayName(actor)} deepened {possessive} religious convictions."
                                 : $"{family.GetDisplayName(actor)} emerged from religious study with a more benevolent outlook."
                         }
                     });

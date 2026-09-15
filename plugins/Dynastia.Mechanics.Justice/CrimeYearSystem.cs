@@ -247,6 +247,12 @@ public sealed class CrimeYearSystem : IYearSystem
         var outcome = crime.IsProfitCrime
             ? success ? $" and brought {proceeds:N0} zł home" : " but gained nothing"
             : string.Empty;
+        var crimePhrase = crime.Id.Equals(
+            "brawling",
+            StringComparison.OrdinalIgnoreCase)
+                ? "got into a public brawl"
+                : $"committed {presentation.DisplayName}";
+
         _events.Publish(new GameEvent
         {
             Type = "justice.crime_uncaught",
@@ -261,7 +267,7 @@ public sealed class CrimeYearSystem : IYearSystem
                 ["success"] = success.ToString().ToLowerInvariant(),
                 ["caught"] = "false",
                 ["proceeds"] = proceeds.ToString(),
-                ["text"] = $"{_family.GetDisplayName(person)} committed {presentation.DisplayName}{outcome} and escaped arrest."
+                ["text"] = $"{_family.GetDisplayName(person)} {crimePhrase}{outcome} and escaped arrest."
             }
         });
     }

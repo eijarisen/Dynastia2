@@ -98,6 +98,12 @@ public sealed partial class MainWindowViewModel
                     .GetEducationLevel(person));
     }
 
+    private void RefreshHobbies()
+    {
+        OnPropertyChanged(
+            nameof(SelectedHobbiesText));
+    }
+
     private void RefreshCareer()
     {
         var person =
@@ -239,6 +245,20 @@ public sealed partial class MainWindowViewModel
                 .GetRelationshipHistory(
                     person);
 
+        var relationshipPeople =
+            BuildRelationshipPeople(
+                person,
+                father,
+                mother,
+                siblings,
+                spouse,
+                children,
+                generatedBackground);
+
+        var relationshipHistoryItems =
+            BuildRelationshipHistoryItems(
+                relationshipHistory);
+
         SelectedFamily =
             new FamilyDetailsViewModel
             {
@@ -292,6 +312,12 @@ public sealed partial class MainWindowViewModel
                     FormatRelationshipHistory(
                         relationshipHistory),
 
+                RelationshipPeople =
+                    relationshipPeople,
+
+                RelationshipHistoryItems =
+                    relationshipHistoryItems,
+
                 ShowAdultRelationships =
                     person.Age >= 18,
 
@@ -307,6 +333,111 @@ public sealed partial class MainWindowViewModel
                             ? "Yes"
                             : "No"
             };
+    }
+
+
+    private IReadOnlyList<RelationshipPersonLineViewModel>
+        BuildRelationshipPeople(
+            IPerson person,
+            IPerson? father,
+            IPerson? mother,
+            IReadOnlyList<IPerson> siblings,
+            IPerson? spouse,
+            IReadOnlyList<IPerson> children,
+            GeneratedFamilyBackgroundInfo? generatedBackground)
+    {
+        var result = new List<RelationshipPersonLineViewModel>();
+
+        result.Add(new(
+            "Father",
+            father?.Id,
+            father is not null
+                ? PersonNameWithLifeYears(father)
+                : generatedBackground?.FatherName ?? "Unknown"));
+
+        result.Add(new(
+            "Mother",
+            mother?.Id,
+            mother is not null
+                ? PersonNameWithLifeYears(mother)
+                : generatedBackground?.MotherName ?? "Unknown"));
+
+        if (siblings.Count > 0)
+        {
+            foreach (var sibling in siblings)
+            {
+                result.Add(new(
+                    _familyService?.GetSex(sibling) == Sex.Male
+                        ? "Brother"
+                        : "Sister",
+                    sibling.Id,
+                    PersonNameWithLifeYears(sibling)));
+            }
+        }
+        else if (generatedBackground?.Siblings.Count > 0)
+        {
+            foreach (var siblingName in generatedBackground.Siblings)
+                result.Add(new("Sibling", null, siblingName));
+        }
+        else
+        {
+            result.Add(new("Siblings", null, "None"));
+        }
+
+        if (person.Age >= 18)
+        {
+            result.Add(new(
+                "Current spouse",
+                spouse?.Id,
+                spouse is null
+                    ? "None"
+                    : PersonNameWithLifeYears(spouse)));
+
+            if (children.Count == 0)
+            {
+                result.Add(new("Children", null, "None"));
+            }
+            else
+            {
+                foreach (var child in children)
+                {
+                    result.Add(new(
+                        _familyService?.GetSex(child) == Sex.Male
+                            ? "Son"
+                            : "Daughter",
+                        child.Id,
+                        PersonNameWithLifeYears(child)));
+                }
+            }
+        }
+
+        return result;
+    }
+
+    private IReadOnlyList<RelationshipHistoryLineViewModel>
+        BuildRelationshipHistoryItems(
+            IReadOnlyList<RelationshipHistoryInfo> history)
+    {
+        return history
+            .OrderBy(item => item.StartYear)
+            .Select(item =>
+            {
+                var spouse = _gameState.People
+                    .FirstOrDefault(person => person.Id == item.SpouseId);
+                var end = item.EndYear is int endYear
+                    ? endYear.ToString()
+                    : "present";
+                var reason = string.IsNullOrWhiteSpace(item.EndReason)
+                    ? string.Empty
+                    : $" ({item.EndReason})";
+
+                return new RelationshipHistoryLineViewModel(
+                    $"{item.StartYear}–{end}: ",
+                    spouse?.Id,
+                    spouse is null ? "Unknown" : PersonName(spouse),
+                    reason);
+            })
+            .ToList();
     }
 
     private IReadOnlyList<IPerson>

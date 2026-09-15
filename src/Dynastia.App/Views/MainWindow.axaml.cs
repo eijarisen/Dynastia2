@@ -191,6 +191,29 @@ public partial class MainWindow : Window
         }
     }
 
+    private void OnRelationshipPersonClick(
+        object? sender,
+        RoutedEventArgs e)
+    {
+        Guid? personId = sender switch
+        {
+            Button { DataContext: RelationshipPersonLineViewModel line } =>
+                line.PersonId,
+            Button { DataContext: RelationshipHistoryLineViewModel history } =>
+                history.PersonId,
+            _ => null
+        };
+
+        if (personId is not Guid id
+            || DataContext is not MainWindowViewModel viewModel)
+        {
+            return;
+        }
+
+        viewModel.SelectHouseholdFromTree(id);
+        e.Handled = true;
+    }
+
     private async void OnWindowKeyDown(
         object? sender,
         KeyEventArgs e)

@@ -1,0 +1,66 @@
+Id,Name,StartYear,EndYear,MinimumAge,TownPreference,GenderPreference,PrimaryTemperament,SecondaryTemperament,Emoji
+reading,Reading,1700,,7,Universal,Neutral,Melancholic,Phlegmatic,📚
+storytelling,Storytelling,1700,,5,Universal,Neutral,Sanguine,Phlegmatic,🗣️
+singing,Singing,1700,,5,Universal,Neutral,Sanguine,,🎤
+dancing,Dancing,1700,,8,Universal,Female-leaning,Sanguine,Choleric,💃
+playing_music,Playing Music,1700,,8,Urban,Neutral,Melancholic,Sanguine,🎵
+drawing_and_painting,Drawing & Painting,1700,,7,Urban,Neutral,Melancholic,Phlegmatic,🎨
+poetry_and_writing,Poetry & Writing,1700,,12,Urban,Neutral,Melancholic,,✒️
+chess,Chess,1700,,9,Urban,Male-leaning,Melancholic,Phlegmatic,♟️
+card_games,Card Games,1700,,10,Universal,Male-leaning,Phlegmatic,Sanguine,🃏
+board_games,Board Games,1700,,6,Universal,Neutral,Phlegmatic,Melancholic,🎲
+gardening,Gardening,1700,,8,Rural,Female-leaning,Phlegmatic,Melancholic,🌱
+fishing,Fishing,1700,,9,Rural,Male-leaning,Phlegmatic,Melancholic,🎣
+hunting,Hunting,1700,,16,Rural,Strongly male-leaning,Choleric,Sanguine,🦌
+target_shooting,Target Shooting,1700,,16,Rural,Strongly male-leaning,Choleric,Phlegmatic,🎯
+horse_riding,Horse Riding,1700,,11,Rural,Male-leaning,Sanguine,Choleric,🐎
+woodcarving,Woodcarving,1700,,11,Rural,Male-leaning,Phlegmatic,Melancholic,🪵
+needlework,Needlework,1700,,7,Universal,Strongly female-leaning,Phlegmatic,Melancholic,🧵
+embroidery,Embroidery,1700,,8,Urban,Strongly female-leaning,Melancholic,Phlegmatic,🪡
+knitting,Knitting,1700,,9,Universal,Strongly female-leaning,Phlegmatic,,🧶
+cooking_and_baking,Cooking & Baking,1700,,8,Universal,Female-leaning,Phlegmatic,Sanguine,🥧
+social_visiting,Social Visiting,1700,,12,Universal,Female-leaning,Sanguine,,☕
+tavern_games,Tavern Games,1700,,18,Universal,Strongly male-leaning,Sanguine,Choleric,🍻
+theatre,Theatre,1700,,11,Urban,Neutral,Sanguine,Melancholic,🎭
+concerts_and_opera,Concerts & Opera,1700,,12,Urban,Neutral,Melancholic,Sanguine,🎼
+walking,Walking,1700,,6,Universal,Neutral,Phlegmatic,Melancholic,🚶
+skittles,Skittles,1700,,10,Universal,Male-leaning,Sanguine,Phlegmatic,🎳
+swimming,Swimming,1700,,8,Universal,Neutral,Sanguine,Choleric,🏊
+ice_skating,Ice Skating,1700,,8,Universal,Neutral,Sanguine,Choleric,⛸️
+fencing,Fencing,1700,,14,Urban,Strongly male-leaning,Choleric,Sanguine,🤺
+foraging,Foraging,1700,,7,Rural,Neutral,Phlegmatic,Melancholic,🍄
+amateur_astronomy,Amateur Astronomy,1700,,12,Universal,Male-leaning,Melancholic,Phlegmatic,🔭
+natural_history,Natural History,1750,,11,Universal,Male-leaning,Melancholic,Phlegmatic,🔍
+collecting_curiosities,Collecting Curiosities,1750,,12,Urban,Neutral,Melancholic,Phlegmatic,🗃️
+billiards,Billiards,1800,,16,Urban,Strongly male-leaning,Phlegmatic,Choleric,🎱
+boxing,Boxing,1800,,15,Urban,Strongly male-leaning,Choleric,Sanguine,🥊
+rowing,Rowing,1800,,13,Urban,Male-leaning,Sanguine,Choleric,🚣
+mountaineering,Mountaineering,1850,,16,Universal,Male-leaning,Choleric,Sanguine,🧗
+photography,Photography,1850,,14,Urban,Neutral,Melancholic,Phlegmatic,📷
+gymnastics,Gymnastics,1850,,9,Urban,Neutral,Sanguine,Choleric,🤸
+stamp_collecting,Stamp Collecting,1860,,8,Urban,Neutral,Melancholic,Phlegmatic,✉️
+cycling,Cycling,1880,,11,Urban,Neutral,Sanguine,Choleric,🚲
+tennis,Tennis,1880,,11,Urban,Neutral,Sanguine,Choleric,🎾
+football,Football,1890,,7,Universal,Strongly male-leaning,Sanguine,Choleric,⚽
+model_building,Model Building,1900,,9,Universal,Male-leaning,Phlegmatic,Melancholic,🛠️
+skiing,Skiing,1900,,9,Universal,Neutral,Choleric,Sanguine,🎿
+table_tennis,Table Tennis,1900,,8,Urban,Neutral,Sanguine,Phlegmatic,🏓
+motoring,Motoring,1905,,18,Urban,Strongly male-leaning,Choleric,Sanguine,🚗
+cinema,Cinema,1910,,7,Urban,Neutral,Sanguine,Phlegmatic,🎬
+camping,Camping,1920,,9,Rural,Neutral,Sanguine,Phlegmatic,⛺
+crosswords,Crosswords,1920,,10,Urban,Neutral,Melancholic,Phlegmatic,🧩
+record_collecting,Record Collecting,1920,,12,Urban,Neutral,Melancholic,Sanguine,🎶
+radio_listening,Radio Listening,1925,,6,Universal,Neutral,Phlegmatic,Melancholic,📻
+amateur_radio,Amateur Radio,1930,,15,Urban,Male-leaning,Melancholic,Phlegmatic,📡
+home_projects,Home Projects,1950,,15,Universal,Male-leaning,Phlegmatic,Choleric,🔨
+television,Television,1955,,5,Universal,Neutral,Phlegmatic,,📺
+jogging,Jogging,1970,,12,Urban,Neutral,Sanguine,Choleric,🏃
+role_playing_games,Role-playing Games,1975,,10,Urban,Male-leaning,Melancholic,Phlegmatic,🐉
+fitness_training,Fitness Training,1980,,14,Urban,Neutral,Choleric,Sanguine,🏋️
+computer_tinkering,Computer Tinkering,1980,,11,Urban,Male-leaning,Melancholic,Phlegmatic,💻
+video_games,Video Games,1980,,7,Urban,Male-leaning,Phlegmatic,Choleric,🎮
+programming,Programming,1980,,12,Urban,Male-leaning,Melancholic,Choleric,👨‍💻
+internet_browsing,Internet Browsing,1995,,8,Urban,Neutral,Phlegmatic,Melancholic,🌐
+blogging,Blogging,2000,,12,Urban,Neutral,Melancholic,Sanguine,✍️
+social_media,Social Media,2005,,12,Universal,Neutral,Sanguine,Phlegmatic,📱
+podcasts,Podcasts,2005,,12,Universal,Neutral,Melancholic,Phlegmatic,🎧

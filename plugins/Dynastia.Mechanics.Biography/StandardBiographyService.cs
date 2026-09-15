@@ -49,6 +49,9 @@ public sealed partial class StandardBiographyService :
         GetBiography(
             IPerson person)
     {
+        EnsureGeneratedAdultLifeMilestones(
+            person);
+
         if (!_entries.TryGetValue(
             person.Id,
             out var entries))
@@ -57,6 +60,9 @@ public sealed partial class StandardBiographyService :
         }
 
         return entries
+            .Where(entry =>
+                !IsMinorRelativeIllnessEntry(
+                    entry))
             .Select(
                 (entry, index) =>
                     new
@@ -81,12 +87,23 @@ public sealed partial class StandardBiographyService :
         IReadOnlyList<BiographyEntry>>
         ExportBiographyState()
     {
+        foreach (var person in
+            _gameState.People)
+        {
+            EnsureGeneratedAdultLifeMilestones(
+                person);
+        }
+
         return _entries.ToDictionary(
             pair =>
                 pair.Key,
             pair =>
                 (IReadOnlyList<BiographyEntry>)
-                    pair.Value.ToList());
+                    pair.Value
+                        .Where(entry =>
+                            !IsMinorRelativeIllnessEntry(
+                                entry))
+                        .ToList());
     }
 
     public void RestoreBiographyState(
@@ -104,7 +121,11 @@ public sealed partial class StandardBiographyService :
             entries)
         {
             _entries[pair.Key] =
-                pair.Value.ToList();
+                pair.Value
+                    .Where(entry =>
+                        !IsMinorRelativeIllnessEntry(
+                            entry))
+                    .ToList();
         }
     }
 
@@ -172,6 +193,12 @@ public sealed partial class StandardBiographyService :
             "🧑 Became an adult.");
     }
 
+    private int GetCompletedBiographyYear(
+        GameEvent gameEvent) =>
+        Math.Max(
+            _gameState.StartYear,
+            gameEvent.Year - 1);
+
     private void AddEntry(
         IPerson person,
         int year,
@@ -190,6 +217,29 @@ public sealed partial class StandardBiographyService :
             new BiographyEntry(
                 year,
                 message));
+    }
+
+    private void AddEntryIfMissing(
+        IPerson person,
+        int year,
+        string message)
+    {
+        if (_entries.TryGetValue(
+                person.Id,
+                out var entries)
+            && entries.Any(entry =>
+                entry.Year == year
+                && entry.Message.Equals(
+                    message,
+                    StringComparison.Ordinal)))
+        {
+            return;
+        }
+
+        AddEntry(
+            person,
+            year,
+            message);
     }
 
     private IPerson? FindPerson(

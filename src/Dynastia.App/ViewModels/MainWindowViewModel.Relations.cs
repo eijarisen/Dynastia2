@@ -66,6 +66,9 @@ public sealed partial class MainWindowViewModel
                         members.Select(member =>
                             FormatRelationHouseholdMember(member, info)));
 
+                var townText = _locationService is null
+                    ? "Town: Unknown"
+                    : $"Town: {_locationService.GetLocation(targetHead).HomeTown.Town}";
                 var wealthText = $"Wealth: {finance.Wealth:N0} zł";
                 var housesText = $"Houses: {_economyService.GetHouses(targetHead).Count}";
 
@@ -94,6 +97,7 @@ public sealed partial class MainWindowViewModel
                     _familyService.GetDisplayName(relative),
                     primary.State,
                     memberText,
+                    townText,
                     wealthText,
                     housesText,
                     actionModels);

@@ -24,6 +24,7 @@ public sealed partial class MainWindowViewModel
             RefreshHealth();
             RefreshEconomy();
             RefreshEducation();
+            RefreshHobbies();
             RefreshCareer();
             RefreshMarriageSatisfaction();
             RefreshChildHappiness();
@@ -87,6 +88,25 @@ public sealed partial class MainWindowViewModel
         {
             _selectedCareer = value;
             OnPropertyChanged();
+        }
+    }
+
+
+    public string SelectedHobbiesText
+    {
+        get
+        {
+            var person = FindSelectedPerson();
+            if (person is null || _hobbyService is null)
+                return "Hobbies: None";
+
+            var hobbies = _hobbyService
+                .GetHobbies(person)
+                .Hobbies;
+
+            return hobbies.Count == 0
+                ? "Hobbies: None"
+                : $"Hobbies: {string.Join(", ", hobbies.Select(hobby => hobby.Name))}";
         }
     }
 

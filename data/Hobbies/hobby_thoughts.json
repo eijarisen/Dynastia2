@@ -1,0 +1,1029 @@
+{
+  "reading": {
+    "Child": [
+      "I like reading stories."
+    ],
+    "Adolescent": [
+      "I've been reading a lot lately."
+    ],
+    "AdultRough": [
+      "Been reading a good book."
+    ],
+    "AdultNormal": [
+      "I've been enjoying a good book lately."
+    ],
+    "AdultElaborate": [
+      "I've been happily disappearing into books whenever I find a quiet moment."
+    ]
+  },
+  "storytelling": {
+    "Child": [
+      "I like telling stories."
+    ],
+    "Adolescent": [
+      "I've got a good story to tell."
+    ],
+    "AdultRough": [
+      "I've got a story for them."
+    ],
+    "AdultNormal": [
+      "I enjoy telling a good story when everyone is together."
+    ],
+    "AdultElaborate": [
+      "There are few things I enjoy more than holding everyone's attention with a good story."
+    ]
+  },
+  "singing": {
+    "Child": [
+      "I like singing."
+    ],
+    "Adolescent": [
+      "I've had that song stuck in my head all day."
+    ],
+    "AdultRough": [
+      "Could sing something."
+    ],
+    "AdultNormal": [
+      "I've been in the mood to sing lately."
+    ],
+    "AdultElaborate": [
+      "I've found myself returning to familiar songs whenever the mood takes me."
+    ]
+  },
+  "dancing": {
+    "Child": [
+      "I want to dance!"
+    ],
+    "Adolescent": [
+      "I wish there was somewhere to go dancing."
+    ],
+    "AdultRough": [
+      "Wouldn't mind a dance."
+    ],
+    "AdultNormal": [
+      "I'd really enjoy going dancing."
+    ],
+    "AdultElaborate": [
+      "A lively evening of dancing sounds considerably more appealing than sitting at home."
+    ]
+  },
+  "playing_music": {
+    "Child": [
+      "I want to play some music."
+    ],
+    "Adolescent": [
+      "I should practice again."
+    ],
+    "AdultRough": [
+      "Could play for a while."
+    ],
+    "AdultNormal": [
+      "I'd like to spend some time playing music."
+    ],
+    "AdultElaborate": [
+      "Losing myself in music for a while would be a welcome pleasure."
+    ]
+  },
+  "drawing_and_painting": {
+    "Child": [
+      "I want to draw something."
+    ],
+    "Adolescent": [
+      "I've got an idea for a picture."
+    ],
+    "AdultRough": [
+      "Might do some drawing."
+    ],
+    "AdultNormal": [
+      "I've been wanting to draw or paint something."
+    ],
+    "AdultElaborate": [
+      "I've had an image in mind that I would very much like to put on paper."
+    ]
+  },
+  "poetry_and_writing": {
+    "Adolescent": [
+      "I've been writing things down lately."
+    ],
+    "AdultRough": [
+      "Got something I want to write."
+    ],
+    "AdultNormal": [
+      "I've been in the mood to write."
+    ],
+    "AdultElaborate": [
+      "I've been trying to put a few persistent thoughts into words."
+    ]
+  },
+  "chess": {
+    "Child": [
+      "I want to play chess."
+    ],
+    "Adolescent": [
+      "I could go for a game of chess."
+    ],
+    "AdultRough": [
+      "Could play a game."
+    ],
+    "AdultNormal": [
+      "I'd enjoy a game of chess."
+    ],
+    "AdultElaborate": [
+      "A thoughtful game of chess would be an excellent way to pass the evening."
+    ]
+  },
+  "card_games": {
+    "Child": [
+      "Can we play cards?"
+    ],
+    "Adolescent": [
+      "I wouldn't mind playing cards."
+    ],
+    "AdultRough": [
+      "Could play some cards."
+    ],
+    "AdultNormal": [
+      "A game of cards would be pleasant."
+    ],
+    "AdultElaborate": [
+      "A few hands of cards in good company would make for an agreeable evening."
+    ]
+  },
+  "board_games": {
+    "Child": [
+      "I want to play a game."
+    ],
+    "Adolescent": [
+      "I feel like playing something."
+    ],
+    "AdultRough": [
+      "Could play a board game."
+    ],
+    "AdultNormal": [
+      "I'd enjoy sitting down for a board game."
+    ],
+    "AdultElaborate": [
+      "A quiet evening spent over a good game sounds rather appealing."
+    ]
+  },
+  "gardening": {
+    "Child": [
+      "I like helping in the garden."
+    ],
+    "Adolescent": [
+      "The garden's looking good this year."
+    ],
+    "AdultRough": [
+      "Garden needs some work."
+    ],
+    "AdultNormal": [
+      "I've been enjoying working in the garden."
+    ],
+    "AdultElaborate": [
+      "There's something deeply satisfying about watching the garden take shape under my care."
+    ]
+  },
+  "fishing": {
+    "Child": [
+      "I like going fishing."
+    ],
+    "Adolescent": [
+      "I'd rather spend the day fishing."
+    ],
+    "AdultRough": [
+      "Could use a day fishing."
+    ],
+    "AdultNormal": [
+      "I could happily spend the day fishing."
+    ],
+    "AdultElaborate": [
+      "There are few things I find as peaceful as spending a quiet day by the water."
+    ]
+  },
+  "hunting": {
+    "Adolescent": [
+      "I'd like to go hunting again."
+    ],
+    "AdultRough": [
+      "Could go hunting."
+    ],
+    "AdultNormal": [
+      "I've been thinking about going hunting."
+    ],
+    "AdultElaborate": [
+      "A few days out hunting would be a welcome change from ordinary life."
+    ]
+  },
+  "target_shooting": {
+    "Adolescent": [
+      "I'd like another chance to practice shooting."
+    ],
+    "AdultRough": [
+      "Could do some shooting."
+    ],
+    "AdultNormal": [
+      "I feel like doing some target practice."
+    ],
+    "AdultElaborate": [
+      "I wouldn't mind spending some time sharpening my aim."
+    ]
+  },
+  "horse_riding": {
+    "Child": [
+      "I want to ride again."
+    ],
+    "Adolescent": [
+      "I'd rather be out riding."
+    ],
+    "AdultRough": [
+      "Could go riding."
+    ],
+    "AdultNormal": [
+      "I'd enjoy going out riding."
+    ],
+    "AdultElaborate": [
+      "A long ride would do me considerably more good than another day indoors."
+    ]
+  },
+  "woodcarving": {
+    "Child": [
+      "I want to carve something."
+    ],
+    "Adolescent": [
+      "I've got something I want to make."
+    ],
+    "AdultRough": [
+      "Could do some carving."
+    ],
+    "AdultNormal": [
+      "I've been working on a little carving."
+    ],
+    "AdultElaborate": [
+      "I enjoy the quiet concentration of shaping something carefully by hand."
+    ]
+  },
+  "needlework": {
+    "Child": [
+      "I like making things with thread."
+    ],
+    "Adolescent": [
+      "I've been working on my needlework."
+    ],
+    "AdultRough": [
+      "Got some sewing to do."
+    ],
+    "AdultNormal": [
+      "I've been enjoying my needlework."
+    ],
+    "AdultElaborate": [
+      "The patient rhythm of needlework has been a pleasant way to spend my quieter hours."
+    ]
+  },
+  "embroidery": {
+    "Child": [
+      "I like making pretty patterns."
+    ],
+    "Adolescent": [
+      "My embroidery is coming along nicely."
+    ],
+    "AdultRough": [
+      "Been doing some embroidery."
+    ],
+    "AdultNormal": [
+      "I've been spending some time embroidering."
+    ],
+    "AdultElaborate": [
+      "I've found embroidery a remarkably satisfying exercise in patience and detail."
+    ]
+  },
+  "knitting": {
+    "Child": [
+      "I like knitting things."
+    ],
+    "Adolescent": [
+      "I've been working on my knitting."
+    ],
+    "AdultRough": [
+      "Got some knitting to finish."
+    ],
+    "AdultNormal": [
+      "I've been relaxing with some knitting."
+    ],
+    "AdultElaborate": [
+      "The simple rhythm of knitting makes for a surprisingly peaceful way to pass the time."
+    ]
+  },
+  "cooking_and_baking": {
+    "Child": [
+      "I like helping with the cooking."
+    ],
+    "Adolescent": [
+      "I want to try making something new."
+    ],
+    "AdultRough": [
+      "Might bake something."
+    ],
+    "AdultNormal": [
+      "I've been enjoying cooking lately."
+    ],
+    "AdultElaborate": [
+      "I've been rather enjoying experimenting with different things in the kitchen."
+    ]
+  },
+  "social_visiting": {
+    "Adolescent": [
+      "I want to go see everyone."
+    ],
+    "AdultRough": [
+      "Should go visit someone."
+    ],
+    "AdultNormal": [
+      "I'd like to pay someone a visit."
+    ],
+    "AdultElaborate": [
+      "I've been feeling rather inclined to spend an afternoon in good company."
+    ]
+  },
+  "tavern_games": {
+    "AdultRough": [
+      "Could go down to the tavern."
+    ],
+    "AdultNormal": [
+      "A few games at the tavern sound good."
+    ],
+    "AdultElaborate": [
+      "An evening of games and conversation at the tavern would be a welcome diversion."
+    ]
+  },
+  "theatre": {
+    "Child": [
+      "I want to see a play."
+    ],
+    "Adolescent": [
+      "I'd love to go to the theatre."
+    ],
+    "AdultRough": [
+      "Could see a play."
+    ],
+    "AdultNormal": [
+      "I'd like to see something at the theatre."
+    ],
+    "AdultElaborate": [
+      "An evening at the theatre sounds like exactly the sort of diversion I could enjoy."
+    ]
+  },
+  "concerts_and_opera": {
+    "Adolescent": [
+      "I'd like to hear some live music."
+    ],
+    "AdultRough": [
+      "Could go hear some music."
+    ],
+    "AdultNormal": [
+      "I'd enjoy going to a concert."
+    ],
+    "AdultElaborate": [
+      "I've been longing for an evening spent listening to music performed properly."
+    ]
+  },
+  "walking": {
+    "Child": [
+      "I want to go for a walk."
+    ],
+    "Adolescent": [
+      "I could use a long walk."
+    ],
+    "AdultRough": [
+      "Need a walk."
+    ],
+    "AdultNormal": [
+      "I'd like to go for a good walk."
+    ],
+    "AdultElaborate": [
+      "A long walk would give me a welcome opportunity to clear my thoughts."
+    ]
+  },
+  "skittles": {
+    "Child": [
+      "I want to play skittles."
+    ],
+    "Adolescent": [
+      "A game of skittles sounds fun."
+    ],
+    "AdultRough": [
+      "Could play some skittles."
+    ],
+    "AdultNormal": [
+      "I wouldn't mind a game of skittles."
+    ],
+    "AdultElaborate": [
+      "A friendly game of skittles sounds like a pleasant way to spend some time."
+    ]
+  },
+  "swimming": {
+    "Child": [
+      "I want to go swimming."
+    ],
+    "Adolescent": [
+      "I'd rather be swimming."
+    ],
+    "AdultRough": [
+      "Could go for a swim."
+    ],
+    "AdultNormal": [
+      "I'd enjoy going for a swim."
+    ],
+    "AdultElaborate": [
+      "A good swim would be an excellent way to clear my head and stretch myself."
+    ]
+  },
+  "ice_skating": {
+    "Child": [
+      "I want to go skating."
+    ],
+    "Adolescent": [
+      "I hope we can go skating soon."
+    ],
+    "AdultRough": [
+      "Could go skating."
+    ],
+    "AdultNormal": [
+      "I'd enjoy some skating while the weather allows it."
+    ],
+    "AdultElaborate": [
+      "I should make the most of the cold weather and spend some time skating."
+    ]
+  },
+  "fencing": {
+    "Adolescent": [
+      "I want to practice my fencing."
+    ],
+    "AdultRough": [
+      "Need some fencing practice."
+    ],
+    "AdultNormal": [
+      "I've been wanting to practice my fencing."
+    ],
+    "AdultElaborate": [
+      "A proper fencing session would be an excellent test of both discipline and reflexes."
+    ]
+  },
+  "foraging": {
+    "Child": [
+      "I like looking for mushrooms and berries."
+    ],
+    "Adolescent": [
+      "I'd like to go gathering in the woods."
+    ],
+    "AdultRough": [
+      "Could go gathering."
+    ],
+    "AdultNormal": [
+      "I've been thinking about going foraging."
+    ],
+    "AdultElaborate": [
+      "A quiet day gathering mushrooms and berries in the woods sounds very pleasant."
+    ]
+  },
+  "amateur_astronomy": {
+    "Adolescent": [
+      "I want to look at the stars tonight."
+    ],
+    "AdultRough": [
+      "Might watch the stars tonight."
+    ],
+    "AdultNormal": [
+      "I'd like to spend some time looking at the night sky."
+    ],
+    "AdultElaborate": [
+      "A clear night spent studying the sky never fails to put ordinary concerns into perspective."
+    ]
+  },
+  "natural_history": {
+    "Child": [
+      "I like looking at plants and animals."
+    ],
+    "Adolescent": [
+      "I've been collecting things I find outside."
+    ],
+    "AdultRough": [
+      "Been looking at things out in nature."
+    ],
+    "AdultNormal": [
+      "I've been taking an interest in natural history."
+    ],
+    "AdultElaborate": [
+      "I've become increasingly fascinated by observing and classifying the natural world around me."
+    ]
+  },
+  "collecting_curiosities": {
+    "Adolescent": [
+      "I like collecting unusual things."
+    ],
+    "AdultRough": [
+      "Found something worth keeping."
+    ],
+    "AdultNormal": [
+      "I've been adding a few interesting things to my collection."
+    ],
+    "AdultElaborate": [
+      "I find considerable pleasure in collecting unusual objects and learning where they came from."
+    ]
+  },
+  "billiards": {
+    "Adolescent": [
+      "I'd like another game of billiards."
+    ],
+    "AdultRough": [
+      "Could play some billiards."
+    ],
+    "AdultNormal": [
+      "I wouldn't mind a game of billiards."
+    ],
+    "AdultElaborate": [
+      "A quiet game of billiards would make for an agreeable evening."
+    ]
+  },
+  "boxing": {
+    "Adolescent": [
+      "I want another boxing match."
+    ],
+    "AdultRough": [
+      "Could use a good fight."
+    ],
+    "AdultNormal": [
+      "I've been wanting to do some boxing."
+    ],
+    "AdultElaborate": [
+      "A demanding boxing session would be a satisfying way to test myself."
+    ]
+  },
+  "rowing": {
+    "Adolescent": [
+      "I'd like to get out on the water."
+    ],
+    "AdultRough": [
+      "Could go rowing."
+    ],
+    "AdultNormal": [
+      "I'd enjoy spending some time rowing."
+    ],
+    "AdultElaborate": [
+      "A long spell out on the water would be both strenuous and wonderfully refreshing."
+    ]
+  },
+  "mountaineering": {
+    "Adolescent": [
+      "I'd love to climb somewhere difficult."
+    ],
+    "AdultRough": [
+      "Could go climbing."
+    ],
+    "AdultNormal": [
+      "I've been wanting to go climbing again."
+    ],
+    "AdultElaborate": [
+      "The prospect of a difficult climb is exhausting to contemplate and irresistible all the same."
+    ]
+  },
+  "photography": {
+    "Adolescent": [
+      "I want to take more photographs."
+    ],
+    "AdultRough": [
+      "Could take some pictures."
+    ],
+    "AdultNormal": [
+      "I've been enjoying photography lately."
+    ],
+    "AdultElaborate": [
+      "I've been trying to capture small moments that would otherwise disappear unnoticed."
+    ]
+  },
+  "gymnastics": {
+    "Child": [
+      "I want to practice gymnastics."
+    ],
+    "Adolescent": [
+      "I should practice some more."
+    ],
+    "AdultRough": [
+      "Could do some gymnastics."
+    ],
+    "AdultNormal": [
+      "I've been enjoying gymnastics."
+    ],
+    "AdultElaborate": [
+      "The discipline and control required by gymnastics are surprisingly satisfying."
+    ]
+  },
+  "stamp_collecting": {
+    "Child": [
+      "I found another stamp for my collection."
+    ],
+    "Adolescent": [
+      "I'm still looking for a few stamps I want."
+    ],
+    "AdultRough": [
+      "Got another stamp for the collection."
+    ],
+    "AdultNormal": [
+      "I've been adding to my stamp collection."
+    ],
+    "AdultElaborate": [
+      "I still find an absurd amount of satisfaction in finding exactly the stamp my collection was missing."
+    ]
+  },
+  "cycling": {
+    "Child": [
+      "I want to ride my bicycle."
+    ],
+    "Adolescent": [
+      "I want to go out cycling."
+    ],
+    "AdultRough": [
+      "Could go for a ride."
+    ],
+    "AdultNormal": [
+      "I'd enjoy going cycling."
+    ],
+    "AdultElaborate": [
+      "A long ride would be an excellent excuse to get out and see somewhere different."
+    ]
+  },
+  "tennis": {
+    "Child": [
+      "I want to play tennis."
+    ],
+    "Adolescent": [
+      "I could go for a game of tennis."
+    ],
+    "AdultRough": [
+      "Could play some tennis."
+    ],
+    "AdultNormal": [
+      "I'd enjoy a game of tennis."
+    ],
+    "AdultElaborate": [
+      "A good competitive game of tennis sounds particularly appealing."
+    ]
+  },
+  "football": {
+    "Child": [
+      "I want to play football."
+    ],
+    "Adolescent": [
+      "I wish we could get a match going."
+    ],
+    "AdultRough": [
+      "Could play some football."
+    ],
+    "AdultNormal": [
+      "I wouldn't mind a game of football."
+    ],
+    "AdultElaborate": [
+      "A proper football match would be an excellent way to spend the afternoon."
+    ]
+  },
+  "model_building": {
+    "Child": [
+      "I want to finish my model."
+    ],
+    "Adolescent": [
+      "I've been working on my model again."
+    ],
+    "AdultRough": [
+      "Got a model to finish."
+    ],
+    "AdultNormal": [
+      "I've been spending some time model building."
+    ],
+    "AdultElaborate": [
+      "I find the precision of assembling a model strangely calming."
+    ]
+  },
+  "skiing": {
+    "Child": [
+      "I want to go skiing."
+    ],
+    "Adolescent": [
+      "I wish we could go skiing."
+    ],
+    "AdultRough": [
+      "Could go skiing."
+    ],
+    "AdultNormal": [
+      "I'd love to go skiing again."
+    ],
+    "AdultElaborate": [
+      "A day on the snow sounds considerably more appealing than staying indoors."
+    ]
+  },
+  "table_tennis": {
+    "Child": [
+      "I want to play table tennis."
+    ],
+    "Adolescent": [
+      "I could go for a game."
+    ],
+    "AdultRough": [
+      "Could play table tennis."
+    ],
+    "AdultNormal": [
+      "I'd enjoy a game of table tennis."
+    ],
+    "AdultElaborate": [
+      "A quick game of table tennis would be a pleasant little distraction."
+    ]
+  },
+  "motoring": {
+    "AdultRough": [
+      "Wouldn't mind taking the car out."
+    ],
+    "AdultNormal": [
+      "I've been looking for an excuse to go for a drive."
+    ],
+    "AdultElaborate": [
+      "There is something remarkably satisfying about simply taking the car out with nowhere particular to be."
+    ]
+  },
+  "cinema": {
+    "Child": [
+      "I want to see a film."
+    ],
+    "Adolescent": [
+      "I'd like to go to the cinema."
+    ],
+    "AdultRough": [
+      "Could see a film."
+    ],
+    "AdultNormal": [
+      "I'd enjoy going to the cinema."
+    ],
+    "AdultElaborate": [
+      "An evening at the cinema sounds like a thoroughly pleasant escape."
+    ]
+  },
+  "camping": {
+    "Child": [
+      "I want to go camping."
+    ],
+    "Adolescent": [
+      "I'd like to spend a few nights outdoors."
+    ],
+    "AdultRough": [
+      "Could go camping."
+    ],
+    "AdultNormal": [
+      "I've been wanting to go camping."
+    ],
+    "AdultElaborate": [
+      "A few quiet nights away from ordinary life would be very welcome."
+    ]
+  },
+  "crosswords": {
+    "Child": [
+      "I want to finish this puzzle."
+    ],
+    "Adolescent": [
+      "This crossword is harder than I thought."
+    ],
+    "AdultRough": [
+      "Got a crossword to finish."
+    ],
+    "AdultNormal": [
+      "I've been doing crosswords lately."
+    ],
+    "AdultElaborate": [
+      "I've become rather fond of having a crossword to puzzle over in quiet moments."
+    ]
+  },
+  "record_collecting": {
+    "Adolescent": [
+      "There's another record I want."
+    ],
+    "AdultRough": [
+      "Could use another record."
+    ],
+    "AdultNormal": [
+      "I've been adding to my record collection."
+    ],
+    "AdultElaborate": [
+      "I've been slowly building a collection of records I genuinely enjoy returning to."
+    ]
+  },
+  "radio_listening": {
+    "Child": [
+      "I want to listen to the radio."
+    ],
+    "Adolescent": [
+      "I wonder what's on the radio."
+    ],
+    "AdultRough": [
+      "Might listen to the radio."
+    ],
+    "AdultNormal": [
+      "I've been enjoying listening to the radio."
+    ],
+    "AdultElaborate": [
+      "I've grown rather fond of settling down and seeing what happens to be on the radio."
+    ]
+  },
+  "amateur_radio": {
+    "Adolescent": [
+      "I want to see who I can reach on the radio."
+    ],
+    "AdultRough": [
+      "Might get on the radio."
+    ],
+    "AdultNormal": [
+      "I've been spending time with the radio set."
+    ],
+    "AdultElaborate": [
+      "There's something fascinating about making contact with someone far away through nothing but a radio signal."
+    ]
+  },
+  "home_projects": {
+    "Adolescent": [
+      "I've got something I want to build."
+    ],
+    "AdultRough": [
+      "Got a job to do around the house."
+    ],
+    "AdultNormal": [
+      "I've been working on a few things around the house."
+    ],
+    "AdultElaborate": [
+      "There is always another small project around the house that seems worth improving."
+    ]
+  },
+  "television": {
+    "Child": [
+      "I want to watch television."
+    ],
+    "Adolescent": [
+      "I wonder what's on television."
+    ],
+    "AdultRough": [
+      "Might watch some television."
+    ],
+    "AdultNormal": [
+      "I'd be happy just watching television for a while."
+    ],
+    "AdultElaborate": [
+      "A quiet evening in front of the television sounds perfectly adequate tonight."
+    ]
+  },
+  "jogging": {
+    "Adolescent": [
+      "I should go for a run."
+    ],
+    "AdultRough": [
+      "Need a run."
+    ],
+    "AdultNormal": [
+      "I'd like to go for a run."
+    ],
+    "AdultElaborate": [
+      "A good run would probably clear my head better than sitting around thinking."
+    ]
+  },
+  "role_playing_games": {
+    "Child": [
+      "I want to play our adventure again."
+    ],
+    "Adolescent": [
+      "I can't wait for the next game."
+    ],
+    "AdultRough": [
+      "Could play a game tonight."
+    ],
+    "AdultNormal": [
+      "I'd enjoy another role-playing game."
+    ],
+    "AdultElaborate": [
+      "I've been looking forward to disappearing into another adventure for an evening."
+    ]
+  },
+  "fitness_training": {
+    "Adolescent": [
+      "I should get another workout in."
+    ],
+    "AdultRough": [
+      "Need a workout."
+    ],
+    "AdultNormal": [
+      "I've been keeping up with my training."
+    ],
+    "AdultElaborate": [
+      "I find a hard training session an unusually effective way to clear my mind."
+    ]
+  },
+  "computer_tinkering": {
+    "Child": [
+      "I want to mess with the computer."
+    ],
+    "Adolescent": [
+      "I want to see if I can get this computer working better."
+    ],
+    "AdultRough": [
+      "Been messing with the computer."
+    ],
+    "AdultNormal": [
+      "I've been tinkering with the computer again."
+    ],
+    "AdultElaborate": [
+      "I keep finding excuses to take things apart, change something, and see whether the computer behaves any better."
+    ]
+  },
+  "video_games": {
+    "Child": [
+      "I want to play some games."
+    ],
+    "Adolescent": [
+      "I've been playing a lot lately."
+    ],
+    "AdultRough": [
+      "Could play a game."
+    ],
+    "AdultNormal": [
+      "I wouldn't mind spending some time playing games."
+    ],
+    "AdultElaborate": [
+      "A quiet evening absorbed in a good game sounds remarkably appealing."
+    ]
+  },
+  "programming": {
+    "Adolescent": [
+      "I've got something I want to code."
+    ],
+    "AdultRough": [
+      "Got some code to work on."
+    ],
+    "AdultNormal": [
+      "I've been programming in my spare time."
+    ],
+    "AdultElaborate": [
+      "I've been enjoying the peculiar satisfaction of making a program finally behave the way I intended."
+    ]
+  },
+  "internet_browsing": {
+    "Child": [
+      "I want to go on the internet."
+    ],
+    "Adolescent": [
+      "I've been spending too much time online."
+    ],
+    "AdultRough": [
+      "Might go online for a bit."
+    ],
+    "AdultNormal": [
+      "I've been browsing around online lately."
+    ],
+    "AdultElaborate": [
+      "I keep disappearing down one interesting corner of the internet after another."
+    ]
+  },
+  "blogging": {
+    "Adolescent": [
+      "I've got something I want to post."
+    ],
+    "AdultRough": [
+      "Got something to write online."
+    ],
+    "AdultNormal": [
+      "I've been writing for my blog."
+    ],
+    "AdultElaborate": [
+      "I've found that writing publicly about the things that interest me is surprisingly satisfying."
+    ]
+  },
+  "social_media": {
+    "Adolescent": [
+      "I want to see what everyone's doing."
+    ],
+    "AdultRough": [
+      "Might check what everyone's up to."
+    ],
+    "AdultNormal": [
+      "I've been spending some time keeping up with people online."
+    ],
+    "AdultElaborate": [
+      "I've fallen into the habit of checking what everyone else has been doing whenever I have a quiet moment."
+    ]
+  },
+  "podcasts": {
+    "Adolescent": [
+      "I've got another episode I want to hear."
+    ],
+    "AdultRough": [
+      "Got something to listen to."
+    ],
+    "AdultNormal": [
+      "I've been listening to a few podcasts lately."
+    ],
+    "AdultElaborate": [
+      "I've become rather fond of having something interesting to listen to while I go about the day."
+    ]
+  }
+}

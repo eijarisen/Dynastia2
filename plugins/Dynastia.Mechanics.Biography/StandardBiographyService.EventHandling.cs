@@ -82,7 +82,7 @@ public sealed partial class StandardBiographyService
 
             AddEntry(
                 subject,
-                gameEvent.Year,
+                GetCompletedBiographyYear(gameEvent),
                 formatted);
 
             if (IsFamilyMoneyEvent(
@@ -99,17 +99,16 @@ public sealed partial class StandardBiographyService
                 {
                     AddEntry(
                         related,
-                        gameEvent.Year,
+                        GetCompletedBiographyYear(gameEvent),
                         formatted);
                 }
             }
         }
 
-        if (gameEvent.Type.Equals(
-            "relationship.married",
-            StringComparison.OrdinalIgnoreCase))
+        if (IsRelationshipEventWithPartner(
+            gameEvent.Type))
         {
-            AddMarriageEntryForSpouse(
+            AddRelationshipEntryForPartner(
                 gameEvent,
                 subject);
         }
@@ -163,7 +162,7 @@ public sealed partial class StandardBiographyService
         {
             AddEntry(
                 parent,
-                gameEvent.Year,
+                GetCompletedBiographyYear(gameEvent),
                 $"👶 {message}");
         }
     }
@@ -200,7 +199,7 @@ public sealed partial class StandardBiographyService
             {
                 AddEntry(
                     child,
-                    gameEvent.Year,
+                    GetCompletedBiographyYear(gameEvent),
                     $"👶 {fallback}");
             }
 
@@ -209,7 +208,7 @@ public sealed partial class StandardBiographyService
 
         AddEntry(
             child,
-            gameEvent.Year,
+            GetCompletedBiographyYear(gameEvent),
             $"👶 Was born to " +
             $"{_family.GetDisplayName(father)} and " +
             $"{_family.GetDisplayName(mother)}.");
@@ -232,44 +231,130 @@ public sealed partial class StandardBiographyService
 
         AddEntry(
             father,
-            gameEvent.Year,
+            GetCompletedBiographyYear(gameEvent),
             $"👶 His {ToOrdinalWord(fatherCount)} child, " +
             $"{_family.GetDisplayName(child)}, was born.");
 
         AddEntry(
             mother,
-            gameEvent.Year,
+            GetCompletedBiographyYear(gameEvent),
             $"👶 Her {ToOrdinalWord(motherCount)} child, " +
             $"{_family.GetDisplayName(child)}, was born.");
+
+        foreach (var sibling in
+            GetSiblings(child))
+        {
+            if (!IsAlive(sibling))
+                continue;
+
+            var relationship =
+                _family.GetSex(child)
+                    == Sex.Male
+                        ? "brother"
+                        : "sister";
+
+            AddEntryIfMissing(
+                sibling,
+                GetCompletedBiographyYear(gameEvent),
+                $"👶 {Possessive(sibling)} {relationship}, " +
+                $"{_family.GetDisplayName(child)}, was born.");
+        }
     }
 
-    private void AddMarriageEntryForSpouse(
+    private void AddRelationshipEntryForPartner(
         GameEvent gameEvent,
         IPerson subject)
     {
-        var spouse =
+        var partner =
             FindRelatedPerson(
                 gameEvent,
                 0);
 
-        if (spouse is null)
+        if (partner is null)
             return;
 
-        AddEntry(
-            spouse,
-            gameEvent.Year,
-            $"💍 Married " +
-            $"{_family.GetDisplayName(subject)}.");
+        EnsureGeneratedAdultLifeMilestones(
+            partner);
+
+        var subjectName =
+            GetRelativeSubjectName(
+                gameEvent,
+                subject);
+
+        var message =
+            gameEvent.Type switch
+            {
+                "relationship.married" or
+                "relationship.remarried" =>
+                    $"💍 Married {subjectName}.",
+
+                "relationship.partnered" =>
+                    $"{GetEmoji(gameEvent.Type)}" +
+                    $"{GetPartnerPartnershipVerb(gameEvent, subject, partner)}.",
+
+                "relationship.divorce" =>
+                    $"💔 Divorced {subjectName}.",
+
+                "relationship.low_satisfaction_divorce" =>
+                    $"💔 Divorced {subjectName} after the marriage deteriorated.",
+
+                "relationship.prison_divorce" =>
+                    $"💔 Marriage to {subjectName} ended in divorce during imprisonment.",
+
+                "relationship.affair" =>
+                    $"💔 Divorced {subjectName} after an affair.",
+
+                _ =>
+                    string.Empty
+            };
+
+        if (!string.IsNullOrWhiteSpace(
+            message))
+        {
+            AddEntryIfMissing(
+                partner,
+                GetCompletedBiographyYear(gameEvent),
+                message);
+        }
     }
 
     private void AddRelativeEntries(
         GameEvent gameEvent,
         IPerson subject)
     {
-        var subjectName =
-            _family.GetDisplayName(
-                subject);
+        var seenRecipients =
+            new HashSet<Guid>();
 
+        var partner =
+            IsRelationshipEventWithPartner(
+                gameEvent.Type)
+                ? FindRelatedPerson(
+                    gameEvent,
+                    0)
+                : null;
+
+        AddCloseRelativeEntries(
+            gameEvent,
+            subject,
+            partner?.Id,
+            seenRecipients);
+
+        if (partner is not null)
+        {
+            AddCloseRelativeEntries(
+                gameEvent,
+                partner,
+                subject.Id,
+                seenRecipients);
+        }
+    }
+
+    private void AddCloseRelativeEntries(
+        GameEvent gameEvent,
+        IPerson subject,
+        Guid? excludedPersonId,
+        ISet<Guid> seenRecipients)
+    {
         var eventVerb =
             GetRelativeEventVerb(
                 gameEvent,
@@ -281,99 +366,214 @@ public sealed partial class StandardBiographyService
             return;
         }
 
+        var subjectName =
+            GetRelativeSubjectName(
+                gameEvent,
+                subject);
+
         var emoji =
             GetEmoji(
                 gameEvent.Type);
 
-        foreach (var parent in
-            new[]
-            {
-                _family.GetFather(subject),
-                _family.GetMother(subject)
-            })
-        {
-            if (!IsAlive(
-                parent))
-            {
-                continue;
-            }
-
-            var relationship =
-                _family.GetSex(subject)
-                    == Sex.Male
-                        ? "son"
-                        : "daughter";
-
-            AddEntry(
-                parent!,
-                gameEvent.Year,
-                $"{emoji}{Possessive(parent!)} " +
-                $"{relationship}, {subjectName}, " +
-                $"{eventVerb}.");
-        }
-
-        foreach (var child in
-            _family.GetChildren(
+        foreach (var relative in
+            GetCloseRelatives(
+                gameEvent,
                 subject))
         {
-            if (!IsAlive(
-                child))
+            if (relative.Id == excludedPersonId
+                || !IsAlive(relative)
+                || !seenRecipients.Add(
+                    relative.Id))
             {
                 continue;
             }
 
             var relationship =
-                _family.GetSex(subject)
-                    == Sex.Male
-                        ? "father"
-                        : "mother";
+                GetRelationshipName(
+                    relative,
+                    subject,
+                    gameEvent);
 
-            AddEntry(
-                child,
-                gameEvent.Year,
-                $"{emoji}{Possessive(child)} " +
+            if (string.IsNullOrWhiteSpace(
+                relationship))
+            {
+                continue;
+            }
+
+            AddEntryIfMissing(
+                relative,
+                GetCompletedBiographyYear(gameEvent),
+                $"{emoji}{Possessive(relative)} " +
                 $"{relationship}, {subjectName}, " +
                 $"{eventVerb}.");
         }
+    }
 
-        var father =
-            _family.GetFather(
-                subject);
+    private IReadOnlyList<IPerson> GetCloseRelatives(
+        GameEvent gameEvent,
+        IPerson subject)
+    {
+        var relatives =
+            new List<IPerson>();
 
-        if (father is null)
-            return;
+        AddIfPresent(
+            relatives,
+            _family.GetFather(subject));
 
-        foreach (var sibling in
+        AddIfPresent(
+            relatives,
+            _family.GetMother(subject));
+
+        relatives.AddRange(
             _family.GetChildren(
-                father))
+                subject));
+
+        relatives.AddRange(
+            GetSiblings(
+                subject));
+
+        AddIfPresent(
+            relatives,
+            _family.GetSpouse(subject));
+
+        if (gameEvent.Type.Equals(
+                "life.death",
+                StringComparison.OrdinalIgnoreCase))
         {
-            if (sibling.Id
-                    == subject.Id
-                || !IsAlive(
-                    sibling))
+            foreach (var relatedId in
+                gameEvent.RelatedPersonIds)
             {
-                continue;
+                var related =
+                    FindPerson(
+                        relatedId);
+
+                if (related is not null
+                    && WereSpousesAtEvent(
+                        subject,
+                        related,
+                        gameEvent.Year))
+                {
+                    AddIfPresent(
+                        relatives,
+                        related);
+                }
             }
-
-            var relationship =
-                _family.GetSex(subject)
-                    == Sex.Male
-                        ? "brother"
-                        : "sister";
-
-            AddEntry(
-                sibling,
-                gameEvent.Year,
-                $"{emoji}{Possessive(sibling)} " +
-                $"{relationship}, {subjectName}, " +
-                $"{eventVerb}.");
         }
+
+        return relatives
+            .DistinctBy(person => person.Id)
+            .ToList();
+    }
+
+    private IReadOnlyList<IPerson> GetSiblings(
+        IPerson person)
+    {
+        var father =
+            _family.GetFather(person);
+
+        var mother =
+            _family.GetMother(person);
+
+        return new[]
+            {
+                father,
+                mother
+            }
+            .Where(parent =>
+                parent is not null)
+            .Cast<IPerson>()
+            .SelectMany(parent =>
+                _family.GetChildren(parent))
+            .Where(sibling =>
+                sibling.Id != person.Id)
+            .DistinctBy(sibling => sibling.Id)
+            .ToList();
+    }
+
+    private string? GetRelationshipName(
+        IPerson observer,
+        IPerson subject,
+        GameEvent gameEvent)
+    {
+        if (_family.GetFather(subject)?.Id
+                == observer.Id
+            || _family.GetMother(subject)?.Id
+                == observer.Id)
+        {
+            return _family.GetSex(subject)
+                == Sex.Male
+                    ? "son"
+                    : "daughter";
+        }
+
+        if (_family.GetChildren(subject)
+            .Any(child =>
+                child.Id == observer.Id))
+        {
+            return _family.GetSex(subject)
+                == Sex.Male
+                    ? "father"
+                    : "mother";
+        }
+
+        if (GetSiblings(subject)
+            .Any(sibling =>
+                sibling.Id == observer.Id))
+        {
+            return _family.GetSex(subject)
+                == Sex.Male
+                    ? "brother"
+                    : "sister";
+        }
+
+        if (_family.GetSpouse(subject)?.Id
+                == observer.Id
+            || WereSpousesAtEvent(
+                subject,
+                observer,
+                gameEvent.Year))
+        {
+            return _family.GetSex(subject)
+                == Sex.Male
+                    ? "husband"
+                    : "wife";
+        }
+
+        return null;
+    }
+
+    private bool WereSpousesAtEvent(
+        IPerson first,
+        IPerson second,
+        int year)
+    {
+        return _family.GetRelationshipHistory(
+                first)
+            .Any(record =>
+                record.SpouseId == second.Id
+                && record.StartYear <= year
+                && (record.EndYear is null
+                    || record.EndYear >= year));
     }
 
     private string GetRelativeEventVerb(
         GameEvent gameEvent,
         IPerson subject)
     {
+        var primary =
+            FindPerson(
+                gameEvent.SubjectId);
+
+        if (primary is not null
+            && primary.Id != subject.Id
+            && IsRelationshipEventWithPartner(
+                gameEvent.Type))
+        {
+            return GetPartnerRelativeEventVerb(
+                gameEvent,
+                primary);
+        }
+
         return gameEvent.Type switch
         {
             "life.death" =>
@@ -425,11 +625,8 @@ public sealed partial class StandardBiographyService
                 "was caught having an affair and divorced",
 
             "justice.crime" =>
-                gameEvent.Data.TryGetValue(
-                    "crime",
-                    out var crime)
-                    ? $"was convicted of {crime}"
-                    : "was convicted of a crime",
+                GetCrimeRelativeEventVerb(
+                    gameEvent),
 
             "health.serious_illness" =>
                 gameEvent.Data.TryGetValue(
@@ -453,6 +650,136 @@ public sealed partial class StandardBiographyService
         };
     }
 
+    private static string GetCrimeRelativeEventVerb(
+        GameEvent gameEvent)
+    {
+        var crime =
+            gameEvent.Data.TryGetValue(
+                "crime",
+                out var crimeName)
+                && !string.IsNullOrWhiteSpace(
+                    crimeName)
+                    ? crimeName
+                    : "a crime";
+
+        if (!gameEvent.Data.TryGetValue(
+                "sentence",
+                out var sentenceText)
+            || !int.TryParse(
+                sentenceText,
+                out var sentence)
+            || sentence <= 0)
+        {
+            return $"was convicted of {crime}";
+        }
+
+        var prisonText =
+            sentence >= 50
+                ? "life in prison"
+                : sentence == 1
+                    ? "1 year in prison"
+                    : $"{sentence} years in prison";
+
+        return $"was convicted of {crime} and sentenced to {prisonText}";
+    }
+
+    private string GetPartnerRelativeEventVerb(
+        GameEvent gameEvent,
+        IPerson primary)
+    {
+        var primaryName =
+            GetRelativeSubjectName(
+                gameEvent,
+                primary);
+
+        return gameEvent.Type switch
+        {
+            "relationship.married" =>
+                $"married {primaryName}",
+
+            "relationship.remarried" =>
+                $"married {primaryName}",
+
+            "relationship.partnered" =>
+                $"entered a partnership with {primaryName}",
+
+            "relationship.divorce" =>
+                $"divorced {primaryName}",
+
+            "relationship.low_satisfaction_divorce" =>
+                $"divorced {primaryName} after the marriage deteriorated",
+
+            "relationship.prison_divorce" =>
+                $"ended the marriage to {primaryName} during imprisonment",
+
+            "relationship.affair" =>
+                $"divorced {primaryName} after an affair",
+
+            _ =>
+                string.Empty
+        };
+    }
+
+    private string GetPartnerPartnershipVerb(
+        GameEvent gameEvent,
+        IPerson subject,
+        IPerson partner)
+    {
+        var subjectName =
+            GetRelativeSubjectName(
+                gameEvent,
+                subject);
+
+        if (!gameEvent.Data.TryGetValue(
+                "biographyVerb",
+                out var biographyVerb)
+            || string.IsNullOrWhiteSpace(
+                biographyVerb))
+        {
+            return $"Entered a partnership with {subjectName}";
+        }
+
+        var partnerName =
+            _family.GetDisplayName(
+                partner);
+
+        var reversed =
+            biographyVerb.Replace(
+                partnerName,
+                subjectName,
+                StringComparison.OrdinalIgnoreCase);
+
+        if (string.IsNullOrWhiteSpace(
+            reversed))
+        {
+            return $"Entered a partnership with {subjectName}";
+        }
+
+        return char.ToUpperInvariant(reversed[0])
+            + reversed[1..];
+    }
+
+    private string GetRelativeSubjectName(
+        GameEvent gameEvent,
+        IPerson subject)
+    {
+        if (IsRelationshipUnion(
+                gameEvent.Type)
+            && _family.GetSex(subject)
+                == Sex.Female
+            && !string.IsNullOrWhiteSpace(
+                subject.MaidenName))
+        {
+            return $"{subject.Name} " +
+                _family.FormatSurname(
+                    subject.MaidenName!,
+                    Sex.Female);
+        }
+
+        return _family.GetDisplayName(
+            subject);
+    }
+
     private string RelatedName(
         GameEvent gameEvent,
         int index,
@@ -467,6 +794,42 @@ public sealed partial class StandardBiographyService
             ? verb
             : $"{verb} " +
               $"{_family.GetDisplayName(related)}";
+    }
+
+    private static bool IsRelationshipUnion(
+        string type) =>
+        type.Equals(
+            "relationship.married",
+            StringComparison.OrdinalIgnoreCase)
+        || type.Equals(
+            "relationship.remarried",
+            StringComparison.OrdinalIgnoreCase)
+        || type.Equals(
+            "relationship.partnered",
+            StringComparison.OrdinalIgnoreCase);
+
+    private static bool IsRelationshipEventWithPartner(
+        string type) =>
+        IsRelationshipUnion(type)
+        || type.Equals(
+            "relationship.divorce",
+            StringComparison.OrdinalIgnoreCase)
+        || type.Equals(
+            "relationship.low_satisfaction_divorce",
+            StringComparison.OrdinalIgnoreCase)
+        || type.Equals(
+            "relationship.prison_divorce",
+            StringComparison.OrdinalIgnoreCase)
+        || type.Equals(
+            "relationship.affair",
+            StringComparison.OrdinalIgnoreCase);
+
+    private static void AddIfPresent(
+        ICollection<IPerson> people,
+        IPerson? person)
+    {
+        if (person is not null)
+            people.Add(person);
     }
 
     private string StripSubjectName(

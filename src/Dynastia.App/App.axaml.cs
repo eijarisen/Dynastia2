@@ -197,6 +197,10 @@ public partial class App : Application
                 pluginContext.GetService<
                     IThoughtService>();
 
+            var hobbyService =
+                pluginContext.GetService<
+                    IHobbyService>();
+
             var personalityService =
                 pluginContext.GetService<
                     IPersonalityService>();
@@ -278,6 +282,7 @@ public partial class App : Application
                             marriageSatisfactionService,
                             familyRelationService,
                             thoughtService,
+                            hobbyService,
                             personalityService,
                             childHappinessService,
                             educationService,

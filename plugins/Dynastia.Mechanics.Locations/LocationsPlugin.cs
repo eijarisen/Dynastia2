@@ -44,6 +44,9 @@ public sealed class LocationsPlugin :
         context.AddService<ILocationService>(
             locations);
 
+        context.AddService<IExistingLocationService>(
+            locations);
+
         var localCareers =
             new StandardLocalCareerOpportunityService(
                 gameState,

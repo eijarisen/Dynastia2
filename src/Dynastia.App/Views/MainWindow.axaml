@@ -241,6 +241,27 @@
             <Setter Property="Opacity" Value="1" />
         </Style>
 
+        <Style Selector="Button.relationshipLink">
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="MinHeight" Value="0" />
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="Foreground" Value="#E9D8B3" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="HorizontalContentAlignment" Value="Left" />
+            <Setter Property="Opacity" Value="1" />
+        </Style>
+
+        <Style Selector="Button.relationshipLink:pointerover">
+            <Setter Property="Foreground" Value="#F1CE70" />
+            <Setter Property="Background" Value="Transparent" />
+        </Style>
+
+        <Style Selector="Button.relationshipLink:disabled">
+            <Setter Property="Foreground" Value="#E9D8B3" />
+            <Setter Property="Opacity" Value="1" />
+        </Style>
+
         <Style Selector="Button.playableTab">
             <Setter Property="Padding" Value="10,5" />
             <Setter Property="Margin" Value="0,0,6,5" />
@@ -1264,6 +1285,7 @@
                                             <TextBlock FontSize="12" Text="{Binding SelectedPerson.AgeText}" />
                                             <TextBlock FontSize="12" Text="{Binding SelectedFamily.Sex, StringFormat='Sex: {0}'}" />
                                             <TextBlock FontSize="12" Text="{Binding SelectedEducation.EducationText}" />
+                                            <TextBlock FontSize="12" Text="{Binding SelectedHobbiesText}" />
                                             <TextBlock FontSize="12" Text="{Binding SelectedCareer.OccupationText}" />
                                             <TextBlock
                                                 IsVisible="{Binding SelectedCareer.HasSatisfaction}"
@@ -1403,23 +1425,25 @@
                                         ColumnDefinitions="*,*"
                                         ColumnSpacing="18">
 
-                                        <StackPanel
+                                        <ItemsControl
                                             Grid.Column="0"
-                                            Spacing="4">
-
-                                            <TextBlock FontSize="12" Text="{Binding SelectedFamily.Father, StringFormat='Father: {0}'}" />
-                                            <TextBlock FontSize="12" Text="{Binding SelectedFamily.Mother, StringFormat='Mother: {0}'}" />
-                                            <TextBlock FontSize="12" TextWrapping="Wrap" Text="{Binding SelectedFamily.Siblings, StringFormat='Siblings: {0}'}" />
-                                            <TextBlock
-                                                IsVisible="{Binding SelectedFamily.ShowAdultRelationships}"
-                                                FontSize="12"
-                                                Text="{Binding SelectedFamily.Spouse, StringFormat='Current spouse: {0}'}" />
-                                            <TextBlock
-                                                IsVisible="{Binding SelectedFamily.ShowAdultRelationships}"
-                                                FontSize="12"
-                                                TextWrapping="Wrap"
-                                                Text="{Binding SelectedFamily.Children, StringFormat='Children: {0}'}" />
-                                        </StackPanel>
+                                            ItemsSource="{Binding SelectedFamily.RelationshipPeople}">
+                                            <ItemsControl.ItemTemplate>
+                                                <DataTemplate x:DataType="vm:RelationshipPersonLineViewModel">
+                                                    <Grid ColumnDefinitions="Auto,*" Margin="0,0,0,4">
+                                                        <TextBlock
+                                                            FontSize="12"
+                                                            Text="{Binding Label, StringFormat='{}{0}: '}" />
+                                                        <Button
+                                                            Grid.Column="1"
+                                                            Classes="relationshipLink"
+                                                            IsEnabled="{Binding IsSelectable}"
+                                                            Content="{Binding DisplayText}"
+                                                            Click="OnRelationshipPersonClick" />
+                                                    </Grid>
+                                                </DataTemplate>
+                                            </ItemsControl.ItemTemplate>
+                                        </ItemsControl>
 
                                         <StackPanel
                                             Grid.Column="1"
@@ -1434,9 +1458,29 @@
 
                                             <TextBlock
                                                 FontSize="11.5"
-                                                LineHeight="17"
-                                                TextWrapping="Wrap"
-                                                Text="{Binding SelectedFamily.RelationshipHistory}" />
+                                                Opacity="0.65"
+                                                Text="{Binding SelectedFamily.RelationshipHistoryEmptyText}" />
+
+                                            <ItemsControl ItemsSource="{Binding SelectedFamily.RelationshipHistoryItems}">
+                                                <ItemsControl.ItemTemplate>
+                                                    <DataTemplate x:DataType="vm:RelationshipHistoryLineViewModel">
+                                                        <StackPanel Orientation="Horizontal" Spacing="0" Margin="0,0,0,4">
+                                                            <TextBlock
+                                                                FontSize="11.5"
+                                                                Text="{Binding PeriodText}" />
+                                                            <Button
+                                                                Classes="relationshipLink"
+                                                                FontSize="11.5"
+                                                                IsEnabled="{Binding IsSelectable}"
+                                                                Content="{Binding PersonText}"
+                                                                Click="OnRelationshipPersonClick" />
+                                                            <TextBlock
+                                                                FontSize="11.5"
+                                                                Text="{Binding ReasonText}" />
+                                                        </StackPanel>
+                                                    </DataTemplate>
+                                                </ItemsControl.ItemTemplate>
+                                            </ItemsControl>
                                         </StackPanel>
                                     </Grid>
                                 </ScrollViewer>

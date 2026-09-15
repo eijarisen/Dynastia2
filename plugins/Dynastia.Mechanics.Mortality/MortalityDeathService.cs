@@ -172,7 +172,7 @@ public sealed class MortalityDeathService
                 : $"children {string.Join(", ", livingChildren)}");
         }
 
-        return $"{pronoun} left " + string.Join(" and ", parts) + ".";
+        return $"{pronoun} is survived by " + string.Join(" and ", parts) + ".";
     }
 
     private void ApplyGrief(

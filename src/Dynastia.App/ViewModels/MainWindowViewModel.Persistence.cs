@@ -72,6 +72,9 @@ public sealed partial class MainWindowViewModel
         _householdService?
             .ReconcileHouseholds();
 
+        _hobbyService?
+            .ReconcileAfterLoad();
+
         _thoughtService?
             .ResetAfterLoad();
 

@@ -253,6 +253,41 @@ public sealed class StandardFamilyRelationService : IFamilyRelationService
         foreach (var child in _family.GetChildren(person).Where(child => child.Age >= 18))
             yield return (child, FamilyRelationshipType.ParentChild, _family.GetSex(child) == Sex.Male ? "Son" : "Daughter");
 
+        foreach (var grandparent in GetGrandparents(person))
+        {
+            yield return (
+                grandparent,
+                FamilyRelationshipType.GrandparentGrandchild,
+                _family.GetSex(grandparent) == Sex.Male ? "Grandfather" : "Grandmother");
+        }
+
+        foreach (var grandchild in GetGrandchildren(person))
+        {
+            yield return (
+                grandchild,
+                FamilyRelationshipType.GrandparentGrandchild,
+                _family.GetSex(grandchild) == Sex.Male ? "Grandson" : "Granddaughter");
+        }
+
+        foreach (var parentSibling in GetParentSiblings(person))
+        {
+            yield return (
+                parentSibling,
+                FamilyRelationshipType.UncleAuntNieceNephew,
+                _family.GetSex(parentSibling) == Sex.Male ? "Uncle" : "Aunt");
+
+            foreach (var cousin in _family.GetChildren(parentSibling))
+            {
+                if (cousin.Id == person.Id)
+                    continue;
+
+                yield return (
+                    cousin,
+                    FamilyRelationshipType.FirstCousin,
+                    "First cousin");
+            }
+        }
+
         var currentSpouseId = _family.GetSpouse(person)?.Id;
         foreach (var history in _family.GetRelationshipHistory(person).Where(h => h.EndYear is not null))
         {
@@ -260,6 +295,49 @@ public sealed class StandardFamilyRelationService : IFamilyRelationService
             if (former is not null && former.Id != currentSpouseId)
                 yield return (former, FamilyRelationshipType.ExSpouse, _family.GetSex(former) == Sex.Male ? "Ex-husband" : "Ex-wife");
         }
+    }
+
+
+    private IReadOnlyList<IPerson> GetGrandparents(IPerson person)
+    {
+        var result = new Dictionary<Guid, IPerson>();
+        foreach (var parent in new[] { _family.GetFather(person), _family.GetMother(person) })
+        {
+            if (parent is null)
+                continue;
+
+            var grandfather = _family.GetFather(parent);
+            var grandmother = _family.GetMother(parent);
+            if (grandfather is not null) result[grandfather.Id] = grandfather;
+            if (grandmother is not null) result[grandmother.Id] = grandmother;
+        }
+
+        return result.Values.ToList();
+    }
+
+    private IReadOnlyList<IPerson> GetGrandchildren(IPerson person)
+    {
+        var result = new Dictionary<Guid, IPerson>();
+        foreach (var child in _family.GetChildren(person))
+        foreach (var grandchild in _family.GetChildren(child))
+            result[grandchild.Id] = grandchild;
+
+        return result.Values.ToList();
+    }
+
+    private IReadOnlyList<IPerson> GetParentSiblings(IPerson person)
+    {
+        var result = new Dictionary<Guid, IPerson>();
+        foreach (var parent in new[] { _family.GetFather(person), _family.GetMother(person) })
+        {
+            if (parent is null)
+                continue;
+
+            foreach (var sibling in GetSiblings(parent))
+                result[sibling.Id] = sibling;
+        }
+
+        return result.Values.ToList();
     }
 
     private double CompatibilityStartBonus(IPerson first, IPerson second)
@@ -285,6 +363,9 @@ public sealed class StandardFamilyRelationService : IFamilyRelationService
     {
         FamilyRelationshipType.ParentChild => ParentChildStart,
         FamilyRelationshipType.Sibling => 55,
+        FamilyRelationshipType.GrandparentGrandchild => 60,
+        FamilyRelationshipType.UncleAuntNieceNephew => 52,
+        FamilyRelationshipType.FirstCousin => 48,
         _ => LegacyExSpouseStart
     };
 
@@ -293,7 +374,10 @@ public sealed class StandardFamilyRelationService : IFamilyRelationService
         "Father" or "Mother" => 0,
         "Son" or "Daughter" => 1,
         "Brother" or "Sister" => 2,
-        _ => 3
+        "Grandfather" or "Grandmother" or "Grandson" or "Granddaughter" => 3,
+        "Uncle" or "Aunt" => 4,
+        "First cousin" => 5,
+        _ => 6
     };
 
     private FamilyRelationshipData? Find(IPerson first, IPerson second)

@@ -118,6 +118,12 @@
                                                     FontSize="13"
                                                     FontWeight="Bold"
                                                     Foreground="#5A3A18"
+                                                    Text="{Binding TownText}" />
+                                                <TextBlock
+                                                    FontFamily="Georgia"
+                                                    FontSize="13"
+                                                    FontWeight="Bold"
+                                                    Foreground="#5A3A18"
                                                     Text="{Binding WealthText}" />
                                                 <TextBlock
                                                     FontFamily="Georgia"

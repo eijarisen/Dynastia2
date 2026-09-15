@@ -4,7 +4,8 @@ using Dynastia.Contracts;
 namespace Dynastia.Mechanics.Locations;
 
 public sealed partial class StandardLocationService :
-    ILocationService
+    ILocationService,
+    IExistingLocationService
 {
     private const string TownsPath =
         "Towns/towns.csv";
@@ -158,6 +159,27 @@ public sealed partial class StandardLocationService :
 
             person.Components.Set(
                 component);
+        }
+
+        return new LocationSnapshot(
+            component.Birthplace,
+            component.HomeTown,
+            component.DeathTown);
+    }
+
+
+    public LocationSnapshot? GetExistingLocation(
+        IPerson person)
+    {
+        ArgumentNullException.ThrowIfNull(person);
+
+        var component =
+            person.Components.Get<LocationComponent>();
+
+        if (component?.Birthplace is null
+            || component.HomeTown is null)
+        {
+            return null;
         }
 
         return new LocationSnapshot(

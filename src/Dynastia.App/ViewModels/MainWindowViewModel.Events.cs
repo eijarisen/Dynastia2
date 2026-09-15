@@ -108,6 +108,9 @@ public sealed partial class MainWindowViewModel
         OnPropertyChanged(
             nameof(SelectedPersonEmoji));
 
+        OnPropertyChanged(
+            nameof(SelectedHobbiesText));
+
         RefreshFamilySection();
     }
 
@@ -136,6 +139,9 @@ public sealed partial class MainWindowViewModel
 
         OnPropertyChanged(
             nameof(SelectedPersonEmoji));
+
+        OnPropertyChanged(
+            nameof(SelectedHobbiesText));
 
         PreviousAlbumYearCommand
             .RaiseCanExecuteChanged();

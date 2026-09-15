@@ -13,6 +13,7 @@
     <Project Path="plugins/Dynastia.Mechanics.Health/Dynastia.Mechanics.Health.csproj" />
     <Project Path="plugins/Dynastia.Mechanics.Historical/Dynastia.Mechanics.Historical.csproj" />
     <Project Path="plugins/Dynastia.Mechanics.Households/Dynastia.Mechanics.Households.csproj" />
+    <Project Path="plugins/Dynastia.Mechanics.Hobbies/Dynastia.Mechanics.Hobbies.csproj" />
     <Project Path="plugins/Dynastia.Mechanics.Inheritance/Dynastia.Mechanics.Inheritance.csproj" />
     <Project Path="plugins/Dynastia.Mechanics.Justice/Dynastia.Mechanics.Justice.csproj" />
     <Project Path="plugins/Dynastia.Mechanics.Locations/Dynastia.Mechanics.Locations.csproj" />

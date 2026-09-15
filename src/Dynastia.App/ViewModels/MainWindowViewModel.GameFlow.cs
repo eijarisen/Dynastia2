@@ -44,6 +44,34 @@ public sealed partial class MainWindowViewModel
         NotifyGameStateChanged();
     }
 
+    public void DebugSimulateNextYear()
+    {
+        if (!IsGameStarted
+            || _succession.IsGameOver
+            || IsMainMenuPromptVisible)
+        {
+            return;
+        }
+
+        if (_autonomousHouseholdDecisionService is null)
+        {
+            ReportPersistenceStatus(
+                "Autonomous household decisions are unavailable.");
+            return;
+        }
+
+        IsYearSummaryVisible =
+            false;
+
+        PersistenceStatusText =
+            string.Empty;
+
+        _autonomousHouseholdDecisionService
+            .QueueActionsForAllHouseholds();
+
+        AdvanceYear();
+    }
+
     private void AdvanceYear()
     {
         if (!IsGameStarted

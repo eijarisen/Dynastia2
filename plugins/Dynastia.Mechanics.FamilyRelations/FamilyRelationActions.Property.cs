@@ -23,12 +23,17 @@ internal static partial class FamilyRelationActions
         IsAvailable = c => IsRelationsContext(c)
             && IsValidRelation(c, relations)
             && ResolveTargetHead(c.Target, households) is { } targetHead
+            && !targetHead.Tags.Has("control.playable")
             && economy.GetHouses(targetHead).Count >= 2,
         Execute = c =>
         {
             var targetHead = ResolveTargetHead(c.Target, households);
-            if (targetHead is null || economy.GetHouses(targetHead).Count < 2)
+            if (targetHead is null
+                || targetHead.Tags.Has("control.playable")
+                || economy.GetHouses(targetHead).Count < 2)
+            {
                 return new(false);
+            }
 
             if (random.NextDouble() >= relations.EvaluateRequestWillingness(c.Actor, c.Target))
             {

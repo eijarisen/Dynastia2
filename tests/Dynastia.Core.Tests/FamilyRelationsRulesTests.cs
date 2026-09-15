@@ -51,6 +51,38 @@ public sealed class FamilyRelationsRulesTests
         Assert.InRange(comfortable, 0, 0.95);
     }
 
+
+    [Theory]
+    [InlineData(1, 0, 0)]
+    [InlineData(2, 1, 2)]
+    [InlineData(3, 1, 2)]
+    [InlineData(4, 2, 3)]
+    [InlineData(5, 3, 4)]
+    public void CareerConnectionsPlaceBelowTheStrongestCurrentJob(
+        int strongestJobLevel,
+        int expectedStandard,
+        int expectedExceptional)
+    {
+        Assert.Equal(
+            expectedStandard,
+            FamilyCareerConnectionRules.GetStandardPlacementLevel(strongestJobLevel));
+        Assert.Equal(
+            expectedExceptional,
+            FamilyCareerConnectionRules.GetExceptionalPlacementLevel(strongestJobLevel));
+    }
+
+    [Fact]
+    public void CareerConnectionsCannotBootstrapAboveTheirSponsor()
+    {
+        Assert.False(FamilyCareerConnectionRules.CanProvideHelp(1));
+        Assert.True(FamilyCareerConnectionRules.CanProvideHelp(2));
+
+        Assert.True(FamilyCareerConnectionRules.CanImprove(0, 3));
+        Assert.True(FamilyCareerConnectionRules.CanImprove(1, 3));
+        Assert.False(FamilyCareerConnectionRules.CanImprove(2, 3));
+        Assert.False(FamilyCareerConnectionRules.CanImprove(3, 3));
+    }
+
     [Fact]
     public void RelationsActionsRunBeforeThoughtGeneration()
     {

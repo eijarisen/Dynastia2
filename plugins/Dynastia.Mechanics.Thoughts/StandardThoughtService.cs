@@ -416,20 +416,16 @@ internal sealed class StandardThoughtService :
                     candidate =>
                         candidate.Id,
                     StringComparer.OrdinalIgnoreCase)
-                .Take(
-                    3)
                 .ToList();
 
         var dynastyKey =
             GetDynastyKey();
 
+        // Always surface the single most salient thought. Random selection
+        // from the top three could let routine financial events displace
+        // major family events such as the death of a child.
         var selected =
-            DeterministicThoughtRandom.Choose(
-                deduplicated,
-                dynastyKey,
-                person.Id.ToString(),
-                _gameState.Year.ToString(),
-                "thought-selection");
+            deduplicated[0];
 
         var text =
             _renderer.Render(

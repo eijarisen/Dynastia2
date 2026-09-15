@@ -20,6 +20,7 @@ internal static partial class FamilyRelationActions
         IsAvailable = c => IsRelationsContext(c)
             && IsValidRelation(c, relations)
             && ResolveTargetHead(c.Target, households) is { } targetHead
+            && !targetHead.Tags.Has("control.playable")
             && economy.GetHousehold(targetHead) is { } targetFinance
             && economy.GetHousehold(c.Actor) is { } actorFinance
             && actorFinance.Wealth <= targetFinance.Wealth
@@ -27,8 +28,11 @@ internal static partial class FamilyRelationActions
         Execute = c =>
         {
             var targetHead = ResolveTargetHead(c.Target, households);
-            if (targetHead is null)
+            if (targetHead is null
+                || targetHead.Tags.Has("control.playable"))
+            {
                 return new(false);
+            }
 
             var targetFinance = economy.GetHousehold(targetHead);
             var amount = ResolveMoneyAmount(c);

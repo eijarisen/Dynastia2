@@ -211,6 +211,21 @@ public partial class MainWindow : Window
             return;
         }
 
+#if DEBUG
+        var debugModifiers =
+            KeyModifiers.Control
+            | KeyModifiers.Shift;
+
+        if (e.Key == Key.Oem3
+            && (e.KeyModifiers & debugModifiers)
+                == debugModifiers)
+        {
+            e.Handled = true;
+            viewModel.DebugSimulateNextYear();
+            return;
+        }
+#endif
+
         if (viewModel.IsYearSummaryVisible
             && (e.Key == Key.Enter
                 || e.Key == Key.Escape))

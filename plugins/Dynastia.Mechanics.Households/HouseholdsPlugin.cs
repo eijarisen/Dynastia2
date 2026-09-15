@@ -166,15 +166,22 @@ public sealed partial class HouseholdsPlugin : IGamePlugin
                 after:
                     ["households.post_inheritance_reconcile"]));
 
-        systems.Register(
-            new AutonomousHouseholdDecisionSystem(
+        var autonomousDecisions =
+            new AutonomousHouseholdDecisionService(
                 gameState,
                 households,
                 actions,
                 economy,
                 health,
                 career,
-                random));
+                random);
+
+        context.AddService<IAutonomousHouseholdDecisionService>(
+            autonomousDecisions);
+
+        systems.Register(
+            new AutonomousHouseholdDecisionSystem(
+                autonomousDecisions));
 
         events.EventPublished +=
             (_, gameEvent) =>

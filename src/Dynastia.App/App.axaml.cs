@@ -172,6 +172,10 @@ public partial class App : Application
             var householdService =
                 pluginContext.GetService<IHouseholdService>();
 
+            var autonomousHouseholdDecisionService =
+                pluginContext.GetService<
+                    IAutonomousHouseholdDecisionService>();
+
             var adoptionService =
                 pluginContext.GetService<IAdoptionService>();
 
@@ -267,6 +271,7 @@ public partial class App : Application
                             economyService,
                             loanService,
                             householdService,
+                            autonomousHouseholdDecisionService,
                             adoptionService,
                             locationService,
                             localCareerOpportunityService,

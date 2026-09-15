@@ -13,13 +13,13 @@ public sealed partial class GenealogyCanvas :
     IDisposable
 {
     private const double Parallax1Factor =
-        0.08;
+        0.015;
 
     private const double Parallax2Factor =
-        0.16;
+        0.05;
 
     private const double Parallax3Factor =
-        0.26;
+        0.10;
 
     // All scenery is deliberately zoomed beyond a simple "fit" so the
     // viewport is fully covered and parallax layers have safe travel room

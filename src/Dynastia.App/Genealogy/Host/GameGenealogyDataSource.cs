@@ -39,6 +39,7 @@ public sealed class GameGenealogyDataSource :
     private readonly IMarriageSatisfactionService?
         _marriageSatisfaction;
     private readonly IThoughtService? _thoughts;
+    private readonly IAppearanceService? _appearance;
     private readonly ISuccessionService? _succession;
 
     private long _topologyVersion;
@@ -57,6 +58,7 @@ public sealed class GameGenealogyDataSource :
         IMarriageSatisfactionService?
             marriageSatisfaction = null,
         IThoughtService? thoughts = null,
+        IAppearanceService? appearance = null,
         ISuccessionService? succession = null)
     {
         _gameState =
@@ -88,6 +90,9 @@ public sealed class GameGenealogyDataSource :
 
         _thoughts =
             thoughts;
+
+        _appearance =
+            appearance;
 
         _succession =
             succession;
@@ -269,7 +274,14 @@ public sealed class GameGenealogyDataSource :
                     _career,
                     _justice,
                     _stats,
-                    _thoughts);
+                    _thoughts,
+                    _appearance);
+
+        var portrait = _appearance is not null
+            ? _appearance.GetPortrait(
+                person,
+                useDeadOverride: false)
+            : avatar;
 
         double? healthValue =
             null;
@@ -517,6 +529,7 @@ public sealed class GameGenealogyDataSource :
             firstName,
             surname,
             avatar,
+            portrait,
             _family.IsBloodline(
                 person),
             _family.IsMaleLineage(

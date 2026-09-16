@@ -46,10 +46,11 @@ public sealed class EducationPlugin : IGamePlugin
         var actions = context.GetService<IActionRegistry>()
             ?? throw new InvalidOperationException("Action registry is unavailable.");
 
-        var education = new StandardEducationService(
-            family);
-
         var eras = EducationEraCatalog.Load(data);
+
+        var education = new StandardEducationService(
+            family,
+            eras);
 
         context.AddService<IEducationService>(education);
 
@@ -152,6 +153,22 @@ public sealed class EducationPlugin : IGamePlugin
                         }
                     }
 
+                    return;
+                }
+
+                if (gameEvent.Data.TryGetValue(
+                        "preserveGeneratedProfile",
+                        out var preserveGeneratedProfile)
+                    && preserveGeneratedProfile.Equals(
+                        "true",
+                        StringComparison.OrdinalIgnoreCase)
+                    && (gameEvent.Type.Equals(
+                            "relationship.married",
+                            StringComparison.OrdinalIgnoreCase)
+                        || gameEvent.Type.Equals(
+                            "relationship.partnered",
+                            StringComparison.OrdinalIgnoreCase)))
+                {
                     return;
                 }
 

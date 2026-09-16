@@ -7,6 +7,7 @@
   "entryType": "Dynastia.Mechanics.Reproduction.ReproductionPlugin",
   "dependencies": [
     "dynastia.family",
+    "dynastia.appearance",
     "dynastia.stats",
     "dynastia.health",
     "dynastia.relationships",

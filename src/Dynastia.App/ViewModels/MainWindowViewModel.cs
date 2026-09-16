@@ -28,9 +28,13 @@ public sealed partial class MainWindowViewModel : ViewModelBase
     private readonly IThoughtService? _thoughtService;
     private readonly IHobbyService? _hobbyService;
     private readonly IPersonalityService? _personalityService;
+    private readonly IAppearanceService? _appearanceService;
     private readonly IChildHappinessService? _childHappinessService;
     private readonly IEducationService? _educationService;
     private readonly ICareerService? _careerService;
+    private readonly ICareerPresentationService?
+        _careerPresentationService;
+    private readonly IPartnerSearchService? _partnerSearchService;
     private readonly IJusticeService? _justiceService;
     private readonly IBiographyService? _biographyService;
     private readonly ISuccessionService _succession;
@@ -95,9 +99,12 @@ public sealed partial class MainWindowViewModel : ViewModelBase
         IThoughtService? thoughtService,
         IHobbyService? hobbyService,
         IPersonalityService? personalityService,
+        IAppearanceService? appearanceService,
         IChildHappinessService? childHappinessService,
         IEducationService? educationService,
         ICareerService? careerService,
+        ICareerPresentationService? careerPresentationService,
+        IPartnerSearchService? partnerSearchService,
         IJusticeService? justiceService,
         IBiographyService? biographyService,
         ISuccessionService succession,
@@ -130,10 +137,15 @@ public sealed partial class MainWindowViewModel : ViewModelBase
             hobbyService;
         _personalityService =
             personalityService;
+        _appearanceService =
+            appearanceService;
         _childHappinessService =
             childHappinessService;
         _educationService = educationService;
         _careerService = careerService;
+        _careerPresentationService =
+            careerPresentationService;
+        _partnerSearchService = partnerSearchService;
         _justiceService = justiceService;
         _biographyService = biographyService;
         _succession = succession;
@@ -300,25 +312,46 @@ public sealed partial class MainWindowViewModel : ViewModelBase
             ? $"The {_gameState.DynastySurname} Dynasty"
             : "Dynastia";
 
-    public string SelectedPersonEmoji
+    public string SelectedPersonPortrait
     {
         get
         {
             var person =
                 FindSelectedPerson();
 
-            return person is null
-                ? string.Empty
-                : PersonEmojiResolver.GetPersonEmoji(
+            if (person is null)
+                return string.Empty;
+
+            if (_appearanceService is not null)
+            {
+                return _appearanceService.GetPortrait(
                     person,
-                    _familyService,
-                    _healthService,
-                    _careerService,
-                    _justiceService,
-                    _statsService,
-                    _thoughtService);
+                    useDeadOverride: false);
+            }
+
+            var sex = _familyService?.GetSex(person)
+                ?? (person.Tags.Has("sex.female")
+                    ? Sex.Female
+                    : Sex.Male);
+
+            if (person.Age <= 4)
+                return "👶🏻";
+
+            if (person.Age <= 11)
+                return sex == Sex.Male ? "👦🏻" : "👧🏻";
+
+            if (person.Age <= 17)
+                return "🧑🏻";
+
+            if (person.Age >= 70)
+                return sex == Sex.Male ? "👴🏻" : "👵🏻";
+
+            return sex == Sex.Male ? "👨🏻" : "👩🏻";
         }
     }
+
+    public bool IsSelectedPersonDeceased =>
+        FindSelectedPerson()?.Tags.Has("state.dead") == true;
 
     public int Year =>
         _gameState.Year;

@@ -75,6 +75,50 @@ public sealed class StandardPersonalityService :
             component.Morals);
     }
 
+    public PersonalitySnapshot GenerateCandidatePersonality(
+        Guid candidateId)
+    {
+        var temperamentRoll = Roll(
+            candidateId,
+            "temperament-random-no-parents");
+
+        var temperament = Temperaments[
+            Math.Min(
+                Temperaments.Length - 1,
+                (int)(temperamentRoll * Temperaments.Length))];
+
+        var moralsRoll = Roll(
+            candidateId,
+            "morals");
+
+        var morals = moralsRoll < 0.35
+            ? "Good"
+            : moralsRoll < 0.75
+                ? "Neutral"
+                : "Evil";
+
+        return new PersonalitySnapshot(
+            temperament,
+            morals);
+    }
+
+    public void SetPersonality(
+        IPerson person,
+        PersonalitySnapshot personality)
+    {
+        ArgumentNullException.ThrowIfNull(person);
+        ArgumentNullException.ThrowIfNull(personality);
+
+        var component = new PersonalityComponent
+        {
+            Temperament = personality.Temperament,
+            Morals = personality.Morals
+        };
+
+        person.Components.Set(component);
+        ApplyTags(person, component);
+    }
+
     public void ReconcileAll()
     {
         foreach (var person in
@@ -407,11 +451,16 @@ public sealed class StandardPersonalityService :
 
     private double Roll(
         IPerson person,
+        string purpose) =>
+        Roll(person.Id, purpose);
+
+    private double Roll(
+        Guid personId,
         string purpose)
     {
         var input =
             $"{_gameState.DynastySurname}|" +
-            $"{person.Id:N}|{purpose}";
+            $"{personId:N}|{purpose}";
 
         var hash =
             SHA256.HashData(

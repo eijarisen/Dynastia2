@@ -22,6 +22,7 @@ public static class ActionEmojiMap
                 ["career.find_another_job"] = "🔎",
                 ["career.use_family_connections"] = "🤝",
                 ["career.help_seek_employment"] = "✅",
+                ["career.help_find_better_job"] = "🔎",
                 ["career.ask_to_recover"] = "🧘",
                 ["career.ask_to_quit"] = "🚶",
 

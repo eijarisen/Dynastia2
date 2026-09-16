@@ -189,14 +189,7 @@
                         FontSize="15"
                         FontWeight="Bold"
                         Foreground="#5E3B12" />
-                    <TextBlock
-                        Margin="0,8,0,0"
-                        FontFamily="Georgia"
-                        FontSize="12"
-                        FontStyle="Italic"
-                        Foreground="#6B5434"
-                        TextWrapping="Wrap"
-                        Text="Interest is the total cost over the whole contract, not an annual percentage. Payments are rounded to full zł; the final payment absorbs any rounding remainder. The first repayment is due one Year Advance after the loan is issued." />
+
                 </StackPanel>
             </Border>
 

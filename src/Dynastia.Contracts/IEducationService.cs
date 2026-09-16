@@ -6,4 +6,6 @@ public interface IEducationService
     int GetEducationLevel(IPerson person);
     void SetEducationLevel(IPerson person, int level);
     void IncreaseEducation(IPerson person, int amount = 1);
+
+    EducationGenerationRange GetGeneratedAdultRange(int year);
 }

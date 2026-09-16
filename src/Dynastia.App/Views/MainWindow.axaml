@@ -109,15 +109,26 @@
                     </Border>
                 </ToolTip.Tip>
 
-                <StackPanel
-                    Width="128"
-                    HorizontalAlignment="Center"
-                    Spacing="2">
-
-                    <TextBlock
+                <Grid Width="128">
+                    <StackPanel
+                        Width="128"
                         HorizontalAlignment="Center"
-                        FontSize="35"
-                        Text="{Binding AvatarText}" />
+                        Spacing="2">
+
+                        <Border
+                            Width="52"
+                            Height="52"
+                            HorizontalAlignment="Center"
+                            Background="#C0463528"
+                            BorderBrush="#7D5A31"
+                            BorderThickness="1"
+                            CornerRadius="4">
+                            <TextBlock
+                                HorizontalAlignment="Center"
+                                VerticalAlignment="Center"
+                                FontSize="35"
+                                Text="{Binding AvatarText}" />
+                        </Border>
 
                     <TextBlock
                         HorizontalAlignment="Center"
@@ -162,15 +173,22 @@
                         Opacity="0.8"
                         Text="{Binding TownText}" />
 
-                    <TextBlock
-                        IsVisible="{Binding ShowOccupation}"
-                        HorizontalAlignment="Center"
-                        TextAlignment="Center"
-                        TextWrapping="Wrap"
-                        FontSize="10.5"
-                        Opacity="0.78"
-                        Text="{Binding OccupationText}" />
-                </StackPanel>
+                        <TextBlock
+                            IsVisible="{Binding ShowOccupation}"
+                            HorizontalAlignment="Center"
+                            TextAlignment="Center"
+                            TextWrapping="Wrap"
+                            FontSize="10.5"
+                            Opacity="0.78"
+                            Text="{Binding OccupationText}" />
+                    </StackPanel>
+
+                    <Border
+                        IsVisible="{Binding IsDeceased}"
+                        IsHitTestVisible="False"
+                        Background="#4D8B622F"
+                        CornerRadius="3" />
+                </Grid>
             </Button>
         </DataTemplate>
 
@@ -656,7 +674,7 @@
                             ClipToBounds="True">
 
                             <Grid
-                                ColumnDefinitions="*,Auto"
+                                ColumnDefinitions="*,Auto,Auto"
                                 ColumnSpacing="7">
 
                                 <TextBlock
@@ -664,8 +682,45 @@
                                     FontWeight="Bold"
                                     Text="Family Chronicle" />
 
-                                <Grid
+                                <Button
                                     Grid.Column="1"
+                                    Width="68"
+                                    Height="34"
+                                    Margin="0"
+                                    Padding="8,4"
+                                    VerticalAlignment="Center"
+                                    HorizontalContentAlignment="Center"
+                                    VerticalContentAlignment="Center"
+                                    Classes="gameAction"
+                                    Click="OnMapClick">
+
+                                    <ToolTip.Tip>
+                                        <Border
+                                            MaxWidth="340"
+                                            Padding="10,7"
+                                            Background="#F20A1514"
+                                            BorderBrush="#B88934"
+                                            BorderThickness="1"
+                                            CornerRadius="4">
+
+                                            <TextBlock
+                                                FontSize="10.5"
+                                                LineHeight="17"
+                                                Foreground="#F5E6C6"
+                                                TextWrapping="Wrap"
+                                                Text="Open the dynasty map. Scroll to zoom, drag to pan, hover over towns, and click a town to inspect family presence and property." />
+                                        </Border>
+                                    </ToolTip.Tip>
+
+                                    <TextBlock
+                                        Foreground="#F8E9C8"
+                                        FontSize="12.5"
+                                        FontWeight="SemiBold"
+                                        Text="Map" />
+                                </Button>
+
+                                <Grid
+                                    Grid.Column="2"
                                     Width="132"
                                     Height="34"
                                     VerticalAlignment="Center"
@@ -1173,16 +1228,27 @@
                             Height="202"
                             HorizontalAlignment="Left"
                             VerticalAlignment="Top"
-                            Background="#77071212"
+                            Background="#C0463528"
                             BorderBrush="#9D772E"
                             BorderThickness="1.5"
                             CornerRadius="4">
 
-                            <TextBlock
-                                HorizontalAlignment="Center"
-                                VerticalAlignment="Center"
-                                FontSize="70"
-                                Text="{Binding SelectedPersonEmoji}" />
+                            <Grid>
+                                <TextBlock
+                                    Margin="6"
+                                    HorizontalAlignment="Center"
+                                    VerticalAlignment="Center"
+                                    TextAlignment="Center"
+                                    TextWrapping="Wrap"
+                                    FontSize="84"
+                                    Text="{Binding SelectedPersonPortrait}" />
+
+                                <Border
+                                    IsVisible="{Binding IsSelectedPersonDeceased}"
+                                    IsHitTestVisible="False"
+                                    Background="#5A8B622F"
+                                    CornerRadius="3" />
+                            </Grid>
                         </Border>
 
                         <!-- Name sits directly above the portrait frame. -->

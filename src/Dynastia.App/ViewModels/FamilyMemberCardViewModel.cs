@@ -16,6 +16,7 @@ public sealed class FamilyMemberCardViewModel
         IMarriageSatisfactionService? marriageSatisfaction,
         IChildHappinessService? childHappiness,
         IThoughtService? thoughts,
+        IAppearanceService? appearance,
         bool isSelected,
         bool isActiveHouseholdHead,
         Action<Guid> selectPerson)
@@ -50,14 +51,23 @@ public sealed class FamilyMemberCardViewModel
             isActiveHouseholdHead;
 
         AvatarText =
-            PersonEmojiResolver.GetPersonEmoji(
-                person,
-                family,
-                health,
-                career,
-                justice,
-                stats,
-                thoughts);
+            IsLiving
+                ? PersonEmojiResolver.GetPersonEmoji(
+                    person,
+                    family,
+                    health,
+                    career,
+                    justice,
+                    stats,
+                    thoughts,
+                    appearance)
+                : appearance is not null
+                    ? appearance.GetPortrait(
+                        person,
+                        useDeadOverride: false)
+                    : ResolveLastPortraitFallback(
+                        person,
+                        family);
 
         var birthYear =
             person.BirthDate?.Year
@@ -415,6 +425,30 @@ public sealed class FamilyMemberCardViewModel
     public bool IsActiveHouseholdHead { get; }
 
     public RelayCommand SelectCommand { get; }
+
+    private static string ResolveLastPortraitFallback(
+        IPerson person,
+        IFamilyService? family)
+    {
+        var sex = family?.GetSex(person)
+            ?? (person.Tags.Has("sex.female")
+                ? Sex.Female
+                : Sex.Male);
+
+        if (person.Age <= 4)
+            return "👶🏻";
+
+        if (person.Age <= 11)
+            return sex == Sex.Male ? "👦🏻" : "👧🏻";
+
+        if (person.Age <= 17)
+            return "🧑🏻";
+
+        if (person.Age >= 70)
+            return sex == Sex.Male ? "👴🏻" : "👵🏻";
+
+        return sex == Sex.Male ? "👨🏻" : "👩🏻";
+    }
 
     private static string FormatOccupation(
         string title,

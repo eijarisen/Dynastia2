@@ -51,7 +51,8 @@ public sealed partial class StandardEconomyService
             lines.Add(
                 new FinanceBreakdownItem(
                     member.Name,
-                    amount));
+                    amount,
+                    member.Id));
         }
 
         var rentalIncome =

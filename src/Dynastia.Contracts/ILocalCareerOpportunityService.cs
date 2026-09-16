@@ -6,6 +6,10 @@ public interface ILocalCareerOpportunityService
         IPerson person,
         CareerLocationRequirement requirement);
 
+    CareerLocationEvaluation Evaluate(
+        TownInfo town,
+        CareerLocationRequirement requirement);
+
     LocationOpportunitySnapshot GetOpportunitySnapshot(
         IPerson person);
 

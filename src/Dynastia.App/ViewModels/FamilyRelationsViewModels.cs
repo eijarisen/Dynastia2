@@ -11,6 +11,10 @@ public sealed record FamilyRelationActionViewModel(
     bool RequiresPropertySelection,
     bool RequiresMoneySelection);
 
+public sealed record FamilyRelationMemberViewModel(
+    string PortraitEmoji,
+    string Text);
+
 public sealed record FamilyRelationHouseholdViewModel(
     Guid HouseholdHeadId,
     Guid RelativeId,
@@ -19,12 +23,14 @@ public sealed record FamilyRelationHouseholdViewModel(
     string RelativeName,
     string FamiliarityState,
     string SympathyState,
-    string OtherMembersText,
+    IReadOnlyList<FamilyRelationMemberViewModel> Members,
     string TownText,
     string WealthText,
     string HousesText,
     IReadOnlyList<FamilyRelationActionViewModel> Actions)
 {
+    public bool IsNonPlayableHousehold => !IsPlayableHousehold;
+
     public string RelationState => $"{FamiliarityState} · {SympathyState}";
 
     public IBrush StateBrush => SympathyState switch
@@ -41,6 +47,7 @@ public sealed class FamilyRelationsWindowViewModel : ViewModelBase
 {
     private readonly MainWindowViewModel _main;
     private string _statusText = string.Empty;
+    private string _selectedHouseholdText = string.Empty;
 
     public FamilyRelationsWindowViewModel(MainWindowViewModel main)
     {
@@ -64,8 +71,20 @@ public sealed class FamilyRelationsWindowViewModel : ViewModelBase
 
     public bool HasStatus => !string.IsNullOrWhiteSpace(StatusText);
 
+    public string SelectedHouseholdText
+    {
+        get => _selectedHouseholdText;
+        private set
+        {
+            if (_selectedHouseholdText == value) return;
+            _selectedHouseholdText = value;
+            OnPropertyChanged();
+        }
+    }
+
     public void Refresh()
     {
+        SelectedHouseholdText = _main.GetFamilyRelationsActiveHouseholdText();
         Households.Clear();
         foreach (var household in _main.GetFamilyRelationsHouseholds())
             Households.Add(household);

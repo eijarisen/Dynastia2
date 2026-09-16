@@ -1,0 +1,196 @@
+using Dynastia.Contracts;
+
+namespace Dynastia.App.ViewModels;
+
+public sealed partial class MainWindowViewModel
+{
+    public JobOpportunityDialogViewModel? GetJobOpportunityDialog(
+        string actionId)
+    {
+        var actor = _succession.ActiveController;
+        if (actor is null
+            || _careerService is null
+            || _locationService is null)
+        {
+            return null;
+        }
+
+        var applicant = IsFamilyJobSearchAction(actionId)
+            ? FindSelectedPerson()
+            : actor;
+
+        if (applicant is null)
+            return null;
+
+        var opportunities = _careerService
+            .GetJobOpportunities(applicant)
+            .OrderByDescending(opportunity => opportunity.AnnualSalary)
+            .ThenByDescending(opportunity => opportunity.JobLevel)
+            .ThenBy(opportunity => opportunity.JobTitle, StringComparer.OrdinalIgnoreCase)
+            .Select(opportunity =>
+                new JobOpportunityCardViewModel(
+                    opportunity,
+                    _careerPresentationService?
+                        .GetCareerEmoji(opportunity.CareerId)
+                        ?? "💼"))
+            .ToList();
+
+        var town = _locationService
+            .GetLocation(applicant)
+            .HomeTown;
+        var name = _familyService is null
+            ? $"{applicant.Name} {applicant.Surname}"
+            : _familyService.GetDisplayName(applicant);
+
+        return new JobOpportunityDialogViewModel(
+            $"Job Opportunities — {town.Town}",
+            "Available work reflects local and regional opportunities.",
+            name,
+            opportunities);
+    }
+
+    public void QueueJobApplication(
+        string actionId,
+        JobOpportunityInfo opportunity)
+    {
+        var actor = _succession.ActiveController;
+        if (actor is null || _succession.IsGameOver)
+            return;
+
+        var target = IsFamilyJobSearchAction(actionId)
+            ? FindSelectedPerson()
+            : actor;
+
+        if (target is null)
+            return;
+
+        var result = _actionRegistry.Execute(
+            actionId,
+            actor,
+            target,
+            new Dictionary<string, string>
+            {
+                ["jobCareerId"] = opportunity.CareerId,
+                ["jobLevel"] = opportunity.JobLevel.ToString(),
+                ["jobRequiredAbility"] = opportunity.RequiredAbilityLevel.ToString(),
+                ["jobRequiredEducation"] = opportunity.RequiredEducationLevel.ToString(),
+                ["jobRequiredExperience"] = opportunity.RequiredExperienceYears.ToString(),
+                ["jobSuccessChance"] = opportunity.SuccessChance.ToString(
+                    "R",
+                    System.Globalization.CultureInfo.InvariantCulture)
+            });
+
+        if (!result.Success
+            && !string.IsNullOrWhiteSpace(result.Message))
+        {
+            PersistenceStatusText = result.Message;
+        }
+
+        RefreshAfterOpportunitySelection();
+    }
+
+    public PotentialPartnerDialogViewModel? GetPotentialPartnerDialog(
+        string actionId = "relationship.find_spouse")
+    {
+        var actor = _succession.ActiveController;
+        if (actor is null || _partnerSearchService is null)
+            return null;
+
+        var arrangedMarriage = actionId.Equals(
+            "relationship.marry_off_daughter",
+            StringComparison.OrdinalIgnoreCase);
+        var seeker = arrangedMarriage
+            ? FindSelectedPerson()
+            : actor;
+
+        if (seeker is null)
+            return null;
+
+        var name = _familyService is null
+            ? $"{seeker.Name} {seeker.Surname}"
+            : _familyService.GetDisplayName(seeker);
+
+        var candidateProfiles = arrangedMarriage
+            ? _partnerSearchService.GetCandidatesFor(
+                seeker,
+                Sex.Male,
+                "arranged-marriage")
+            : _partnerSearchService.GetCandidates(seeker);
+
+        var candidates = candidateProfiles
+            .Select(candidate =>
+                new PotentialPartnerCardViewModel(
+                    candidate,
+                    candidate.JobLevel > 0
+                        ? _careerPresentationService?
+                            .GetCareerEmoji(candidate.CareerId)
+                            ?? "💼"
+                        : "🔎",
+                    arrangedMarriage ? "Choose" : "Approach"))
+            .ToList();
+
+        return new PotentialPartnerDialogViewModel(
+            name,
+            candidates,
+            arrangedMarriage
+                ? "Choose a proposed husband."
+                : "Choose whom to approach.");
+    }
+
+    public void QueueCourtship(
+        string actionId,
+        PartnerCandidateInfo candidate)
+    {
+        var actor = _succession.ActiveController;
+        if (actor is null
+            || _partnerSearchService is null
+            || _succession.IsGameOver)
+        {
+            return;
+        }
+
+        var target = actionId.Equals(
+            "relationship.marry_off_daughter",
+            StringComparison.OrdinalIgnoreCase)
+            ? FindSelectedPerson()
+            : actor;
+
+        if (target is null)
+            return;
+
+        var result = _actionRegistry.Execute(
+            actionId,
+            actor,
+            target,
+            _partnerSearchService.BuildActionParameters(candidate));
+
+        if (!result.Success
+            && !string.IsNullOrWhiteSpace(result.Message))
+        {
+            PersistenceStatusText = result.Message;
+        }
+
+        RefreshAfterOpportunitySelection();
+    }
+
+    private static bool IsFamilyJobSearchAction(string actionId) =>
+        actionId.Equals(
+            "career.help_seek_employment",
+            StringComparison.OrdinalIgnoreCase)
+        || actionId.Equals(
+            "career.help_find_better_job",
+            StringComparison.OrdinalIgnoreCase);
+
+    private void RefreshAfterOpportunitySelection()
+    {
+        RefreshPeople();
+        RefreshAlbum();
+        RefreshHealth();
+        RefreshEconomy();
+        RefreshEducation();
+        RefreshCareer();
+        RefreshJustice();
+        RefreshNarrative();
+        RefreshActions();
+    }
+}

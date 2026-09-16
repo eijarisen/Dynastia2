@@ -48,10 +48,6 @@
             <Setter Property="Background" Value="Transparent" />
             <Setter Property="Foreground" Value="#6B4521" />
         </Style>
-        <Style Selector="Button.householdName:disabled">
-            <Setter Property="Opacity" Value="1" />
-            <Setter Property="Foreground" Value="#352110" />
-        </Style>
     </Window.Styles>
 
     <Grid>
@@ -65,13 +61,18 @@
                 Foreground="#2F1D0E"
                 Text="Family Relations" />
 
-            <TextBlock
+            <StackPanel
                 Grid.Row="1"
                 HorizontalAlignment="Center"
-                FontFamily="Georgia"
-                FontSize="14"
-                Foreground="#5B4024"
-                Text="Family households beyond the active household. Familiarity is permanent; Sympathy changes with treatment and time." />
+                Spacing="4">
+                <TextBlock
+                    HorizontalAlignment="Center"
+                    FontFamily="Georgia"
+                    FontSize="19"
+                    FontWeight="Bold"
+                    Foreground="#4B321B"
+                    Text="{Binding SelectedHouseholdText}" />
+            </StackPanel>
 
             <Border
                 Grid.Row="2"
@@ -108,9 +109,17 @@
                                                     Text=" — " />
                                                 <Button
                                                     Classes="householdName"
-                                                    IsEnabled="{Binding IsPlayableHousehold}"
+                                                    IsVisible="{Binding IsPlayableHousehold}"
                                                     Content="{Binding RelativeName}"
                                                     Click="OnHouseholdNameClick" />
+                                                <TextBlock
+                                                    IsVisible="{Binding IsNonPlayableHousehold}"
+                                                    VerticalAlignment="Center"
+                                                    FontFamily="Georgia"
+                                                    FontSize="18"
+                                                    FontWeight="Bold"
+                                                    Foreground="#91877B"
+                                                    Text="{Binding RelativeName}" />
                                                 <TextBlock
                                                     FontFamily="Georgia"
                                                     FontSize="18"
@@ -152,14 +161,40 @@
                                                     Text="{Binding HousesText}" />
                                             </StackPanel>
 
-                                            <TextBlock
+                                            <ItemsControl
                                                 Margin="0,3,0,0"
-                                                FontFamily="Georgia"
-                                                FontSize="13"
-                                                LineHeight="20"
-                                                Foreground="#46321C"
-                                                TextWrapping="Wrap"
-                                                Text="{Binding OtherMembersText}" />
+                                                ItemsSource="{Binding Members}">
+                                                <ItemsControl.ItemTemplate>
+                                                    <DataTemplate x:DataType="vm:FamilyRelationMemberViewModel">
+                                                        <StackPanel
+                                                            Margin="0,1"
+                                                            Orientation="Horizontal"
+                                                            Spacing="7">
+                                                            <Border
+                                                                Width="25"
+                                                                Height="25"
+                                                                VerticalAlignment="Center"
+                                                                Background="#C0463528"
+                                                                BorderBrush="#9D772E"
+                                                                BorderThickness="1"
+                                                                CornerRadius="3">
+                                                                <TextBlock
+                                                                    HorizontalAlignment="Center"
+                                                                    VerticalAlignment="Center"
+                                                                    FontSize="16"
+                                                                    Text="{Binding PortraitEmoji}" />
+                                                            </Border>
+                                                            <TextBlock
+                                                                VerticalAlignment="Center"
+                                                                FontFamily="Georgia"
+                                                                FontSize="13"
+                                                                Foreground="#46321C"
+                                                                TextWrapping="Wrap"
+                                                                Text="{Binding Text}" />
+                                                        </StackPanel>
+                                                    </DataTemplate>
+                                                </ItemsControl.ItemTemplate>
+                                            </ItemsControl>
                                         </StackPanel>
 
                                         <ItemsControl

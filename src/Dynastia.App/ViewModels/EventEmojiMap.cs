@@ -127,6 +127,7 @@ public static class EventEmojiMap
                 ["career.fired"] = "💥",
                 ["career.promotion"] = "✨",
                 ["relationship.partnered"] = "👩‍❤️‍👩",
+                ["relationship.courtship"] = "💌",
                 ["relationship.married"] = "💍",
                 ["relationship.affair"] = "🤫",
                 ["birth.condition"] = "🧩",

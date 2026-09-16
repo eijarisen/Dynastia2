@@ -3,6 +3,7 @@ using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
 using Dynastia.App.Audio;
 using Dynastia.App.Genealogy.Host;
+using Dynastia.App.Map.Host;
 using Dynastia.App.Persistence;
 using Dynastia.App.ViewModels;
 using Dynastia.App.Views;
@@ -205,6 +206,10 @@ public partial class App : Application
                 pluginContext.GetService<
                     IPersonalityService>();
 
+            var appearanceService =
+                pluginContext.GetService<
+                    IAppearanceService>();
+
             var childHappinessService =
                 pluginContext.GetService<
                     IChildHappinessService>();
@@ -214,6 +219,13 @@ public partial class App : Application
 
             var careerService =
                 pluginContext.GetService<ICareerService>();
+
+            var careerPresentationService =
+                pluginContext.GetService<
+                    ICareerPresentationService>();
+
+            var partnerSearchService =
+                pluginContext.GetService<IPartnerSearchService>();
 
             var justiceService =
                 pluginContext.GetService<IJusticeService>();
@@ -245,11 +257,23 @@ public partial class App : Application
                         locationService,
                         marriageSatisfactionService,
                         thoughtService,
+                        appearanceService,
                         successionService);
 
             var genealogySelection =
                 new SelectionServiceGenealogyAdapter(
                     selectionService);
+
+            var mapDataSource =
+                locationService is null
+                    ? null
+                    : new GameMapDataSource(
+                        gameState,
+                        locationService,
+                        familyService,
+                        economyService,
+                        householdService,
+                        successionService);
 
             var musicService =
                 new BackgroundMusicService();
@@ -262,6 +286,9 @@ public partial class App : Application
 
                     GenealogySelection =
                         genealogySelection,
+
+                    MapDataSource =
+                        mapDataSource,
 
                     DataContext =
                         new MainWindowViewModel(
@@ -284,9 +311,12 @@ public partial class App : Application
                             thoughtService,
                             hobbyService,
                             personalityService,
+                            appearanceService,
                             childHappinessService,
                             educationService,
                             careerService,
+                            careerPresentationService,
+                            partnerSearchService,
                             justiceService,
                             biographyService,
                             successionService,

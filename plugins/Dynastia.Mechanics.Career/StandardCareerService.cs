@@ -3,7 +3,8 @@ using Dynastia.Contracts;
 namespace Dynastia.Mechanics.Career;
 
 public sealed partial class StandardCareerService :
-    ICareerService
+    ICareerService,
+    ICareerPresentationService
 {
     public const decimal DefaultBaseIncomePerLevel =
         500m;
@@ -18,6 +19,7 @@ public sealed partial class StandardCareerService :
     private readonly ILocalCareerOpportunityService
         _localOpportunities;
     private readonly IStatsService _stats;
+    private readonly IEducationService _education;
 
     internal StandardCareerService(
         IGameState gameState,
@@ -27,7 +29,8 @@ public sealed partial class StandardCareerService :
         HistoricalCareerPresentationCatalog presentation,
         RetirementRuleCatalog retirementRules,
         ILocalCareerOpportunityService localOpportunities,
-        IStatsService stats)
+        IStatsService stats,
+        IEducationService education)
     {
         _gameState = gameState;
         _family = family;
@@ -41,6 +44,8 @@ public sealed partial class StandardCareerService :
 
         _stats =
             stats;
+        _education =
+            education;
     }
 
     public void EnsureCareer(

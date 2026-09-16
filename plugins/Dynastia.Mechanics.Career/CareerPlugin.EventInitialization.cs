@@ -38,6 +38,22 @@ public sealed partial class CareerPlugin
                     return;
                 }
 
+                if (gameEvent.Data.TryGetValue(
+                        "preserveGeneratedProfile",
+                        out var preserveGeneratedProfile)
+                    && preserveGeneratedProfile.Equals(
+                        "true",
+                        StringComparison.OrdinalIgnoreCase)
+                    && (gameEvent.Type.Equals(
+                            "relationship.married",
+                            StringComparison.OrdinalIgnoreCase)
+                        || gameEvent.Type.Equals(
+                            "relationship.partnered",
+                            StringComparison.OrdinalIgnoreCase)))
+                {
+                    return;
+                }
+
                 if (gameEvent.Type.Equals(
                         "relationship.married",
                         StringComparison.OrdinalIgnoreCase)

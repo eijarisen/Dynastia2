@@ -26,6 +26,11 @@ public sealed class ReproductionPlugin : IGamePlugin
             ?? throw new InvalidOperationException(
                 "Health service is unavailable.");
 
+        var appearance =
+            context.GetService<IAppearanceService>()
+            ?? throw new InvalidOperationException(
+                "Appearance service is unavailable.");
+
         var marriageSatisfaction =
             context.GetService<IMarriageSatisfactionService>()
             ?? throw new InvalidOperationException(
@@ -107,6 +112,7 @@ public sealed class ReproductionPlugin : IGamePlugin
                 family,
                 stats,
                 health,
+                appearance,
                 marriageSatisfaction,
                 historicalNames,
                 random,

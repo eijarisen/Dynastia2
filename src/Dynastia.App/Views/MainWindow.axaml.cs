@@ -3,9 +3,12 @@ using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Platform.Storage;
 using Dynastia.App.Genealogy.Host;
+using Dynastia.App.Map.Host;
 using Dynastia.App.ViewModels;
+using Dynastia.Contracts;
 using Dynastia.StandardUI.Genealogy.Contracts;
 using Dynastia.StandardUI.Genealogy.Views;
+using Dynastia.StandardUI.Map.Views;
 
 namespace Dynastia.App.Views;
 
@@ -21,6 +24,7 @@ public partial class MainWindow : Window
 
     private bool _persistenceDialogOpen;
     private bool _genealogyDialogOpen;
+    private bool _mapDialogOpen;
     private bool _familyRelationsDialogOpen;
     private bool _familyInventoryDialogOpen;
     private bool _instructionsDialogOpen;
@@ -34,6 +38,12 @@ public partial class MainWindow : Window
     }
 
     public IGlobalSelectionService? GenealogySelection
+    {
+        get;
+        set;
+    }
+
+    public GameMapDataSource? MapDataSource
     {
         get;
         set;
@@ -112,6 +122,82 @@ public partial class MainWindow : Window
                 {
                     viewModel.QueueSelfImprovementAction(
                         selectedActionId);
+                }
+
+                return;
+            }
+
+            if (e.ActionId.Equals(
+                    "career.seek_employment",
+                    StringComparison.OrdinalIgnoreCase)
+                || e.ActionId.Equals(
+                    "career.find_another_job",
+                    StringComparison.OrdinalIgnoreCase)
+                || e.ActionId.Equals(
+                    "career.help_seek_employment",
+                    StringComparison.OrdinalIgnoreCase)
+                || e.ActionId.Equals(
+                    "career.help_find_better_job",
+                    StringComparison.OrdinalIgnoreCase))
+            {
+                var model =
+                    viewModel.GetJobOpportunityDialog(
+                        e.ActionId);
+
+                if (model is null
+                    || model.Opportunities.Count == 0)
+                {
+                    viewModel.ReportPersistenceStatus(
+                        "No suitable vacancies are currently available.");
+                    return;
+                }
+
+                var jobOpportunitiesWindow =
+                    new JobOpportunitiesWindow(model);
+
+                var selection =
+                    await jobOpportunitiesWindow.ShowDialog<JobOpportunityInfo?>(this);
+
+                if (selection is not null)
+                {
+                    viewModel.QueueJobApplication(
+                        e.ActionId,
+                        selection);
+                }
+
+                return;
+            }
+
+            if (e.ActionId.Equals(
+                    "relationship.find_spouse",
+                    StringComparison.OrdinalIgnoreCase)
+                || e.ActionId.Equals(
+                    "relationship.marry_off_daughter",
+                    StringComparison.OrdinalIgnoreCase))
+            {
+                var model =
+                    viewModel.GetPotentialPartnerDialog(
+                        e.ActionId);
+
+                if (model is null
+                    || model.Candidates.Count == 0)
+                {
+                    viewModel.ReportPersistenceStatus(
+                        "No suitable potential partners are currently available.");
+                    return;
+                }
+
+                var potentialPartnersWindow =
+                    new PotentialPartnersWindow(model);
+
+                var selection =
+                    await potentialPartnersWindow.ShowDialog<PartnerCandidateInfo?>(this);
+
+                if (selection is not null)
+                {
+                    viewModel.QueueCourtship(
+                        e.ActionId,
+                        selection);
                 }
 
                 return;
@@ -558,6 +644,58 @@ public partial class MainWindow : Window
         {
             SetPaperDialogBackdrop(false);
             _familyRelationsDialogOpen = false;
+        }
+    }
+
+    private async void OnMapClick(
+        object? sender,
+        RoutedEventArgs e)
+    {
+        if (_mapDialogOpen)
+            return;
+
+        if (MapDataSource is null
+            || GenealogySelection is null)
+        {
+            if (DataContext
+                is MainWindowViewModel viewModel)
+            {
+                viewModel.ReportPersistenceStatus(
+                    "Map is unavailable because the Location service did not initialize.");
+            }
+
+            return;
+        }
+
+        _mapDialogOpen =
+            true;
+
+        try
+        {
+            var window =
+                new TownMapWindow(
+                    MapDataSource,
+                    GenealogySelection);
+
+            await window.ShowDialog(
+                this);
+        }
+        catch (Exception exception)
+        {
+            Console.Error.WriteLine(
+                exception);
+
+            if (DataContext
+                is MainWindowViewModel viewModel)
+            {
+                viewModel.ReportPersistenceStatus(
+                    $"Map failed: {exception.Message}");
+            }
+        }
+        finally
+        {
+            _mapDialogOpen =
+                false;
         }
     }
 

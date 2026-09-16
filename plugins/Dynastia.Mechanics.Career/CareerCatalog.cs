@@ -109,6 +109,9 @@ internal sealed class CareerCatalog
     internal IReadOnlyCollection<string> CareerIds =>
         _byId.Keys.ToArray();
 
+    internal IReadOnlyList<CareerDefinition> All =>
+        _careers;
+
     public static CareerCatalog Load(
         IGameDataService data)
     {
@@ -238,6 +241,7 @@ internal sealed class CareerCatalog
                 "Number",
                 "Id",
                 "Name",
+                "Emoji",
                 "StartYear",
                 "EndYear",
                 "MaleEarly",
@@ -255,12 +259,45 @@ internal sealed class CareerCatalog
                 "RequiredOpportunityTags"
             };
 
-        if (!header.SequenceEqual(
-            expectedHeader,
-            StringComparer.Ordinal))
+        var legacyHeader =
+            new[]
+            {
+                "Number",
+                "Id",
+                "Name",
+                "StartYear",
+                "EndYear",
+                "MaleEarly",
+                "FemaleEarly",
+                "MaleLate",
+                "FemaleLate",
+                "BaseSalary",
+                "Level1Title",
+                "Level2Title",
+                "Level3Title",
+                "Level4Title",
+                "Level5Title",
+                "LocationType",
+                "MinimumSettlementClass",
+                "RequiredOpportunityTags"
+            };
+
+        var hasEmojiColumn =
+            header.SequenceEqual(
+                expectedHeader,
+                StringComparer.Ordinal);
+
+        var isLegacyHeader =
+            header.SequenceEqual(
+                legacyHeader,
+                StringComparer.Ordinal);
+
+        if (!hasEmojiColumn
+            && !isLegacyHeader)
         {
             throw new InvalidDataException(
-                $"{DataPath} has an unexpected header.");
+                $"{DataPath} has an unexpected header: " +
+                string.Join(",", header));
         }
 
         var result =
@@ -273,14 +310,24 @@ internal sealed class CareerCatalog
             var fields =
                 lines[index].Split(',');
 
+            var expectedFieldCount =
+                hasEmojiColumn
+                    ? expectedHeader.Length
+                    : legacyHeader.Length;
+
             if (fields.Length
-                != expectedHeader.Length)
+                != expectedFieldCount)
             {
                 throw new InvalidDataException(
                     $"{DataPath} row {index + 1} " +
                     $"has {fields.Length} fields; " +
-                    $"expected {expectedHeader.Length}.");
+                    $"expected {expectedFieldCount}.");
             }
+
+            var offset =
+                hasEmojiColumn
+                    ? 1
+                    : 0;
 
             result.Add(
                 new CareerDefinition(
@@ -288,58 +335,62 @@ internal sealed class CareerCatalog
                         fields[1],
                     Name:
                         fields[2],
+                    Emoji:
+                        hasEmojiColumn
+                            ? fields[3]
+                            : "💼",
                     StartYear:
                         ParseInt(
-                            fields[3],
+                            fields[3 + offset],
                             index),
                     EndYear:
                         string.IsNullOrWhiteSpace(
-                            fields[4])
+                            fields[4 + offset])
                             ? null
                             : ParseInt(
-                                fields[4],
+                                fields[4 + offset],
                                 index),
                     MaleEarly:
                         ParseInt(
-                            fields[5],
+                            fields[5 + offset],
                             index),
                     FemaleEarly:
                         ParseInt(
-                            fields[6],
+                            fields[6 + offset],
                             index),
                     MaleLate:
                         ParseInt(
-                            fields[7],
+                            fields[7 + offset],
                             index),
                     FemaleLate:
                         ParseInt(
-                            fields[8],
+                            fields[8 + offset],
                             index),
                     BaseSalary:
                         ParseDecimal(
-                            fields[9],
+                            fields[9 + offset],
                             index),
                     Level1Title:
-                        fields[10],
+                        fields[10 + offset],
                     Level2Title:
-                        fields[11],
+                        fields[11 + offset],
                     Level3Title:
-                        fields[12],
+                        fields[12 + offset],
                     Level4Title:
-                        fields[13],
+                        fields[13 + offset],
                     Level5Title:
-                        fields[14],
+                        fields[14 + offset],
                     LocationType:
                         ParseLocationType(
-                            fields[15],
+                            fields[15 + offset],
                             index),
                     MinimumSettlementClass:
                         ParseSettlementClass(
-                            fields[16],
+                            fields[16 + offset],
                             index),
                     RequiredOpportunityTags:
                         ParseTags(
-                            fields[17])));
+                            fields[17 + offset])));
         }
 
         return result;
@@ -385,6 +436,13 @@ internal sealed class CareerCatalog
 
         foreach (var career in careers)
         {
+            if (string.IsNullOrWhiteSpace(
+                career.Emoji))
+            {
+                throw new InvalidDataException(
+                    $"{career.Name}: career emoji is required.");
+            }
+
             if (career.StartYear
                 < GameCalendarConfiguration.GameStartYear
                 || career.StartYear

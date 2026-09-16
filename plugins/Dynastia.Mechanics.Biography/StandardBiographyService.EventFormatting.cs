@@ -126,6 +126,7 @@ public sealed partial class StandardBiographyService
             "career.fired" => "💥 ",
             "career.promotion" => "✨ ",
             "relationship.partnered" => "👩‍❤️‍👩 ",
+            "relationship.courtship" => "💌 ",
             "relationship.married" => "💍 ",
             "relationship.affair" => "🤫 ",
             "birth.condition" => "🧩 ",

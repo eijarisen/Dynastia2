@@ -19,8 +19,8 @@ public sealed partial class CareerPlugin
                 Id = "career.help_seek_employment",
                 Label = "Help to Seek Employment",
                 Description =
-                    "Help your unemployed wife or unmarried adult daughter find work. " +
-                    "A career is drawn first; manual/physical careers use her Strength while office, professional and technical careers use her Intellect.",
+                    "Browse vacancies for your unemployed spouse or unmarried adult daughter " +
+                    "and help them apply for a specific position.",
                 Mode = ActionExecutionMode.Queued,
                 QueuePhase = YearPhase.QueuedActionsEarly,
 
@@ -38,25 +38,19 @@ public sealed partial class CareerPlugin
                         return false;
                     }
 
-                    var targetCareer =
-                        career.GetCareer(target);
-
+                    var targetCareer = career.GetCareer(target);
                     if (targetCareer.IsRetired
                         || targetCareer.JobLevel != 0)
                     {
                         return false;
                     }
 
-                    var isWife =
-                        family.GetSpouse(actor)?.Id == target.Id;
-
-                    var isUnmarriedDaughter =
-                        family.GetChildren(actor)
-                            .Any(child => child.Id == target.Id)
+                    var isWife = family.GetSpouse(actor)?.Id == target.Id;
+                    var isUnmarriedDaughter = family.GetChildren(actor)
+                        .Any(child => child.Id == target.Id)
                         && family.GetSpouse(target) is null;
 
-                    return isWife
-                        || isUnmarriedDaughter;
+                    return isWife || isUnmarriedDaughter;
                 },
 
                 Execute = actionContext =>
@@ -73,15 +67,10 @@ public sealed partial class CareerPlugin
                         return new GameActionResult(false);
                     }
 
-                    var targetCareer =
-                        career.GetCareer(target);
-
-                    var isWife =
-                        family.GetSpouse(actor)?.Id == target.Id;
-
-                    var isUnmarriedDaughter =
-                        family.GetChildren(actor)
-                            .Any(child => child.Id == target.Id)
+                    var targetCareer = career.GetCareer(target);
+                    var isWife = family.GetSpouse(actor)?.Id == target.Id;
+                    var isUnmarriedDaughter = family.GetChildren(actor)
+                        .Any(child => child.Id == target.Id)
                         && family.GetSpouse(target) is null;
 
                     if ((!isWife && !isUnmarriedDaughter)
@@ -91,67 +80,132 @@ public sealed partial class CareerPlugin
                         return new GameActionResult(false);
                     }
 
-                    var opportunity =
-                        career.CreateEmploymentOpportunity(
-                            target,
-                            stats);
-
-                    var successChance =
-                        PersonalityInfluence.AdjustProbability(
-                            opportunity.SuccessChance,
-                            target,
-                            sanguine: 0.10);
-
-                    if (random.NextDouble()
-                        < successChance)
+                    if (TryGetSelectedJob(actionContext, out _, out _))
                     {
-                        career.AcceptEmploymentOpportunity(
+                        return ResolveSelectedJobApplication(
+                            actionContext,
+                            career,
+                            family,
+                            events,
                             target,
-                            opportunity);
+                            actor);
+                    }
 
-                        var employed =
-                            career.GetCareer(
-                                target);
+                    if (!ActionCompatibilityParameters.IsRestoredQueuedAction(
+                            actionContext.Parameters))
+                    {
+                        return new GameActionResult(false);
+                    }
 
-                        events.Publish(
-                            new GameEvent
+                    var opportunity = career.CreateEmploymentOpportunity(
+                        target,
+                        stats);
+                    var successChance = PersonalityInfluence.AdjustProbability(
+                        opportunity.SuccessChance,
+                        target,
+                        sanguine: 0.10);
+
+                    if (random.NextDouble() < successChance)
+                    {
+                        career.AcceptEmploymentOpportunity(target, opportunity);
+                        var employed = career.GetCareer(target);
+
+                        events.Publish(new GameEvent
+                        {
+                            Type = "career.employment",
+                            Year = actionContext.GameState.Year,
+                            SubjectId = target.Id,
+                            RelatedPersonIds = [actor.Id],
+                            Data = new Dictionary<string, string>
                             {
-                                Type = "career.employment",
-                                Year = actionContext.GameState.Year,
-                                SubjectId = target.Id,
-                                RelatedPersonIds = [actor.Id],
-                                Data = new Dictionary<string, string>
-                                {
-                                    ["careerId"] =
-                                        employed.CareerId
-                                        ?? string.Empty,
-
-                                    ["careerName"] =
-                                        employed.CareerName
-                                        ?? string.Empty,
-
-                                    ["jobTitle"] =
-                                        employed.JobTitle,
-
-                                    ["aptitudeStat"] =
-                                        opportunity.StatId,
-
-                                    ["aptitudeValue"] =
-                                        opportunity.StatValue
-                                            .ToString(),
-
-                                    ["chance"] =
-                                        successChance
-                                            .ToString(
-                                                "0.00"),
-
-                                    ["text"] =
-                                        $"{family.GetDisplayName(target)} found employment as {employed.JobTitle}."
-                                }
-                            });
+                                ["careerId"] = employed.CareerId ?? string.Empty,
+                                ["careerName"] = employed.CareerName ?? string.Empty,
+                                ["jobTitle"] = employed.JobTitle,
+                                ["text"] =
+                                    $"{family.GetDisplayName(target)} found employment as {employed.JobTitle}."
+                            }
+                        });
                     }
 
                     return new GameActionResult(true);
+                }
+            });
+
+        actions.Register(
+            new GameActionDefinition
+            {
+                Id = "career.help_find_better_job",
+                Label = "Find a Better Job",
+                Description =
+                    "Browse better-paying vacancies for your employed spouse or unmarried adult daughter.",
+                Mode = ActionExecutionMode.Queued,
+                QueuePhase = YearPhase.QueuedActionsEarly,
+
+                IsAvailable = actionContext =>
+                {
+                    var actor = actionContext.Actor;
+                    var target = actionContext.Target;
+
+                    if (!CanActorSupport(actor)
+                        || !target.Tags.Has("state.alive")
+                        || target.Id == actor.Id
+                        || family.GetSex(target) != Sex.Female
+                        || target.Age < 18
+                        || target.Tags.Has("state.imprisoned"))
+                    {
+                        return false;
+                    }
+
+                    var isWife = family.GetSpouse(actor)?.Id == target.Id;
+                    var isUnmarriedDaughter = family.GetChildren(actor)
+                        .Any(child => child.Id == target.Id)
+                        && family.GetSpouse(target) is null;
+                    if (!isWife && !isUnmarriedDaughter)
+                        return false;
+
+                    var targetCareer = career.GetCareer(target);
+                    return !targetCareer.IsRetired
+                        && targetCareer.JobLevel > 0
+                        && targetCareer.JobLevel < 3;
+                },
+
+                Execute = actionContext =>
+                {
+                    var actor = actionContext.Actor;
+                    var target = actionContext.Target;
+
+                    if (!CanActorSupport(actor)
+                        || !target.Tags.Has("state.alive")
+                        || target.Id == actor.Id
+                        || family.GetSex(target) != Sex.Female
+                        || target.Age < 18)
+                    {
+                        return new GameActionResult(false);
+                    }
+
+                    var isWife = family.GetSpouse(actor)?.Id == target.Id;
+                    var isUnmarriedDaughter = family.GetChildren(actor)
+                        .Any(child => child.Id == target.Id)
+                        && family.GetSpouse(target) is null;
+                    var targetCareer = career.GetCareer(target);
+
+                    if ((!isWife && !isUnmarriedDaughter)
+                        || targetCareer.IsRetired
+                        || targetCareer.JobLevel <= 0
+                        || targetCareer.JobLevel >= 3)
+                    {
+                        return new GameActionResult(false);
+                    }
+
+                    return TryGetSelectedJob(actionContext, out _, out _)
+                        ? ResolveSelectedJobApplication(
+                            actionContext,
+                            career,
+                            family,
+                            events,
+                            target,
+                            actor)
+                        : new GameActionResult(false);
                 }
             });
 

@@ -362,7 +362,7 @@ public sealed class StandardFamilyRelationService : IFamilyRelationService
             foreach (var cousin in _family.GetChildren(parentSibling))
             {
                 if (cousin.Id != person.Id)
-                    yield return (cousin, FamilyRelationshipType.FirstCousin, "First cousin");
+                    yield return (cousin, FamilyRelationshipType.FirstCousin, "Cousin");
             }
         }
 
@@ -455,7 +455,7 @@ public sealed class StandardFamilyRelationService : IFamilyRelationService
         "Brother" or "Sister" => 2,
         "Grandfather" or "Grandmother" or "Grandson" or "Granddaughter" => 3,
         "Uncle" or "Aunt" or "Nephew" or "Niece" => 4,
-        "First cousin" => 5,
+        "First cousin" or "Cousin" => 5,
         _ => 6
     };
 

@@ -49,6 +49,21 @@ public sealed partial class RelationshipsPlugin : IGamePlugin
             ?? throw new InvalidOperationException(
                 "Career service is unavailable.");
 
+        var personality =
+            context.GetService<IPersonalityService>()
+            ?? throw new InvalidOperationException(
+                "Personality service is unavailable.");
+
+        var appearance =
+            context.GetService<IAppearanceService>()
+            ?? throw new InvalidOperationException(
+                "Appearance service is unavailable.");
+
+        var locations =
+            context.GetService<ILocationService>()
+            ?? throw new InvalidOperationException(
+                "Location service is unavailable.");
+
         var households =
             context.GetService<IHouseholdService>()
             ?? throw new InvalidOperationException(
@@ -102,8 +117,30 @@ public sealed partial class RelationshipsPlugin : IGamePlugin
             RelationshipEventVariantCatalog.Load(
                 data);
 
+        var partnerSearch =
+            new StandardPartnerSearchService(
+                gameState,
+                family,
+                stats,
+                education,
+                career,
+                economy,
+                personality,
+                appearance,
+                () => context.GetService<IHobbyService>(),
+                locations,
+                data,
+                historicalNames,
+                calendar,
+                random,
+                events,
+                relationshipEventVariants);
+
         context.AddService<IRelationshipEraService>(
             relationshipEras);
+
+        context.AddService<IPartnerSearchService>(
+            partnerSearch);
 
         var breakups =
             new RelationshipBreakupService(
@@ -141,6 +178,7 @@ public sealed partial class RelationshipsPlugin : IGamePlugin
                 [
                     CreateFindSpouseAction(
                         family,
+                        partnerSearch,
                         RequireHistoricalVariant(
                             historical,
                             "relationship.find_spouse",
@@ -153,6 +191,7 @@ public sealed partial class RelationshipsPlugin : IGamePlugin
                     CreateMarryOffDaughterAction(
                         family,
                         households,
+                        partnerSearch,
                         stats,
                         health,
                         education,
@@ -249,6 +288,7 @@ public sealed partial class RelationshipsPlugin : IGamePlugin
     private static GameActionDefinition
         CreateFindSpouseAction(
             IFamilyService family,
+            StandardPartnerSearchService partnerSearch,
             HistoricalActionVariant variant)
     {
         return new GameActionDefinition
@@ -294,11 +334,25 @@ public sealed partial class RelationshipsPlugin : IGamePlugin
             Execute =
                 actionContext =>
                 {
-                    actionContext.Actor.Tags.Add(
-                        "modifier.find_spouse");
+                    if (actionContext.Parameters.ContainsKey(
+                        "partner.candidateKey"))
+                    {
+                        return partnerSearch.ResolveCourtship(
+                            actionContext);
+                    }
 
-                    return new GameActionResult(
-                        true);
+                    // Compatibility for a spouse search that was already
+                    // queued before candidate selection was introduced.
+                    if (ActionCompatibilityParameters.IsRestoredQueuedAction(
+                            actionContext.Parameters))
+                    {
+                        actionContext.Actor.Tags.Add(
+                            "modifier.find_spouse");
+
+                        return new GameActionResult(true);
+                    }
+
+                    return new GameActionResult(false);
                 }
         };
     }
@@ -307,6 +361,7 @@ public sealed partial class RelationshipsPlugin : IGamePlugin
         CreateMarryOffDaughterAction(
             IFamilyService family,
             IHouseholdService households,
+            IPartnerSearchService partnerSearch,
             IStatsService stats,
             IHealthService health,
             IEducationService education,
@@ -362,6 +417,14 @@ public sealed partial class RelationshipsPlugin : IGamePlugin
                         return new GameActionResult(
                             false,
                             "The selected daughter is no longer eligible.");
+                    }
+
+                    if (actionContext.Parameters.ContainsKey(
+                        "partner.candidateKey"))
+                    {
+                        return partnerSearch.ResolveArrangedMarriage(
+                            actionContext,
+                            variant);
                     }
 
                     var appeal =

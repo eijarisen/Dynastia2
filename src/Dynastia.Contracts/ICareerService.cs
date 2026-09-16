@@ -11,6 +11,28 @@ public interface ICareerService
     void Retire(IPerson person);
     decimal GetAnnualIncome(IPerson person);
 
+    IReadOnlyList<JobOpportunityInfo> GetJobOpportunities(
+        IPerson person,
+        int count = 5);
+
+    JobApplicationResult ApplyForJob(
+        IPerson person,
+        string careerId,
+        int jobLevel);
+
+    void AssignCareer(
+        IPerson person,
+        string? careerId,
+        int jobLevel,
+        int jobSatisfaction);
+
+    GeneratedCareerProfile GenerateCandidateCareer(
+        Sex sex,
+        TownInfo town,
+        int year,
+        int jobLevel,
+        string deterministicKey);
+
     bool TryFindBetterJob(IPerson person);
 
     bool TryFindEmployment(

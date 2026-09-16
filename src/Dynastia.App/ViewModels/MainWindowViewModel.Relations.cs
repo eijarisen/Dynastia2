@@ -10,6 +10,19 @@ public sealed partial class MainWindowViewModel
         && _succession.ActiveController is not null
         && _familyRelationService is not null;
 
+    internal string GetFamilyRelationsActiveHouseholdText()
+    {
+        var head = _succession.ActiveController;
+        if (head is null)
+            return "Selected household: None";
+
+        var name = _familyService is null
+            ? $"{head.Name} {head.Surname}"
+            : _familyService.GetDisplayName(head);
+
+        return $"Selected household: {name}";
+    }
+
     internal IReadOnlyList<FamilyRelationHouseholdViewModel> GetFamilyRelationsHouseholds()
     {
         var actor = _succession.ActiveController;
@@ -59,12 +72,10 @@ public sealed partial class MainWindowViewModel
                     .ThenBy(person => person.Id)
                     .ToArray();
 
-                var memberText = members.Length == 0
-                    ? "No household members."
-                    : string.Join(
-                        Environment.NewLine,
-                        members.Select(member =>
-                            FormatRelationHouseholdMember(member, info)));
+                var memberModels = members
+                    .Select(member =>
+                        FormatRelationHouseholdMember(member, info))
+                    .ToList();
 
                 var townText = _locationService is null
                     ? "Town: Unknown"
@@ -96,11 +107,11 @@ public sealed partial class MainWindowViewModel
                     targetHead.Id,
                     relative.Id,
                     targetHead.Tags.Has("control.playable"),
-                    primary.Kinship,
+                    NormalizeKinshipLabel(primary.Kinship),
                     _familyService.GetDisplayName(relative),
                     primary.FamiliarityState,
                     primary.SympathyState,
-                    memberText,
+                    memberModels,
                     townText,
                     wealthText,
                     housesText,
@@ -221,12 +232,13 @@ public sealed partial class MainWindowViewModel
         return result;
     }
 
-    private string FormatRelationHouseholdMember(
+    private FamilyRelationMemberViewModel FormatRelationHouseholdMember(
         IPerson member,
         RelatedFamilyHouseholdInfo info)
     {
         var kinship = ResolveRelationHouseholdKinship(member, info);
-        var name = _familyService?.GetDisplayName(member) ?? $"{member.Name} {member.Surname}";
+        var name = _familyService?.GetDisplayName(member)
+            ?? $"{member.Name} {member.Surname}";
         var career = _careerService?.GetCareer(member);
         var careerText = career is null
             ? string.Empty
@@ -234,9 +246,19 @@ public sealed partial class MainWindowViewModel
                 ? $"{career.JobTitle} ({career.JobLevel})"
                 : career.JobTitle;
 
-        return string.IsNullOrWhiteSpace(careerText)
+        var text = string.IsNullOrWhiteSpace(careerText)
             ? $"{kinship} — {name}"
             : $"{kinship} — {name} — {careerText}";
+
+        var portrait = _appearanceService is not null
+            ? _appearanceService.GetPortrait(
+                member,
+                useDeadOverride: false)
+            : ResolveRelationPortraitFallback(member);
+
+        return new FamilyRelationMemberViewModel(
+            portrait,
+            text);
     }
 
     private string ResolveRelationHouseholdKinship(
@@ -245,7 +267,7 @@ public sealed partial class MainWindowViewModel
     {
         var direct = info.Relations.FirstOrDefault(link => link.RelativeId == member.Id);
         if (direct is not null)
-            return direct.Kinship;
+            return NormalizeKinshipLabel(direct.Kinship);
 
         if (_familyService is null)
             return "Household member";
@@ -271,7 +293,7 @@ public sealed partial class MainWindowViewModel
         "Son" or "Daughter" => sex == Sex.Male ? "Son-in-law" : "Daughter-in-law",
         "Brother" or "Sister" => sex == Sex.Male ? "Brother-in-law" : "Sister-in-law",
         "Father" or "Mother" => sex == Sex.Male ? "Stepfather" : "Stepmother",
-        _ => sex == Sex.Male ? "Male relative by marriage" : "Female relative by marriage"
+        _ => sex == Sex.Male ? "Uncle" : "Aunt"
     };
 
     private static string ResolveDescendantKinship(string directKinship, Sex sex) => directKinship switch
@@ -280,6 +302,51 @@ public sealed partial class MainWindowViewModel
         "Brother" or "Sister" => sex == Sex.Male ? "Nephew" : "Niece",
         _ => sex == Sex.Male ? "Male relative" : "Female relative"
     };
+
+    private static string NormalizeKinshipLabel(string kinship)
+    {
+        if (kinship.Equals(
+                "First cousin",
+                StringComparison.OrdinalIgnoreCase))
+        {
+            return "Cousin";
+        }
+
+        if (kinship.Equals(
+                "Female relative by marriage",
+                StringComparison.OrdinalIgnoreCase))
+        {
+            return "Aunt";
+        }
+
+        if (kinship.Equals(
+                "Male relative by marriage",
+                StringComparison.OrdinalIgnoreCase))
+        {
+            return "Uncle";
+        }
+
+        return kinship;
+    }
+
+    private string ResolveRelationPortraitFallback(IPerson person)
+    {
+        var sex = _familyService?.GetSex(person)
+            ?? (person.Tags.Has("sex.female")
+                ? Sex.Female
+                : Sex.Male);
+
+        if (person.Age <= 4)
+            return "👶🏻";
+        if (person.Age <= 11)
+            return sex == Sex.Male ? "👦🏻" : "👧🏻";
+        if (person.Age <= 17)
+            return "🧑🏻";
+        if (person.Age >= 70)
+            return sex == Sex.Male ? "👴🏻" : "👵🏻";
+
+        return sex == Sex.Male ? "👨🏻" : "👩🏻";
+    }
 
     private static int RelationActionOrder(string id) => id switch
     {

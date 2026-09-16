@@ -5,11 +5,14 @@ namespace Dynastia.Mechanics.Education;
 public sealed class StandardEducationService : IEducationService
 {
     private readonly IFamilyService _family;
+    private readonly EducationEraCatalog _eras;
 
     public StandardEducationService(
-        IFamilyService family)
+        IFamilyService family,
+        EducationEraCatalog eras)
     {
         _family = family;
+        _eras = eras;
     }
 
     public void EnsureEducation(IPerson person)
@@ -54,6 +57,16 @@ public sealed class StandardEducationService : IEducationService
         SetEducationLevel(
             person,
             GetEducationLevel(person) + amount);
+    }
+
+    public EducationGenerationRange GetGeneratedAdultRange(
+        int year)
+    {
+        var rule = _eras.GetRule(year);
+
+        return new EducationGenerationRange(
+            rule.GeneratedAdultMinLevel,
+            rule.GeneratedAdultMaxLevel);
     }
 
     private EducationComponent GetRequired(IPerson person)

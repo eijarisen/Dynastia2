@@ -95,6 +95,14 @@ public sealed partial class GenealogyCanvas :
                 176,
                 74));
 
+    private static readonly IBrush DeceasedSepiaOverlay =
+        new SolidColorBrush(
+            Color.FromArgb(
+                0x52,
+                139,
+                98,
+                47));
+
     private static readonly IBrush EdgeBrush =
         new SolidColorBrush(
             Color.FromArgb(
@@ -206,6 +214,14 @@ public sealed partial class GenealogyCanvas :
                 Guid?>(
                     nameof(SelectedPersonId));
 
+    public static readonly StyledProperty<bool>
+        UsePortraitsProperty =
+            AvaloniaProperty.Register<
+                GenealogyCanvas,
+                bool>(
+                    nameof(UsePortraits),
+                    defaultValue: true);
+
     private readonly Bitmap? _background;
     private readonly Bitmap? _parallax1;
     private readonly Bitmap? _parallax2;
@@ -265,7 +281,8 @@ public sealed partial class GenealogyCanvas :
 
         AffectsRender<GenealogyCanvas>(
             LayoutProperty,
-            SelectedPersonIdProperty);
+            SelectedPersonIdProperty,
+            UsePortraitsProperty);
     }
 
     public TreeLayout? Layout
@@ -290,6 +307,12 @@ public sealed partial class GenealogyCanvas :
             SetValue(
                 SelectedPersonIdProperty,
                 value);
+    }
+
+    public bool UsePortraits
+    {
+        get => GetValue(UsePortraitsProperty);
+        set => SetValue(UsePortraitsProperty, value);
     }
 
     public event Action<Guid>?

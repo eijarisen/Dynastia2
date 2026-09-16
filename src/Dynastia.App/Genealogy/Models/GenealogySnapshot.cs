@@ -12,6 +12,7 @@ public sealed record GenealogyPersonRecord(
     string FirstName,
     string Surname,
     string AvatarText,
+    string PortraitText,
     bool IsBloodline,
     bool IsMaleLineage,
     bool IsFemale,

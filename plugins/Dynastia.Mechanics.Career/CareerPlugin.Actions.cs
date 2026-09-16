@@ -162,7 +162,8 @@ public sealed partial class CareerPlugin
                 Id = "career.seek_employment",
                 Label = "Seek Employment",
                 Description =
-                    "Look for work. The game first draws a career from professions open in the current year. Manual/physical careers use Strength; office, professional and technical careers use Intellect. Strong regional or local opportunities also improve the chance of being hired. A new job appears in the household's expected income immediately; cash is paid during the next annual finance pass.",
+                    "Browse concrete vacancies in the current town and apply for one. " +
+                    "Your relevant ability, education and work history influence the application.",
                 Mode = ActionExecutionMode.Queued,
                 QueuePhase = YearPhase.LifeEvents,
 
@@ -176,9 +177,7 @@ public sealed partial class CareerPlugin
                         return false;
                     }
 
-                    var current =
-                        career.GetCareer(actionContext.Actor);
-
+                    var current = career.GetCareer(actionContext.Actor);
                     return !current.IsRetired
                         && current.JobLevel == 0;
                 },
@@ -194,63 +193,50 @@ public sealed partial class CareerPlugin
                         return new GameActionResult(false);
                     }
 
-                    var opportunity =
-                        career.CreateEmploymentOpportunity(
-                            actor,
-                            stats);
-
-                    var successChance =
-                        PersonalityInfluence.AdjustProbability(
-                            opportunity.SuccessChance,
-                            actor,
-                            sanguine: 0.10);
-
-                    if (random.NextDouble()
-                        < successChance)
+                    if (TryGetSelectedJob(actionContext, out _, out _))
                     {
-                        career.AcceptEmploymentOpportunity(
-                            actor,
-                            opportunity);
+                        return ResolveSelectedJobApplication(
+                            actionContext,
+                            career,
+                            family,
+                            events,
+                            actor);
+                    }
 
-                        var employed =
-                            career.GetCareer(
-                                actor);
+                    // Compatibility for a job search queued by an older save.
+                    if (!ActionCompatibilityParameters.IsRestoredQueuedAction(
+                            actionContext.Parameters))
+                    {
+                        return new GameActionResult(false);
+                    }
 
-                        events.Publish(
-                            new GameEvent
+                    var opportunity = career.CreateEmploymentOpportunity(
+                        actor,
+                        stats);
+                    var successChance = PersonalityInfluence.AdjustProbability(
+                        opportunity.SuccessChance,
+                        actor,
+                        sanguine: 0.10);
+
+                    if (random.NextDouble() < successChance)
+                    {
+                        career.AcceptEmploymentOpportunity(actor, opportunity);
+                        var employed = career.GetCareer(actor);
+
+                        events.Publish(new GameEvent
+                        {
+                            Type = "career.employment",
+                            Year = actionContext.GameState.Year,
+                            SubjectId = actor.Id,
+                            Data = new Dictionary<string, string>
                             {
-                                Type = "career.employment",
-                                Year = actionContext.GameState.Year,
-                                SubjectId = actor.Id,
-                                Data = new Dictionary<string, string>
-                                {
-                                    ["careerId"] =
-                                        employed.CareerId
-                                        ?? string.Empty,
-
-                                    ["careerName"] =
-                                        employed.CareerName
-                                        ?? string.Empty,
-
-                                    ["jobTitle"] =
-                                        employed.JobTitle,
-
-                                    ["aptitudeStat"] =
-                                        opportunity.StatId,
-
-                                    ["aptitudeValue"] =
-                                        opportunity.StatValue
-                                            .ToString(),
-
-                                    ["chance"] =
-                                        successChance
-                                            .ToString(
-                                                "0.00"),
-
-                                    ["text"] =
-                                        $"{family.GetDisplayName(actor)} found employment as {employed.JobTitle}."
-                                }
-                            });
+                                ["careerId"] = employed.CareerId ?? string.Empty,
+                                ["careerName"] = employed.CareerName ?? string.Empty,
+                                ["jobTitle"] = employed.JobTitle,
+                                ["text"] =
+                                    $"{family.GetDisplayName(actor)} found employment as {employed.JobTitle}."
+                            }
+                        });
                     }
 
                     return new GameActionResult(true);
@@ -261,9 +247,10 @@ public sealed partial class CareerPlugin
             new GameActionDefinition
             {
                 Id = "career.find_another_job",
-                Label = "Find Another Job",
+                Label = "Find a Better Job",
                 Description =
-                    "Search the current town's labour market for a better-paying suitable career while keeping the present job. Only a higher-paying offer is accepted.",
+                    "Browse the same local vacancies while keeping your current job. " +
+                    "A successful offer is accepted only when it pays more than your present position.",
                 Mode = ActionExecutionMode.Queued,
                 QueuePhase = YearPhase.LifeEvents,
 
@@ -280,13 +267,31 @@ public sealed partial class CareerPlugin
 
                     var current = career.GetCareer(actionContext.Actor);
                     return !current.IsRetired
-                        && current.JobLevel is 1 or 2;
+                        && current.JobLevel > 0
+                        && current.JobLevel < 4;
                 },
 
                 Execute = actionContext =>
                 {
                     var actor = actionContext.Actor;
                     var before = career.GetCareer(actor);
+
+                    if (TryGetSelectedJob(actionContext, out _, out _))
+                    {
+                        return ResolveSelectedJobApplication(
+                            actionContext,
+                            career,
+                            family,
+                            events,
+                            actor);
+                    }
+
+                    if (!ActionCompatibilityParameters.IsRestoredQueuedAction(
+                            actionContext.Parameters))
+                    {
+                        return new GameActionResult(false);
+                    }
+
                     var changed = career.TryFindBetterJob(actor);
                     if (!changed)
                         return new GameActionResult(true);
@@ -301,7 +306,9 @@ public sealed partial class CareerPlugin
                         {
                             ["oldCareerId"] = before.CareerId ?? string.Empty,
                             ["newCareerId"] = after.CareerId ?? string.Empty,
-                            ["text"] = $"{family.GetDisplayName(actor)} left {before.JobTitle} work for a better-paying position as {after.JobTitle}."
+                            ["text"] =
+                                $"{family.GetDisplayName(actor)} left {before.JobTitle} work " +
+                                $"for a better-paying position as {after.JobTitle}."
                         }
                     });
 
@@ -309,6 +316,4 @@ public sealed partial class CareerPlugin
                 }
             });
     }
-
-
 }

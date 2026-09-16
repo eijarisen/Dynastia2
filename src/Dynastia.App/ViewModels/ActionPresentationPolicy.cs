@@ -118,6 +118,9 @@ internal static class ActionPresentationPolicy
                     "career.help_seek_employment",
                     StringComparison.OrdinalIgnoreCase)
                 || actionId.Equals(
+                    "career.help_find_better_job",
+                    StringComparison.OrdinalIgnoreCase)
+                || actionId.Equals(
                     "career.ask_to_quit",
                     StringComparison.OrdinalIgnoreCase))
             {
@@ -265,6 +268,9 @@ internal static class ActionPresentationPolicy
                             StringComparison.OrdinalIgnoreCase)
                         || action.Id.Equals(
                             "career.help_seek_employment",
+                            StringComparison.OrdinalIgnoreCase)
+                        || action.Id.Equals(
+                            "career.help_find_better_job",
                             StringComparison.OrdinalIgnoreCase));
 
             actions.Insert(

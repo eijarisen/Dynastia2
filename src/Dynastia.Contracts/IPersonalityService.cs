@@ -5,6 +5,13 @@ public interface IPersonalityService
     PersonalitySnapshot? GetPersonality(
         IPerson person);
 
+    PersonalitySnapshot GenerateCandidatePersonality(
+        Guid candidateId);
+
+    void SetPersonality(
+        IPerson person,
+        PersonalitySnapshot personality);
+
     void ReconcileAll();
 
     bool ShiftMorals(IPerson person, int steps);

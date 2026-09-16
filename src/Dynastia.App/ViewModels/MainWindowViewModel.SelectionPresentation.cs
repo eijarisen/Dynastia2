@@ -35,7 +35,9 @@ public sealed partial class MainWindowViewModel
 
             OnPropertyChanged();
             OnPropertyChanged(
-                nameof(SelectedPersonEmoji));
+                nameof(SelectedPersonPortrait));
+            OnPropertyChanged(
+                nameof(IsSelectedPersonDeceased));
         }
     }
 

@@ -60,6 +60,107 @@ public sealed class StandardHobbyService :
             hobbies);
     }
 
+    public IReadOnlyList<HobbyInfo> GenerateCandidateHobbies(
+        Guid candidateId,
+        Sex sex,
+        int age,
+        int year,
+        string temperament,
+        SettlementClass settlementClass)
+    {
+        if (age < 5)
+            return [];
+
+        var available = _catalog.Hobbies
+            .Where(hobby => hobby.IsAvailable(year, age))
+            .Select(hobby => new WeightedHobby(
+                hobby,
+                HobbyBalanceRules.TownMultiplier(
+                    hobby.TownPreference,
+                    settlementClass)
+                * HobbyBalanceRules.GenderMultiplier(
+                    hobby.GenderPreference,
+                    sex)
+                * HobbyBalanceRules.TemperamentMultiplier(
+                    hobby,
+                    temperament)))
+            .Where(item => item.Weight > 0)
+            .ToList();
+
+        if (available.Count == 0)
+            return [];
+
+        var desiredCount = DeterministicHobbyRandom.Roll(
+                _gameState.DynastySurname,
+                candidateId.ToString("N"),
+                year.ToString(),
+                "candidate-hobby-count")
+            < 0.35
+                ? 1
+                : 2;
+
+        var result = new List<HobbyInfo>();
+
+        for (var slot = 0;
+            slot < desiredCount && available.Count > 0;
+            slot++)
+        {
+            var total = available.Sum(item => item.Weight);
+            var target = DeterministicHobbyRandom.Roll(
+                    _gameState.DynastySurname,
+                    candidateId.ToString("N"),
+                    year.ToString(),
+                    slot.ToString(),
+                    "candidate-hobby")
+                * total;
+
+            var cumulative = 0.0;
+            var selectedIndex = available.Count - 1;
+
+            for (var index = 0; index < available.Count; index++)
+            {
+                cumulative += available[index].Weight;
+                if (target <= cumulative)
+                {
+                    selectedIndex = index;
+                    break;
+                }
+            }
+
+            var selected = available[selectedIndex].Hobby;
+            result.Add(new HobbyInfo(
+                selected.Id,
+                selected.Name,
+                selected.Emoji));
+            available.RemoveAt(selectedIndex);
+        }
+
+        return result;
+    }
+
+    public void SetHobbies(
+        IPerson person,
+        IReadOnlyCollection<string> hobbyIds)
+    {
+        ArgumentNullException.ThrowIfNull(person);
+        ArgumentNullException.ThrowIfNull(hobbyIds);
+
+        var valid = hobbyIds
+            .Select(_catalog.Find)
+            .Where(hobby => hobby is not null)
+            .Select(hobby => hobby!.Id)
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .Take(HobbyBalanceRules.MaximumHobbies)
+            .ToList();
+
+        person.Components.Set(new HobbyComponent
+        {
+            HobbyCapacity = HobbyBalanceRules.MaximumHobbies,
+            HobbyIds = valid,
+            LastProcessedYear = _gameState.Year
+        });
+    }
+
     public void ReconcileAll()
     {
         foreach (var person in _gameState.People

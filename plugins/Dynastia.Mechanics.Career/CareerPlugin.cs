@@ -69,9 +69,11 @@ public sealed partial class CareerPlugin : IGamePlugin
                 presentation,
                 retirementRules,
                 localOpportunities,
-                stats);
+                stats,
+                education);
 
         context.AddService<ICareerService>(career);
+        context.AddService<ICareerPresentationService>(career);
 
         InitializeFromEvents(
             gameState,
@@ -103,6 +105,10 @@ public sealed partial class CareerPlugin : IGamePlugin
             random,
             family,
             events);
+
+        systems.Register(
+            new CareerExperienceYearSystem(
+                career));
 
         systems.Register(
             new CareerRetirementYearSystem(

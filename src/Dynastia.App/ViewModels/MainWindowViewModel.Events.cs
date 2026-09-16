@@ -106,7 +106,10 @@ public sealed partial class MainWindowViewModel
             nameof(HasFamilyRelations));
 
         OnPropertyChanged(
-            nameof(SelectedPersonEmoji));
+            nameof(SelectedPersonPortrait));
+
+        OnPropertyChanged(
+            nameof(IsSelectedPersonDeceased));
 
         OnPropertyChanged(
             nameof(SelectedHobbiesText));
@@ -138,7 +141,10 @@ public sealed partial class MainWindowViewModel
             nameof(HasFamilyRelations));
 
         OnPropertyChanged(
-            nameof(SelectedPersonEmoji));
+            nameof(SelectedPersonPortrait));
+
+        OnPropertyChanged(
+            nameof(IsSelectedPersonDeceased));
 
         OnPropertyChanged(
             nameof(SelectedHobbiesText));

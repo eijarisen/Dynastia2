@@ -492,6 +492,7 @@ public sealed partial class MainWindowViewModel
             _marriageSatisfactionService,
             _childHappinessService,
             _thoughtService,
+            _appearanceService,
             selectedId == person.Id,
             activeHeadId == person.Id,
             SelectFamilyMember);
@@ -540,7 +541,7 @@ public sealed partial class MainWindowViewModel
         return
             $"{ActionEmojiMap.Format(queued.ActionId, queued.Label)}" +
             Environment.NewLine +
-            $"Target: {targetName}" +
+            $"{targetName}" +
             Environment.NewLine +
             description;
     }

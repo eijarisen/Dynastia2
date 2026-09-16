@@ -70,10 +70,28 @@ public sealed class StandardLocalCareerOpportunityService :
         CareerLocationRequirement requirement)
     {
         ArgumentNullException.ThrowIfNull(person);
-        ArgumentNullException.ThrowIfNull(requirement);
 
-        var profile =
-            GetOpportunitySnapshot(person);
+        return EvaluateProfile(
+            GetOpportunitySnapshot(person),
+            requirement);
+    }
+
+    public CareerLocationEvaluation Evaluate(
+        TownInfo town,
+        CareerLocationRequirement requirement)
+    {
+        ArgumentNullException.ThrowIfNull(town);
+
+        return EvaluateProfile(
+            GetOpportunitySnapshot(town),
+            requirement);
+    }
+
+    private static CareerLocationEvaluation EvaluateProfile(
+        LocationOpportunitySnapshot profile,
+        CareerLocationRequirement requirement)
+    {
+        ArgumentNullException.ThrowIfNull(requirement);
 
         var townClass =
             profile.Town.SettlementClass;

@@ -1,66 +1,66 @@
-Number,Id,Name,StartYear,EndYear,MaleEarly,FemaleEarly,MaleLate,FemaleLate,BaseSalary,Level1Title,Level2Title,Level3Title,Level4Title,Level5Title,LocationType,MinimumSettlementClass,RequiredOpportunityTags
-1,agriculture_and_farm_estates,Agriculture & Farm Estates,1700,,180,120,14,11,400,Farm Hand,Farm Worker,Farm Foreman,Estate Manager,Agricultural Magnate,Generic,SmallTown,-
-2,horse_and_carriage_trade,Horse & Carriage Trade,1700,1955,95,5,7,1,450,Stable Hand,Groom,Stable Master,Stud Manager,Horse-Trade Magnate,Generic,SmallTown,-
-3,blacksmithing,Blacksmithing,1700,1970,89,1,11,1,600,Smithy Helper,Blacksmith,Master Blacksmith,Smithy Proprietor,Metalcraft Magnate,Generic,SmallTown,-
-4,coal_mining,Coal Mining,1750,,54,1,24,1,700,Pit Hand,Miner,Mine Foreman,Colliery Director,Coal Magnate,Specialist,SmallTown,coal
-5,oil_and_refining,Oil & Refining,1855,,33,2,28,7,850,Drilling Hand,Rig Operator,Field Supervisor,Refinery Director,Oil Magnate,Specialist,SmallTown,oil
-6,steel_and_foundry,Iron & Steel Foundry,1800,,64,1,30,5,700,Foundry Hand,Ironworker,Foundry Foreman,Works Director,Steel Magnate,Specialist,Town,steel;heavy_industry
-7,textile_mills,Textile Mills,1790,2005,38,88,6,10,450,Mill Hand,Weaver,Floor Supervisor,Mill Director,Textile Magnate,Specialist,Town,textiles
-8,timber_and_sawmills,Timber & Sawmills,1700,,76,4,30,5,600,Logging Hand,Sawyer,Logging Foreman,Timber Director,Timber Magnate,Specialist,SmallTown,forestry
-9,construction,Construction,1700,,74,2,64,11,600,Laborer,Craftsman,Master Builder,Building Contractor,Construction Magnate,Generic,SmallTown,-
-10,railways,Railways,1840,,86,4,22,8,650,Track Hand,Railway Clerk,Station Master,Regional Director,Railway Magnate,Generic,Town,-
-11,shipping_and_ports,Shipping & Ports,1700,,64,1,38,7,650,Dock Hand,Shipping Clerk,Dockmaster,Shipping Director,Shipping Magnate,Specialist,Town,port;shipping
-12,mass_factory_manufacturing,Factory Manufacturing,1820,2000,78,42,10,8,500,Factory Hand,Machine Operator,Shift Foreman,Factory Director,Industrial Magnate,Specialist,Town,manufacturing
-13,traditional_printworks,Printing & Printworks,1700,2015,28,7,8,7,550,Press Hand,Typesetter,Master Printer,Printing House Proprietor,Printing Magnate,Generic,Town,-
-14,newspapers_and_publishing,Newspapers & Publishing,1800,,26,4,22,22,600,Copy Runner,Reporter,Editor,Publisher,Press Magnate,Urban,City,-
-15,retail_trade,Commerce & Retail,1700,,26,39,45,55,500,Shop Hand,Trader,Merchant,Commercial Director,Trade Magnate,Generic,SmallTown,-
-16,banking,Banking,1800,,21,4,36,44,700,Bank Messenger,Bank Clerk,Branch Manager,Bank Director,Banking Magnate,Urban,City,-
-17,insurance,Insurance,1800,,16,4,29,36,650,Office Runner,Insurance Clerk,Branch Manager,Company Director,Insurance Magnate,Urban,City,-
-18,hotels_and_restaurants,Inns & Hospitality,1700,,27,33,45,55,450,Kitchen Hand,Inn Worker,Innkeeper,Hotel Proprietor,Hospitality Magnate,Generic,SmallTown,-
-19,food_processing,Food Processing,1850,,27,33,38,38,500,Packing Hand,Production Worker,Floor Manager,Plant Director,Food Industry Magnate,Specialist,Town,food;agriculture
-20,baking_and_confectionery,Baking & Confectionery,1700,,39,26,34,41,500,Bakery Hand,Baker,Master Baker,Bakery Proprietor,Bakery Magnate,Generic,SmallTown,-
-21,meat_trade,Meat Trade,1700,,50,6,38,16,550,Slaughterhouse Hand,Butcher,Master Butcher,Meatworks Director,Meat Industry Magnate,Generic,SmallTown,-
-22,tailoring_and_fashion,Tailoring & Fashion,1700,,26,49,20,46,500,Workshop Hand,Tailor,Master Tailor,Fashion House Director,Fashion Magnate,Generic,SmallTown,-
-23,leather_and_shoemaking,Leather & Shoemaking,1700,2010,56,14,5,3,500,Tannery Hand,Shoemaker,Master Leatherworker,Leatherworks Director,Leather Magnate,Generic,SmallTown,-
-24,furniture_and_carpentry,Furniture & Carpentry,1700,,71,4,42,8,550,Workshop Hand,Carpenter,Master Carpenter,Furniture Works Director,Furniture Magnate,Generic,SmallTown,-
-25,glass_and_ceramics,Glass & Ceramics,1700,,28,12,24,16,550,Kiln Hand,Glassworker,Workshop Master,Works Director,Glass & Ceramics Magnate,Generic,Town,-
-26,jewellery_and_watchmaking,Jewellery & Watchmaking,1700,,21,4,23,12,700,Shop Assistant,Jeweller,Master Jeweller,Jewellery House Director,Luxury Goods Magnate,Generic,Town,-
-27,photography,Photography,1840,,18,2,19,16,650,Studio Assistant,Photographer,Studio Manager,Agency Director,Photography Magnate,Generic,Town,-
-28,domestic_service,Domestic Service,1700,1975,20,80,2,6,350,Domestic Servant,Senior Servant,House Steward,Service Agency Director,Domestic Services Magnate,Generic,SmallTown,-
-29,laundry_and_dry_cleaning,Laundry Services,1800,,7,28,16,29,400,Laundry Hand,Presser,Shop Manager,Chain Director,Laundry Magnate,Generic,Town,-
-30,funeral_services,Funeral Services,1700,,17,3,18,12,600,Undertaker's Assistant,Mortuary Worker,Funeral Manager,Company Director,Funeral Services Magnate,Generic,SmallTown,-
-31,real_estate,Property & Real Estate,1850,,18,2,38,38,650,Office Runner,Property Clerk,Estate Agent,Agency Director,Property Magnate,Generic,Town,-
-32,accounting,Bookkeeping & Accounting,1700,,22,8,30,55,700,Clerk,Bookkeeper,Accountant,Firm Partner,Accounting Magnate,Generic,Town,-
-33,legal_services,Legal Services,1700,,19,1,32,32,800,Legal Clerk,Legal Assistant,Advocate,Firm Partner,Legal Magnate,Urban,City,-
-34,healthcare_services,Medicine & Healthcare,1700,,12,18,30,70,750,Medical Attendant,Medical Assistant,Physician,Senior Physician,Healthcare Magnate,Generic,SmallTown,-
-35,pharmacy,Apothecary & Pharmacy,1700,,13,9,19,56,750,Apothecary Assistant,Apothecary,Pharmacist,Pharmacy Proprietor,Pharmacy Magnate,Generic,Town,-
-36,education,Education & Tutoring,1700,,12,18,25,75,550,Tutor Assistant,Teacher,Head Teacher,Schoolmaster,Education Magnate,Generic,SmallTown,-
-37,electric_power,Electric Power,1890,,59,1,58,6,700,Line Hand,Electrician,Grid Supervisor,Utility Director,Power Magnate,Generic,Town,-
-38,cinema_and_film,Cinema & Film,1900,,38,7,19,16,600,Studio Hand,Film Technician,Production Manager,Studio Director,Film Magnate,Urban,City,-
-39,advertising,Advertising,1900,,26,9,29,36,650,Office Runner,Copywriter,Account Manager,Agency Director,Advertising Magnate,Urban,City,-
-40,automotive_industry,Automotive Industry,1910,,79,1,55,10,650,Assembly Worker,Mechanic,Production Manager,Motorworks Director,Automotive Magnate,Specialist,Town,automotive
-41,chemical_industry,Chemical Industry,1880,,71,4,42,18,750,Plant Hand,Chemical Operator,Plant Supervisor,Chemical Works Director,Chemical Magnate,Specialist,Town,chemicals
-42,beauty_and_cosmetics,Beauty & Cosmetics,1900,,5,45,15,60,500,Salon Assistant,Beautician,Salon Manager,Beauty Company Director,Cosmetics Magnate,Generic,Town,-
-43,radio_broadcasting,Radio Broadcasting,1920,,36,9,9,9,650,Studio Assistant,Radio Technician,Programme Manager,Network Director,Broadcasting Magnate,Urban,City,-
-44,aviation,Aviation,1930,,39,1,44,11,800,Ground Hand,Aircraft Mechanic,Operations Manager,Airline Director,Aviation Magnate,Specialist,Town,aviation
-45,road_haulage,Road Haulage,1920,,74,1,68,8,600,Loading Hand,Driver,Depot Manager,Haulage Director,Transport Magnate,Generic,Town,-
-46,consumer_goods_and_appliances,Consumer Goods & Appliances,1920,,52,22,30,20,600,Assembly Hand,Technician,Production Manager,Works Director,Consumer Goods Magnate,Generic,Town,-
-47,tourism_and_travel,Tourism & Travel,1850,,19,16,34,51,550,Travel Office Assistant,Travel Agent,Branch Manager,Tour Company Director,Tourism Magnate,Specialist,Town,tourism
-48,plastics_industry,Plastics Industry,1940,,56,14,24,10,600,Plant Hand,Machine Operator,Shift Supervisor,Plastics Director,Plastics Magnate,Specialist,Town,chemicals
-49,electronics_manufacturing,Electronics Manufacturing,1950,,46,20,28,22,650,Assembly Hand,Electronics Technician,Production Manager,Electronics Director,Electronics Magnate,Specialist,City,technology;manufacturing
-50,pharmaceuticals,Pharmaceuticals,1900,,24,16,34,41,750,Packaging Hand,Laboratory Technician,Production Manager,Pharma Director,Pharmaceutical Magnate,Specialist,City,chemicals
-51,television,Television,1950,,34,11,15,15,650,Studio Runner,Broadcast Technician,Producer,Network Director,Television Magnate,Urban,City,-
-52,telecommunications,Telecommunications,1880,,31,4,49,26,700,Cable Hand,Telephone Technician,Exchange Manager,Telecom Director,Telecom Magnate,Generic,Town,-
-53,engineering_services,Engineering Services,1850,,29,1,68,17,800,Drafting Assistant,Technician,Project Engineer,Consultancy Director,Engineering Magnate,Urban,City,-
-54,logistics_and_warehousing,Logistics & Warehousing,1950,,50,6,56,24,600,Warehouse Hand,Dispatcher,Depot Manager,Logistics Director,Logistics Magnate,Generic,Town,-
-55,computing_and_it_services,Computing & IT Services,1970,,59,10,58,32,750,Data Entry Operator,Computer Technician,Systems Manager,IT Director,Technology Magnate,Specialist,City,technology
-56,investment_and_financial_services,Investment & Financial Services,1980,,40,4,46,24,850,Office Runner,Brokerage Clerk,Portfolio Manager,Investment Director,Finance Magnate,Urban,MajorCity,-
-57,private_security,Private Security,1980,,52,3,52,13,550,Security Guard,Security Officer,Site Manager,Security Director,Security Magnate,Generic,Town,-
-58,biotechnology,Biotechnology,1990,,21,14,28,28,800,Laboratory Assistant,Laboratory Technician,Research Manager,Biotech Director,Biotechnology Magnate,Urban,MajorCity,-
-59,software_industry,Software Industry,1980,,63,7,90,30,850,Support Technician,Programmer,Lead Developer,Software Director,Software Magnate,Specialist,City,technology
-60,video_game_industry,Video Game Industry,1995,,40,4,60,20,750,QA Tester,Game Developer,Lead Developer,Studio Director,Games Magnate,Specialist,City,technology
-61,business_process_outsourcing,Business Process Outsourcing,1995,,24,46,40,50,500,Data Operator,Service Specialist,Team Leader,Operations Director,Services Magnate,Urban,City,-
-62,e_commerce,E-Commerce,2000,,39,26,50,50,600,Warehouse Picker,E-Commerce Operator,Marketplace Manager,Commerce Director,E-Commerce Magnate,Generic,Town,-
-63,digital_media,Digital Media,2000,,36,24,48,48,600,Production Assistant,Content Producer,Editorial Manager,Media Director,Digital Media Magnate,Urban,City,-
-64,cybersecurity,Cybersecurity,2005,,36,4,80,20,900,Support Technician,Security Analyst,Security Manager,Cybersecurity Director,Cybersecurity Magnate,Specialist,City,technology
-65,renewable_energy,Renewable Energy,2000,,40,4,68,22,750,Installation Hand,Energy Technician,Project Manager,Energy Director,Renewable Energy Magnate,Generic,Town,-
+Number,Id,Name,Emoji,StartYear,EndYear,MaleEarly,FemaleEarly,MaleLate,FemaleLate,BaseSalary,Level1Title,Level2Title,Level3Title,Level4Title,Level5Title,LocationType,MinimumSettlementClass,RequiredOpportunityTags
+1,agriculture_and_farm_estates,Agriculture & Farm Estates,🌾,1700,,180,120,14,11,400,Farm Hand,Farm Worker,Farm Foreman,Estate Manager,Agricultural Magnate,Generic,SmallTown,-
+2,horse_and_carriage_trade,Horse & Carriage Trade,🐎,1700,1955,95,5,7,1,450,Stable Hand,Groom,Stable Master,Stud Manager,Horse-Trade Magnate,Generic,SmallTown,-
+3,blacksmithing,Blacksmithing,🔨,1700,1970,89,1,11,1,600,Smithy Helper,Blacksmith,Master Blacksmith,Smithy Proprietor,Metalcraft Magnate,Generic,SmallTown,-
+4,coal_mining,Coal Mining,⛏️,1750,,54,1,24,1,700,Pit Hand,Miner,Mine Foreman,Colliery Director,Coal Magnate,Specialist,SmallTown,coal
+5,oil_and_refining,Oil & Refining,🛢️,1855,,33,2,28,7,850,Drilling Hand,Rig Operator,Field Supervisor,Refinery Director,Oil Magnate,Specialist,SmallTown,oil
+6,steel_and_foundry,Iron & Steel Foundry,⚙️,1800,,64,1,30,5,700,Foundry Hand,Ironworker,Foundry Foreman,Works Director,Steel Magnate,Specialist,Town,steel;heavy_industry
+7,textile_mills,Textile Mills,🧵,1790,2005,38,88,6,10,450,Mill Hand,Weaver,Floor Supervisor,Mill Director,Textile Magnate,Specialist,Town,textiles
+8,timber_and_sawmills,Timber & Sawmills,🪵,1700,,76,4,30,5,600,Logging Hand,Sawyer,Logging Foreman,Timber Director,Timber Magnate,Specialist,SmallTown,forestry
+9,construction,Construction,🧱,1700,,74,2,64,11,600,Laborer,Craftsman,Master Builder,Building Contractor,Construction Magnate,Generic,SmallTown,-
+10,railways,Railways,🚂,1840,,86,4,22,8,650,Track Hand,Railway Clerk,Station Master,Regional Director,Railway Magnate,Generic,Town,-
+11,shipping_and_ports,Shipping & Ports,⚓,1700,,64,1,38,7,650,Dock Hand,Shipping Clerk,Dockmaster,Shipping Director,Shipping Magnate,Specialist,Town,port;shipping
+12,mass_factory_manufacturing,Factory Manufacturing,🏭,1820,2000,78,42,10,8,500,Factory Hand,Machine Operator,Shift Foreman,Factory Director,Industrial Magnate,Specialist,Town,manufacturing
+13,traditional_printworks,Printing & Printworks,📜,1700,2015,28,7,8,7,550,Press Hand,Typesetter,Master Printer,Printing House Proprietor,Printing Magnate,Generic,Town,-
+14,newspapers_and_publishing,Newspapers & Publishing,📰,1800,,26,4,22,22,600,Copy Runner,Reporter,Editor,Publisher,Press Magnate,Urban,City,-
+15,retail_trade,Commerce & Retail,🏪,1700,,26,39,45,55,500,Shop Hand,Trader,Merchant,Commercial Director,Trade Magnate,Generic,SmallTown,-
+16,banking,Banking,🏦,1800,,21,4,36,44,700,Bank Messenger,Bank Clerk,Branch Manager,Bank Director,Banking Magnate,Urban,City,-
+17,insurance,Insurance,☂️,1800,,16,4,29,36,650,Office Runner,Insurance Clerk,Branch Manager,Company Director,Insurance Magnate,Urban,City,-
+18,hotels_and_restaurants,Inns & Hospitality,🏨,1700,,27,33,45,55,450,Kitchen Hand,Inn Worker,Innkeeper,Hotel Proprietor,Hospitality Magnate,Generic,SmallTown,-
+19,food_processing,Food Processing,🥫,1850,,27,33,38,38,500,Packing Hand,Production Worker,Floor Manager,Plant Director,Food Industry Magnate,Specialist,Town,food;agriculture
+20,baking_and_confectionery,Baking & Confectionery,🥖,1700,,39,26,34,41,500,Bakery Hand,Baker,Master Baker,Bakery Proprietor,Bakery Magnate,Generic,SmallTown,-
+21,meat_trade,Meat Trade,🥩,1700,,50,6,38,16,550,Slaughterhouse Hand,Butcher,Master Butcher,Meatworks Director,Meat Industry Magnate,Generic,SmallTown,-
+22,tailoring_and_fashion,Tailoring & Fashion,👗,1700,,26,49,20,46,500,Workshop Hand,Tailor,Master Tailor,Fashion House Director,Fashion Magnate,Generic,SmallTown,-
+23,leather_and_shoemaking,Leather & Shoemaking,👞,1700,2010,56,14,5,3,500,Tannery Hand,Shoemaker,Master Leatherworker,Leatherworks Director,Leather Magnate,Generic,SmallTown,-
+24,furniture_and_carpentry,Furniture & Carpentry,🪚,1700,,71,4,42,8,550,Workshop Hand,Carpenter,Master Carpenter,Furniture Works Director,Furniture Magnate,Generic,SmallTown,-
+25,glass_and_ceramics,Glass & Ceramics,🏺,1700,,28,12,24,16,550,Kiln Hand,Glassworker,Workshop Master,Works Director,Glass & Ceramics Magnate,Generic,Town,-
+26,jewellery_and_watchmaking,Jewellery & Watchmaking,💍,1700,,21,4,23,12,700,Shop Assistant,Jeweller,Master Jeweller,Jewellery House Director,Luxury Goods Magnate,Generic,Town,-
+27,photography,Photography,📷,1840,,18,2,19,16,650,Studio Assistant,Photographer,Studio Manager,Agency Director,Photography Magnate,Generic,Town,-
+28,domestic_service,Domestic Service,🧹,1700,1975,20,80,2,6,350,Domestic Servant,Senior Servant,House Steward,Service Agency Director,Domestic Services Magnate,Generic,SmallTown,-
+29,laundry_and_dry_cleaning,Laundry Services,🧺,1800,,7,28,16,29,400,Laundry Hand,Presser,Shop Manager,Chain Director,Laundry Magnate,Generic,Town,-
+30,funeral_services,Funeral Services,⚰️,1700,,17,3,18,12,600,Undertaker's Assistant,Mortuary Worker,Funeral Manager,Company Director,Funeral Services Magnate,Generic,SmallTown,-
+31,real_estate,Property & Real Estate,🏠,1850,,18,2,38,38,650,Office Runner,Property Clerk,Estate Agent,Agency Director,Property Magnate,Generic,Town,-
+32,accounting,Bookkeeping & Accounting,🧮,1700,,22,8,30,55,700,Clerk,Bookkeeper,Accountant,Firm Partner,Accounting Magnate,Generic,Town,-
+33,legal_services,Legal Services,⚖️,1700,,19,1,32,32,800,Legal Clerk,Legal Assistant,Advocate,Firm Partner,Legal Magnate,Urban,City,-
+34,healthcare_services,Medicine & Healthcare,🩺,1700,,12,18,30,70,750,Medical Attendant,Medical Assistant,Physician,Senior Physician,Healthcare Magnate,Generic,SmallTown,-
+35,pharmacy,Apothecary & Pharmacy,⚗️,1700,,13,9,19,56,750,Apothecary Assistant,Apothecary,Pharmacist,Pharmacy Proprietor,Pharmacy Magnate,Generic,Town,-
+36,education,Education & Tutoring,📚,1700,,12,18,25,75,550,Tutor Assistant,Teacher,Head Teacher,Schoolmaster,Education Magnate,Generic,SmallTown,-
+37,electric_power,Electric Power,⚡,1890,,59,1,58,6,700,Line Hand,Electrician,Grid Supervisor,Utility Director,Power Magnate,Generic,Town,-
+38,cinema_and_film,Cinema & Film,🎬,1900,,38,7,19,16,600,Studio Hand,Film Technician,Production Manager,Studio Director,Film Magnate,Urban,City,-
+39,advertising,Advertising,📣,1900,,26,9,29,36,650,Office Runner,Copywriter,Account Manager,Agency Director,Advertising Magnate,Urban,City,-
+40,automotive_industry,Automotive Industry,🚗,1910,,79,1,55,10,650,Assembly Worker,Mechanic,Production Manager,Motorworks Director,Automotive Magnate,Specialist,Town,automotive
+41,chemical_industry,Chemical Industry,🧪,1880,,71,4,42,18,750,Plant Hand,Chemical Operator,Plant Supervisor,Chemical Works Director,Chemical Magnate,Specialist,Town,chemicals
+42,beauty_and_cosmetics,Beauty & Cosmetics,💄,1900,,5,45,15,60,500,Salon Assistant,Beautician,Salon Manager,Beauty Company Director,Cosmetics Magnate,Generic,Town,-
+43,radio_broadcasting,Radio Broadcasting,📻,1920,,36,9,9,9,650,Studio Assistant,Radio Technician,Programme Manager,Network Director,Broadcasting Magnate,Urban,City,-
+44,aviation,Aviation,✈️,1930,,39,1,44,11,800,Ground Hand,Aircraft Mechanic,Operations Manager,Airline Director,Aviation Magnate,Specialist,Town,aviation
+45,road_haulage,Road Haulage,🚚,1920,,74,1,68,8,600,Loading Hand,Driver,Depot Manager,Haulage Director,Transport Magnate,Generic,Town,-
+46,consumer_goods_and_appliances,Consumer Goods & Appliances,🔌,1920,,52,22,30,20,600,Assembly Hand,Technician,Production Manager,Works Director,Consumer Goods Magnate,Generic,Town,-
+47,tourism_and_travel,Tourism & Travel,🧳,1850,,19,16,34,51,550,Travel Office Assistant,Travel Agent,Branch Manager,Tour Company Director,Tourism Magnate,Specialist,Town,tourism
+48,plastics_industry,Plastics Industry,🧴,1940,,56,14,24,10,600,Plant Hand,Machine Operator,Shift Supervisor,Plastics Director,Plastics Magnate,Specialist,Town,chemicals
+49,electronics_manufacturing,Electronics Manufacturing,🔋,1950,,46,20,28,22,650,Assembly Hand,Electronics Technician,Production Manager,Electronics Director,Electronics Magnate,Specialist,City,technology;manufacturing
+50,pharmaceuticals,Pharmaceuticals,💊,1900,,24,16,34,41,750,Packaging Hand,Laboratory Technician,Production Manager,Pharma Director,Pharmaceutical Magnate,Specialist,City,chemicals
+51,television,Television,📺,1950,,34,11,15,15,650,Studio Runner,Broadcast Technician,Producer,Network Director,Television Magnate,Urban,City,-
+52,telecommunications,Telecommunications,☎️,1880,,31,4,49,26,700,Cable Hand,Telephone Technician,Exchange Manager,Telecom Director,Telecom Magnate,Generic,Town,-
+53,engineering_services,Engineering Services,📐,1850,,29,1,68,17,800,Drafting Assistant,Technician,Project Engineer,Consultancy Director,Engineering Magnate,Urban,City,-
+54,logistics_and_warehousing,Logistics & Warehousing,📦,1950,,50,6,56,24,600,Warehouse Hand,Dispatcher,Depot Manager,Logistics Director,Logistics Magnate,Generic,Town,-
+55,computing_and_it_services,Computing & IT Services,🖥️,1970,,59,10,58,32,750,Data Entry Operator,Computer Technician,Systems Manager,IT Director,Technology Magnate,Specialist,City,technology
+56,investment_and_financial_services,Investment & Financial Services,📈,1980,,40,4,46,24,850,Office Runner,Brokerage Clerk,Portfolio Manager,Investment Director,Finance Magnate,Urban,MajorCity,-
+57,private_security,Private Security,🛡️,1980,,52,3,52,13,550,Security Guard,Security Officer,Site Manager,Security Director,Security Magnate,Generic,Town,-
+58,biotechnology,Biotechnology,🧬,1990,,21,14,28,28,800,Laboratory Assistant,Laboratory Technician,Research Manager,Biotech Director,Biotechnology Magnate,Urban,MajorCity,-
+59,software_industry,Software Industry,💻,1980,,63,7,90,30,850,Support Technician,Programmer,Lead Developer,Software Director,Software Magnate,Specialist,City,technology
+60,video_game_industry,Video Game Industry,🎮,1995,,40,4,60,20,750,QA Tester,Game Developer,Lead Developer,Studio Director,Games Magnate,Specialist,City,technology
+61,business_process_outsourcing,Business Process Outsourcing,🎧,1995,,24,46,40,50,500,Data Operator,Service Specialist,Team Leader,Operations Director,Services Magnate,Urban,City,-
+62,e_commerce,E-Commerce,🛒,2000,,39,26,50,50,600,Warehouse Picker,E-Commerce Operator,Marketplace Manager,Commerce Director,E-Commerce Magnate,Generic,Town,-
+63,digital_media,Digital Media,📱,2000,,36,24,48,48,600,Production Assistant,Content Producer,Editorial Manager,Media Director,Digital Media Magnate,Urban,City,-
+64,cybersecurity,Cybersecurity,🔐,2005,,36,4,80,20,900,Support Technician,Security Analyst,Security Manager,Cybersecurity Director,Cybersecurity Magnate,Specialist,City,technology
+65,renewable_energy,Renewable Energy,☀️,2000,,40,4,68,22,750,Installation Hand,Energy Technician,Project Manager,Energy Director,Renewable Energy Magnate,Generic,Town,-

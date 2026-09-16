@@ -36,7 +36,5 @@
     <Project Path="src/Dynastia.Core/Dynastia.Core.csproj" />
     <Project Path="src/Dynastia.PluginHost/Dynastia.PluginHost.csproj" />
   </Folder>
-  <Folder Name="/tests/">
-    <Project Path="tests/Dynastia.Core.Tests/Dynastia.Core.Tests.csproj" />
-  </Folder>
+  <Folder Name="/tests/" />
 </Solution>

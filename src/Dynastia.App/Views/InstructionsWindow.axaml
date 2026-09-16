@@ -31,10 +31,10 @@
             <Setter Property="Background" Value="#E8D5AF" />
             <Setter Property="BorderBrush" Value="#9D6F35" />
             <Setter Property="BorderThickness" Value="1.5" />
-            <Setter Property="Padding" Value="18,8" />
-            <Setter Property="Margin" Value="4,0" />
+            <Setter Property="Padding" Value="12,8" />
+            <Setter Property="Margin" Value="2,0" />
             <Setter Property="FontFamily" Value="Georgia" />
-            <Setter Property="FontSize" Value="15" />
+            <Setter Property="FontSize" Value="14" />
             <Setter Property="FontWeight" Value="Bold" />
         </Style>
 
@@ -45,6 +45,14 @@
 
         <Style Selector="TabControl.instructionsTabs ContentPresenter">
             <Setter Property="Background" Value="#00FFFFFF" />
+        </Style>
+
+        <Style Selector="TextBlock.guideParagraph">
+            <Setter Property="TextWrapping" Value="Wrap" />
+            <Setter Property="FontFamily" Value="Georgia" />
+            <Setter Property="FontSize" Value="16" />
+            <Setter Property="Foreground" Value="#352110" />
+            <Setter Property="LineHeight" Value="24" />
         </Style>
     </Window.Styles>
 
@@ -65,18 +73,15 @@
                 Foreground="#2F1D0E"
                 Text="Instructions" />
 
-            <StackPanel
+            <TextBlock
                 Grid.Row="1"
-                Spacing="6">
-                <TextBlock
-                    TextWrapping="Wrap"
-                    TextAlignment="Center"
-                    FontFamily="Georgia"
-                    FontSize="17"
-                    Foreground="#3A2615"
-                    LineHeight="24"
-                    Text="Dynastia is a generational family simulation. You guide one family through decades of marriages, children, careers, illness, property, inheritance and unexpected events. Your main goal is to keep the direct male lineage alive, but lasting success also depends on how well the wider family lives, works, marries and survives." />
-            </StackPanel>
+                TextWrapping="Wrap"
+                TextAlignment="Center"
+                FontFamily="Georgia"
+                FontSize="16"
+                Foreground="#3A2615"
+                LineHeight="23"
+                Text="Dynastia is a year-by-year family dynasty simulation set in a changing historical world. You begin with one Polish family and guide its playable male-line households through work, marriage, children, health, money, property and relationships while the wider bloodline continues living on its own. Your central goal is to keep the direct male lineage alive, but long-term success comes from building households that can survive bad health, poor finances, family conflict and unexpected events. Traits pass between generations, towns and eras shape opportunities, and every annual choice becomes part of the family’s Chronicle and biographies." />
 
             <Border
                 Grid.Row="2"
@@ -94,28 +99,16 @@
                         <ScrollViewer>
                             <StackPanel Margin="12,8,12,6" Spacing="12">
                                 <TextBlock
-                                    TextWrapping="Wrap"
-                                    FontFamily="Georgia"
-                                    FontSize="16"
-                                    Foreground="#352110"
-                                    LineHeight="24"
-                                    Text="The main screen is built around four panels. Household shows the currently active family branch, who lives there, and what resources that household controls. Personal Details explains the selected person in more depth, including their traits, health, relationships and biography. Actions is where you choose what the active household head intends to do. Family Chronicle records the story of the dynasty year by year." />
+                                    Classes="guideParagraph"
+                                    Text="Choose a surname and a starting year, then guide the dynasty one year at a time. The chosen period matters: names, careers, education, medicine, loans, local opportunities and some event or action wording change with history. The main screen is centered on Households, Actions, Personal Details and the Family Chronicle. Selecting a person changes whom you are inspecting or targeting; switching the active lineage household changes which adult male heir you are currently directing." />
 
                                 <TextBlock
-                                    TextWrapping="Wrap"
-                                    FontFamily="Georgia"
-                                    FontSize="16"
-                                    Foreground="#352110"
-                                    LineHeight="24"
-                                    Text="Time advances one year at a time. Before moving on, each playable male heir must have an annual action queued, even if that choice is simply Pass. Some actions take effect at once, but most are intentions for the coming year and resolve when the year is simulated. After the simulation, look through your households again rather than relying only on the Chronicle, because finances, health, work and relationships can all shift at the same time." />
+                                    Classes="guideParagraph"
+                                    Text="Every playable adult male heir needs one annual action before Next Year can be used. Pass is a valid choice. Actions are grouped into Personal, Career, Family, Finances and Skills filters, and some open a dedicated selector for property, loans, family relations or self-improvement. Many choices are queued for the coming year, so review the target and description before committing. Independent bloodline households make their own decisions rather than waiting for the player." />
 
                                 <TextBlock
-                                    TextWrapping="Wrap"
-                                    FontFamily="Georgia"
-                                    FontSize="16"
-                                    Foreground="#352110"
-                                    LineHeight="24"
-                                    Text="You can inspect a person either from the household panel or from the family tree. Selection lets you target actions and read details, but it does not change which household you control. Export saves the current state of the dynasty to a file, Load restores an exported game, and pressing Enter is the same as clicking Next Year." />
+                                    Classes="guideParagraph"
+                                    Text="When the year advances, the game resolves everyone’s aging, household finances, health, relationships, careers, family events and other systems in sequence. The year summary and Family Chronicle show notable outcomes, while the person panels reveal quieter changes. Use the genealogy view to follow the wider bloodline, and the Map beside the Chronicle year controls to see towns, dynasty presence and property across Poland; scroll to zoom, drag to pan, or search for a town. Export preserves the current game in a save file; Load restores it later." />
                             </StackPanel>
                         </ScrollViewer>
                     </TabItem>
@@ -124,28 +117,16 @@
                         <ScrollViewer>
                             <StackPanel Margin="12,8,12,6" Spacing="12">
                                 <TextBlock
-                                    TextWrapping="Wrap"
-                                    FontFamily="Georgia"
-                                    FontSize="16"
-                                    Foreground="#352110"
-                                    LineHeight="24"
-                                    Text="The dynasty is broader than the household you are currently playing. Daughters, their descendants, former spouses and side branches all remain part of the family’s history and continue to appear in the tree. The playable line, however, depends on the direct male lineage. As long as at least one living male from that line survives, the dynasty continues, even if he is still a child." />
+                                    Classes="guideParagraph"
+                                    Text="Dynastia follows two related ideas: the direct male lineage and the wider bloodline. Adult men in the direct male lineage form the households you control and receive annual actions. Daughters and their descendants remain part of the bloodline, appear in genealogy and family history, and continue living in independently simulated households. The dynasty survives while at least one living male of the direct line remains, including boys who are not yet old enough to control." />
 
                                 <TextBlock
-                                    TextWrapping="Wrap"
-                                    FontFamily="Georgia"
-                                    FontSize="16"
-                                    Foreground="#352110"
-                                    LineHeight="24"
-                                    Text="This makes succession more fragile than the family tree may first suggest. A large extended family can still be close to collapse if very few male-line heirs remain. Sons are therefore strategically important, but the wider family still matters because daughters create alliances, relatives can provide support, and one branch’s success may later rescue another." />
+                                    Classes="guideParagraph"
+                                    Text="Households change as generations age. Adult male descendants establish their own homes, spouses and dependent children join households, and daughters may leave through marriage. Death, remarriage, divorce and orphaning can reorganize where people live. If both parents die, a minor bloodline child may be taken in by another family household; if no suitable household exists, the child can grow up in an orphanage before becoming independent." />
 
                                 <TextBlock
-                                    TextWrapping="Wrap"
-                                    FontFamily="Georgia"
-                                    FontSize="16"
-                                    Foreground="#352110"
-                                    LineHeight="24"
-                                    Text="Households split as adult male heirs establish homes of their own. You can switch between those playable branches in the Household panel. Older generations eventually die, wealth passes on, children grow into adults, and the balance of the dynasty can change completely over time." />
+                                    Classes="guideParagraph"
+                                    Text="Relatives in different households also have persistent family relations. Familiarity and sympathy can improve or deteriorate, affecting whether relatives are willing to cooperate. The Family Relations window lets a playable household rebuild ties, request or send money, transfer houses, or use family career connections when circumstances allow. Inheritance moves wealth and property between generations, while existing debts or financial claims can also outlive the person who created them." />
                             </StackPanel>
                         </ScrollViewer>
                     </TabItem>
@@ -154,58 +135,88 @@
                         <ScrollViewer>
                             <StackPanel Margin="12,8,12,6" Spacing="12">
                                 <TextBlock
-                                    TextWrapping="Wrap"
-                                    FontFamily="Georgia"
-                                    FontSize="16"
-                                    Foreground="#352110"
-                                    LineHeight="24"
-                                    Text="Every person has six core traits that shape the way their life unfolds. Immunity and Longevity support survival and recovery, Fertility matters when couples try to have children, Appeal influences romantic prospects, Strength helps where physical capability matters, and Intellect supports learning and many advanced careers. Traits are inherited imperfectly, so family strengths and weaknesses can echo through generations without producing identical descendants." />
+                                    Classes="guideParagraph"
+                                    Text="Each person is more than an age and occupation. Six core traits—Immunity, Longevity, Fertility, Appeal, Strength and Intellect—shape different parts of life. Children inherit these traits with variation, so strong and weak tendencies can run through a family without producing identical descendants. People also develop a temperament and Morals, which influence behavior, relationships and some decisions. Paid Self Improvement can strengthen an adult’s effective traits when the relevant treatment or training exists in that era." />
 
                                 <TextBlock
-                                    TextWrapping="Wrap"
-                                    FontFamily="Georgia"
-                                    FontSize="16"
-                                    Foreground="#352110"
-                                    LineHeight="24"
-                                    Text="Health is separate from traits and changes throughout life. Illness, injury, mental strain, poverty, household pressure, grief and old age can all shape it. Marriages also develop over time. Good conditions help them thrive, while money troubles, poor health, infertility, strain or betrayal can wear them down. A damaged marriage can sometimes be repaired, but deeper problems in the household may still pull it back down again." />
+                                    Classes="guideParagraph"
+                                    Text="Health changes over time through illness, injury, stress, work, poverty, family circumstances and recovery. Immunity and Longevity help people withstand those pressures, while some conditions can be temporary, chronic or serious. Medical treatment, recovery and psychotherapy can help in appropriate situations. Aging and mortality continue regardless of the player’s plans, so a prosperous household can still be disrupted by sickness or an early death." />
 
                                 <TextBlock
-                                    TextWrapping="Wrap"
-                                    FontFamily="Georgia"
-                                    FontSize="16"
-                                    Foreground="#352110"
-                                    LineHeight="24"
-                                    Text="From age five onward, living people also have a current thought. It reflects the concern that matters most to them that year, whether that is grief, illness, poverty, work, marriage, prison, a birth, a promotion or something else. Their displayed emoji comes from that thought, so it gives you a quick sense of what is on their mind. Children and adolescents think differently from adults, and adult phrasing changes with Intellect." />
+                                    Classes="guideParagraph"
+                                    Text="Children have their own Happiness, affected by health, home conditions and personality, and a parent can devote a year to raising a child more closely. Older children and adults also have thoughts that reflect what currently matters to them; the emoji beside a person comes from that thought. Hobbies and pastimes add personal flavor and can appear in thoughts, helping different relatives feel distinct even when their statistics are similar." />
                             </StackPanel>
                         </ScrollViewer>
                     </TabItem>
 
-                    <TabItem Header="Work &amp; Wealth">
+                    <TabItem Header="Work &amp; Learning">
                         <ScrollViewer>
                             <StackPanel Margin="12,8,12,6" Spacing="12">
                                 <TextBlock
-                                    TextWrapping="Wrap"
-                                    FontFamily="Georgia"
-                                    FontSize="16"
-                                    Foreground="#352110"
-                                    LineHeight="24"
-                                    Text="Household money is one of the game’s central pressures. Income can come from working adults, pensions and rented property, while expenses grow with dependents, services and family needs. Because wealth belongs to the household rather than to a private purse, every major decision competes with something else: paying for treatment, educating children, improving a trait, buying property or simply staying afloat." />
+                                    Classes="guideParagraph"
+                                    Text="Education and work form a long-term path rather than a single promotion ladder. Children can learn as they grow, and family members can sometimes spend an annual action helping with their studies. Adults may pursue further education when it is available and affordable. Intellect matters strongly for learning and many skilled or professional careers, while Strength matters more for physical work. The opportunities appropriate to an early eighteenth-century town are intentionally different from those found in later eras." />
 
                                 <TextBlock
-                                    TextWrapping="Wrap"
-                                    FontFamily="Georgia"
-                                    FontSize="16"
-                                    Foreground="#352110"
-                                    LineHeight="24"
-                                    Text="Careers begin with education and opportunity, then develop through work, promotion, setbacks and retirement. Some professions reward Strength more, others rely more on Intellect and education. Job satisfaction is separate from status, so a successful career can still make someone miserable. When a person becomes unhappy or exhausted, recovery or a different path may be wiser than pushing harder." />
+                                    Classes="guideParagraph"
+                                    Text="Employment is also local. Every person lives in a town, and towns and regions have different kinds of work. Seeking employment opens a small board of concrete vacancies appropriate to the current year and location; you choose which post to pursue rather than searching blindly. Relevant Strength or Intellect, education and a person’s accumulated work experience all matter, and experienced workers can look for better-paying positions without first resigning. A household head can use the same process to help an eligible spouse or daughter. Relocation can therefore matter to a family’s prospects as much as personal ability." />
 
                                 <TextBlock
-                                    TextWrapping="Wrap"
-                                    FontFamily="Georgia"
-                                    FontSize="16"
-                                    Foreground="#352110"
-                                    LineHeight="24"
-                                    Text="Property gives the family both security and income. A household’s first owned house becomes its home, while additional houses are treated as rental property until you decide otherwise in the future. Wealth can also move through inheritance, support between relatives, marriage, and rare life events. Not everything can be planned, so part of playing well is building families that can absorb shocks instead of collapsing after one bad year." />
+                                    Classes="guideParagraph"
+                                    Text="Once employed, people can advance, lose jobs, become dissatisfied, retire, or deliberately work harder. Education can limit or enable higher career levels, while job satisfaction and health make relentless advancement costly. A playable head can also help a wife or unmarried adult daughter seek work, and strong family connections may open career help across households. Careers feed directly into household income, pensions and long-term family security." />
+                            </StackPanel>
+                        </ScrollViewer>
+                    </TabItem>
+
+                    <TabItem Header="Wealth &amp; Homes">
+                        <ScrollViewer>
+                            <StackPanel Margin="12,8,12,6" Spacing="12">
+                                <TextBlock
+                                    Classes="guideParagraph"
+                                    Text="Money belongs to households, so the fortunes of a head, spouse, dependent children and other household members are tied together. Income can come from employment, pensions, property and financial contracts, while living costs, dependents, hired childcare and other obligations reduce what remains. The budget panel shows the household’s current position and recent income and expenses. A household with little or no money has fewer options and can also suffer wider health and relationship pressure." />
+
+                                <TextBlock
+                                    Classes="guideParagraph"
+                                    Text="Houses are both homes and assets. Buying property can give a family security, additional houses can support rental income, and property can be sold or assigned to heirs. Buying in another town creates an investment rather than an automatic move; owning a house there can later create the option to relocate, with consequences for employment and local opportunities. Family Relations can also move money or property between related households, making strong family ties economically useful in difficult years." />
+
+                                <TextBlock
+                                    Classes="guideParagraph"
+                                    Text="Loans add another layer of planning. A household can borrow money under terms appropriate to the historical period, or lend spare cash to an outside borrower and receive repayments over time. Repayment commitments reduce future flexibility, while receivables create future income; both can matter during inheritance. Estates distribute wealth and houses after deaths, so earlier decisions often echo into the next generation. Building reserves is useful because rare events, illness, unemployment and family crises can all create sudden costs." />
+                            </StackPanel>
+                        </ScrollViewer>
+                    </TabItem>
+
+                    <TabItem Header="Family Life">
+                        <ScrollViewer>
+                            <StackPanel Margin="12,8,12,6" Spacing="12">
+                                <TextBlock
+                                    Classes="guideParagraph"
+                                    Text="Marriage and children are central to the dynasty, but neither is automatic. When an unmarried playable man seeks a spouse, the game presents a small set of potential partners with their personality, education, traits, hobbies and occupation. You choose whom to approach, and a particularly ambitious match may reject the courtship. Appeal still matters, but education, abilities, age, career, Personality, Morals and the historical setting all shape marriage prospects. Daughters can sometimes be helped toward marriage through their own family action. Once married, couples develop Satisfaction over time; health problems, unemployment, household strain, imprisonment and financial trouble can place pressure on the relationship, while deliberate reconciliation can repair it before it collapses." />
+
+                                <TextBlock
+                                    Classes="guideParagraph"
+                                    Text="Couples may have children when their circumstances allow. Fertility matters for both partners, the mother’s age matters, and a playable husband can make having a child a priority for the year. Children inherit family traits, may be born with health conditions, and become part of the household economy immediately. Large families can create strain, so childcare matters: households may hire help, and an eligible adult unmarried daughter can sometimes care for younger siblings instead." />
+
+                                <TextBlock
+                                    Classes="guideParagraph"
+                                    Text="Family life can also go wrong. Affairs, divorce and remarriage change households and can hurt spouses and children. Children of divorced parents carry the effects of that disruption while growing up. Orphans may remain with a surviving mother, be taken in by another bloodline household, or enter an orphanage. The game therefore rewards thinking about family stability as well as simply producing heirs." />
+                            </StackPanel>
+                        </ScrollViewer>
+                    </TabItem>
+
+                    <TabItem Header="Events &amp; Risks">
+                        <ScrollViewer>
+                            <StackPanel Margin="12,8,12,6" Spacing="12">
+                                <TextBlock
+                                    Classes="guideParagraph"
+                                    Text="Not every year is controlled by the player. Crime, illness, accidents, household disasters and other rare events can interrupt even a carefully managed plan. Adults may commit crimes and receive prison sentences, losing freedom to act and often damaging work or family life. The kinds of crimes and the way they are described can vary by historical period. Imprisonment also affects relationships and household responsibilities until the person is released." />
+
+                                <TextBlock
+                                    Classes="guideParagraph"
+                                    Text="Rare life events are deliberately uncommon but broad in effect. A household can face events such as fire, burglary, flooding or structural accidents, while individuals may encounter assault, workplace accidents, serious falls, unexpected windfalls, distant inheritances or wrongful arrest. Which events make sense can depend on the year, the person’s age, work and household situation. Some events cost money or health; others unexpectedly improve a family’s fortunes. Mortality also includes ordinary aging and serious health conditions, so death can arrive without a dramatic event." />
+
+                                <TextBlock
+                                    Classes="guideParagraph"
+                                    Text="The Family Chronicle is the main record of important developments, organized by year and household. Biographies preserve major events from an individual life, including family milestones that matter to close relatives. Thoughts give a more immediate view of what a person currently cares about. Read these together: the Chronicle explains what happened to the dynasty, the biography explains one life, and the thought often explains what feels important right now." />
                             </StackPanel>
                         </ScrollViewer>
                     </TabItem>

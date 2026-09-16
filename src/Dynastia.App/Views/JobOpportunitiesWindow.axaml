@@ -1,0 +1,144 @@
+<Window
+    xmlns="https://github.com/avaloniaui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:ui="using:Dynastia.App.Controls"
+    xmlns:vm="using:Dynastia.App.ViewModels"
+    x:Class="Dynastia.App.Views.JobOpportunitiesWindow"
+    x:DataType="vm:JobOpportunityDialogViewModel"
+    Width="920"
+    Height="760"
+    CanResize="False"
+    ShowInTaskbar="False"
+    WindowDecorations="None"
+    TransparencyLevelHint="Transparent"
+    WindowStartupLocation="CenterOwner"
+    Background="#00000000"
+    KeyDown="OnWindowKeyDown"
+    Title="Job Opportunities">
+
+    <Window.Styles>
+        <Style Selector="Button.paperAction">
+            <Setter Property="MinWidth" Value="110" />
+            <Setter Property="Padding" Value="14,7" />
+            <Setter Property="Foreground" Value="#3F2714" />
+            <Setter Property="Background" Value="#E8D5AF" />
+            <Setter Property="BorderBrush" Value="#9D6F35" />
+            <Setter Property="BorderThickness" Value="1.5" />
+            <Setter Property="FontFamily" Value="Georgia" />
+            <Setter Property="FontSize" Value="12.5" />
+            <Setter Property="FontWeight" Value="Bold" />
+        </Style>
+        <Style Selector="Button.paperAction:pointerover">
+            <Setter Property="Background" Value="#D4B178" />
+            <Setter Property="Foreground" Value="#2D1A0E" />
+        </Style>
+    </Window.Styles>
+
+    <Grid>
+        <Image Source="/Assets/UI/instructions_paper.png" Stretch="Fill" />
+
+        <Grid Margin="82,66,82,54" RowDefinitions="Auto,Auto,Auto,*,Auto" RowSpacing="10">
+            <TextBlock
+                HorizontalAlignment="Center"
+                FontFamily="avares://Dynastia.App/Assets/Fonts#UnifrakturCook"
+                FontSize="40"
+                Foreground="#2F1D0E"
+                Text="{Binding Title}" />
+
+            <TextBlock
+                Grid.Row="1"
+                HorizontalAlignment="Center"
+                FontFamily="Georgia"
+                FontSize="14"
+                Foreground="#5B4024"
+                Text="{Binding Subtitle}" />
+
+            <TextBlock
+                Grid.Row="2"
+                HorizontalAlignment="Center"
+                FontFamily="Georgia"
+                FontSize="13"
+                FontStyle="Italic"
+                Foreground="#745A38"
+                Text="{Binding ApplicantText}" />
+
+            <ItemsControl
+                Grid.Row="3"
+                VerticalAlignment="Center"
+                ItemsSource="{Binding Opportunities}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate x:DataType="vm:JobOpportunityCardViewModel">
+                            <Border
+                                Margin="4,2"
+                                Height="81"
+                                Padding="14,6"
+                                Background="#35FFF4D9"
+                                BorderBrush="#A17A43"
+                                BorderThickness="1"
+                                CornerRadius="4">
+                                <Grid ColumnDefinitions="82,*,Auto" ColumnSpacing="13">
+                                    <Border
+                                        Width="70"
+                                        Height="64"
+                                        HorizontalAlignment="Left"
+                                        VerticalAlignment="Center"
+                                        Background="#77071212"
+                                        BorderBrush="#9D772E"
+                                        BorderThickness="1.5"
+                                        CornerRadius="4">
+                                        <TextBlock
+                                            HorizontalAlignment="Center"
+                                            VerticalAlignment="Center"
+                                            TextAlignment="Center"
+                                            FontSize="31"
+                                            Text="{Binding CareerEmoji}" />
+                                    </Border>
+
+                                    <StackPanel
+                                        Grid.Column="1"
+                                        VerticalAlignment="Center"
+                                        Spacing="2">
+                                        <TextBlock
+                                            FontFamily="Georgia"
+                                            FontSize="16"
+                                            FontWeight="Bold"
+                                            Foreground="#352110"
+                                            TextWrapping="Wrap"
+                                            Text="{Binding Heading}" />
+                                        <TextBlock
+                                            FontFamily="Georgia"
+                                            FontSize="12.5"
+                                            Foreground="#4B321B"
+                                            TextWrapping="Wrap"
+                                            Text="{Binding RequirementsText}" />
+                                        <TextBlock
+                                            FontFamily="Georgia"
+                                            FontSize="12.5"
+                                            Foreground="#4B321B"
+                                            TextWrapping="Wrap"
+                                            Text="{Binding ApplicantComparisonText}" />
+                                    </StackPanel>
+                                    <Button
+                                        Grid.Column="2"
+                                        Classes="paperAction"
+                                        VerticalAlignment="Center"
+                                        Content="Apply"
+                                        Click="OnApplyClick" />
+                                </Grid>
+                            </Border>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+            </ItemsControl>
+
+            <ui:ImageStateButton
+                Grid.Row="4"
+                Width="170"
+                Height="66"
+                HorizontalAlignment="Center"
+                IdleSource="avares://Dynastia.App/Assets/UI/b_close_idle.png"
+                HoverSource="avares://Dynastia.App/Assets/UI/b_close_hover.png"
+                FallbackText="Close"
+                Click="OnCloseClick" />
+        </Grid>
+    </Grid>
+</Window>

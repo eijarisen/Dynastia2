@@ -239,6 +239,24 @@ public sealed partial class MainWindowViewModel
                 StringComparison.OrdinalIgnoreCase)
             || actionId.Equals(
                 "loan.give",
+                StringComparison.OrdinalIgnoreCase)
+            || actionId.Equals(
+                "career.seek_employment",
+                StringComparison.OrdinalIgnoreCase)
+            || actionId.Equals(
+                "career.find_another_job",
+                StringComparison.OrdinalIgnoreCase)
+            || actionId.Equals(
+                "career.help_seek_employment",
+                StringComparison.OrdinalIgnoreCase)
+            || actionId.Equals(
+                "career.help_find_better_job",
+                StringComparison.OrdinalIgnoreCase)
+            || actionId.Equals(
+                "relationship.find_spouse",
+                StringComparison.OrdinalIgnoreCase)
+            || actionId.Equals(
+                "relationship.marry_off_daughter",
                 StringComparison.OrdinalIgnoreCase))
         {
             ActionSelectionRequested?.Invoke(
@@ -509,7 +527,7 @@ public sealed partial class MainWindowViewModel
                 ? $"{target.Name} {target.Surname}"
                 : _familyService.GetDisplayName(target);
 
-        return $"{text} — Target: {targetName}";
+        return $"{text} — {targetName}";
     }
 
     private IPerson? FindSelectedPerson()

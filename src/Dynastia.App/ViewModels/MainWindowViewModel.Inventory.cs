@@ -28,6 +28,7 @@ public sealed partial class MainWindowViewModel
         var incomeLines =
             _economyService
                 .GetProjectedIncomeBreakdown(actor)
+                .Select(FormatInventoryIncomeLine)
                 .ToList();
 
         var loanIncome =
@@ -159,6 +160,50 @@ public sealed partial class MainWindowViewModel
                 action.Id.Equals(
                     actionId,
                     StringComparison.OrdinalIgnoreCase));
+    }
+
+    private FinanceBreakdownItem FormatInventoryIncomeLine(
+        FinanceBreakdownItem line)
+    {
+        if (line.PersonId is not Guid personId)
+            return line;
+
+        var person =
+            _gameState.People.FirstOrDefault(
+                candidate => candidate.Id == personId);
+
+        if (person is null)
+            return line;
+
+        var name =
+            _familyService?.GetDisplayName(person)
+            ?? $"{person.Name} {person.Surname}";
+
+        var emoji =
+            _careerPresentationService?
+                .GetOccupationEmoji(person)
+            ?? "💼";
+
+        if (_careerService is null)
+        {
+            return line with
+            {
+                Label = $"{emoji} {name}"
+            };
+        }
+
+        var career =
+            _careerService.GetCareer(person);
+
+        var occupation =
+            career.JobLevel > 0
+                ? $"{career.JobTitle} (L{career.JobLevel})"
+                : career.JobTitle;
+
+        return line with
+        {
+            Label = $"{emoji} {name} — {occupation}"
+        };
     }
 }
 

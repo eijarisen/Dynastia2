@@ -11,7 +11,8 @@ public static class PersonEmojiResolver
         ICareerService? career,
         IJusticeService? justice,
         IStatsService? stats,
-        IThoughtService? thoughts = null)
+        IThoughtService? thoughts = null,
+        IAppearanceService? appearance = null)
     {
         if (person.Tags.Has(
             "state.dead"))
@@ -63,7 +64,7 @@ public static class PersonEmojiResolver
                     return "🤒";
             }
 
-            return "👶";
+            return GetNeutralPortrait(person, family, appearance);
         }
 
         var thought =
@@ -74,44 +75,58 @@ public static class PersonEmojiResolver
             && !string.IsNullOrWhiteSpace(
                 thought.Emoji))
         {
+            if (thought.Emoji.Equals(
+                    "🙂",
+                    StringComparison.Ordinal))
+            {
+                return GetNeutralPortrait(
+                    person,
+                    family,
+                    appearance);
+            }
+
             return thought.Emoji;
         }
 
         // Defensive fallback only. Under normal gameplay every living person
-        // aged 5+ has a stored thought.
-        var sex =
-            family is not null
-                ? family.GetSex(
-                    person)
-                : person.Tags.Has(
-                    "sex.female")
-                    ? Sex.Female
-                    : Sex.Male;
+        // aged 5+ has a stored thought. Neutral presentation uses the person's
+        // physical portrait rather than a generic yellow face.
+        return GetNeutralPortrait(
+            person,
+            family,
+            appearance);
+    }
+
+    private static string GetNeutralPortrait(
+        IPerson person,
+        IFamilyService? family,
+        IAppearanceService? appearance)
+    {
+        if (appearance is not null)
+        {
+            return appearance.GetPortrait(
+                person,
+                useDeadOverride: false);
+        }
+
+        var sex = family is not null
+            ? family.GetSex(person)
+            : person.Tags.Has("sex.female")
+                ? Sex.Female
+                : Sex.Male;
+
+        if (person.Age <= 4)
+            return "👶🏻";
 
         if (person.Age <= 11)
-        {
-            return sex == Sex.Male
-                ? "👦"
-                : "👧";
-        }
+            return sex == Sex.Male ? "👦🏻" : "👧🏻";
 
         if (person.Age <= 17)
-            return "🧑";
+            return "🧑🏻";
 
-        var retirementAge =
-            sex == Sex.Male
-                ? 65
-                : 60;
+        if (person.Age >= 70)
+            return sex == Sex.Male ? "👴🏻" : "👵🏻";
 
-        if (person.Age >= retirementAge)
-        {
-            return sex == Sex.Male
-                ? "👴"
-                : "👵";
-        }
-
-        return sex == Sex.Male
-            ? "👨"
-            : "👩";
+        return sex == Sex.Male ? "👨🏻" : "👩🏻";
     }
 }

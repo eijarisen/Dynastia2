@@ -72,8 +72,24 @@ public sealed class MarriageYearSystem : IYearSystem
 
         foreach (var person in livingSnapshot)
         {
-            if (!CanSearch(person))
+            var legacyRequested =
+                person.Tags.Has("modifier.find_spouse");
+
+            // Playable/autonomous dynasty households now choose from the
+            // concrete candidate pool through the Find a Spouse action.
+            // Keep the old automatic path only for peripheral simulation
+            // and for queued actions restored from an older save.
+            if (!legacyRequested
+                && !person.Tags.Has("simulation.peripheral_ex"))
+            {
                 continue;
+            }
+
+            if (!CanSearch(person))
+            {
+                person.Tags.Remove("modifier.find_spouse");
+                continue;
+            }
 
             var appeal =
                 GetStat(

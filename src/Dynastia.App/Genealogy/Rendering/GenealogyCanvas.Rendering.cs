@@ -221,7 +221,9 @@ public sealed partial class GenealogyCanvas
 
         DrawCenteredText(
             context,
-            node.Person.AvatarText,
+            UsePortraits
+                ? node.Person.PortraitText
+                : node.Person.AvatarText,
             rect,
             rect.Y + 5 * z,
             28 * z,
@@ -309,6 +311,16 @@ public sealed partial class GenealogyCanvas
                 TileSecondaryText,
                 maxLines:
                     1);
+        }
+
+        if (UsePortraits && !node.Person.IsAlive)
+        {
+            context.DrawRectangle(
+                DeceasedSepiaOverlay,
+                null,
+                rect,
+                Math.Max(3, 5 * Zoom),
+                Math.Max(3, 5 * Zoom));
         }
     }
 

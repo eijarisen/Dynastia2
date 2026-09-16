@@ -1164,7 +1164,105 @@ internal sealed class AdvancedAutonomousHouseholdStrategy :
             ? new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
             : new Dictionary<string, string>(baseParameters, StringComparer.OrdinalIgnoreCase);
 
-        if (actionId.Equals("household.sell_house", StringComparison.OrdinalIgnoreCase))
+        if (actionId.Equals("career.seek_employment", StringComparison.OrdinalIgnoreCase)
+            || actionId.Equals("career.find_another_job", StringComparison.OrdinalIgnoreCase)
+            || actionId.Equals("career.help_seek_employment", StringComparison.OrdinalIgnoreCase))
+        {
+            var applicant = actionId.Equals(
+                    "career.help_seek_employment",
+                    StringComparison.OrdinalIgnoreCase)
+                ? target
+                : snapshot.Head;
+
+            var current = _career.GetCareer(applicant);
+            var opportunities = _career.GetJobOpportunities(applicant);
+            if (opportunities.Count == 0)
+                return null;
+
+            var salaryWeight = snapshot.FinancialState is
+                    AutonomousFinancialState.Critical or
+                    AutonomousFinancialState.Poor
+                ? 1.6
+                : 1.0;
+
+            var best = opportunities
+                .OrderByDescending(opportunity =>
+                    (double)Math.Max(0m,
+                        opportunity.AnnualSalary - current.AnnualIncome)
+                        * salaryWeight
+                        * opportunity.SuccessChance
+                    + opportunity.SuccessChance * 1000.0)
+                .ThenByDescending(opportunity => opportunity.AnnualSalary)
+                .First();
+
+            parameters["jobCareerId"] = best.CareerId;
+            parameters["jobLevel"] = best.JobLevel.ToString(
+                CultureInfo.InvariantCulture);
+            parameters["jobRequiredAbility"] = best.RequiredAbilityLevel.ToString(
+                CultureInfo.InvariantCulture);
+            parameters["jobRequiredEducation"] = best.RequiredEducationLevel.ToString(
+                CultureInfo.InvariantCulture);
+            parameters["jobRequiredExperience"] = best.RequiredExperienceYears.ToString(
+                CultureInfo.InvariantCulture);
+            parameters["jobSuccessChance"] = best.SuccessChance.ToString(
+                "R",
+                CultureInfo.InvariantCulture);
+        }
+        else if (actionId.Equals("relationship.find_spouse", StringComparison.OrdinalIgnoreCase))
+        {
+            var partnerSearch = _context.GetService<IPartnerSearchService>();
+            if (partnerSearch is null)
+                return null;
+
+            var candidates = partnerSearch.GetCandidates(snapshot.Head);
+            if (candidates.Count == 0)
+                return null;
+
+            var needsChildren = snapshot.LivingChildCount < 2
+                && snapshot.HasRealisticReproductivePath;
+            var needsIncome = snapshot.FinancialState is
+                AutonomousFinancialState.Critical or
+                AutonomousFinancialState.Poor;
+
+            var best = candidates
+                .OrderByDescending(candidate =>
+                candidate.AcceptanceChance * 60.0
+                + candidate.PartnerValue * 0.35
+                + (needsChildren && candidate.Sex == Sex.Female
+                    ? Math.Max(0, 46 - candidate.Age) * 1.5
+                    : 0)
+                + (needsIncome
+                    ? (double)candidate.AnnualIncome / 100.0
+                    : 0))
+                .First();
+
+            foreach (var pair in partnerSearch.BuildActionParameters(best))
+                parameters[pair.Key] = pair.Value;
+        }
+        else if (actionId.Equals("relationship.marry_off_daughter", StringComparison.OrdinalIgnoreCase))
+        {
+            var partnerSearch = _context.GetService<IPartnerSearchService>();
+            if (partnerSearch is null)
+                return null;
+
+            var candidates = partnerSearch.GetCandidatesFor(
+                target,
+                Sex.Male,
+                "arranged-marriage");
+            if (candidates.Count == 0)
+                return null;
+
+            var best = candidates
+                .OrderByDescending(candidate =>
+                    candidate.AcceptanceChance * 70.0
+                    + candidate.PartnerValue * 0.25
+                    + (double)candidate.AnnualIncome / 150.0)
+                .First();
+
+            foreach (var pair in partnerSearch.BuildActionParameters(best))
+                parameters[pair.Key] = pair.Value;
+        }
+        else if (actionId.Equals("household.sell_house", StringComparison.OrdinalIgnoreCase))
         {
             var investment = snapshot.Finance?.Houses
                 .FirstOrDefault(house => house.IsRented);

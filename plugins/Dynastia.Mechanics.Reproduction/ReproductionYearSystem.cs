@@ -52,6 +52,7 @@ public sealed class ReproductionYearSystem : IYearSystem
     private readonly IFamilyService _family;
     private readonly IStatsService _stats;
     private readonly IHealthService _health;
+    private readonly IAppearanceService _appearance;
     private readonly IMarriageSatisfactionService _marriageSatisfaction;
     private readonly IHistoricalNameService _historicalNames;
     private readonly IGameRandom _random;
@@ -66,6 +67,7 @@ public sealed class ReproductionYearSystem : IYearSystem
         IFamilyService family,
         IStatsService stats,
         IHealthService health,
+        IAppearanceService appearance,
         IMarriageSatisfactionService marriageSatisfaction,
         IHistoricalNameService historicalNames,
         IGameRandom random,
@@ -78,6 +80,7 @@ public sealed class ReproductionYearSystem : IYearSystem
         _family = family;
         _stats = stats;
         _health = health;
+        _appearance = appearance;
         _marriageSatisfaction = marriageSatisfaction;
         _historicalNames = historicalNames;
         _random = random;
@@ -558,6 +561,9 @@ public sealed class ReproductionYearSystem : IYearSystem
             child,
             father,
             mother);
+
+        _appearance.EnsureAppearance(
+            child);
 
         var inheritedStats =
             InheritStats(

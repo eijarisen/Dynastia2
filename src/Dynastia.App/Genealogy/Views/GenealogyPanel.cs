@@ -64,6 +64,9 @@ public sealed class GenealogyPanel :
     private readonly ToggleButton
         _maleLineageOnly;
 
+    private readonly ToggleButton
+        _portraitMode;
+
     private long _topologyVersion =
         long.MinValue;
 
@@ -157,6 +160,9 @@ public sealed class GenealogyPanel :
                 "Male Lineage Only",
                 isChecked: false);
 
+        _portraitMode =
+            CreatePortraitModeToggle();
+
         _showAllSpouses.Click +=
             OnFilterChanged;
 
@@ -165,6 +171,9 @@ public sealed class GenealogyPanel :
 
         _maleLineageOnly.Click +=
             OnFilterChanged;
+
+        _portraitMode.Click +=
+            OnPortraitModeChanged;
 
         var instructions =
             new TextBlock
@@ -211,6 +220,7 @@ public sealed class GenealogyPanel :
                     selected,
                     founder,
                     CreateSeparator(),
+                    _portraitMode,
                     _showAllSpouses,
                     _daughtersFamilies,
                     _maleLineageOnly,
@@ -444,6 +454,29 @@ public sealed class GenealogyPanel :
         return filter;
     }
 
+    private static ToggleButton CreatePortraitModeToggle()
+    {
+        return new ToggleButton
+        {
+            IsChecked = true,
+            Background = new SolidColorBrush(
+                Color.FromArgb(0xE4, 9, 31, 27)),
+            BorderBrush = ToolBorder,
+            BorderThickness = new Thickness(1),
+            Padding = new Thickness(11, 5),
+            Margin = new Thickness(0, 0, 7, 0),
+            CornerRadius = new CornerRadius(4),
+            VerticalAlignment = VerticalAlignment.Center,
+            Content = new TextBlock
+            {
+                Text = "View: Portraits",
+                Foreground = ToolText,
+                FontSize = 12,
+                FontWeight = FontWeight.SemiBold
+            }
+        };
+    }
+
     private static Border CreateSeparator()
     {
         return new Border
@@ -497,6 +530,24 @@ public sealed class GenealogyPanel :
         }
 
         RebuildAndFitTree();
+    }
+
+    private void OnPortraitModeChanged(
+        object? sender,
+        Avalonia.Interactivity.RoutedEventArgs e)
+    {
+        var usePortraits =
+            _portraitMode.IsChecked == true;
+
+        _canvas.UsePortraits =
+            usePortraits;
+
+        if (_portraitMode.Content is TextBlock label)
+        {
+            label.Text = usePortraits
+                ? "View: Portraits"
+                : "View: States";
+        }
     }
 
     private void OnFilterChanged(

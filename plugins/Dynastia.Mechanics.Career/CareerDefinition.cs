@@ -5,6 +5,7 @@ namespace Dynastia.Mechanics.Career;
 internal sealed record CareerDefinition(
     string Id,
     string Name,
+    string Emoji,
     int StartYear,
     int? EndYear,
     int MaleEarly,

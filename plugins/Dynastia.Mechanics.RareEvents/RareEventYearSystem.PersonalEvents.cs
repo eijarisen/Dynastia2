@@ -361,7 +361,7 @@ internal sealed partial class RareEventYearSystem
                 person);
 
         var lostJob =
-            career.JobLevel > 0
+            career.IsEmployed
             && !career.IsRetired;
 
         if (lostJob)

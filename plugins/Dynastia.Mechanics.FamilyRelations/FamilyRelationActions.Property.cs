@@ -151,7 +151,7 @@ internal static partial class FamilyRelationActions
             .Where(p =>
             {
                 var c = career.GetCareer(p);
-                return !c.IsRetired && c.JobLevel > 0;
+                return !c.IsRetired && c.IsEmployed && !c.IsSelfEmployed;
             })
             .ToList();
 

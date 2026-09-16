@@ -94,8 +94,8 @@ public sealed partial class MainWindowViewModel
         SelectedEducation =
             new EducationViewModel(
                 person.Age,
-                _educationService
-                    .GetEducationLevel(person));
+                _educationService.GetEducationLevel(person),
+                _craftService?.GetKnownCrafts(person));
     }
 
     private void RefreshHobbies()

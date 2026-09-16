@@ -1096,6 +1096,30 @@ internal sealed partial class ThoughtPhraseRenderer
                         ]
                 },
 
+            "craft.learned" =>
+                [$"I've been learning {C("craftName", "a craft")}."],
+
+            "craft.self_employment_started" =>
+                [$"I've started earning a living through {C("craftName", "my craft")}."],
+
+            "craft.work" =>
+                C("performance", "ordinary").ToLowerInvariant() switch
+                {
+                    "strong" =>
+                        ["Business has been unusually good this year."],
+                    "poor" =>
+                        ["Work for my trade has been painfully scarce."],
+                    _ => voice switch
+                    {
+                        ThoughtVoice.AdultRough =>
+                            ["Work's been coming in."],
+                        ThoughtVoice.AdultElaborate =>
+                            ["I've been fortunate enough to maintain a steady stream of work in my trade."],
+                        _ =>
+                            ["I've had a steady amount of work for my craft lately."]
+                    }
+                },
+
             "farming.work" =>
                 C("performance", "ordinary").ToLowerInvariant() switch
                 {

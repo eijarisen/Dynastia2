@@ -73,6 +73,16 @@ public static class ActionEmojiMap
             return $"🚚 {label}";
         }
 
+        if (actionId.StartsWith(
+            "craft.start.",
+            StringComparison.OrdinalIgnoreCase)
+            || actionId.StartsWith(
+                "craft.teach.",
+                StringComparison.OrdinalIgnoreCase))
+        {
+            return $"🛠️ {label}";
+        }
+
         if (!Emojis.TryGetValue(
             actionId,
             out var emoji))

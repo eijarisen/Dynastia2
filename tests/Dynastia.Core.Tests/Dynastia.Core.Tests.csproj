@@ -22,6 +22,7 @@
     <ProjectReference Include="..\..\src\Dynastia.Core\Dynastia.Core.csproj" />
     <ProjectReference Include="..\..\plugins\Dynastia.Mechanics.Appearance\Dynastia.Mechanics.Appearance.csproj" />
     <ProjectReference Include="..\..\plugins\Dynastia.Mechanics.Career\Dynastia.Mechanics.Career.csproj" />
+    <ProjectReference Include="..\..\plugins\Dynastia.Mechanics.Crafts\Dynastia.Mechanics.Crafts.csproj" />
     <ProjectReference Include="..\..\plugins\Dynastia.Mechanics.Education\Dynastia.Mechanics.Education.csproj" />
     <ProjectReference Include="..\..\plugins\Dynastia.Mechanics.Economy\Dynastia.Mechanics.Economy.csproj" />
     <ProjectReference Include="..\..\plugins\Dynastia.Mechanics.Family\Dynastia.Mechanics.Family.csproj" />

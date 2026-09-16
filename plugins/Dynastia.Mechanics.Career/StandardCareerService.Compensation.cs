@@ -27,6 +27,10 @@ public sealed partial class StandardCareerService
 
         career.IsRetired =
             true;
+
+        _craftResolver()?.EndOccupation(
+            person,
+            "retirement");
     }
 
     public decimal GetLevelOneSalary(

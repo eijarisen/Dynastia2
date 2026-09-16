@@ -235,13 +235,22 @@ public sealed partial class MainWindowViewModel
             _careerService.GetCareer(person);
 
         var occupation =
-            career.JobLevel > 0
+            career.IsEmployed && career.JobLevel > 0
                 ? $"{career.JobTitle} (L{career.JobLevel})"
                 : career.JobTitle;
 
+        var amount = line.Amount;
+        if (_craftService is not null && career.IsSelfEmployed)
+        {
+            var craft = _craftService.GetSnapshot(person);
+            if (craft.LastIncomeYear == _gameState.Year)
+                amount = craft.LastAnnualIncome;
+        }
+
         return line with
         {
-            Label = $"{emoji} {name} — {occupation}"
+            Label = $"{emoji} {name} — {occupation}",
+            Amount = amount
         };
     }
 }

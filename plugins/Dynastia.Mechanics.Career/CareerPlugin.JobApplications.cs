@@ -87,7 +87,7 @@ public sealed partial class CareerPlugin
             ["chance"] = result.SuccessChance.ToString("0.00")
         };
 
-        if (result.Before.JobLevel > 0)
+        if (result.Before.IsEmployed)
         {
             data["oldCareerId"] = result.Before.CareerId ?? string.Empty;
             data["text"] =

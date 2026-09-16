@@ -162,6 +162,30 @@ internal static class ActionPresentationPolicy
         }
 
         if (actionId.StartsWith(
+            "craft.teach.",
+            StringComparison.OrdinalIgnoreCase))
+        {
+            categories.UnionWith(
+                new[]
+                {
+                    ActionCategory.Family,
+                    ActionCategory.Skills
+                });
+
+            return categories;
+        }
+
+        if (actionId.StartsWith(
+            "craft.start.",
+            StringComparison.OrdinalIgnoreCase))
+        {
+            categories.Add(
+                ActionCategory.Career);
+
+            return categories;
+        }
+
+        if (actionId.StartsWith(
             "farming.",
             StringComparison.OrdinalIgnoreCase))
         {

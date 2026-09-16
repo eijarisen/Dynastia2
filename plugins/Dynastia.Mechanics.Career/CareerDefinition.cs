@@ -20,7 +20,8 @@ internal sealed record CareerDefinition(
     string Level5Title,
     CareerLocationType LocationType,
     SettlementClass MinimumSettlementClass,
-    IReadOnlyList<string> RequiredOpportunityTags)
+    IReadOnlyList<string> RequiredOpportunityTags,
+    IReadOnlyList<string> RelevantCraftIds)
 {
     public const int TechnologyFreezeYear =
         GameCalendarConfiguration.TechnologyFreezeYear;

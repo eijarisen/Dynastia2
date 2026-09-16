@@ -70,7 +70,8 @@ public sealed partial class CareerPlugin : IGamePlugin
                 retirementRules,
                 localOpportunities,
                 stats,
-                education);
+                education,
+                () => context.GetService<ICraftService>());
 
         context.AddService<ICareerService>(career);
         context.AddService<ICareerPresentationService>(career);

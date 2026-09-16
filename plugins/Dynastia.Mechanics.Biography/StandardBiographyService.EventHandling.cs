@@ -35,6 +35,23 @@ public sealed partial class StandardBiographyService
             return;
         }
 
+        if (gameEvent.Type.Equals(
+                "craft.learned",
+                StringComparison.OrdinalIgnoreCase)
+            || gameEvent.Type.Equals(
+                "craft.teaching_failed",
+                StringComparison.OrdinalIgnoreCase)
+            || gameEvent.Type.Equals(
+                "craft.self_employment_started",
+                StringComparison.OrdinalIgnoreCase)
+            || gameEvent.Type.Equals(
+                "craft.self_employment_ended",
+                StringComparison.OrdinalIgnoreCase))
+        {
+            AddCraftEntries(gameEvent);
+            return;
+        }
+
         if (!_households.ShouldShowFamilyNews(
             gameEvent))
         {
@@ -119,6 +136,45 @@ public sealed partial class StandardBiographyService
             AddRelativeEntries(
                 gameEvent,
                 subject);
+        }
+    }
+
+    private void AddCraftEntries(GameEvent gameEvent)
+    {
+        var message = GetEventText(gameEvent);
+        if (string.IsNullOrWhiteSpace(message))
+            return;
+
+        var formatted = FormatWithEmoji(gameEvent.Type, message);
+        var people = new List<IPerson>();
+        var subject = FindPerson(gameEvent.SubjectId);
+        if (subject is not null)
+            people.Add(subject);
+
+        var includeTeacher = gameEvent.Type.Equals(
+                "craft.teaching_failed",
+                StringComparison.OrdinalIgnoreCase)
+            || gameEvent.Type.Equals(
+                "craft.learned",
+                StringComparison.OrdinalIgnoreCase)
+                && gameEvent.Data.TryGetValue(
+                    "learningMode",
+                    out var learningMode)
+                && learningMode.Equals(
+                    "taught",
+                    StringComparison.OrdinalIgnoreCase);
+
+        if (includeTeacher)
+        {
+            people.AddRange(gameEvent.RelatedPersonIds
+                .Select(id => FindPerson(id))
+                .Where(person => person is not null)
+                .Cast<IPerson>());
+        }
+
+        foreach (var person in people.DistinctBy(person => person.Id))
+        {
+            AddEntry(person, GetCompletedBiographyYear(gameEvent), formatted);
         }
     }
 

@@ -346,13 +346,13 @@ public sealed class GameGenealogyDataSource :
                         ? $"{occupation} — " +
                           $"{career.AnnualIncome:N0} zł/year pension"
                         : occupation
-                    : career.JobLevel > 0
+                    : career.IsEmployed
                         ? $"{occupation} — " +
                           $"{career.AnnualIncome:N0} zł/year"
                         : occupation;
 
             satisfactionTooltip =
-                career.JobLevel > 0
+                career.IsEmployed
                 && !career.IsRetired
                     ? career.JobSatisfactionText
                     : "N/A";

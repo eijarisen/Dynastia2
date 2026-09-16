@@ -128,7 +128,7 @@ internal sealed partial class RareEventYearSystem
                 person);
 
         if (person.Age >= 18
-            && career.JobLevel > 0
+            && career.IsEmployed
             && !career.IsRetired)
         {
             candidates.Add(

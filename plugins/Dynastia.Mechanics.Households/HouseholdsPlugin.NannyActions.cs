@@ -245,7 +245,7 @@ public sealed partial class HouseholdsPlugin
                             && status.UnderageChildren
                                 > status.BaseChildCapacity
                             && !daughterCareer.IsRetired
-                            && daughterCareer.JobLevel == 0;
+                            && !daughterCareer.IsEmployed;
                     },
 
                 Execute =
@@ -275,7 +275,7 @@ public sealed partial class HouseholdsPlugin
                             || status.UnderageChildren
                                 <= status.BaseChildCapacity
                             || daughterCareer.IsRetired
-                            || daughterCareer.JobLevel != 0
+                            || daughterCareer.IsEmployed
                             || family.GetSpouse(
                                 daughter) is not null
                             || households.ResolveHouseholdHead(

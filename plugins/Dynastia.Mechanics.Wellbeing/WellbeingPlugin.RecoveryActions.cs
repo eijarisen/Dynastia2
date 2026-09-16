@@ -158,7 +158,7 @@ public sealed partial class WellbeingPlugin
                                 actionContext.Actor);
 
                         return !current.IsRetired
-                            && current.JobLevel > 0
+                            && current.IsEmployed
                             && current.JobSatisfaction == 1;
                     },
 
@@ -172,7 +172,7 @@ public sealed partial class WellbeingPlugin
                             career.GetCareer(actor);
 
                         if (current.IsRetired
-                            || current.JobLevel <= 0
+                            || !current.IsEmployed
                             || current.JobSatisfaction != 1)
                         {
                             return new GameActionResult(

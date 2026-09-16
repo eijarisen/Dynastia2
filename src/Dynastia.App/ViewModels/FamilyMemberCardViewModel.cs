@@ -161,7 +161,7 @@ public sealed class FamilyMemberCardViewModel
                     careerSnapshot);
 
             satisfactionTooltip =
-                careerSnapshot.JobLevel > 0
+                careerSnapshot.IsEmployed
                 && !careerSnapshot.IsRetired
                     ? careerSnapshot.JobSatisfactionText
                     : "N/A";
@@ -462,7 +462,7 @@ public sealed class FamilyMemberCardViewModel
     private static string ResolveLastOccupation(
         CareerSnapshot career)
     {
-        if (career.JobLevel > 0)
+        if (career.IsEmployed)
         {
             return FormatOccupation(
                 career.JobTitle,

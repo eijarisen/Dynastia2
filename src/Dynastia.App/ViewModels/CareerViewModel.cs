@@ -74,7 +74,7 @@ public sealed class CareerViewModel
         SatisfactionLabel =
             isAlive
             && !snapshot.IsRetired
-                ? snapshot.JobLevel > 0
+                ? snapshot.IsEmployed
                     ? snapshot.JobSatisfactionText
                     : nonWorkingAdult
                         ? "N/A"
@@ -93,7 +93,7 @@ public sealed class CareerViewModel
                 : snapshot.IsRetired
                     ? $"Pension: " +
                       $"{snapshot.AnnualIncome:N0} zł/year"
-                    : snapshot.JobLevel > 0
+                    : snapshot.IsEmployed
                         ? $"Income: " +
                           $"{snapshot.AnnualIncome:N0} zł/year"
                         : nonWorkingAdult

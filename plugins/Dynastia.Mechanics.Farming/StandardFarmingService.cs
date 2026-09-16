@@ -98,9 +98,7 @@ internal sealed class StandardFarmingService :
             || person.Age < 10
             || person.Tags.Has("state.imprisoned")
             || person.Tags.Has("role.nanny")
-            || person.Tags.Has("role.family_nanny")
-            || person.Tags.Has("career.craft_self_employed")
-            || person.Tags.Has("employment.craft"))
+            || person.Tags.Has("role.family_nanny"))
         {
             return false;
         }
@@ -115,10 +113,7 @@ internal sealed class StandardFarmingService :
             return false;
         }
 
-        var career =
-            _career.GetCareer(person);
-
-        return career.JobLevel <= 0;
+        return !_career.IsEmployed(person);
     }
 
     public decimal GetExpectedAnnualIncome(

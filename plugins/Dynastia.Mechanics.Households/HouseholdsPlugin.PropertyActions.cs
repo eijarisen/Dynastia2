@@ -475,7 +475,7 @@ public sealed partial class HouseholdsPlugin
                 && !person.Tags.Has("role.nanny")
                 && !person.Tags.Has("role.family_nanny"))
             .Select(person => new { Person = person, Career = career.GetCareer(person) })
-            .Where(item => !item.Career.IsRetired && item.Career.JobLevel > 0)
+            .Where(item => !item.Career.IsRetired && item.Career.IsEmployed && !item.Career.IsSelfEmployed)
             .ToList();
 
         economy.SetResidenceTown(head, destination);

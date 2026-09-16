@@ -43,7 +43,7 @@ public sealed partial class StandardEconomyService
         {
             var amount =
                 RoundCurrency(
-                    _income.GetAnnualIncome(member));
+                    _income.Providers.Sum(provider => provider.GetExpectedAnnualIncome(member)));
 
             if (amount == 0)
                 continue;

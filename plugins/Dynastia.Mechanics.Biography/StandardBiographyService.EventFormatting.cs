@@ -152,6 +152,10 @@ public sealed partial class StandardBiographyService
             "farmland.given" => "🌾 ",
             "farmland.received" => "🌾 ",
             "farmland.request_refused" => "🚫 ",
+            "craft.learned" => "🛠️ ",
+            "craft.teaching_failed" => "🧱 ",
+            "craft.self_employment_started" => "🛠️ ",
+            "craft.self_employment_ended" => "🚶 ",
 
             "household.house_promised" => "🎁 ",
 

@@ -79,8 +79,7 @@ public sealed partial class StandardCareerService
                 continue;
             }
 
-            if (current.JobLevel > 0
-                && level <= current.JobLevel
+            if (current.IsEmployed
                 && selected.Career.BaseSalary * level
                     <= current.AnnualIncome)
             {
@@ -182,7 +181,7 @@ public sealed partial class StandardCareerService
         }
 
         var offeredSalary = definition.BaseSalary * level;
-        if (before.JobLevel > 0
+        if (before.IsEmployed
             && offeredSalary <= before.AnnualIncome)
         {
             return new JobApplicationResult(
@@ -219,6 +218,14 @@ public sealed partial class StandardCareerService
         ArgumentNullException.ThrowIfNull(person);
 
         var level = Math.Clamp(jobLevel, 0, 5);
+
+        if (_craftResolver()?.IsSelfEmployed(person) == true)
+        {
+            _craftResolver()?.EndOccupation(
+                person,
+                level > 0 ? "formal employment" : "ended");
+        }
+
         var definition = level > 0
             ? _catalog.Find(careerId)
             : null;
@@ -483,7 +490,8 @@ public sealed partial class StandardCareerService
             applicantEducation,
             experience.Total,
             chance,
-            year);
+            year,
+            _craftResolver()?.GetApplicationBonus(person, definition.Id) ?? 0);
     }
 
     private double CalculateApplicationChance(
@@ -521,6 +529,8 @@ public sealed partial class StandardCareerService
             chance += 0.10;
         else if (experience.Related > 0)
             chance += 0.05;
+
+        chance += _craftResolver()?.GetApplicationBonus(person, definition.Id) ?? 0;
 
         chance += Math.Min(5, component.PeakJobLevel) * 0.02;
 
@@ -560,6 +570,13 @@ public sealed partial class StandardCareerService
                     definition,
                     _catalog.Find(pair.Key)))
             .Sum(pair => pair.Value);
+
+        var craftExperience = _craftResolver()?.GetCareerExperience(person, definition.Id);
+        if (craftExperience is not null)
+        {
+            exact += craftExperience.ExactYears;
+            related += craftExperience.RelatedYears;
+        }
 
         return (exact, related, exact + related);
     }

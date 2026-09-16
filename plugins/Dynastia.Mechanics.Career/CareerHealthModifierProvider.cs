@@ -28,7 +28,7 @@ public sealed class CareerHealthModifierProvider :
             change += RetirementBonus;
 
         if (!career.IsRetired
-            && career.JobLevel > 0
+            && career.IsEmployed
             && career.JobSatisfaction == 1)
         {
             change -= MiserableJobPenalty;

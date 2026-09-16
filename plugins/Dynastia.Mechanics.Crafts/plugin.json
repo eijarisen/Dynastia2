@@ -1,0 +1,15 @@
+{
+  "id": "dynastia.crafts",
+  "name": "Standard Crafts",
+  "version": "0.1.0",
+  "apiVersion": 1,
+  "assembly": "Dynastia.Mechanics.Crafts.dll",
+  "entryType": "Dynastia.Mechanics.Crafts.CraftsPlugin",
+  "dependencies": [
+    "dynastia.family",
+    "dynastia.stats",
+    "dynastia.economy",
+    "dynastia.education",
+    "dynastia.career"
+  ]
+}

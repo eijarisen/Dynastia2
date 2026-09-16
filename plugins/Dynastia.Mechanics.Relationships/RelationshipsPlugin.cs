@@ -49,6 +49,11 @@ public sealed partial class RelationshipsPlugin : IGamePlugin
             ?? throw new InvalidOperationException(
                 "Career service is unavailable.");
 
+        var crafts =
+            context.GetService<ICraftService>()
+            ?? throw new InvalidOperationException(
+                "Craft service is unavailable.");
+
         var personality =
             context.GetService<IPersonalityService>()
             ?? throw new InvalidOperationException(
@@ -124,6 +129,7 @@ public sealed partial class RelationshipsPlugin : IGamePlugin
                 stats,
                 education,
                 career,
+                crafts,
                 economy,
                 personality,
                 appearance,

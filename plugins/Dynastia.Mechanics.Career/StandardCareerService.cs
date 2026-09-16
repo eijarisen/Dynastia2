@@ -20,6 +20,7 @@ public sealed partial class StandardCareerService :
         _localOpportunities;
     private readonly IStatsService _stats;
     private readonly IEducationService _education;
+    private readonly Func<ICraftService?> _craftResolver;
 
     internal StandardCareerService(
         IGameState gameState,
@@ -30,7 +31,8 @@ public sealed partial class StandardCareerService :
         RetirementRuleCatalog retirementRules,
         ILocalCareerOpportunityService localOpportunities,
         IStatsService stats,
-        IEducationService education)
+        IEducationService education,
+        Func<ICraftService?> craftResolver)
     {
         _gameState = gameState;
         _family = family;
@@ -46,6 +48,8 @@ public sealed partial class StandardCareerService :
             stats;
         _education =
             education;
+        _craftResolver =
+            craftResolver;
     }
 
     public void EnsureCareer(
@@ -120,38 +124,59 @@ public sealed partial class StandardCareerService :
                 career);
 
         var year = _gameState.Year;
+        var crafts = _craftResolver();
+        var activeCraft = career.IsRetired
+            ? null
+            : crafts?.GetActiveCraft(person);
+        var isCraftSelfEmployed = activeCraft is not null;
+        var annualIncome = isCraftSelfEmployed
+            ? crafts!.GetExpectedAnnualIncome(person)
+            : GetAnnualIncome(person);
+        var jobTitle = isCraftSelfEmployed
+            ? $"Self-employed {activeCraft!.SelfEmploymentTitle}"
+            : ResolveJobTitle(person, career, definition);
+        var statusId = isCraftSelfEmployed
+            ? null
+            : ResolveStatusId(person, career);
 
         return new CareerSnapshot(
             career.JobLevel,
-            ResolveJobTitle(
-                person,
-                career,
-                definition),
+            jobTitle,
             career.JobSatisfaction,
             ResolveJobSatisfactionText(
                 career.JobSatisfaction),
             career.LastIncome,
-            GetAnnualIncome(
-                person),
+            annualIncome,
             career.IsRetired,
             definition?.Id,
-            definition is null
-                ? null
-                : _presentation.ResolveCareerName(
-                    definition.Id,
-                    definition.Name,
-                    year),
-            definition?.BaseSalary
-                ?? 0,
+            isCraftSelfEmployed
+                ? activeCraft!.Name
+                : definition is null
+                    ? null
+                    : _presentation.ResolveCareerName(
+                        definition.Id,
+                        definition.Name,
+                        year),
+            isCraftSelfEmployed
+                ? GetLevelOneSalary(activeCraft!.PrimaryCareerId)
+                : definition?.BaseSalary ?? 0,
             career.PeakJobLevel,
             career.PeakCareerId,
-            ResolvePeakJobTitle(
-                career),
-            ResolveStatusId(
-                person,
-                career));
+            ResolvePeakJobTitle(career),
+            statusId,
+            career.JobLevel > 0 || isCraftSelfEmployed,
+            isCraftSelfEmployed,
+            activeCraft?.Id);
     }
 
+
+    public bool IsEmployed(IPerson person)
+    {
+        var career = GetRequired(person);
+        return !career.IsRetired
+            && (career.JobLevel > 0
+                || _craftResolver()?.IsSelfEmployed(person) == true);
+    }
 
     public string GetStatusLabel(
         string statusId)
@@ -236,6 +261,8 @@ public sealed partial class StandardCareerService :
 
         if (targetLevel <= 0)
         {
+            _craftResolver()?.EndOccupation(person, "ended");
+
             career.JobLevel =
                 0;
 

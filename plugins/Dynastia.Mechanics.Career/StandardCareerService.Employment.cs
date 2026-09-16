@@ -45,7 +45,7 @@ public sealed partial class StandardCareerService
     {
         var current = GetRequired(person);
         if (current.IsRetired
-            || current.JobLevel != 0
+            || IsEmployed(person)
             || person.Age < 18
             || !person.Tags.Has("state.alive")
             || person.Tags.Has("state.imprisoned"))
@@ -249,7 +249,7 @@ public sealed partial class StandardCareerService
                 person);
 
         if (career.IsRetired
-            || career.JobLevel > 0)
+            || IsEmployed(person))
         {
             throw new InvalidOperationException(
                 "Family connections can only place an unemployed non-retired person.");

@@ -35,7 +35,7 @@ public sealed partial class CareerPlugin
                         career.GetCareer(actionContext.Actor);
 
                     return !current.IsRetired
-                        && current.JobLevel > 0;
+                        && current.IsEmployed;
                 },
 
                 Execute = actionContext =>
@@ -44,36 +44,31 @@ public sealed partial class CareerPlugin
                     var current = career.GetCareer(actor);
 
                     if (current.IsRetired
-                        || current.JobLevel <= 0)
+                        || !current.IsEmployed)
                     {
                         return new GameActionResult(false);
                     }
 
                     career.SetJobLevel(actor, 0);
 
-                    events.Publish(
-                        new GameEvent
-                        {
-                            Type = "career.quit",
-                            Year = actionContext.GameState.Year,
-                            SubjectId = actor.Id,
-                            Data = new Dictionary<string, string>
+                    if (!current.IsSelfEmployed)
+                    {
+                        events.Publish(
+                            new GameEvent
                             {
-                                ["careerId"] =
-                                    current.CareerId
-                                    ?? string.Empty,
-
-                                ["careerName"] =
-                                    current.CareerName
-                                    ?? string.Empty,
-
-                                ["jobTitle"] =
-                                    current.JobTitle,
-
-                                ["text"] =
-                                    $"{family.GetDisplayName(actor)} quit their job as {current.JobTitle}."
-                            }
-                        });
+                                Type = "career.quit",
+                                Year = actionContext.GameState.Year,
+                                SubjectId = actor.Id,
+                                Data = new Dictionary<string, string>
+                                {
+                                    ["careerId"] = current.CareerId ?? string.Empty,
+                                    ["careerName"] = current.CareerName ?? string.Empty,
+                                    ["jobTitle"] = current.JobTitle,
+                                    ["text"] =
+                                        $"{family.GetDisplayName(actor)} quit their job as {current.JobTitle}."
+                                }
+                            });
+                    }
 
                     return new GameActionResult(true);
                 }
@@ -179,7 +174,7 @@ public sealed partial class CareerPlugin
 
                     var current = career.GetCareer(actionContext.Actor);
                     return !current.IsRetired
-                        && current.JobLevel == 0;
+                        && !current.IsEmployed;
                 },
 
                 Execute = actionContext =>
@@ -188,7 +183,7 @@ public sealed partial class CareerPlugin
                     var current = career.GetCareer(actor);
 
                     if (current.IsRetired
-                        || current.JobLevel != 0)
+                        || current.IsEmployed)
                     {
                         return new GameActionResult(false);
                     }
@@ -267,8 +262,8 @@ public sealed partial class CareerPlugin
 
                     var current = career.GetCareer(actionContext.Actor);
                     return !current.IsRetired
-                        && current.JobLevel > 0
-                        && current.JobLevel < 4;
+                        && current.IsEmployed
+                        && (current.IsSelfEmployed || current.JobLevel < 4);
                 },
 
                 Execute = actionContext =>

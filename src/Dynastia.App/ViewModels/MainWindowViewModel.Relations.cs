@@ -283,7 +283,7 @@ public sealed partial class MainWindowViewModel
         var career = _careerService?.GetCareer(member);
         var careerText = career is null
             ? string.Empty
-            : career.JobLevel > 0
+            : career.IsEmployed && career.JobLevel > 0
                 ? $"{career.JobTitle} ({career.JobLevel})"
                 : career.JobTitle;
 

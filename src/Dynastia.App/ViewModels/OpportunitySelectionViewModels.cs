@@ -37,6 +37,9 @@ public sealed class JobOpportunityCardViewModel
         $"Applicant: {Opportunity.PrimaryAbility} {Opportunity.ApplicantAbilityLevel} · " +
         $"Education {Opportunity.ApplicantEducationLevel} · " +
         $"Experience {Opportunity.ApplicantExperienceYears}y · " +
+        (Opportunity.CraftBonus > 0
+            ? $"Craft bonus +{Opportunity.CraftBonus:P0} · "
+            : string.Empty) +
         $"Chance {Opportunity.SuccessChance:P0} · " +
         $"Salary {Opportunity.AnnualSalary:N0} zł/year";
 }
@@ -105,6 +108,13 @@ public sealed class PotentialPartnerCardViewModel
 
     public string EducationText =>
         $"Education: {Candidate.EducationLevel}";
+
+    public string CraftsText =>
+        Candidate.Crafts.Count == 0
+            ? "Crafts: None"
+            : "Crafts: " + string.Join(
+                ", ",
+                Candidate.Crafts.Select(craft => craft.Name));
 
     public string HobbiesText =>
         Candidate.Hobbies.Count == 0

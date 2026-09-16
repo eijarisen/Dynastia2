@@ -1374,6 +1374,7 @@
                                             <TextBlock FontSize="12" Text="{Binding SelectedPerson.AgeText}" />
                                             <TextBlock FontSize="12" Text="{Binding SelectedFamily.Sex, StringFormat='Sex: {0}'}" />
                                             <TextBlock FontSize="12" Text="{Binding SelectedEducation.EducationText}" />
+                                            <TextBlock FontSize="12" Text="{Binding SelectedEducation.CraftsText}" />
                                             <TextBlock FontSize="12" Text="{Binding SelectedHobbiesText}" />
                                             <TextBlock FontSize="12" Text="{Binding SelectedCareer.OccupationText}" />
                                             <TextBlock

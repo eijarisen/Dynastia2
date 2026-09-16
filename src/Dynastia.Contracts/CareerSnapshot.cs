@@ -14,4 +14,7 @@ public sealed record CareerSnapshot(
     int PeakJobLevel = 0,
     string? PeakCareerId = null,
     string? PeakJobTitle = null,
-    string? StatusId = null);
+    string? StatusId = null,
+    bool IsEmployed = false,
+    bool IsSelfEmployed = false,
+    string? CraftId = null);

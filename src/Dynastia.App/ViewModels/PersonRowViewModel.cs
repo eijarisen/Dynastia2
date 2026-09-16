@@ -66,7 +66,7 @@ public sealed class PersonRowViewModel
                     person);
 
             OccupationText =
-                career.JobLevel > 0
+                career.IsEmployed && career.JobLevel > 0
                     ? $"{career.JobTitle} ({career.JobLevel})"
                     : career.JobTitle;
         }

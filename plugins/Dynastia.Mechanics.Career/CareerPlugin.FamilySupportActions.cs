@@ -40,7 +40,7 @@ public sealed partial class CareerPlugin
 
                     var targetCareer = career.GetCareer(target);
                     if (targetCareer.IsRetired
-                        || targetCareer.JobLevel != 0)
+                        || targetCareer.IsEmployed)
                     {
                         return false;
                     }
@@ -75,7 +75,7 @@ public sealed partial class CareerPlugin
 
                     if ((!isWife && !isUnmarriedDaughter)
                         || targetCareer.IsRetired
-                        || targetCareer.JobLevel != 0)
+                        || targetCareer.IsEmployed)
                     {
                         return new GameActionResult(false);
                     }
@@ -165,8 +165,8 @@ public sealed partial class CareerPlugin
 
                     var targetCareer = career.GetCareer(target);
                     return !targetCareer.IsRetired
-                        && targetCareer.JobLevel > 0
-                        && targetCareer.JobLevel < 3;
+                        && targetCareer.IsEmployed
+                        && (targetCareer.IsSelfEmployed || targetCareer.JobLevel < 3);
                 },
 
                 Execute = actionContext =>
@@ -191,8 +191,8 @@ public sealed partial class CareerPlugin
 
                     if ((!isWife && !isUnmarriedDaughter)
                         || targetCareer.IsRetired
-                        || targetCareer.JobLevel <= 0
-                        || targetCareer.JobLevel >= 3)
+                        || !targetCareer.IsEmployed
+                        || !targetCareer.IsSelfEmployed && targetCareer.JobLevel >= 3)
                     {
                         return new GameActionResult(false);
                     }
@@ -249,7 +249,7 @@ public sealed partial class CareerPlugin
                             ? 2
                             : 1;
 
-                    return targetCareer.JobLevel > 0
+                    return targetCareer.IsEmployed
                         && targetCareer.JobSatisfaction
                             <= maximumSatisfaction;
                 },
@@ -278,7 +278,7 @@ public sealed partial class CareerPlugin
                             ? 2
                             : 1;
 
-                    if (targetCareer.JobLevel <= 0
+                    if (!targetCareer.IsEmployed
                         || targetCareer.JobSatisfaction
                             > maximumSatisfaction)
                     {
@@ -382,7 +382,7 @@ public sealed partial class CareerPlugin
                     var targetCareer =
                         career.GetCareer(target);
 
-                    return targetCareer.JobLevel > 0
+                    return targetCareer.IsEmployed
                         && targetCareer.JobSatisfaction == 1;
                 },
 
@@ -405,7 +405,7 @@ public sealed partial class CareerPlugin
                     var targetCareer =
                         career.GetCareer(target);
 
-                    if (targetCareer.JobLevel <= 0
+                    if (!targetCareer.IsEmployed
                         || targetCareer.JobSatisfaction != 1)
                     {
                         return new GameActionResult(false);

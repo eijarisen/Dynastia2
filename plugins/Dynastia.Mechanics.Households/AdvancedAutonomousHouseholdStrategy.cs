@@ -403,6 +403,12 @@ internal sealed class AdvancedAutonomousHouseholdStrategy :
             "farming.buy_farmland" =>
                 ScoreBuyFarmland(option, snapshot),
 
+            _ when id.StartsWith("craft.start.", StringComparison.OrdinalIgnoreCase) =>
+                ScoreStartCraft(option, snapshot),
+
+            _ when id.StartsWith("craft.teach.", StringComparison.OrdinalIgnoreCase) =>
+                ScoreTeachCraft(option, snapshot),
+
             "family_relations.improve" =>
                 ScoreImproveRelations(option, snapshot),
 
@@ -456,11 +462,11 @@ internal sealed class AdvancedAutonomousHouseholdStrategy :
         if (target.IsSeriousHealthRisk)
         {
             var workingAdults = snapshot.Members.Count(member =>
-                member.Career?.JobLevel > 0);
+                member.Career?.IsEmployed == true);
 
             var survivalCriticalAdult =
                 target.Person.Id == snapshot.Head.Id
-                || target.Career?.JobLevel > 0 && workingAdults <= 1
+                || target.Career?.IsEmployed == true && workingAdults <= 1
                 || snapshot.Spouse?.Id == target.Person.Id
                     && snapshot.LivingChildCount < 2
                     && snapshot.HasRealisticReproductivePath;
@@ -721,7 +727,7 @@ internal sealed class AdvancedAutonomousHouseholdStrategy :
         AutonomousHouseholdSnapshot snapshot,
         AutonomousMemberSnapshot? target)
     {
-        if (target?.Career?.JobLevel != 0)
+        if (target?.Career?.IsEmployed != false)
             return null;
 
         return snapshot.FinancialState switch
@@ -742,8 +748,9 @@ internal sealed class AdvancedAutonomousHouseholdStrategy :
         AutonomousActionCandidate option,
         AutonomousHouseholdSnapshot snapshot)
     {
-        var level = _career.GetCareer(snapshot.Head).JobLevel;
-        if (level <= 0)
+        var current = _career.GetCareer(snapshot.Head);
+        var level = current.JobLevel;
+        if (!current.IsEmployed)
             return null;
 
         if ((snapshot.FinancialState is AutonomousFinancialState.Critical
@@ -1127,6 +1134,64 @@ internal sealed class AdvancedAutonomousHouseholdStrategy :
         return WithScore(option, AutonomyCategory.Property,
             AutonomousPriorityBands.LongTermImprovement,
             45 + earlyEraBonus + workerBonus);
+    }
+
+    private AutonomousActionCandidate? ScoreStartCraft(
+        AutonomousActionCandidate option,
+        AutonomousHouseholdSnapshot snapshot)
+    {
+        var crafts = _context.GetService<ICraftService>();
+        if (crafts is null || crafts.IsSelfEmployed(snapshot.Head))
+            return null;
+
+        var craftId = option.Action.Id["craft.start.".Length..];
+        var craft = crafts.Catalog.FirstOrDefault(candidate =>
+            candidate.Id.Equals(craftId, StringComparison.OrdinalIgnoreCase));
+        if (craft is null)
+            return null;
+
+        var current = _career.GetCareer(snapshot.Head);
+        var expectedCraftIncome = _career.GetLevelOneSalary(craft.PrimaryCareerId);
+        if (expectedCraftIncome <= 0m)
+            return null;
+
+        if (!current.IsEmployed)
+        {
+            return snapshot.FinancialState switch
+            {
+                AutonomousFinancialState.Critical => WithScore(option,
+                    AutonomyCategory.Solvency,
+                    AutonomousPriorityBands.HouseholdSolvency, 94),
+                AutonomousFinancialState.Poor => WithScore(option,
+                    AutonomyCategory.Solvency,
+                    AutonomousPriorityBands.HouseholdSolvency, 86),
+                _ => WithScore(option,
+                    AutonomyCategory.CareerDevelopment,
+                    AutonomousPriorityBands.LongTermImprovement, 58)
+            };
+        }
+
+        if (current.IsSelfEmployed || expectedCraftIncome <= current.AnnualIncome * 1.10m)
+            return null;
+
+        return WithScore(option, AutonomyCategory.CareerDevelopment,
+            AutonomousPriorityBands.LongTermImprovement, 44);
+    }
+
+    private AutonomousActionCandidate? ScoreTeachCraft(
+        AutonomousActionCandidate option,
+        AutonomousHouseholdSnapshot snapshot)
+    {
+        if (!IsAtLeast(snapshot.FinancialState, AutonomousFinancialState.Stable)
+            || snapshot.HasSeriousMedicalDanger
+            || snapshot.Status?.IsLargeFamilyStrained == true
+            || snapshot.LivingChildCount < 2 && snapshot.HasRealisticReproductivePath)
+        {
+            return null;
+        }
+
+        return WithScore(option, AutonomyCategory.CareerDevelopment,
+            AutonomousPriorityBands.LongTermImprovement, 38);
     }
 
     private AutonomousActionCandidate? ScoreImproveRelations(
@@ -1658,9 +1723,9 @@ internal sealed class AdvancedAutonomousHouseholdStrategy :
         if (target.Person.Id == snapshot.Head.Id)
             score += 16;
 
-        if (target.Career?.JobLevel > 0)
+        if (target.Career?.IsEmployed == true)
         {
-            var workingAdults = snapshot.Members.Count(member => member.Career?.JobLevel > 0);
+            var workingAdults = snapshot.Members.Count(member => member.Career?.IsEmployed == true);
             if (workingAdults <= 1)
                 score += 18;
         }

@@ -79,7 +79,7 @@ public sealed class CrimeYearSystem : IYearSystem
             person,
             intellect,
             broke,
-            career.JobLevel > 0,
+            career.IsEmployed,
             hasHousehold,
             state.Year);
         if (crime is null)

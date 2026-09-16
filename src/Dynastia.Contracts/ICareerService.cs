@@ -10,6 +10,7 @@ public interface ICareerService
     string GetStatusLabel(string statusId);
     void Retire(IPerson person);
     decimal GetAnnualIncome(IPerson person);
+    bool IsEmployed(IPerson person);
 
     decimal GetLevelOneSalary(string careerId);
 

@@ -146,6 +146,10 @@ public static class EventEmojiMap
                 ["farmland.given"] = "🌾",
                 ["farmland.received"] = "🌾",
                 ["farmland.request_refused"] = "🚫",
+                ["craft.learned"] = "🛠️",
+                ["craft.teaching_failed"] = "🧱",
+                ["craft.self_employment_started"] = "🛠️",
+                ["craft.self_employment_ended"] = "🚶",
 
                 // Filled the other missing action-family event emoji.
                 ["household.house_promised"] = "🎁",

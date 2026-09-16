@@ -127,7 +127,7 @@ public sealed class MarriageSatisfactionYearSystem : IYearSystem
         var husbandCareer = _career.GetCareer(husband);
         if (!husbandCareer.IsRetired
             && husband.Age >= 18
-            && husbandCareer.JobLevel <= 0)
+            && !husbandCareer.IsEmployed)
         {
             total += UnemployedHusbandPenalty;
             issues.Add("husband unemployed");
@@ -160,8 +160,8 @@ public sealed class MarriageSatisfactionYearSystem : IYearSystem
                 _career.GetCareer(wife);
 
             var hasWorkingSpouse =
-                husbandCareer.JobLevel > 0
-                || wifeCareer.JobLevel > 0;
+                husbandCareer.IsEmployed
+                || wifeCareer.IsEmployed;
 
             total +=
                 MarriageBalanceRules.GetFinancialPressurePenalty(

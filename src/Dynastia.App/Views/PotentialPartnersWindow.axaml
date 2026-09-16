@@ -176,6 +176,11 @@
                                             <TextBlock
                                                 FontFamily="Georgia"
                                                 FontSize="11.5"
+                                                Foreground="#3F2B19"
+                                                Text="{Binding CraftsText}" />
+                                            <TextBlock
+                                                FontFamily="Georgia"
+                                                FontSize="11.5"
                                                 Foreground="#46321C"
                                                 TextTrimming="CharacterEllipsis"
                                                 Text="{Binding HobbiesText}" />

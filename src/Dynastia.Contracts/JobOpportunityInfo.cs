@@ -14,4 +14,5 @@ public sealed record JobOpportunityInfo(
     int ApplicantEducationLevel,
     int ApplicantExperienceYears,
     double SuccessChance,
-    int SearchYear);
+    int SearchYear,
+    double CraftBonus = 0);

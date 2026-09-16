@@ -26,6 +26,7 @@ internal sealed class StandardPartnerSearchService :
     private readonly IStatsService _stats;
     private readonly IEducationService _education;
     private readonly ICareerService _career;
+    private readonly ICraftService _crafts;
     private readonly IEconomyService _economy;
     private readonly IPersonalityService _personality;
     private readonly IAppearanceService _appearance;
@@ -44,6 +45,7 @@ internal sealed class StandardPartnerSearchService :
         IStatsService stats,
         IEducationService education,
         ICareerService career,
+        ICraftService crafts,
         IEconomyService economy,
         IPersonalityService personality,
         IAppearanceService appearance,
@@ -61,6 +63,7 @@ internal sealed class StandardPartnerSearchService :
         _stats = stats;
         _education = education;
         _career = career;
+        _crafts = crafts;
         _economy = economy;
         _personality = personality;
         _appearance = appearance;
@@ -229,6 +232,15 @@ internal sealed class StandardPartnerSearchService :
                     candidateTown.SettlementClass)
                 ?? [];
 
+            var craftIds = _crafts.GenerateCandidateCraftIds(
+                candidateId.ToString("N"),
+                career.CareerId,
+                _gameState.Year);
+            var candidateCrafts = craftIds
+                .Select(id => _crafts.Catalog.First(craft =>
+                    craft.Id.Equals(id, StringComparison.OrdinalIgnoreCase)))
+                .ToList();
+
             var (estimatedWealth, estimatedHouses) = partnerSex == Sex.Male
                 ? EstimateMaleResources(career, education)
                 : (0m, 0);
@@ -278,7 +290,10 @@ internal sealed class StandardPartnerSearchService :
                 partnerValue,
                 acceptanceChance,
                 candidateTown.Id,
-                _gameState.Year));
+                _gameState.Year)
+            {
+                Crafts = candidateCrafts
+            });
         }
 
         return result;
@@ -339,6 +354,7 @@ internal sealed class StandardPartnerSearchService :
             ["partner.estimatedWealth"] = candidate.EstimatedWealth.ToString(CultureInfo.InvariantCulture),
             ["partner.estimatedHouses"] = candidate.EstimatedHouses.ToString(CultureInfo.InvariantCulture),
             ["partner.hobbies"] = string.Join('|', candidate.Hobbies.Select(hobby => hobby.Id)),
+            ["partner.crafts"] = string.Join('|', candidate.Crafts.Select(craft => craft.Id)),
             ["partner.value"] = candidate.PartnerValue.ToString("R", CultureInfo.InvariantCulture),
             ["partner.acceptance"] = candidate.AcceptanceChance.ToString("R", CultureInfo.InvariantCulture),
             ["partner.searchYear"] = candidate.SearchYear.ToString(CultureInfo.InvariantCulture),
@@ -609,6 +625,9 @@ internal sealed class StandardPartnerSearchService :
             candidate.CareerId,
             candidate.JobLevel,
             candidate.JobSatisfaction);
+        _crafts.SetCrafts(
+            person,
+            candidate.Crafts.Select(craft => craft.Id));
 
         if (candidate.Sex == Sex.Male
             && _locations.FindTown(candidate.TownId) is TownInfo originTown)
@@ -661,6 +680,15 @@ internal sealed class StandardPartnerSearchService :
         var hobbies = hobbyIds
             .Select(id => new HobbyInfo(id, id, string.Empty))
             .ToList();
+        var craftIds = parameters.TryGetValue("partner.crafts", out var storedCraftIds)
+            ? storedCraftIds.Split('|', StringSplitOptions.RemoveEmptyEntries)
+            : Array.Empty<string>();
+        var crafts = craftIds
+            .Select(id => _crafts.Catalog.FirstOrDefault(craft =>
+                craft.Id.Equals(id, StringComparison.OrdinalIgnoreCase)))
+            .Where(craft => craft is not null)
+            .Cast<CraftInfo>()
+            .ToList();
         var estimatedWealth = OptionalDecimal(
             parameters,
             "partner.estimatedWealth");
@@ -711,7 +739,10 @@ internal sealed class StandardPartnerSearchService :
             value,
             acceptance,
             townId,
-            searchYear);
+            searchYear)
+        {
+            Crafts = crafts
+        };
     }
 
     private bool TryReadCandidate(

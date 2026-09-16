@@ -256,6 +256,31 @@ internal sealed class CareerCatalog
                 "Level5Title",
                 "LocationType",
                 "MinimumSettlementClass",
+                "RequiredOpportunityTags",
+                "RelevantCraftIds"
+            };
+
+        var preCraftHeader =
+            new[]
+            {
+                "Number",
+                "Id",
+                "Name",
+                "Emoji",
+                "StartYear",
+                "EndYear",
+                "MaleEarly",
+                "FemaleEarly",
+                "MaleLate",
+                "FemaleLate",
+                "BaseSalary",
+                "Level1Title",
+                "Level2Title",
+                "Level3Title",
+                "Level4Title",
+                "Level5Title",
+                "LocationType",
+                "MinimumSettlementClass",
                 "RequiredOpportunityTags"
             };
 
@@ -282,9 +307,14 @@ internal sealed class CareerCatalog
                 "RequiredOpportunityTags"
             };
 
-        var hasEmojiColumn =
+        var hasCraftColumn =
             header.SequenceEqual(
                 expectedHeader,
+                StringComparer.Ordinal);
+
+        var hasEmojiColumn = hasCraftColumn
+            || header.SequenceEqual(
+                preCraftHeader,
                 StringComparer.Ordinal);
 
         var isLegacyHeader =
@@ -311,9 +341,11 @@ internal sealed class CareerCatalog
                 lines[index].Split(',');
 
             var expectedFieldCount =
-                hasEmojiColumn
+                hasCraftColumn
                     ? expectedHeader.Length
-                    : legacyHeader.Length;
+                    : hasEmojiColumn
+                        ? preCraftHeader.Length
+                        : legacyHeader.Length;
 
             if (fields.Length
                 != expectedFieldCount)
@@ -390,7 +422,11 @@ internal sealed class CareerCatalog
                             index),
                     RequiredOpportunityTags:
                         ParseTags(
-                            fields[17 + offset])));
+                            fields[17 + offset]),
+                    RelevantCraftIds:
+                        hasCraftColumn
+                            ? ParseTags(fields[18 + offset])
+                            : Array.Empty<string>()));
         }
 
         return result;

@@ -26,6 +26,8 @@ public sealed record PartnerCandidateInfo(
     string TownId,
     int SearchYear)
 {
+    public IReadOnlyList<CraftInfo> Crafts { get; init; } = [];
+
     public string DisplayName => $"{Name} {DisplaySurname}";
 
     public string DisplaySurname

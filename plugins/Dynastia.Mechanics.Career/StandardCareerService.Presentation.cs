@@ -54,6 +54,12 @@ public sealed partial class StandardCareerService
             return "🧑‍🍼";
         }
 
+        var activeCraft =
+            _craftResolver()?.GetActiveCraft(person);
+
+        if (activeCraft is not null)
+            return activeCraft.Emoji;
+
         var jobLevel =
             career?.JobLevel
             ?? 0;

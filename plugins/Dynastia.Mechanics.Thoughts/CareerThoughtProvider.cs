@@ -128,7 +128,7 @@ internal sealed class CareerThoughtProvider :
             yield break;
         }
 
-        if (career.JobLevel > 0)
+        if (career.IsEmployed)
         {
             var candidate =
                 career.JobSatisfaction switch

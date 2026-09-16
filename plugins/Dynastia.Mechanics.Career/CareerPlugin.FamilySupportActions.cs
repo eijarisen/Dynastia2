@@ -357,7 +357,7 @@ public sealed partial class CareerPlugin
                 Id = "career.ask_to_quit",
                 Label = "Ask to Quit Job",
                 Description =
-                    "Ask your miserable employed spouse or adult daughter to quit. " +
+                    "Ask your employed spouse or adult daughter to quit so they can focus on the household, including farm work. " +
                     "There is a 50% refusal chance.",
                 Mode = ActionExecutionMode.Queued,
                 QueuePhase = YearPhase.QueuedActionsEarly,
@@ -382,8 +382,7 @@ public sealed partial class CareerPlugin
                     var targetCareer =
                         career.GetCareer(target);
 
-                    return targetCareer.IsEmployed
-                        && targetCareer.JobSatisfaction == 1;
+                    return targetCareer.IsEmployed;
                 },
 
                 Execute = actionContext =>
@@ -405,11 +404,8 @@ public sealed partial class CareerPlugin
                     var targetCareer =
                         career.GetCareer(target);
 
-                    if (!targetCareer.IsEmployed
-                        || targetCareer.JobSatisfaction != 1)
-                    {
+                    if (!targetCareer.IsEmployed)
                         return new GameActionResult(false);
-                    }
 
                     if (random.NextDouble() > 0.5)
                     {

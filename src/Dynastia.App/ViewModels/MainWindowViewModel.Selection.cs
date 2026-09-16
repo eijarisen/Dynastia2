@@ -119,7 +119,8 @@ public sealed partial class MainWindowViewModel
         SelectedCareer =
             new CareerViewModel(
                 _careerService.GetCareer(person),
-                person.Tags.Has("state.alive"));
+                person.Tags.Has("state.alive"),
+                _farmingService?.IsWorkingFarmWorker(person, person) == true);
     }
 
     private void RefreshMarriageSatisfaction()

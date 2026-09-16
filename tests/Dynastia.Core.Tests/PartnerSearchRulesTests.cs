@@ -166,6 +166,29 @@ public sealed class PartnerSearchRulesTests
     }
 
     [Fact]
+    public void MalePartnerValueRewardsFarmlandOwnership()
+    {
+        var traits = new[] { 3, 3, 3, 3, 3, 3 };
+
+        var landless = PartnerSearchRules.CalculatePartnerValue(
+            Sex.Male,
+            30,
+            traits,
+            2,
+            1);
+        var landed = PartnerSearchRules.CalculatePartnerValue(
+            Sex.Male,
+            30,
+            traits,
+            2,
+            1,
+            farmlandOwned: 2);
+
+        Assert.Equal(5, landed - landless, 10);
+        Assert.True(landed > landless);
+    }
+
+    [Fact]
     public void HusbandOriginsBroadenAcrossModernCenturiesWhileSameTownStaysMostLikely()
     {
         var eighteenth =

@@ -10,6 +10,7 @@ public sealed class FamilyMemberCardViewModel
         IHealthService? health,
         IEducationService? education,
         ICareerService? career,
+        IFarmingService? farming,
         IJusticeService? justice,
         IStatsService? stats,
         ILocationService? locations,
@@ -152,9 +153,11 @@ public sealed class FamilyMemberCardViewModel
                     person);
 
             OccupationText =
-                FormatOccupation(
-                    careerSnapshot.JobTitle,
-                    careerSnapshot.JobLevel);
+                farming?.IsWorkingFarmWorker(person, person) == true
+                    ? "Farm Worker"
+                    : FormatOccupation(
+                        careerSnapshot.JobTitle,
+                        careerSnapshot.JobLevel);
 
             lastOccupationTooltip =
                 ResolveLastOccupation(

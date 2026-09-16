@@ -250,7 +250,8 @@ internal static partial class FamilyRelationActions
                 transferred with
                 {
                     AcquiredYear = c.GameState.Year,
-                    AcquisitionSource = "family-request"
+                    AcquisitionSource = "family-request",
+                    AssignedHeirId = null
                 });
             relations.RecordInteraction(c.Actor, c.Target, 8, 8);
 
@@ -302,7 +303,8 @@ internal static partial class FamilyRelationActions
                 transferred with
                 {
                     AcquiredYear = c.GameState.Year,
-                    AcquisitionSource = "family-gift"
+                    AcquisitionSource = "family-gift",
+                    AssignedHeirId = null
                 });
             relations.RecordInteraction(c.Actor, c.Target, 8, 12);
 

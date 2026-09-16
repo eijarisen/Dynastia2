@@ -18,6 +18,12 @@ public sealed partial class StandardEconomyService
                     if (house.AssignedHeirId == heirId)
                         house.AssignedHeirId = null;
                 }
+
+                foreach (var parcel in household.Farmland)
+                {
+                    if (parcel.AssignedHeirId == heirId)
+                        parcel.AssignedHeirId = null;
+                }
             }
 
             var estate =
@@ -32,6 +38,12 @@ public sealed partial class StandardEconomyService
             {
                 if (house.AssignedHeirId == heirId)
                     house.AssignedHeirId = null;
+            }
+
+            foreach (var parcel in estate.PendingFarmland)
+            {
+                if (parcel.AssignedHeirId == heirId)
+                    parcel.AssignedHeirId = null;
             }
         }
     }

@@ -33,6 +33,7 @@ public sealed class GameGenealogyDataSource :
     private readonly IHealthService? _health;
     private readonly IEducationService? _education;
     private readonly ICareerService? _career;
+    private readonly IFarmingService? _farming;
     private readonly IJusticeService? _justice;
     private readonly IStatsService? _stats;
     private readonly ILocationService? _locations;
@@ -52,6 +53,7 @@ public sealed class GameGenealogyDataSource :
         IHealthService? health = null,
         IEducationService? education = null,
         ICareerService? career = null,
+        IFarmingService? farming = null,
         IJusticeService? justice = null,
         IStatsService? stats = null,
         ILocationService? locations = null,
@@ -75,6 +77,9 @@ public sealed class GameGenealogyDataSource :
 
         _career =
             career;
+
+        _farming =
+            farming;
 
         _justice =
             justice;
@@ -335,21 +340,28 @@ public sealed class GameGenealogyDataSource :
                         ? career.PeakJobLevel
                         : 0;
 
+            var isFarmWorker =
+                _farming?.IsWorkingFarmWorker(person, person) == true;
+
             occupation =
-                displayedCareerLevel > 0
-                    ? $"{career.JobTitle} ({displayedCareerLevel})"
-                    : career.JobTitle;
+                isFarmWorker
+                    ? "Farm Worker"
+                    : displayedCareerLevel > 0
+                        ? $"{career.JobTitle} ({displayedCareerLevel})"
+                        : career.JobTitle;
 
             occupationTooltip =
-                career.IsRetired
-                    ? career.AnnualIncome > 0
-                        ? $"{occupation} — " +
-                          $"{career.AnnualIncome:N0} zł/year pension"
-                        : occupation
-                    : career.IsEmployed
-                        ? $"{occupation} — " +
-                          $"{career.AnnualIncome:N0} zł/year"
-                        : occupation;
+                isFarmWorker
+                    ? occupation
+                    : career.IsRetired
+                        ? career.AnnualIncome > 0
+                            ? $"{occupation} — " +
+                              $"{career.AnnualIncome:N0} zł/year pension"
+                            : occupation
+                        : career.IsEmployed
+                            ? $"{occupation} — " +
+                              $"{career.AnnualIncome:N0} zł/year"
+                            : occupation;
 
             satisfactionTooltip =
                 career.IsEmployed

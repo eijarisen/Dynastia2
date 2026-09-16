@@ -54,7 +54,7 @@ public sealed class FarmingPlugin : IGamePlugin
             new GameActionDefinition
             {
                 Id = "farming.buy_farmland",
-                Label = "Buy Farmland",
+                Label = $"Buy Farmland — {farming.PurchasePrice:N0} zł",
                 Description =
                     "Queue the purchase of one farmland parcel in the household's current town for 10,000 zł.",
                 Mode = ActionExecutionMode.Queued,
@@ -104,7 +104,7 @@ public sealed class FarmingPlugin : IGamePlugin
             new GameActionDefinition
             {
                 Id = "farming.sell_farmland",
-                Label = "Sell Farmland",
+                Label = $"Sell Farmland — {farming.SalePrice:N0} zł",
                 Description =
                     "Queue the sale of one farmland parcel for 8,000 zł. Local land is sold first; otherwise the oldest owned parcel is sold.",
                 Mode = ActionExecutionMode.Queued,

@@ -17,6 +17,8 @@ public sealed class FamilyInventoryWindowViewModel :
     private string _farmlandTitle = "Farmland";
     private string _farmlandSummaryText = string.Empty;
     private string _farmlandEmptyText = string.Empty;
+    private string _buyFarmlandActionText = "Buy Farmland — 10,000 zł";
+    private string _sellFarmlandActionText = "Sell Farmland — 8,000 zł";
     private bool _canTakeLoan;
     private bool _canGiveLoan;
     private bool _canBuyHouse;
@@ -160,6 +162,30 @@ public sealed class FamilyInventoryWindowViewModel :
         }
     }
 
+    public string BuyFarmlandActionText
+    {
+        get => _buyFarmlandActionText;
+        private set
+        {
+            if (_buyFarmlandActionText == value)
+                return;
+            _buyFarmlandActionText = value;
+            OnPropertyChanged();
+        }
+    }
+
+    public string SellFarmlandActionText
+    {
+        get => _sellFarmlandActionText;
+        private set
+        {
+            if (_sellFarmlandActionText == value)
+                return;
+            _sellFarmlandActionText = value;
+            OnPropertyChanged();
+        }
+    }
+
     public bool CanTakeLoan
     {
         get => _canTakeLoan;
@@ -258,6 +284,8 @@ public sealed class FamilyInventoryWindowViewModel :
             FarmlandTitle = "Farmland";
             FarmlandSummaryText = string.Empty;
             FarmlandEmptyText = "No owned farmland.";
+            BuyFarmlandActionText = "Buy Farmland — 10,000 zł";
+            SellFarmlandActionText = "Sell Farmland — 8,000 zł";
             CanTakeLoan = false;
             CanGiveLoan = false;
             CanBuyHouse = false;
@@ -349,13 +377,12 @@ public sealed class FamilyInventoryWindowViewModel :
 
         if (data.Farming is { } farming)
         {
-            foreach (var group in farming.Farmland
-                .GroupBy(asset => asset.Town.Id, StringComparer.OrdinalIgnoreCase)
-                .OrderBy(group => group.Min(asset => asset.AcquiredYear))
-                .ThenBy(group => group.Key, StringComparer.OrdinalIgnoreCase))
+            foreach (var asset in farming.Farmland
+                .OrderBy(asset => asset.AcquiredYear)
+                .ThenBy(asset => asset.Town.Town, StringComparer.CurrentCultureIgnoreCase)
+                .ThenBy(asset => asset.Id))
             {
-                var first = group.First();
-                var isLocal = group.Key.Equals(
+                var isLocal = asset.Town.Id.Equals(
                     farming.ResidenceTownId,
                     StringComparison.OrdinalIgnoreCase);
 
@@ -368,9 +395,10 @@ public sealed class FamilyInventoryWindowViewModel :
                     : "Remote / idle";
 
                 Farmland.Add(new InventoryFarmlandViewModel(
-                    first.Town.Town,
-                    group.Count(),
-                    status));
+                    asset,
+                    status,
+                    heirOptions,
+                    _main.SetFarmlandInheritanceHeir));
             }
 
             FarmlandTitle = $"Farmland — {farming.TotalParcelCount} " +
@@ -396,6 +424,10 @@ public sealed class FamilyInventoryWindowViewModel :
         CanSellHouse = data.CanSellHouse;
         CanBuyFarmland = data.CanBuyFarmland;
         CanSellFarmland = data.CanSellFarmland;
+        BuyFarmlandActionText =
+            $"Buy Farmland — {data.FarmlandPurchasePrice:N0} zł";
+        SellFarmlandActionText =
+            $"Sell Farmland — {data.FarmlandSalePrice:N0} zł";
     }
 }
 
@@ -433,19 +465,58 @@ public sealed class InventoryLoanLineViewModel
     public string DetailsText { get; }
 }
 
-public sealed class InventoryFarmlandViewModel
+public sealed class InventoryFarmlandViewModel :
+    ViewModelBase
 {
+    private readonly Func<Guid, Guid?, bool> _assign;
+    private HouseHeirOptionViewModel _selectedHeir;
+
     public InventoryFarmlandViewModel(
-        string town,
-        int count,
-        string statusText)
+        FarmlandAssetInfo farmland,
+        string statusText,
+        IReadOnlyList<HouseHeirOptionViewModel> heirOptions,
+        Func<Guid, Guid?, bool> assign)
     {
-        TownText = count == 1 ? town : $"{town} ×{count}";
+        FarmlandId = farmland.Id;
+        TownText = farmland.Town.DisplayName;
         StatusText = statusText;
+        HeirOptions = heirOptions;
+        _assign = assign;
+        _selectedHeir =
+            heirOptions.FirstOrDefault(option =>
+                option.PersonId == farmland.AssignedHeirId)
+            ?? heirOptions[0];
     }
 
+    public Guid FarmlandId { get; }
     public string TownText { get; }
     public string StatusText { get; }
+    public IReadOnlyList<HouseHeirOptionViewModel> HeirOptions { get; }
+
+    public HouseHeirOptionViewModel SelectedHeir
+    {
+        get => _selectedHeir;
+        set
+        {
+            if (value is null
+                || ReferenceEquals(_selectedHeir, value))
+            {
+                return;
+            }
+
+            var previous = _selectedHeir;
+            _selectedHeir = value;
+
+            if (!_assign(
+                    FarmlandId,
+                    value.PersonId))
+            {
+                _selectedHeir = previous;
+            }
+
+            OnPropertyChanged();
+        }
+    }
 }
 
 public sealed class HouseHeirOptionViewModel

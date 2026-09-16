@@ -4,6 +4,7 @@ public static class FarmingRules
 {
     public const decimal PurchasePrice = 10000m;
     public const decimal SalePrice = 8000m;
+    public const decimal IncomeScale = 5m;
 
     public static IReadOnlyList<decimal> GetStaffingFactors(
         int localParcelCount,

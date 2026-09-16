@@ -116,12 +116,20 @@ public sealed partial class MainWindowViewModel
     {
         get
         {
+            var head =
+                GetDisplayedHouseholdHead();
+
             var finance =
                 GetDisplayedHouseholdFinance();
 
-            return finance is null
-                ? string.Empty
-                : $"Houses: {finance.Houses.Count}";
+            if (head is null || finance is null)
+                return string.Empty;
+
+            var farmlandCount =
+                _farmingService?.GetSnapshot(head).TotalParcelCount
+                ?? 0;
+
+            return $"Houses: {finance.Houses.Count}   •   Farmland: {farmlandCount}";
         }
     }
 
@@ -141,6 +149,8 @@ public sealed partial class MainWindowViewModel
                 return string.Empty;
             }
 
+            var lines = new List<string>();
+
             if (finance.Houses.Count == 0)
             {
                 var homeTown =
@@ -150,33 +160,56 @@ public sealed partial class MainWindowViewModel
                         .HomeTown
                         .Town;
 
-                return string.IsNullOrWhiteSpace(
-                    homeTown)
+                lines.Add(
+                    string.IsNullOrWhiteSpace(homeTown)
                         ? "No owned houses. The household rents its residence."
-                        : $"{homeTown} — Renting";
+                        : $"{homeTown} — Renting");
             }
-
-            var lines =
-                finance.Houses
-                    .Select(
+            else
+            {
+                lines.AddRange(
+                    finance.Houses.Select(
                         house =>
                             $"{house.Town.Town} — " +
-                            $"{house.Status}")
-                    .ToList();
+                            $"{house.Status}"));
 
-            if (!finance.Houses.Any(house => house.IsResidence))
-            {
-                var homeTown =
-                    _locationService?
-                        .GetLocation(head)
-                        .HomeTown
-                        .Town;
-
-                if (!string.IsNullOrWhiteSpace(homeTown))
+                if (!finance.Houses.Any(house => house.IsResidence))
                 {
-                    lines.Insert(
-                        0,
-                        $"{homeTown} — Renting");
+                    var homeTown =
+                        _locationService?
+                            .GetLocation(head)
+                            .HomeTown
+                            .Town;
+
+                    if (!string.IsNullOrWhiteSpace(homeTown))
+                    {
+                        lines.Insert(
+                            0,
+                            $"{homeTown} — Renting");
+                    }
+                }
+            }
+
+            var farming =
+                _farmingService?.GetSnapshot(head);
+
+            if (farming is { TotalParcelCount: > 0 })
+            {
+                lines.Add(string.Empty);
+                lines.Add($"Farmland: {farming.TotalParcelCount} parcel" +
+                    $"{(farming.TotalParcelCount == 1 ? string.Empty : "s")}");
+
+                foreach (var group in farming.Farmland
+                    .GroupBy(asset => asset.Town.Id, StringComparer.OrdinalIgnoreCase)
+                    .OrderBy(group => group.First().Town.Town, StringComparer.CurrentCultureIgnoreCase))
+                {
+                    var first = group.First();
+                    var local = group.Key.Equals(
+                        farming.ResidenceTownId,
+                        StringComparison.OrdinalIgnoreCase);
+                    lines.Add(
+                        $"{first.Town.Town} ×{group.Count()} — " +
+                        (local ? "Local" : "Remote / idle"));
                 }
             }
 

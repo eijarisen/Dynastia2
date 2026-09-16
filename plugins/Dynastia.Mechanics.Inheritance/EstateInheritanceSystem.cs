@@ -505,13 +505,22 @@ public sealed class EstateInheritanceSystem :
                 heir => heir.Id,
                 _ => new List<FarmlandAssetInfo>());
 
+        var heirsById =
+            heirs.ToDictionary(heir => heir.Id);
+
+        var recipients =
+            HouseInheritanceAssignmentRules.ResolveRecipients(
+                heirs.Select(heir => heir.Id).ToList(),
+                farmland.Select(parcel => parcel.AssignedHeirId).ToList());
+
         for (var index = 0; index < farmland.Count; index++)
         {
-            var heir = heirs[index % heirs.Count];
+            var heir = heirsById[recipients[index]];
             var parcel = farmland[index] with
             {
                 AcquiredYear = gameState.Year,
-                AcquisitionSource = "inheritance"
+                AcquisitionSource = "inheritance",
+                AssignedHeirId = null
             };
 
             if (HasEstablishedHouseholdOutsideEstate(

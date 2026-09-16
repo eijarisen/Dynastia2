@@ -126,7 +126,9 @@ public sealed partial class MainWindowViewModel
             CanUseFamilyInventoryAction("household.buy_house"),
             CanUseFamilyInventoryAction("household.sell_house"),
             CanUseFamilyInventoryAction("farming.buy_farmland"),
-            CanUseFamilyInventoryAction("farming.sell_farmland"));
+            CanUseFamilyInventoryAction("farming.sell_farmland"),
+            _farmingService?.PurchasePrice ?? 10000m,
+            _farmingService?.SalePrice ?? 8000m);
     }
 
     internal bool SetHouseInheritanceHeir(
@@ -156,6 +158,34 @@ public sealed partial class MainWindowViewModel
         OnPropertyChanged(
             nameof(HouseholdHousesDetailsText));
 
+        return true;
+    }
+
+    internal bool SetFarmlandInheritanceHeir(
+        Guid farmlandId,
+        Guid? heirId)
+    {
+        var actor =
+            _succession.ActiveController;
+
+        if (actor is null
+            || _economyService is null)
+        {
+            return false;
+        }
+
+        var changed =
+            _economyService.SetFarmlandInheritanceHeir(
+                actor,
+                farmlandId,
+                heirId);
+
+        if (!changed)
+            return false;
+
+        RefreshEconomy();
+        OnPropertyChanged(
+            nameof(HouseholdHousesDetailsText));
         return true;
     }
 
@@ -272,7 +302,9 @@ internal sealed record FamilyInventoryData(
     bool CanBuyHouse,
     bool CanSellHouse,
     bool CanBuyFarmland,
-    bool CanSellFarmland);
+    bool CanSellFarmland,
+    decimal FarmlandPurchasePrice,
+    decimal FarmlandSalePrice);
 
 internal sealed record FamilyInventoryChildData(
     Guid Id,

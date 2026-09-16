@@ -267,6 +267,7 @@
                                         Spacing="8">
                                         <Button
                                             Classes="inventoryAction"
+                                            IsVisible="{Binding CanBuyHouse}"
                                             IsEnabled="{Binding CanBuyHouse}"
                                             Content="Buy a House"
                                             Click="OnBuyHouseClick" />
@@ -365,12 +366,12 @@
                                         <Button
                                             Classes="inventoryAction"
                                             IsEnabled="{Binding CanBuyFarmland}"
-                                            Content="Buy Farmland"
+                                            Content="{Binding BuyFarmlandActionText}"
                                             Click="OnBuyFarmlandClick" />
                                         <Button
                                             Classes="inventoryAction"
                                             IsEnabled="{Binding CanSellFarmland}"
-                                            Content="Sell Farmland"
+                                            Content="{Binding SellFarmlandActionText}"
                                             Click="OnSellFarmlandClick" />
                                     </StackPanel>
                                 </Grid>
@@ -386,21 +387,50 @@
                                     <ItemsControl.ItemTemplate>
                                         <DataTemplate x:DataType="vm:InventoryFarmlandViewModel">
                                             <Grid
-                                                Margin="0,3"
+                                                Margin="0,4"
                                                 ColumnDefinitions="*,Auto"
                                                 ColumnSpacing="18">
-                                                <TextBlock
-                                                    FontFamily="Georgia"
-                                                    FontSize="13.5"
-                                                    FontWeight="Bold"
-                                                    Foreground="#46321C"
-                                                    Text="{Binding TownText}" />
-                                                <TextBlock
+                                                <StackPanel Spacing="2">
+                                                    <TextBlock
+                                                        FontFamily="Georgia"
+                                                        FontSize="13.5"
+                                                        FontWeight="Bold"
+                                                        Foreground="#46321C"
+                                                        Text="{Binding TownText}" />
+                                                    <TextBlock
+                                                        FontFamily="Georgia"
+                                                        FontSize="11.5"
+                                                        Foreground="#6B5131"
+                                                        Text="{Binding StatusText}" />
+                                                </StackPanel>
+
+                                                <StackPanel
                                                     Grid.Column="1"
-                                                    FontFamily="Georgia"
-                                                    FontSize="11.5"
-                                                    Foreground="#6B5131"
-                                                    Text="{Binding StatusText}" />
+                                                    Orientation="Horizontal"
+                                                    VerticalAlignment="Center"
+                                                    Spacing="8">
+                                                    <TextBlock
+                                                        VerticalAlignment="Center"
+                                                        FontFamily="Georgia"
+                                                        FontSize="12"
+                                                        FontWeight="Bold"
+                                                        Foreground="#46321C"
+                                                        Text="Inherits:" />
+                                                    <ComboBox
+                                                        Classes="houseHeir"
+                                                        ItemsSource="{Binding HeirOptions}"
+                                                        SelectedItem="{Binding SelectedHeir, Mode=TwoWay}">
+                                                        <ComboBox.ItemTemplate>
+                                                            <DataTemplate x:DataType="vm:HouseHeirOptionViewModel">
+                                                                <TextBlock
+                                                                    FontFamily="Georgia"
+                                                                    FontSize="12"
+                                                                    Foreground="#352110"
+                                                                    Text="{Binding Label}" />
+                                                            </DataTemplate>
+                                                        </ComboBox.ItemTemplate>
+                                                    </ComboBox>
+                                                </StackPanel>
                                             </Grid>
                                         </DataTemplate>
                                     </ItemsControl.ItemTemplate>
@@ -427,7 +457,7 @@
                     FontFamily="Georgia"
                     FontSize="11.5"
                     Foreground="#6B4521"
-                    Text="Assigned houses bypass standard house inheritance; unassigned houses keep the normal rules." />
+                    Text="Assigned houses and farmland bypass standard inheritance; unassigned property keeps the normal rules." />
                 <ui:ImageStateButton
                     Grid.Column="1"
                     Width="170"

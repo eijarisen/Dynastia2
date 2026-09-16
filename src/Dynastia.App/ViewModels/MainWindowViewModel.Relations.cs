@@ -283,9 +283,11 @@ public sealed partial class MainWindowViewModel
         var career = _careerService?.GetCareer(member);
         var careerText = career is null
             ? string.Empty
-            : career.IsEmployed && career.JobLevel > 0
-                ? $"{career.JobTitle} ({career.JobLevel})"
-                : career.JobTitle;
+            : _farmingService?.IsWorkingFarmWorker(member, member) == true
+                ? "Farm Worker"
+                : career.IsEmployed && career.JobLevel > 0
+                    ? $"{career.JobTitle} ({career.JobLevel})"
+                    : career.JobTitle;
 
         var text = string.IsNullOrWhiteSpace(careerText)
             ? $"{kinship} — {name}"

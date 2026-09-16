@@ -6,7 +6,8 @@ public sealed class CareerViewModel
 {
     public CareerViewModel(
         CareerSnapshot snapshot,
-        bool isAlive)
+        bool isAlive,
+        bool isFarmWorker = false)
     {
         JobLevel =
             snapshot.JobLevel;
@@ -30,12 +31,14 @@ public sealed class CareerViewModel
             snapshot.IsRetired;
 
         OccupationText =
-            snapshot.JobLevel > 0
-                ? $"Occupation: " +
-                  $"{snapshot.JobTitle} " +
-                  $"({snapshot.JobLevel})"
-                : $"Occupation: " +
-                  $"{snapshot.JobTitle}";
+            isFarmWorker
+                ? "Occupation: Farm Worker"
+                : snapshot.JobLevel > 0
+                    ? $"Occupation: " +
+                      $"{snapshot.JobTitle} " +
+                      $"({snapshot.JobLevel})"
+                    : $"Occupation: " +
+                      $"{snapshot.JobTitle}";
 
         var unemployedAdult =
             isAlive

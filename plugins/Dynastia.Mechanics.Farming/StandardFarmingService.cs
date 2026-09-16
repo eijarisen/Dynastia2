@@ -116,6 +116,29 @@ internal sealed class StandardFarmingService :
         return !_career.IsEmployed(person);
     }
 
+    public bool IsWorkingFarmWorker(
+        IPerson person,
+        IPerson householdRepresentative)
+    {
+        if (!IsAvailableFarmWorker(
+                person,
+                householdRepresentative))
+        {
+            return false;
+        }
+
+        var localParcelCount =
+            GetLocalParcelCount(
+                householdRepresentative);
+
+        if (localParcelCount <= 0)
+            return false;
+
+        return GetWorkingFarmWorkers(
+                householdRepresentative)
+            .Any(worker => worker.Id == person.Id);
+    }
+
     public decimal GetExpectedAnnualIncome(
         IPerson householdRepresentative)
     {
@@ -137,6 +160,7 @@ internal sealed class StandardFarmingService :
         return Math.Round(
             referenceIncome
             * multiplier
+            * FarmingRules.IncomeScale
             * staffing.Sum(),
             0,
             MidpointRounding.AwayFromZero);
@@ -156,7 +180,8 @@ internal sealed class StandardFarmingService :
             _career.GetLevelOneSalary(
                 AgricultureCareerId)
             * _eraSchedule.GetMultiplier(
-                _gameState.Year);
+                _gameState.Year)
+            * FarmingRules.IncomeScale;
 
         decimal total = 0m;
 
@@ -193,7 +218,7 @@ internal sealed class StandardFarmingService :
                         ? "poor"
                         : "ordinary";
 
-        var workers = GetAvailableWorkers(
+        var workers = GetWorkingFarmWorkers(
             householdRepresentative);
 
         _events.Publish(
@@ -225,33 +250,45 @@ internal sealed class StandardFarmingService :
     {
         var memberIds =
             _economy.GetHouseholdMemberIds(
-                householdRepresentative)
-            .ToHashSet();
+                householdRepresentative);
 
-        return _gameState.People
-            .Where(person => memberIds.Contains(person.Id))
+        var peopleById =
+            _gameState.People.ToDictionary(person => person.Id);
+
+        return memberIds
+            .Distinct()
+            .Select(id => peopleById.GetValueOrDefault(id))
+            .Where(person => person is not null)
+            .Cast<IPerson>()
             .Where(person =>
                 IsAvailableFarmWorker(
                     person,
                     householdRepresentative))
-            .DistinctBy(person => person.Id)
+            .ToList();
+    }
+
+    private IReadOnlyList<IPerson> GetWorkingFarmWorkers(
+        IPerson householdRepresentative)
+    {
+        var localParcels =
+            GetLocalParcelCount(
+                householdRepresentative);
+
+        if (localParcels <= 0)
+            return [];
+
+        return GetAvailableWorkers(
+                householdRepresentative)
+            .Take(localParcels * 2)
             .ToList();
     }
 
     private IReadOnlyList<decimal> GetStaffingFactors(
         IPerson householdRepresentative)
     {
-        var residence =
-            _economy.GetResidenceTown(
-                householdRepresentative);
-
         var localParcels =
-            _economy.GetFarmland(
-                householdRepresentative)
-            .Count(asset =>
-                asset.Town.Id.Equals(
-                    residence.Id,
-                    StringComparison.OrdinalIgnoreCase));
+            GetLocalParcelCount(
+                householdRepresentative);
 
         var workers =
             GetAvailableWorkers(
@@ -261,5 +298,20 @@ internal sealed class StandardFarmingService :
         return FarmingRules.GetStaffingFactors(
             localParcels,
             workers);
+    }
+
+    private int GetLocalParcelCount(
+        IPerson householdRepresentative)
+    {
+        var residence =
+            _economy.GetResidenceTown(
+                householdRepresentative);
+
+        return _economy.GetFarmland(
+                householdRepresentative)
+            .Count(asset =>
+                asset.Town.Id.Equals(
+                    residence.Id,
+                    StringComparison.OrdinalIgnoreCase));
     }
 }

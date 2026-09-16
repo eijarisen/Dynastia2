@@ -12,6 +12,10 @@ public interface IFarmingService
         IPerson person,
         IPerson householdRepresentative);
 
+    bool IsWorkingFarmWorker(
+        IPerson person,
+        IPerson householdRepresentative);
+
     decimal GetExpectedAnnualIncome(
         IPerson householdRepresentative);
 }

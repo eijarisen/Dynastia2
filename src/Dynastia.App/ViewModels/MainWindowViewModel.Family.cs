@@ -25,6 +25,7 @@ public sealed partial class MainWindowViewModel
                     _healthService,
                     _economyService,
                     _careerService,
+                    _farmingService,
                     _householdService,
                     _locationService));
         }
@@ -486,6 +487,7 @@ public sealed partial class MainWindowViewModel
             _healthService,
             _educationService,
             _careerService,
+            _farmingService,
             _justiceService,
             _statsService,
             _locationService,

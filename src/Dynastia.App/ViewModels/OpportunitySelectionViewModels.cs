@@ -127,7 +127,7 @@ public sealed class PotentialPartnerCardViewModel
         Candidate.Sex == Sex.Male;
 
     public string FinancialText =>
-        $"Estimated wealth: {Candidate.EstimatedWealth:N0} zł · Houses: {Candidate.EstimatedHouses}";
+        $"Estimated wealth: {Candidate.EstimatedWealth:N0} zł · Houses: {Candidate.EstimatedHouses} · Farmland: {Candidate.EstimatedFarmland}";
 
     public string SuccessChanceText =>
         $"Chance of success: {Candidate.AcceptanceChance:P0}";

@@ -9,6 +9,7 @@ public sealed class FarmingRulesTests
     {
         Assert.Equal(10000m, FarmingRules.PurchasePrice);
         Assert.Equal(8000m, FarmingRules.SalePrice);
+        Assert.Equal(5m, FarmingRules.IncomeScale);
     }
 
     [Theory]

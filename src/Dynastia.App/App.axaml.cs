@@ -258,6 +258,7 @@ public partial class App : Application
                         healthService,
                         educationService,
                         careerService,
+                        farmingService,
                         justiceService,
                         statsService,
                         locationService,

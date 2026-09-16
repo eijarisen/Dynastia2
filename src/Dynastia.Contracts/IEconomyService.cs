@@ -138,6 +138,11 @@ public interface IEconomyService
         IPerson person,
         Guid farmlandId);
 
+    bool SetFarmlandInheritanceHeir(
+        IPerson person,
+        Guid farmlandId,
+        Guid? heirId);
+
     IReadOnlyList<FarmlandAssetInfo> TakeAllFarmland(
         IPerson person);
 

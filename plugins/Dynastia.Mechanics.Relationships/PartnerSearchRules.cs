@@ -11,7 +11,8 @@ public static class PartnerSearchRules
         int educationLevel,
         int careerLevel,
         decimal householdWealth = 0m,
-        int housesOwned = 0)
+        int housesOwned = 0,
+        int farmlandOwned = 0)
     {
         ArgumentNullException.ThrowIfNull(statValues);
 
@@ -35,8 +36,9 @@ public static class PartnerSearchRules
 
         // For male partners, household resources are part of marriage-market
         // attractiveness alongside traits, education and career standing.
-        // One ordinary house price (20,000 zł) is enough to fill the cash half
-        // of this component; up to two owned houses fill the property half.
+        // One ordinary house price (20,000 zł) is enough to fill the cash
+        // component; up to two owned houses and two farmland parcels contribute
+        // their respective property components.
         var maleTraits = statTotal / 30.0 * 65.0;
         var career = Math.Clamp(careerLevel, 0, 5)
             / 5.0 * 15.0;
@@ -44,9 +46,11 @@ public static class PartnerSearchRules
             * 5.0;
         var property = Math.Clamp(housesOwned, 0, 2)
             / 2.0 * 5.0;
+        var farmland = Math.Clamp(farmlandOwned, 0, 2)
+            / 2.0 * 5.0;
 
         return Math.Clamp(
-            maleTraits + education + career + cash + property,
+            maleTraits + education + career + cash + property + farmland,
             0,
             100);
     }

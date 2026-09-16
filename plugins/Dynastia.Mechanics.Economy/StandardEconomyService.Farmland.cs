@@ -59,7 +59,8 @@ public sealed partial class StandardEconomyService
             Id = farmland.Id == Guid.Empty ? Guid.NewGuid() : farmland.Id,
             TownId = farmland.Town.Id,
             AcquiredYear = farmland.AcquiredYear,
-            AcquisitionSource = farmland.AcquisitionSource
+            AcquisitionSource = farmland.AcquisitionSource,
+            AssignedHeirId = farmland.AssignedHeirId
         });
     }
 
@@ -77,6 +78,35 @@ public sealed partial class StandardEconomyService
         var state = household.Farmland[index];
         household.Farmland.RemoveAt(index);
         return ToFarmlandInfo(state);
+    }
+
+    public bool SetFarmlandInheritanceHeir(
+        IPerson person,
+        Guid farmlandId,
+        Guid? heirId)
+    {
+        var household = GetRequiredHousehold(person);
+        NormalizeFarmland(household);
+
+        var farmland = household.Farmland
+            .FirstOrDefault(candidate => candidate.Id == farmlandId);
+
+        if (farmland is null)
+            return false;
+
+        if (heirId is Guid selectedHeirId)
+        {
+            var validChild = _family.GetChildren(person)
+                .Any(child =>
+                    child.Id == selectedHeirId
+                    && child.Tags.Has("state.alive"));
+
+            if (!validChild)
+                return false;
+        }
+
+        farmland.AssignedHeirId = heirId;
+        return true;
     }
 
     public IReadOnlyList<FarmlandAssetInfo> TakeAllFarmland(
@@ -125,7 +155,8 @@ public sealed partial class StandardEconomyService
             Id = farmland.Id == Guid.Empty ? Guid.NewGuid() : farmland.Id,
             TownId = farmland.Town.Id,
             AcquiredYear = farmland.AcquiredYear,
-            AcquisitionSource = farmland.AcquisitionSource
+            AcquisitionSource = farmland.AcquisitionSource,
+            AssignedHeirId = farmland.AssignedHeirId
         });
     }
 
@@ -188,6 +219,7 @@ public sealed partial class StandardEconomyService
             state.Id,
             town,
             state.AcquiredYear,
-            state.AcquisitionSource);
+            state.AcquisitionSource,
+            state.AssignedHeirId);
     }
 }

@@ -13,6 +13,7 @@ public sealed class PersonRowViewModel
         IHealthService? healthService,
         IEconomyService? economyService,
         ICareerService? careerService,
+        IFarmingService? farmingService,
         IHouseholdService? householdService,
         ILocationService? locationService)
     {
@@ -44,7 +45,11 @@ public sealed class PersonRowViewModel
 
             ShowHousehold = true;
             BudgetText = $"${economy.Wealth:N0}";
-            HousesText = $"Houses: {economy.HousesOwned}";
+            var farmlandCount = farmingService?.GetSnapshot(person).TotalParcelCount
+                ?? economyService?.GetFarmland(person).Count
+                ?? 0;
+
+            HousesText = $"Houses: {economy.HousesOwned}   •   Farmland: {farmlandCount}";
             IncomeExpensesText =
                 $"+${projectedIncome:N0} / -${economy.LastExpenses:N0}";
 
@@ -66,9 +71,11 @@ public sealed class PersonRowViewModel
                     person);
 
             OccupationText =
-                career.IsEmployed && career.JobLevel > 0
-                    ? $"{career.JobTitle} ({career.JobLevel})"
-                    : career.JobTitle;
+                farmingService?.IsWorkingFarmWorker(person, person) == true
+                    ? "Farm Worker"
+                    : career.IsEmployed && career.JobLevel > 0
+                        ? $"{career.JobTitle} ({career.JobLevel})"
+                        : career.JobTitle;
         }
 
         if (locationService is not null)

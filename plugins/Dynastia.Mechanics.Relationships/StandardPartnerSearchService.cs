@@ -241,9 +241,13 @@ internal sealed class StandardPartnerSearchService :
                     craft.Id.Equals(id, StringComparison.OrdinalIgnoreCase)))
                 .ToList();
 
-            var (estimatedWealth, estimatedHouses) = partnerSex == Sex.Male
-                ? EstimateMaleResources(career, education)
-                : (0m, 0);
+            var (estimatedWealth, estimatedHouses, estimatedFarmland) = partnerSex == Sex.Male
+                ? EstimateMaleResources(
+                    career,
+                    education,
+                    candidateTown,
+                    _gameState.Year)
+                : (0m, 0, 0);
 
             var partnerValue = PartnerSearchRules.CalculatePartnerValue(
                 partnerSex,
@@ -252,7 +256,8 @@ internal sealed class StandardPartnerSearchService :
                 education,
                 career.JobLevel,
                 estimatedWealth,
-                estimatedHouses);
+                estimatedHouses,
+                estimatedFarmland);
             var acceptanceChance = PartnerSearchRules.CalculateAcceptanceChance(
                 seekerValue,
                 partnerValue,
@@ -292,7 +297,8 @@ internal sealed class StandardPartnerSearchService :
                 candidateTown.Id,
                 _gameState.Year)
             {
-                Crafts = candidateCrafts
+                Crafts = candidateCrafts,
+                EstimatedFarmland = estimatedFarmland
             });
         }
 
@@ -322,7 +328,10 @@ internal sealed class StandardPartnerSearchService :
             education,
             career.JobLevel,
             household?.Wealth ?? 0m,
-            household?.HousesOwned ?? 0);
+            household?.HousesOwned ?? 0,
+            household is null
+                ? 0
+                : _economy.GetFarmland(person).Count);
     }
 
     public IReadOnlyDictionary<string, string> BuildActionParameters(
@@ -353,6 +362,7 @@ internal sealed class StandardPartnerSearchService :
             ["partner.jobSatisfaction"] = candidate.JobSatisfaction.ToString(CultureInfo.InvariantCulture),
             ["partner.estimatedWealth"] = candidate.EstimatedWealth.ToString(CultureInfo.InvariantCulture),
             ["partner.estimatedHouses"] = candidate.EstimatedHouses.ToString(CultureInfo.InvariantCulture),
+            ["partner.estimatedFarmland"] = candidate.EstimatedFarmland.ToString(CultureInfo.InvariantCulture),
             ["partner.hobbies"] = string.Join('|', candidate.Hobbies.Select(hobby => hobby.Id)),
             ["partner.crafts"] = string.Join('|', candidate.Crafts.Select(craft => craft.Id)),
             ["partner.value"] = candidate.PartnerValue.ToString("R", CultureInfo.InvariantCulture),
@@ -695,6 +705,9 @@ internal sealed class StandardPartnerSearchService :
         var estimatedHouses = OptionalInt(
             parameters,
             "partner.estimatedHouses");
+        var estimatedFarmland = OptionalInt(
+            parameters,
+            "partner.estimatedFarmland");
         var value = RequiredDouble(parameters, "partner.value");
         var acceptance = RequiredDouble(parameters, "partner.acceptance");
         var searchYear = RequiredInt(parameters, "partner.searchYear");
@@ -741,7 +754,8 @@ internal sealed class StandardPartnerSearchService :
             townId,
             searchYear)
         {
-            Crafts = crafts
+            Crafts = crafts,
+            EstimatedFarmland = estimatedFarmland
         };
     }
 
@@ -761,9 +775,11 @@ internal sealed class StandardPartnerSearchService :
         }
     }
 
-    private static (decimal Wealth, int Houses) EstimateMaleResources(
+    private static (decimal Wealth, int Houses, int Farmland) EstimateMaleResources(
         GeneratedCareerProfile career,
-        int educationLevel)
+        int educationLevel,
+        TownInfo town,
+        int year)
     {
         var education = Math.Clamp(educationLevel, 0, 5);
         var level = Math.Clamp(career.JobLevel, 0, 5);
@@ -783,7 +799,22 @@ internal sealed class StandardPartnerSearchService :
                 ? 1
                 : 0;
 
-        return (wealth, houses);
+        var agriculture = career.CareerId?.Equals(
+            "agriculture_and_farm_estates",
+            StringComparison.OrdinalIgnoreCase) == true;
+
+        var farmland = agriculture
+            ? level >= 3 ? 2 : 1
+            : town.SettlementClass == SettlementClass.SmallTown
+                && year <= 1850
+                    ? 1
+                    : town.SettlementClass == SettlementClass.SmallTown
+                      && year <= 1900
+                      && education <= 2
+                        ? 1
+                        : 0;
+
+        return (wealth, houses, farmland);
     }
 
     private void SeedArrangedHusbandResources(
@@ -808,6 +839,17 @@ internal sealed class StandardPartnerSearchService :
             _economy.AddHouse(
                 husband,
                 town);
+        }
+
+        for (var index = 0;
+            index < Math.Max(0, candidate.EstimatedFarmland);
+            index++)
+        {
+            _economy.AddFarmland(
+                husband,
+                town,
+                _gameState.Year,
+                "marriage-candidate");
         }
     }
 

@@ -30,7 +30,7 @@ public sealed partial class HouseholdsPlugin
                         return false;
 
                     return economy.GetHousehold(context.Actor)
-                        is not null;
+                        is { Wealth: >= 15000m };
                 },
                 Execute = context =>
                 {

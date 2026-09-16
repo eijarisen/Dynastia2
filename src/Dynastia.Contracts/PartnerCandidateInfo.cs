@@ -28,6 +28,8 @@ public sealed record PartnerCandidateInfo(
 {
     public IReadOnlyList<CraftInfo> Crafts { get; init; } = [];
 
+    public int EstimatedFarmland { get; init; }
+
     public string DisplayName => $"{Name} {DisplaySurname}";
 
     public string DisplaySurname

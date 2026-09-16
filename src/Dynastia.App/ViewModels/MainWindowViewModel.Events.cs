@@ -45,6 +45,9 @@ public sealed partial class MainWindowViewModel
         object? sender,
         GameEvent gameEvent)
     {
+        PreserveChronicleHousehold(
+            gameEvent);
+
         if (gameEvent.Year
             == AlbumYear)
         {
@@ -52,6 +55,56 @@ public sealed partial class MainWindowViewModel
         }
 
         RefreshNarrative();
+    }
+
+    private void PreserveChronicleHousehold(
+        GameEvent gameEvent)
+    {
+        if (gameEvent.Data.ContainsKey(
+                "chronicleHouseholdId")
+            || gameEvent.Data
+                is not IDictionary<string, string> data)
+        {
+            return;
+        }
+
+        var personIds =
+            new List<Guid>();
+
+        if (gameEvent.SubjectId is Guid subjectId)
+            personIds.Add(subjectId);
+
+        personIds.AddRange(
+            gameEvent.RelatedPersonIds);
+
+        foreach (var personId in personIds.Distinct())
+        {
+            var person =
+                _gameState.People.FirstOrDefault(
+                    candidate =>
+                        candidate.Id == personId);
+
+            if (person is null)
+                continue;
+
+            var household =
+                _householdService?.GetHouseholdInfo(
+                    person);
+
+            if (household is null)
+                continue;
+
+            data["chronicleHouseholdId"] =
+                household.HouseholdId.ToString();
+
+            data["chronicleHouseholdHeadId"] =
+                household.HeadId.ToString();
+
+            data["chronicleHouseholdAnchorId"] =
+                household.DynastyAnchorId.ToString();
+
+            return;
+        }
     }
 
     private void OnSelectionChanged(

@@ -79,6 +79,7 @@ public sealed partial class CareerPlugin : IGamePlugin
             gameState,
             career,
             family,
+            education,
             retirementRules,
             random,
             events);

@@ -173,10 +173,6 @@ internal sealed class StandardPartnerSearchService :
                         candidateRandom)
                     : seekerTown;
 
-            var education = candidateRandom.NextInt(
-                educationRange.MinimumLevel,
-                educationRange.MaximumLevel);
-
             var stats = MainStatIds.ToDictionary(
                 id => id,
                 _ => candidateRandom.NextInt(1, 5),
@@ -199,19 +195,28 @@ internal sealed class StandardPartnerSearchService :
                 }
             }
 
-            var jobLevel = candidateRandom.NextInt(0, 3);
-            if (exceptional
-                && jobLevel > 0
-                && candidateRandom.NextDouble() < 0.35)
-            {
-                jobLevel = Math.Min(4, jobLevel + 1);
-            }
+            var education =
+                PartnerCandidateProfileRules.ResolveEducationLevel(
+                    educationRange.MinimumLevel,
+                    educationRange.MaximumLevel,
+                    stats["intellect"],
+                    candidateRandom.NextDouble());
+            var desiredJobLevel =
+                PartnerCandidateProfileRules.ResolveDesiredJobLevel(
+                    age,
+                    education,
+                    stats["strength"],
+                    stats["intellect"],
+                    candidateRandom.NextDouble());
 
             var career = _career.GenerateCandidateCareer(
                 partnerSex,
                 candidateTown,
                 _gameState.Year,
-                jobLevel,
+                desiredJobLevel,
+                stats["strength"],
+                stats["intellect"],
+                education,
                 candidateId.ToString("N"));
 
             var hobbies = _hobbyResolver()?
@@ -238,7 +243,8 @@ internal sealed class StandardPartnerSearchService :
                 estimatedHouses);
             var acceptanceChance = PartnerSearchRules.CalculateAcceptanceChance(
                 seekerValue,
-                partnerValue);
+                partnerValue,
+                partnerSex);
             var appearance = _appearance.GenerateCandidateAppearance(
                 candidateId,
                 partnerSex);

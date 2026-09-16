@@ -56,6 +56,70 @@ public sealed class HealthMortalityStabilizationTests
             6);
     }
 
+
+    [Fact]
+    public void HealthSeverityIncreasesImpactWithoutChangingIncidence()
+    {
+        var mild = new HealthConditionDefinition
+        {
+            Id = "mild",
+            Name = "Mild",
+            Type = "seasonal",
+            Category = "Mild",
+            Course = "Acute",
+            HealthImpact = -10
+        };
+        var serious = new HealthConditionDefinition
+        {
+            Id = "serious",
+            Name = "Serious",
+            Type = "curable",
+            Category = "Serious",
+            Course = "Acute",
+            HealthImpact = -10,
+            ImmediateHealthImpact = -40
+        };
+
+        Assert.Equal(-13.5, HealthSeverityRules.ScaleAnnualImpact(mild), 6);
+        Assert.Equal(-14.0, HealthSeverityRules.ScaleAnnualImpact(serious), 6);
+        Assert.Equal(-50.0, HealthSeverityRules.ScaleImmediateImpact(serious), 6);
+
+        Assert.Equal(
+            0.126,
+            HealthIncidenceRules.ScaleMildConditionChance(0.28),
+            6);
+    }
+
+    [Fact]
+    public void LoadedConditionsAdoptCurrentSeverityTuning()
+    {
+        var health = new StandardHealthService(
+            new MinimalHealthData(),
+            new FixedRandom());
+        var person = new Person("Anna", "Test", 30);
+        person.Components.Set(
+            new HealthComponent
+            {
+                Current = 100,
+                Maximum = 100,
+                Conditions =
+                {
+                    new HealthConditionState
+                    {
+                        Id = "test_condition",
+                        Name = "Test Condition",
+                        Type = "seasonal",
+                        HealthImpact = -1,
+                        RemainingYears = 1
+                    }
+                }
+            });
+
+        var condition = health.GetHealth(person).Conditions.Single();
+
+        Assert.Equal(-1.35, condition.HealthImpact, 6);
+    }
+
     [Fact]
     public void RandomMortalityIsReducedButZeroHealthIsNotPartOfScale()
     {

@@ -272,6 +272,55 @@ public sealed partial class MainWindowViewModel
         ResolveChronicleHousehold(
             GameEvent gameEvent)
     {
+        if (gameEvent.Data.TryGetValue(
+                "chronicleHouseholdId",
+                out var storedHouseholdIdText)
+            && Guid.TryParse(
+                storedHouseholdIdText,
+                out var storedHouseholdId)
+            && gameEvent.Data.TryGetValue(
+                "chronicleHouseholdHeadId",
+                out var storedHeadIdText)
+            && Guid.TryParse(
+                storedHeadIdText,
+                out var storedHeadId))
+        {
+            var storedHead =
+                _gameState.People.FirstOrDefault(
+                    person =>
+                        person.Id == storedHeadId);
+
+            if (storedHead is not null)
+            {
+                IPerson? storedAnchor = null;
+
+                if (gameEvent.Data.TryGetValue(
+                        "chronicleHouseholdAnchorId",
+                        out var storedAnchorIdText)
+                    && Guid.TryParse(
+                        storedAnchorIdText,
+                        out var storedAnchorId))
+                {
+                    storedAnchor =
+                        _gameState.People.FirstOrDefault(
+                            person =>
+                                person.Id == storedAnchorId);
+                }
+
+                storedAnchor ??=
+                    storedHead;
+
+                return (
+                    storedHouseholdId,
+                    $"{_familyService?.GetDisplayName(storedHead) ?? storedHead.Name}'s household",
+                    _familyService?.IsMaleLineage(storedAnchor) == true
+                        ? 0
+                        : 1,
+                    _familyService?.GetGeneration(storedAnchor)
+                        ?? int.MaxValue);
+            }
+        }
+
         var personIds =
             new List<Guid>();
 

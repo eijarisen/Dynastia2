@@ -30,6 +30,7 @@ public sealed class StandardHealthService : IHealthService
     public HealthSnapshot GetHealth(IPerson person)
     {
         var health = GetRequired(person);
+        ReconcileStoredConditionImpacts(health);
         return new HealthSnapshot(
             health.Current,
             health.Maximum,
@@ -81,6 +82,12 @@ public sealed class StandardHealthService : IHealthService
                 condition.RemainingYears = _random.NextInt(
                     definition.DurationMin.Value,
                     definition.DurationMax.Value);
+            }
+
+            if (definition is not null)
+            {
+                condition.HealthImpact =
+                    HealthSeverityRules.ScaleAnnualImpact(definition);
             }
 
             change += condition.HealthImpact;
@@ -136,8 +143,9 @@ public sealed class StandardHealthService : IHealthService
 
     internal void ApplyImmediateImpact(IPerson person, HealthConditionDefinition definition)
     {
-        if (definition.ImmediateHealthImpact != 0)
-            ChangeHealth(person, definition.ImmediateHealthImpact);
+        var impact = HealthSeverityRules.ScaleImmediateImpact(definition);
+        if (impact != 0)
+            ChangeHealth(person, impact);
     }
 
     private bool TryAddCondition(IPerson person, string conditionId, int? year, out HealthConditionState? added)
@@ -163,11 +171,25 @@ public sealed class StandardHealthService : IHealthService
                     ?? definition.Name
                 : definition.Name,
             Type = definition.Type,
-            HealthImpact = definition.HealthImpact,
+            HealthImpact = HealthSeverityRules.ScaleAnnualImpact(definition),
             RemainingYears = remaining
         };
         health.Conditions.Add(added);
         return true;
+    }
+
+
+    private void ReconcileStoredConditionImpacts(HealthComponent health)
+    {
+        foreach (var condition in health.Conditions)
+        {
+            var definition = GetDefinition(condition.Id);
+            if (definition is null)
+                continue;
+
+            condition.HealthImpact =
+                HealthSeverityRules.ScaleAnnualImpact(definition);
+        }
     }
 
     private HealthComponent GetRequired(IPerson person)

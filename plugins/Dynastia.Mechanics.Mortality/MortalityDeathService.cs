@@ -87,6 +87,27 @@ public sealed class MortalityDeathService
         var mother = _family.GetMother(person);
         var siblings = GetSiblings(person);
 
+        var chronicleHouseholdId =
+            _economy.GetHouseholdId(
+                person);
+
+        var chronicleHouseholdHead =
+            chronicleHouseholdId is Guid householdId
+                ? gameState.People.FirstOrDefault(
+                    candidate =>
+                        _economy.HasHousehold(
+                            candidate)
+                        && _economy.GetHouseholdId(
+                            candidate)
+                            == householdId)
+                : null;
+
+        var chronicleHouseholdAnchorId =
+            chronicleHouseholdHead is null
+                ? null
+                : _economy.GetHouseholdDynastyAnchorId(
+                    chronicleHouseholdHead);
+
         person.Tags.Remove("state.alive");
         person.Tags.Remove("control.playable");
         person.Tags.Add("state.dead");
@@ -124,6 +145,32 @@ public sealed class MortalityDeathService
 
         var survivors = BuildSurvivorText(person, spouse, children);
 
+        var eventData =
+            new Dictionary<string, string>
+            {
+                ["cause"] = cause,
+                ["age"] = person.Age.ToString(),
+                ["text"] =
+                    $"{_family.GetDisplayName(person)} " +
+                    $"died at age {person.Age}." + survivors
+            };
+
+        if (chronicleHouseholdId is Guid storedHouseholdId
+            && chronicleHouseholdHead is not null)
+        {
+            eventData["chronicleHouseholdId"] =
+                storedHouseholdId.ToString();
+
+            eventData["chronicleHouseholdHeadId"] =
+                chronicleHouseholdHead.Id.ToString();
+
+            if (chronicleHouseholdAnchorId is Guid anchorId)
+            {
+                eventData["chronicleHouseholdAnchorId"] =
+                    anchorId.ToString();
+            }
+        }
+
         _events.Publish(
             new GameEvent
             {
@@ -131,14 +178,7 @@ public sealed class MortalityDeathService
                 Year = gameState.Year,
                 SubjectId = person.Id,
                 RelatedPersonIds = related.Distinct().ToList(),
-                Data = new Dictionary<string, string>
-                {
-                    ["cause"] = cause,
-                    ["age"] = person.Age.ToString(),
-                    ["text"] =
-                        $"{_family.GetDisplayName(person)} " +
-                        $"died at age {person.Age}." + survivors
-                }
+                Data = eventData
             });
     }
 

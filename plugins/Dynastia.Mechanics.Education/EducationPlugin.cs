@@ -5,10 +5,6 @@ namespace Dynastia.Mechanics.Education;
 public sealed class EducationPlugin : IGamePlugin
 {
     private const decimal EducationCost = 2000m;
-    private const double BaseSuccessChance = 0.45;
-    private const double IntellectMultiplier = 0.10;
-    private const double MaximumPaidEducationSuccessChance = 0.95;
-
     private const int HelpLearningMinimumAge = 6;
     private const int HelpLearningAdultAge = 18;
     private const double HelpLearningBaseChance = 0.10;
@@ -57,7 +53,6 @@ public sealed class EducationPlugin : IGamePlugin
         InitializeFromEvents(
             gameState,
             education,
-            family,
             random,
             events,
             eras);
@@ -94,7 +89,6 @@ public sealed class EducationPlugin : IGamePlugin
     private static void InitializeFromEvents(
         IGameState gameState,
         IEducationService education,
-        IFamilyService family,
         IGameRandom random,
         IGameEventBus events,
         EducationEraCatalog eras)
@@ -119,37 +113,28 @@ public sealed class EducationPlugin : IGamePlugin
                         {
                             var era = eras.GetRule(gameEvent.Year);
 
+                            // The starting parents and older sister are all
+                            // adults with a pre-game life history. Give each
+                            // of them a historically appropriate adult
+                            // education profile before Career initializes so
+                            // starting job level and education can agree.
+                            foreach (var adult in gameState.People.Where(
+                                person =>
+                                    person.Id != founder.Id
+                                    && person.Age >= 18))
+                            {
+                                education.SetEducationLevel(
+                                    adult,
+                                    random.NextInt(
+                                        era.GeneratedAdultMinLevel,
+                                        era.GeneratedAdultMaxLevel));
+                            }
+
                             education.SetEducationLevel(
                                 founder,
                                 random.NextInt(
                                     era.FounderMinLevel,
                                     era.FounderMaxLevel));
-
-                            var father =
-                                family.GetFather(
-                                    founder);
-
-                            var mother =
-                                family.GetMother(
-                                    founder);
-
-                            if (father is not null)
-                            {
-                                education.SetEducationLevel(
-                                    father,
-                                    random.NextInt(
-                                        era.GeneratedAdultMinLevel,
-                                        era.GeneratedAdultMaxLevel));
-                            }
-
-                            if (mother is not null)
-                            {
-                                education.SetEducationLevel(
-                                    mother,
-                                    random.NextInt(
-                                        era.GeneratedAdultMinLevel,
-                                        era.GeneratedAdultMaxLevel));
-                            }
                         }
                     }
 
@@ -313,17 +298,13 @@ public sealed class EducationPlugin : IGamePlugin
                     .Value;
 
                 var successChance =
-                    BaseSuccessChance
-                    + intellect * IntellectMultiplier;
-
-                successChance =
-                    Math.Min(
-                        MaximumPaidEducationSuccessChance,
-                        PersonalityInfluence.AdjustProbability(
-                            successChance,
-                            target,
-                            melancholic: 0.10,
-                            choleric: -0.10));
+                    PersonalityInfluence.AdjustProbability(
+                        EducationProgressionRules
+                            .GetPaidEducationSuccessChance(
+                                intellect),
+                        target,
+                        melancholic: 0.10,
+                        choleric: -0.10);
 
                 var success =
                     random.NextDouble() < successChance;

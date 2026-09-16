@@ -68,9 +68,10 @@ public sealed partial class StandardCareerService :
             person.Age >= 18
                 && !person.Tags.Has(
                     "role.nanny")
-                ? _random.NextInt(
-                    0,
-                    3)
+                ? InitialCareerProfileRules.ResolveJobLevel(
+                    person.Age,
+                    _education.GetEducationLevel(person),
+                    _random.NextDouble())
                 : 0;
 
         var component =

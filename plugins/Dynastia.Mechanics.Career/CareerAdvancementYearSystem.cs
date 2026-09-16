@@ -106,8 +106,35 @@ public sealed class CareerAdvancementYearSystem :
                 person,
                 "intellect");
 
+        var strength =
+            GetStat(
+                person,
+                "strength");
+
+        var definition =
+            _career.GetDefinition(
+                person);
+
+        var strengthDrivenCareer =
+            definition is not null
+            && CareerEntryAptitudeClassifier.Get(
+                definition)
+                == CareerEntryAptitude.Strength;
+
+        var promotionAptitude =
+            CareerBalanceRules.GetPromotionAptitudeStat(
+                strengthDrivenCareer,
+                career.JobLevel,
+                strength,
+                intellect);
+
+        var educationMatters =
+            CareerBalanceRules.PromotionUsesEducation(
+                strengthDrivenCareer,
+                career.JobLevel);
+
         var promotionChance =
-            (intellect / 5.0)
+            (promotionAptitude / 5.0)
             * 0.02;
 
         var education =
@@ -119,25 +146,29 @@ public sealed class CareerAdvancementYearSystem :
         {
             promotionChance +=
                 CareerBalanceRules.GetWorkHarderPromotionBonus(
-                    intellect,
-                    education);
+                    promotionAptitude,
+                    education,
+                    educationMatters);
         }
 
-        if (career.JobLevel >= 2
+        if (educationMatters
+            && career.JobLevel >= 2
             && education < 3)
         {
             promotionChance /=
                 5;
         }
 
-        if (career.JobLevel >= 3
+        if (educationMatters
+            && career.JobLevel >= 3
             && education < 4)
         {
             promotionChance /=
                 10;
         }
 
-        if (career.JobLevel >= 4
+        if (educationMatters
+            && career.JobLevel >= 4
             && education < 5)
         {
             promotionChance =

@@ -31,6 +31,9 @@ public interface ICareerService
         TownInfo town,
         int year,
         int jobLevel,
+        int strength,
+        int intellect,
+        int educationLevel,
         string deterministicKey);
 
     bool TryFindBetterJob(IPerson person);

@@ -10,7 +10,17 @@ public sealed class PartnerSearchRulesTests
     {
         Assert.Equal(
             0.85,
-            PartnerSearchRules.CalculateAcceptanceChance(70, 70),
+            PartnerSearchRules.CalculateAcceptanceChance(
+                70,
+                70,
+                Sex.Female),
+            10);
+        Assert.Equal(
+            0.87,
+            PartnerSearchRules.CalculateAcceptanceChance(
+                70,
+                70,
+                Sex.Male),
             10);
     }
 
@@ -19,16 +29,93 @@ public sealed class PartnerSearchRulesTests
     {
         Assert.Equal(
             0.65,
-            PartnerSearchRules.CalculateAcceptanceChance(60, 70),
+            PartnerSearchRules.CalculateAcceptanceChance(
+                60,
+                70,
+                Sex.Female),
             10);
         Assert.Equal(
             0.45,
-            PartnerSearchRules.CalculateAcceptanceChance(60, 80),
+            PartnerSearchRules.CalculateAcceptanceChance(
+                60,
+                80,
+                Sex.Female),
             10);
         Assert.Equal(
             0.10,
-            PartnerSearchRules.CalculateAcceptanceChance(0, 100),
+            PartnerSearchRules.CalculateAcceptanceChance(
+                0,
+                100,
+                Sex.Female),
             10);
+    }
+
+
+    [Fact]
+    public void MaleCandidatesAreMoreWillingWithoutDefaultingToNinetyFivePercent()
+    {
+        var equal = PartnerSearchRules.CalculateAcceptanceChance(
+            70,
+            70,
+            Sex.Male);
+        var slightlyAdvantageous = PartnerSearchRules.CalculateAcceptanceChance(
+            75,
+            70,
+            Sex.Male);
+        var ambitious = PartnerSearchRules.CalculateAcceptanceChance(
+            60,
+            75,
+            Sex.Male);
+
+        Assert.Equal(0.87, equal, 10);
+        Assert.Equal(0.885, slightlyAdvantageous, 10);
+        Assert.Equal(0.825, ambitious, 10);
+        Assert.True(slightlyAdvantageous < 0.95);
+    }
+
+    [Fact]
+    public void CandidateEducationTracksIntellectWithinHistoricalRange()
+    {
+        var low = PartnerCandidateProfileRules.ResolveEducationLevel(
+            1,
+            4,
+            intellect: 1,
+            roll: 0.5);
+        var average = PartnerCandidateProfileRules.ResolveEducationLevel(
+            1,
+            4,
+            intellect: 3,
+            roll: 0.5);
+        var high = PartnerCandidateProfileRules.ResolveEducationLevel(
+            1,
+            4,
+            intellect: 5,
+            roll: 0.5);
+
+        Assert.Equal(1, low);
+        Assert.Equal(3, average);
+        Assert.Equal(4, high);
+    }
+
+    [Fact]
+    public void CandidateCareerStandingRewardsEducationAndAbility()
+    {
+        var weak = PartnerCandidateProfileRules.ResolveDesiredJobLevel(
+            age: 30,
+            educationLevel: 0,
+            strength: 1,
+            intellect: 1,
+            roll: 0.70);
+        var established = PartnerCandidateProfileRules.ResolveDesiredJobLevel(
+            age: 30,
+            educationLevel: 4,
+            strength: 4,
+            intellect: 4,
+            roll: 0.70);
+
+        Assert.True(established >= weak);
+        Assert.InRange(weak, 0, 2);
+        Assert.InRange(established, 1, 3);
     }
 
     [Fact]

@@ -8,6 +8,7 @@ public sealed partial class CareerPlugin
         IGameState gameState,
         ICareerService career,
         IFamilyService family,
+        IEducationService education,
         RetirementRuleCatalog retirementRules,
         IGameRandom random,
         IGameEventBus events)
@@ -25,9 +26,10 @@ public sealed partial class CareerPlugin
                             gameEvent.SubjectId is Guid founderId
                             && person.Id == founderId
                                 ? 1
-                                : person.Age >= 18
-                                    ? random.NextInt(0, 3)
-                                    : 0;
+                                : InitialCareerProfileRules.ResolveJobLevel(
+                                    person.Age,
+                                    education.GetEducationLevel(person),
+                                    random.NextDouble());
 
                         career.InitializeCareer(
                             person,
@@ -73,7 +75,10 @@ public sealed partial class CareerPlugin
                     {
                         career.InitializeCareer(
                             spouse,
-                            random.NextInt(0, 3),
+                            InitialCareerProfileRules.ResolveJobLevel(
+                                spouse.Age,
+                                education.GetEducationLevel(spouse),
+                                random.NextDouble()),
                             random.NextInt(1, 5));
 
                         var retirementAge =

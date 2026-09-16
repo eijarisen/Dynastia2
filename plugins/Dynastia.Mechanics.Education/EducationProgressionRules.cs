@@ -2,6 +2,17 @@ namespace Dynastia.Mechanics.Education;
 
 public static class EducationProgressionRules
 {
+    public static double GetPaidEducationSuccessChance(
+        int intellect) =>
+        Math.Clamp(intellect, 1, 5) switch
+        {
+            1 => 0.05,
+            2 => 0.15,
+            3 => 0.30,
+            4 => 0.50,
+            _ => 0.70
+        };
+
     public static int GetPassiveChildhoodCeiling(
         int intellect,
         int eraMaximum = 5) =>

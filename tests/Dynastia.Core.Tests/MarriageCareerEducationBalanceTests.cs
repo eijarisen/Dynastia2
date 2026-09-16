@@ -72,6 +72,63 @@ public sealed class MarriageCareerEducationBalanceTests
         Assert.Equal(0.44, highlyEducated, 6);
     }
 
+
+    [Theory]
+    [InlineData(1, 0.05)]
+    [InlineData(2, 0.15)]
+    [InlineData(3, 0.30)]
+    [InlineData(4, 0.50)]
+    [InlineData(5, 0.70)]
+    public void PaidEducationStronglyTracksIntellect(
+        int intellect,
+        double expectedChance)
+    {
+        Assert.Equal(
+            expectedChance,
+            EducationProgressionRules
+                .GetPaidEducationSuccessChance(
+                    intellect),
+            6);
+    }
+
+    [Fact]
+    public void StrengthCareersUseStrengthUntilLevelThreeThenIntellect()
+    {
+        Assert.Equal(
+            5,
+            CareerBalanceRules.GetPromotionAptitudeStat(
+                strengthDrivenCareer: true,
+                currentJobLevel: 1,
+                strength: 5,
+                intellect: 1));
+
+        Assert.Equal(
+            5,
+            CareerBalanceRules.GetPromotionAptitudeStat(
+                strengthDrivenCareer: true,
+                currentJobLevel: 2,
+                strength: 5,
+                intellect: 1));
+
+        Assert.Equal(
+            1,
+            CareerBalanceRules.GetPromotionAptitudeStat(
+                strengthDrivenCareer: true,
+                currentJobLevel: 3,
+                strength: 5,
+                intellect: 1));
+
+        Assert.False(
+            CareerBalanceRules.PromotionUsesEducation(
+                strengthDrivenCareer: true,
+                currentJobLevel: 2));
+
+        Assert.True(
+            CareerBalanceRules.PromotionUsesEducation(
+                strengthDrivenCareer: true,
+                currentJobLevel: 3));
+    }
+
     [Theory]
     [InlineData(1, 1, 2)]
     [InlineData(2, 2, 3)]

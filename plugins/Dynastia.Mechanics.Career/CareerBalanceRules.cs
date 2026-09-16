@@ -27,15 +27,45 @@ public static class CareerBalanceRules
         return Math.Min(0.95, baseChance);
     }
 
-    public static double GetWorkHarderPromotionBonus(
-        int intellect,
-        int educationLevel)
+    public static int GetPromotionAptitudeStat(
+        bool strengthDrivenCareer,
+        int currentJobLevel,
+        int strength,
+        int intellect)
     {
-        var intellectValue = Math.Clamp(intellect, 1, 5);
-        var educationValue = Math.Clamp(educationLevel, 0, 5);
+        var useStrength =
+            strengthDrivenCareer
+            && currentJobLevel <= 2;
+
+        return Math.Clamp(
+            useStrength
+                ? strength
+                : intellect,
+            1,
+            5);
+    }
+
+    public static bool PromotionUsesEducation(
+        bool strengthDrivenCareer,
+        int currentJobLevel) =>
+        !strengthDrivenCareer
+        || currentJobLevel >= 3;
+
+    public static double GetWorkHarderPromotionBonus(
+        int aptitudeStat,
+        int educationLevel,
+        bool educationMatters = true)
+    {
+        var aptitudeValue =
+            Math.Clamp(aptitudeStat, 1, 5);
+
+        var educationValue =
+            educationMatters
+                ? Math.Clamp(educationLevel, 0, 5)
+                : 0;
 
         return 0.12
-            + intellectValue * 0.04
+            + aptitudeValue * 0.04
             + educationValue * 0.04;
     }
 }

@@ -53,9 +53,27 @@ public static class PartnerSearchRules
 
     public static double CalculateAcceptanceChance(
         double searcherValue,
-        double candidateValue) =>
-        Math.Clamp(
-            0.85 + 0.02 * (searcherValue - candidateValue),
+        double candidateValue,
+        Sex candidateSex = Sex.Female)
+    {
+        var valueDifference = searcherValue - candidateValue;
+
+        // Wife candidates retain the original, steeper selectiveness curve.
+        // Husband candidates are somewhat more willing overall, but react less
+        // dramatically to a small Partner Value advantage. This prevents most
+        // arranged-marriage candidates from collapsing to the 95% ceiling while
+        // still making clearly advantageous matches easier to secure.
+        if (candidateSex == Sex.Male)
+        {
+            return Math.Clamp(
+                0.87 + 0.003 * valueDifference,
+                0.20,
+                0.95);
+        }
+
+        return Math.Clamp(
+            0.85 + 0.02 * valueDifference,
             0.10,
             0.95);
+    }
 }

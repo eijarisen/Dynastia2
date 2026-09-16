@@ -45,23 +45,65 @@ internal sealed class MentalHealthYearSystem : IYearSystem
 
             var hasAnxiety = _health.HasCondition(person, "anxiety");
             var hasDepression = _health.HasCondition(person, "depression");
-            if (hasAnxiety && hasDepression)
+            var hasAlcoholism = _health.HasCondition(person, "alcoholism");
+
+            var candidates = new List<(string Id, double Weight)>();
+
+            if (!hasDepression)
+            {
+                candidates.Add((
+                    "depression",
+                    MentalHealthStressRules.GetDepressionWeight(person)));
+            }
+
+            if (!hasAnxiety)
+            {
+                candidates.Add((
+                    "anxiety",
+                    MentalHealthStressRules.GetAnxietyWeight(person)));
+            }
+
+            if (!hasAlcoholism)
+            {
+                var alcoholismWeight =
+                    MentalHealthStressRules.GetAlcoholismWeight(
+                        person,
+                        stress);
+
+                if (alcoholismWeight > 0)
+                    candidates.Add(("alcoholism", alcoholismWeight));
+            }
+
+            if (candidates.Count == 0)
                 continue;
 
-            var chance = 0.0015 + stress * 0.011;
-            chance *= TemperamentMultiplier(person);
-            if (hasAnxiety || hasDepression)
-                chance *= 0.55;
-            chance = Math.Clamp(chance, 0, 0.12);
+            var existingStressConditions =
+                (hasAnxiety ? 1 : 0)
+                + (hasDepression ? 1 : 0)
+                + (hasAlcoholism ? 1 : 0);
+
+            var chance = MentalHealthStressRules.GetReactionChance(
+                stress,
+                person,
+                existingStressConditions);
 
             if (_random.NextDouble() >= chance)
                 continue;
 
-            var depressionChance = person.Tags.Has("personality.melancholic") ? 0.65
-                : person.Tags.Has("personality.choleric") ? 0.35 : 0.50;
-            var condition = _random.NextDouble() < depressionChance ? "depression" : "anxiety";
-            if ((condition == "depression" && hasDepression) || (condition == "anxiety" && hasAnxiety))
-                condition = condition == "depression" ? "anxiety" : "depression";
+            var totalWeight = candidates.Sum(candidate => candidate.Weight);
+            var roll = _random.NextDouble() * totalWeight;
+            var condition = candidates[^1].Id;
+
+            foreach (var candidate in candidates)
+            {
+                if (roll < candidate.Weight)
+                {
+                    condition = candidate.Id;
+                    break;
+                }
+
+                roll -= candidate.Weight;
+            }
 
             if (!_health.AddCondition(person, condition, gameState.Year))
                 continue;
@@ -211,5 +253,4 @@ internal sealed class MentalHealthYearSystem : IYearSystem
         return mother is not null && _family.GetChildren(mother).Any(c => c.Id == b.Id);
     }
     private static IPerson? Find(IGameState s, Guid? id) => id is Guid x ? s.People.FirstOrDefault(p => p.Id == x) : null;
-    private static double TemperamentMultiplier(IPerson p) => p.Tags.Has("personality.melancholic") ? 1.60 : p.Tags.Has("personality.choleric") ? 1.35 : p.Tags.Has("personality.sanguine") ? 0.65 : p.Tags.Has("personality.phlegmatic") ? 0.55 : 1.0;
 }

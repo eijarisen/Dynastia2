@@ -130,7 +130,7 @@ public sealed partial class MainWindowViewModel
         get
         {
             var head =
-                _succession.ActiveController;
+                GetDisplayedHouseholdHead();
 
             var finance =
                 GetDisplayedHouseholdFinance();

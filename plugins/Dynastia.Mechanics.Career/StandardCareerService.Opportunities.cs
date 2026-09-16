@@ -250,17 +250,23 @@ public sealed partial class StandardCareerService
         TownInfo town,
         int year,
         int jobLevel,
+        int strength,
+        int intellect,
+        int educationLevel,
         string deterministicKey)
     {
         ArgumentNullException.ThrowIfNull(town);
         ArgumentException.ThrowIfNullOrWhiteSpace(deterministicKey);
 
-        var level = Math.Clamp(jobLevel, 0, 4);
+        var desiredLevel = Math.Clamp(jobLevel, 0, 3);
+        var candidateStrength = Math.Clamp(strength, 1, 5);
+        var candidateIntellect = Math.Clamp(intellect, 1, 5);
+        var education = Math.Clamp(educationLevel, 0, 5);
         var random = new DeterministicCareerRandom(
             $"{_gameState.DynastySurname}|{deterministicKey}|candidate-career");
         var satisfaction = random.NextInt(1, 5);
 
-        if (level == 0)
+        if (desiredLevel == 0)
         {
             return new GeneratedCareerProfile(
                 null,
@@ -279,11 +285,19 @@ public sealed partial class StandardCareerService
                     town,
                     definition.LocationRequirement);
 
+                var compatibility = GetGeneratedCandidateCareerFit(
+                    definition,
+                    desiredLevel,
+                    candidateStrength,
+                    candidateIntellect,
+                    education);
+
                 return new WeightedCareerCandidate(
                     definition,
                     evaluation.IsEligible
                         ? definition.GetEntryWeight(sex, year)
                             * evaluation.WeightMultiplier
+                            * compatibility
                         : 0);
             })
             .Where(candidate => candidate.Weight > 0)
@@ -301,6 +315,12 @@ public sealed partial class StandardCareerService
         }
 
         var chosen = SelectWeighted(candidates, random).Career;
+        var level = AdjustGeneratedCandidateJobLevel(
+            chosen,
+            desiredLevel,
+            candidateStrength,
+            candidateIntellect,
+            education);
         var careerName = _presentation.ResolveCareerName(
             chosen.Id,
             chosen.Name,
@@ -318,6 +338,79 @@ public sealed partial class StandardCareerService
             level,
             satisfaction,
             chosen.BaseSalary * level);
+    }
+
+    private static double GetGeneratedCandidateCareerFit(
+        CareerDefinition definition,
+        int desiredLevel,
+        int strength,
+        int intellect,
+        int education)
+    {
+        var aptitude = CareerEntryAptitudeClassifier.Get(definition);
+        var ability = aptitude == CareerEntryAptitude.Intellect
+            ? intellect
+            : strength;
+        var abilityMultiplier = ability switch
+        {
+            1 => 0.30,
+            2 => 0.65,
+            3 => 1.00,
+            4 => 1.25,
+            _ => 1.45
+        };
+
+        if (aptitude != CareerEntryAptitude.Intellect)
+            return abilityMultiplier;
+
+        var educationMultiplier = desiredLevel switch
+        {
+            >= 3 => education switch
+            {
+                0 => 0.15,
+                1 => 0.50,
+                2 => 0.85,
+                _ => 1.10
+            },
+            2 => education switch
+            {
+                0 => 0.35,
+                1 => 0.75,
+                _ => 1.05
+            },
+            _ => 0.80 + education * 0.06
+        };
+
+        return abilityMultiplier * educationMultiplier;
+    }
+
+    private static int AdjustGeneratedCandidateJobLevel(
+        CareerDefinition definition,
+        int desiredLevel,
+        int strength,
+        int intellect,
+        int education)
+    {
+        var aptitude = CareerEntryAptitudeClassifier.Get(definition);
+        var ability = aptitude == CareerEntryAptitude.Intellect
+            ? intellect
+            : strength;
+        var level = Math.Clamp(desiredLevel, 1, 3);
+
+        if (ability <= 1)
+            level = 1;
+        else if (ability == 2 && level > 2)
+            level = 2;
+
+        if (aptitude == CareerEntryAptitude.Intellect)
+        {
+            if (education == 0)
+                level = Math.Min(level, 1);
+            else if (education == 1)
+                level = Math.Min(level, 2);
+        }
+
+        return level;
     }
 
     internal void RecordCurrentExperience(

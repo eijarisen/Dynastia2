@@ -23,7 +23,8 @@ public sealed class StandardEducationService : IEducationService
         person.Components.Set(
             new EducationComponent
             {
-                Level = 0
+                Level = 0,
+                IsInitialized = false
             });
     }
 
@@ -32,15 +33,20 @@ public sealed class StandardEducationService : IEducationService
         var component =
             GetRequired(person);
 
-        if (component.Level == 0
-            && _family.GetGeneration(person) == 0
-            && _family.IsBloodline(person))
+        if (!component.IsInitialized)
         {
-            var bytes =
-                person.Id.ToByteArray();
+            if (component.Level == 0
+                && _family.GetGeneration(person) == 0
+                && _family.IsBloodline(person))
+            {
+                var bytes =
+                    person.Id.ToByteArray();
 
-            component.Level =
-                1 + bytes[6] % 3;
+                component.Level =
+                    1 + bytes[6] % 3;
+            }
+
+            component.IsInitialized = true;
         }
 
         return component.Level;
@@ -48,8 +54,10 @@ public sealed class StandardEducationService : IEducationService
 
     public void SetEducationLevel(IPerson person, int level)
     {
-        GetRequired(person).Level =
+        var component = GetRequired(person);
+        component.Level =
             Math.Clamp(level, 0, 5);
+        component.IsInitialized = true;
     }
 
     public void IncreaseEducation(IPerson person, int amount = 1)

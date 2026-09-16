@@ -20,8 +20,8 @@ public static class PersonEmojiResolver
             return "💀";
         }
 
-        // Imprisonment is an overriding visual state. Do this before
-        // thoughts and age-based emoji so prisoners always show chains.
+        // Status emoji are intentionally separate from physical portraits.
+        // Imprisonment is an overriding state and therefore wins over thoughts.
         if (person.Tags.Has(
             "state.imprisoned")
             || justice?.IsImprisoned(person) == true)
@@ -29,8 +29,9 @@ public static class PersonEmojiResolver
             return "⛓️";
         }
 
-        // Ages 0-4 never receive a thought. Only their immediate physical
-        // condition may replace the normal infant emoji.
+        // Children below five do not have stored thoughts yet, so retain the
+        // small immediate-health override that previously represented their
+        // meaningful status. A healthy child simply uses the neutral status.
         if (person.Age < 5)
         {
             var healthState =
@@ -64,7 +65,7 @@ public static class PersonEmojiResolver
                     return "🤒";
             }
 
-            return GetNeutralPortrait(person, family, appearance);
+            return "🙂";
         }
 
         var thought =
@@ -73,60 +74,16 @@ public static class PersonEmojiResolver
 
         if (thought is not null
             && !string.IsNullOrWhiteSpace(
-                thought.Emoji))
+                thought.Emoji)
+            && !thought.Emoji.Equals(
+                "🙂",
+                StringComparison.Ordinal))
         {
-            if (thought.Emoji.Equals(
-                    "🙂",
-                    StringComparison.Ordinal))
-            {
-                return GetNeutralPortrait(
-                    person,
-                    family,
-                    appearance);
-            }
-
             return thought.Emoji;
         }
 
-        // Defensive fallback only. Under normal gameplay every living person
-        // aged 5+ has a stored thought. Neutral presentation uses the person's
-        // physical portrait rather than a generic yellow face.
-        return GetNeutralPortrait(
-            person,
-            family,
-            appearance);
-    }
-
-    private static string GetNeutralPortrait(
-        IPerson person,
-        IFamilyService? family,
-        IAppearanceService? appearance)
-    {
-        if (appearance is not null)
-        {
-            return appearance.GetPortrait(
-                person,
-                useDeadOverride: false);
-        }
-
-        var sex = family is not null
-            ? family.GetSex(person)
-            : person.Tags.Has("sex.female")
-                ? Sex.Female
-                : Sex.Male;
-
-        if (person.Age <= 4)
-            return "👶🏻";
-
-        if (person.Age <= 11)
-            return sex == Sex.Male ? "👦🏻" : "👧🏻";
-
-        if (person.Age <= 17)
-            return "🧑🏻";
-
-        if (person.Age >= 70)
-            return sex == Sex.Male ? "👴🏻" : "👵🏻";
-
-        return sex == Sex.Male ? "👨🏻" : "👩🏻";
+        // Neutral state presentation is deliberately generic. Physical
+        // appearance is shown only in portrait contexts.
+        return "🙂";
     }
 }

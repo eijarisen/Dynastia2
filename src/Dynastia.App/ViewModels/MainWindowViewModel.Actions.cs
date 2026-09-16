@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using System.Globalization;
 using Avalonia.Threading;
 using Dynastia.App.Persistence;
 using Dynastia.Contracts;
@@ -381,14 +382,48 @@ public sealed partial class MainWindowViewModel
             ? "townId"
             : "propertyId";
 
+        var parameters =
+            new Dictionary<string, string>(
+                StringComparer.OrdinalIgnoreCase)
+            {
+                [key] = selectedId
+            };
+
+        if (actionId.Equals(
+                "household.buy_house",
+                StringComparison.OrdinalIgnoreCase)
+            && _locationService?.FindTown(selectedId) is { } buyTown
+            && _economyService is not null)
+        {
+            parameters["summaryTown"] = buyTown.Town;
+            parameters["summaryPrice"] =
+                _economyService.GetHousePrice(buyTown)
+                    .ToString(CultureInfo.InvariantCulture);
+        }
+        else if (actionId.Equals(
+                     "household.sell_house",
+                     StringComparison.OrdinalIgnoreCase)
+                 && _economyService is not null
+                 && Guid.TryParse(selectedId, out var propertyId))
+        {
+            var house =
+                _economyService.GetHouses(actor)
+                    .FirstOrDefault(candidate => candidate.Id == propertyId);
+
+            if (house is not null)
+            {
+                parameters["summaryTown"] = house.Town.Town;
+                parameters["summaryPrice"] =
+                    _economyService.GetHouseSaleValue(house.Town)
+                        .ToString(CultureInfo.InvariantCulture);
+            }
+        }
+
         var result = _actionRegistry.Execute(
             actionId,
             actor,
             target,
-            new Dictionary<string, string>
-            {
-                [key] = selectedId
-            });
+            parameters);
 
         if (!result.Success && !string.IsNullOrWhiteSpace(result.Message))
             PersistenceStatusText = result.Message;
@@ -512,22 +547,190 @@ public sealed partial class MainWindowViewModel
         var text =
             $"Queued: {ActionEmojiMap.Format(queued.ActionId, queued.Label)}";
 
-        if (queued.TargetId == queued.ActorId)
+        var detail =
+            BuildQueuedActionDetail(queued);
+
+        if (!string.IsNullOrWhiteSpace(detail))
+            text += $" -- {detail}";
+
+        if (SuppressQueuedActionPersonName(queued.ActionId))
             return text;
 
-        var target =
+        var personId =
+            queued.TargetId != queued.ActorId
+                ? queued.TargetId
+                : queued.ActorId;
+
+        var person =
             _gameState.People.FirstOrDefault(
-                person => person.Id == queued.TargetId);
+                candidate => candidate.Id == personId);
 
-        if (target is null)
+        if (person is null)
             return text;
 
-        var targetName =
+        var personName =
             _familyService is null
-                ? $"{target.Name} {target.Surname}"
-                : _familyService.GetDisplayName(target);
+                ? $"{person.Name} {person.Surname}"
+                : _familyService.GetDisplayName(person);
 
-        return $"{text} — {targetName}";
+        return $"{text} — {personName}";
+    }
+
+    private string BuildQueuedActionDetail(
+        QueuedActionInfo queued)
+    {
+        var parameters =
+            queued.Parameters;
+
+        if (parameters is null)
+            return string.Empty;
+
+        if (queued.ActionId.StartsWith(
+                "loan.",
+                StringComparison.OrdinalIgnoreCase)
+            && TryReadDecimalParameter(
+                parameters,
+                "principal",
+                out var principal)
+            && TryReadIntParameter(
+                parameters,
+                "durationYears",
+                out var durationYears))
+        {
+            var yearsLabel =
+                durationYears == 1
+                    ? "year"
+                    : "years";
+
+            return
+                $"{principal.ToString("N0", CultureInfo.InvariantCulture)} zł, " +
+                $"{durationYears} {yearsLabel}";
+        }
+
+        if (queued.ActionId.Equals(
+                "household.buy_house",
+                StringComparison.OrdinalIgnoreCase)
+            || queued.ActionId.Equals(
+                "household.sell_house",
+                StringComparison.OrdinalIgnoreCase))
+        {
+            var townName =
+                parameters.TryGetValue("summaryTown", out var storedTown)
+                    ? storedTown
+                    : null;
+
+            decimal? price =
+                TryReadDecimalParameter(
+                    parameters,
+                    "summaryPrice",
+                    out var storedPrice)
+                    ? storedPrice
+                    : null;
+
+            if (queued.ActionId.Equals(
+                    "household.buy_house",
+                    StringComparison.OrdinalIgnoreCase))
+            {
+                if (string.IsNullOrWhiteSpace(townName)
+                    && parameters.TryGetValue("townId", out var townId)
+                    && _locationService?.FindTown(townId) is { } town)
+                {
+                    townName = town.Town;
+                    price ??= _economyService?.GetHousePrice(town);
+                }
+            }
+            else if (parameters.TryGetValue(
+                         "propertyId",
+                         out var propertyIdRaw)
+                     && Guid.TryParse(propertyIdRaw, out var propertyId)
+                     && _economyService is not null)
+            {
+                var actor =
+                    _gameState.People.FirstOrDefault(
+                        person => person.Id == queued.ActorId);
+
+                var house =
+                    actor is null
+                        ? null
+                        : _economyService.GetHouses(actor)
+                            .FirstOrDefault(candidate => candidate.Id == propertyId);
+
+                if (house is not null)
+                {
+                    townName ??= house.Town.Town;
+                    price ??= _economyService.GetHouseSaleValue(house.Town);
+                }
+            }
+
+            if (!string.IsNullOrWhiteSpace(townName)
+                && price is not null)
+            {
+                return
+                    $"{townName}, " +
+                    $"{price.Value.ToString("N0", CultureInfo.InvariantCulture)} zł";
+            }
+
+            if (!string.IsNullOrWhiteSpace(townName))
+                return townName;
+        }
+
+        return string.Empty;
+    }
+
+    private static bool TryReadDecimalParameter(
+        IReadOnlyDictionary<string, string> parameters,
+        string key,
+        out decimal value)
+    {
+        value = 0m;
+
+        return
+            parameters.TryGetValue(key, out var text)
+            && decimal.TryParse(
+                text,
+                NumberStyles.Number,
+                CultureInfo.InvariantCulture,
+                out value);
+    }
+
+    private static bool TryReadIntParameter(
+        IReadOnlyDictionary<string, string> parameters,
+        string key,
+        out int value)
+    {
+        value = 0;
+
+        return
+            parameters.TryGetValue(key, out var text)
+            && int.TryParse(
+                text,
+                NumberStyles.Integer,
+                CultureInfo.InvariantCulture,
+                out value);
+    }
+
+    private static bool SuppressQueuedActionPersonName(
+        string actionId)
+    {
+        if (actionId.Equals(
+                "turn.pass",
+                StringComparison.OrdinalIgnoreCase)
+            || actionId.StartsWith(
+                "loan.",
+                StringComparison.OrdinalIgnoreCase))
+        {
+            return true;
+        }
+
+        return actionId.Equals(
+                   "household.buy_house",
+                   StringComparison.OrdinalIgnoreCase)
+               || actionId.Equals(
+                   "household.sell_house",
+                   StringComparison.OrdinalIgnoreCase)
+               || actionId.Equals(
+                   "household.give_house_to_son",
+                   StringComparison.OrdinalIgnoreCase);
     }
 
     private IPerson? FindSelectedPerson()

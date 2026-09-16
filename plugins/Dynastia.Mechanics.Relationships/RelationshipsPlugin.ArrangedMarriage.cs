@@ -54,6 +54,7 @@ public sealed partial class RelationshipsPlugin
         IPerson father,
         IPerson daughter,
         IFamilyService family,
+        ILocationService locations,
         IStatsService stats,
         IHealthService health,
         IEducationService education,
@@ -121,6 +122,19 @@ public sealed partial class RelationshipsPlugin
 
         husband.Tags.Add(
             "sexuality.heterosexual");
+
+        var daughterTown =
+            locations.GetLocation(daughter).HomeTown;
+        var husbandOrigin =
+            HusbandOriginSelector.Choose(
+                daughterTown,
+                locations.GetTowns(),
+                gameState.Year,
+                random);
+
+        locations.SetPersonHomeTown(
+            husband,
+            husbandOrigin);
 
         GeneratedFamilyBackgroundGenerator.Assign(
             husband,

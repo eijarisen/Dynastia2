@@ -290,6 +290,9 @@ public partial class App : Application
                     MapDataSource =
                         mapDataSource,
 
+                    MusicService =
+                        musicService,
+
                     DataContext =
                         new MainWindowViewModel(
                             gameState,

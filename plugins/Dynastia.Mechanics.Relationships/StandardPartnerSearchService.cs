@@ -117,7 +117,8 @@ internal sealed class StandardPartnerSearchService :
 
         var result = new List<PartnerCandidateInfo>();
         var seekerValue = GetPartnerValue(seeker);
-        var town = _locations.GetLocation(seeker).HomeTown;
+        var seekerTown = _locations.GetLocation(seeker).HomeTown;
+        var allTowns = _locations.GetTowns();
         var educationRange = _education.GetGeneratedAdultRange(
             _gameState.Year);
 
@@ -163,6 +164,15 @@ internal sealed class StandardPartnerSearchService :
             var personality = _personality
                 .GenerateCandidatePersonality(candidateId);
 
+            var candidateTown =
+                partnerSex == Sex.Male
+                    ? HusbandOriginSelector.Choose(
+                        seekerTown,
+                        allTowns,
+                        _gameState.Year,
+                        candidateRandom)
+                    : seekerTown;
+
             var education = candidateRandom.NextInt(
                 educationRange.MinimumLevel,
                 educationRange.MaximumLevel);
@@ -199,7 +209,7 @@ internal sealed class StandardPartnerSearchService :
 
             var career = _career.GenerateCandidateCareer(
                 partnerSex,
-                town,
+                candidateTown,
                 _gameState.Year,
                 jobLevel,
                 candidateId.ToString("N"));
@@ -211,7 +221,7 @@ internal sealed class StandardPartnerSearchService :
                     age,
                     _gameState.Year,
                     personality.Temperament,
-                    town.SettlementClass)
+                    candidateTown.SettlementClass)
                 ?? [];
 
             var (estimatedWealth, estimatedHouses) = partnerSex == Sex.Male
@@ -261,7 +271,7 @@ internal sealed class StandardPartnerSearchService :
                 portrait,
                 partnerValue,
                 acceptanceChance,
-                town.Id,
+                candidateTown.Id,
                 _gameState.Year));
         }
 
@@ -326,6 +336,7 @@ internal sealed class StandardPartnerSearchService :
             ["partner.value"] = candidate.PartnerValue.ToString("R", CultureInfo.InvariantCulture),
             ["partner.acceptance"] = candidate.AcceptanceChance.ToString("R", CultureInfo.InvariantCulture),
             ["partner.searchYear"] = candidate.SearchYear.ToString(CultureInfo.InvariantCulture),
+            ["partner.townId"] = candidate.TownId,
             ["partner.appearance.hairGeneA"] = candidate.Appearance.HairGeneA.ToString(),
             ["partner.appearance.hairGeneB"] = candidate.Appearance.HairGeneB.ToString(),
             ["partner.appearance.hairColor"] = candidate.Appearance.HairColor.ToString(),
@@ -593,6 +604,17 @@ internal sealed class StandardPartnerSearchService :
             candidate.JobLevel,
             candidate.JobSatisfaction);
 
+        if (candidate.Sex == Sex.Male
+            && _locations.FindTown(candidate.TownId) is TownInfo originTown)
+        {
+            // Seed the generated husband's birthplace before the marriage
+            // event. The Locations plugin will then move his HomeTown into
+            // the wife's household while preserving this origin.
+            _locations.SetPersonHomeTown(
+                person,
+                originTown);
+        }
+
         GeneratedFamilyBackgroundGenerator.Assign(
             person,
             candidate.Surname,
@@ -642,6 +664,11 @@ internal sealed class StandardPartnerSearchService :
         var value = RequiredDouble(parameters, "partner.value");
         var acceptance = RequiredDouble(parameters, "partner.acceptance");
         var searchYear = RequiredInt(parameters, "partner.searchYear");
+        var townId = parameters.TryGetValue(
+            "partner.townId",
+            out var storedTownId)
+                ? storedTownId
+                : string.Empty;
         var candidateId = Guid.ParseExact(key, "N");
         var appearance = TryReadAppearance(parameters, out var storedAppearance)
             ? storedAppearance
@@ -677,7 +704,7 @@ internal sealed class StandardPartnerSearchService :
             portrait,
             value,
             acceptance,
-            string.Empty,
+            townId,
             searchYear);
     }
 

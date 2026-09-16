@@ -2,6 +2,7 @@ using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Platform.Storage;
+using Dynastia.App.Audio;
 using Dynastia.App.Genealogy.Host;
 using Dynastia.App.Map.Host;
 using Dynastia.App.ViewModels;
@@ -44,6 +45,12 @@ public partial class MainWindow : Window
     }
 
     public GameMapDataSource? MapDataSource
+    {
+        get;
+        set;
+    }
+
+    public BackgroundMusicService? MusicService
     {
         get;
         set;
@@ -374,6 +381,22 @@ public partial class MainWindow : Window
         e.Handled = true;
 
         viewModel.NextYearCommand.Execute(null);
+    }
+
+    private void OnMusicToggleClick(
+        object? sender,
+        RoutedEventArgs e)
+    {
+        if (MusicService is null)
+            return;
+
+        var muted =
+            MusicService.ToggleMuted();
+
+        MusicToggleButton.Content =
+            muted
+                ? "🔇"
+                : "🔊";
     }
 
     private async void OnSaveGameClick(

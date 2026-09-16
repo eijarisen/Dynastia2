@@ -174,7 +174,7 @@
                                                                 Width="25"
                                                                 Height="25"
                                                                 VerticalAlignment="Center"
-                                                                Background="#C0463528"
+                                                                Background="#54000000"
                                                                 BorderBrush="#9D772E"
                                                                 BorderThickness="1"
                                                                 CornerRadius="3">

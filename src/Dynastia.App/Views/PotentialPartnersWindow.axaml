@@ -79,7 +79,7 @@
                                     Height="142"
                                     HorizontalAlignment="Left"
                                     VerticalAlignment="Center"
-                                    Background="#77071212"
+                                    Background="#54000000"
                                     BorderBrush="#9D772E"
                                     BorderThickness="1.5"
                                     CornerRadius="4">

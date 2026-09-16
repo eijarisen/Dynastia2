@@ -34,6 +34,8 @@
 
             <Button
                 Classes="familyCard"
+                Classes.living="{Binding IsLiving}"
+                Classes.deceased="{Binding IsDeceased}"
                 Classes.selected="{Binding IsSelected}"
                 Classes.head="{Binding IsActiveHouseholdHead}"
                 Command="{Binding SelectCommand}">
@@ -115,20 +117,14 @@
                         HorizontalAlignment="Center"
                         Spacing="2">
 
-                        <Border
+                        <TextBlock
                             Width="52"
                             Height="52"
                             HorizontalAlignment="Center"
-                            Background="#C0463528"
-                            BorderBrush="#7D5A31"
-                            BorderThickness="1"
-                            CornerRadius="4">
-                            <TextBlock
-                                HorizontalAlignment="Center"
-                                VerticalAlignment="Center"
-                                FontSize="35"
-                                Text="{Binding AvatarText}" />
-                        </Border>
+                            VerticalAlignment="Center"
+                            TextAlignment="Center"
+                            FontSize="35"
+                            Text="{Binding AvatarText}" />
 
                     <TextBlock
                         HorizontalAlignment="Center"
@@ -183,11 +179,6 @@
                             Text="{Binding OccupationText}" />
                     </StackPanel>
 
-                    <Border
-                        IsVisible="{Binding IsDeceased}"
-                        IsHitTestVisible="False"
-                        Background="#4D8B622F"
-                        CornerRadius="3" />
                 </Grid>
             </Button>
         </DataTemplate>
@@ -333,22 +324,46 @@
             <Setter Property="Width" Value="140" />
             <Setter Property="Padding" Value="5" />
             <Setter Property="Margin" Value="2" />
-            <Setter Property="Background" Value="#79071413" />
+            <Setter Property="Background" Value="Transparent" />
             <Setter Property="Foreground" Value="#F2E6CB" />
             <Setter Property="BorderBrush" Value="#5D4B2D" />
             <Setter Property="BorderThickness" Value="1" />
             <Setter Property="HorizontalContentAlignment" Value="Stretch" />
         </Style>
 
+        <Style Selector="Button.familyCard.living">
+            <Setter Property="Background" Value="#54000000" />
+        </Style>
+
+        <Style Selector="Button.familyCard.deceased">
+            <Setter Property="Background" Value="#4D8B622F" />
+        </Style>
+
         <Style Selector="Button.familyCard:pointerover">
             <Setter Property="Foreground" Value="#FFF1CB" />
-            <Setter Property="Background" Value="#A51A332D" />
+            <Setter Property="Background" Value="Transparent" />
             <Setter Property="BorderBrush" Value="#C99B39" />
         </Style>
 
+        <Style Selector="Button.familyCard.living:pointerover">
+            <Setter Property="Background" Value="#54000000" />
+        </Style>
+
+        <Style Selector="Button.familyCard.deceased:pointerover">
+            <Setter Property="Background" Value="#4D8B622F" />
+        </Style>
+
         <Style Selector="Button.familyCard.selected">
-            <Setter Property="Background" Value="#A7203A32" />
+            <Setter Property="Background" Value="Transparent" />
             <Setter Property="BorderBrush" Value="#D9B04A" />
+        </Style>
+
+        <Style Selector="Button.familyCard.living.selected">
+            <Setter Property="Background" Value="#54000000" />
+        </Style>
+
+        <Style Selector="Button.familyCard.deceased.selected">
+            <Setter Property="Background" Value="#4D8B622F" />
         </Style>
 
         <Style Selector="Button.familyCard.head">
@@ -1228,7 +1243,7 @@
                             Height="202"
                             HorizontalAlignment="Left"
                             VerticalAlignment="Top"
-                            Background="#C0463528"
+                            Background="#54000000"
                             BorderBrush="#9D772E"
                             BorderThickness="1.5"
                             CornerRadius="4">
@@ -1280,22 +1295,30 @@
                             Text="{Binding SelectedPerson.PersonalityText}" />
 
                         <!-- Six larger, color-coded skills. -->
-                        <ItemsControl
-                            Margin="196,58,50,0"
-                            Height="54"
+                        <Border
+                            Margin="0,54,46,0"
+                            Width="384"
+                            Height="62"
                             VerticalAlignment="Top"
-                            HorizontalAlignment="Stretch"
-                            ItemsSource="{Binding SelectedStats}"
-                            ItemTemplate="{StaticResource CompactStatTemplate}">
+                            HorizontalAlignment="Right"
+                            Padding="6,4"
+                            Background="#54000000"
+                            CornerRadius="6">
+                            <ItemsControl
+                                HorizontalAlignment="Stretch"
+                                VerticalAlignment="Center"
+                                ItemsSource="{Binding SelectedStats}"
+                                ItemTemplate="{StaticResource CompactStatTemplate}">
 
-                            <ItemsControl.ItemsPanel>
-                                <ItemsPanelTemplate>
-                                    <WrapPanel
-                                        Orientation="Horizontal"
-                                        HorizontalAlignment="Right" />
-                                </ItemsPanelTemplate>
-                            </ItemsControl.ItemsPanel>
-                        </ItemsControl>
+                                <ItemsControl.ItemsPanel>
+                                    <ItemsPanelTemplate>
+                                        <StackPanel
+                                            Orientation="Horizontal"
+                                            HorizontalAlignment="Right" />
+                                    </ItemsPanelTemplate>
+                                </ItemsControl.ItemsPanel>
+                            </ItemsControl>
+                        </Border>
 
                         <!-- Health -->
                         <StackPanel
@@ -1688,6 +1711,23 @@
                             FallbackText="Export"
                             Click="OnSaveGameClick" />
                     </Canvas>
+
+                    <Button
+                        x:Name="MusicToggleButton"
+                        Canvas.Left="1094"
+                        Canvas.Top="43"
+                        Width="42"
+                        Height="42"
+                        Padding="0"
+                        Background="#72000000"
+                        BorderBrush="#8F6C2C"
+                        BorderThickness="1"
+                        CornerRadius="5"
+                        Foreground="#F1E3C4"
+                        FontSize="20"
+                        Content="🔊"
+                        ToolTip.Tip="Mute music"
+                        Click="OnMusicToggleClick" />
 
                     <TextBlock
                         Canvas.Left="1148"

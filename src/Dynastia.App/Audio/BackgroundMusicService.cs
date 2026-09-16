@@ -29,9 +29,64 @@ public sealed class BackgroundMusicService :
 
     private bool _disposed;
     private bool _advancing;
+    private bool _isMuted;
+    private float _volume = 0.28f;
 
-    public float Volume { get; set; } =
-        0.28f;
+    public float Volume
+    {
+        get
+        {
+            lock (_gate)
+            {
+                return _volume;
+            }
+        }
+        set
+        {
+            lock (_gate)
+            {
+                _volume =
+                    Math.Clamp(value, 0f, 1f);
+
+                if (_output is not null)
+                {
+                    _output.Volume =
+                        _isMuted
+                            ? 0f
+                            : _volume;
+                }
+            }
+        }
+    }
+
+    public bool IsMuted
+    {
+        get
+        {
+            lock (_gate)
+            {
+                return _isMuted;
+            }
+        }
+    }
+
+    public bool ToggleMuted()
+    {
+        lock (_gate)
+        {
+            _isMuted = !_isMuted;
+
+            if (_output is not null)
+            {
+                _output.Volume =
+                    _isMuted
+                        ? 0f
+                        : _volume;
+            }
+
+            return _isMuted;
+        }
+    }
 
     public void Start()
     {
@@ -122,7 +177,9 @@ public sealed class BackgroundMusicService :
                     new WaveOutEvent
                     {
                         Volume =
-                            Volume
+                            _isMuted
+                                ? 0f
+                                : _volume
                     };
 
                 _output.PlaybackStopped +=

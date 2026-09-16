@@ -31,15 +31,15 @@ public sealed class TownMapControl :
 
     private static readonly IBrush OrdinaryTownFill =
         new SolidColorBrush(
-            Color.FromArgb(0xC8, 139, 125, 83));
+            Color.FromArgb(0xEE, 214, 196, 126));
 
     private static readonly IBrush DynastyTownFill =
         new SolidColorBrush(
-            Color.FromRgb(211, 176, 83));
+            Color.FromRgb(236, 196, 91));
 
     private static readonly IBrush PlayableTownFill =
         new SolidColorBrush(
-            Color.FromRgb(235, 202, 103));
+            Color.FromRgb(255, 220, 112));
 
     private static readonly IBrush CurrentTownFill =
         new SolidColorBrush(
@@ -371,14 +371,22 @@ public sealed class TownMapControl :
         TownMapItem item,
         Point screen)
     {
-        var radius =
+        var populationRadius =
+            PopulationRadius(item.Population);
+
+        var stateRadius =
             item.IsCurrentHouseholdTown
-                ? 5.7
+                ? 5.9
                 : item.HasPlayableHousehold
-                    ? 4.8
+                    ? 5.0
                     : item.HasDynastyResidents
-                        ? 3.9
-                        : 2.3;
+                        ? 4.1
+                        : 0.0;
+
+        var radius =
+            Math.Max(
+                populationRadius,
+                stateRadius);
 
         var fill =
             item.IsCurrentHouseholdTown
@@ -587,6 +595,18 @@ public sealed class TownMapControl :
                 rect.X + 9,
                 rect.Y + 8));
     }
+
+    private static double PopulationRadius(
+        int population) =>
+        population switch
+        {
+            >= 250000 => 5.4,
+            >= 100000 => 4.7,
+            >= 50000 => 4.1,
+            >= 20000 => 3.6,
+            >= 5000 => 3.1,
+            _ => 2.6
+        };
 
     private bool ShouldDrawLabel(
         TownMapItem item)

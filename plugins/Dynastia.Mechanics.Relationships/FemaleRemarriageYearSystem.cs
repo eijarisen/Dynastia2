@@ -22,6 +22,7 @@ public sealed class FemaleRemarriageYearSystem :
     private readonly IHealthService _health;
     private readonly IEducationService _education;
     private readonly ICareerService _career;
+    private readonly ILocationService _locations;
     private readonly IGameDataService _data;
     private readonly IHistoricalNameService _historicalNames;
     private readonly IGameRandom _random;
@@ -34,6 +35,7 @@ public sealed class FemaleRemarriageYearSystem :
         IHealthService health,
         IEducationService education,
         ICareerService career,
+        ILocationService locations,
         IGameDataService data,
         IHistoricalNameService historicalNames,
         IGameRandom random,
@@ -45,6 +47,7 @@ public sealed class FemaleRemarriageYearSystem :
         _health = health;
         _education = education;
         _career = career;
+        _locations = locations;
         _data = data;
         _historicalNames = historicalNames;
         _random = random;
@@ -200,6 +203,22 @@ public sealed class FemaleRemarriageYearSystem :
 
         husband.Tags.Add(
             "sexuality.heterosexual");
+
+        var wifeTown =
+            _locations.GetLocation(woman).HomeTown;
+        var husbandOrigin =
+            HusbandOriginSelector.Choose(
+                wifeTown,
+                _locations.GetTowns(),
+                gameState.Year,
+                _random);
+
+        // Pre-seed the husband's origin. When the marriage event is
+        // published, the Locations plugin moves his HomeTown to the wife's
+        // household while preserving this town as his birthplace.
+        _locations.SetPersonHomeTown(
+            husband,
+            husbandOrigin);
 
         GeneratedFamilyBackgroundGenerator.Assign(
             husband,

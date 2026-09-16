@@ -77,4 +77,41 @@ public sealed class PartnerSearchRulesTests
         Assert.Equal(100, established, 10);
         Assert.True(established > withoutResources);
     }
+
+    [Fact]
+    public void HusbandOriginsBroadenAcrossModernCenturiesWhileSameTownStaysMostLikely()
+    {
+        var eighteenth =
+            HusbandOriginSelector.GetDistribution(1750);
+        var nineteenth =
+            HusbandOriginSelector.GetDistribution(1850);
+        var twentieth =
+            HusbandOriginSelector.GetDistribution(1950);
+        var twentyFirst =
+            HusbandOriginSelector.GetDistribution(2025);
+
+        foreach (var distribution in new[]
+                 {
+                     eighteenth,
+                     nineteenth,
+                     twentieth,
+                     twentyFirst
+                 })
+        {
+            Assert.Equal(1.0, distribution.Total, 10);
+            Assert.True(
+                distribution.SameTownChance
+                > distribution.NearbyTownChance);
+            Assert.True(
+                distribution.SameTownChance
+                > distribution.RegionalCityChance);
+            Assert.True(
+                distribution.SameTownChance
+                > distribution.NationalChance);
+        }
+
+        Assert.True(nineteenth.NationalChance > eighteenth.NationalChance);
+        Assert.True(twentieth.NationalChance > nineteenth.NationalChance);
+        Assert.True(twentyFirst.NationalChance > twentieth.NationalChance);
+    }
 }

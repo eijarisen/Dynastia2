@@ -517,31 +517,53 @@ public sealed partial class MainWindowViewModel
                 "No planned action for this year.";
         }
 
-        var target =
-            _gameState.People
-                .FirstOrDefault(
-                    person =>
-                        person.Id
-                        == queued.TargetId);
-
-        var targetName =
-            target is null
-                ? "Unknown"
-                : _familyService is null
-                    ? $"{target.Name} {target.Surname}"
-                    : _familyService.GetDisplayName(
-                        target);
-
         var description =
             string.IsNullOrWhiteSpace(
                 queued.Description)
                 ? "This action is queued for the next annual pass."
                 : queued.Description;
 
+        var title =
+            ActionEmojiMap.Format(queued.ActionId, queued.Label);
+
+        var detail =
+            BuildQueuedActionDetail(queued);
+
+        if (!string.IsNullOrWhiteSpace(detail))
+            title += $" -- {detail}";
+
+        if (SuppressQueuedActionPersonName(queued.ActionId))
+        {
+            return
+                title +
+                Environment.NewLine +
+                description;
+        }
+
+        var personId =
+            queued.TargetId != queued.ActorId
+                ? queued.TargetId
+                : queued.ActorId;
+
+        var person =
+            _gameState.People
+                .FirstOrDefault(
+                    candidate =>
+                        candidate.Id
+                        == personId);
+
+        var personName =
+            person is null
+                ? "Unknown"
+                : _familyService is null
+                    ? $"{person.Name} {person.Surname}"
+                    : _familyService.GetDisplayName(
+                        person);
+
         return
-            $"{ActionEmojiMap.Format(queued.ActionId, queued.Label)}" +
+            title +
             Environment.NewLine +
-            $"{targetName}" +
+            personName +
             Environment.NewLine +
             description;
     }

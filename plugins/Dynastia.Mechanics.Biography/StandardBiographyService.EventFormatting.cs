@@ -14,6 +14,15 @@ public sealed partial class StandardBiographyService
             StringComparison.OrdinalIgnoreCase)
         || type.Equals(
             "family_relations.money_refused",
+            StringComparison.OrdinalIgnoreCase)
+        || type.Equals(
+            "farmland.given",
+            StringComparison.OrdinalIgnoreCase)
+        || type.Equals(
+            "farmland.received",
+            StringComparison.OrdinalIgnoreCase)
+        || type.Equals(
+            "farmland.request_refused",
             StringComparison.OrdinalIgnoreCase);
 
     private static bool IsImportantForRelatives(
@@ -137,6 +146,12 @@ public sealed partial class StandardBiographyService
             "household.house_sold" => "💵 ",
             "household.house_rented" => "🏘️ ",
             "household.house_given" => "🎁 ",
+            "farmland.bought" => "🌾 ",
+            "farmland.sold" => "🌾 ",
+            "farmland.inherited" => "🌾 ",
+            "farmland.given" => "🌾 ",
+            "farmland.received" => "🌾 ",
+            "farmland.request_refused" => "🚫 ",
 
             "household.house_promised" => "🎁 ",
 

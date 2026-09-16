@@ -31,6 +31,8 @@ public sealed class HouseholdEconomyComponent
 
     public List<HousePropertyState> Houses { get; } = [];
 
+    public List<FarmlandAssetState> Farmland { get; } = [];
+
     public Guid? NannyId { get; set; }
 
     public decimal LastIncome { get; set; }

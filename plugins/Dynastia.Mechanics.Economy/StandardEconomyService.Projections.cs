@@ -69,6 +69,21 @@ public sealed partial class StandardEconomyService
                     rentalIncome));
         }
 
+        foreach (var provider in _householdIncome.Providers)
+        {
+            var amount =
+                RoundCurrency(
+                    provider.GetExpectedAnnualIncome(owner));
+
+            if (amount == 0)
+                continue;
+
+            lines.Add(
+                new FinanceBreakdownItem(
+                    provider.Label,
+                    amount));
+        }
+
         return lines;
     }
 }

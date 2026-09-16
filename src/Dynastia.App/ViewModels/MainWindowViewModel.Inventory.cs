@@ -25,11 +25,26 @@ public sealed partial class MainWindowViewModel
         if (finance is null)
             return null;
 
+        var farming =
+            _farmingService?.GetSnapshot(actor);
+
         var incomeLines =
             _economyService
                 .GetProjectedIncomeBreakdown(actor)
+                .Where(line =>
+                    !line.Label.Equals(
+                        "farming",
+                        StringComparison.OrdinalIgnoreCase))
                 .Select(FormatInventoryIncomeLine)
                 .ToList();
+
+        if (farming is { TotalParcelCount: > 0 })
+        {
+            incomeLines.Add(
+                new FinanceBreakdownItem(
+                    "Farming",
+                    farming.LastAnnualIncome));
+        }
 
         var loanIncome =
             GetProjectedLoanIncome(actor);
@@ -43,8 +58,7 @@ public sealed partial class MainWindowViewModel
         }
 
         var incomeTotal =
-            _economyService.GetProjectedAnnualIncome(actor)
-            + loanIncome;
+            incomeLines.Sum(line => line.Amount);
 
         var debts =
             _loanService?.GetDebts(actor)
@@ -105,11 +119,14 @@ public sealed partial class MainWindowViewModel
             debts,
             loansGiven,
             _economyService.GetHouses(actor),
+            farming,
             children,
             CanUseFamilyInventoryAction("loan.take"),
             CanUseFamilyInventoryAction("loan.give"),
             CanUseFamilyInventoryAction("household.buy_house"),
-            CanUseFamilyInventoryAction("household.sell_house"));
+            CanUseFamilyInventoryAction("household.sell_house"),
+            CanUseFamilyInventoryAction("farming.buy_farmland"),
+            CanUseFamilyInventoryAction("farming.sell_farmland"));
     }
 
     internal bool SetHouseInheritanceHeir(
@@ -140,6 +157,28 @@ public sealed partial class MainWindowViewModel
             nameof(HouseholdHousesDetailsText));
 
         return true;
+    }
+
+    internal GameActionResult QueueFamilyInventoryAction(
+        string actionId)
+    {
+        var actor = _succession.ActiveController;
+        if (actor is null)
+            return new GameActionResult(false, "No active household is available.");
+
+        var result = _actionRegistry.Execute(
+            actionId,
+            actor,
+            actor);
+
+        if (!result.Success && !string.IsNullOrWhiteSpace(result.Message))
+            PersistenceStatusText = result.Message;
+
+        RefreshActions();
+        RefreshEconomy();
+        OnPropertyChanged(nameof(HasQueuedAction));
+        OnPropertyChanged(nameof(QueuedActionText));
+        return result;
     }
 
     private bool CanUseFamilyInventoryAction(
@@ -217,11 +256,14 @@ internal sealed record FamilyInventoryData(
     IReadOnlyList<LoanContractInfo> Debts,
     IReadOnlyList<LoanContractInfo> LoansGiven,
     IReadOnlyList<HousePropertyInfo> Houses,
+    FarmingHouseholdSnapshot? Farming,
     IReadOnlyList<FamilyInventoryChildData> Children,
     bool CanTakeLoan,
     bool CanGiveLoan,
     bool CanBuyHouse,
-    bool CanSellHouse);
+    bool CanSellHouse,
+    bool CanBuyFarmland,
+    bool CanSellFarmland);
 
 internal sealed record FamilyInventoryChildData(
     Guid Id,

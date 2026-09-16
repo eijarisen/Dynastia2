@@ -3,13 +3,37 @@ using Avalonia.Media;
 
 namespace Dynastia.App.ViewModels;
 
-public sealed record FamilyRelationActionViewModel(
-    string Id,
-    string Label,
-    string Description,
-    Guid RelativeId,
-    bool RequiresPropertySelection,
-    bool RequiresMoneySelection);
+public sealed class FamilyRelationActionViewModel
+{
+    public FamilyRelationActionViewModel(
+        string id,
+        string label,
+        string description,
+        Guid relativeId,
+        bool requiresPropertySelection,
+        bool requiresMoneySelection,
+        IReadOnlyList<PropertySelectionOption>? inlinePropertyOptions = null)
+    {
+        Id = id;
+        Label = label;
+        Description = description;
+        RelativeId = relativeId;
+        RequiresPropertySelection = requiresPropertySelection;
+        RequiresMoneySelection = requiresMoneySelection;
+        InlinePropertyOptions = inlinePropertyOptions ?? [];
+        SelectedInlineProperty = InlinePropertyOptions.FirstOrDefault();
+    }
+
+    public string Id { get; }
+    public string Label { get; }
+    public string Description { get; }
+    public Guid RelativeId { get; }
+    public bool RequiresPropertySelection { get; }
+    public bool RequiresMoneySelection { get; }
+    public IReadOnlyList<PropertySelectionOption> InlinePropertyOptions { get; }
+    public PropertySelectionOption? SelectedInlineProperty { get; set; }
+    public bool HasInlinePropertySelection => InlinePropertyOptions.Count > 0;
+}
 
 public sealed record FamilyRelationMemberViewModel(
     string PortraitEmoji,
@@ -27,6 +51,7 @@ public sealed record FamilyRelationHouseholdViewModel(
     string TownText,
     string WealthText,
     string HousesText,
+    string FarmlandText,
     IReadOnlyList<FamilyRelationActionViewModel> Actions)
 {
     public bool IsNonPlayableHousehold => !IsPlayableHousehold;

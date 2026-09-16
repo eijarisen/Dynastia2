@@ -21,6 +21,7 @@ public sealed class EconomyYearSystem :
     private readonly IFamilyService _family;
     private readonly IStatsService _stats;
     private readonly IIncomeProviderRegistry _income;
+    private readonly IHouseholdIncomeProviderRegistry _householdIncome;
     private readonly IGameRandom _random;
     private readonly IGameEventBus _events;
     private readonly ILocationService _locations;
@@ -30,6 +31,7 @@ public sealed class EconomyYearSystem :
         IFamilyService family,
         IStatsService stats,
         IIncomeProviderRegistry income,
+        IHouseholdIncomeProviderRegistry householdIncome,
         IGameRandom random,
         IGameEventBus events,
         ILocationService locations)
@@ -45,6 +47,9 @@ public sealed class EconomyYearSystem :
 
         _income =
             income;
+
+        _householdIncome =
+            householdIncome;
 
         _random =
             random;
@@ -160,6 +165,24 @@ public sealed class EconomyYearSystem :
 
         income +=
             rentalIncome;
+
+        foreach (var provider in _householdIncome.Providers)
+        {
+            var householdAmount =
+                Math.Round(
+                    provider.GetAnnualIncome(head),
+                    0,
+                    MidpointRounding.AwayFromZero);
+
+            household.LastIncomeBreakdown.Add(
+                new LedgerLineState
+                {
+                    Label = provider.Label,
+                    Amount = householdAmount
+                });
+
+            income += householdAmount;
+        }
 
         if (HasExceptionalIntellect(head)
             && _random.NextDouble()

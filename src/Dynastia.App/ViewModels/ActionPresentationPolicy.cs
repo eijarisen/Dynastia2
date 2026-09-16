@@ -162,6 +162,16 @@ internal static class ActionPresentationPolicy
         }
 
         if (actionId.StartsWith(
+            "farming.",
+            StringComparison.OrdinalIgnoreCase))
+        {
+            categories.Add(
+                ActionCategory.Finances);
+
+            return categories;
+        }
+
+        if (actionId.StartsWith(
             "loan.",
             StringComparison.OrdinalIgnoreCase))
         {
@@ -228,7 +238,9 @@ internal static class ActionPresentationPolicy
         GroupTogether(
             actions,
             "household.buy_house",
-            "household.sell_house");
+            "household.sell_house",
+            "farming.buy_farmland",
+            "farming.sell_farmland");
 
         GroupTogether(
             actions,

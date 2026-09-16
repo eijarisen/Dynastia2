@@ -29,6 +29,13 @@ public sealed partial class StandardCareerService
             true;
     }
 
+    public decimal GetLevelOneSalary(
+        string careerId)
+    {
+        var definition = _catalog.Find(careerId);
+        return definition?.BaseSalary ?? 0m;
+    }
+
     public decimal GetAnnualIncome(
         IPerson person)
     {

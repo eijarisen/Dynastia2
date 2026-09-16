@@ -8,4 +8,6 @@ public sealed class PersonalEstateComponent
     public int PendingHouses { get; set; }
 
     public List<HousePropertyState> PendingHouseProperties { get; } = [];
+
+    public List<FarmlandAssetState> PendingFarmland { get; } = [];
 }

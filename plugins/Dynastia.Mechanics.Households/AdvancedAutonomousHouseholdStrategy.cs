@@ -342,6 +342,9 @@ internal sealed class AdvancedAutonomousHouseholdStrategy :
             "household.sell_house" =>
                 ScoreSellHouse(option, snapshot),
 
+            "farming.sell_farmland" =>
+                ScoreSellFarmland(option, snapshot),
+
             "loan.take" =>
                 ScoreTakeLoan(option, snapshot),
 
@@ -359,6 +362,9 @@ internal sealed class AdvancedAutonomousHouseholdStrategy :
 
             "family_relations.ask_house" =>
                 ScoreAskHouse(option, snapshot),
+
+            "family_relations.ask_farmland" =>
+                ScoreAskFarmland(option, snapshot),
 
             "family_relations.ask_job_help" =>
                 ScoreAskJobHelp(option, snapshot),
@@ -394,11 +400,15 @@ internal sealed class AdvancedAutonomousHouseholdStrategy :
             "household.buy_house" =>
                 ScoreBuyHouse(option, snapshot),
 
+            "farming.buy_farmland" =>
+                ScoreBuyFarmland(option, snapshot),
+
             "family_relations.improve" =>
                 ScoreImproveRelations(option, snapshot),
 
             "family_relations.give_money" or
             "family_relations.give_house" or
+            "family_relations.give_farmland" or
             "family_relations.give_job_help" =>
                 ScoreFamilyGenerosity(option, snapshot),
 
@@ -630,6 +640,41 @@ internal sealed class AdvancedAutonomousHouseholdStrategy :
         };
     }
 
+    private AutonomousActionCandidate? ScoreSellFarmland(
+        AutonomousActionCandidate option,
+        AutonomousHouseholdSnapshot snapshot)
+    {
+        var farming = _context.GetService<IFarmingService>();
+        var farm = farming?.GetSnapshot(snapshot.Head);
+        if (farm is null || farm.TotalParcelCount == 0)
+            return null;
+
+        var wealth = snapshot.Finance?.Wealth ?? 0m;
+        var remoteCount = farm.TotalParcelCount - farm.LocalParcelCount;
+
+        if ((snapshot.HasImmediateMedicalDanger || snapshot.HasSeriousMedicalDanger)
+            && wealth < 1000m)
+        {
+            return WithScore(option, AutonomyCategory.Survival,
+                AutonomousPriorityBands.EmergencySurvival, 101);
+        }
+
+        return snapshot.FinancialState switch
+        {
+            AutonomousFinancialState.Critical => WithScore(option,
+                AutonomyCategory.Solvency,
+                AutonomousPriorityBands.HouseholdSolvency,
+                remoteCount > 0 ? 99 : 92),
+            AutonomousFinancialState.Poor when remoteCount > 0 => WithScore(option,
+                AutonomyCategory.Solvency,
+                AutonomousPriorityBands.HouseholdSolvency, 82),
+            AutonomousFinancialState.Poor => WithScore(option,
+                AutonomyCategory.Solvency,
+                AutonomousPriorityBands.HouseholdSolvency, 70),
+            _ => null
+        };
+    }
+
     private AutonomousActionCandidate? ScoreTakeLoan(
         AutonomousActionCandidate option,
         AutonomousHouseholdSnapshot snapshot)
@@ -768,6 +813,33 @@ internal sealed class AdvancedAutonomousHouseholdStrategy :
                 WithScore(option, AutonomyCategory.Property,
                     AutonomousPriorityBands.LongTermImprovement,
                     55 + willingnessBonus),
+            _ => null
+        };
+    }
+
+    private AutonomousActionCandidate? ScoreAskFarmland(
+        AutonomousActionCandidate option,
+        AutonomousHouseholdSnapshot snapshot)
+    {
+        if (!RequestIsReasonable(option))
+            return null;
+
+        var farming = _context.GetService<IFarmingService>();
+        var own = farming?.GetSnapshot(snapshot.Head);
+        if (own is null || own.AvailableWorkers == 0)
+            return null;
+
+        var willingnessBonus = (option.RequestWillingness ?? 0) * 15;
+        return snapshot.FinancialState switch
+        {
+            AutonomousFinancialState.Critical or AutonomousFinancialState.Poor =>
+                WithScore(option, AutonomyCategory.FamilyRelations,
+                    AutonomousPriorityBands.HouseholdSolvency,
+                    66 + willingnessBonus),
+            AutonomousFinancialState.Stable =>
+                WithScore(option, AutonomyCategory.Property,
+                    AutonomousPriorityBands.LongTermImprovement,
+                    48 + willingnessBonus),
             _ => null
         };
     }
@@ -1023,6 +1095,38 @@ internal sealed class AdvancedAutonomousHouseholdStrategy :
         return WithScore(option, AutonomyCategory.Property,
             AutonomousPriorityBands.LongTermImprovement,
             snapshot.HasResidence ? 44 : 78);
+    }
+
+    private AutonomousActionCandidate? ScoreBuyFarmland(
+        AutonomousActionCandidate option,
+        AutonomousHouseholdSnapshot snapshot)
+    {
+        if (snapshot.FinancialState != AutonomousFinancialState.Secure
+            || snapshot.HasSeriousMedicalDanger
+            || snapshot.Status?.IsLargeFamilyStrained == true
+            || snapshot.LivingChildCount < 2 && snapshot.HasRealisticReproductivePath)
+        {
+            return null;
+        }
+
+        var farming = _context.GetService<IFarmingService>();
+        if (farming is null || snapshot.Finance is null)
+            return null;
+
+        var farm = farming.GetSnapshot(snapshot.Head);
+        if (farm.AvailableWorkers == 0)
+            return null;
+
+        var reserve = snapshot.ExpectedExpenses * 2m;
+        if (snapshot.Finance.Wealth - farming.PurchasePrice < reserve)
+            return null;
+
+        var earlyEraBonus = Math.Clamp((2000 - _gameState.Year) / 25.0, 0, 12);
+        var workerBonus = Math.Min(farm.AvailableWorkers, 2) * 5;
+
+        return WithScore(option, AutonomyCategory.Property,
+            AutonomousPriorityBands.LongTermImprovement,
+            45 + earlyEraBonus + workerBonus);
     }
 
     private AutonomousActionCandidate? ScoreImproveRelations(
@@ -1311,6 +1415,18 @@ internal sealed class AdvancedAutonomousHouseholdStrategy :
             if (investment is null)
                 return null;
             parameters["propertyId"] = investment.Id.ToString();
+        }
+        else if (actionId.Equals("family_relations.give_farmland", StringComparison.OrdinalIgnoreCase))
+        {
+            var residence = _economy.GetResidenceTown(snapshot.Head);
+            var parcel = _economy.GetFarmland(snapshot.Head)
+                .OrderBy(asset => asset.Town.Id.Equals(residence.Id, StringComparison.OrdinalIgnoreCase) ? 1 : 0)
+                .ThenBy(asset => asset.AcquiredYear)
+                .ThenBy(asset => asset.Id)
+                .FirstOrDefault();
+            if (parcel is null)
+                return null;
+            parameters["farmlandId"] = parcel.Id.ToString();
         }
 
         return parameters;
@@ -1639,6 +1755,7 @@ internal sealed class AdvancedAutonomousHouseholdStrategy :
         if (id is "personality.religious_study" or
             "family_relations.give_money" or
             "family_relations.give_house" or
+            "family_relations.give_farmland" or
             "family_relations.give_job_help")
         {
             good += 0.12;

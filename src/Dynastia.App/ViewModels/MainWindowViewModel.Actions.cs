@@ -608,6 +608,24 @@ public sealed partial class MainWindowViewModel
         }
 
         if (queued.ActionId.Equals(
+                "farming.buy_farmland",
+                StringComparison.OrdinalIgnoreCase))
+        {
+            return _farmingService is null
+                ? "10,000 zł"
+                : $"{_farmingService.PurchasePrice.ToString("N0", CultureInfo.InvariantCulture)} zł";
+        }
+
+        if (queued.ActionId.Equals(
+                "farming.sell_farmland",
+                StringComparison.OrdinalIgnoreCase))
+        {
+            return _farmingService is null
+                ? "8,000 zł"
+                : $"{_farmingService.SalePrice.ToString("N0", CultureInfo.InvariantCulture)} zł";
+        }
+
+        if (queued.ActionId.Equals(
                 "household.buy_house",
                 StringComparison.OrdinalIgnoreCase)
             || queued.ActionId.Equals(
@@ -730,6 +748,12 @@ public sealed partial class MainWindowViewModel
                    StringComparison.OrdinalIgnoreCase)
                || actionId.Equals(
                    "household.give_house_to_son",
+                   StringComparison.OrdinalIgnoreCase)
+               || actionId.Equals(
+                   "farming.buy_farmland",
+                   StringComparison.OrdinalIgnoreCase)
+               || actionId.Equals(
+                   "farming.sell_farmland",
                    StringComparison.OrdinalIgnoreCase);
     }
 

@@ -1,0 +1,13 @@
+{
+  "id": "dynastia.farming",
+  "name": "Standard Farming",
+  "version": "0.1.0",
+  "apiVersion": 1,
+  "assembly": "Dynastia.Mechanics.Farming.dll",
+  "entryType": "Dynastia.Mechanics.Farming.FarmingPlugin",
+  "dependencies": [
+    "dynastia.family",
+    "dynastia.economy",
+    "dynastia.career"
+  ]
+}

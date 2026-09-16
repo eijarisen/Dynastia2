@@ -119,6 +119,24 @@ public partial class FamilyInventoryWindow : Window
         _viewModel.Refresh();
     }
 
+    private void OnBuyFarmlandClick(
+        object? sender,
+        RoutedEventArgs e)
+    {
+        _main.QueueFamilyInventoryAction(
+            "farming.buy_farmland");
+        _viewModel.Refresh();
+    }
+
+    private void OnSellFarmlandClick(
+        object? sender,
+        RoutedEventArgs e)
+    {
+        _main.QueueFamilyInventoryAction(
+            "farming.sell_farmland");
+        _viewModel.Refresh();
+    }
+
     private void OnCloseClick(
         object? sender,
         RoutedEventArgs e) =>

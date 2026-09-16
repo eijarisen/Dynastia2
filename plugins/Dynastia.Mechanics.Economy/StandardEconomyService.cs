@@ -14,12 +14,14 @@ public sealed partial class StandardEconomyService :
     private readonly IFamilyService _family;
     private readonly ILocationService _locations;
     private readonly IIncomeProviderRegistry _income;
+    private readonly IHouseholdIncomeProviderRegistry _householdIncome;
 
     public StandardEconomyService(
         IGameState gameState,
         IFamilyService family,
         ILocationService locations,
-        IIncomeProviderRegistry income)
+        IIncomeProviderRegistry income,
+        IHouseholdIncomeProviderRegistry householdIncome)
     {
         _gameState =
             gameState;
@@ -32,6 +34,9 @@ public sealed partial class StandardEconomyService :
 
         _income =
             income;
+
+        _householdIncome =
+            householdIncome;
     }
 
     public bool HasHousehold(

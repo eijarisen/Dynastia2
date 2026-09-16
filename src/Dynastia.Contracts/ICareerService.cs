@@ -11,6 +11,8 @@ public interface ICareerService
     void Retire(IPerson person);
     decimal GetAnnualIncome(IPerson person);
 
+    decimal GetLevelOneSalary(string careerId);
+
     IReadOnlyList<JobOpportunityInfo> GetJobOpportunities(
         IPerson person,
         int count = 5);

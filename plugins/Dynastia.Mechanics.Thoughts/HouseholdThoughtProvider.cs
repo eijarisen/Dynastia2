@@ -113,6 +113,34 @@ internal sealed class HouseholdThoughtProvider :
                             gameEvent,
                             person)))
         {
+            if (gameEvent.Type.Equals(
+                    "farming.income",
+                    StringComparison.OrdinalIgnoreCase)
+                && gameEvent.RelatedPersonIds.Contains(person.Id))
+            {
+                var performance = gameEvent.Data.TryGetValue(
+                    "performance",
+                    out var storedPerformance)
+                        ? storedPerformance
+                        : "ordinary";
+
+                yield return new ThoughtCandidate(
+                    "farming.work",
+                    "household.farming",
+                    "household.farming",
+                    performance.Equals("ordinary", StringComparison.OrdinalIgnoreCase)
+                        ? 10
+                        : 18,
+                    "🌾",
+                    "event",
+                    gameEvent.Type,
+                    "farming.work",
+                    new Dictionary<string, string>
+                    {
+                        ["performance"] = performance
+                    });
+            }
+
             if (person.Age >= 18)
             {
                 if (gameEvent.Type.Equals(

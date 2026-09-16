@@ -84,6 +84,10 @@ public sealed class AdulthoodInheritanceSystem :
             TransferPendingHouses(
                 gameState,
                 person);
+
+            TransferPendingFarmland(
+                gameState,
+                person);
         }
     }
 
@@ -184,4 +188,43 @@ public sealed class AdulthoodInheritanceSystem :
                     }
             });
     }
+
+    private void TransferPendingFarmland(
+        IGameState gameState,
+        IPerson person)
+    {
+        var farmland =
+            _economy.TakePendingFarmland(
+                person);
+
+        if (farmland.Count == 0)
+            return;
+
+        foreach (var parcel in farmland)
+        {
+            _economy.AddExistingFarmland(
+                person,
+                parcel);
+        }
+
+        _events.Publish(
+            new GameEvent
+            {
+                Type = "farmland.received",
+                Year = gameState.Year,
+                SubjectId = person.Id,
+                Data = new Dictionary<string, string>
+                {
+                    ["count"] = farmland.Count.ToString(),
+                    ["towns"] = string.Join(
+                        ", ",
+                        farmland.Select(asset => asset.Town.Town)),
+                    ["text"] =
+                        $"{_family.GetDisplayName(person)} received " +
+                        $"{farmland.Count} inherited farmland parcel" +
+                        $"{(farmland.Count == 1 ? "" : "s")} after establishing a household."
+                }
+            });
+    }
+
 }

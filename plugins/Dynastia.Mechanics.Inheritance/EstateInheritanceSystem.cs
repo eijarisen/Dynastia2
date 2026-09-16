@@ -114,6 +114,12 @@ public sealed class EstateInheritanceSystem :
                     head)
                 .ToList();
 
+        var farmland =
+            _economy
+                .TakeAllFarmland(
+                    head)
+                .ToList();
+
         var wealth =
             finance.Wealth;
 
@@ -156,6 +162,9 @@ public sealed class EstateInheritanceSystem :
                             ["houses"] =
                                 houses.Count.ToString(),
 
+                            ["farmland"] =
+                                farmland.Count.ToString(),
+
                             ["text"] =
                                 $"The remaining estate of " +
                                 $"{(anchor is null ? _family.GetDisplayName(head) : _family.GetDisplayName(anchor))} " +
@@ -175,6 +184,14 @@ public sealed class EstateInheritanceSystem :
             ?? head,
             heirs,
             houses,
+            estateHouseholdId);
+
+        DistributeFarmland(
+            gameState,
+            anchor
+            ?? head,
+            heirs,
+            farmland,
             estateHouseholdId);
 
         DistributeCash(
@@ -218,6 +235,9 @@ public sealed class EstateInheritanceSystem :
                         ["houses"] =
                             houses.Count.ToString(),
 
+                        ["farmland"] =
+                            farmland.Count.ToString(),
+
                         ["heirs"] =
                             heirs.Count.ToString(),
 
@@ -242,6 +262,12 @@ public sealed class EstateInheritanceSystem :
         var houses =
             _economy
                 .TakeAllHouses(
+                    oldHead)
+                .ToList();
+
+        var farmland =
+            _economy
+                .TakeAllFarmland(
                     oldHead)
                 .ToList();
 
@@ -274,6 +300,13 @@ public sealed class EstateInheritanceSystem :
                     anchor,
                     house);
             }
+
+            foreach (var parcel in farmland)
+            {
+                _economy.AddExistingFarmland(
+                    anchor,
+                    parcel);
+            }
         }
         else
         {
@@ -290,6 +323,13 @@ public sealed class EstateInheritanceSystem :
                 _economy.AddPendingHouse(
                     anchor,
                     house);
+            }
+
+            foreach (var parcel in farmland)
+            {
+                _economy.AddPendingFarmland(
+                    anchor,
+                    parcel);
             }
         }
 
@@ -320,6 +360,9 @@ public sealed class EstateInheritanceSystem :
 
                         ["houses"] =
                             houses.Count.ToString(),
+
+                        ["farmland"] =
+                            farmland.Count.ToString(),
 
                         ["text"] =
                             $"The remaining assets of " +
@@ -443,6 +486,76 @@ public sealed class EstateInheritanceSystem :
                                 $"inherited {inherited.Count} " +
                                 $"house{(inherited.Count == 1 ? "" : "s")}."
                         }
+                });
+        }
+    }
+
+    private void DistributeFarmland(
+        IGameState gameState,
+        IPerson source,
+        IReadOnlyList<IPerson> heirs,
+        IReadOnlyList<FarmlandAssetInfo> farmland,
+        Guid? estateHouseholdId)
+    {
+        if (farmland.Count == 0 || heirs.Count == 0)
+            return;
+
+        var received =
+            heirs.ToDictionary(
+                heir => heir.Id,
+                _ => new List<FarmlandAssetInfo>());
+
+        for (var index = 0; index < farmland.Count; index++)
+        {
+            var heir = heirs[index % heirs.Count];
+            var parcel = farmland[index] with
+            {
+                AcquiredYear = gameState.Year,
+                AcquisitionSource = "inheritance"
+            };
+
+            if (HasEstablishedHouseholdOutsideEstate(
+                    heir,
+                    estateHouseholdId))
+            {
+                _economy.AddExistingFarmland(
+                    heir,
+                    parcel);
+            }
+            else
+            {
+                _economy.AddPendingFarmland(
+                    heir,
+                    parcel);
+            }
+
+            received[heir.Id].Add(parcel);
+        }
+
+        foreach (var heir in heirs)
+        {
+            var inherited = received[heir.Id];
+            if (inherited.Count == 0)
+                continue;
+
+            _events.Publish(
+                new GameEvent
+                {
+                    Type = "farmland.inherited",
+                    Year = gameState.Year,
+                    SubjectId = heir.Id,
+                    RelatedPersonIds = [source.Id],
+                    Data = new Dictionary<string, string>
+                    {
+                        ["count"] = inherited.Count.ToString(),
+                        ["towns"] = string.Join(
+                            ", ",
+                            inherited.Select(asset => asset.Town.Town)),
+                        ["text"] =
+                            $"{_family.GetDisplayName(heir)} inherited " +
+                            $"{inherited.Count} parcel" +
+                            $"{(inherited.Count == 1 ? "" : "s")} of farmland."
+                    }
                 });
         }
     }

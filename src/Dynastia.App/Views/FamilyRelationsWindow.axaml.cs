@@ -51,8 +51,17 @@ public partial class FamilyRelationsWindow : Window
         if (sender is not Button { DataContext: FamilyRelationActionViewModel action })
             return;
 
-        string? propertyId = null;
+        string? propertyId =
+            action.HasInlinePropertySelection
+                ? action.SelectedInlineProperty?.Id
+                : null;
         decimal? moneyAmount = null;
+
+        if (action.HasInlinePropertySelection
+            && string.IsNullOrWhiteSpace(propertyId))
+        {
+            return;
+        }
 
         if (action.RequiresPropertySelection)
         {

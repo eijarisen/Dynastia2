@@ -1096,6 +1096,28 @@ internal sealed partial class ThoughtPhraseRenderer
                         ]
                 },
 
+            "farming.work" =>
+                C("performance", "ordinary").ToLowerInvariant() switch
+                {
+                    "strong" =>
+                        ["The land produced unusually well this year."],
+                    "poor" =>
+                        ["The farm hardly produced anything this year."],
+                    _ => voice switch
+                    {
+                        ThoughtVoice.Child =>
+                            ["I've been helping with the farm."],
+                        ThoughtVoice.Adolescent =>
+                            ["There's always work to do on the land."],
+                        ThoughtVoice.AdultRough =>
+                            ["Farm work keeps me busy."],
+                        ThoughtVoice.AdultElaborate =>
+                            ["A good portion of my time lately has gone into keeping the family's land productive."],
+                        _ =>
+                            ["I've been spending plenty of time working the family's land."]
+                    }
+                },
+
             "property.bought" =>
                 ["I'm pleased we were able to buy another house.", "Buying the house feels like a real step forward."],
 

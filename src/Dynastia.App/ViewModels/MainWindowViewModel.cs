@@ -14,6 +14,7 @@ public sealed partial class MainWindowViewModel : ViewModelBase
     private readonly IFamilyService? _familyService;
     private readonly IHealthService? _healthService;
     private readonly IEconomyService? _economyService;
+    private readonly IFarmingService? _farmingService;
     private readonly ILoanService? _loanService;
     private readonly IHouseholdService? _householdService;
     private readonly IAutonomousHouseholdDecisionService?
@@ -88,6 +89,7 @@ public sealed partial class MainWindowViewModel : ViewModelBase
         IFamilyService? familyService,
         IHealthService? healthService,
         IEconomyService? economyService,
+        IFarmingService? farmingService,
         ILoanService? loanService,
         IHouseholdService? householdService,
         IAutonomousHouseholdDecisionService? autonomousHouseholdDecisionService,
@@ -120,6 +122,7 @@ public sealed partial class MainWindowViewModel : ViewModelBase
         _familyService = familyService;
         _healthService = healthService;
         _economyService = economyService;
+        _farmingService = farmingService;
         _loanService = loanService;
         _householdService = householdService;
         _autonomousHouseholdDecisionService =

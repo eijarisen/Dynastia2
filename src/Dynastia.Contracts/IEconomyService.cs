@@ -121,6 +121,26 @@ public interface IEconomyService
     IReadOnlyList<HousePropertyInfo> TakeAllHouses(
         IPerson person);
 
+    IReadOnlyList<FarmlandAssetInfo> GetFarmland(
+        IPerson person);
+
+    FarmlandAssetInfo AddFarmland(
+        IPerson person,
+        TownInfo town,
+        int acquiredYear,
+        string acquisitionSource);
+
+    void AddExistingFarmland(
+        IPerson person,
+        FarmlandAssetInfo farmland);
+
+    FarmlandAssetInfo? TakeFarmland(
+        IPerson person,
+        Guid farmlandId);
+
+    IReadOnlyList<FarmlandAssetInfo> TakeAllFarmland(
+        IPerson person);
+
     decimal GetPendingInheritance(
         IPerson person);
 
@@ -148,6 +168,16 @@ public interface IEconomyService
         HousePropertyInfo house);
 
     IReadOnlyList<HousePropertyInfo> TakePendingHouses(
+        IPerson person);
+
+    IReadOnlyList<FarmlandAssetInfo> GetPendingFarmland(
+        IPerson person);
+
+    void AddPendingFarmland(
+        IPerson person,
+        FarmlandAssetInfo farmland);
+
+    IReadOnlyList<FarmlandAssetInfo> TakePendingFarmland(
         IPerson person);
 
     void SetNanny(

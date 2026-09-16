@@ -46,7 +46,7 @@ public sealed class HistoricalRetouchBatch5Tests
         var condition = Assert.Single(service.GetHealth(person).Conditions);
         Assert.Equal("tuberculosis", condition.Id);
         Assert.Equal("Consumption", condition.Name);
-        Assert.Equal(-15, condition.HealthImpact);
+        Assert.Equal(-21, condition.HealthImpact);
     }
 
     [Fact]

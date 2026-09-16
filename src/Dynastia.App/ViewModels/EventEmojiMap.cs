@@ -140,6 +140,12 @@ public static class EventEmojiMap
                 ["household.moved"] = "🚚",
                 ["household.house_rented"] = "🏘️",
                 ["household.house_given"] = "🎁",
+                ["farmland.bought"] = "🌾",
+                ["farmland.sold"] = "🌾",
+                ["farmland.inherited"] = "🌾",
+                ["farmland.given"] = "🌾",
+                ["farmland.received"] = "🌾",
+                ["farmland.request_refused"] = "🚫",
 
                 // Filled the other missing action-family event emoji.
                 ["household.house_promised"] = "🎁",

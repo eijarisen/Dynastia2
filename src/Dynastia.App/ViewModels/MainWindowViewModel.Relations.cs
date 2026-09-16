@@ -82,6 +82,7 @@ public sealed partial class MainWindowViewModel
                     : $"Town: {_locationService.GetLocation(targetHead).HomeTown.Town}";
                 var wealthText = $"Wealth: {finance.Wealth:N0} zł";
                 var housesText = $"Houses: {_economyService.GetHouses(targetHead).Count}";
+                var farmlandText = $"Farmland: {_economyService.GetFarmland(targetHead).Count} parcels";
 
                 var actionModels = _actionRegistry
                     .GetAvailableActions(actor, relative, parameters)
@@ -100,7 +101,12 @@ public sealed partial class MainWindowViewModel
                             StringComparison.OrdinalIgnoreCase)
                         || action.Id.Equals(
                             "family_relations.give_money",
-                            StringComparison.OrdinalIgnoreCase)))
+                            StringComparison.OrdinalIgnoreCase),
+                        action.Id.Equals(
+                            "family_relations.give_farmland",
+                            StringComparison.OrdinalIgnoreCase)
+                            ? GetFamilyRelationGiveFarmlandOptions()
+                            : null))
                     .ToList();
 
                 return new FamilyRelationHouseholdViewModel(
@@ -115,6 +121,7 @@ public sealed partial class MainWindowViewModel
                     townText,
                     wealthText,
                     housesText,
+                    farmlandText,
                     actionModels);
             })
             .Where(item => item is not null)
@@ -157,6 +164,29 @@ public sealed partial class MainWindowViewModel
                 $"{house.Town.SettlementClassDisplayName} — rented investment",
                 $"Value {_economyService.GetHouseSaleValue(house.Town):N0} zł",
                 $"{house.Town.Town} {house.Town.County} {house.Town.RegionId}"))
+            .ToList();
+    }
+
+    internal IReadOnlyList<PropertySelectionOption> GetFamilyRelationGiveFarmlandOptions()
+    {
+        var actor = _succession.ActiveController;
+        if (actor is null || _economyService is null)
+            return [];
+
+        var residence = _economyService.GetResidenceTown(actor);
+
+        return _economyService.GetFarmland(actor)
+            .OrderBy(asset => asset.AcquiredYear)
+            .ThenBy(asset => asset.Id)
+            .Select(asset => new PropertySelectionOption(
+                asset.Id.ToString(),
+                asset.Town.Town,
+                asset.Town.County,
+                asset.Town.Id.Equals(residence.Id, StringComparison.OrdinalIgnoreCase)
+                    ? "Local farmland"
+                    : "Remote farmland",
+                $"Acquired {asset.AcquiredYear}",
+                $"{asset.Town.Town} {asset.Town.County} {asset.Town.RegionId}"))
             .ToList();
     }
 
@@ -216,7 +246,18 @@ public sealed partial class MainWindowViewModel
             ["familyRelations"] = "true"
         };
         if (!string.IsNullOrWhiteSpace(propertyId))
-            parameters["propertyId"] = propertyId;
+        {
+            if (actionId.Equals(
+                    "family_relations.give_farmland",
+                    StringComparison.OrdinalIgnoreCase))
+            {
+                parameters["farmlandId"] = propertyId;
+            }
+            else
+            {
+                parameters["propertyId"] = propertyId;
+            }
+        }
 
         if (moneyAmount is decimal amount)
         {
@@ -355,6 +396,8 @@ public sealed partial class MainWindowViewModel
         "family_relations.ask_money" => 20,
         "family_relations.give_house" => 30,
         "family_relations.ask_house" => 40,
+        "family_relations.give_farmland" => 45,
+        "family_relations.ask_farmland" => 46,
         "family_relations.give_job_help" => 50,
         "family_relations.ask_job_help" => 60,
         _ => 100

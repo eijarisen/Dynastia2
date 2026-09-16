@@ -24,6 +24,8 @@ internal static partial class FamilyRelationActions
         actions.Register(CreateGiveMoney(relations, households, economy, random, events, family));
         actions.Register(CreateAskHouse(relations, households, economy, locations, career, random, events, family, gameState));
         actions.Register(CreateGiveHouse(relations, households, economy, locations, career, random, events, family, gameState));
+        actions.Register(CreateAskFarmland(relations, households, economy, random, events, family));
+        actions.Register(CreateGiveFarmland(relations, households, economy, events, family));
         actions.Register(CreateAskJobHelp(relations, households, economy, career, random, events, family, gameState));
         actions.Register(CreateGiveJobHelp(relations, households, economy, career, random, events, family, gameState));
     }

@@ -14,10 +14,15 @@ public sealed class FamilyInventoryWindowViewModel :
     private string _expenseTotalText = string.Empty;
     private string _loanEmptyText = string.Empty;
     private string _houseEmptyText = string.Empty;
+    private string _farmlandTitle = "Farmland";
+    private string _farmlandSummaryText = string.Empty;
+    private string _farmlandEmptyText = string.Empty;
     private bool _canTakeLoan;
     private bool _canGiveLoan;
     private bool _canBuyHouse;
     private bool _canSellHouse;
+    private bool _canBuyFarmland;
+    private bool _canSellFarmland;
 
     public FamilyInventoryWindowViewModel(
         MainWindowViewModel main)
@@ -37,6 +42,9 @@ public sealed class FamilyInventoryWindowViewModel :
 
     public ObservableCollection<InventoryHouseViewModel>
         Houses { get; } = [];
+
+    public ObservableCollection<InventoryFarmlandViewModel>
+        Farmland { get; } = [];
 
     public string HouseholdName
     {
@@ -116,6 +124,42 @@ public sealed class FamilyInventoryWindowViewModel :
         }
     }
 
+    public string FarmlandTitle
+    {
+        get => _farmlandTitle;
+        private set
+        {
+            if (_farmlandTitle == value)
+                return;
+            _farmlandTitle = value;
+            OnPropertyChanged();
+        }
+    }
+
+    public string FarmlandSummaryText
+    {
+        get => _farmlandSummaryText;
+        private set
+        {
+            if (_farmlandSummaryText == value)
+                return;
+            _farmlandSummaryText = value;
+            OnPropertyChanged();
+        }
+    }
+
+    public string FarmlandEmptyText
+    {
+        get => _farmlandEmptyText;
+        private set
+        {
+            if (_farmlandEmptyText == value)
+                return;
+            _farmlandEmptyText = value;
+            OnPropertyChanged();
+        }
+    }
+
     public bool CanTakeLoan
     {
         get => _canTakeLoan;
@@ -168,6 +212,30 @@ public sealed class FamilyInventoryWindowViewModel :
         }
     }
 
+    public bool CanBuyFarmland
+    {
+        get => _canBuyFarmland;
+        private set
+        {
+            if (_canBuyFarmland == value)
+                return;
+            _canBuyFarmland = value;
+            OnPropertyChanged();
+        }
+    }
+
+    public bool CanSellFarmland
+    {
+        get => _canSellFarmland;
+        private set
+        {
+            if (_canSellFarmland == value)
+                return;
+            _canSellFarmland = value;
+            OnPropertyChanged();
+        }
+    }
+
     public void Refresh()
     {
         var data =
@@ -177,6 +245,7 @@ public sealed class FamilyInventoryWindowViewModel :
         Expenses.Clear();
         Loans.Clear();
         Houses.Clear();
+        Farmland.Clear();
 
         if (data is null)
         {
@@ -186,10 +255,15 @@ public sealed class FamilyInventoryWindowViewModel :
             ExpenseTotalText = "Expenses: —";
             LoanEmptyText = "No loans.";
             HouseEmptyText = "No owned houses.";
+            FarmlandTitle = "Farmland";
+            FarmlandSummaryText = string.Empty;
+            FarmlandEmptyText = "No owned farmland.";
             CanTakeLoan = false;
             CanGiveLoan = false;
             CanBuyHouse = false;
             CanSellHouse = false;
+            CanBuyFarmland = false;
+            CanSellFarmland = false;
             return;
         }
 
@@ -273,10 +347,55 @@ public sealed class FamilyInventoryWindowViewModel :
                 ? "No owned houses."
                 : string.Empty;
 
+        if (data.Farming is { } farming)
+        {
+            foreach (var group in farming.Farmland
+                .GroupBy(asset => asset.Town.Id, StringComparer.OrdinalIgnoreCase)
+                .OrderBy(group => group.Min(asset => asset.AcquiredYear))
+                .ThenBy(group => group.Key, StringComparer.OrdinalIgnoreCase))
+            {
+                var first = group.First();
+                var isLocal = group.Key.Equals(
+                    farming.ResidenceTownId,
+                    StringComparison.OrdinalIgnoreCase);
+
+                var status = isLocal
+                    ? farming.AvailableWorkers <= 0
+                        ? "Local / idle"
+                        : farming.AvailableWorkers >= farming.LocalWorkerCapacity
+                            ? "Local / worked"
+                            : "Local / partly worked"
+                    : "Remote / idle";
+
+                Farmland.Add(new InventoryFarmlandViewModel(
+                    first.Town.Town,
+                    group.Count(),
+                    status));
+            }
+
+            FarmlandTitle = $"Farmland — {farming.TotalParcelCount} " +
+                (farming.TotalParcelCount == 1 ? "parcel" : "parcels");
+            FarmlandSummaryText =
+                $"Available workers: {farming.AvailableWorkers}   •   " +
+                $"Current local capacity: {farming.LocalWorkerCapacity}   •   " +
+                $"This year's farming income: {farming.LastAnnualIncome:N0} zł";
+            FarmlandEmptyText = farming.TotalParcelCount == 0
+                ? "No owned farmland."
+                : string.Empty;
+        }
+        else
+        {
+            FarmlandTitle = "Farmland";
+            FarmlandSummaryText = string.Empty;
+            FarmlandEmptyText = "Farming mechanics are unavailable.";
+        }
+
         CanTakeLoan = data.CanTakeLoan;
         CanGiveLoan = data.CanGiveLoan;
         CanBuyHouse = data.CanBuyHouse;
         CanSellHouse = data.CanSellHouse;
+        CanBuyFarmland = data.CanBuyFarmland;
+        CanSellFarmland = data.CanSellFarmland;
     }
 }
 
@@ -312,6 +431,21 @@ public sealed class InventoryLoanLineViewModel
 
     public string Title { get; }
     public string DetailsText { get; }
+}
+
+public sealed class InventoryFarmlandViewModel
+{
+    public InventoryFarmlandViewModel(
+        string town,
+        int count,
+        string statusText)
+    {
+        TownText = count == 1 ? town : $"{town} ×{count}";
+        StatusText = statusText;
+    }
+
+    public string TownText { get; }
+    public string StatusText { get; }
 }
 
 public sealed class HouseHeirOptionViewModel

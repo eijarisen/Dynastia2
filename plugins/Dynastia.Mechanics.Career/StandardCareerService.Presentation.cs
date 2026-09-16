@@ -45,9 +45,6 @@ public sealed partial class StandardCareerService
         var career =
             person.Components.Get<CareerComponent>();
 
-        if (career?.IsRetired == true)
-            return "🕰️";
-
         if (person.Tags.Has(
             "role.family_nanny"))
         {
@@ -59,6 +56,9 @@ public sealed partial class StandardCareerService
 
         if (activeCraft is not null)
             return activeCraft.Emoji;
+
+        if (career?.IsRetired == true)
+            return "🕰️";
 
         var jobLevel =
             career?.JobLevel

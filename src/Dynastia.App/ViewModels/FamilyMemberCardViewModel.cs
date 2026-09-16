@@ -165,7 +165,7 @@ public sealed class FamilyMemberCardViewModel
 
             satisfactionTooltip =
                 careerSnapshot.IsEmployed
-                && !careerSnapshot.IsRetired
+                && (!careerSnapshot.IsRetired || careerSnapshot.IsSelfEmployed)
                     ? careerSnapshot.JobSatisfactionText
                     : "N/A";
         }

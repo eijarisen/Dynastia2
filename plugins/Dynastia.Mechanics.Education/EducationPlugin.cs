@@ -4,7 +4,7 @@ namespace Dynastia.Mechanics.Education;
 
 public sealed class EducationPlugin : IGamePlugin
 {
-    private const decimal EducationCost = 2000m;
+    private const decimal EducationCost = 3000m;
     private const int HelpLearningMinimumAge = 6;
     private const int HelpLearningAdultAge = 18;
     private const double HelpLearningBaseChance = 0.10;
@@ -232,7 +232,7 @@ public sealed class EducationPlugin : IGamePlugin
         return new GameActionDefinition
         {
             Id = "education.get_education",
-            Label = "Get Education (2,000 zł)",
+            Label = "Get Education (3,000 zł)",
             Description =
                 "Pay for private instruction or formal study appropriate to the period. " +
                 "The cost is paid whether the attempt succeeds or fails. " +

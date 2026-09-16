@@ -195,7 +195,7 @@
     "actionId": "wellbeing.heal_relative",
     "startYear": 1700,
     "endYear": 1849,
-    "label": "Summon a Physician (1,000 zł)",
+    "label": "Summon a Physician (2,000 zł)",
     "description": "Pay for a physician, medicines and convalescence appropriate to the period. Restores 20 health.",
     "narrative": "paid for a physician and a period of convalescence"
   },
@@ -203,7 +203,7 @@
     "actionId": "wellbeing.heal_relative",
     "startYear": 1850,
     "endYear": 1945,
-    "label": "Medical Treatment (1,000 zł)",
+    "label": "Medical Treatment (2,000 zł)",
     "description": "Pay for professional medical treatment. Restores 25 health.",
     "narrative": "paid for medical treatment"
   },
@@ -211,8 +211,8 @@
     "actionId": "wellbeing.heal_relative",
     "startYear": 1946,
     "endYear": null,
-    "label": "Improve Health (1,000 zł)",
-    "description": "Pay 1,000 zł for modern medical treatment. Restores 30 health.",
+    "label": "Improve Health (2,000 zł)",
+    "description": "Pay 2,000 zł for modern medical treatment. Restores 30 health.",
     "narrative": "paid for medical treatment that substantially improved their health"
   },
   {

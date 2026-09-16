@@ -34,8 +34,8 @@ public sealed partial class CareerPlugin
                     var current =
                         career.GetCareer(actionContext.Actor);
 
-                    return !current.IsRetired
-                        && current.IsEmployed;
+                    return current.IsEmployed
+                        && (!current.IsRetired || current.IsSelfEmployed);
                 },
 
                 Execute = actionContext =>
@@ -43,8 +43,8 @@ public sealed partial class CareerPlugin
                     var actor = actionContext.Actor;
                     var current = career.GetCareer(actor);
 
-                    if (current.IsRetired
-                        || !current.IsEmployed)
+                    if (!current.IsEmployed
+                        || (current.IsRetired && !current.IsSelfEmployed))
                     {
                         return new GameActionResult(false);
                     }

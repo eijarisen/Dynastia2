@@ -275,26 +275,35 @@ internal static partial class FamilyRelationActions
     {
         Id = "family_relations.give_farmland",
         Label = "Give Farmland",
-        Description = "Transfer one selected farmland parcel to this relative's household. The transfer is unconditional and never causes relocation.",
+        Description = "Transfer one farmland parcel located in this relative's current town. The oldest matching parcel is used automatically; the transfer is unconditional and never causes relocation.",
         Mode = ActionExecutionMode.Queued,
         QueuePhase = YearPhase.FamilyRelationActions,
         IsAvailable = c => IsRelationsContext(c)
             && IsValidRelation(c, relations)
-            && ResolveTargetHead(c.Target, households) is not null
-            && economy.GetFarmland(c.Actor).Count > 0,
+            && ResolveTargetHead(c.Target, households) is { } targetHead
+            && HasFarmlandInTown(
+                c.Actor,
+                economy.GetResidenceTown(targetHead),
+                economy),
         Execute = c =>
         {
             var targetHead = ResolveTargetHead(c.Target, households);
             if (targetHead is null)
                 return new(false);
 
-            if (!c.Parameters.TryGetValue("farmlandId", out var raw)
-                || !Guid.TryParse(raw, out var farmlandId))
-            {
-                return new(false, "No farmland parcel was selected.");
-            }
+            var targetResidence = economy.GetResidenceTown(targetHead);
+            var selected = economy.GetFarmland(c.Actor)
+                .Where(asset => asset.Town.Id.Equals(
+                    targetResidence.Id,
+                    StringComparison.OrdinalIgnoreCase))
+                .OrderBy(asset => asset.AcquiredYear)
+                .ThenBy(asset => asset.Id)
+                .FirstOrDefault();
 
-            var transferred = economy.TakeFarmland(c.Actor, farmlandId);
+            if (selected is null)
+                return new(false, "No farmland is owned in this relative's current town.");
+
+            var transferred = economy.TakeFarmland(c.Actor, selected.Id);
             if (transferred is null)
                 return new(false, "That farmland parcel is no longer owned.");
 
@@ -318,4 +327,13 @@ internal static partial class FamilyRelationActions
             return new(true);
         }
     };
+
+    private static bool HasFarmlandInTown(
+        IPerson actor,
+        TownInfo town,
+        IEconomyService economy) =>
+        economy.GetFarmland(actor).Any(asset =>
+            asset.Town.Id.Equals(
+                town.Id,
+                StringComparison.OrdinalIgnoreCase));
 }

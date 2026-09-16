@@ -76,7 +76,7 @@ public sealed class CareerViewModel
 
         SatisfactionLabel =
             isAlive
-            && !snapshot.IsRetired
+            && (!snapshot.IsRetired || snapshot.IsSelfEmployed)
                 ? snapshot.IsEmployed
                     ? snapshot.JobSatisfactionText
                     : nonWorkingAdult
@@ -93,15 +93,18 @@ public sealed class CareerViewModel
         IncomeText =
             !isAlive
                 ? string.Empty
-                : snapshot.IsRetired
-                    ? $"Pension: " +
+                : snapshot.IsSelfEmployed
+                    ? $"Income: " +
                       $"{snapshot.AnnualIncome:N0} zł/year"
-                    : snapshot.IsEmployed
-                        ? $"Income: " +
+                    : snapshot.IsRetired
+                        ? $"Pension: " +
                           $"{snapshot.AnnualIncome:N0} zł/year"
-                        : nonWorkingAdult
-                            ? "Income: 0 zł"
-                            : string.Empty;
+                        : snapshot.IsEmployed
+                            ? $"Income: " +
+                              $"{snapshot.AnnualIncome:N0} zł/year"
+                            : nonWorkingAdult
+                                ? "Income: 0 zł"
+                                : string.Empty;
     }
 
     public int JobLevel { get; }

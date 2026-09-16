@@ -102,11 +102,7 @@ public sealed partial class MainWindowViewModel
                         || action.Id.Equals(
                             "family_relations.give_money",
                             StringComparison.OrdinalIgnoreCase),
-                        action.Id.Equals(
-                            "family_relations.give_farmland",
-                            StringComparison.OrdinalIgnoreCase)
-                            ? GetFamilyRelationGiveFarmlandOptions()
-                            : null))
+                        null))
                     .ToList();
 
                 return new FamilyRelationHouseholdViewModel(
@@ -167,29 +163,6 @@ public sealed partial class MainWindowViewModel
             .ToList();
     }
 
-    internal IReadOnlyList<PropertySelectionOption> GetFamilyRelationGiveFarmlandOptions()
-    {
-        var actor = _succession.ActiveController;
-        if (actor is null || _economyService is null)
-            return [];
-
-        var residence = _economyService.GetResidenceTown(actor);
-
-        return _economyService.GetFarmland(actor)
-            .OrderBy(asset => asset.AcquiredYear)
-            .ThenBy(asset => asset.Id)
-            .Select(asset => new PropertySelectionOption(
-                asset.Id.ToString(),
-                asset.Town.Town,
-                asset.Town.County,
-                asset.Town.Id.Equals(residence.Id, StringComparison.OrdinalIgnoreCase)
-                    ? "Local farmland"
-                    : "Remote farmland",
-                $"Acquired {asset.AcquiredYear}",
-                $"{asset.Town.Town} {asset.Town.County} {asset.Town.RegionId}"))
-            .ToList();
-    }
-
     internal decimal GetFamilyRelationMoneyMaximum(
         Guid relativeId,
         string actionId)
@@ -246,18 +219,7 @@ public sealed partial class MainWindowViewModel
             ["familyRelations"] = "true"
         };
         if (!string.IsNullOrWhiteSpace(propertyId))
-        {
-            if (actionId.Equals(
-                    "family_relations.give_farmland",
-                    StringComparison.OrdinalIgnoreCase))
-            {
-                parameters["farmlandId"] = propertyId;
-            }
-            else
-            {
-                parameters["propertyId"] = propertyId;
-            }
-        }
+            parameters["propertyId"] = propertyId;
 
         if (moneyAmount is decimal amount)
         {

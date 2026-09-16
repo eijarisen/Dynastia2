@@ -628,7 +628,7 @@ internal sealed class AdvancedAutonomousHouseholdStrategy :
             return null;
 
         if ((snapshot.HasImmediateMedicalDanger || snapshot.HasSeriousMedicalDanger)
-            && (snapshot.Finance?.Wealth ?? 0) < 1000m)
+            && (snapshot.Finance?.Wealth ?? 0) < 2000m)
         {
             return WithScore(option, AutonomyCategory.Survival,
                 AutonomousPriorityBands.EmergencySurvival, 97);
@@ -659,7 +659,7 @@ internal sealed class AdvancedAutonomousHouseholdStrategy :
         var remoteCount = farm.TotalParcelCount - farm.LocalParcelCount;
 
         if ((snapshot.HasImmediateMedicalDanger || snapshot.HasSeriousMedicalDanger)
-            && wealth < 1000m)
+            && wealth < 2000m)
         {
             return WithScore(option, AutonomyCategory.Survival,
                 AutonomousPriorityBands.EmergencySurvival, 101);
@@ -689,7 +689,7 @@ internal sealed class AdvancedAutonomousHouseholdStrategy :
             return null;
 
         if ((snapshot.HasImmediateMedicalDanger || snapshot.HasSeriousMedicalDanger)
-            && (snapshot.Finance?.Wealth ?? 0) < 1000m)
+            && (snapshot.Finance?.Wealth ?? 0) < 2000m)
         {
             return WithScore(option, AutonomyCategory.Survival,
                 AutonomousPriorityBands.EmergencySurvival, 62);
@@ -781,7 +781,7 @@ internal sealed class AdvancedAutonomousHouseholdStrategy :
         var willingnessBonus = (option.RequestWillingness ?? 0) * 20;
 
         if ((snapshot.HasImmediateMedicalDanger || snapshot.HasSeriousMedicalDanger)
-            && (snapshot.Finance?.Wealth ?? 0) < 1000m)
+            && (snapshot.Finance?.Wealth ?? 0) < 2000m)
         {
             return WithScore(option, AutonomyCategory.Survival,
                 AutonomousPriorityBands.EmergencySurvival,

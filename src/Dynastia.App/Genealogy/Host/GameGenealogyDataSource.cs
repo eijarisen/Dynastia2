@@ -333,12 +333,14 @@ public sealed class GameGenealogyDataSource :
                     person);
 
             var displayedCareerLevel =
-                career.JobLevel > 0
-                    ? career.JobLevel
-                    : career.IsRetired
-                      && career.PeakJobLevel > 0
-                        ? career.PeakJobLevel
-                        : 0;
+                career.IsSelfEmployed
+                    ? 0
+                    : career.JobLevel > 0
+                        ? career.JobLevel
+                        : career.IsRetired
+                          && career.PeakJobLevel > 0
+                            ? career.PeakJobLevel
+                            : 0;
 
             var isFarmWorker =
                 _farming?.IsWorkingFarmWorker(person, person) == true;
@@ -353,19 +355,22 @@ public sealed class GameGenealogyDataSource :
             occupationTooltip =
                 isFarmWorker
                     ? occupation
-                    : career.IsRetired
-                        ? career.AnnualIncome > 0
-                            ? $"{occupation} — " +
-                              $"{career.AnnualIncome:N0} zł/year pension"
-                            : occupation
-                        : career.IsEmployed
-                            ? $"{occupation} — " +
-                              $"{career.AnnualIncome:N0} zł/year"
-                            : occupation;
+                    : career.IsSelfEmployed
+                        ? $"{occupation} — " +
+                          $"{career.AnnualIncome:N0} zł/year"
+                        : career.IsRetired
+                            ? career.AnnualIncome > 0
+                                ? $"{occupation} — " +
+                                  $"{career.AnnualIncome:N0} zł/year pension"
+                                : occupation
+                            : career.IsEmployed
+                                ? $"{occupation} — " +
+                                  $"{career.AnnualIncome:N0} zł/year"
+                                : occupation;
 
             satisfactionTooltip =
                 career.IsEmployed
-                && !career.IsRetired
+                && (!career.IsRetired || career.IsSelfEmployed)
                     ? career.JobSatisfactionText
                     : "N/A";
         }

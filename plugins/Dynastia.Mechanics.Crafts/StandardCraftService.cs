@@ -158,7 +158,6 @@ internal sealed class StandardCraftService : ICraftService, IIncomeProvider
             || !person.Tags.Has("state.alive")
             || person.Age < 18
             || person.Tags.Has("state.imprisoned")
-            || _career.GetCareer(person).IsRetired
             || !KnowsCraft(person, craft.Id))
         {
             return false;
@@ -172,11 +171,15 @@ internal sealed class StandardCraftService : ICraftService, IIncomeProvider
             return true;
         }
 
-        // A craft occupation replaces any formal career. Career assignment is
-        // cleared before activating the craft so its transition hook cannot
-        // clear the newly selected occupation.
-        var satisfaction = _career.GetCareer(person).JobSatisfaction;
-        _career.AssignCareer(person, null, 0, satisfaction);
+        // A craft occupation replaces an active formal career. Retired
+        // characters keep their retirement state and pension eligibility while
+        // taking up craft work again.
+        var career = _career.GetCareer(person);
+        if (!career.IsRetired)
+        {
+            _career.AssignCareer(person, null, 0, career.JobSatisfaction);
+        }
+
         component.ActiveCraftOccupationId = craft.Id;
         person.Tags.Add("career.craft_self_employed");
         person.Tags.Add("employment.craft");

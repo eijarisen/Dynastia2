@@ -125,9 +125,7 @@ public sealed partial class StandardCareerService :
 
         var year = _gameState.Year;
         var crafts = _craftResolver();
-        var activeCraft = career.IsRetired
-            ? null
-            : crafts?.GetActiveCraft(person);
+        var activeCraft = crafts?.GetActiveCraft(person);
         var isCraftSelfEmployed = activeCraft is not null;
         var annualIncome = isCraftSelfEmployed
             ? crafts!.GetExpectedAnnualIncome(person)
@@ -148,7 +146,7 @@ public sealed partial class StandardCareerService :
             career.LastIncome,
             annualIncome,
             career.IsRetired,
-            definition?.Id,
+            isCraftSelfEmployed ? null : definition?.Id,
             isCraftSelfEmployed
                 ? activeCraft!.Name
                 : definition is null
@@ -173,9 +171,8 @@ public sealed partial class StandardCareerService :
     public bool IsEmployed(IPerson person)
     {
         var career = GetRequired(person);
-        return !career.IsRetired
-            && (career.JobLevel > 0
-                || _craftResolver()?.IsSelfEmployed(person) == true);
+        return (!career.IsRetired && career.JobLevel > 0)
+            || _craftResolver()?.IsSelfEmployed(person) == true;
     }
 
     public string GetStatusLabel(

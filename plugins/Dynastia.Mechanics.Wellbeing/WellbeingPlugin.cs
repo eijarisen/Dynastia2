@@ -8,7 +8,7 @@ public sealed partial class WellbeingPlugin : IGamePlugin
         1500m;
 
     private const decimal HealCost =
-        1000m;
+        2000m;
 
     private const double DrinkHealthPenalty =
         10;

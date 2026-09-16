@@ -6,9 +6,9 @@ public sealed class HealthViewModel
 {
     public HealthViewModel(HealthSnapshot snapshot)
     {
-        Current = snapshot.Current;
-        Maximum = snapshot.Maximum;
-        Percentage = snapshot.Percentage;
+        Current = Math.Round(snapshot.Current);
+        Maximum = Math.Round(snapshot.Maximum);
+        Percentage = Math.Round(snapshot.Percentage);
 
         ConditionsText =
             snapshot.Conditions.Count == 0
@@ -23,7 +23,7 @@ public sealed class HealthViewModel
     public double Percentage { get; }
 
     public string HealthText =>
-        $"Health: {Current:0.#}/{Maximum:0.#}";
+        $"Health: {Current:0}/{Maximum:0}";
 
     public string HealthSummaryText =>
         $"{HealthText} • {ConditionsText}";

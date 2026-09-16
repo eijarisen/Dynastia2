@@ -17,8 +17,8 @@ public sealed class FamilyInventoryWindowViewModel :
     private string _farmlandTitle = "Farmland";
     private string _farmlandSummaryText = string.Empty;
     private string _farmlandEmptyText = string.Empty;
-    private string _buyFarmlandActionText = "Buy Farmland — 10,000 zł";
-    private string _sellFarmlandActionText = "Sell Farmland — 8,000 zł";
+    private string _buyFarmlandActionText = "Buy Farmland (10,000 zł)";
+    private string _sellFarmlandActionText = "Sell Farmland (8,000 zł)";
     private bool _canTakeLoan;
     private bool _canGiveLoan;
     private bool _canBuyHouse;
@@ -284,8 +284,8 @@ public sealed class FamilyInventoryWindowViewModel :
             FarmlandTitle = "Farmland";
             FarmlandSummaryText = string.Empty;
             FarmlandEmptyText = "No owned farmland.";
-            BuyFarmlandActionText = "Buy Farmland — 10,000 zł";
-            SellFarmlandActionText = "Sell Farmland — 8,000 zł";
+            BuyFarmlandActionText = "Buy Farmland (10,000 zł)";
+            SellFarmlandActionText = "Sell Farmland (8,000 zł)";
             CanTakeLoan = false;
             CanGiveLoan = false;
             CanBuyHouse = false;
@@ -425,9 +425,9 @@ public sealed class FamilyInventoryWindowViewModel :
         CanBuyFarmland = data.CanBuyFarmland;
         CanSellFarmland = data.CanSellFarmland;
         BuyFarmlandActionText =
-            $"Buy Farmland — {data.FarmlandPurchasePrice:N0} zł";
+            $"Buy Farmland ({data.FarmlandPurchasePrice:N0} zł)";
         SellFarmlandActionText =
-            $"Sell Farmland — {data.FarmlandSalePrice:N0} zł";
+            $"Sell Farmland ({data.FarmlandSalePrice:N0} zł)";
     }
 }
 

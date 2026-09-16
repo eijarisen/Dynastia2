@@ -54,14 +54,16 @@ public sealed class FarmingPlugin : IGamePlugin
             new GameActionDefinition
             {
                 Id = "farming.buy_farmland",
-                Label = $"Buy Farmland — {farming.PurchasePrice:N0} zł",
+                Label = $"Buy Farmland ({farming.PurchasePrice:N0} zł)",
                 Description =
-                    "Queue the purchase of one farmland parcel in the household's current town for 10,000 zł.",
+                    "Queue the purchase of one farmland parcel in the household's current town for 10,000 zł. The household must own a house in that town.",
                 Mode = ActionExecutionMode.Queued,
                 QueuePhase = YearPhase.QueuedActionsEarly,
                 IsAvailable = context =>
                     context.Actor.Id == context.Target.Id
-                    && economy.GetHousehold(context.Actor) is { Wealth: >= 10000m },
+                    && economy.GetHousehold(context.Actor) is { } household
+                    && household.Wealth >= farming.PurchasePrice
+                    && OwnsHouseInResidenceTown(economy, context.Actor),
                 Execute = context =>
                 {
                     var finance = economy.GetHousehold(context.Actor);
@@ -70,6 +72,13 @@ public sealed class FarmingPlugin : IGamePlugin
                         return new GameActionResult(
                             false,
                             "The household can no longer afford farmland.");
+                    }
+
+                    if (!OwnsHouseInResidenceTown(economy, context.Actor))
+                    {
+                        return new GameActionResult(
+                            false,
+                            "The household must own a house in its current town before buying farmland there.");
                     }
 
                     var town = economy.GetResidenceTown(context.Actor);
@@ -104,7 +113,7 @@ public sealed class FarmingPlugin : IGamePlugin
             new GameActionDefinition
             {
                 Id = "farming.sell_farmland",
-                Label = $"Sell Farmland — {farming.SalePrice:N0} zł",
+                Label = $"Sell Farmland ({farming.SalePrice:N0} zł)",
                 Description =
                     "Queue the sale of one farmland parcel for 8,000 zł. Local land is sold first; otherwise the oldest owned parcel is sold.",
                 Mode = ActionExecutionMode.Queued,
@@ -155,4 +164,16 @@ public sealed class FarmingPlugin : IGamePlugin
                 }
             });
     }
+
+    private static bool OwnsHouseInResidenceTown(
+        IEconomyService economy,
+        IPerson actor)
+    {
+        var residence = economy.GetResidenceTown(actor);
+        return economy.GetHouses(actor).Any(house =>
+            house.Town.Id.Equals(
+                residence.Id,
+                StringComparison.OrdinalIgnoreCase));
+    }
+
 }

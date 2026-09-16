@@ -79,8 +79,7 @@ public sealed class CraftsPlugin : IGamePlugin
                     && !context.Actor.Tags.Has("state.imprisoned")
                     && definition.StartYear <= context.GameState.Year
                     && crafts.KnowsCraft(context.Actor, definition.Id)
-                    && !crafts.IsSelfEmployed(context.Actor)
-                    && !career.GetCareer(context.Actor).IsRetired,
+                    && !crafts.IsSelfEmployed(context.Actor),
                 Execute = context =>
                     new GameActionResult(crafts.StartOccupation(context.Actor, definition.Id))
             });

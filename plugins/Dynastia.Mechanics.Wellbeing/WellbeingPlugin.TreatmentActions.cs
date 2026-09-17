@@ -126,9 +126,8 @@ public sealed partial class WellbeingPlugin
                                 .Value;
 
                         var successChance =
-                            (TherapySuccessIntellectFactor
-                             - intellect)
-                            / TherapySuccessDivisor;
+                            TherapyRules.GetSuccessChance(
+                                intellect);
 
                         var success =
                             random.NextDouble()
@@ -153,6 +152,10 @@ public sealed partial class WellbeingPlugin
                             health.RemoveCondition(
                                 target,
                                 "anxiety");
+
+                            health.RemoveCondition(
+                                target,
+                                "drug_dependence");
 
                             events.Publish(
                                 new GameEvent
@@ -372,15 +375,10 @@ public sealed partial class WellbeingPlugin
         IHealthService health,
         IPerson target)
     {
-        return health.HasCondition(
-                target,
-                "alcoholism")
-            || health.HasCondition(
-                target,
-                "depression")
-            || health.HasCondition(
-                target,
-                "anxiety");
+        return health.GetHealth(target).Conditions
+            .Any(condition =>
+                TherapyRules.IsTreatableCondition(
+                    condition.Id));
     }
 
     private static bool CanActorActOnSelf(

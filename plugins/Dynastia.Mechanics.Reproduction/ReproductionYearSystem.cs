@@ -63,6 +63,9 @@ public sealed class ReproductionYearSystem : IYearSystem
         BirthConditionDefinition>
         _birthConditions;
 
+    private readonly BirthConditionContextCatalog
+        _birthConditionContext;
+
     public ReproductionYearSystem(
         IFamilyService family,
         IStatsService stats,
@@ -75,7 +78,9 @@ public sealed class ReproductionYearSystem : IYearSystem
         IGameEventBus events,
         IReadOnlyList<
             BirthConditionDefinition>
-            birthConditions)
+            birthConditions,
+        BirthConditionContextCatalog
+            birthConditionContext)
     {
         _family = family;
         _stats = stats;
@@ -90,6 +95,9 @@ public sealed class ReproductionYearSystem : IYearSystem
         // Keep file order. Probability is direct, not a cumulative threshold.
         _birthConditions =
             birthConditions.ToList();
+
+        _birthConditionContext =
+            birthConditionContext;
     }
 
     public string Id =>
@@ -572,7 +580,9 @@ public sealed class ReproductionYearSystem : IYearSystem
 
         var birthCondition =
             ApplyBirthConditionStatModifiers(
-                inheritedStats);
+                inheritedStats,
+                mother,
+                gameState.Year);
 
         _stats.SetStats(
             child,
@@ -642,26 +652,23 @@ public sealed class ReproductionYearSystem : IYearSystem
 
     private BirthConditionDefinition?
         ApplyBirthConditionStatModifiers(
-            Dictionary<string, int> stats)
+            Dictionary<string, int> stats,
+            IPerson mother,
+            int year)
     {
-        // One shared roll keeps birth defects mutually exclusive.
-        // Each data entry now supplies its OWN probability rather
-        // than a precomputed cumulative threshold.
+        // One shared roll keeps congenital conditions mutually exclusive.
+        // Maternal age modifies the seven-condition pool; the newborn's
+        // inherited Longevity no longer changes whether a condition occurred.
         var roll =
             _random.NextDouble();
-
-        var longevity =
-            stats.TryGetValue(
-                "longevity",
-                out var inheritedLongevity)
-                ? inheritedLongevity
-                : 3;
 
         var condition =
             BirthConditionRules.SelectCondition(
                 _birthConditions,
                 roll,
-                longevity);
+                year,
+                mother.Age,
+                _birthConditionContext);
 
         if (condition is null)
             return null;

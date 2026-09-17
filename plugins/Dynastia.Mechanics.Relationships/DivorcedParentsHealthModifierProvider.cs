@@ -2,24 +2,14 @@ using Dynastia.Contracts;
 
 namespace Dynastia.Mechanics.Relationships;
 
+// Retained as a compatibility type for old builds/tests. Parental divorce is
+// now represented through Stress rather than direct annual Health damage.
 internal sealed class DivorcedParentsHealthModifierProvider :
     IAnnualHealthModifierProvider
 {
-    private const double AnnualPenalty =
-        0.5;
-
     public string Id =>
         "relationships.parents_divorced_health";
 
     public double GetAnnualHealthChange(
-        IPerson person)
-    {
-        return person.Age < 18
-            && person.Tags.Has(
-                "state.alive")
-            && person.Tags.Has(
-                DivorcedParentsTracker.Tag)
-                    ? -AnnualPenalty
-                    : 0;
-    }
+        IPerson person) => 0;
 }

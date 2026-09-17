@@ -8,13 +8,30 @@ public sealed class HealthYearSystem : IYearSystem
     private readonly StandardHealthService _health;
     private readonly IStatsService _stats;
     private readonly IFamilyService _family;
+    private readonly IExistingLocationService _locations;
+    private readonly IContextWeightCatalog _contextWeights;
     private readonly IGameRandom _random;
     private readonly IGameEventBus _events;
     private readonly IAnnualHealthModifierRegistry _modifiers;
 
-    public HealthYearSystem(StandardHealthService health, IStatsService stats, IFamilyService family, IGameRandom random, IGameEventBus events, IAnnualHealthModifierRegistry modifiers)
+    public HealthYearSystem(
+        StandardHealthService health,
+        IStatsService stats,
+        IFamilyService family,
+        IExistingLocationService locations,
+        IContextWeightCatalog contextWeights,
+        IGameRandom random,
+        IGameEventBus events,
+        IAnnualHealthModifierRegistry modifiers)
     {
-        _health = health; _stats = stats; _family = family; _random = random; _events = events; _modifiers = modifiers;
+        _health = health;
+        _stats = stats;
+        _family = family;
+        _locations = locations;
+        _contextWeights = contextWeights;
+        _random = random;
+        _events = events;
+        _modifiers = modifiers;
     }
 
     public string Id => "health.annual";
@@ -44,12 +61,19 @@ public sealed class HealthYearSystem : IYearSystem
         var chance = immunity switch { 1 => .28, 2 => .20, 3 => .14, 4 => .09, _ => .05 };
         chance = HealthIncidenceRules.ScaleMildConditionChance(chance);
         if (_random.NextDouble() >= chance) return;
+        var context = HealthContextProfile.Build(person, state.Year, _family, _locations);
         if (!_health.TryAddWeightedCondition(
                 person,
                 "Mild",
                 person.Age,
                 state.Year,
-                d => d.GeneticTag is not null && person.Tags.Has(d.GeneticTag) ? 2.75 : 1.0,
+                d =>
+                {
+                    var weight = _contextWeights.GetMultiplier(d.Id, context);
+                    if (d.GeneticTag is not null && person.Tags.Has(d.GeneticTag))
+                        weight *= 2.75;
+                    return weight;
+                },
                 out var added,
                 out var definition)
             || definition is null
@@ -66,6 +90,7 @@ public sealed class HealthYearSystem : IYearSystem
         var multiplier = longevity switch { 1 => 1.80, 2 => 1.40, 3 => 1.00, 4 => .70, _ => .45 };
         var chance = HealthIncidenceRules.ScaleSeriousConditionChance(baseChance * multiplier);
         if (_random.NextDouble() >= chance) return;
+        var context = HealthContextProfile.Build(person, state.Year, _family, _locations);
 
         double Weight(HealthConditionDefinition d)
         {
@@ -73,6 +98,8 @@ public sealed class HealthYearSystem : IYearSystem
             if (d.GeneticTag is not null && person.Tags.Has(d.GeneticTag)) weight *= 2.75;
             if (d.Id.Equals("heart_attack", StringComparison.OrdinalIgnoreCase) && (person.Tags.Has("genetic.heart") || _health.HasCondition(person, "heart_disease"))) weight *= 2.5;
             if (d.Id.Equals("stroke", StringComparison.OrdinalIgnoreCase) && (person.Tags.Has("genetic.heart") || _health.HasCondition(person, "hypertension"))) weight *= 2.5;
+            if (d.Id.Equals("chronic_liver_disease", StringComparison.OrdinalIgnoreCase) && _health.HasCondition(person, "alcoholism")) weight *= 4.0;
+            weight *= _contextWeights.GetMultiplier(d.Id, context);
             return weight;
         }
 

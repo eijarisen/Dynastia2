@@ -9,12 +9,9 @@ internal sealed class DivorcedParentsTracker
 
     private readonly IGameState _gameState;
     private readonly IFamilyService _family;
-    private readonly IHealthService _health;
-
     public DivorcedParentsTracker(
         IGameState gameState,
         IFamilyService family,
-        IHealthService health,
         IGameEventBus events)
     {
         _gameState =
@@ -22,9 +19,6 @@ internal sealed class DivorcedParentsTracker
 
         _family =
             family;
-
-        _health =
-            health;
 
         events.EventPublished +=
             OnEventPublished;
@@ -77,11 +71,6 @@ internal sealed class DivorcedParentsTracker
 
             child.Tags.Add(
                 Tag);
-
-            _health.AddCondition(
-                child,
-                "parents_divorced",
-                gameEvent.Year);
         }
     }
 

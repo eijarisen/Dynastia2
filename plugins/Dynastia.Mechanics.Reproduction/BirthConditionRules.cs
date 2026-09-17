@@ -4,30 +4,36 @@ public static class BirthConditionRules
 {
     public const double FrequencyScale = 0.40;
 
-    public static double GetLongevityModifier(int longevity) =>
-        Math.Clamp(longevity, 1, 5) switch
-        {
-            1 => 1.20,
-            2 => 1.10,
-            3 => 1.00,
-            4 => 0.90,
-            _ => 0.80
-        };
-
-    public static double GetProbabilityScale(int longevity) =>
-        FrequencyScale * GetLongevityModifier(longevity);
+    // Kept as compatibility helpers for older tests/callers. Longevity no
+    // longer changes congenital-condition probability.
+    public static double GetLongevityModifier(int longevity) => 1.0;
+    public static double GetProbabilityScale(int longevity) => FrequencyScale;
 
     public static BirthConditionDefinition? SelectCondition(
         IReadOnlyList<BirthConditionDefinition> definitions,
         double roll,
-        int longevity)
+        int longevity) =>
+        SelectCondition(definitions, roll, year: 1700, motherAge: 30, context: null);
+
+    public static BirthConditionDefinition? SelectCondition(
+        IReadOnlyList<BirthConditionDefinition> definitions,
+        double roll,
+        int year,
+        int motherAge,
+        BirthConditionContextCatalog? context)
     {
         var cumulative = 0.0;
-        var probabilityScale = GetProbabilityScale(longevity);
 
         foreach (var definition in definitions)
         {
-            cumulative += definition.Probability * probabilityScale;
+            if (year < definition.StartYear
+                || definition.EndYear is int endYear && year > endYear)
+            {
+                continue;
+            }
+
+            var multiplier = context?.GetMultiplier(definition.Id, year, motherAge) ?? 1.0;
+            cumulative += definition.Probability * FrequencyScale * multiplier;
             if (roll < cumulative)
                 return definition;
         }

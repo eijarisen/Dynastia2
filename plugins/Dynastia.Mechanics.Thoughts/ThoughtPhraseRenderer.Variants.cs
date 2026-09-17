@@ -593,6 +593,28 @@ internal sealed partial class ThoughtPhraseRenderer
                         ]
                 },
 
+            "drug_dependence" =>
+                voice switch
+                {
+                    ThoughtVoice.AdultRough =>
+                        [
+                            $"This {condition} is hard to stop.",
+                            $"The {condition} keeps pulling me back."
+                        ],
+
+                    ThoughtVoice.AdultElaborate =>
+                        [
+                            $"The {condition} is becoming increasingly difficult to control.",
+                            $"I understand what this {condition} is doing to me, but breaking the dependence remains painfully difficult."
+                        ],
+
+                    _ =>
+                        [
+                            $"This {condition} is getting harder to control.",
+                            $"I know I need to get this {condition} under control."
+                        ]
+                },
+
             "health.terminal" =>
                 HealthVariants(
                     voice,

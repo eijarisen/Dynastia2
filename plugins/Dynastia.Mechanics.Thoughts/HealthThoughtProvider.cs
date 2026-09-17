@@ -127,6 +127,41 @@ internal sealed class HealthThoughtProvider :
             }
         }
 
+        if (person.Age >= 18)
+        {
+            var drugDependence =
+                health.Conditions
+                    .FirstOrDefault(
+                        condition =>
+                            condition.Id.Equals(
+                                "drug_dependence",
+                                StringComparison.OrdinalIgnoreCase)
+                            || condition.Name.Equals(
+                                "Drug Dependence",
+                                StringComparison.OrdinalIgnoreCase)
+                            || condition.Name.Equals(
+                                "Opium Dependence",
+                                StringComparison.OrdinalIgnoreCase));
+
+            if (drugDependence is not null)
+            {
+                yield return new ThoughtCandidate(
+                    "health.drug_dependence",
+                    "health.mental",
+                    "health.mental",
+                    78,
+                    "😵",
+                    "state",
+                    drugDependence.Id,
+                    "drug_dependence",
+                    ThoughtProviderUtilities.Context(
+                        (
+                            "condition",
+                            drugDependence.Name
+                        )));
+            }
+        }
+
         var physical =
             health.Conditions
                 .Where(
@@ -380,6 +415,9 @@ internal sealed class HealthThoughtProvider :
                 StringComparison.OrdinalIgnoreCase)
             || condition.Id.Equals(
                 "alcoholism",
+                StringComparison.OrdinalIgnoreCase)
+            || condition.Id.Equals(
+                "drug_dependence",
                 StringComparison.OrdinalIgnoreCase)
             || condition.Name.Equals(
                 "Depression",

@@ -167,11 +167,19 @@ public sealed partial class RelationshipsPlugin : IGamePlugin
         context.AddService<IMarriageSatisfactionService>(
             marriageSatisfaction);
 
+        var stressModifiers =
+            context.GetService<IStressModifierRegistry>()
+            ?? throw new InvalidOperationException(
+                "Stress modifier registry is unavailable.");
+
+        stressModifiers.Register(
+            new RelationshipStressModifierProvider(
+                marriageSatisfaction));
+
         _ =
             new DivorcedParentsTracker(
                 gameState,
                 family,
-                health,
                 events);
 
         systems.Register(

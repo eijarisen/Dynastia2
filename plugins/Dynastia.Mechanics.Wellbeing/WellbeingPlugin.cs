@@ -16,11 +16,6 @@ public sealed partial class WellbeingPlugin : IGamePlugin
     private const double AlcoholismChanceFromDrinking =
         0.20;
 
-    private const double TherapySuccessIntellectFactor =
-        6;
-
-    private const double TherapySuccessDivisor =
-        10;
 
     public void Initialize(
         IGamePluginContext context)

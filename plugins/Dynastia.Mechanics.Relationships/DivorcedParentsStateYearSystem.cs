@@ -56,10 +56,11 @@ internal sealed class DivorcedParentsStateYearSystem :
                 person.Tags.Add(
                     DivorcedParentsTracker.Tag);
 
-                _health.AddCondition(
+                // Legacy saves may still contain the old pseudo-condition.
+                // Family-state stress replaces its direct health damage.
+                _health.RemoveCondition(
                     person,
-                    "parents_divorced",
-                    gameState.Year);
+                    "parents_divorced");
             }
         }
     }

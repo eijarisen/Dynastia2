@@ -8,6 +8,7 @@
   "dependencies": [
     "dynastia.family",
     "dynastia.stats",
-    "dynastia.economy"
+    "dynastia.economy",
+    "dynastia.locations"
   ]
 }

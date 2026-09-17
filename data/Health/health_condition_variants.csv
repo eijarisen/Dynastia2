@@ -27,3 +27,7 @@ anxiety,1700,1899,Nervous Distress
 anxiety,1900,,Anxiety
 alcoholism,1700,1848,Habitual Drunkenness
 alcoholism,1849,,Alcoholism
+dementia,1700,1899,Senile Decline
+dementia,1900,,Dementia
+drug_dependence,1800,1913,Opium Dependence
+drug_dependence,1914,,Drug Dependence

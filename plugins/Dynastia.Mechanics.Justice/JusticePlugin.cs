@@ -19,6 +19,7 @@ public sealed class JusticePlugin : IGamePlugin
         var events = context.GetService<IGameEventBus>() ?? throw new InvalidOperationException("Game event bus is unavailable.");
         var systems = context.GetService<IYearSystemRegistry>() ?? throw new InvalidOperationException("Year system registry is unavailable.");
         var guards = context.GetService<IActionGuardRegistry>() ?? throw new InvalidOperationException("Action guard registry is unavailable.");
+        var stressModifiers = context.GetService<IStressModifierRegistry>() ?? throw new InvalidOperationException("Stress modifier registry is unavailable.");
 
         var crimes = JsonSerializer.Deserialize<List<CrimeDefinition>>(
             data.ReadText(CrimesPath),
@@ -33,6 +34,7 @@ public sealed class JusticePlugin : IGamePlugin
 
         var justice = new StandardJusticeService();
         context.AddService<IJusticeService>(justice);
+        stressModifiers.Register(new JusticeStressModifierProvider(justice));
         guards.Register(new PrisonActionGuard(justice));
         systems.Register(new PrisonStatusYearSystem(justice, family, events));
         systems.Register(new CrimeYearSystem(justice, family, stats, career, economy, economyBalance, random, events, crimes, historicalCrimes));

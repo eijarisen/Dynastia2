@@ -120,6 +120,9 @@ public partial class App : Application
             pluginContext.AddService<IGameDataService>(
                 dataService);
 
+            pluginContext.AddService<IContextWeightService>(
+                new ContextWeightService(dataService));
+
             pluginContext.AddService<IActionGuardRegistry>(
                 actionGuardRegistry);
 

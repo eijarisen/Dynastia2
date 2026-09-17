@@ -35,6 +35,9 @@ public sealed partial class CareerPlugin : IGamePlugin
         var healthModifiers = context.GetService<IAnnualHealthModifierRegistry>()
             ?? throw new InvalidOperationException("Health modifier registry is unavailable.");
 
+        var stressModifiers = context.GetService<IStressModifierRegistry>()
+            ?? throw new InvalidOperationException("Stress modifier registry is unavailable.");
+
         var random = context.GetService<IGameRandom>()
             ?? throw new InvalidOperationException("Game random service is unavailable.");
 
@@ -90,6 +93,9 @@ public sealed partial class CareerPlugin : IGamePlugin
 
         healthModifiers.Register(
             new CareerHealthModifierProvider(career));
+
+        stressModifiers.Register(
+            new CareerStressModifierProvider(career));
 
         RegisterActions(
             actions,

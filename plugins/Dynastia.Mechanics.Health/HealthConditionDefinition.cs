@@ -1,3 +1,5 @@
+using Dynastia.Contracts;
+
 namespace Dynastia.Mechanics.Health;
 
 public sealed class HealthConditionDefinition
@@ -11,6 +13,9 @@ public sealed class HealthConditionDefinition
     public string Category { get; init; } = string.Empty;
     public string Course { get; init; } = string.Empty;
     public int MinimumAge { get; init; }
+    public int? MaximumAge { get; init; }
+    public int StartYear { get; init; } = GameCalendarConfiguration.GameStartYear;
+    public int? EndYear { get; init; }
     public string? GeneticTag { get; init; }
     public bool Newsworthy { get; init; }
 

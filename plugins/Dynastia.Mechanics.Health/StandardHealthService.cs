@@ -57,6 +57,7 @@ public sealed class StandardHealthService : IHealthService
     public bool RemoveCondition(IPerson person, string conditionId) => GetRequired(person).Conditions.RemoveAll(x => x.Id.Equals(conditionId, StringComparison.OrdinalIgnoreCase)) > 0;
 
     internal IReadOnlyCollection<string> ConditionIds => _definitions.Keys;
+    internal IReadOnlyCollection<HealthConditionDefinition> Definitions => _definitions.Values;
 
     public void ConfigureHistoricalCatalog(HistoricalHealthCatalog historical) =>
         _historical = historical ?? throw new ArgumentNullException(nameof(historical));
@@ -109,14 +110,13 @@ public sealed class StandardHealthService : IHealthService
     {
         var candidates = _definitions.Values
             .Where(d => d.Category.Equals(category, StringComparison.OrdinalIgnoreCase)
-                        && age >= d.MinimumAge
+                        && IsAvailable(d, age, year)
                         && d.Weight > 0
                         && !HasCondition(person, d.Id))
             .Select(d => new
             {
                 Definition = d,
                 Weight = d.Weight
-                    * (_historical?.GetWeightMultiplier(d.Id, year) ?? 1.0)
                     * Math.Max(0, weightModifier?.Invoke(d) ?? 1)
             })
             .Where(x => x.Weight > 0)
@@ -140,6 +140,15 @@ public sealed class StandardHealthService : IHealthService
 
         return TryAddCondition(person, selected.Id, year, out added);
     }
+
+    public static bool IsAvailable(
+        HealthConditionDefinition definition,
+        int age,
+        int year) =>
+        age >= definition.MinimumAge
+        && (definition.MaximumAge is null || age <= definition.MaximumAge.Value)
+        && year >= definition.StartYear
+        && (definition.EndYear is null || year <= definition.EndYear.Value);
 
     internal void ApplyImmediateImpact(IPerson person, HealthConditionDefinition definition)
     {
@@ -243,6 +252,10 @@ public sealed class StandardHealthService : IHealthService
                     "Every health condition needs id, name, type, category and course.");
             }
             if (!ids.Add(d.Id)) throw new InvalidDataException($"Duplicate health condition ID '{d.Id}'.");
+            if (d.MinimumAge < 0) throw new InvalidDataException($"Condition '{d.Id}' has a negative minimumAge.");
+            if (d.MaximumAge is int maximumAge && maximumAge < d.MinimumAge) throw new InvalidDataException($"Condition '{d.Id}' has maximumAge below minimumAge.");
+            if (d.StartYear < GameCalendarConfiguration.GameStartYear) throw new InvalidDataException($"Condition '{d.Id}' starts before {GameCalendarConfiguration.GameStartYear}.");
+            if (d.EndYear is int endYear && endYear < d.StartYear) throw new InvalidDataException($"Condition '{d.Id}' has endYear before startYear.");
             if (d.DurationMin.HasValue != d.DurationMax.HasValue) throw new InvalidDataException($"Condition '{d.Id}' must specify both durationMin and durationMax, or neither.");
             if (d.DurationMin.HasValue && (d.DurationMin <= 0 || d.DurationMax < d.DurationMin)) throw new InvalidDataException($"Condition '{d.Id}' has an invalid duration.");
             if ((d.Category.Equals("Mild", StringComparison.OrdinalIgnoreCase)

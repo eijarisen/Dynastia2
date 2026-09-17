@@ -6,7 +6,8 @@
     "statModifiers": {
       "intellect": -2
     },
-    "probability": 0.0015
+    "probability": 0.0012,
+    "startYear": 1700
   },
   {
     "id": "cerebral_palsy",
@@ -15,14 +16,8 @@
     "statModifiers": {
       "strength": -2
     },
-    "probability": 0.0025
-  },
-  {
-    "id": "autism",
-    "name": "Autism",
-    "healthConditionId": "autism",
-    "statModifiers": {},
-    "probability": 0.03
+    "probability": 0.0023,
+    "startYear": 1700
   },
   {
     "id": "congenital_heart_defect",
@@ -31,7 +26,8 @@
     "statModifiers": {
       "strength": -1
     },
-    "probability": 0.01
+    "probability": 0.012,
+    "startYear": 1700
   },
   {
     "id": "cleft_lip_palate",
@@ -40,37 +36,16 @@
     "statModifiers": {
       "appeal": -1
     },
-    "probability": 0.0016
+    "probability": 0.002,
+    "startYear": 1700
   },
   {
     "id": "congenital_hearing_loss",
     "name": "Congenital Hearing Loss",
     "healthConditionId": "congenital_hearing_loss",
     "statModifiers": {},
-    "probability": 0.0015
-  },
-  {
-    "id": "limb_difference",
-    "name": "Congenital Limb Difference",
-    "healthConditionId": "limb_difference",
-    "statModifiers": {
-      "strength": -1
-    },
-    "probability": 0.00055
-  },
-  {
-    "id": "craniosynostosis",
-    "name": "Craniosynostosis",
-    "healthConditionId": "craniosynostosis",
-    "statModifiers": {},
-    "probability": 0.0004
-  },
-  {
-    "id": "gastroschisis",
-    "name": "Gastroschisis",
-    "healthConditionId": "gastroschisis",
-    "statModifiers": {},
-    "probability": 0.0004
+    "probability": 0.002,
+    "startYear": 1700
   },
   {
     "id": "spina_bifida",
@@ -79,38 +54,17 @@
     "statModifiers": {
       "strength": -2
     },
-    "probability": 0.00035
+    "probability": 0.001,
+    "startYear": 1700
   },
   {
-    "id": "congenital_diaphragmatic_hernia",
-    "name": "Congenital Diaphragmatic Hernia",
-    "healthConditionId": "congenital_diaphragmatic_hernia",
+    "id": "limb_difference",
+    "name": "Congenital Limb Difference",
+    "healthConditionId": "limb_difference",
     "statModifiers": {
       "strength": -1
     },
-    "probability": 0.0003
-  },
-  {
-    "id": "cystic_fibrosis",
-    "name": "Cystic Fibrosis",
-    "healthConditionId": "cystic_fibrosis",
-    "statModifiers": {
-      "strength": -1
-    },
-    "probability": 0.0003
-  },
-  {
-    "id": "anophthalmia_microphthalmia",
-    "name": "Congenital Eye Malformation",
-    "healthConditionId": "anophthalmia_microphthalmia",
-    "statModifiers": {},
-    "probability": 0.0002
-  },
-  {
-    "id": "achondroplasia",
-    "name": "Achondroplasia",
-    "healthConditionId": "achondroplasia",
-    "statModifiers": {},
-    "probability": 0.0001
+    "probability": 0.00075,
+    "startYear": 1700
   }
 ]

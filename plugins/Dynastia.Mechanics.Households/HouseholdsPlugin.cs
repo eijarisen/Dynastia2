@@ -57,6 +57,11 @@ public sealed partial class HouseholdsPlugin : IGamePlugin
             ?? throw new InvalidOperationException(
                 "Annual health modifier registry is unavailable.");
 
+        var stressModifiers =
+            context.GetService<IStressModifierRegistry>()
+            ?? throw new InvalidOperationException(
+                "Stress modifier registry is unavailable.");
+
         var actions =
             context.GetService<IActionRegistry>()
             ?? throw new InvalidOperationException(
@@ -216,6 +221,10 @@ public sealed partial class HouseholdsPlugin : IGamePlugin
                 family,
                 stats,
                 career));
+
+        stressModifiers.Register(
+            new HouseholdStressModifierProvider(
+                households));
 
         _ =
             new FamilyNannyTracker(

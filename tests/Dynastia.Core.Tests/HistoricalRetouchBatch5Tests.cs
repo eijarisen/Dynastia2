@@ -1,5 +1,6 @@
 using Dynastia.Contracts;
 using Dynastia.Core.Entities;
+using Dynastia.Core.Data;
 using Dynastia.Mechanics.Health;
 using Dynastia.Mechanics.Justice;
 using Dynastia.Mechanics.Wellbeing;
@@ -78,15 +79,21 @@ public sealed class HistoricalRetouchBatch5Tests
     }
 
     [Fact]
-    public void DiseaseEraWeightsChangeMixWithoutChangingIncidenceScale()
+    public void DiseaseContextWeightsChangeMixWithoutChangingIncidenceScale()
     {
-        var catalog = HistoricalHealthCatalog.Load(
-            CreateData(),
+        var catalog = new ContextWeightService(CreateData()).LoadCatalog(
+            "Health/health_condition_context_weights.csv",
             ["tuberculosis", "stroke"]);
 
-        Assert.Equal(2.5, catalog.GetWeightMultiplier("tuberculosis", 1750), 6);
-        Assert.Equal(0.15, catalog.GetWeightMultiplier("tuberculosis", 2000), 6);
-        Assert.Equal(1.0, catalog.GetWeightMultiplier("stroke", 1750), 6);
+        Assert.Equal(2.5, catalog.GetMultiplier(
+            "tuberculosis",
+            new ContextWeightContext(1750, 40)), 6);
+        Assert.Equal(0.15, catalog.GetMultiplier(
+            "tuberculosis",
+            new ContextWeightContext(2000, 40)), 6);
+        Assert.Equal(1.0, catalog.GetMultiplier(
+            "stroke",
+            new ContextWeightContext(1750, 60)), 6);
         Assert.Equal(0.007, HealthIncidenceRules.ScaleSeriousConditionChance(0.02), 6);
         Assert.Equal(0.126, HealthIncidenceRules.ScaleMildConditionChance(0.28), 6);
     }
@@ -195,15 +202,17 @@ public sealed class HistoricalRetouchBatch5Tests
     }
 
     [Fact]
-    public void HistoricalCatalogRejectsUnknownEraWeightIds()
+    public void ContextWeightCatalogRejectsUnknownConditionIds()
     {
         var data = CreateData(
             healthWeights:
-                "ConditionId,StartYear,EndYear,WeightMultiplier\n" +
-                "unknown,1700,,2.0\n");
+                "ItemId,StartYear,EndYear,Dimension,Value,WeightMultiplier\n" +
+                "unknown,1700,,All,,2.0\n");
 
         Assert.Throws<InvalidDataException>(() =>
-            HistoricalHealthCatalog.Load(data, ["tuberculosis", "stroke"]));
+            new ContextWeightService(data).LoadCatalog(
+                "Health/health_condition_context_weights.csv",
+                ["tuberculosis", "stroke"]));
     }
 
     private static InlineDataService CreateData(
@@ -249,14 +258,14 @@ public sealed class HistoricalRetouchBatch5Tests
                     "tuberculosis,1850,,Tuberculosis\n" +
                     "stroke,1700,1945,Apoplexy\n" +
                     "stroke,1946,,Stroke\n",
-                ["Health/health_condition_era_weights.csv"] =
+                ["Health/health_condition_context_weights.csv"] =
                     healthWeights ??
-                    "ConditionId,StartYear,EndYear,WeightMultiplier\n" +
-                    "tuberculosis,1700,1849,2.5\n" +
-                    "tuberculosis,1850,1913,2.0\n" +
-                    "tuberculosis,1914,1945,1.2\n" +
-                    "tuberculosis,1946,1989,0.35\n" +
-                    "tuberculosis,1990,,0.15\n",
+                    "ItemId,StartYear,EndYear,Dimension,Value,WeightMultiplier\n" +
+                    "tuberculosis,1700,1849,All,,2.5\n" +
+                    "tuberculosis,1850,1913,All,,2.0\n" +
+                    "tuberculosis,1914,1945,All,,1.2\n" +
+                    "tuberculosis,1946,1989,All,,0.35\n" +
+                    "tuberculosis,1990,,All,,0.15\n",
                 ["Health/healthcare_eras.csv"] =
                     "StartYear,EndYear,HealAmount\n" +
                     "1700,1849,20\n" +

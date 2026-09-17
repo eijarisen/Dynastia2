@@ -182,18 +182,21 @@ public sealed class HealthMortalityStabilizationTests
     }
 
     [Theory]
-    [InlineData(1, 1.20)]
-    [InlineData(2, 1.10)]
-    [InlineData(3, 1.00)]
-    [InlineData(4, 0.90)]
-    [InlineData(5, 0.80)]
-    public void BirthConditionLongevityModifierIsModest(
-        int longevity,
-        double expectedModifier)
+    [InlineData(1)]
+    [InlineData(2)]
+    [InlineData(3)]
+    [InlineData(4)]
+    [InlineData(5)]
+    public void BirthConditionProbabilityNoLongerDependsOnChildLongevity(
+        int longevity)
     {
         Assert.Equal(
-            expectedModifier,
+            1.0,
             BirthConditionRules.GetLongevityModifier(longevity),
+            6);
+        Assert.Equal(
+            BirthConditionRules.FrequencyScale,
+            BirthConditionRules.GetProbabilityScale(longevity),
             6);
     }
 
@@ -216,17 +219,17 @@ public sealed class HealthMortalityStabilizationTests
     }
 
     [Fact]
-    public void BirthConditionTotalUsesGlobalReduction()
+    public void BirthConditionTotalUsesReducedSevenConditionPool()
     {
-        const double currentTableTotal = 0.0497;
+        const double currentTableTotal = 0.02125;
 
         var longevityThree =
             currentTableTotal * BirthConditionRules.GetProbabilityScale(3);
         var longevityOne =
             currentTableTotal * BirthConditionRules.GetProbabilityScale(1);
 
-        Assert.Equal(0.01988, longevityThree, 6);
-        Assert.Equal(0.023856, longevityOne, 6);
+        Assert.Equal(0.0085, longevityThree, 6);
+        Assert.Equal(0.0085, longevityOne, 6);
         Assert.True(longevityOne < currentTableTotal);
     }
 

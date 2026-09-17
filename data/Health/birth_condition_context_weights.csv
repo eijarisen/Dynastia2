@@ -1,0 +1,15 @@
+﻿ConditionId,StartYear,EndYear,MotherAgeBand,WeightMultiplier
+down_syndrome,1700,,YoungAdult,1.0
+down_syndrome,1700,,Adult,5.0
+cerebral_palsy,1700,,YoungAdult,1.0
+cerebral_palsy,1700,,Adult,1.3
+congenital_heart_defect,1700,,YoungAdult,1.0
+congenital_heart_defect,1700,,Adult,1.2
+cleft_lip_palate,1700,,YoungAdult,1.0
+cleft_lip_palate,1700,,Adult,1.1
+congenital_hearing_loss,1700,,YoungAdult,1.0
+congenital_hearing_loss,1700,,Adult,1.15
+spina_bifida,1700,,YoungAdult,1.0
+spina_bifida,1700,,Adult,1.1
+limb_difference,1700,,YoungAdult,1.0
+limb_difference,1700,,Adult,1.0

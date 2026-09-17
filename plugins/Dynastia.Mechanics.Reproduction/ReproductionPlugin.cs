@@ -96,6 +96,11 @@ public sealed class ReproductionPlugin : IGamePlugin
         ValidateBirthConditions(
             birthConditions);
 
+        var birthConditionContext =
+            BirthConditionContextCatalog.Load(
+                data,
+                birthConditions.Select(condition => condition.Id));
+
         actions.RegisterDynamicProvider(
             (_, _) =>
                 [
@@ -118,7 +123,8 @@ public sealed class ReproductionPlugin : IGamePlugin
                 random,
                 calendar,
                 events,
-                birthConditions));
+                birthConditions,
+                birthConditionContext));
 
         context.Log(
             "Reproduction mechanics registered.");
@@ -248,6 +254,19 @@ public sealed class ReproductionPlugin : IGamePlugin
                 throw new InvalidDataException(
                     $"Birth condition '{definition.Id}' " +
                     "must have probability > 0 and <= 1.");
+            }
+
+            if (definition.StartYear < GameCalendarConfiguration.GameStartYear)
+            {
+                throw new InvalidDataException(
+                    $"Birth condition '{definition.Id}' starts before {GameCalendarConfiguration.GameStartYear}.");
+            }
+
+            if (definition.EndYear is int endYear
+                && endYear < definition.StartYear)
+            {
+                throw new InvalidDataException(
+                    $"Birth condition '{definition.Id}' has endYear before startYear.");
             }
 
             totalProbability +=

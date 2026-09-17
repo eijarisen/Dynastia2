@@ -10,7 +10,8 @@
     "weight": 30,
     "newsworthy": false,
     "durationMin": 1,
-    "durationMax": 2
+    "durationMax": 2,
+    "startYear": 1700
   },
   {
     "id": "influenza",
@@ -23,7 +24,8 @@
     "weight": 14,
     "newsworthy": false,
     "durationMin": 1,
-    "durationMax": 2
+    "durationMax": 2,
+    "startYear": 1700
   },
   {
     "id": "gastroenteritis",
@@ -36,7 +38,8 @@
     "weight": 14,
     "newsworthy": false,
     "durationMin": 1,
-    "durationMax": 2
+    "durationMax": 2,
+    "startYear": 1700
   },
   {
     "id": "sinus_infection",
@@ -49,7 +52,8 @@
     "weight": 12,
     "newsworthy": false,
     "durationMin": 1,
-    "durationMax": 2
+    "durationMax": 2,
+    "startYear": 1700
   },
   {
     "id": "bronchitis",
@@ -62,7 +66,8 @@
     "weight": 10,
     "newsworthy": false,
     "durationMin": 1,
-    "durationMax": 3
+    "durationMax": 3,
+    "startYear": 1700
   },
   {
     "id": "urinary_tract_infection",
@@ -75,7 +80,8 @@
     "weight": 9,
     "newsworthy": false,
     "durationMin": 1,
-    "durationMax": 2
+    "durationMax": 2,
+    "startYear": 1700
   },
   {
     "id": "migraines",
@@ -89,7 +95,8 @@
     "newsworthy": false,
     "durationMin": 1,
     "durationMax": 2,
-    "geneticTag": "genetic.migraine"
+    "geneticTag": "genetic.migraine",
+    "startYear": 1700
   },
   {
     "id": "seasonal_allergies",
@@ -102,7 +109,8 @@
     "weight": 8,
     "newsworthy": false,
     "durationMin": 1,
-    "durationMax": 3
+    "durationMax": 3,
+    "startYear": 1700
   },
   {
     "id": "pneumonia",
@@ -115,7 +123,8 @@
     "weight": 14,
     "newsworthy": true,
     "durationMin": 2,
-    "durationMax": 4
+    "durationMax": 4,
+    "startYear": 1700
   },
   {
     "id": "tuberculosis",
@@ -128,7 +137,8 @@
     "weight": 6,
     "newsworthy": true,
     "durationMin": 3,
-    "durationMax": 8
+    "durationMax": 8,
+    "startYear": 1700
   },
   {
     "id": "appendicitis",
@@ -142,7 +152,8 @@
     "newsworthy": true,
     "durationMin": 1,
     "durationMax": 2,
-    "immediateHealthImpact": -18
+    "immediateHealthImpact": -18,
+    "startYear": 1700
   },
   {
     "id": "asthma",
@@ -154,7 +165,8 @@
     "healthImpact": -2,
     "weight": 11,
     "newsworthy": false,
-    "geneticTag": "genetic.asthma"
+    "geneticTag": "genetic.asthma",
+    "startYear": 1700
   },
   {
     "id": "epilepsy",
@@ -166,7 +178,8 @@
     "healthImpact": -4,
     "weight": 7,
     "newsworthy": true,
-    "geneticTag": "genetic.epilepsy"
+    "geneticTag": "genetic.epilepsy",
+    "startYear": 1700
   },
   {
     "id": "arthritis",
@@ -177,7 +190,8 @@
     "minimumAge": 45,
     "healthImpact": -2,
     "weight": 12,
-    "newsworthy": false
+    "newsworthy": false,
+    "startYear": 1700
   },
   {
     "id": "hypertension",
@@ -189,7 +203,8 @@
     "healthImpact": -2,
     "weight": 12,
     "newsworthy": false,
-    "geneticTag": "genetic.hypertension"
+    "geneticTag": "genetic.hypertension",
+    "startYear": 1700
   },
   {
     "id": "diabetes",
@@ -201,7 +216,8 @@
     "healthImpact": -4,
     "weight": 10,
     "newsworthy": true,
-    "geneticTag": "genetic.diabetes"
+    "geneticTag": "genetic.diabetes",
+    "startYear": 1700
   },
   {
     "id": "heart_disease",
@@ -213,7 +229,8 @@
     "healthImpact": -5,
     "weight": 8,
     "newsworthy": true,
-    "geneticTag": "genetic.heart"
+    "geneticTag": "genetic.heart",
+    "startYear": 1700
   },
   {
     "id": "chronic_kidney_disease",
@@ -224,7 +241,8 @@
     "minimumAge": 45,
     "healthImpact": -5,
     "weight": 6,
-    "newsworthy": true
+    "newsworthy": true,
+    "startYear": 1700
   },
   {
     "id": "cancer",
@@ -236,7 +254,8 @@
     "healthImpact": -9,
     "weight": 6,
     "newsworthy": true,
-    "geneticTag": "genetic.cancer"
+    "geneticTag": "genetic.cancer",
+    "startYear": 1700
   },
   {
     "id": "heart_attack",
@@ -251,7 +270,8 @@
     "durationMin": 2,
     "durationMax": 4,
     "geneticTag": "genetic.heart",
-    "immediateHealthImpact": -35
+    "immediateHealthImpact": -35,
+    "startYear": 1700
   },
   {
     "id": "stroke",
@@ -266,7 +286,8 @@
     "durationMin": 2,
     "durationMax": 5,
     "geneticTag": "genetic.heart",
-    "immediateHealthImpact": -40
+    "immediateHealthImpact": -40,
+    "startYear": 1700
   },
   {
     "id": "depression",
@@ -279,7 +300,8 @@
     "weight": 0,
     "newsworthy": false,
     "durationMin": 3,
-    "durationMax": 6
+    "durationMax": 6,
+    "startYear": 1700
   },
   {
     "id": "anxiety",
@@ -292,7 +314,8 @@
     "weight": 0,
     "newsworthy": false,
     "durationMin": 2,
-    "durationMax": 5
+    "durationMax": 5,
+    "startYear": 1700
   },
   {
     "id": "alcoholism",
@@ -303,7 +326,8 @@
     "minimumAge": 18,
     "healthImpact": -10,
     "weight": 0,
-    "newsworthy": false
+    "newsworthy": false,
+    "startYear": 1700
   },
   {
     "id": "broken_arm",
@@ -316,7 +340,8 @@
     "weight": 0,
     "newsworthy": false,
     "durationMin": 1,
-    "durationMax": 2
+    "durationMax": 2,
+    "startYear": 1700
   },
   {
     "id": "broken_leg",
@@ -329,7 +354,8 @@
     "weight": 0,
     "newsworthy": false,
     "durationMin": 1,
-    "durationMax": 3
+    "durationMax": 3,
+    "startYear": 1700
   },
   {
     "id": "concussion",
@@ -342,7 +368,8 @@
     "weight": 0,
     "newsworthy": false,
     "durationMin": 1,
-    "durationMax": 2
+    "durationMax": 2,
+    "startYear": 1700
   },
   {
     "id": "paraplegia",
@@ -353,7 +380,8 @@
     "minimumAge": 0,
     "healthImpact": -5,
     "weight": 0,
-    "newsworthy": true
+    "newsworthy": true,
+    "startYear": 1700
   },
   {
     "id": "parents_divorced",
@@ -362,9 +390,10 @@
     "category": "Mental",
     "course": "Chronic",
     "minimumAge": 0,
-    "healthImpact": -5,
+    "healthImpact": 0,
     "weight": 0,
-    "newsworthy": false
+    "newsworthy": false,
+    "startYear": 1700
   },
   {
     "id": "down_syndrome",
@@ -373,9 +402,10 @@
     "category": "Birth",
     "course": "Chronic",
     "minimumAge": 0,
-    "healthImpact": -10,
+    "healthImpact": -2,
     "weight": 0,
-    "newsworthy": false
+    "newsworthy": false,
+    "startYear": 1700
   },
   {
     "id": "cerebral_palsy",
@@ -384,9 +414,10 @@
     "category": "Birth",
     "course": "Chronic",
     "minimumAge": 0,
-    "healthImpact": -10,
+    "healthImpact": -2,
     "weight": 0,
-    "newsworthy": false
+    "newsworthy": false,
+    "startYear": 1700
   },
   {
     "id": "autism",
@@ -397,7 +428,8 @@
     "minimumAge": 0,
     "healthImpact": 0,
     "weight": 0,
-    "newsworthy": false
+    "newsworthy": false,
+    "startYear": 1700
   },
   {
     "id": "congenital_heart_defect",
@@ -406,9 +438,10 @@
     "category": "Birth",
     "course": "Chronic",
     "minimumAge": 0,
-    "healthImpact": 0,
+    "healthImpact": -3,
     "weight": 0,
-    "newsworthy": false
+    "newsworthy": false,
+    "startYear": 1700
   },
   {
     "id": "cleft_lip_palate",
@@ -419,7 +452,8 @@
     "minimumAge": 0,
     "healthImpact": 0,
     "weight": 0,
-    "newsworthy": false
+    "newsworthy": false,
+    "startYear": 1700
   },
   {
     "id": "congenital_hearing_loss",
@@ -430,7 +464,8 @@
     "minimumAge": 0,
     "healthImpact": 0,
     "weight": 0,
-    "newsworthy": false
+    "newsworthy": false,
+    "startYear": 1700
   },
   {
     "id": "limb_difference",
@@ -439,9 +474,10 @@
     "category": "Birth",
     "course": "Chronic",
     "minimumAge": 0,
-    "healthImpact": 0,
+    "healthImpact": -1,
     "weight": 0,
-    "newsworthy": false
+    "newsworthy": false,
+    "startYear": 1700
   },
   {
     "id": "craniosynostosis",
@@ -452,7 +488,8 @@
     "minimumAge": 0,
     "healthImpact": 0,
     "weight": 0,
-    "newsworthy": false
+    "newsworthy": false,
+    "startYear": 1700
   },
   {
     "id": "gastroschisis",
@@ -463,7 +500,8 @@
     "minimumAge": 0,
     "healthImpact": 0,
     "weight": 0,
-    "newsworthy": false
+    "newsworthy": false,
+    "startYear": 1700
   },
   {
     "id": "spina_bifida",
@@ -472,9 +510,10 @@
     "category": "Birth",
     "course": "Chronic",
     "minimumAge": 0,
-    "healthImpact": 0,
+    "healthImpact": -2,
     "weight": 0,
-    "newsworthy": false
+    "newsworthy": false,
+    "startYear": 1700
   },
   {
     "id": "congenital_diaphragmatic_hernia",
@@ -485,7 +524,8 @@
     "minimumAge": 0,
     "healthImpact": 0,
     "weight": 0,
-    "newsworthy": false
+    "newsworthy": false,
+    "startYear": 1700
   },
   {
     "id": "cystic_fibrosis",
@@ -496,7 +536,8 @@
     "minimumAge": 0,
     "healthImpact": 0,
     "weight": 0,
-    "newsworthy": false
+    "newsworthy": false,
+    "startYear": 1700
   },
   {
     "id": "anophthalmia_microphthalmia",
@@ -507,7 +548,8 @@
     "minimumAge": 0,
     "healthImpact": 0,
     "weight": 0,
-    "newsworthy": false
+    "newsworthy": false,
+    "startYear": 1700
   },
   {
     "id": "achondroplasia",
@@ -518,6 +560,130 @@
     "minimumAge": 0,
     "healthImpact": 0,
     "weight": 0,
-    "newsworthy": false
+    "newsworthy": false,
+    "startYear": 1700
+  },
+  {
+    "id": "measles",
+    "name": "Measles",
+    "type": "seasonal",
+    "category": "Mild",
+    "course": "Acute",
+    "minimumAge": 0,
+    "healthImpact": -6,
+    "weight": 6,
+    "newsworthy": false,
+    "durationMin": 1,
+    "durationMax": 2,
+    "startYear": 1700
+  },
+  {
+    "id": "whooping_cough",
+    "name": "Whooping Cough",
+    "type": "seasonal",
+    "category": "Mild",
+    "course": "Acute",
+    "minimumAge": 0,
+    "healthImpact": -7,
+    "weight": 4,
+    "newsworthy": false,
+    "durationMin": 1,
+    "durationMax": 3,
+    "startYear": 1700
+  },
+  {
+    "id": "smallpox",
+    "name": "Smallpox",
+    "type": "curable",
+    "category": "Serious",
+    "course": "Acute",
+    "minimumAge": 0,
+    "healthImpact": -15,
+    "weight": 2,
+    "newsworthy": true,
+    "durationMin": 2,
+    "durationMax": 4,
+    "immediateHealthImpact": -20,
+    "startYear": 1700,
+    "endYear": 1979
+  },
+  {
+    "id": "typhoid_fever",
+    "name": "Typhoid Fever",
+    "type": "curable",
+    "category": "Serious",
+    "course": "Acute",
+    "minimumAge": 5,
+    "healthImpact": -12,
+    "weight": 4,
+    "newsworthy": true,
+    "durationMin": 2,
+    "durationMax": 4,
+    "immediateHealthImpact": -10,
+    "startYear": 1700
+  },
+  {
+    "id": "polio",
+    "name": "Polio",
+    "type": "curable",
+    "category": "Serious",
+    "course": "Acute",
+    "minimumAge": 0,
+    "healthImpact": -9,
+    "weight": 2,
+    "newsworthy": true,
+    "durationMin": 2,
+    "durationMax": 4,
+    "immediateHealthImpact": -12,
+    "startYear": 1700,
+    "endYear": 2002
+  },
+  {
+    "id": "dementia",
+    "name": "Dementia",
+    "type": "permanent",
+    "category": "Serious",
+    "course": "Chronic",
+    "minimumAge": 60,
+    "healthImpact": -3,
+    "weight": 6,
+    "newsworthy": false,
+    "startYear": 1700
+  },
+  {
+    "id": "chronic_lung_disease",
+    "name": "Chronic Lung Disease",
+    "type": "permanent",
+    "category": "Serious",
+    "course": "Chronic",
+    "minimumAge": 40,
+    "healthImpact": -4,
+    "weight": 5,
+    "newsworthy": false,
+    "startYear": 1700
+  },
+  {
+    "id": "chronic_liver_disease",
+    "name": "Chronic Liver Disease",
+    "type": "permanent",
+    "category": "Serious",
+    "course": "Chronic",
+    "minimumAge": 35,
+    "healthImpact": -5,
+    "weight": 4,
+    "newsworthy": true,
+    "startYear": 1700
+  },
+  {
+    "id": "drug_dependence",
+    "name": "Drug Dependence",
+    "type": "permanent",
+    "category": "Mental",
+    "course": "Chronic",
+    "minimumAge": 18,
+    "healthImpact": -8,
+    "weight": 0,
+    "newsworthy": false,
+    "startYear": 1800
   }
 ]

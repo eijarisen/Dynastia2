@@ -511,7 +511,8 @@ internal sealed class AdvancedAutonomousHouseholdStrategy :
             return null;
 
         var dangerous = target.Health.Conditions.Any(condition =>
-            condition.Id.Equals("alcoholism", StringComparison.OrdinalIgnoreCase)
+            (condition.Id.Equals("alcoholism", StringComparison.OrdinalIgnoreCase)
+             || condition.Id.Equals("drug_dependence", StringComparison.OrdinalIgnoreCase))
             && target.Health.Percentage <= 60);
 
         return WithScore(

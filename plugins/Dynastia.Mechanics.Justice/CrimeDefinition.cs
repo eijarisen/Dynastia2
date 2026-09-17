@@ -15,10 +15,29 @@ public sealed class CrimeDefinition
     public bool RequiresEmployment { get; init; }
     public string Description { get; init; } = string.Empty;
 
-    public bool IsProfitCrime => ProfitMax > 0;
-    public bool IsPlanned => Category.Contains("financial", StringComparison.OrdinalIgnoreCase)
-        || Category.Contains("property", StringComparison.OrdinalIgnoreCase);
-    public bool IsViolentOrImpulsive => Category.Contains("violent", StringComparison.OrdinalIgnoreCase)
-        || Category.Equals("impulsive", StringComparison.OrdinalIgnoreCase)
-        || Category.Equals("extreme", StringComparison.OrdinalIgnoreCase);
+    public int StartYear { get; init; } = 1700;
+    public int? EndYear { get; init; }
+    public int MinimumAge { get; init; } = 18;
+    public int? MaximumAge { get; init; }
+    public string PrimaryStat { get; init; } = "intellect";
+    public string? SecondaryStat { get; init; }
+    public IReadOnlyList<string> BehaviorTags { get; init; } = [];
+    public double PovertyMultiplier { get; init; } = 1.0;
+    public double StressWeightPerPoint { get; init; }
+    public string SettlementPreference { get; init; } = "Universal";
+    public IReadOnlyList<string> PreferredOpportunityTags { get; init; } = [];
+    public IReadOnlyList<string> PreferredCareerFamilies { get; init; } = [];
+
+    public bool IsProfitCrime => ProfitMax > 0 || HasBehavior("profit");
+    public bool IsPlanned => HasBehavior("planned");
+    public bool IsSevere => HasBehavior("violent") || HasBehavior("severe") || HasBehavior("extreme");
+
+    public bool HasBehavior(string tag) =>
+        BehaviorTags.Contains(tag, StringComparer.OrdinalIgnoreCase);
+
+    public bool IsAvailable(int year, int age) =>
+        year >= StartYear
+        && (EndYear is null || year <= EndYear.Value)
+        && age >= MinimumAge
+        && (MaximumAge is null || age <= MaximumAge.Value);
 }

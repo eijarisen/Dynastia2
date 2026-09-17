@@ -173,7 +173,7 @@ public sealed class HistoricalRetouchBatch5Tests
     }
 
     [Fact]
-    public void CrimeEraWeightsDoNotMutateSuccessDetectionOrSentenceData()
+    public void HistoricalCrimePresentationDoesNotMutateCrimeMechanics()
     {
         var catalog = CrimeHistoricalCatalog.Load(
             CreateData(),
@@ -190,15 +190,17 @@ public sealed class HistoricalRetouchBatch5Tests
             ProfitMax = 5,
             SuccessBase = 0.68,
             DetectionBase = 0.45,
-            Description = "smuggling illicit goods"
+            Description = "smuggling illicit goods",
+            BehaviorTags = ["financial", "profit", "planned"]
         };
 
-        Assert.Equal(1.6, catalog.GetWeightMultiplier("smuggling", 1750), 6);
-        Assert.Equal(0.8, catalog.GetWeightMultiplier("smuggling", 2000), 6);
+        _ = catalog.Resolve(crime, 1750);
+        _ = catalog.Resolve(crime, 2000);
         Assert.Equal(0.68, crime.SuccessBase, 6);
         Assert.Equal(0.45, crime.DetectionBase, 6);
         Assert.Equal(2, crime.SentenceMin);
         Assert.Equal(6, crime.SentenceMax);
+        Assert.True(crime.IsPlanned);
     }
 
     [Fact]
@@ -275,16 +277,6 @@ public sealed class HistoricalRetouchBatch5Tests
                     "CrimeId,StartYear,EndYear,DisplayName,Description\n" +
                     "vandalism,1700,1793,property destruction,deliberately damaging property\n" +
                     "vandalism,1794,,vandalism,vandalizing public property\n",
-                ["Justice/crime_era_weights.csv"] =
-                    "CrimeId,StartYear,EndYear,WeightMultiplier\n" +
-                    "smuggling,1700,1799,1.6\n" +
-                    "smuggling,1800,1849,1.4\n" +
-                    "smuggling,1850,1913,1.2\n" +
-                    "smuggling,1914,1945,1.1\n" +
-                    "smuggling,1946,1989,0.9\n" +
-                    "smuggling,1990,,0.8\n" +
-                    "fraud,1700,1799,0.55\n" +
-                    "embezzlement,1700,1799,0.5\n"
             });
     }
 

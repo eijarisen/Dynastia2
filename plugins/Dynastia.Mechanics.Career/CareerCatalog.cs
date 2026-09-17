@@ -5,698 +5,234 @@ namespace Dynastia.Mechanics.Career;
 
 internal sealed class CareerCatalog
 {
-    private const string DataPath =
-        "Career/careers.csv";
+    private const string DataPath = "Career/careers.csv";
+    private const string OpportunityTagsPath = "Towns/opportunity_tags.csv";
 
-    private const string OpportunityTagsPath =
-        "Towns/opportunity_tags.csv";
+    private static readonly IReadOnlySet<string> AllowedAptitudeStats =
+        new HashSet<string>(["strength", "intellect", "appeal"], StringComparer.OrdinalIgnoreCase);
 
+    private readonly IReadOnlyList<CareerDefinition> _careers;
+    private readonly IReadOnlyDictionary<string, CareerDefinition> _byId;
 
-    private static readonly IReadOnlySet<string>
-        ExpectedCareerIds =
-            new HashSet<string>(
-                new[]
-                {
-                    "agriculture_and_farm_estates",
-                    "horse_and_carriage_trade",
-                    "blacksmithing",
-                    "coal_mining",
-                    "oil_and_refining",
-                    "steel_and_foundry",
-                    "textile_mills",
-                    "timber_and_sawmills",
-                    "construction",
-                    "railways",
-                    "shipping_and_ports",
-                    "mass_factory_manufacturing",
-                    "traditional_printworks",
-                    "newspapers_and_publishing",
-                    "retail_trade",
-                    "banking",
-                    "insurance",
-                    "hotels_and_restaurants",
-                    "food_processing",
-                    "baking_and_confectionery",
-                    "meat_trade",
-                    "tailoring_and_fashion",
-                    "leather_and_shoemaking",
-                    "furniture_and_carpentry",
-                    "glass_and_ceramics",
-                    "jewellery_and_watchmaking",
-                    "photography",
-                    "domestic_service",
-                    "laundry_and_dry_cleaning",
-                    "funeral_services",
-                    "real_estate",
-                    "accounting",
-                    "legal_services",
-                    "healthcare_services",
-                    "pharmacy",
-                    "education",
-                    "electric_power",
-                    "cinema_and_film",
-                    "advertising",
-                    "automotive_industry",
-                    "chemical_industry",
-                    "beauty_and_cosmetics",
-                    "radio_broadcasting",
-                    "aviation",
-                    "road_haulage",
-                    "consumer_goods_and_appliances",
-                    "tourism_and_travel",
-                    "plastics_industry",
-                    "electronics_manufacturing",
-                    "pharmaceuticals",
-                    "television",
-                    "telecommunications",
-                    "engineering_services",
-                    "logistics_and_warehousing",
-                    "computing_and_it_services",
-                    "investment_and_financial_services",
-                    "private_security",
-                    "biotechnology",
-                    "software_industry",
-                    "video_game_industry",
-                    "business_process_outsourcing",
-                    "e_commerce",
-                    "digital_media",
-                    "cybersecurity",
-                    "renewable_energy",
-                },
-                StringComparer.OrdinalIgnoreCase);
-
-    private readonly IReadOnlyList<CareerDefinition>
-        _careers;
-
-    private readonly IReadOnlyDictionary<
-        string,
-        CareerDefinition>
-        _byId;
-
-    private CareerCatalog(
-        IReadOnlyList<CareerDefinition> careers)
+    private CareerCatalog(IReadOnlyList<CareerDefinition> careers)
     {
-        _careers =
-            careers;
-
-        _byId =
-            careers.ToDictionary(
-                career =>
-                    career.Id,
-                StringComparer.OrdinalIgnoreCase);
+        _careers = careers;
+        _byId = careers.ToDictionary(career => career.Id, StringComparer.OrdinalIgnoreCase);
     }
 
-    internal IReadOnlyCollection<string> CareerIds =>
-        _byId.Keys.ToArray();
+    internal IReadOnlyCollection<string> CareerIds => _byId.Keys.ToArray();
+    internal IReadOnlyCollection<string> CareerFamilies =>
+        _careers.Select(career => career.CareerFamily)
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToArray();
+    internal IReadOnlyList<CareerDefinition> All => _careers;
 
-    internal IReadOnlyList<CareerDefinition> All =>
-        _careers;
-
-    public static CareerCatalog Load(
-        IGameDataService data)
+    public static CareerCatalog Load(IGameDataService data, CareerEducationProfileCatalog educationProfiles)
     {
-        ArgumentNullException.ThrowIfNull(
-            data);
+        ArgumentNullException.ThrowIfNull(data);
+        ArgumentNullException.ThrowIfNull(educationProfiles);
 
-        var careers =
-            Parse(
-                data.ReadText(
-                    DataPath));
-
-        var knownOpportunityTags =
-            ParseOpportunityTags(
-                data.ReadText(
-                    OpportunityTagsPath));
-
-        Validate(
-            careers,
-            knownOpportunityTags);
-
-        return new CareerCatalog(
-            careers);
+        var careers = Parse(data.ReadText(DataPath));
+        var knownOpportunityTags = ParseOpportunityTags(data.ReadText(OpportunityTagsPath));
+        Validate(careers, knownOpportunityTags, educationProfiles);
+        return new CareerCatalog(careers);
     }
 
-    public CareerDefinition? Find(
-        string? id)
+    public CareerDefinition? Find(string? id)
     {
-        if (string.IsNullOrWhiteSpace(
-            id))
-        {
+        if (string.IsNullOrWhiteSpace(id))
             return null;
-        }
-
-        return _byId.TryGetValue(
-            id,
-            out var career)
-                ? career
-                : null;
+        return _byId.TryGetValue(id, out var career) ? career : null;
     }
 
     public CareerDefinition SelectForEntry(
         Sex sex,
         int gameYear,
         IGameRandom random,
-        Func<CareerDefinition, double>?
-            availabilityMultiplier = null)
+        Func<CareerDefinition, double>? availabilityMultiplier = null)
     {
-        var available =
-            _careers
-                .Where(
-                    career =>
-                        career.IsOpenForEntry(
-                            gameYear))
-                .Select(
-                    career =>
-                    {
-                        var locationMultiplier =
-                            availabilityMultiplier?.Invoke(
-                                career)
-                            ?? 1.0;
-
-                        return new WeightedCareer(
-                            career,
-                            career.GetEntryWeight(
-                                sex,
-                                gameYear)
-                            * Math.Max(
-                                0,
-                                locationMultiplier));
-                    })
-                .Where(
-                    entry =>
-                        entry.Weight > 0)
-                .ToList();
+        var available = _careers
+            .Where(career => career.IsOpenForEntry(gameYear))
+            .Select(career =>
+            {
+                var multiplier = availabilityMultiplier?.Invoke(career) ?? 1.0;
+                return new WeightedCareer(
+                    career,
+                    career.GetEntryWeight(sex, gameYear) * Math.Max(0, multiplier));
+            })
+            .Where(entry => entry.Weight > 0)
+            .ToList();
 
         if (available.Count == 0)
-        {
-            throw new InvalidOperationException(
-                $"No career is available for entry " +
-                $"in year {gameYear}.");
-        }
+            throw new InvalidOperationException($"No career is available for entry in year {gameYear}.");
 
-        var total =
-            available.Sum(
-                entry =>
-                    entry.Weight);
-
-        var roll =
-            random.NextDouble()
-            * total;
-
-        foreach (var entry in
-            available)
+        var total = available.Sum(entry => entry.Weight);
+        var roll = random.NextDouble() * total;
+        foreach (var entry in available)
         {
             if (roll < entry.Weight)
                 return entry.Career;
-
-            roll -=
-                entry.Weight;
+            roll -= entry.Weight;
         }
-
         return available[^1].Career;
     }
 
-    private static IReadOnlyList<CareerDefinition>
-        Parse(
-            string text)
+    private static IReadOnlyList<CareerDefinition> Parse(string text)
     {
-        var lines =
-            text.Split(
-                ['\r', '\n'],
-                StringSplitOptions
-                    .RemoveEmptyEntries);
+        var lines = text.Split(['\r', '\n'], StringSplitOptions.RemoveEmptyEntries);
+        const string header = "Number,Id,Name,Emoji,StartYear,EndYear,MaleEarly,FemaleEarly,MaleLate,FemaleLate,BaseSalary,Level1Title,Level2Title,Level3Title,Level4Title,Level5Title,LocationType,MinimumSettlementClass,RequiredOpportunityTags,PrimaryStat,SecondaryStat,EducationProfile,CareerFamily";
+        if (lines.Length < 2 || !lines[0].TrimStart('\uFEFF').Equals(header, StringComparison.Ordinal))
+            throw new InvalidDataException($"{DataPath} has an unexpected header or is empty.");
 
-        if (lines.Length < 2)
+        var result = new List<CareerDefinition>();
+        for (var index = 1; index < lines.Length; index++)
         {
-            throw new InvalidDataException(
-                $"{DataPath} is empty.");
+            var fields = lines[index].Split(',');
+            if (fields.Length != 23)
+                throw new InvalidDataException($"{DataPath} row {index + 1} has {fields.Length} fields; expected 23.");
+
+            result.Add(new CareerDefinition(
+                Id: fields[1].Trim(),
+                Name: fields[2].Trim(),
+                Emoji: fields[3].Trim(),
+                StartYear: ParseInt(fields[4], index),
+                EndYear: string.IsNullOrWhiteSpace(fields[5]) ? null : ParseInt(fields[5], index),
+                MaleEarly: ParseInt(fields[6], index),
+                FemaleEarly: ParseInt(fields[7], index),
+                MaleLate: ParseInt(fields[8], index),
+                FemaleLate: ParseInt(fields[9], index),
+                BaseSalary: ParseDecimal(fields[10], index),
+                Level1Title: fields[11].Trim(),
+                Level2Title: fields[12].Trim(),
+                Level3Title: fields[13].Trim(),
+                Level4Title: fields[14].Trim(),
+                Level5Title: fields[15].Trim(),
+                LocationType: ParseLocationType(fields[16], index),
+                MinimumSettlementClass: ParseSettlementClass(fields[17], index),
+                RequiredOpportunityTags: ParseTags(fields[18]),
+                PrimaryStat: fields[19].Trim(),
+                SecondaryStat: NormalizeOptional(fields[20]),
+                EducationProfile: fields[21].Trim(),
+                CareerFamily: fields[22].Trim()));
         }
-
-        var header =
-            lines[0].Split(',');
-
-        var expectedHeader =
-            new[]
-            {
-                "Number",
-                "Id",
-                "Name",
-                "Emoji",
-                "StartYear",
-                "EndYear",
-                "MaleEarly",
-                "FemaleEarly",
-                "MaleLate",
-                "FemaleLate",
-                "BaseSalary",
-                "Level1Title",
-                "Level2Title",
-                "Level3Title",
-                "Level4Title",
-                "Level5Title",
-                "LocationType",
-                "MinimumSettlementClass",
-                "RequiredOpportunityTags",
-                "RelevantCraftIds"
-            };
-
-        var preCraftHeader =
-            new[]
-            {
-                "Number",
-                "Id",
-                "Name",
-                "Emoji",
-                "StartYear",
-                "EndYear",
-                "MaleEarly",
-                "FemaleEarly",
-                "MaleLate",
-                "FemaleLate",
-                "BaseSalary",
-                "Level1Title",
-                "Level2Title",
-                "Level3Title",
-                "Level4Title",
-                "Level5Title",
-                "LocationType",
-                "MinimumSettlementClass",
-                "RequiredOpportunityTags"
-            };
-
-        var legacyHeader =
-            new[]
-            {
-                "Number",
-                "Id",
-                "Name",
-                "StartYear",
-                "EndYear",
-                "MaleEarly",
-                "FemaleEarly",
-                "MaleLate",
-                "FemaleLate",
-                "BaseSalary",
-                "Level1Title",
-                "Level2Title",
-                "Level3Title",
-                "Level4Title",
-                "Level5Title",
-                "LocationType",
-                "MinimumSettlementClass",
-                "RequiredOpportunityTags"
-            };
-
-        var hasCraftColumn =
-            header.SequenceEqual(
-                expectedHeader,
-                StringComparer.Ordinal);
-
-        var hasEmojiColumn = hasCraftColumn
-            || header.SequenceEqual(
-                preCraftHeader,
-                StringComparer.Ordinal);
-
-        var isLegacyHeader =
-            header.SequenceEqual(
-                legacyHeader,
-                StringComparer.Ordinal);
-
-        if (!hasEmojiColumn
-            && !isLegacyHeader)
-        {
-            throw new InvalidDataException(
-                $"{DataPath} has an unexpected header: " +
-                string.Join(",", header));
-        }
-
-        var result =
-            new List<CareerDefinition>();
-
-        for (var index = 1;
-            index < lines.Length;
-            index++)
-        {
-            var fields =
-                lines[index].Split(',');
-
-            var expectedFieldCount =
-                hasCraftColumn
-                    ? expectedHeader.Length
-                    : hasEmojiColumn
-                        ? preCraftHeader.Length
-                        : legacyHeader.Length;
-
-            if (fields.Length
-                != expectedFieldCount)
-            {
-                throw new InvalidDataException(
-                    $"{DataPath} row {index + 1} " +
-                    $"has {fields.Length} fields; " +
-                    $"expected {expectedFieldCount}.");
-            }
-
-            var offset =
-                hasEmojiColumn
-                    ? 1
-                    : 0;
-
-            result.Add(
-                new CareerDefinition(
-                    Id:
-                        fields[1],
-                    Name:
-                        fields[2],
-                    Emoji:
-                        hasEmojiColumn
-                            ? fields[3]
-                            : "💼",
-                    StartYear:
-                        ParseInt(
-                            fields[3 + offset],
-                            index),
-                    EndYear:
-                        string.IsNullOrWhiteSpace(
-                            fields[4 + offset])
-                            ? null
-                            : ParseInt(
-                                fields[4 + offset],
-                                index),
-                    MaleEarly:
-                        ParseInt(
-                            fields[5 + offset],
-                            index),
-                    FemaleEarly:
-                        ParseInt(
-                            fields[6 + offset],
-                            index),
-                    MaleLate:
-                        ParseInt(
-                            fields[7 + offset],
-                            index),
-                    FemaleLate:
-                        ParseInt(
-                            fields[8 + offset],
-                            index),
-                    BaseSalary:
-                        ParseDecimal(
-                            fields[9 + offset],
-                            index),
-                    Level1Title:
-                        fields[10 + offset],
-                    Level2Title:
-                        fields[11 + offset],
-                    Level3Title:
-                        fields[12 + offset],
-                    Level4Title:
-                        fields[13 + offset],
-                    Level5Title:
-                        fields[14 + offset],
-                    LocationType:
-                        ParseLocationType(
-                            fields[15 + offset],
-                            index),
-                    MinimumSettlementClass:
-                        ParseSettlementClass(
-                            fields[16 + offset],
-                            index),
-                    RequiredOpportunityTags:
-                        ParseTags(
-                            fields[17 + offset]),
-                    RelevantCraftIds:
-                        hasCraftColumn
-                            ? ParseTags(fields[18 + offset])
-                            : Array.Empty<string>()));
-        }
-
         return result;
     }
 
     private static void Validate(
         IReadOnlyList<CareerDefinition> careers,
-        IReadOnlySet<string> knownOpportunityTags)
+        IReadOnlySet<string> knownOpportunityTags,
+        CareerEducationProfileCatalog educationProfiles)
     {
-        if (careers.Count != 65)
+        if (careers.Count == 0)
+            throw new InvalidDataException($"{DataPath} is empty.");
+
+        var ids = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        foreach (var career in careers)
         {
-            throw new InvalidDataException(
-                $"{DataPath} must contain exactly " +
-                $"65 careers; found {careers.Count}.");
+            if (string.IsNullOrWhiteSpace(career.Id) || !ids.Add(career.Id))
+                throw new InvalidDataException($"{DataPath} contains a duplicate or empty career ID '{career.Id}'.");
         }
 
-        if (careers
-            .Select(
-                career =>
-                    career.Id)
-            .Distinct(
-                StringComparer.OrdinalIgnoreCase)
-            .Count()
-            != careers.Count)
-        {
-            throw new InvalidDataException(
-                $"{DataPath} contains duplicate career IDs.");
-        }
-
-        var actualCareerIds =
-            careers
-                .Select(career => career.Id)
-                .ToHashSet(
-                    StringComparer.OrdinalIgnoreCase);
-
-        if (!actualCareerIds.SetEquals(
-                ExpectedCareerIds))
-        {
-            throw new InvalidDataException(
-                $"{DataPath} must preserve the existing " +
-                "65 career IDs for save compatibility.");
-        }
 
         foreach (var career in careers)
         {
-            if (string.IsNullOrWhiteSpace(
-                career.Emoji))
-            {
-                throw new InvalidDataException(
-                    $"{career.Name}: career emoji is required.");
-            }
-
-            if (career.StartYear
-                < GameCalendarConfiguration.GameStartYear
-                || career.StartYear
-                    > CareerDefinition
-                        .TechnologyFreezeYear)
-            {
-                throw new InvalidDataException(
-                    $"{career.Name}: invalid start year " +
-                    $"{career.StartYear}.");
-            }
-
-            if (career.EndYear is int endYear
-                && endYear < career.StartYear)
-            {
-                throw new InvalidDataException(
-                    $"{career.Name}: end year precedes " +
-                    "start year.");
-            }
-
-            if (career.MaleEarly <= 0
-                || career.FemaleEarly <= 0
-                || career.MaleLate <= 0
-                || career.FemaleLate <= 0)
-            {
-                throw new InvalidDataException(
-                    $"{career.Name}: sex may influence " +
-                    "career entry but may not make it " +
-                    "impossible.");
-            }
-
-            if (career.LocationType
-                    == CareerLocationType.Specialist
-                && career.RequiredOpportunityTags.Count == 0)
-            {
-                throw new InvalidDataException(
-                    $"{career.Name}: specialist careers require "
-                    + "at least one opportunity tag.");
-            }
-
-            if (career.RequiredOpportunityTags
-                .Any(tag =>
-                    !knownOpportunityTags.Contains(tag)))
-            {
-                var unknown =
-                    career.RequiredOpportunityTags
-                        .First(tag =>
-                            !knownOpportunityTags.Contains(tag));
-
-                throw new InvalidDataException(
-                    $"{career.Name}: unknown opportunity tag " +
-                    $"'{unknown}'.");
-            }
-
-            if (career.LocationType
-                    != CareerLocationType.Specialist
-                && career.RequiredOpportunityTags.Count > 0)
-            {
-                throw new InvalidDataException(
-                    $"{career.Name}: opportunity tags are only "
-                    + "valid for specialist careers.");
-            }
-
+            if (string.IsNullOrWhiteSpace(career.Name) || string.IsNullOrWhiteSpace(career.Emoji))
+                throw new InvalidDataException($"Career '{career.Id}' needs a name and emoji.");
+            if (career.StartYear < GameCalendarConfiguration.GameStartYear
+                || career.StartYear > CareerDefinition.TechnologyFreezeYear)
+                throw new InvalidDataException($"{career.Name}: invalid start year {career.StartYear}.");
+            if (career.EndYear is int endYear && endYear < career.StartYear)
+                throw new InvalidDataException($"{career.Name}: end year precedes start year.");
+            if (career.MaleEarly <= 0 || career.FemaleEarly <= 0 || career.MaleLate <= 0 || career.FemaleLate <= 0)
+                throw new InvalidDataException($"{career.Name}: sex weighting must remain positive.");
             if (career.BaseSalary <= 0)
+                throw new InvalidDataException($"{career.Name}: base salary must be positive.");
+            if (!AllowedAptitudeStats.Contains(career.PrimaryStat))
+                throw new InvalidDataException($"{career.Name}: invalid primary stat '{career.PrimaryStat}'.");
+            if (career.SecondaryStat is not null
+                && (!AllowedAptitudeStats.Contains(career.SecondaryStat)
+                    || career.SecondaryStat.Equals(career.PrimaryStat, StringComparison.OrdinalIgnoreCase)))
+                throw new InvalidDataException($"{career.Name}: invalid secondary stat '{career.SecondaryStat}'.");
+            if (!educationProfiles.Contains(career.EducationProfile))
+                throw new InvalidDataException($"{career.Name}: unknown education profile '{career.EducationProfile}'.");
+            if (string.IsNullOrWhiteSpace(career.CareerFamily))
+                throw new InvalidDataException($"{career.Name}: CareerFamily is required.");
+
+            if (career.LocationType == CareerLocationType.Specialist && career.RequiredOpportunityTags.Count == 0)
+                throw new InvalidDataException($"{career.Name}: specialist careers require at least one opportunity tag.");
+            if (career.RequiredOpportunityTags.Any(tag => !knownOpportunityTags.Contains(tag)))
             {
-                throw new InvalidDataException(
-                    $"{career.Name}: base salary must " +
-                    "be positive.");
+                var unknown = career.RequiredOpportunityTags.First(tag => !knownOpportunityTags.Contains(tag));
+                throw new InvalidDataException($"{career.Name}: unknown opportunity tag '{unknown}'.");
             }
+            if (career.LocationType != CareerLocationType.Specialist && career.RequiredOpportunityTags.Count > 0)
+                throw new InvalidDataException($"{career.Name}: opportunity tags are only valid for specialist careers.");
 
-            if (new[]
-                {
-                    career.Level1Title,
-                    career.Level2Title,
-                    career.Level3Title,
-                    career.Level4Title,
-                    career.Level5Title
-                }
-                .Any(
-                    string.IsNullOrWhiteSpace))
-            {
-                throw new InvalidDataException(
-                    $"{career.Name}: all five job titles " +
-                    "are required.");
-            }
+            if (new[] { career.Level1Title, career.Level2Title, career.Level3Title, career.Level4Title, career.Level5Title }
+                .Any(string.IsNullOrWhiteSpace))
+                throw new InvalidDataException($"{career.Name}: all five job titles are required.");
         }
     }
 
-    private static CareerLocationType ParseLocationType(
-        string value,
-        int rowIndex)
+    private static string? NormalizeOptional(string value)
     {
-        if (Enum.TryParse<CareerLocationType>(
-                value,
-                ignoreCase: true,
-                out var result))
-        {
+        var trimmed = value.Trim();
+        return string.IsNullOrWhiteSpace(trimmed) || trimmed == "-" ? null : trimmed;
+    }
+
+    private static CareerLocationType ParseLocationType(string value, int rowIndex)
+    {
+        if (Enum.TryParse<CareerLocationType>(value, true, out var result))
             return result;
-        }
-
-        throw new InvalidDataException(
-            $"{DataPath} row {rowIndex + 1}: "
-            + $"'{value}' is not a valid location type.");
+        throw new InvalidDataException($"{DataPath} row {rowIndex + 1}: '{value}' is not a valid location type.");
     }
 
-    private static SettlementClass ParseSettlementClass(
-        string value,
-        int rowIndex)
+    private static SettlementClass ParseSettlementClass(string value, int rowIndex)
     {
-        if (Enum.TryParse<SettlementClass>(
-                value,
-                ignoreCase: true,
-                out var result))
-        {
+        if (Enum.TryParse<SettlementClass>(value, true, out var result))
             return result;
-        }
-
-        throw new InvalidDataException(
-            $"{DataPath} row {rowIndex + 1}: "
-            + $"'{value}' is not a valid settlement class.");
+        throw new InvalidDataException($"{DataPath} row {rowIndex + 1}: '{value}' is not a valid settlement class.");
     }
 
-    private static IReadOnlyList<string> ParseTags(
-        string value)
+    private static IReadOnlyList<string> ParseTags(string value)
     {
-        if (string.IsNullOrWhiteSpace(value)
-            || value.Trim() == "-")
-        {
+        if (string.IsNullOrWhiteSpace(value) || value.Trim() == "-")
             return Array.Empty<string>();
-        }
-
-        return value
-            .Split(
-                ';',
-                StringSplitOptions.RemoveEmptyEntries
-                | StringSplitOptions.TrimEntries)
-            .Distinct(
-                StringComparer.OrdinalIgnoreCase)
+        return value.Split(';', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+            .Distinct(StringComparer.OrdinalIgnoreCase)
             .ToArray();
     }
 
-    private static IReadOnlySet<string>
-        ParseOpportunityTags(
-            string text)
+    private static IReadOnlySet<string> ParseOpportunityTags(string text)
     {
-        var lines =
-            text.Split(
-                ['\r', '\n'],
-                StringSplitOptions.RemoveEmptyEntries);
-
+        var lines = text.Split(['\r', '\n'], StringSplitOptions.RemoveEmptyEntries);
         if (lines.Length < 2)
+            throw new InvalidDataException($"{OpportunityTagsPath} is empty.");
+
+        var result = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        for (var index = 1; index < lines.Length; index++)
         {
-            throw new InvalidDataException(
-                $"{OpportunityTagsPath} is empty.");
+            var fields = lines[index].Split(',');
+            if (fields.Length != 4 || string.IsNullOrWhiteSpace(fields[0]))
+                throw new InvalidDataException($"Invalid {OpportunityTagsPath} row {index + 1}.");
+            result.Add(fields[0].Trim());
         }
-
-        var result =
-            new HashSet<string>(
-                StringComparer.OrdinalIgnoreCase);
-
-        for (var index = 1;
-            index < lines.Length;
-            index++)
-        {
-            var fields =
-                lines[index].Split(',');
-
-            if (fields.Length != 4
-                || string.IsNullOrWhiteSpace(fields[0]))
-            {
-                throw new InvalidDataException(
-                    $"Invalid {OpportunityTagsPath} row " +
-                    $"{index + 1}.");
-            }
-
-            result.Add(
-                fields[0].Trim());
-        }
-
         return result;
     }
 
-    private static int ParseInt(
-        string value,
-        int rowIndex)
+    private static int ParseInt(string value, int rowIndex)
     {
-        if (int.TryParse(
-            value,
-            NumberStyles.Integer,
-            CultureInfo.InvariantCulture,
-            out var result))
-        {
+        if (int.TryParse(value, NumberStyles.Integer, CultureInfo.InvariantCulture, out var result))
             return result;
-        }
-
-        throw new InvalidDataException(
-            $"{DataPath} row {rowIndex + 1}: " +
-            $"'{value}' is not an integer.");
+        throw new InvalidDataException($"{DataPath} row {rowIndex + 1}: '{value}' is not an integer.");
     }
 
-    private static decimal ParseDecimal(
-        string value,
-        int rowIndex)
+    private static decimal ParseDecimal(string value, int rowIndex)
     {
-        if (decimal.TryParse(
-            value,
-            NumberStyles.Number,
-            CultureInfo.InvariantCulture,
-            out var result))
-        {
+        if (decimal.TryParse(value, NumberStyles.Number, CultureInfo.InvariantCulture, out var result))
             return result;
-        }
-
-        throw new InvalidDataException(
-            $"{DataPath} row {rowIndex + 1}: " +
-            $"'{value}' is not a decimal.");
+        throw new InvalidDataException($"{DataPath} row {rowIndex + 1}: '{value}' is not a decimal.");
     }
 
-    private sealed record WeightedCareer(
-        CareerDefinition Career,
-        double Weight);
+    private sealed record WeightedCareer(CareerDefinition Career, double Weight);
 }

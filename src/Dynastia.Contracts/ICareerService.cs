@@ -30,14 +30,11 @@ public interface ICareerService
         int jobSatisfaction);
 
     GeneratedCareerProfile GenerateCandidateCareer(
-        Sex sex,
-        TownInfo town,
-        int year,
-        int jobLevel,
-        int strength,
-        int intellect,
-        int educationLevel,
-        string deterministicKey);
+        GeneratedCareerContext context);
+
+    string? GetCareerFamily(IPerson person);
+
+    IReadOnlyCollection<string> GetKnownCareerFamilies();
 
     bool TryFindBetterJob(IPerson person);
 

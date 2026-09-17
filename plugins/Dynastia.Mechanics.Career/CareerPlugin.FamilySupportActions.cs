@@ -100,10 +100,7 @@ public sealed partial class CareerPlugin
                     var opportunity = career.CreateEmploymentOpportunity(
                         target,
                         stats);
-                    var successChance = PersonalityInfluence.AdjustProbability(
-                        opportunity.SuccessChance,
-                        target,
-                        sanguine: 0.10);
+                    var successChance = opportunity.SuccessChance;
 
                     if (random.NextDouble() < successChance)
                     {

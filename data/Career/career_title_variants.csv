@@ -1,4 +1,4 @@
-CareerId,StartYear,EndYear,DisplayName,Level1Title,Level2Title,Level3Title,Level4Title,Level5Title
+﻿CareerId,StartYear,EndYear,DisplayName,Level1Title,Level2Title,Level3Title,Level4Title,Level5Title
 agriculture_and_farm_estates,1700,1849,Agriculture & Estates,Farm Labourer,Tenant Farmer,Farm Steward,Estate Steward,Landed Proprietor
 horse_and_carriage_trade,1700,1849,Horse & Carriage Trade,Stable Hand,Groom,Stable Master,Stud Proprietor,Horse Merchant
 blacksmithing,1700,1849,Blacksmithing,Smithy Apprentice,Blacksmith,Master Blacksmith,Smithy Proprietor,Metal Merchant
@@ -31,3 +31,13 @@ banking,1800,1849,Banking,Bank Messenger,Bank Clerk,Banker,Banking House Partner
 insurance,1800,1849,Insurance,Office Runner,Insurance Clerk,Insurance Agent,Insurance Office Proprietor,Insurance Proprietor
 railways,1840,1849,Railways,Track Labourer,Railway Clerk,Station Master,Railway Superintendent,Railway Proprietor
 photography,1840,1849,Photography,Studio Assistant,Photographer,Studio Proprietor,Photographic House Proprietor,Photography Proprietor
+public_administration,1700,1849,Civil Administration,Office Copyist,Clerk,Secretary,Senior Official,State Councillor
+law_enforcement,1700,1849,Town Watch & Constabulary,Town Watchman,Constable,Watch Sergeant,Chief Constable,Municipal Police Chief
+military_service,1700,1849,Military Service,Soldier,Sergeant,Lieutenant,Colonel,General
+postal_service,1700,1849,Post & Courier Service,Post Rider,Postal Clerk,Postmaster,Postal Superintendent,Postal Director
+religious_service,1700,1849,Religious Service,Church Assistant,Religious Worker,Cleric,Senior Cleric,Religious Superior
+performing_arts,1700,1849,Theatre & Music,Stage Assistant,Performer,Principal Performer,Company Manager,Theatre Proprietor
+shipbuilding,1700,1849,Shipbuilding,Shipyard Labourer,Shipwright,Master Shipwright,Shipyard Proprietor,Shipbuilding Proprietor
+scientific_research,1800,1849,Natural Philosophy & Scientific Work,Scientific Assistant,Research Assistant,Natural Philosopher,Senior Scholar,Scientific Institution Director
+telecommunications,1880,1945,Telegraph & Telephone Services,Cable Hand,Telegraph Operator,Exchange Supervisor,Regional Superintendent,Communications Director
+computing_and_it_services,1970,1989,Computing & Data Processing,Data Entry Operator,Computer Operator,Systems Analyst,Data Processing Manager,Computing Director

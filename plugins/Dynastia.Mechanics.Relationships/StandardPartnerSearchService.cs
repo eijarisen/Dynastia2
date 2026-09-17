@@ -213,14 +213,18 @@ internal sealed class StandardPartnerSearchService :
                     candidateRandom.NextDouble());
 
             var career = _career.GenerateCandidateCareer(
-                partnerSex,
-                candidateTown,
-                _gameState.Year,
-                desiredJobLevel,
-                stats["strength"],
-                stats["intellect"],
-                education,
-                candidateId.ToString("N"));
+                new GeneratedCareerContext(
+                    partnerSex,
+                    candidateTown,
+                    _gameState.Year,
+                    desiredJobLevel,
+                    age,
+                    stats["strength"],
+                    stats["intellect"],
+                    stats["appeal"],
+                    education,
+                    personality.Temperament,
+                    candidateId.ToString("N")));
 
             var hobbies = _hobbyResolver()?
                 .GenerateCandidateHobbies(

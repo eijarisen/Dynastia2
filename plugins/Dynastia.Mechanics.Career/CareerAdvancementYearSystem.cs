@@ -106,31 +106,25 @@ public sealed class CareerAdvancementYearSystem :
                 person,
                 "intellect");
 
-        var strength =
-            GetStat(
-                person,
-                "strength");
-
         var definition =
             _career.GetDefinition(
                 person);
 
-        var strengthDrivenCareer =
-            definition is not null
-            && CareerEntryAptitudeClassifier.Get(
-                definition)
-                == CareerEntryAptitude.Strength;
+        if (definition is null)
+            return;
+
+        var careerAbility =
+            _career.GetCareerAbility(
+                person,
+                definition);
 
         var promotionAptitude =
-            CareerBalanceRules.GetPromotionAptitudeStat(
-                strengthDrivenCareer,
-                career.JobLevel,
-                strength,
-                intellect);
-
-        var educationMatters =
-            CareerBalanceRules.PromotionUsesEducation(
-                strengthDrivenCareer,
+            CareerBalanceRules.GetPromotionAptitude(
+                careerAbility,
+                intellect,
+                definition.PrimaryStat.Equals(
+                    "intellect",
+                    StringComparison.OrdinalIgnoreCase),
                 career.JobLevel);
 
         var promotionChance =
@@ -147,67 +141,37 @@ public sealed class CareerAdvancementYearSystem :
             promotionChance +=
                 CareerBalanceRules.GetWorkHarderPromotionBonus(
                     promotionAptitude,
-                    education,
-                    educationMatters);
+                    education);
         }
 
-        if (educationMatters
-            && career.JobLevel >= 2
-            && education < 3)
-        {
-            promotionChance /=
-                5;
-        }
+        var expectedEducation =
+            _career.GetExpectedEducation(
+                definition,
+                career.JobLevel + 1);
 
-        if (educationMatters
-            && career.JobLevel >= 3
-            && education < 4)
-        {
-            promotionChance /=
-                10;
-        }
-
-        if (educationMatters
-            && career.JobLevel >= 4
-            && education < 5)
-        {
-            promotionChance =
-                0;
-        }
+        promotionChance *=
+            CareerBalanceRules.GetEducationPromotionMultiplier(
+                education,
+                expectedEducation);
 
         promotionChance *=
             obsolescence
                 .PromotionMultiplier;
 
-        var personalityModifier =
-            person.Tags.Has(
-                "personality.melancholic")
-                ? -0.10
-                : person.Tags.Has(
-                    "personality.sanguine")
-                    ? 0.10
-                    : person.Tags.Has(
-                        "personality.choleric")
-                        ? 0.15
-                        : 0.0;
+        promotionChance *= Math.Clamp(
+            _career.GetTemperamentMultiplier(
+                definition,
+                person),
+            0.90,
+            1.15);
 
         if (person.Tags.Has(
                 "personality.choleric")
             && person.Tags.Has(
                 "modifier.work_harder"))
         {
-            personalityModifier +=
-                0.10;
+            promotionChance *= 1.10;
         }
-
-        personalityModifier =
-            Math.Clamp(
-                personalityModifier,
-                -PersonalityInfluence.MaximumModifier,
-                PersonalityInfluence.MaximumModifier);
-
-        promotionChance *=
-            1.0 + personalityModifier;
 
         if (_random.NextDouble()
             >= promotionChance)

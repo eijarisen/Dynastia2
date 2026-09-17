@@ -92,41 +92,41 @@ public sealed class MarriageCareerEducationBalanceTests
     }
 
     [Fact]
-    public void StrengthCareersUseStrengthUntilLevelThreeThenIntellect()
+    public void HigherLevelPromotionBlendsCareerAbilityWithIntellect()
     {
         Assert.Equal(
             5,
-            CareerBalanceRules.GetPromotionAptitudeStat(
-                strengthDrivenCareer: true,
-                currentJobLevel: 1,
-                strength: 5,
-                intellect: 1));
+            CareerBalanceRules.GetPromotionAptitude(
+                careerAbility: 5,
+                intellect: 1,
+                primaryIsIntellect: false,
+                currentJobLevel: 2),
+            6);
+
+        Assert.Equal(
+            3.4,
+            CareerBalanceRules.GetPromotionAptitude(
+                careerAbility: 5,
+                intellect: 1,
+                primaryIsIntellect: false,
+                currentJobLevel: 3),
+            6);
 
         Assert.Equal(
             5,
-            CareerBalanceRules.GetPromotionAptitudeStat(
-                strengthDrivenCareer: true,
-                currentJobLevel: 2,
-                strength: 5,
-                intellect: 1));
+            CareerBalanceRules.GetPromotionAptitude(
+                careerAbility: 5,
+                intellect: 1,
+                primaryIsIntellect: true,
+                currentJobLevel: 4),
+            6);
 
-        Assert.Equal(
-            1,
-            CareerBalanceRules.GetPromotionAptitudeStat(
-                strengthDrivenCareer: true,
-                currentJobLevel: 3,
-                strength: 5,
-                intellect: 1));
-
-        Assert.False(
-            CareerBalanceRules.PromotionUsesEducation(
-                strengthDrivenCareer: true,
-                currentJobLevel: 2));
-
-        Assert.True(
-            CareerBalanceRules.PromotionUsesEducation(
-                strengthDrivenCareer: true,
-                currentJobLevel: 3));
+        Assert.Equal(0.35,
+            CareerBalanceRules.GetEducationPromotionMultiplier(2, 3),
+            6);
+        Assert.Equal(0.10,
+            CareerBalanceRules.GetEducationPromotionMultiplier(1, 3),
+            6);
     }
 
     [Theory]

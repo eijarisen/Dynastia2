@@ -40,7 +40,7 @@ public sealed class StressOutcomeCatalog
                 throw new InvalidDataException($"{Path} row {row} ConditionId: stress outcome '{conditionId}' must have ordinary selection weight 0.");
 
             var start = ParseInt(fields[1], row, "StartYear");
-            var end = string.IsNullOrWhiteSpace(fields[2]) ? null : ParseInt(fields[2], row, "EndYear");
+            int? end = string.IsNullOrWhiteSpace(fields[2]) ? null : ParseInt(fields[2], row, "EndYear");
             var minimumAge = ParseInt(fields[3], row, "MinimumAge");
             var minimumStress = ParseDouble(fields[4], row, "MinimumStress");
             var baseWeight = ParseDouble(fields[5], row, "BaseWeight");

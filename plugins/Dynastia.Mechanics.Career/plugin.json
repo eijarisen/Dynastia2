@@ -11,6 +11,7 @@
     "dynastia.stats",
     "dynastia.health",
     "dynastia.economy",
-    "dynastia.education"
+    "dynastia.education",
+    "dynastia.personality"
   ]
 }

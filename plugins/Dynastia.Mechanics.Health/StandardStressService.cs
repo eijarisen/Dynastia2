@@ -120,7 +120,7 @@ public sealed class StandardStressService : IStressService
                 || gameEvent.Type.Equals("relationship.affair", StringComparison.OrdinalIgnoreCase))
             {
                 var partner = gameEvent.RelatedPersonIds
-                    .Select(Find)
+                    .Select(id => Find(id))
                     .FirstOrDefault(candidate => candidate is not null && candidate.Id != subject.Id);
 
                 if (subject.Id == person.Id || partner?.Id == person.Id)
@@ -153,9 +153,7 @@ public sealed class StandardStressService : IStressService
 
             if (gameEvent.Type.Equals("justice.crime_uncaught", StringComparison.OrdinalIgnoreCase)
                 && subject.Id == person.Id
-                && gameEvent.Data.TryGetValue("category", out var category)
-                && (category.Contains("violent", StringComparison.OrdinalIgnoreCase)
-                    || category.Equals("extreme", StringComparison.OrdinalIgnoreCase)))
+                && IsSevereCrimeEvent(gameEvent))
             {
                 contributions.Add(new("justice.violent_incident", 2));
                 continue;
@@ -174,6 +172,25 @@ public sealed class StandardStressService : IStressService
                 contributions.Add(new("career.job_loss", 2));
             }
         }
+    }
+
+
+    private static bool IsSevereCrimeEvent(GameEvent gameEvent)
+    {
+        if (gameEvent.Data.TryGetValue("behaviorTags", out var tags))
+        {
+            var parsed = tags.Split(
+                ';',
+                StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+            return parsed.Contains("violent", StringComparer.OrdinalIgnoreCase)
+                || parsed.Contains("severe", StringComparer.OrdinalIgnoreCase)
+                || parsed.Contains("extreme", StringComparer.OrdinalIgnoreCase);
+        }
+
+        // Compatibility fallback for events saved before explicit behavior tags.
+        return gameEvent.Data.TryGetValue("category", out var category)
+            && (category.Contains("violent", StringComparison.OrdinalIgnoreCase)
+                || category.Equals("extreme", StringComparison.OrdinalIgnoreCase));
     }
 
     private static bool HasTraumaticDamage(GameEvent gameEvent)

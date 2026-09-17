@@ -22,11 +22,7 @@ public sealed partial class StandardCareerService
             return false;
         }
 
-        var successChance =
-            PersonalityInfluence.AdjustProbability(
-                opportunity.SuccessChance,
-                person,
-                sanguine: 0.10);
+        var successChance = opportunity.SuccessChance;
 
         if (offeredSalary <= oldSalary
             || _random.NextDouble() >= successChance)
@@ -63,10 +59,10 @@ public sealed partial class StandardCareerService
             return false;
         }
 
-        var chance = PersonalityInfluence.AdjustProbability(
-            Math.Clamp(opportunity.SuccessChance + chanceBonus, 0, 0.98),
-            person,
-            sanguine: 0.10);
+        var chance = Math.Clamp(
+            opportunity.SuccessChance + chanceBonus,
+            0,
+            0.98);
 
         if (_random.NextDouble() >= chance)
             return false;
@@ -295,6 +291,8 @@ public sealed partial class StandardCareerService
         IPerson person,
         CareerDefinition? previous)
     {
+        var desiredLevel = Math.Max(1, GetRequired(person).JobLevel);
+
         if (previous is not null
             && previous.IsOpenForEntry(_gameState.Year)
             && IsLocallyAvailable(person, previous))
@@ -321,6 +319,11 @@ public sealed partial class StandardCareerService
                             definition.LocationRequirement);
                         return evaluation.IsEligible
                             ? evaluation.WeightMultiplier
+                                * GetSelectionContextMultiplier(definition, person)
+                                * GetAutomaticCareerFitMultiplier(
+                                    definition,
+                                    person,
+                                    desiredLevel)
                             : 0;
                     });
             }
@@ -328,6 +331,16 @@ public sealed partial class StandardCareerService
             {
                 return null;
             }
+        }
+
+        if (previous is not null)
+        {
+            var sameFamily = TryPreferred(definition =>
+                definition.CareerFamily.Equals(
+                    previous.CareerFamily,
+                    StringComparison.OrdinalIgnoreCase));
+            if (sameFamily is not null)
+                return sameFamily;
         }
 
         if (previous is not null
@@ -341,20 +354,12 @@ public sealed partial class StandardCareerService
                 return sameIndustry;
         }
 
-        if (previous is not null)
-        {
-            var aptitude = CareerEntryAptitudeClassifier.Get(previous);
-            var samePrimarySkill = TryPreferred(definition =>
-                CareerEntryAptitudeClassifier.Get(definition) == aptitude);
-            if (samePrimarySkill is not null)
-                return samePrimarySkill;
-        }
-
-        return SelectCareerForEntry(person);
+        return SelectCareerForEntry(person, desiredLevel);
     }
 
     private CareerDefinition SelectCareerForEntry(
-        IPerson person)
+        IPerson person,
+        int desiredLevel = 1)
     {
         return _catalog.SelectForEntry(
             _family.GetSex(
@@ -370,6 +375,11 @@ public sealed partial class StandardCareerService
 
                 return evaluation.IsEligible
                     ? evaluation.WeightMultiplier
+                        * GetSelectionContextMultiplier(definition, person)
+                        * GetAutomaticCareerFitMultiplier(
+                            definition,
+                            person,
+                            desiredLevel)
                     : 0;
             });
     }

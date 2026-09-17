@@ -11,7 +11,19 @@
     "successBase": 1,
     "detectionBase": 0.55,
     "requiresEmployment": false,
-    "description": "vandalizing public property"
+    "description": "vandalizing public property",
+    "startYear": 1700,
+    "minimumAge": 18,
+    "primaryStat": "strength",
+    "secondaryStat": null,
+    "settlementPreference": "Universal",
+    "preferredOpportunityTags": [],
+    "preferredCareerFamilies": [],
+    "povertyMultiplier": 1.0,
+    "stressWeightPerPoint": 0.1,
+    "behaviorTags": [
+      "impulsive"
+    ]
   },
   {
     "id": "brawling",
@@ -25,7 +37,20 @@
     "successBase": 1,
     "detectionBase": 0.75,
     "requiresEmployment": false,
-    "description": "starting a public brawl"
+    "description": "starting a public brawl",
+    "startYear": 1700,
+    "minimumAge": 18,
+    "primaryStat": "strength",
+    "secondaryStat": "appeal",
+    "settlementPreference": "Universal",
+    "preferredOpportunityTags": [],
+    "preferredCareerFamilies": [],
+    "povertyMultiplier": 1.0,
+    "stressWeightPerPoint": 0.12,
+    "behaviorTags": [
+      "violent",
+      "impulsive"
+    ]
   },
   {
     "id": "petty_theft",
@@ -39,7 +64,20 @@
     "successBase": 0.72,
     "detectionBase": 0.45,
     "requiresEmployment": false,
-    "description": "committing petty theft"
+    "description": "committing petty theft",
+    "startYear": 1700,
+    "minimumAge": 18,
+    "primaryStat": "intellect",
+    "secondaryStat": null,
+    "settlementPreference": "Urban",
+    "preferredOpportunityTags": [],
+    "preferredCareerFamilies": [],
+    "povertyMultiplier": 2.5,
+    "stressWeightPerPoint": 0.04,
+    "behaviorTags": [
+      "property",
+      "profit"
+    ]
   },
   {
     "id": "burglary",
@@ -53,7 +91,21 @@
     "successBase": 0.62,
     "detectionBase": 0.55,
     "requiresEmployment": false,
-    "description": "burglarizing a property"
+    "description": "burglarizing a property",
+    "startYear": 1700,
+    "minimumAge": 18,
+    "primaryStat": "strength",
+    "secondaryStat": "intellect",
+    "settlementPreference": "Urban",
+    "preferredOpportunityTags": [],
+    "preferredCareerFamilies": [],
+    "povertyMultiplier": 2.2,
+    "stressWeightPerPoint": 0.05,
+    "behaviorTags": [
+      "property",
+      "profit",
+      "planned"
+    ]
   },
   {
     "id": "smuggling",
@@ -67,7 +119,29 @@
     "successBase": 0.68,
     "detectionBase": 0.45,
     "requiresEmployment": false,
-    "description": "smuggling illicit goods"
+    "description": "smuggling illicit goods",
+    "startYear": 1700,
+    "minimumAge": 18,
+    "primaryStat": "intellect",
+    "secondaryStat": "appeal",
+    "settlementPreference": "Universal",
+    "preferredOpportunityTags": [
+      "port",
+      "shipping"
+    ],
+    "preferredCareerFamilies": [
+      "maritime",
+      "transport",
+      "commerce"
+    ],
+    "povertyMultiplier": 1.5,
+    "stressWeightPerPoint": 0.02,
+    "behaviorTags": [
+      "financial",
+      "profit",
+      "planned",
+      "organized"
+    ]
   },
   {
     "id": "fraud",
@@ -81,7 +155,28 @@
     "successBase": 0.66,
     "detectionBase": 0.4,
     "requiresEmployment": false,
-    "description": "committing financial fraud"
+    "description": "committing financial fraud",
+    "startYear": 1700,
+    "minimumAge": 18,
+    "primaryStat": "intellect",
+    "secondaryStat": "appeal",
+    "settlementPreference": "Urban",
+    "preferredOpportunityTags": [
+      "finance"
+    ],
+    "preferredCareerFamilies": [
+      "finance",
+      "business_services",
+      "commerce",
+      "property"
+    ],
+    "povertyMultiplier": 1.1,
+    "stressWeightPerPoint": 0.02,
+    "behaviorTags": [
+      "financial",
+      "profit",
+      "planned"
+    ]
   },
   {
     "id": "embezzlement",
@@ -95,7 +190,30 @@
     "successBase": 0.7,
     "detectionBase": 0.5,
     "requiresEmployment": true,
-    "description": "embezzling money through work"
+    "description": "embezzling money through work",
+    "startYear": 1700,
+    "minimumAge": 18,
+    "primaryStat": "intellect",
+    "secondaryStat": "appeal",
+    "settlementPreference": "Urban",
+    "preferredOpportunityTags": [
+      "finance"
+    ],
+    "preferredCareerFamilies": [
+      "finance",
+      "business_services",
+      "public_service",
+      "commerce",
+      "property"
+    ],
+    "povertyMultiplier": 1.0,
+    "stressWeightPerPoint": 0.03,
+    "behaviorTags": [
+      "financial",
+      "profit",
+      "planned",
+      "employment"
+    ]
   },
   {
     "id": "robbery",
@@ -109,7 +227,21 @@
     "successBase": 0.58,
     "detectionBase": 0.75,
     "requiresEmployment": false,
-    "description": "committing robbery"
+    "description": "committing robbery",
+    "startYear": 1700,
+    "minimumAge": 18,
+    "primaryStat": "strength",
+    "secondaryStat": "intellect",
+    "settlementPreference": "Universal",
+    "preferredOpportunityTags": [],
+    "preferredCareerFamilies": [],
+    "povertyMultiplier": 1.8,
+    "stressWeightPerPoint": 0.08,
+    "behaviorTags": [
+      "property",
+      "profit",
+      "violent"
+    ]
   },
   {
     "id": "aggravated_assault",
@@ -123,7 +255,20 @@
     "successBase": 1,
     "detectionBase": 0.75,
     "requiresEmployment": false,
-    "description": "committing aggravated assault"
+    "description": "committing aggravated assault",
+    "startYear": 1700,
+    "minimumAge": 18,
+    "primaryStat": "strength",
+    "secondaryStat": "appeal",
+    "settlementPreference": "Universal",
+    "preferredOpportunityTags": [],
+    "preferredCareerFamilies": [],
+    "povertyMultiplier": 1.0,
+    "stressWeightPerPoint": 0.12,
+    "behaviorTags": [
+      "violent",
+      "impulsive"
+    ]
   },
   {
     "id": "arson",
@@ -137,7 +282,21 @@
     "successBase": 1,
     "detectionBase": 0.65,
     "requiresEmployment": false,
-    "description": "committing arson"
+    "description": "committing arson",
+    "startYear": 1700,
+    "minimumAge": 18,
+    "primaryStat": "intellect",
+    "secondaryStat": "strength",
+    "settlementPreference": "Universal",
+    "preferredOpportunityTags": [],
+    "preferredCareerFamilies": [],
+    "povertyMultiplier": 1.0,
+    "stressWeightPerPoint": 0.12,
+    "behaviorTags": [
+      "violent",
+      "impulsive",
+      "planned"
+    ]
   },
   {
     "id": "manslaughter",
@@ -151,7 +310,20 @@
     "successBase": 1,
     "detectionBase": 0.85,
     "requiresEmployment": false,
-    "description": "causing a death through manslaughter"
+    "description": "causing a death through manslaughter",
+    "startYear": 1700,
+    "minimumAge": 18,
+    "primaryStat": "strength",
+    "secondaryStat": null,
+    "settlementPreference": "Universal",
+    "preferredOpportunityTags": [],
+    "preferredCareerFamilies": [],
+    "povertyMultiplier": 1.0,
+    "stressWeightPerPoint": 0.1,
+    "behaviorTags": [
+      "violent",
+      "severe"
+    ]
   },
   {
     "id": "kidnapping",
@@ -165,7 +337,21 @@
     "successBase": 1,
     "detectionBase": 0.9,
     "requiresEmployment": false,
-    "description": "committing kidnapping"
+    "description": "committing kidnapping",
+    "startYear": 1700,
+    "minimumAge": 18,
+    "primaryStat": "strength",
+    "secondaryStat": "intellect",
+    "settlementPreference": "Universal",
+    "preferredOpportunityTags": [],
+    "preferredCareerFamilies": [],
+    "povertyMultiplier": 1.1,
+    "stressWeightPerPoint": 0.06,
+    "behaviorTags": [
+      "violent",
+      "planned",
+      "severe"
+    ]
   },
   {
     "id": "murder",
@@ -179,6 +365,321 @@
     "successBase": 1,
     "detectionBase": 0.9,
     "requiresEmployment": false,
-    "description": "committing murder"
+    "description": "committing murder",
+    "startYear": 1700,
+    "minimumAge": 18,
+    "primaryStat": "strength",
+    "secondaryStat": "intellect",
+    "settlementPreference": "Universal",
+    "preferredOpportunityTags": [],
+    "preferredCareerFamilies": [],
+    "povertyMultiplier": 1.0,
+    "stressWeightPerPoint": 0.12,
+    "behaviorTags": [
+      "violent",
+      "extreme"
+    ]
+  },
+  {
+    "id": "pickpocketing",
+    "name": "pickpocketing",
+    "category": "property",
+    "weight": 16,
+    "sentenceMin": 1,
+    "sentenceMax": 2,
+    "profitMin": 1,
+    "profitMax": 2,
+    "successBase": 0.7,
+    "detectionBase": 0.5,
+    "requiresEmployment": false,
+    "description": "picking pockets in a crowd",
+    "startYear": 1700,
+    "minimumAge": 18,
+    "primaryStat": "intellect",
+    "secondaryStat": "appeal",
+    "settlementPreference": "Urban",
+    "preferredOpportunityTags": [],
+    "preferredCareerFamilies": [
+      "commerce",
+      "hospitality",
+      "media_creative"
+    ],
+    "povertyMultiplier": 2.4,
+    "stressWeightPerPoint": 0.04,
+    "behaviorTags": [
+      "property",
+      "profit"
+    ]
+  },
+  {
+    "id": "poaching",
+    "name": "poaching",
+    "category": "property",
+    "weight": 8,
+    "sentenceMin": 1,
+    "sentenceMax": 2,
+    "profitMin": 1,
+    "profitMax": 2,
+    "successBase": 0.75,
+    "detectionBase": 0.4,
+    "requiresEmployment": false,
+    "description": "poaching game or livestock",
+    "startYear": 1700,
+    "minimumAge": 18,
+    "primaryStat": "strength",
+    "secondaryStat": "intellect",
+    "settlementPreference": "Rural",
+    "preferredOpportunityTags": [
+      "agriculture",
+      "forestry"
+    ],
+    "preferredCareerFamilies": [
+      "agriculture",
+      "forestry_wood"
+    ],
+    "povertyMultiplier": 2.2,
+    "stressWeightPerPoint": 0.03,
+    "behaviorTags": [
+      "property",
+      "profit",
+      "rural"
+    ]
+  },
+  {
+    "id": "counterfeiting",
+    "name": "counterfeiting",
+    "category": "financial",
+    "weight": 4,
+    "sentenceMin": 2,
+    "sentenceMax": 8,
+    "profitMin": 2,
+    "profitMax": 5,
+    "successBase": 0.6,
+    "detectionBase": 0.45,
+    "requiresEmployment": false,
+    "description": "forging money or valuable documents",
+    "startYear": 1700,
+    "minimumAge": 18,
+    "primaryStat": "intellect",
+    "secondaryStat": null,
+    "settlementPreference": "Urban",
+    "preferredOpportunityTags": [
+      "finance",
+      "media"
+    ],
+    "preferredCareerFamilies": [
+      "finance",
+      "media_print",
+      "business_services"
+    ],
+    "povertyMultiplier": 1.2,
+    "stressWeightPerPoint": 0.02,
+    "behaviorTags": [
+      "financial",
+      "profit",
+      "planned"
+    ]
+  },
+  {
+    "id": "bribery",
+    "name": "bribery",
+    "category": "financial",
+    "weight": 4,
+    "sentenceMin": 1,
+    "sentenceMax": 5,
+    "profitMin": 2,
+    "profitMax": 5,
+    "successBase": 0.62,
+    "detectionBase": 0.35,
+    "requiresEmployment": false,
+    "description": "taking or arranging a bribe",
+    "startYear": 1700,
+    "minimumAge": 18,
+    "primaryStat": "appeal",
+    "secondaryStat": "intellect",
+    "settlementPreference": "Urban",
+    "preferredOpportunityTags": [
+      "finance"
+    ],
+    "preferredCareerFamilies": [
+      "public_service",
+      "security",
+      "legal",
+      "finance",
+      "property"
+    ],
+    "povertyMultiplier": 0.85,
+    "stressWeightPerPoint": 0.03,
+    "behaviorTags": [
+      "financial",
+      "profit",
+      "planned"
+    ]
+  },
+  {
+    "id": "extortion",
+    "name": "extortion",
+    "category": "property_violent",
+    "weight": 2,
+    "sentenceMin": 3,
+    "sentenceMax": 8,
+    "profitMin": 2,
+    "profitMax": 5,
+    "successBase": 0.6,
+    "detectionBase": 0.65,
+    "requiresEmployment": false,
+    "description": "extorting money through threats",
+    "startYear": 1700,
+    "minimumAge": 18,
+    "primaryStat": "strength",
+    "secondaryStat": "appeal",
+    "settlementPreference": "Universal",
+    "preferredOpportunityTags": [],
+    "preferredCareerFamilies": [],
+    "povertyMultiplier": 1.2,
+    "stressWeightPerPoint": 0.1,
+    "behaviorTags": [
+      "property",
+      "profit",
+      "violent",
+      "planned"
+    ]
+  },
+  {
+    "id": "tax_evasion",
+    "name": "tax evasion",
+    "category": "financial",
+    "weight": 3,
+    "sentenceMin": 2,
+    "sentenceMax": 6,
+    "profitMin": 2,
+    "profitMax": 6,
+    "successBase": 0.7,
+    "detectionBase": 0.35,
+    "requiresEmployment": true,
+    "description": "concealing income or property from taxation",
+    "startYear": 1700,
+    "minimumAge": 18,
+    "primaryStat": "intellect",
+    "secondaryStat": null,
+    "settlementPreference": "Urban",
+    "preferredOpportunityTags": [
+      "finance"
+    ],
+    "preferredCareerFamilies": [
+      "finance",
+      "commerce",
+      "property",
+      "business_services"
+    ],
+    "povertyMultiplier": 0.65,
+    "stressWeightPerPoint": 0.01,
+    "behaviorTags": [
+      "financial",
+      "profit",
+      "planned",
+      "employment"
+    ]
+  },
+  {
+    "id": "transport_theft",
+    "name": "transport theft",
+    "category": "property",
+    "weight": 5,
+    "sentenceMin": 2,
+    "sentenceMax": 5,
+    "profitMin": 2,
+    "profitMax": 5,
+    "successBase": 0.6,
+    "detectionBase": 0.65,
+    "requiresEmployment": false,
+    "description": "stealing valuable transport",
+    "startYear": 1700,
+    "minimumAge": 18,
+    "primaryStat": "intellect",
+    "secondaryStat": "strength",
+    "settlementPreference": "Universal",
+    "preferredOpportunityTags": [
+      "automotive"
+    ],
+    "preferredCareerFamilies": [
+      "transport"
+    ],
+    "povertyMultiplier": 2.0,
+    "stressWeightPerPoint": 0.05,
+    "behaviorTags": [
+      "property",
+      "profit",
+      "planned"
+    ]
+  },
+  {
+    "id": "narcotics_trade",
+    "name": "drug trafficking",
+    "category": "financial",
+    "weight": 2,
+    "sentenceMin": 4,
+    "sentenceMax": 12,
+    "profitMin": 3,
+    "profitMax": 7,
+    "successBase": 0.6,
+    "detectionBase": 0.6,
+    "requiresEmployment": false,
+    "description": "trafficking prohibited narcotics",
+    "startYear": 1800,
+    "minimumAge": 18,
+    "primaryStat": "intellect",
+    "secondaryStat": "appeal",
+    "settlementPreference": "Urban",
+    "preferredOpportunityTags": [
+      "port",
+      "shipping"
+    ],
+    "preferredCareerFamilies": [
+      "maritime",
+      "transport",
+      "commerce"
+    ],
+    "povertyMultiplier": 1.5,
+    "stressWeightPerPoint": 0.06,
+    "behaviorTags": [
+      "financial",
+      "profit",
+      "planned",
+      "organized"
+    ]
+  },
+  {
+    "id": "cybercrime",
+    "name": "cybercrime",
+    "category": "technology",
+    "weight": 3.5,
+    "sentenceMin": 1,
+    "sentenceMax": 6,
+    "profitMin": 2,
+    "profitMax": 8,
+    "successBase": 0.65,
+    "detectionBase": 0.45,
+    "requiresEmployment": false,
+    "description": "committing computer-enabled fraud or intrusion",
+    "startYear": 1980,
+    "minimumAge": 18,
+    "primaryStat": "intellect",
+    "secondaryStat": null,
+    "settlementPreference": "Urban",
+    "preferredOpportunityTags": [
+      "technology"
+    ],
+    "preferredCareerFamilies": [
+      "technology"
+    ],
+    "povertyMultiplier": 0.8,
+    "stressWeightPerPoint": 0.02,
+    "behaviorTags": [
+      "financial",
+      "profit",
+      "planned",
+      "technology"
+    ]
   }
 ]

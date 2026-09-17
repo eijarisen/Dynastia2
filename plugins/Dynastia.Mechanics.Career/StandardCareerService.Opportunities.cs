@@ -42,6 +42,7 @@ public sealed partial class StandardCareerService
                 var weight = evaluation.IsEligible
                     ? definition.GetEntryWeight(sex, year)
                         * evaluation.WeightMultiplier
+                        * GetSelectionContextMultiplier(definition, person)
                     : 0;
 
                 return new WeightedCareerCandidate(
@@ -253,24 +254,19 @@ public sealed partial class StandardCareerService
     }
 
     public GeneratedCareerProfile GenerateCandidateCareer(
-        Sex sex,
-        TownInfo town,
-        int year,
-        int jobLevel,
-        int strength,
-        int intellect,
-        int educationLevel,
-        string deterministicKey)
+        GeneratedCareerContext context)
     {
-        ArgumentNullException.ThrowIfNull(town);
-        ArgumentException.ThrowIfNullOrWhiteSpace(deterministicKey);
+        ArgumentNullException.ThrowIfNull(context);
+        ArgumentNullException.ThrowIfNull(context.Town);
+        ArgumentException.ThrowIfNullOrWhiteSpace(context.DeterministicKey);
 
-        var desiredLevel = Math.Clamp(jobLevel, 0, 3);
-        var candidateStrength = Math.Clamp(strength, 1, 5);
-        var candidateIntellect = Math.Clamp(intellect, 1, 5);
-        var education = Math.Clamp(educationLevel, 0, 5);
+        var desiredLevel = Math.Clamp(context.DesiredJobLevel, 0, 3);
+        var strength = Math.Clamp(context.Strength, 1, 5);
+        var intellect = Math.Clamp(context.Intellect, 1, 5);
+        var appeal = Math.Clamp(context.Appeal, 1, 5);
+        var education = Math.Clamp(context.EducationLevel, 0, 5);
         var random = new DeterministicCareerRandom(
-            $"{_gameState.DynastySurname}|{deterministicKey}|candidate-career");
+            $"{_gameState.DynastySurname}|{context.DeterministicKey}|candidate-career");
         var satisfaction = random.NextInt(1, 5);
 
         if (desiredLevel == 0)
@@ -285,25 +281,27 @@ public sealed partial class StandardCareerService
         }
 
         var candidates = _catalog.All
-            .Where(definition => definition.IsOpenForEntry(year))
+            .Where(definition => definition.IsOpenForEntry(context.Year))
             .Select(definition =>
             {
                 var evaluation = _localOpportunities.Evaluate(
-                    town,
+                    context.Town,
                     definition.LocationRequirement);
 
                 var compatibility = GetGeneratedCandidateCareerFit(
                     definition,
                     desiredLevel,
-                    candidateStrength,
-                    candidateIntellect,
+                    strength,
+                    intellect,
+                    appeal,
                     education);
 
                 return new WeightedCareerCandidate(
                     definition,
                     evaluation.IsEligible
-                        ? definition.GetEntryWeight(sex, year)
+                        ? definition.GetEntryWeight(context.Sex, context.Year)
                             * evaluation.WeightMultiplier
+                            * GetSelectionContextMultiplier(definition, context)
                             * compatibility
                         : 0);
             })
@@ -325,18 +323,19 @@ public sealed partial class StandardCareerService
         var level = AdjustGeneratedCandidateJobLevel(
             chosen,
             desiredLevel,
-            candidateStrength,
-            candidateIntellect,
+            strength,
+            intellect,
+            appeal,
             education);
         var careerName = _presentation.ResolveCareerName(
             chosen.Id,
             chosen.Name,
-            year);
+            context.Year);
         var title = _presentation.ResolveCareerTitle(
             chosen.Id,
             level,
             chosen.GetTitle(level),
-            year);
+            context.Year);
 
         return new GeneratedCareerProfile(
             chosen.Id,
@@ -347,74 +346,49 @@ public sealed partial class StandardCareerService
             chosen.BaseSalary * level);
     }
 
-    private static double GetGeneratedCandidateCareerFit(
+    private double GetGeneratedCandidateCareerFit(
         CareerDefinition definition,
         int desiredLevel,
         int strength,
         int intellect,
+        int appeal,
         int education)
     {
-        var aptitude = CareerEntryAptitudeClassifier.Get(definition);
-        var ability = aptitude == CareerEntryAptitude.Intellect
-            ? intellect
-            : strength;
-        var abilityMultiplier = ability switch
-        {
-            1 => 0.30,
-            2 => 0.65,
-            3 => 1.00,
-            4 => 1.25,
-            _ => 1.45
-        };
-
-        if (aptitude != CareerEntryAptitude.Intellect)
-            return abilityMultiplier;
-
-        var educationMultiplier = desiredLevel switch
-        {
-            >= 3 => education switch
-            {
-                0 => 0.15,
-                1 => 0.50,
-                2 => 0.85,
-                _ => 1.10
-            },
-            2 => education switch
-            {
-                0 => 0.35,
-                1 => 0.75,
-                _ => 1.05
-            },
-            _ => 0.80 + education * 0.06
-        };
-
-        return abilityMultiplier * educationMultiplier;
+        var ability = GetCareerAbility(
+            definition,
+            strength,
+            intellect,
+            appeal);
+        return GetCareerFitMultiplier(
+            ability,
+            education,
+            GetExpectedEducation(definition, desiredLevel));
     }
 
-    private static int AdjustGeneratedCandidateJobLevel(
+    private int AdjustGeneratedCandidateJobLevel(
         CareerDefinition definition,
         int desiredLevel,
         int strength,
         int intellect,
+        int appeal,
         int education)
     {
-        var aptitude = CareerEntryAptitudeClassifier.Get(definition);
-        var ability = aptitude == CareerEntryAptitude.Intellect
-            ? intellect
-            : strength;
+        var ability = GetCareerAbility(
+            definition,
+            strength,
+            intellect,
+            appeal);
         var level = Math.Clamp(desiredLevel, 1, 3);
 
-        if (ability <= 1)
+        if (ability < 1.75)
             level = 1;
-        else if (ability == 2 && level > 2)
+        else if (ability < 2.50 && level > 2)
             level = 2;
 
-        if (aptitude == CareerEntryAptitude.Intellect)
+        while (level > 1
+            && education + 1 < GetExpectedEducation(definition, level))
         {
-            if (education == 0)
-                level = Math.Min(level, 1);
-            else if (education == 1)
-                level = Math.Min(level, 2);
+            level--;
         }
 
         return level;
@@ -448,16 +422,10 @@ public sealed partial class StandardCareerService
         int level)
     {
         var year = _gameState.Year;
-        var aptitude = CareerEntryAptitudeClassifier.Get(definition);
-        var statId = CareerEntryAptitudeClassifier.GetStatId(aptitude);
-        var applicantAbility = _stats.GetStats(person)
-            .First(value => value.Id.Equals(
-                statId,
-                StringComparison.OrdinalIgnoreCase))
-            .Value;
+        var applicantAbility = GetCareerAbility(person, definition);
         var applicantEducation = _education.GetEducationLevel(person);
         var experience = GetRelevantExperience(person, definition);
-        var requirements = GetVacancyRequirements(level);
+        var requirements = GetVacancyRequirements(definition, level);
         var local = _localOpportunities.Evaluate(
             person,
             definition.LocationRequirement);
@@ -480,13 +448,11 @@ public sealed partial class StandardCareerService
                 year),
             level,
             definition.BaseSalary * level,
-            aptitude == CareerEntryAptitude.Intellect
-                ? "Intellect"
-                : "Strength",
+            CareerAptitude.GetDisplayName(definition),
             requirements.Ability,
             requirements.Education,
             requirements.Experience,
-            applicantAbility,
+            (int)Math.Round(applicantAbility, MidpointRounding.AwayFromZero),
             applicantEducation,
             experience.Total,
             chance,
@@ -500,25 +466,16 @@ public sealed partial class StandardCareerService
         int level,
         CareerLocationEvaluation local)
     {
-        var aptitude = CareerEntryAptitudeClassifier.Get(definition);
-        var statId = CareerEntryAptitudeClassifier.GetStatId(aptitude);
-        var stat = _stats.GetStats(person)
-            .First(value => value.Id.Equals(
-                statId,
-                StringComparison.OrdinalIgnoreCase))
-            .Value;
+        var ability = GetCareerAbility(person, definition);
         var component = GetRequired(person);
         component.ExperienceYearsByCareer ??=
             new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
         var education = _education.GetEducationLevel(person);
         var experience = GetRelevantExperience(person, definition);
-        var requirements = GetVacancyRequirements(level);
+        var requirements = GetVacancyRequirements(definition, level);
 
-        // Vacancy requirements are the anchor. Meeting them gives a credible
-        // chance, while exceeding or missing them moves the actual approval
-        // percentage shown on the board.
         var chance = 0.55;
-        chance += (stat - requirements.Ability) * 0.12;
+        chance += (ability - requirements.Ability) * 0.12;
         chance += (education - requirements.Education) * 0.08;
         chance += Math.Clamp(
             experience.Total - requirements.Experience,
@@ -531,7 +488,6 @@ public sealed partial class StandardCareerService
             chance += 0.05;
 
         chance += _craftResolver()?.GetApplicationBonus(person, definition.Id) ?? 0;
-
         chance += Math.Min(5, component.PeakJobLevel) * 0.02;
 
         chance += local.Strength switch
@@ -541,10 +497,8 @@ public sealed partial class StandardCareerService
             _ => 0
         };
 
-        chance = PersonalityInfluence.AdjustProbability(
-            chance,
-            person,
-            sanguine: 0.10);
+        var temperamentFit = GetTemperamentMultiplier(definition, person);
+        chance += Math.Clamp((temperamentFit - 1.0) * 0.25, -0.05, 0.05);
 
         return Math.Clamp(chance, 0.05, 0.95);
     }
@@ -566,9 +520,10 @@ public sealed partial class StandardCareerService
             .Where(pair => !pair.Key.Equals(
                     definition.Id,
                     StringComparison.OrdinalIgnoreCase)
-                && IsSameCareerFamily(
-                    definition,
-                    _catalog.Find(pair.Key)))
+                && _catalog.Find(pair.Key) is CareerDefinition relatedCareer
+                && definition.CareerFamily.Equals(
+                    relatedCareer.CareerFamily,
+                    StringComparison.OrdinalIgnoreCase))
             .Sum(pair => pair.Value);
 
         var craftExperience = _craftResolver()?.GetCareerExperience(person, definition.Id);
@@ -581,36 +536,26 @@ public sealed partial class StandardCareerService
         return (exact, related, exact + related);
     }
 
-    private static (int Ability, int Education, int Experience)
-        GetVacancyRequirements(int level) =>
-        Math.Clamp(level, 1, 3) switch
-        {
-            1 => (2, 1, 0),
-            2 => (3, 3, 2),
-            _ => (4, 4, 5)
-        };
-
-    private static bool IsSameCareerFamily(
-        CareerDefinition first,
-        CareerDefinition? second)
+    private (int Ability, int Education, int Experience)
+        GetVacancyRequirements(CareerDefinition definition, int level)
     {
-        if (second is null)
-            return false;
-
-        if (first.RequiredOpportunityTags.Count > 0
-            && second.RequiredOpportunityTags.Count > 0
-            && first.RequiredOpportunityTags.Any(tag =>
-                second.RequiredOpportunityTags.Contains(
-                    tag,
-                    StringComparer.OrdinalIgnoreCase)))
+        var clamped = Math.Clamp(level, 1, 3);
+        var ability = clamped switch
         {
-            return true;
-        }
-
-        return first.LocationType == CareerLocationType.Specialist
-            && second.LocationType == CareerLocationType.Specialist
-            && CareerEntryAptitudeClassifier.Get(first)
-                == CareerEntryAptitudeClassifier.Get(second);
+            1 => 2,
+            2 => 3,
+            _ => 4
+        };
+        var experience = clamped switch
+        {
+            1 => 0,
+            2 => 2,
+            _ => 5
+        };
+        return (
+            ability,
+            GetExpectedEducation(definition, clamped),
+            experience);
     }
 
     private static int RollVacancyLevel(

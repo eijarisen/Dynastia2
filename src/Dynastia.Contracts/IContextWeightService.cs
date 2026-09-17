@@ -6,5 +6,9 @@ public interface IContextWeightService
         string relativePath,
         IEnumerable<string> knownItemIds);
 
+    IContextWeightCatalog LoadGlobalCatalog(
+        string relativePath,
+        string itemId = "global");
+
     string GetAgeBand(int age);
 }

@@ -72,23 +72,15 @@ public sealed partial class StandardCareerService
             SelectCareerForEntry(
                 person);
 
-        var aptitude =
-            CareerEntryAptitudeClassifier.Get(
-                definition);
+        var statValues = stats.GetStats(person)
+            .ToDictionary(
+                stat => stat.Id,
+                stat => stat.Value,
+                StringComparer.OrdinalIgnoreCase);
 
-        var statId =
-            CareerEntryAptitudeClassifier.GetStatId(
-                aptitude);
-
-        var statValue =
-            stats.GetStats(
-                person)
-            .First(
-                stat =>
-                    stat.Id.Equals(
-                        statId,
-                        StringComparison.OrdinalIgnoreCase))
-            .Value;
+        var statValue = CareerAptitude.GetComposite(
+            definition,
+            statId => statValues.TryGetValue(statId, out var value) ? value : 3);
 
         var locationEvaluation =
             _localOpportunities.Evaluate(
@@ -105,8 +97,7 @@ public sealed partial class StandardCareerService
 
         return new EmploymentOpportunity(
             definition,
-            aptitude,
-            statId,
+            definition.PrimaryStat,
             statValue,
             successChance);
     }

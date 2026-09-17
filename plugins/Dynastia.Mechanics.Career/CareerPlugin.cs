@@ -18,6 +18,9 @@ public sealed partial class CareerPlugin : IGamePlugin
         var data = context.GetService<IGameDataService>()
             ?? throw new InvalidOperationException("Game data service is unavailable.");
 
+        var contextWeights = context.GetService<IContextWeightService>()
+            ?? throw new InvalidOperationException("Context-weight service is unavailable.");
+
         var localOpportunities =
             context.GetService<ILocalCareerOpportunityService>()
             ?? throw new InvalidOperationException(
@@ -50,9 +53,18 @@ public sealed partial class CareerPlugin : IGamePlugin
         var systems = context.GetService<IYearSystemRegistry>()
             ?? throw new InvalidOperationException("Year system registry is unavailable.");
 
+        var educationProfiles =
+            CareerEducationProfileCatalog.Load(
+                data);
+
         var catalog =
             CareerCatalog.Load(
-                data);
+                data,
+                educationProfiles);
+
+        var careerContext = contextWeights.LoadCatalog(
+            "Career/career_context_weights.csv",
+            catalog.CareerIds);
 
         var retirementRules =
             RetirementRuleCatalog.Load(
@@ -74,6 +86,8 @@ public sealed partial class CareerPlugin : IGamePlugin
                 localOpportunities,
                 stats,
                 education,
+                educationProfiles,
+                careerContext,
                 () => context.GetService<ICraftService>());
 
         context.AddService<ICareerService>(career);

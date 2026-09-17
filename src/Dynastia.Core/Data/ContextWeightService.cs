@@ -43,6 +43,33 @@ public sealed class ContextWeightService : IContextWeightService
         return new Catalog(rows, this);
     }
 
+    public IContextWeightCatalog LoadGlobalCatalog(
+        string relativePath,
+        string itemId = "global")
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(relativePath);
+        ArgumentException.ThrowIfNullOrWhiteSpace(itemId);
+
+        var text = _data.ReadText(relativePath);
+        var lines = text.Split(['\r', '\n'], StringSplitOptions.RemoveEmptyEntries);
+        const string header = "StartYear,EndYear,Dimension,Value,WeightMultiplier";
+        if (lines.Length < 2
+            || !lines[0].TrimStart('\uFEFF').Equals(header, StringComparison.Ordinal))
+        {
+            throw new InvalidDataException($"{relativePath}: unexpected header or empty file.");
+        }
+
+        var normalized = new List<string>
+        {
+            "ItemId,StartYear,EndYear,Dimension,Value,WeightMultiplier"
+        };
+        normalized.AddRange(lines.Skip(1).Select(line => $"{itemId},{line}"));
+
+        var known = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { itemId };
+        var rows = Parse(relativePath, string.Join(Environment.NewLine, normalized), known);
+        return new Catalog(rows, this);
+    }
+
     public string GetAgeBand(int age) => age switch
     {
         < 0 => throw new ArgumentOutOfRangeException(nameof(age)),
@@ -81,7 +108,7 @@ public sealed class ContextWeightService : IContextWeightService
                 throw new InvalidDataException($"{path} row {rowNumber} ItemId: unknown item '{itemId}'.");
 
             var startYear = ParseInt(fields[1], path, rowNumber, "StartYear");
-            var endYear = string.IsNullOrWhiteSpace(fields[2])
+            int? endYear = string.IsNullOrWhiteSpace(fields[2])
                 ? null
                 : ParseInt(fields[2], path, rowNumber, "EndYear");
             if (startYear < GameCalendarConfiguration.GameStartYear)
@@ -225,6 +252,32 @@ public sealed class ContextWeightService : IContextWeightService
                     continue;
                 multiplier *= row.WeightMultiplier;
             }
+            return multiplier;
+        }
+
+        public double GetDimensionMultiplier(
+            string itemId,
+            ContextWeightContext context,
+            string dimension)
+        {
+            ArgumentException.ThrowIfNullOrWhiteSpace(dimension);
+
+            if (!_rows.TryGetValue(itemId, out var rows))
+                return 1.0;
+
+            var multiplier = 1.0;
+            foreach (var row in rows)
+            {
+                if (!row.Dimension.Equals(dimension, StringComparison.OrdinalIgnoreCase)
+                    || !row.Covers(context.Year)
+                    || !Matches(row, context))
+                {
+                    continue;
+                }
+
+                multiplier *= row.WeightMultiplier;
+            }
+
             return multiplier;
         }
 

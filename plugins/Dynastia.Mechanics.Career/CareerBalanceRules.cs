@@ -4,11 +4,26 @@ namespace Dynastia.Mechanics.Career;
 
 public static class CareerBalanceRules
 {
+    public static double GetCompositeAptitude(
+        int primaryStat,
+        int? secondaryStat = null)
+    {
+        var primary = Math.Clamp(primaryStat, 1, 5);
+        if (secondaryStat is null)
+            return primary;
+
+        var secondary = Math.Clamp(secondaryStat.Value, 1, 5);
+        return primary * 0.75 + secondary * 0.25;
+    }
+
     public static double GetEmploymentSearchChance(
-        int aptitudeStat,
+        double aptitudeStat,
         CareerOpportunityStrength opportunityStrength)
     {
-        var baseChance = Math.Clamp(aptitudeStat, 1, 5) switch
+        var aptitude = Math.Clamp(aptitudeStat, 1, 5);
+        var lower = (int)Math.Floor(aptitude);
+        var upper = (int)Math.Ceiling(aptitude);
+        static double ChanceFor(int value) => value switch
         {
             1 => 0.35,
             2 => 0.50,
@@ -16,6 +31,9 @@ public static class CareerBalanceRules
             4 => 0.80,
             _ => 0.90
         };
+        var fraction = aptitude - lower;
+        var baseChance = ChanceFor(lower)
+            + (ChanceFor(upper) - ChanceFor(lower)) * fraction;
 
         baseChance += opportunityStrength switch
         {
@@ -27,45 +45,41 @@ public static class CareerBalanceRules
         return Math.Min(0.95, baseChance);
     }
 
-    public static int GetPromotionAptitudeStat(
-        bool strengthDrivenCareer,
-        int currentJobLevel,
-        int strength,
-        int intellect)
+    public static double GetPromotionAptitude(
+        double careerAbility,
+        int intellect,
+        bool primaryIsIntellect,
+        int currentJobLevel)
     {
-        var useStrength =
-            strengthDrivenCareer
-            && currentJobLevel <= 2;
+        var ability = Math.Clamp(careerAbility, 1, 5);
+        if (primaryIsIntellect || currentJobLevel <= 2)
+            return ability;
 
         return Math.Clamp(
-            useStrength
-                ? strength
-                : intellect,
+            ability * 0.60 + Math.Clamp(intellect, 1, 5) * 0.40,
             1,
             5);
     }
 
-    public static bool PromotionUsesEducation(
-        bool strengthDrivenCareer,
-        int currentJobLevel) =>
-        !strengthDrivenCareer
-        || currentJobLevel >= 3;
-
     public static double GetWorkHarderPromotionBonus(
-        int aptitudeStat,
-        int educationLevel,
-        bool educationMatters = true)
+        double aptitudeStat,
+        int educationLevel)
     {
-        var aptitudeValue =
-            Math.Clamp(aptitudeStat, 1, 5);
+        var aptitudeValue = Math.Clamp(aptitudeStat, 1, 5);
+        var educationValue = Math.Clamp(educationLevel, 0, 5);
+        return 0.12 + aptitudeValue * 0.04 + educationValue * 0.04;
+    }
 
-        var educationValue =
-            educationMatters
-                ? Math.Clamp(educationLevel, 0, 5)
-                : 0;
-
-        return 0.12
-            + aptitudeValue * 0.04
-            + educationValue * 0.04;
+    public static double GetEducationPromotionMultiplier(
+        int actualEducation,
+        int expectedEducation)
+    {
+        var gap = Math.Max(0, expectedEducation - actualEducation);
+        return gap switch
+        {
+            0 => 1.0,
+            1 => 0.35,
+            _ => 0.10
+        };
     }
 }

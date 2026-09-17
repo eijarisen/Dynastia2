@@ -3,3 +3,15 @@ vandalism,1700,1793,property destruction,deliberately damaging property
 vandalism,1794,,vandalism,vandalizing public property
 aggravated_assault,1700,1899,violent assault,committing a violent assault
 aggravated_assault,1900,,aggravated assault,committing aggravated assault
+fraud,1700,1849,swindling,committing a financial swindle
+pickpocketing,1700,1849,pocket-picking,picking pockets in a crowd
+transport_theft,1700,1899,horse theft,stealing a horse or carriage
+transport_theft,1900,1945,motor vehicle theft,stealing a motor vehicle
+transport_theft,1946,,vehicle theft,stealing a motor vehicle
+narcotics_trade,1800,1913,opium trafficking,trafficking opium and other prohibited narcotics
+narcotics_trade,1914,1969,narcotics trafficking,trafficking prohibited narcotics
+narcotics_trade,1970,,drug trafficking,trafficking prohibited drugs
+cybercrime,1980,1999,computer crime,committing computer-enabled fraud or unauthorized access
+cybercrime,2000,,cybercrime,committing computer-enabled fraud or intrusion
+kidnapping,1700,1899,abduction,committing an abduction
+tax_evasion,1700,1945,tax fraud,concealing taxable income or property

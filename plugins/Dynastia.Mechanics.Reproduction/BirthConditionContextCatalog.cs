@@ -40,7 +40,7 @@ public sealed class BirthConditionContextCatalog
                 throw new InvalidDataException($"{Path} row {row} ConditionId: unknown condition '{id}'.");
 
             var start = ParseInt(fields[1], row, "StartYear");
-            var end = string.IsNullOrWhiteSpace(fields[2]) ? null : ParseInt(fields[2], row, "EndYear");
+            int? end = string.IsNullOrWhiteSpace(fields[2]) ? null : ParseInt(fields[2], row, "EndYear");
             var ageBand = fields[3].Trim();
             var multiplier = ParseDouble(fields[4], row, "WeightMultiplier");
 

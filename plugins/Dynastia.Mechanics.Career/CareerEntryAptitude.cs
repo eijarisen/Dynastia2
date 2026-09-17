@@ -1,77 +1,40 @@
 namespace Dynastia.Mechanics.Career;
 
-internal enum CareerEntryAptitude
+internal static class CareerAptitude
 {
-    Strength,
-    Intellect
-}
+    private static readonly IReadOnlyDictionary<string, string> DisplayNames =
+        new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+        {
+            ["strength"] = "Strength",
+            ["intellect"] = "Intellect",
+            ["appeal"] = "Appeal"
+        };
 
-internal static class CareerEntryAptitudeClassifier
-{
-    // These careers are primarily office, professional, scientific,
-    // creative, analytical, or technical paths for job-entry purposes.
-    // All remaining careers use Strength because their entry path is
-    // primarily manual/physical.
-    private static readonly HashSet<string>
-        IntellectDrivenCareers =
-            new(
-                StringComparer.OrdinalIgnoreCase)
-            {
-                "newspapers_and_publishing",
-                "banking",
-                "insurance",
-                "tailoring_and_fashion",
-                "jewellery_and_watchmaking",
-                "photography",
-                "real_estate",
-                "accounting",
-                "legal_services",
-                "healthcare_services",
-                "pharmacy",
-                "education",
-                "cinema_and_film",
-                "advertising",
-                "chemical_industry",
-                "beauty_and_cosmetics",
-                "radio_broadcasting",
-                "aviation",
-                "tourism_and_travel",
-                "pharmaceuticals",
-                "television",
-                "telecommunications",
-                "engineering_services",
-                "computing_and_it_services",
-                "investment_and_financial_services",
-                "biotechnology",
-                "software_industry",
-                "video_game_industry",
-                "business_process_outsourcing",
-                "digital_media",
-                "cybersecurity"
-            };
-
-    public static CareerEntryAptitude Get(
-        CareerDefinition career)
+    public static double GetComposite(
+        CareerDefinition career,
+        Func<string, int> getStat)
     {
-        return IntellectDrivenCareers.Contains(
-            career.Id)
-                ? CareerEntryAptitude.Intellect
-                : CareerEntryAptitude.Strength;
+        return CareerBalanceRules.GetCompositeAptitude(
+            getStat(career.PrimaryStat),
+            string.IsNullOrWhiteSpace(career.SecondaryStat)
+                ? null
+                : getStat(career.SecondaryStat));
     }
 
-    public static string GetStatId(
-        CareerEntryAptitude aptitude)
+    public static string GetDisplayName(CareerDefinition career)
     {
-        return aptitude ==
-            CareerEntryAptitude.Intellect
-                ? "intellect"
-                : "strength";
+        var primary = ResolveDisplay(career.PrimaryStat);
+        return string.IsNullOrWhiteSpace(career.SecondaryStat)
+            ? primary
+            : $"{primary} / {ResolveDisplay(career.SecondaryStat)}";
     }
+
+    private static string ResolveDisplay(string statId) =>
+        DisplayNames.TryGetValue(statId, out var value) ? value : statId;
 }
 
 internal sealed record EmploymentOpportunity(
     CareerDefinition Career,
-    CareerEntryAptitude Aptitude,
-    string StatId,
-    int StatValue,
+    string PrimaryStatId,
+    double Ability,
     double SuccessChance);

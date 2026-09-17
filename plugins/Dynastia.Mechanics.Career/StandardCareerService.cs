@@ -20,6 +20,8 @@ public sealed partial class StandardCareerService :
         _localOpportunities;
     private readonly IStatsService _stats;
     private readonly IEducationService _education;
+    private readonly CareerEducationProfileCatalog _educationProfiles;
+    private readonly IContextWeightCatalog _careerContext;
     private readonly Func<ICraftService?> _craftResolver;
 
     internal StandardCareerService(
@@ -32,6 +34,8 @@ public sealed partial class StandardCareerService :
         ILocalCareerOpportunityService localOpportunities,
         IStatsService stats,
         IEducationService education,
+        CareerEducationProfileCatalog educationProfiles,
+        IContextWeightCatalog careerContext,
         Func<ICraftService?> craftResolver)
     {
         _gameState = gameState;
@@ -48,6 +52,10 @@ public sealed partial class StandardCareerService :
             stats;
         _education =
             education;
+        _educationProfiles =
+            educationProfiles;
+        _careerContext =
+            careerContext;
         _craftResolver =
             craftResolver;
     }
@@ -100,7 +108,8 @@ public sealed partial class StandardCareerService :
         {
             component.CareerId =
                 SelectCareerForEntry(
-                    person)
+                    person,
+                    jobLevel)
                 .Id;
 
             UpdatePeakCareer(
@@ -175,6 +184,18 @@ public sealed partial class StandardCareerService :
             || _craftResolver()?.IsSelfEmployed(person) == true;
     }
 
+    public string? GetCareerFamily(IPerson person)
+    {
+        ArgumentNullException.ThrowIfNull(person);
+        var career = GetRequired(person);
+        return career.JobLevel > 0
+            ? _catalog.Find(career.CareerId)?.CareerFamily
+            : null;
+    }
+
+    public IReadOnlyCollection<string> GetKnownCareerFamilies() =>
+        _catalog.CareerFamilies;
+
     public string GetStatusLabel(
         string statusId)
     {
@@ -230,7 +251,8 @@ public sealed partial class StandardCareerService :
                 CareerId =
                     level > 0
                         ? SelectCareerForEntry(
-                            person)
+                            person,
+                            level)
                             .Id
                         : null
             };
@@ -284,7 +306,8 @@ public sealed partial class StandardCareerService :
         {
             career.CareerId =
                 SelectCareerForEntry(
-                    person)
+                    person,
+                    targetLevel)
                     .Id;
         }
 
@@ -398,7 +421,8 @@ public sealed partial class StandardCareerService :
         // entrants in the loaded game's effective technological year.
         career.CareerId =
             SelectCareerForEntry(
-                person)
+                person,
+                career.JobLevel)
                 .Id;
 
         UpdatePeakCareer(

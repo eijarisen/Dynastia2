@@ -36,7 +36,7 @@ Career behavior is concentrated in `plugins/Dynastia.Mechanics.Career/`:
 
 Historical career data lives in `data/Career/`. Time-aware local opportunities live in `data/Towns/` and `Dynastia.Mechanics.Locations`.
 
-Historical Education access lives in `data/Education/education_eras.csv` and is loaded by `EducationEraCatalog`. Historical player-action availability/text lives in `data/Common/historical_action_variants.json` and is exposed through `Dynastia.Mechanics.Historical`. Rare-event year gates live in `data/Common/rare_event_availability.csv`; do not reintroduce hard-coded year checks into the Rare Events processing loop.
+Historical Education access lives in `data/Education/education_eras.csv` and is loaded by `EducationEraCatalog`. Historical player-action availability/text lives in `data/Common/historical_action_variants.json` and is exposed through `Dynastia.Mechanics.Historical`. Rare Events use fixed pool gates in `data/RareEvents/rare_event_pool_rules.csv` and data-driven availability/eligibility in `data/RareEvents/rare_events.csv`; adding event rows must not change aggregate Household/Personal gate frequency.
 
 `GameCalendarConfiguration` owns the selectable 1700–1900 New Game range. `HistoricalEraConfiguration` owns the gameplay-era labels. Do not add new fixed 1900 assumptions.
 

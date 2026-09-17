@@ -168,8 +168,15 @@ public static class EventEmojiMap
 
                 ["rare.house_fire"] = "🔥",
                 ["rare.burglary"] = "🕵️",
-                ["rare.storm_flood_damage"] = "🌊",
+                ["rare.storm_flood_damage"] = "🌊", // legacy history
+                ["rare.storm_flood"] = "🌊",
                 ["rare.structural_accident"] = "🧱",
+                ["rare.legal_dispute"] = "⚖️",
+                ["rare.major_repair"] = "🔧",
+                ["rare.house_discovery"] = "💎",
+                ["rare.exceptional_harvest"] = "🌾",
+                ["rare.crop_failure"] = "🌾",
+                ["rare.local_epidemic"] = "🦠",
                 ["rare.assault"] = "🥊",
                 ["rare.mugging"] = "💸",
                 ["rare.workplace_accident"] = "⚠️",
@@ -181,6 +188,14 @@ public static class EventEmojiMap
                 ["rare.fraud"] = "🎭",
                 ["rare.found_property"] = "💎",
                 ["rare.wrongful_arrest"] = "⚖️",
+                ["rare.water_accident"] = "🌊",
+                ["rare.animal_accident"] = "🐎",
+                ["rare.craft_setback"] = "🛠️",
+                ["rare.scholarship"] = "🎓",
+                ["rare.professional_recognition"] = "🏅",
+                ["rare.patronage"] = "🤝",
+                ["rare.prize_award"] = "🏆",
+                ["rare.craft_commission"] = "🛠️",
                 ["rare.suicide"] = "🕯️"
             };
 

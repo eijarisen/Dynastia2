@@ -60,7 +60,25 @@ internal sealed class EventThoughtProvider :
                         "🤕",
                         "rare.accident"),
 
+                ["rare.water_accident"] =
+                    new(
+                        90,
+                        "🌊",
+                        "rare.accident"),
+
+                ["rare.animal_accident"] =
+                    new(
+                        86,
+                        "🐎",
+                        "rare.accident"),
+
                 ["rare.storm_flood_damage"] =
+                    new(
+                        88,
+                        "😱",
+                        "rare.accident"),
+
+                ["rare.storm_flood"] =
                     new(
                         88,
                         "😱",

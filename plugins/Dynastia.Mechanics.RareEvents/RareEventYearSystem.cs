@@ -2,75 +2,12 @@ using Dynastia.Contracts;
 
 namespace Dynastia.Mechanics.RareEvents;
 
-internal sealed partial class RareEventYearSystem :
-    IYearSystem
+internal sealed partial class RareEventYearSystem : IYearSystem
 {
-    // Household probabilities are annual per eligible household.
-    private const double HouseFireChance =
-        0.00035;
-
-    private const double BurglaryChance =
-        0.00060;
-
-    private const double StormFloodChance =
-        0.00025;
-
-    private const double StructuralAccidentChance =
-        0.00010;
-
-    // Personal probabilities are annual per eligible person.
-    private const double AssaultChance =
-        0.00020;
-
-    private const double MuggingChance =
-        0.00015;
-
-    private const double WorkplaceAccidentChance =
-        0.00015;
-
-    private const double TrafficAccidentChance =
-        0.00012;
-
-    private const double LightningStrikeChance =
-        0.000003;
-
-    private const double SeriousFallChance =
-        0.00010;
-
-    private const double LotteryChance =
-        0.00002;
-
-    private const double DistantInheritanceChance =
-        0.00004;
-
-    private const double FraudChance =
-        0.00012;
-
-    private const double FoundPropertyChance =
-        0.00004;
-
-    private const double WrongfulArrestChance =
-        0.00001;
-
-    private const double BaseSuicideChance =
-        0.000005;
-
-    private const double MaximumSuicideChance =
-        0.0004;
-
-    // The design calls these "small" / "substantial" chances
-    // without fixing exact values.
-    private const double CatastrophicFireDeathChance =
-        0.05;
-
-    private const double WorkplaceDeathChance =
-        0.05;
-
-    private const double TrafficDeathChance =
-        0.05;
-
-    private const double LightningDeathChance =
-        0.35;
+    private const double CatastrophicFireDeathChance = 0.05;
+    private const double WorkplaceDeathChance = 0.05;
+    private const double TrafficDeathChance = 0.05;
+    private const double LightningDeathChance = 0.35;
 
     private readonly IFamilyService _family;
     private readonly IHealthService _health;
@@ -78,11 +15,24 @@ internal sealed partial class RareEventYearSystem :
     private readonly ICareerService _career;
     private readonly IJusticeService _justice;
     private readonly IHouseholdService _households;
+    private readonly IStatsService _stats;
+    private readonly IPersonalityService _personality;
+    private readonly IStressService _stress;
+    private readonly IEducationService _education;
+    private readonly ILocalCareerOpportunityService _localOpportunities;
     private readonly IGameRandom _random;
     private readonly IGameEventBus _events;
     private readonly RecentLifeEventTracker _recent;
     private readonly RareEventDeathService _death;
-    private readonly RareEventAvailabilityCatalog _availability;
+    private readonly RareEventCatalog _catalog;
+    private readonly RareEventPoolRulesCatalog _poolRules;
+    private readonly RareEventSimpleEffectCatalog _simpleEffects;
+    private readonly RareEventEpidemicCatalog _epidemics;
+    private readonly RareEventCareerFamilyWeightCatalog _careerFamilyWeights;
+    private readonly RareEventVariantCatalog _variants;
+    private readonly IContextWeightCatalog _contextWeights;
+    private readonly Func<IFarmingService?> _farmingResolver;
+    private readonly Func<ICraftService?> _craftResolver;
 
     public RareEventYearSystem(
         IFamilyService family,
@@ -91,11 +41,24 @@ internal sealed partial class RareEventYearSystem :
         ICareerService career,
         IJusticeService justice,
         IHouseholdService households,
+        IStatsService stats,
+        IPersonalityService personality,
+        IStressService stress,
+        IEducationService education,
+        ILocalCareerOpportunityService localOpportunities,
         IGameRandom random,
         IGameEventBus events,
         RecentLifeEventTracker recent,
         RareEventDeathService death,
-        RareEventAvailabilityCatalog availability)
+        RareEventCatalog catalog,
+        RareEventPoolRulesCatalog poolRules,
+        RareEventSimpleEffectCatalog simpleEffects,
+        RareEventEpidemicCatalog epidemics,
+        RareEventCareerFamilyWeightCatalog careerFamilyWeights,
+        RareEventVariantCatalog variants,
+        IContextWeightCatalog contextWeights,
+        Func<IFarmingService?> farmingResolver,
+        Func<ICraftService?> craftResolver)
     {
         _family = family;
         _health = health;
@@ -103,58 +66,47 @@ internal sealed partial class RareEventYearSystem :
         _career = career;
         _justice = justice;
         _households = households;
+        _stats = stats;
+        _personality = personality;
+        _stress = stress;
+        _education = education;
+        _localOpportunities = localOpportunities;
         _random = random;
         _events = events;
         _recent = recent;
         _death = death;
-        _availability = availability;
+        _catalog = catalog;
+        _poolRules = poolRules;
+        _simpleEffects = simpleEffects;
+        _epidemics = epidemics;
+        _careerFamilyWeights = careerFamilyWeights;
+        _variants = variants;
+        _contextWeights = contextWeights;
+        _farmingResolver = farmingResolver;
+        _craftResolver = craftResolver;
     }
 
-    public string Id =>
-        "rare_events.annual";
+    public string Id => "rare_events.annual";
+    public YearPhase Phase => YearPhase.Death;
+    public IReadOnlyCollection<string> Before => ["mortality.natural_death"];
+    public IReadOnlyCollection<string> After => Array.Empty<string>();
 
-    public YearPhase Phase =>
-        YearPhase.Death;
-
-    public IReadOnlyCollection<string> Before =>
-        ["mortality.natural_death"];
-
-    public IReadOnlyCollection<string> After =>
-        Array.Empty<string>();
-
-    public void Execute(
-        IGameState gameState)
+    public void Execute(IGameState gameState)
     {
-        ProcessHouseholdEvents(
-            gameState);
+        ProcessHouseholdEvents(gameState);
 
-        // Rebuild the living list after household events because
-        // catastrophic fires can kill an occupant.
-        var living =
-            gameState.People
-                .Where(
-                    person =>
-                        person.Tags.Has(
-                            "state.alive")
-                        && !SimulationState.IsInactive(
-                            person))
-                .ToList();
+        var living = gameState.People
+            .Where(person => person.Tags.Has("state.alive") && !SimulationState.IsInactive(person))
+            .ToList();
 
-        foreach (var person in
-            living)
+        foreach (var person in living)
         {
-            if (person.Tags.Has(
-                    "state.dead")
-                || SimulationState.IsInactive(
-                    person))
-            {
+            if (!person.Tags.Has("state.alive") || SimulationState.IsInactive(person))
                 continue;
-            }
 
-            ProcessPersonalEvent(
-                gameState,
-                person);
+            ProcessPersonalEvent(gameState, person);
+            if (person.Tags.Has("state.alive"))
+                ProcessSpecialEvents(gameState, person);
         }
     }
-
 }

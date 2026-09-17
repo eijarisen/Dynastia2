@@ -80,7 +80,8 @@ internal sealed partial class RareEventYearSystem
 
     private void ExecuteWorkplaceAccident(
         IGameState gameState,
-        IPerson person)
+        IPerson person,
+        RareEventDefinition definition)
     {
         var damage =
             ApplyNonFatalDamage(
@@ -92,11 +93,16 @@ internal sealed partial class RareEventYearSystem
             _random.NextDouble()
             < WorkplaceDeathChance;
 
+        var definitionName =
+            _variants.ResolveName(
+                definition,
+                gameState.Year);
+
         PublishPersonalEvent(
             gameState,
             person,
             "rare.workplace_accident",
-            $"{_family.GetDisplayName(person)} suffered a serious workplace accident.",
+            $"{_family.GetDisplayName(person)} suffered a serious {definitionName.ToLowerInvariant()}.",
             new Dictionary<string, string>
             {
                 ["healthDamage"] =
@@ -105,7 +111,8 @@ internal sealed partial class RareEventYearSystem
 
                 ["fatal"] =
                     fatal.ToString()
-            });
+            },
+            definitionName);
 
         if (fatal)
         {
@@ -118,7 +125,8 @@ internal sealed partial class RareEventYearSystem
 
     private void ExecuteTrafficAccident(
         IGameState gameState,
-        IPerson person)
+        IPerson person,
+        RareEventDefinition definition)
     {
         var damage =
             ApplyNonFatalDamage(
@@ -130,11 +138,16 @@ internal sealed partial class RareEventYearSystem
             _random.NextDouble()
             < TrafficDeathChance;
 
+        var definitionName =
+            _variants.ResolveName(
+                definition,
+                gameState.Year);
+
         PublishPersonalEvent(
             gameState,
             person,
             "rare.traffic_accident",
-            $"{_family.GetDisplayName(person)} was badly injured in a road traffic accident.",
+            $"{_family.GetDisplayName(person)} was badly injured in a {definitionName.ToLowerInvariant()}.",
             new Dictionary<string, string>
             {
                 ["healthDamage"] =
@@ -143,7 +156,8 @@ internal sealed partial class RareEventYearSystem
 
                 ["fatal"] =
                     fatal.ToString()
-            });
+            },
+            definitionName);
 
         if (fatal)
         {

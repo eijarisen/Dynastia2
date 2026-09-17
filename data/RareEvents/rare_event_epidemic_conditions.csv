@@ -1,0 +1,8 @@
+﻿ConditionId,StartYear,EndYear,BaseWeight,MinimumAffected,MaximumAffected
+influenza,1700,,3.0,1,3
+measles,1700,,2.5,1,3
+whooping_cough,1700,,1.5,1,3
+smallpox,1700,1979,2.0,1,3
+typhoid_fever,1700,1989,2.0,1,3
+polio,1850,2002,1.0,1,2
+gastroenteritis,1700,,2.0,1,3

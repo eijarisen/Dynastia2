@@ -1,0 +1,31 @@
+﻿EventId,Name,Pool,Category,StartYear,EndYear,BaseWeight,MinimumAge,MaximumAge,RequiresFinanceHousehold,MinimumHouseholdWealth,RequiresEmployment,RequiresOwnedHouse,RequiresFarmland,RequiresCraft,MinimumStress,StatId,StatDirection,TownPreference,MinimumSettlementClass,RequiredOpportunityTags,PreferredOpportunityTags,PreferredCareerFamilies,HandlerId
+rare.house_fire,House Fire,Household,HouseholdDisaster,1700,,35,0,,True,0,False,False,False,False,0,-,None,Universal,SmallTown,-,-,-,bespoke.house_fire
+rare.burglary,Burglary,Household,HouseholdCrime,1700,,60,0,,True,1,False,False,False,False,0,-,None,Urban,SmallTown,-,-,-,bespoke.burglary
+rare.storm_flood,Storm or Flood Damage,Household,Weather,1700,,25,0,,True,0,False,False,False,False,0,-,None,Rural,SmallTown,-,-,-,bespoke.storm_flood
+rare.structural_accident,Structural Accident,Household,HouseholdDisaster,1700,,10,0,,True,0,False,False,False,False,0,-,None,Universal,SmallTown,-,-,-,bespoke.structural_accident
+rare.legal_dispute,Costly Legal Dispute,Household,HouseholdLoss,1700,,15,0,,True,300,False,False,False,False,0,-,None,Urban,SmallTown,-,-,legal;property;commerce,generic.wealth_loss
+rare.major_repair,Major Property Repair,Household,HouseholdLoss,1700,,25,0,,True,0,False,True,False,False,0,-,None,Universal,SmallTown,-,-,property;construction,generic.wealth_loss
+rare.house_discovery,Valuable Discovery at Home,Household,HouseholdFortune,1700,,10,0,,True,0,False,True,False,False,0,-,None,Universal,SmallTown,-,-,-,generic.wealth_gain
+rare.exceptional_harvest,Exceptional Harvest,Household,FarmingFortune,1700,,20,0,,True,0,False,False,True,False,0,-,None,Rural,SmallTown,agriculture,agriculture,agriculture,bespoke.exceptional_harvest
+rare.crop_failure,Crop Failure,Household,FarmingLoss,1700,,20,0,,True,0,False,False,True,False,0,-,None,Rural,SmallTown,agriculture,agriculture,agriculture,bespoke.crop_failure
+rare.local_epidemic,Local Epidemic,Household,HealthCrisis,1700,,15,0,,False,0,False,False,False,False,0,-,None,Urban,SmallTown,-,-,-,bespoke.local_epidemic
+rare.assault,Assault,Personal,Violence,1700,,20,15,,False,0,False,False,False,False,0,-,None,Urban,SmallTown,-,-,security,bespoke.assault
+rare.mugging,Mugging,Personal,Violence,1700,,15,15,,True,1,False,False,False,False,0,-,None,Urban,SmallTown,-,-,-,bespoke.mugging
+rare.workplace_accident,Workplace Accident,Personal,Accident,1700,,15,18,,False,0,True,False,False,False,0,-,None,Universal,SmallTown,-,-,-,bespoke.workplace_accident
+rare.traffic_accident,Road Accident,Personal,Accident,1700,,12,10,,False,0,False,False,False,False,0,-,None,Universal,SmallTown,-,-,transport,bespoke.traffic_accident
+rare.lightning_strike,Lightning Strike,Personal,Accident,1700,,0.3,0,,False,0,False,False,False,False,0,-,None,Rural,SmallTown,-,-,agriculture;forestry_wood,bespoke.lightning_strike
+rare.serious_fall,Serious Fall,Personal,Accident,1700,,10,10,,False,0,False,False,False,False,0,strength,Low,Universal,SmallTown,-,-,-,bespoke.serious_fall
+rare.lottery_win,Lottery Win,Personal,Fortune,1957,,2,18,,True,0,False,False,False,False,0,-,None,Universal,SmallTown,-,-,-,bespoke.lottery_win
+rare.distant_inheritance,Distant Inheritance,Personal,Fortune,1700,,4,18,,True,0,False,False,False,False,0,-,None,Universal,SmallTown,-,-,-,generic.wealth_gain
+rare.fraud,Victim of Fraud,Personal,FinancialLoss,1700,,12,18,,True,1000,False,False,False,False,0,intellect,Low,Urban,SmallTown,-,finance,finance;commerce;property;business_services,bespoke.fraud
+rare.found_property,Found Valuable Property,Personal,Fortune,1700,,4,18,,True,0,False,False,False,False,0,-,None,Universal,SmallTown,-,-,-,generic.wealth_gain
+rare.wrongful_arrest,Wrongful Arrest,Personal,LegalMisfortune,1700,,1,18,,False,0,False,False,False,False,0,-,None,Urban,SmallTown,-,-,security;public_service,bespoke.wrongful_arrest
+rare.water_accident,Water Accident,Personal,Accident,1700,,10,10,,False,0,False,False,False,False,0,strength,Low,Universal,SmallTown,-,port;shipping,maritime;transport,generic.health_damage_with_death_risk
+rare.animal_accident,Animal Accident,Personal,Accident,1700,,8,5,,False,0,False,False,False,False,0,strength,Low,Rural,SmallTown,-,agriculture;forestry,agriculture;forestry_wood,generic.health_damage_with_death_risk
+rare.craft_setback,Craft Setback,Personal,CraftLoss,1700,,5,14,,True,0,False,False,False,True,0,-,None,Universal,SmallTown,-,-,-,generic.wealth_loss
+rare.scholarship,Scholarship Opportunity,Personal,Opportunity,1800,,5,10,29,False,0,False,False,False,False,0,intellect,High,Urban,Town,-,-,education;science_health,bespoke.scholarship
+rare.professional_recognition,Professional Recognition,Personal,Opportunity,1700,,7,18,,False,0,True,False,False,False,0,-,None,Universal,SmallTown,-,-,-,bespoke.professional_recognition
+rare.patronage,Unexpected Patronage,Personal,Fortune,1700,,4,18,,True,0,False,False,False,False,0,appeal,High,Urban,SmallTown,-,media;tourism,media_creative;science_health;education;religion,generic.wealth_gain
+rare.prize_award,Prize or Award,Personal,Fortune,1850,,3,18,,True,0,False,False,False,False,0,intellect,High,Urban,SmallTown,-,-,media_creative;science_health;technology;engineering,generic.wealth_gain
+rare.craft_commission,Valuable Craft Commission,Personal,CraftFortune,1700,,6,16,,True,0,False,False,False,True,0,-,None,Universal,SmallTown,-,-,-,bespoke.craft_commission
+rare.suicide,Suicide,Special,MentalHealth,1700,,0,15,,False,0,False,False,False,False,5,-,None,Universal,SmallTown,-,-,-,special.suicide

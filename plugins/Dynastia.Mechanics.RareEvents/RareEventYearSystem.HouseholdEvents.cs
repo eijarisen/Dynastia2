@@ -329,7 +329,7 @@ internal sealed partial class RareEventYearSystem
         PublishHouseholdEvent(
             gameState,
             household,
-            "rare.storm_flood_damage",
+            "rare.storm_flood",
             $"A severe storm or flood damaged the household of " +
             $"{HouseholdDisplayName(household)}, causing " +
             $"{actualLoss:N0} zł in losses" +

@@ -28,9 +28,9 @@ public sealed class HistoricalRetouchBatch2Tests
         "]";
 
     private const string RareEventData =
-        "EventId,StartYear,EndYear\n" +
-        "rare.traffic_accident,1920,\n" +
-        "rare.lottery_win,1957,\n";
+        "EventId,Name,Pool,Category,StartYear,EndYear,BaseWeight,MinimumAge,MaximumAge,RequiresFinanceHousehold,MinimumHouseholdWealth,RequiresEmployment,RequiresOwnedHouse,RequiresFarmland,RequiresCraft,MinimumStress,StatId,StatDirection,TownPreference,MinimumSettlementClass,RequiredOpportunityTags,PreferredOpportunityTags,PreferredCareerFamilies,HandlerId\n" +
+        "rare.traffic_accident,Road Accident,Personal,Accident,1700,,12,10,,False,0,False,False,False,False,0,-,None,Universal,SmallTown,-,-,transport,bespoke.traffic_accident\n" +
+        "rare.lottery_win,Lottery Win,Personal,Fortune,1957,,2,18,,True,0,False,False,False,False,0,-,None,Universal,SmallTown,-,-,-,bespoke.lottery_win\n";
 
     [Fact]
     public void EarlyModernEducationUsesQuarterPassiveChanceAndLowCeilings()
@@ -80,11 +80,11 @@ public sealed class HistoricalRetouchBatch2Tests
         var catalog = RareEventAvailabilityCatalog.Load(
             new InlineDataService(new Dictionary<string, string>
             {
-                ["Common/rare_event_availability.csv"] = RareEventData
+                ["RareEvents/rare_events.csv"] = RareEventData
             }));
 
-        Assert.False(catalog.IsAvailable("rare.traffic_accident", 1919));
-        Assert.True(catalog.IsAvailable("rare.traffic_accident", 1920));
+        Assert.False(catalog.IsAvailable("rare.traffic_accident", 1699));
+        Assert.True(catalog.IsAvailable("rare.traffic_accident", 1700));
         Assert.False(catalog.IsAvailable("rare.lottery_win", 1956));
         Assert.True(catalog.IsAvailable("rare.lottery_win", 1957));
     }

@@ -1,0 +1,4 @@
+﻿Pool,AnnualGateChance,Notes
+Household,0.0013,One household rare-event gate per household per year. Catalog size does not change the gate.
+Personal,0.00095,One personal rare-event gate per eligible living person per year. Catalog size does not change the gate.
+Special,0.0,Dynamic conditional events use their own explicit risk formula; currently suicide only.

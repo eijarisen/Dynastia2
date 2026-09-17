@@ -4,289 +4,149 @@ namespace Dynastia.Mechanics.RareEvents;
 
 internal sealed partial class RareEventYearSystem
 {
-    private void ProcessHouseholdEvents(
-        IGameState gameState)
+    private void ProcessHouseholdEvents(IGameState gameState)
     {
-        foreach (var household in
-            GetLivingHouseholds(
-                gameState))
+        var gate = _poolRules.GetGateChance("Household");
+        foreach (var household in GetLivingHouseholds(gameState))
         {
-            var finance =
-                _economy.GetHousehold(
-                    household.Head);
-
-            if (finance is null)
+            if (_random.NextDouble() >= gate)
                 continue;
 
-            var candidates =
-                new List<HouseholdEventCandidate>
-                {
-                    new(
-                        HouseholdRareEvent.HouseFire,
-                        HouseFireChance),
+            var selectionSubject = household.Head.Tags.Has("state.alive")
+                ? household.Head
+                : household.PrimaryOccupant;
 
-                    new(
-                        HouseholdRareEvent.StormOrFlood,
-                        StormFloodChance),
+            var candidates = _catalog.GetPool("Household")
+                .Where(definition => IsEligible(definition, gameState, selectionSubject, household.Head))
+                .Select(definition => new EventCandidate(
+                    definition,
+                    GetSelectionWeight(definition, gameState, selectionSubject)))
+                .Where(candidate => candidate.Weight > 0)
+                .ToList();
 
-                    new(
-                        HouseholdRareEvent.StructuralAccident,
-                        StructuralAccidentChance)
-                };
-
-            if (finance.Wealth > 0)
-            {
-                candidates.Add(
-                    new HouseholdEventCandidate(
-                        HouseholdRareEvent.Burglary,
-                        BurglaryChance));
-            }
-
-            candidates.RemoveAll(
-                candidate =>
-                    !_availability.IsAvailable(
-                        GetEventId(candidate.Event),
-                        gameState.Year));
-
-            var selected =
-                SelectEvent(
-                    candidates);
-
-            if (selected is null)
-                continue;
-
-            switch (selected.Value)
-            {
-                case HouseholdRareEvent.HouseFire:
-                    ExecuteHouseFire(
-                        gameState,
-                        household);
-                    break;
-
-                case HouseholdRareEvent.Burglary:
-                    ExecuteBurglary(
-                        gameState,
-                        household);
-                    break;
-
-                case HouseholdRareEvent.StormOrFlood:
-                    ExecuteStormOrFlood(
-                        gameState,
-                        household);
-                    break;
-
-                case HouseholdRareEvent.StructuralAccident:
-                    ExecuteStructuralAccident(
-                        gameState,
-                        household);
-                    break;
-            }
+            var selected = SelectWeighted(candidates);
+            if (selected is not null)
+                ExecuteHouseholdEvent(gameState, household, selected);
         }
     }
 
-    private void ProcessPersonalEvent(
-        IGameState gameState,
-        IPerson person)
+    private void ProcessPersonalEvent(IGameState gameState, IPerson person)
     {
-        var candidates =
-            new List<PersonalEventCandidate>();
-
-        var financeHead =
-            ResolveFinanceHead(
-                person);
-
-        var finance =
-            financeHead is null
-                ? null
-                : _economy.GetHousehold(
-                    financeHead);
-
-        if (person.Age >= 15)
-        {
-            candidates.Add(
-                new PersonalEventCandidate(
-                    PersonalRareEvent.Assault,
-                    AssaultChance));
-
-            if (finance is not null)
-            {
-                candidates.Add(
-                    new PersonalEventCandidate(
-                        PersonalRareEvent.Mugging,
-                        MuggingChance));
-            }
-
-            candidates.Add(
-                new PersonalEventCandidate(
-                    PersonalRareEvent.Suicide,
-                    GetSuicideChance(
-                        person)));
-        }
-
-        var career =
-            _career.GetCareer(
-                person);
-
-        if (person.Age >= 18
-            && career.IsEmployed
-            && !career.IsRetired)
-        {
-            candidates.Add(
-                new PersonalEventCandidate(
-                    PersonalRareEvent.WorkplaceAccident,
-                    WorkplaceAccidentChance));
-        }
-
-        if (person.Age >= 10)
-        {
-            candidates.Add(
-                new PersonalEventCandidate(
-                    PersonalRareEvent.TrafficAccident,
-                    TrafficAccidentChance));
-        }
-
-        candidates.Add(
-            new PersonalEventCandidate(
-                PersonalRareEvent.LightningStrike,
-                LightningStrikeChance));
-
-        if (person.Age >= 10)
-        {
-            candidates.Add(
-                new PersonalEventCandidate(
-                    PersonalRareEvent.SeriousFall,
-                    SeriousFallChance));
-        }
-
-        if (person.Age >= 18
-            && finance is not null)
-        {
-            candidates.Add(
-                new PersonalEventCandidate(
-                    PersonalRareEvent.LotteryWin,
-                    LotteryChance));
-
-            candidates.Add(
-                new PersonalEventCandidate(
-                    PersonalRareEvent.DistantInheritance,
-                    DistantInheritanceChance));
-
-            candidates.Add(
-                new PersonalEventCandidate(
-                    PersonalRareEvent.FoundProperty,
-                    FoundPropertyChance));
-
-            if (finance.Wealth >= 1000)
-            {
-                candidates.Add(
-                    new PersonalEventCandidate(
-                        PersonalRareEvent.Fraud,
-                        FraudChance));
-            }
-        }
-
-        if (person.Age >= 18
-            && !_justice.IsImprisoned(
-                person))
-        {
-            candidates.Add(
-                new PersonalEventCandidate(
-                    PersonalRareEvent.WrongfulArrest,
-                    WrongfulArrestChance));
-        }
-
-        candidates.RemoveAll(
-            candidate =>
-                !_availability.IsAvailable(
-                    GetEventId(candidate.Event),
-                    gameState.Year));
-
-        var selected =
-            SelectEvent(
-                candidates);
-
-        if (selected is null)
+        if (_random.NextDouble() >= _poolRules.GetGateChance("Personal"))
             return;
 
-        switch (selected.Value)
+        var financeHead = ResolveFinanceHead(person);
+        var candidates = _catalog.GetPool("Personal")
+            .Where(definition => IsEligible(definition, gameState, person, financeHead))
+            .Select(definition => new EventCandidate(
+                definition,
+                GetSelectionWeight(definition, gameState, person)))
+            .Where(candidate => candidate.Weight > 0)
+            .ToList();
+
+        var selected = SelectWeighted(candidates);
+        if (selected is not null)
+            ExecutePersonalEvent(gameState, person, financeHead, selected);
+    }
+
+    private void ProcessSpecialEvents(IGameState gameState, IPerson person)
+    {
+        foreach (var definition in _catalog.GetPool("Special"))
         {
-            case PersonalRareEvent.Assault:
-                ExecuteAssault(
-                    gameState,
-                    person);
-                break;
+            if (!definition.HandlerId.Equals("special.suicide", StringComparison.OrdinalIgnoreCase)
+                || !IsEligible(definition, gameState, person, ResolveFinanceHead(person)))
+            {
+                continue;
+            }
 
-            case PersonalRareEvent.Mugging:
-                ExecuteMugging(
-                    gameState,
-                    person,
-                    financeHead!);
-                break;
+            var stress = _stress.GetStress(person).Total;
+            var health = _health.GetHealth(person);
+            var personality = _personality.GetPersonality(person);
+            var chance = RareEventRules.GetSuicideChance(
+                stress,
+                HasCondition(health, "depression"),
+                HasCondition(health, "anxiety"),
+                HasCondition(health, "alcoholism"),
+                HasCondition(health, "drug_dependence"),
+                _recent.HasFlag(person, "recent.bereavement"),
+                _recent.HasFlag(person, "recent.divorce"),
+                _recent.HasFlag(person, "recent.job_loss") && IsHouseholdBroke(person),
+                health.Percentage < 25,
+                personality?.Temperament);
 
-            case PersonalRareEvent.WorkplaceAccident:
-                ExecuteWorkplaceAccident(
-                    gameState,
-                    person);
-                break;
-
-            case PersonalRareEvent.TrafficAccident:
-                ExecuteTrafficAccident(
-                    gameState,
-                    person);
-                break;
-
-            case PersonalRareEvent.LightningStrike:
-                ExecuteLightningStrike(
-                    gameState,
-                    person);
-                break;
-
-            case PersonalRareEvent.SeriousFall:
-                ExecuteSeriousFall(
-                    gameState,
-                    person);
-                break;
-
-            case PersonalRareEvent.LotteryWin:
-                ExecuteLotteryWin(
-                    gameState,
-                    person,
-                    financeHead!);
-                break;
-
-            case PersonalRareEvent.DistantInheritance:
-                ExecuteDistantInheritance(
-                    gameState,
-                    person,
-                    financeHead!);
-                break;
-
-            case PersonalRareEvent.Fraud:
-                ExecuteFraud(
-                    gameState,
-                    person,
-                    financeHead!);
-                break;
-
-            case PersonalRareEvent.FoundProperty:
-                ExecuteFoundProperty(
-                    gameState,
-                    person,
-                    financeHead!);
-                break;
-
-            case PersonalRareEvent.WrongfulArrest:
-                ExecuteWrongfulArrest(
-                    gameState,
-                    person);
-                break;
-
-            case PersonalRareEvent.Suicide:
-                ExecuteSuicide(
-                    gameState,
-                    person);
-                break;
+            if (chance > 0 && _random.NextDouble() < chance)
+            {
+                ExecuteSuicide(gameState, person);
+                return;
+            }
         }
     }
 
+    private void ExecuteHouseholdEvent(
+        IGameState gameState,
+        HouseholdContext household,
+        RareEventDefinition definition)
+    {
+        switch (definition.HandlerId.ToLowerInvariant())
+        {
+            case "bespoke.house_fire":
+                ExecuteHouseFire(gameState, household);
+                return;
+            case "bespoke.burglary":
+                ExecuteBurglary(gameState, household);
+                return;
+            case "bespoke.storm_flood":
+                ExecuteStormOrFlood(gameState, household);
+                return;
+            case "bespoke.structural_accident":
+                ExecuteStructuralAccident(gameState, household);
+                return;
+            case "bespoke.exceptional_harvest":
+                ExecuteExceptionalHarvest(gameState, household, definition);
+                return;
+            case "bespoke.crop_failure":
+                ExecuteCropFailure(gameState, household, definition);
+                return;
+            case "bespoke.local_epidemic":
+                ExecuteLocalEpidemic(gameState, household, definition);
+                return;
+            default:
+                if (definition.HandlerId.StartsWith("generic.", StringComparison.OrdinalIgnoreCase))
+                {
+                    ExecuteSimpleEffects(gameState, definition, household.PrimaryOccupant, household.Head, household);
+                    return;
+                }
+                throw new InvalidOperationException($"Unsupported household rare-event handler '{definition.HandlerId}'.");
+        }
+    }
+
+    private void ExecutePersonalEvent(
+        IGameState gameState,
+        IPerson person,
+        IPerson? financeHead,
+        RareEventDefinition definition)
+    {
+        switch (definition.HandlerId.ToLowerInvariant())
+        {
+            case "bespoke.assault": ExecuteAssault(gameState, person); return;
+            case "bespoke.mugging": ExecuteMugging(gameState, person, financeHead!); return;
+            case "bespoke.workplace_accident": ExecuteWorkplaceAccident(gameState, person, definition); return;
+            case "bespoke.traffic_accident": ExecuteTrafficAccident(gameState, person, definition); return;
+            case "bespoke.lightning_strike": ExecuteLightningStrike(gameState, person); return;
+            case "bespoke.serious_fall": ExecuteSeriousFall(gameState, person); return;
+            case "bespoke.lottery_win": ExecuteLotteryWin(gameState, person, financeHead!); return;
+            case "bespoke.fraud": ExecuteFraud(gameState, person, financeHead!); return;
+            case "bespoke.wrongful_arrest": ExecuteWrongfulArrest(gameState, person); return;
+            case "bespoke.scholarship": ExecuteScholarship(gameState, person, definition); return;
+            case "bespoke.professional_recognition": ExecuteProfessionalRecognition(gameState, person, definition); return;
+            case "bespoke.craft_commission": ExecuteCraftCommission(gameState, person, financeHead!, definition); return;
+            default:
+                if (definition.HandlerId.StartsWith("generic.", StringComparison.OrdinalIgnoreCase))
+                {
+                    ExecuteSimpleEffects(gameState, definition, person, financeHead, null);
+                    return;
+                }
+                throw new InvalidOperationException($"Unsupported personal rare-event handler '{definition.HandlerId}'.");
+        }
+    }
 }

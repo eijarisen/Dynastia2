@@ -1,0 +1,21 @@
+﻿EventId,StartYear,EndYear,DisplayName
+rare.traffic_accident,1700,1849,Horse & Carriage Accident
+rare.traffic_accident,1850,1919,Road & Carriage Accident
+rare.traffic_accident,1920,,Road Traffic Accident
+rare.workplace_accident,1700,1849,Workplace Accident
+rare.workplace_accident,1850,1945,Industrial or Workplace Accident
+rare.workplace_accident,1946,,Workplace Accident
+rare.scholarship,1800,1945,Scholarship or Bursary
+rare.scholarship,1946,,Scholarship Opportunity
+rare.professional_recognition,1700,1849,Professional Distinction
+rare.professional_recognition,1850,,Professional Recognition
+rare.patronage,1700,1913,Patronage
+rare.patronage,1914,,Unexpected Patronage
+rare.prize_award,1850,1945,Prize or Public Distinction
+rare.prize_award,1946,,Prize or Award
+rare.craft_commission,1700,1849,Important Commission
+rare.craft_commission,1850,,Valuable Craft Commission
+rare.legal_dispute,1700,1849,Costly Legal Dispute
+rare.legal_dispute,1850,,Legal Dispute
+rare.local_epidemic,1700,1945,Local Epidemic
+rare.local_epidemic,1946,,Local Disease Outbreak

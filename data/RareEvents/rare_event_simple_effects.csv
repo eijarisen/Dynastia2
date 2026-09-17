@@ -1,0 +1,13 @@
+﻿EventId,EffectType,Target,MinimumValue,MaximumValue,Chance,Parameter
+rare.legal_dispute,WealthLoss,Household,500,5000,1.0,
+rare.major_repair,WealthLoss,Household,1000,6000,1.0,
+rare.house_discovery,WealthGain,Household,500,5000,1.0,
+rare.distant_inheritance,WealthGain,Household,2000,15000,1.0,
+rare.found_property,WealthGain,Household,500,3000,1.0,
+rare.water_accident,HealthDamage,Subject,20,60,1.0,
+rare.water_accident,DeathChance,Subject,0.03,0.03,1.0,
+rare.animal_accident,HealthDamage,Subject,10,35,1.0,
+rare.animal_accident,DeathChance,Subject,0.01,0.01,1.0,
+rare.craft_setback,WealthLoss,Household,300,1500,1.0,
+rare.patronage,WealthGain,Household,1000,5000,1.0,
+rare.prize_award,WealthGain,Household,500,3000,1.0,

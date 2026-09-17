@@ -1025,5 +1025,132 @@
     "AdultElaborate": [
       "I've become rather fond of having something interesting to listen to while I go about the day."
     ]
+  },
+  "religious_devotion": {
+    "Child": [
+      "I like joining in with prayers and holy days."
+    ],
+    "Adolescent": [
+      "I've been thinking more about faith lately."
+    ],
+    "AdultRough": [
+      "Been spending time on my faith."
+    ],
+    "AdultNormal": [
+      "I've been finding some peace in religious devotion."
+    ],
+    "AdultElaborate": [
+      "I've been setting aside quiet time for prayer and reflection; the ritual gives a welcome shape to the day."
+    ]
+  },
+  "community_and_charity": {
+    "Adolescent": [
+      "I like helping when there's something useful to do."
+    ],
+    "AdultRough": [
+      "Been helping out in the community."
+    ],
+    "AdultNormal": [
+      "I've been spending some time helping people in the community."
+    ],
+    "AdultElaborate": [
+      "I've found it surprisingly rewarding to give some of my free time to people who need a hand."
+    ]
+  },
+  "family_history": {
+    "Adolescent": [
+      "I've been asking about old family stories."
+    ],
+    "AdultRough": [
+      "Been looking into the family history."
+    ],
+    "AdultNormal": [
+      "I've been piecing together more of the family's history."
+    ],
+    "AdultElaborate": [
+      "I've been tracing old names and stories through the family; every answer seems to uncover another branch worth following."
+    ]
+  },
+  "language_learning": {
+    "Child": [
+      "I like learning words in another language."
+    ],
+    "Adolescent": [
+      "I've been practicing another language."
+    ],
+    "AdultRough": [
+      "Been learning another language."
+    ],
+    "AdultNormal": [
+      "I've been enjoying learning another language in my spare time."
+    ],
+    "AdultElaborate": [
+      "I've been steadily working at another language and enjoying the moment when unfamiliar phrases finally begin to make sense."
+    ]
+  },
+  "animal_keeping": {
+    "Child": [
+      "I like looking after the animals."
+    ],
+    "Adolescent": [
+      "I've been spending a lot of time looking after animals."
+    ],
+    "AdultRough": [
+      "Been looking after the animals."
+    ],
+    "AdultNormal": [
+      "I've been enjoying caring for animals in my spare time."
+    ],
+    "AdultElaborate": [
+      "There's something very grounding about caring for animals and learning all their small habits."
+    ]
+  },
+  "travel_and_sightseeing": {
+    "Adolescent": [
+      "I'd like to see somewhere new."
+    ],
+    "AdultRough": [
+      "Could do with seeing somewhere new."
+    ],
+    "AdultNormal": [
+      "I've been thinking about taking a trip and seeing somewhere different."
+    ],
+    "AdultElaborate": [
+      "The thought of seeing unfamiliar streets and countryside has been increasingly tempting; a change of scenery would do me good."
+    ]
+  },
+  "hiking": {
+    "Child": [
+      "I like going on long walks outside."
+    ],
+    "Adolescent": [
+      "I'd like to go hiking again."
+    ],
+    "AdultRough": [
+      "Could go for a proper hike."
+    ],
+    "AdultNormal": [
+      "I've been enjoying long hikes whenever I get the chance."
+    ],
+    "AdultElaborate": [
+      "A long day on foot, with nothing but open country ahead, has become one of my favourite ways to clear my head."
+    ]
+  },
+  "birdwatching": {
+    "Child": [
+      "I like watching the birds outside."
+    ],
+    "Adolescent": [
+      "I've been trying to spot more kinds of birds."
+    ],
+    "AdultRough": [
+      "Been watching the birds."
+    ],
+    "AdultNormal": [
+      "I've been enjoying watching and identifying birds."
+    ],
+    "AdultElaborate": [
+      "I've grown fond of the patient business of watching birds closely enough to notice their habits and differences."
+    ]
   }
 }

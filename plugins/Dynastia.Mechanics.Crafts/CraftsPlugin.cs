@@ -11,6 +11,9 @@ public sealed class CraftsPlugin : IGamePlugin
         var economy = Require<IEconomyService>(context, "Economy service");
         var career = Require<ICareerService>(context, "Career service");
         var stats = Require<IStatsService>(context, "Stats service");
+        var personality = Require<IPersonalityService>(context, "Personality service");
+        var localOpportunities = Require<ILocalCareerOpportunityService>(context, "Local opportunity service");
+        var contextWeights = Require<IContextWeightService>(context, "Context-weight service");
         var data = Require<IGameDataService>(context, "Game data service");
         var random = Require<IGameRandom>(context, "Game random service");
         var events = Require<IGameEventBus>(context, "Game event bus");
@@ -26,8 +29,12 @@ public sealed class CraftsPlugin : IGamePlugin
             family,
             economy,
             career,
+            stats,
+            personality,
+            localOpportunities,
             random,
             events,
+            contextWeights,
             catalog);
 
         context.AddService<ICraftService>(service);
@@ -77,7 +84,7 @@ public sealed class CraftsPlugin : IGamePlugin
                     && context.Actor.Tags.Has("control.playable")
                     && context.Actor.Age >= 18
                     && !context.Actor.Tags.Has("state.imprisoned")
-                    && definition.StartYear <= context.GameState.Year
+                    && definition.IsHistoricallyAvailable(context.GameState.Year)
                     && crafts.KnowsCraft(context.Actor, definition.Id)
                     && !crafts.IsSelfEmployed(context.Actor),
                 Execute = context =>
@@ -89,7 +96,7 @@ public sealed class CraftsPlugin : IGamePlugin
                 Id = $"craft.teach.{definition.Id}",
                 Label = $"Teach Craft: {definition.Name}",
                 Description =
-                    $"Teach {definition.Name} to a child aged 10-17. Success depends on the child's Intellect.",
+                    $"Teach {definition.Name} to a child who is old enough to learn it. Success depends on the craft's relevant aptitude.",
                 Mode = ActionExecutionMode.Queued,
                 QueuePhase = YearPhase.LifeEvents,
                 IsAvailable = context =>
@@ -97,10 +104,10 @@ public sealed class CraftsPlugin : IGamePlugin
                     if (!context.Actor.Tags.Has("state.alive")
                         || !context.Actor.Tags.Has("control.playable")
                         || !context.Target.Tags.Has("state.alive")
-                        || context.Target.Age is < 10 or > 17
-                        || definition.StartYear > context.GameState.Year
+                        || context.Target.Age >= 18
                         || crafts.GetKnownCrafts(context.Target).Count >= CraftRules.MaximumCrafts
-                        || crafts.KnowsCraft(context.Target, definition.Id))
+                        || crafts.KnowsCraft(context.Target, definition.Id)
+                        || !crafts.CanLearnCraft(context.Target, definition.Id))
                     {
                         return false;
                     }
@@ -125,12 +132,14 @@ public sealed class CraftsPlugin : IGamePlugin
                     if (teacher is null)
                         return new GameActionResult(false);
 
-                    var intellect = stats.GetStats(context.Target)
-                        .First(stat => stat.Id.Equals("intellect", StringComparison.OrdinalIgnoreCase))
-                        .Value;
-                    var chance = CraftRules.GetTeachingSuccessChance(intellect);
+                    var targetStats = stats.GetStats(context.Target)
+                        .Where(stat => stat.Id is "strength" or "intellect")
+                        .ToDictionary(stat => stat.Id, stat => stat.Value, StringComparer.OrdinalIgnoreCase);
+                    var chance = CraftRules.GetTeachingSuccessChance(definition, targetStats);
                     var success = random.NextDouble() < chance
                         && crafts.LearnCraft(context.Target, definition.Id);
+                    var displayName = crafts.Catalog.First(craft =>
+                        craft.Id.Equals(definition.Id, StringComparison.OrdinalIgnoreCase)).Name;
 
                     events.Publish(new GameEvent
                     {
@@ -141,14 +150,14 @@ public sealed class CraftsPlugin : IGamePlugin
                         Data = new Dictionary<string, string>
                         {
                             ["craftId"] = definition.Id,
-                            ["craftName"] = definition.Name,
+                            ["craftName"] = displayName,
                             ["teacherId"] = teacher.Id.ToString(),
                             ["learningMode"] = "taught",
                             ["chance"] = chance.ToString("0.00", System.Globalization.CultureInfo.InvariantCulture),
                             ["suppressChronicle"] = success ? "false" : "true",
                             ["text"] = success
-                                ? $"At age {context.Target.Age}, {family.GetDisplayName(context.Target)} learned {definition.Name} from {family.GetDisplayName(teacher)}."
-                                : $"{family.GetDisplayName(teacher)} tried to teach {family.GetDisplayName(context.Target)} {definition.Name}, but the lesson did not take."
+                                ? $"At age {context.Target.Age}, {family.GetDisplayName(context.Target)} learned {displayName} from {family.GetDisplayName(teacher)}."
+                                : $"{family.GetDisplayName(teacher)} tried to teach {family.GetDisplayName(context.Target)} {displayName}, but the lesson did not take."
                         }
                     });
 
@@ -180,7 +189,7 @@ public sealed class CraftsPlugin : IGamePlugin
 
     private static void RegisterGeneratedAdultInitialization(
         IGameState gameState,
-        ICraftService crafts,
+        StandardCraftService crafts,
         ICareerService career,
         IGameEventBus events)
     {
@@ -188,7 +197,7 @@ public sealed class CraftsPlugin : IGamePlugin
         {
             if (gameEvent.Type.Equals("game.started", StringComparison.OrdinalIgnoreCase))
             {
-                foreach (var person in gameState.People.Where(person => person.Age >= 18))
+                foreach (var person in gameState.People.Where(person => person.Age >= 18 && person.Tags.Has("state.alive")))
                     InitializeGeneratedAdult(person, gameState.Year, crafts, career);
                 return;
             }
@@ -240,7 +249,7 @@ public sealed class CraftsPlugin : IGamePlugin
     private static void InitializeGeneratedAdult(
         IPerson person,
         int year,
-        ICraftService crafts,
+        StandardCraftService crafts,
         ICareerService career)
     {
         if (crafts.GetKnownCrafts(person).Count > 0)
@@ -249,8 +258,8 @@ public sealed class CraftsPlugin : IGamePlugin
         var formal = career.GetCareer(person);
         crafts.SetCrafts(
             person,
-            crafts.GenerateCandidateCraftIds(
-                person.Id.ToString("N"),
+            crafts.GenerateCraftIdsForPerson(
+                person,
                 formal.JobLevel > 0 ? formal.CareerId : null,
                 year));
     }
@@ -261,18 +270,12 @@ public sealed class CraftsPlugin : IGamePlugin
     {
         foreach (var craft in catalog.All)
         {
-            if (career.GetLevelOneSalary(craft.PrimaryCareerId) <= 0m)
+            foreach (var careerId in craft.PrimaryCareerIds.Concat(craft.SecondaryCareerIds))
             {
-                throw new InvalidDataException(
-                    $"Craft '{craft.Id}' references unknown primary career '{craft.PrimaryCareerId}'.");
-            }
-
-            foreach (var relatedCareerId in craft.RelatedCareerIds)
-            {
-                if (career.GetLevelOneSalary(relatedCareerId) <= 0m)
+                if (career.GetLevelOneSalary(careerId) <= 0m)
                 {
                     throw new InvalidDataException(
-                        $"Craft '{craft.Id}' references unknown related career '{relatedCareerId}'.");
+                        $"Craft '{craft.Id}' references unknown career '{careerId}'.");
                 }
             }
         }

@@ -233,13 +233,22 @@ internal sealed class StandardPartnerSearchService :
                     age,
                     _gameState.Year,
                     personality.Temperament,
-                    candidateTown.SettlementClass)
+                    candidateTown.SettlementClass,
+                    stats["strength"],
+                    stats["intellect"],
+                    stats["appeal"])
                 ?? [];
 
             var craftIds = _crafts.GenerateCandidateCraftIds(
                 candidateId.ToString("N"),
                 career.CareerId,
-                _gameState.Year);
+                _gameState.Year,
+                partnerSex,
+                age,
+                stats["strength"],
+                stats["intellect"],
+                personality.Temperament,
+                candidateTown);
             var candidateCrafts = craftIds
                 .Select(id => _crafts.Catalog.First(craft =>
                     craft.Id.Equals(id, StringComparison.OrdinalIgnoreCase)))

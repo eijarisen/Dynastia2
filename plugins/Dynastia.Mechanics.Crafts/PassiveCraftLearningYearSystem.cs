@@ -33,7 +33,7 @@ internal sealed class PassiveCraftLearningYearSystem : IYearSystem
     {
         foreach (var child in gameState.People.Where(person =>
                      person.Tags.Has("state.alive")
-                     && person.Age is >= 10 and <= 17
+                     && person.Age < 18
                      && !SimulationState.IsInactive(person)).ToList())
         {
             if (_crafts.GetKnownCrafts(child).Count >= CraftRules.MaximumCrafts)
@@ -52,9 +52,13 @@ internal sealed class PassiveCraftLearningYearSystem : IYearSystem
 
             var choices = teachers
                 .SelectMany(parent => _crafts.GetKnownCrafts(parent)
-                    .Where(craft => craft.StartYear <= gameState.Year
-                        && !_crafts.KnowsCraft(child, craft.Id))
-                    .Select(craft => (Teacher: parent, Craft: craft)))
+                    .Where(craft => !_crafts.KnowsCraft(child, craft.Id)
+                        && _crafts.CanLearnCraft(child, craft.Id))
+                    .Select(craft => new LearningChoice(
+                        parent,
+                        craft,
+                        _crafts.GetLearningWeight(child, craft.Id))))
+                .Where(choice => choice.Weight > 0)
                 .GroupBy(choice => choice.Craft.Id, StringComparer.OrdinalIgnoreCase)
                 .Select(group => group.First())
                 .ToList();
@@ -62,7 +66,7 @@ internal sealed class PassiveCraftLearningYearSystem : IYearSystem
             if (choices.Count == 0 || _random.NextDouble() >= CraftRules.PassiveLearningChance)
                 continue;
 
-            var selected = choices[_random.NextInt(0, choices.Count - 1)];
+            var selected = ChooseWeighted(choices, _random.NextDouble());
             if (!_crafts.LearnCraft(child, selected.Craft.Id))
                 continue;
 
@@ -84,4 +88,25 @@ internal sealed class PassiveCraftLearningYearSystem : IYearSystem
             });
         }
     }
+
+    private static LearningChoice ChooseWeighted(
+        IReadOnlyList<LearningChoice> choices,
+        double unitRoll)
+    {
+        var total = choices.Sum(choice => choice.Weight);
+        var target = unitRoll * total;
+        var cumulative = 0.0;
+        foreach (var choice in choices)
+        {
+            cumulative += choice.Weight;
+            if (target <= cumulative)
+                return choice;
+        }
+        return choices[^1];
+    }
+
+    private sealed record LearningChoice(
+        IPerson Teacher,
+        CraftInfo Craft,
+        double Weight);
 }

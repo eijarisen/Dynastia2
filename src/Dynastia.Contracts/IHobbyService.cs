@@ -2,8 +2,7 @@ namespace Dynastia.Contracts;
 
 public interface IHobbyService
 {
-    HobbyPersonSnapshot GetHobbies(
-        IPerson person);
+    HobbyPersonSnapshot GetHobbies(IPerson person);
 
     IReadOnlyList<HobbyInfo> GenerateCandidateHobbies(
         Guid candidateId,
@@ -11,7 +10,10 @@ public interface IHobbyService
         int age,
         int year,
         string temperament,
-        SettlementClass settlementClass);
+        SettlementClass settlementClass,
+        int strength,
+        int intellect,
+        int appeal);
 
     void SetHobbies(
         IPerson person,

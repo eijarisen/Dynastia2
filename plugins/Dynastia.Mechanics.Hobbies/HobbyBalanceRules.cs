@@ -33,18 +33,6 @@ public static class HobbyBalanceRules
             _ => 1.0
         };
 
-    public static double GenderMultiplier(
-        string preference,
-        Sex sex) =>
-        preference.ToLowerInvariant() switch
-        {
-            "male-leaning" => sex == Sex.Male ? 1.6 : 0.75,
-            "strongly male-leaning" => sex == Sex.Male ? 2.5 : 0.4,
-            "female-leaning" => sex == Sex.Female ? 1.6 : 0.75,
-            "strongly female-leaning" => sex == Sex.Female ? 2.5 : 0.4,
-            _ => 1.0
-        };
-
     public static double TemperamentMultiplier(
         HobbyDefinition hobby,
         string? temperament)
@@ -68,4 +56,36 @@ public static class HobbyBalanceRules
 
         return 1.0;
     }
+
+    public static double StatMultiplier(
+        HobbyDefinition hobby,
+        IReadOnlyDictionary<string, int> stats)
+    {
+        ArgumentNullException.ThrowIfNull(hobby);
+        ArgumentNullException.ThrowIfNull(stats);
+
+        var primary = ResolveStatMultiplier(GetStat(stats, hobby.PrimaryStat));
+        if (string.IsNullOrWhiteSpace(hobby.SecondaryStat))
+            return primary;
+
+        var secondaryBase = ResolveStatMultiplier(GetStat(stats, hobby.SecondaryStat));
+        var secondary = 1.0 + (secondaryBase - 1.0) * 0.5;
+        return primary * secondary;
+    }
+
+    private static int GetStat(
+        IReadOnlyDictionary<string, int> stats,
+        string statId) =>
+        stats.TryGetValue(statId, out var value)
+            ? Math.Clamp(value, 1, 5)
+            : 3;
+
+    private static double ResolveStatMultiplier(int stat) => stat switch
+    {
+        <= 1 => 0.85,
+        2 => 0.93,
+        3 => 1.00,
+        4 => 1.08,
+        _ => 1.16
+    };
 }

@@ -1,38 +1,26 @@
-Id,Name,StartYear,Emoji,SelfEmploymentTitle,PrimaryCareerId,RelatedCareerIds
-blacksmithing,Blacksmithing,1700,🔨,Blacksmith,blacksmithing,steel_and_foundry|mass_factory_manufacturing
-carpentry,Carpentry,1700,🪚,Carpenter,furniture_and_carpentry,construction|timber_and_sawmills
-masonry,Masonry,1700,🧱,Mason,construction,-
-tailoring,Tailoring,1700,🧵,Tailor,tailoring_and_fashion,textile_mills
-weaving,Weaving,1700,🧶,Weaver,textile_mills,tailoring_and_fashion
-leatherworking,Leatherworking,1700,👞,Leatherworker,leather_and_shoemaking,horse_and_carriage_trade
-baking,Baking,1700,🥖,Baker,baking_and_confectionery,food_processing|hotels_and_restaurants
-butchery,Butchery,1700,🥩,Butcher,meat_trade,food_processing
-cooking,Cooking,1700,🍳,Cook,hotels_and_restaurants,food_processing
-brewing,Brewing,1700,🍺,Brewer,food_processing,hotels_and_restaurants
-milling,Milling,1700,🌾,Miller,agriculture_and_farm_estates,food_processing
-printing,Printing,1700,📰,Printer,traditional_printworks,newspapers_and_publishing
-bookbinding,Bookbinding,1700,📕,Bookbinder,traditional_printworks,newspapers_and_publishing
-jewellery_watchmaking,Jewellery & Watchmaking,1700,💍,Jeweller / Watchmaker,jewellery_and_watchmaking,-
-pottery_glasswork,Pottery & Glasswork,1700,🏺,Potter / Glazier,glass_and_ceramics,construction
-apothecary,Apothecary,1700,⚗️,Apothecary,pharmacy,pharmaceuticals|healthcare_services
-metalworking,Metalworking,1700,⚙️,Metalworker,steel_and_foundry,mass_factory_manufacturing|engineering_services
-wheelwrighting,Wheelwrighting & Coachwork,1700,🛞,Wheelwright,horse_and_carriage_trade,furniture_and_carpentry|automotive_industry
-coopering,Coopering,1700,🛢️,Cooper,food_processing,furniture_and_carpentry|agriculture_and_farm_estates
-locksmithing,Locksmithing,1700,🔐,Locksmith,steel_and_foundry,construction
-boatbuilding,Boatbuilding,1700,🛶,Boatbuilder,shipping_and_ports,furniture_and_carpentry|timber_and_sawmills
-saddlery,Saddlery,1700,🐎,Saddler,horse_and_carriage_trade,leather_and_shoemaking
-mechanical_repair,Mechanical Repair,1800,🔧,Mechanic,engineering_services,railways|mass_factory_manufacturing
-machining,Machining,1850,🛠️,Machinist,mass_factory_manufacturing,engineering_services|automotive_industry|steel_and_foundry
-photography,Photography,1850,📷,Photographer,photography,advertising|cinema_and_film
-plumbing,Plumbing,1850,🚰,Plumber,construction,engineering_services
-electrical_work,Electrical Work,1880,⚡,Electrician,electric_power,construction|electronics_manufacturing
-welding,Welding,1890,🥽,Welder,steel_and_foundry,construction|mass_factory_manufacturing|automotive_industry
-automotive_repair,Automotive Repair,1905,🚗,Auto Mechanic,automotive_industry,engineering_services
-radio_electronics,Radio & Electronics,1920,📻,Radio Technician,electronics_manufacturing,radio_broadcasting|telecommunications
-appliance_repair,Appliance Repair,1950,🔌,Appliance Repairer,consumer_goods_and_appliances,electronics_manufacturing
-computer_hardware,Computer Hardware,1970,🖥️,Computer Technician,computing_and_it_services,electronics_manufacturing
-programming,Programming,1980,💻,Programmer,software_industry,computing_and_it_services|video_game_industry
-network_administration,Network Administration,1990,📡,Network Technician,computing_and_it_services,telecommunications|cybersecurity
-web_design,Web Design,1995,🌐,Web Designer,digital_media,software_industry|e_commerce
-digital_media_editing,Digital Media Editing,1995,🎬,Media Editor,digital_media,advertising|television|cinema_and_film
-cybersecurity,Cybersecurity,2000,🛡️,Security Consultant,cybersecurity,computing_and_it_services
+﻿Id,Name,StartYear,EndYear,MinimumLearningAge,BaseWeight,PrimaryStat,SecondaryStat,TownPreference,MinimumSettlementClass,RequiredOpportunityTags,PreferredOpportunityTags,Emoji
+metalworking,Metalworking,1700,,12,1.25,strength,intellect,Universal,SmallTown,-,steel;heavy_industry;manufacturing,⚒️
+woodworking_carpentry,Woodworking & Carpentry,1700,,10,1.40,strength,intellect,Universal,SmallTown,-,forestry,🪚
+masonry,Masonry,1700,,12,1.00,strength,intellect,Universal,SmallTown,-,manufacturing,🧱
+pottery_ceramics,Pottery & Ceramics,1700,,10,0.85,intellect,strength,Universal,SmallTown,-,manufacturing,🏺
+glassworking,Glassworking,1700,,12,0.60,intellect,strength,Urban,SmallTown,-,chemicals;manufacturing,🪟
+tailoring_sewing,Tailoring & Sewing,1700,,8,1.40,intellect,-,Universal,SmallTown,-,textiles,🧵
+weaving_textiles,Weaving & Textile Work,1700,,8,1.00,intellect,strength,Universal,SmallTown,-,textiles,🧶
+leatherworking_shoemaking,Leatherworking & Shoemaking,1700,,10,1.00,strength,intellect,Universal,SmallTown,-,-,👞
+jewellery_watchmaking,Jewellery & Watchmaking,1700,,12,0.60,intellect,-,Urban,SmallTown,-,finance,⌚
+printing_bookbinding,Printing & Bookbinding,1700,,10,0.70,intellect,strength,Urban,SmallTown,-,media,📚
+baking_confectionery,Baking & Confectionery,1700,,8,1.20,intellect,strength,Universal,SmallTown,-,food,🥖
+food_processing_preservation,Food Processing & Preservation,1700,,8,1.10,intellect,strength,Rural,SmallTown,-,food;agriculture,🫙
+hairdressing_cosmetics,Hairdressing & Cosmetics,1700,,10,1.00,intellect,-,Universal,SmallTown,-,-,✂️
+shipwrighting,Shipwrighting,1700,,12,0.50,strength,intellect,Urban,SmallTown,shipbuilding,port;shipping,⛵
+photography,Photography,1840,,12,0.70,intellect,-,Urban,SmallTown,-,media;tourism,📷
+plumbing,Plumbing & Pipework,1850,,12,1.00,strength,intellect,Urban,SmallTown,-,-,🚰
+machining,Machining,1850,,14,0.80,intellect,strength,Urban,SmallTown,-,manufacturing;heavy_industry;steel,⚙️
+mechanical_repair,Mechanical Repair,1850,,12,1.00,intellect,strength,Universal,SmallTown,-,manufacturing,🔧
+electrical_work,Electrical Work,1880,,14,1.00,intellect,strength,Urban,SmallTown,-,electric_power;manufacturing,⚡
+automotive_repair,Automotive Repair,1900,,14,1.10,intellect,strength,Universal,SmallTown,-,automotive,🚗
+welding_metal_fabrication,Welding & Metal Fabrication,1900,,14,0.90,strength,intellect,Urban,SmallTown,-,steel;heavy_industry;shipbuilding;automotive;manufacturing,🔥
+radio_electronics,Radio & Electronics,1920,,12,0.80,intellect,-,Urban,SmallTown,-,electric_power;technology;manufacturing,📻
+aircraft_maintenance,Aircraft Maintenance,1930,,14,0.40,intellect,strength,Urban,SmallTown,aviation,manufacturing,🛩️
+plastics_fabrication,Plastics Fabrication,1950,,14,0.70,intellect,strength,Urban,SmallTown,-,chemicals;manufacturing,🧪
+computer_hardware_repair,Computer Hardware & Repair,1970,,12,0.80,intellect,-,Urban,SmallTown,-,technology;manufacturing,🖥️

@@ -1,0 +1,18 @@
+﻿CraftId,StartYear,EndYear,DisplayName
+metalworking,1700,1849,Smithing
+metalworking,1850,,Metalworking
+woodworking_carpentry,1700,1849,Carpentry & Joinery
+woodworking_carpentry,1850,,Woodworking & Carpentry
+hairdressing_cosmetics,1700,1899,Barbering & Hairdressing
+hairdressing_cosmetics,1900,,Hairdressing & Cosmetics
+photography,1840,1859,Daguerreotype & Photography
+photography,1860,,Photography
+mechanical_repair,1850,1899,Machine Repair
+mechanical_repair,1900,,Mechanical Repair
+automotive_repair,1900,1945,Motor Mechanics
+automotive_repair,1946,,Automotive Repair
+radio_electronics,1920,1949,Radio Repair
+radio_electronics,1950,1979,Radio & Television Electronics
+radio_electronics,1980,,Electronics
+computer_hardware_repair,1970,1999,Computer Hardware
+computer_hardware_repair,2000,,Computer Hardware & Repair

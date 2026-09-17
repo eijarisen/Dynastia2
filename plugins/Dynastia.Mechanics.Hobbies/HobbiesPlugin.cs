@@ -15,6 +15,7 @@ public sealed class HobbiesPlugin :
         var personality = Require<IPersonalityService>(context, "Personality service");
         var stats = Require<IStatsService>(context, "Stats service");
         var data = Require<IGameDataService>(context, "Game data service");
+        var contextWeights = Require<IContextWeightService>(context, "Context-weight service");
         var events = Require<IGameEventBus>(context, "Event bus");
         var systems = Require<IYearSystemRegistry>(context, "Year-system registry");
         var thoughtProviders = Require<IThoughtProviderRegistry>(context, "Thought provider registry");
@@ -26,7 +27,8 @@ public sealed class HobbiesPlugin :
             locations,
             personality,
             stats,
-            data);
+            data,
+            contextWeights);
 
         context.AddService<IHobbyService>(hobbies);
 

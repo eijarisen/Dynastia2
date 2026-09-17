@@ -10,6 +10,8 @@
     "dynastia.stats",
     "dynastia.economy",
     "dynastia.education",
-    "dynastia.career"
+    "dynastia.career",
+    "dynastia.personality",
+    "dynastia.locations"
   ]
 }

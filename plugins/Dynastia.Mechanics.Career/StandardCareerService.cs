@@ -141,7 +141,9 @@ public sealed partial class StandardCareerService :
 
         var year = _gameState.Year;
         var crafts = _craftResolver();
-        var activeCraft = crafts?.GetActiveCraft(person);
+        var activeCraft = HasCraftOccupation(person)
+            ? crafts?.GetActiveCraft(person)
+            : null;
         var isCraftSelfEmployed = activeCraft is not null;
         var annualIncome = isCraftSelfEmployed
             ? crafts!.GetExpectedAnnualIncome(person)
@@ -188,7 +190,7 @@ public sealed partial class StandardCareerService :
     {
         var career = GetRequired(person);
         return (!career.IsRetired && career.JobLevel > 0)
-            || _craftResolver()?.IsSelfEmployed(person) == true;
+            || HasCraftOccupation(person);
     }
 
     public string? GetCareerFamily(IPerson person)
@@ -290,7 +292,8 @@ public sealed partial class StandardCareerService :
 
         if (targetLevel <= 0)
         {
-            _craftResolver()?.EndOccupation(person, "ended");
+            if (HasCraftOccupation(person))
+                _craftResolver()?.EndOccupation(person, "ended");
 
             career.JobLevel =
                 0;
@@ -466,6 +469,12 @@ public sealed partial class StandardCareerService :
                 career.CareerId;
         }
     }
+
+    // Crafts owns this reconciled cross-plugin tag. Checking it before
+    // reading Craft state keeps freshly-created people safe while preserving
+    // fail-fast reads for people that are actually marked as craft workers.
+    private static bool HasCraftOccupation(IPerson person) =>
+        person.Tags.Has("career.craft_self_employed");
 
     private static CareerComponent GetRequired(
         IPerson person)

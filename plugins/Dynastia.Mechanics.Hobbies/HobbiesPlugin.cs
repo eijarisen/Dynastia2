@@ -49,7 +49,9 @@ public sealed class HobbiesPlugin :
                 ReconciliationLifecycleStage.AfterLoad,
                 ReconciliationLifecycleStage.BeforeYear,
                 ReconciliationLifecycleStage.AfterYear,
-                ReconciliationLifecycleStage.AfterImmediateAction
+                ReconciliationLifecycleStage.AfterImmediateAction,
+                ReconciliationLifecycleStage.AfterQueuedAction,
+                ReconciliationLifecycleStage.AfterPersonCreated
             ],
             _ => hobbies.ReconcileAll(),
             order: 70);

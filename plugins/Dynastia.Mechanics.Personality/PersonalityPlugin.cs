@@ -62,7 +62,9 @@ public sealed class PersonalityPlugin :
                 ReconciliationLifecycleStage.AfterLoad,
                 ReconciliationLifecycleStage.BeforeYear,
                 ReconciliationLifecycleStage.AfterYear,
-                ReconciliationLifecycleStage.AfterImmediateAction
+                ReconciliationLifecycleStage.AfterImmediateAction,
+                ReconciliationLifecycleStage.AfterQueuedAction,
+                ReconciliationLifecycleStage.AfterPersonCreated
             ],
             _ => personality.ReconcileAll(),
             order: 25);

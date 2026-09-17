@@ -302,9 +302,6 @@ public sealed partial class MainWindowViewModel
             nameof(HouseholdIncomeExpensesText));
 
         OnPropertyChanged(
-            nameof(HouseholdResidentsText));
-
-        OnPropertyChanged(
             nameof(HouseholdWarningText));
 
         OnPropertyChanged(

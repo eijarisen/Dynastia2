@@ -91,7 +91,9 @@ public sealed class EconomyPlugin : IGamePlugin
                 ReconciliationLifecycleStage.AfterLoad,
                 ReconciliationLifecycleStage.BeforeYear,
                 ReconciliationLifecycleStage.AfterYear,
-                ReconciliationLifecycleStage.AfterImmediateAction
+                ReconciliationLifecycleStage.AfterImmediateAction,
+                ReconciliationLifecycleStage.AfterQueuedAction,
+                ReconciliationLifecycleStage.AfterPersonCreated
             ],
             _ => economy.ReconcileState(),
             order: 55);

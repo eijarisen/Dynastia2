@@ -220,7 +220,7 @@ public sealed partial class StandardCareerService
 
         var level = Math.Clamp(jobLevel, 0, 5);
 
-        if (_craftResolver()?.IsSelfEmployed(person) == true)
+        if (HasCraftOccupation(person))
         {
             _craftResolver()?.EndOccupation(
                 person,

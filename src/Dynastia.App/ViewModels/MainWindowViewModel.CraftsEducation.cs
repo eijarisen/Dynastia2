@@ -24,11 +24,12 @@ public sealed partial class MainWindowViewModel
     public IReadOnlyList<PropertySelectionOption> GetCraftProfessionOptions()
     {
         var actor = _succession.ActiveController;
-        if (actor is null || _craftService is null)
+        var target = FindSelectedPerson();
+        if (actor is null || target is null || _craftService is null)
             return Array.Empty<PropertySelectionOption>();
 
         var available = _actionRegistry
-            .GetAvailableActions(actor, actor)
+            .GetAvailableActions(actor, target)
             .Where(action => action.Id.StartsWith(
                 "craft.start.",
                 StringComparison.OrdinalIgnoreCase))
@@ -37,11 +38,11 @@ public sealed partial class MainWindowViewModel
                 action => action.Id,
                 StringComparer.OrdinalIgnoreCase);
 
-        return _craftService.GetKnownCrafts(actor)
+        return _craftService.GetKnownCrafts(target)
             .Where(craft => available.ContainsKey(craft.Id))
             .Select(craft =>
             {
-                var progress = _craftService.GetProgress(actor, craft.Id);
+                var progress = _craftService.GetProgress(target, craft.Id);
                 var mastery = progress?.MasteryName ?? "Novice";
                 var years = progress?.RelevantExperienceYears ?? 0;
                 var expected = progress?.ExpectedAnnualIncome ?? 0m;
@@ -61,7 +62,8 @@ public sealed partial class MainWindowViewModel
     public void QueueCraftProfessionAction(string actionId)
     {
         var actor = _succession.ActiveController;
-        if (actor is null || _succession.IsGameOver)
+        var target = FindSelectedPerson();
+        if (actor is null || target is null || _succession.IsGameOver)
             return;
 
         var craftId = actionId.StartsWith(
@@ -69,7 +71,7 @@ public sealed partial class MainWindowViewModel
             StringComparison.OrdinalIgnoreCase)
             ? actionId["craft.start.".Length..]
             : string.Empty;
-        var craftName = _craftService?.GetKnownCrafts(actor)
+        var craftName = _craftService?.GetKnownCrafts(target)
             .FirstOrDefault(craft => craft.Id.Equals(craftId, StringComparison.OrdinalIgnoreCase))?.Name;
         var parameters = string.IsNullOrWhiteSpace(craftName)
             ? null
@@ -78,7 +80,7 @@ public sealed partial class MainWindowViewModel
                 ["summaryCraft"] = craftName
             };
 
-        var result = _actionRegistry.Execute(actionId, actor, actor, parameters);
+        var result = _actionRegistry.Execute(actionId, actor, target, parameters);
         if (!result.Success && !string.IsNullOrWhiteSpace(result.Message))
             PersistenceStatusText = result.Message;
 

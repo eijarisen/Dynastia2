@@ -6,5 +6,7 @@ public enum ReconciliationLifecycleStage
     AfterLoad = 1,
     BeforeYear = 2,
     AfterYear = 3,
-    AfterImmediateAction = 4
+    AfterImmediateAction = 4,
+    AfterQueuedAction = 5,
+    AfterPersonCreated = 6
 }

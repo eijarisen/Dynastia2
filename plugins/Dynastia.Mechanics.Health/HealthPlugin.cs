@@ -55,7 +55,9 @@ public sealed class HealthPlugin : IGamePlugin
                 ReconciliationLifecycleStage.AfterLoad,
                 ReconciliationLifecycleStage.BeforeYear,
                 ReconciliationLifecycleStage.AfterYear,
-                ReconciliationLifecycleStage.AfterImmediateAction
+                ReconciliationLifecycleStage.AfterImmediateAction,
+                ReconciliationLifecycleStage.AfterQueuedAction,
+                ReconciliationLifecycleStage.AfterPersonCreated
             ],
             _ => health.ReconcileAll(state.People),
             order: 40);

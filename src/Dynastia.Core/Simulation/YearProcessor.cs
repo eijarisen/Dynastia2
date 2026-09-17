@@ -43,7 +43,15 @@ public sealed class YearProcessor
                 Console.WriteLine(
                     $"[{_gameState.Year}] Running {system.Id}");
 
+                var peopleCountBefore = _gameState.People.Count;
+
                 system.Execute(_gameState);
+
+                if (_gameState.People.Count > peopleCountBefore)
+                {
+                    _reconciliation?.Reconcile(
+                        ReconciliationLifecycleStage.AfterPersonCreated);
+                }
             }
 
             _reconciliation?.Reconcile(

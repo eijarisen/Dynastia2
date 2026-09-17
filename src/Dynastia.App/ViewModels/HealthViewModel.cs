@@ -4,11 +4,17 @@ namespace Dynastia.App.ViewModels;
 
 public sealed class HealthViewModel
 {
-    public HealthViewModel(HealthSnapshot snapshot)
+    public HealthViewModel(
+        HealthSnapshot snapshot,
+        StressSnapshot? stress = null)
     {
         Current = Math.Round(snapshot.Current);
         Maximum = Math.Round(snapshot.Maximum);
         Percentage = Math.Round(snapshot.Percentage);
+
+        StressText = stress is null
+            ? null
+            : $"Stress: {stress.Total:0.#}/10";
 
         ConditionsText =
             snapshot.Conditions.Count == 0
@@ -26,7 +32,11 @@ public sealed class HealthViewModel
         $"Health: {Current:0}/{Maximum:0}";
 
     public string HealthSummaryText =>
-        $"{HealthText} • {ConditionsText}";
+        StressText is null
+            ? $"{HealthText} • {ConditionsText}"
+            : $"{HealthText} • {StressText} • {ConditionsText}";
+
+    public string? StressText { get; }
 
     public string ConditionsText { get; }
 

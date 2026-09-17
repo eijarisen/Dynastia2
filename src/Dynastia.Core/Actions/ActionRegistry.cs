@@ -446,11 +446,12 @@ public sealed class ActionRegistry : IActionRegistry
                 queued.Parameters,
                 executionContext));
 
-        if (result.Success
-            && action.Mode == ActionExecutionMode.Immediate)
+        if (result.Success)
         {
             _reconciliation?.Reconcile(
-                ReconciliationLifecycleStage.AfterImmediateAction);
+                action.Mode == ActionExecutionMode.Immediate
+                    ? ReconciliationLifecycleStage.AfterImmediateAction
+                    : ReconciliationLifecycleStage.AfterQueuedAction);
         }
 
         return Outcome(

@@ -70,6 +70,15 @@ public static class CareerBalanceRules
         return 0.12 + aptitudeValue * 0.04 + educationValue * 0.04;
     }
 
+    public static double GetTargetLevelPromotionMultiplier(
+        int targetJobLevel) =>
+        targetJobLevel switch
+        {
+            4 => 0.80,
+            >= 5 => 0.35,
+            _ => 1.0
+        };
+
     public static double GetEducationPromotionMultiplier(
         int actualEducation,
         int expectedEducation)

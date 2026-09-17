@@ -61,7 +61,9 @@ public sealed class EducationPlugin : IGamePlugin
                 ReconciliationLifecycleStage.AfterLoad,
                 ReconciliationLifecycleStage.BeforeYear,
                 ReconciliationLifecycleStage.AfterYear,
-                ReconciliationLifecycleStage.AfterImmediateAction
+                ReconciliationLifecycleStage.AfterImmediateAction,
+                ReconciliationLifecycleStage.AfterQueuedAction,
+                ReconciliationLifecycleStage.AfterPersonCreated
             ],
             _ =>
             {

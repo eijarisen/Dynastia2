@@ -14,8 +14,8 @@ public static class CraftRules
         new(1, "Novice", 1, 0.0, 0, 1609.61m),
         new(2, "Apprentice", 2, 3.0, 0, 1742.49m),
         new(3, "Adept", 3, 8.0, 1, 1924.77m),
-        new(4, "Expert", 4, 15.0, 3, 2208.61m),
-        new(5, "Master", 5, 25.0, 8, 2806.17m)
+        new(4, "Expert", 4, 18.0, 4, 2208.61m),
+        new(5, "Master", 5, 34.0, 10, 2806.17m)
     ];
 
     public static IReadOnlyList<CraftMasteryRule> MasteryLevels => MasteryRules;

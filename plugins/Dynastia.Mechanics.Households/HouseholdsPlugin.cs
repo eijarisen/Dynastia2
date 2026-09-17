@@ -127,7 +127,9 @@ public sealed partial class HouseholdsPlugin : IGamePlugin
                 ReconciliationLifecycleStage.AfterLoad,
                 ReconciliationLifecycleStage.BeforeYear,
                 ReconciliationLifecycleStage.AfterYear,
-                ReconciliationLifecycleStage.AfterImmediateAction
+                ReconciliationLifecycleStage.AfterImmediateAction,
+                ReconciliationLifecycleStage.AfterQueuedAction,
+                ReconciliationLifecycleStage.AfterPersonCreated
             ],
             _ => households.ReconcileHouseholds(),
             order: 60);
@@ -264,6 +266,7 @@ public sealed partial class HouseholdsPlugin : IGamePlugin
             family,
             economy,
             economyBalance,
+            locations,
             career,
             education,
             stats,

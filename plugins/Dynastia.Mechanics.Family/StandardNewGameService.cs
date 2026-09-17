@@ -53,6 +53,10 @@ public sealed class StandardNewGameService : INewGameService
                 startYear);
 
         _gameState.ClearPeople();
+        _selection.SelectedPersonId =
+            null;
+        _events.RestoreEvents([]);
+
         _gameState.StartYear =
             startYear;
         _gameState.Year =
@@ -257,9 +261,6 @@ public sealed class StandardNewGameService : INewGameService
             father,
             mother);
 
-        _selection.SelectedPersonId =
-            founder.Id;
-
         _events.Publish(
             new GameEvent
             {
@@ -285,6 +286,9 @@ public sealed class StandardNewGameService : INewGameService
 
         _reconciliation.Reconcile(
             ReconciliationLifecycleStage.AfterNewGame);
+
+        _selection.SelectedPersonId =
+            founder.Id;
 
         return founder;
     }

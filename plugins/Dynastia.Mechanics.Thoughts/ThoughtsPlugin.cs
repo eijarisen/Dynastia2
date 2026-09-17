@@ -136,7 +136,9 @@ public sealed class ThoughtsPlugin :
             [
                 ReconciliationLifecycleStage.AfterNewGame,
                 ReconciliationLifecycleStage.AfterYear,
-                ReconciliationLifecycleStage.AfterImmediateAction
+                ReconciliationLifecycleStage.AfterImmediateAction,
+                ReconciliationLifecycleStage.AfterQueuedAction,
+                ReconciliationLifecycleStage.AfterPersonCreated
             ],
             _ => thoughts.EnsureCurrentThoughts(),
             order: 90);

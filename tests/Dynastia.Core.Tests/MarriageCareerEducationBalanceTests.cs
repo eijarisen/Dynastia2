@@ -148,4 +148,12 @@ public sealed class MarriageCareerEducationBalanceTests
             helpedCeiling,
             EducationProgressionRules.GetHelpedChildhoodCeiling(intellect));
     }
+    [Fact]
+    public void UpperCareerLevelsApplyAdditionalPromotionDifficulty()
+    {
+        Assert.Equal(1.0, CareerBalanceRules.GetTargetLevelPromotionMultiplier(3), 10);
+        Assert.Equal(0.80, CareerBalanceRules.GetTargetLevelPromotionMultiplier(4), 10);
+        Assert.Equal(0.35, CareerBalanceRules.GetTargetLevelPromotionMultiplier(5), 10);
+    }
+
 }

@@ -50,7 +50,9 @@ public sealed partial class StandardCareerService
         }
 
         var activeCraft =
-            _craftResolver()?.GetActiveCraft(person);
+            HasCraftOccupation(person)
+                ? _craftResolver()?.GetActiveCraft(person)
+                : null;
 
         if (activeCraft is not null)
             return activeCraft.Emoji;

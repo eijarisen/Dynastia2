@@ -36,10 +36,12 @@ public sealed class JobOpportunityCardViewModel
     public string ApplicantComparisonText =>
         $"Applicant: {Opportunity.PrimaryAbility} {Opportunity.ApplicantAbilityLevel} · " +
         $"Education {Opportunity.ApplicantEducationLevel} · " +
-        $"Experience {Opportunity.ApplicantExperienceYears}y · " +
+        $"Experience {Opportunity.ApplicantExperienceYears}y" +
         (Opportunity.CraftBonus > 0
-            ? $"Craft bonus +{Opportunity.CraftBonus:P0} · "
-            : string.Empty) +
+            ? $" · Craft bonus +{Opportunity.CraftBonus:P0}"
+            : string.Empty);
+
+    public string ChanceAndSalaryText =>
         $"Chance {Opportunity.SuccessChance:P0} · " +
         $"Salary {Opportunity.AnnualSalary:N0} zł/year";
 }

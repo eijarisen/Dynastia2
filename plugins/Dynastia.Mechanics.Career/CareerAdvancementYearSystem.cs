@@ -155,6 +155,10 @@ public sealed class CareerAdvancementYearSystem :
                 expectedEducation);
 
         promotionChance *=
+            CareerBalanceRules.GetTargetLevelPromotionMultiplier(
+                career.JobLevel + 1);
+
+        promotionChance *=
             obsolescence
                 .PromotionMultiplier;
 

@@ -86,18 +86,20 @@ public sealed class CraftsPlugin : IGamePlugin
                 Mode = ActionExecutionMode.Queued,
                 QueuePhase = YearPhase.LifeEvents,
                 IsAvailable = context =>
-                    context.Actor.Id == context.Target.Id
-                    && context.Actor.Tags.Has("state.alive")
-                    && context.ActorHasControl
-                    && context.Actor.Age >= 18
-                    && !context.Actor.Tags.Has("state.imprisoned")
-                    && crafts.KnowsCraft(context.Actor, definition.Id)
+                    CanDirectCraftOccupation(
+                        context,
+                        family,
+                        economy)
+                    && context.Target.Tags.Has("state.alive")
+                    && context.Target.Age >= 18
+                    && !context.Target.Tags.Has("state.imprisoned")
+                    && crafts.KnowsCraft(context.Target, definition.Id)
                     && !string.Equals(
-                        crafts.GetActiveCraft(context.Actor)?.Id,
+                        crafts.GetActiveCraft(context.Target)?.Id,
                         definition.Id,
                         StringComparison.OrdinalIgnoreCase),
                 Execute = context =>
-                    new GameActionResult(crafts.StartOccupation(context.Actor, definition.Id))
+                    new GameActionResult(crafts.StartOccupation(context.Target, definition.Id))
             });
 
             actions.Register(new GameActionDefinition
@@ -185,14 +187,47 @@ public sealed class CraftsPlugin : IGamePlugin
             Mode = ActionExecutionMode.Queued,
             QueuePhase = YearPhase.LifeEvents,
             IsAvailable = context =>
-                context.Actor.Id == context.Target.Id
-                && context.Actor.Tags.Has("state.alive")
-                && context.ActorHasControl
-                && !context.Actor.Tags.Has("state.imprisoned")
-                && crafts.IsSelfEmployed(context.Actor),
+                CanDirectCraftOccupation(
+                    context,
+                    family,
+                    economy)
+                && context.Target.Tags.Has("state.alive")
+                && !context.Target.Tags.Has("state.imprisoned")
+                && crafts.IsSelfEmployed(context.Target),
             Execute = context =>
-                new GameActionResult(crafts.EndOccupation(context.Actor, "stopped"))
+                new GameActionResult(crafts.EndOccupation(context.Target, "stopped"))
         });
+    }
+
+    private static bool CanDirectCraftOccupation(
+        GameActionContext context,
+        IFamilyService family,
+        IEconomyService economy)
+    {
+        if (!context.ActorHasControl
+            || !context.Actor.Tags.Has("state.alive"))
+        {
+            return false;
+        }
+
+        if (context.Actor.Id == context.Target.Id)
+            return true;
+
+        var actorHouseholdId = economy.GetHouseholdId(context.Actor);
+        if (actorHouseholdId is null
+            || economy.GetHouseholdId(context.Target) != actorHouseholdId)
+        {
+            return false;
+        }
+
+        var isSpouse =
+            family.GetSpouse(context.Actor)?.Id == context.Target.Id;
+
+        var isResidentAdultChild =
+            family.GetChildren(context.Actor)
+                .Any(child => child.Id == context.Target.Id);
+
+        return isSpouse || isResidentAdultChild;
     }
 
     private static IPerson? FindTeacher(
@@ -238,9 +273,13 @@ public sealed class CraftsPlugin : IGamePlugin
                 {
                     var person = gameState.People.FirstOrDefault(candidate => candidate.Id == relatedId);
                     if (person is not null
-                        && person.Age >= 18
-                        && crafts.GetKnownCrafts(person).Count == 0)
+                        && person.Age >= 18)
                     {
+                        // Relationship events are published synchronously while
+                        // generated adults are still being constructed. Reconcile
+                        // Craft-owned state before any Craft read; the general
+                        // AfterPersonCreated lifecycle pass runs only after the
+                        // creating year system returns.
                         InitializeGeneratedAdult(person, gameState.Year, crafts, career);
                     }
                 }

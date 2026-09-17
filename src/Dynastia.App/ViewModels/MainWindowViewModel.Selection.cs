@@ -45,6 +45,8 @@ public sealed partial class MainWindowViewModel
         SelectedHealth =
             new HealthViewModel(
                 _healthService.GetHealth(
+                    person),
+                _stressService?.GetStress(
                     person));
     }
 

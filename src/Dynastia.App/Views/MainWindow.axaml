@@ -1174,13 +1174,6 @@
                                             Spacing="4">
                                             <TextBlock
                                                 HorizontalAlignment="Center"
-                                                FontSize="10.5"
-                                                FontWeight="SemiBold"
-                                                Foreground="#D8C79E"
-                                                Text="{Binding HouseholdResidentsText}" />
-
-                                            <TextBlock
-                                                HorizontalAlignment="Center"
                                                 TextAlignment="Center"
                                                 TextWrapping="Wrap"
                                                 FontSize="10.5"

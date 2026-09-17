@@ -95,8 +95,8 @@ public sealed class CraftRulesTests
             (1, "Novice", 0.0, 0),
             (2, "Apprentice", 3.0, 0),
             (3, "Adept", 8.0, 1),
-            (4, "Expert", 15.0, 3),
-            (5, "Master", 25.0, 8)
+            (4, "Expert", 18.0, 4),
+            (5, "Master", 34.0, 10)
         };
 
         Assert.Equal(expected.Length, CraftRules.MasteryLevels.Count);
@@ -121,12 +121,12 @@ public sealed class CraftRulesTests
     [Fact]
     public void MasteryExperienceGates_CannotBeBoughtAround()
     {
-        Assert.Equal(4, CraftRules.GetMasteryLevel(25.0, 7));
-        Assert.Equal(5, CraftRules.GetMasteryLevel(25.0, 8));
+        Assert.Equal(4, CraftRules.GetMasteryLevel(34.0, 9));
+        Assert.Equal(5, CraftRules.GetMasteryLevel(34.0, 10));
         Assert.Equal(2, CraftRules.GetMasteryLevel(8.0, 0));
         Assert.Equal(3, CraftRules.GetMasteryLevel(8.0, 1));
-        Assert.Equal(3, CraftRules.GetMasteryLevel(15.0, 2));
-        Assert.Equal(4, CraftRules.GetMasteryLevel(15.0, 3));
+        Assert.Equal(3, CraftRules.GetMasteryLevel(18.0, 3));
+        Assert.Equal(4, CraftRules.GetMasteryLevel(18.0, 4));
     }
 
     [Theory]

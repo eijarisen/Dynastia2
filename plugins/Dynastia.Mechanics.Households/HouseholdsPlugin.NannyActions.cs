@@ -10,6 +10,7 @@ public sealed partial class HouseholdsPlugin
         IFamilyService family,
         IEconomyService economy,
         IEconomyBalanceService economyBalance,
+        ILocationService locations,
         ICareerService career,
         IEducationService education,
         IStatsService stats,
@@ -129,6 +130,13 @@ public sealed partial class HouseholdsPlugin
                     education.SetEducationLevel(
                         nanny,
                         0);
+
+                    var actorTown =
+                        locations.GetLocation(actor).HomeTown;
+
+                    locations.SetPersonHomeTown(
+                        nanny,
+                        actorTown);
 
                     career.InitializeCareer(
                         nanny,

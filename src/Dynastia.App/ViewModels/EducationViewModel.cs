@@ -23,7 +23,7 @@ public sealed class EducationViewModel
             : "Crafts: " + string.Join(
                 ", ",
                 crafts.Select(craft =>
-                    $"{craft.CraftName} — {craft.MasteryName} · {craft.RelevantExperienceYears} years"));
+                    $"{craft.CraftName} ({craft.MasteryName})"));
     }
 
     public int Level { get; }

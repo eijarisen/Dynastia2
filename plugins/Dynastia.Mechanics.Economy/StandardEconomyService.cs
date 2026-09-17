@@ -15,13 +15,19 @@ public sealed partial class StandardEconomyService :
     private readonly ILocationService _locations;
     private readonly IIncomeProviderRegistry _income;
     private readonly IHouseholdIncomeProviderRegistry _householdIncome;
+    private readonly IHouseholdFinanceProjectionProviderRegistry _financeProjections;
+    private readonly IStatsService _stats;
+    private readonly IGameRandom _random;
 
     public StandardEconomyService(
         IGameState gameState,
         IFamilyService family,
         ILocationService locations,
         IIncomeProviderRegistry income,
-        IHouseholdIncomeProviderRegistry householdIncome)
+        IHouseholdIncomeProviderRegistry householdIncome,
+        IHouseholdFinanceProjectionProviderRegistry financeProjections,
+        IStatsService stats,
+        IGameRandom random)
     {
         _gameState =
             gameState;
@@ -37,6 +43,15 @@ public sealed partial class StandardEconomyService :
 
         _householdIncome =
             householdIncome;
+
+        _financeProjections =
+            financeProjections;
+
+        _stats =
+            stats;
+
+        _random =
+            random;
     }
 
     public bool HasHousehold(

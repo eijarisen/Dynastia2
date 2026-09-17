@@ -65,6 +65,9 @@ public sealed partial class GameSaveService
             StartYear =
                 _gameState.StartYear,
 
+            RandomState =
+                _random.CaptureState(),
+
             SelectedPersonId =
                 uiState.SelectedPersonId,
 
@@ -106,6 +109,12 @@ public sealed partial class GameSaveService
             var type =
                 component.GetType();
 
+            var componentId =
+                type.GetCustomAttribute<PersistedComponentIdAttribute>()
+                    ?.Id
+                ?? throw new InvalidOperationException(
+                    $"Persisted component '{type.FullName}' has no stable component ID.");
+
             var typeName =
                 type.FullName
                 ?? throw new InvalidOperationException(
@@ -140,6 +149,9 @@ public sealed partial class GameSaveService
             components.Add(
                 new ComponentSaveData
                 {
+                    ComponentId =
+                        componentId,
+
                     AssemblyName =
                         assemblyName,
 

@@ -22,7 +22,7 @@ public sealed partial class StandardEconomyService
             new HouseholdEconomyComponent
             {
                 HouseholdId =
-                    Guid.NewGuid(),
+                    _random.NextGuid(),
 
                 HeadId =
                     head.Id,
@@ -125,7 +125,7 @@ public sealed partial class StandardEconomyService
             == Guid.Empty)
         {
             household.HouseholdId =
-                Guid.NewGuid();
+                _random.NextGuid();
         }
 
         if (household.HeadId
@@ -223,7 +223,7 @@ public sealed partial class StandardEconomyService
                     new HousePropertyState
                     {
                         Id =
-                            Guid.NewGuid(),
+                            _random.NextGuid(),
 
                         Town =
                             town
@@ -236,7 +236,7 @@ public sealed partial class StandardEconomyService
         {
             house.Id =
                 house.Id == Guid.Empty
-                    ? Guid.NewGuid()
+                    ? _random.NextGuid()
                     : house.Id;
 
             house.Town ??=
@@ -287,7 +287,7 @@ public sealed partial class StandardEconomyService
         {
             house.Id =
                 house.Id == Guid.Empty
-                    ? Guid.NewGuid()
+                    ? _random.NextGuid()
                     : house.Id;
 
             house.Town ??=
@@ -318,7 +318,7 @@ public sealed partial class StandardEconomyService
         return new HousePropertyState
         {
             Id =
-                Guid.NewGuid(),
+                _random.NextGuid(),
 
             Town =
                 town

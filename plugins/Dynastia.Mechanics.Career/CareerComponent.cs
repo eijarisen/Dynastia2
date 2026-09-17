@@ -1,5 +1,8 @@
+using Dynastia.Contracts;
+
 namespace Dynastia.Mechanics.Career;
 
+[PersistedComponentId("career.person")]
 public sealed class CareerComponent
 {
     public string? CareerId { get; set; }

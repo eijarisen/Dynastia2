@@ -1,5 +1,8 @@
+using Dynastia.Contracts;
+
 namespace Dynastia.Mechanics.Economy;
 
+[PersistedComponentId("economy.personal_estate")]
 public sealed class PersonalEstateComponent
 {
     public decimal PendingInheritance { get; set; }

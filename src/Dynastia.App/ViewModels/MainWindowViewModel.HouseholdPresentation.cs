@@ -31,12 +31,14 @@ public sealed partial class MainWindowViewModel
             var head =
                 GetDisplayedHouseholdHead();
 
-            var projected =
+            var forecast =
                 head is null
-                    ? finance.LastIncome
-                    : (_economyService?.GetProjectedAnnualIncome(head)
-                        ?? finance.LastIncome)
-                      + GetProjectedLoanIncome(head);
+                    ? null
+                    : _economyService?.GetAnnualForecast(head);
+
+            var projected =
+                forecast?.ProjectedIncome
+                ?? finance.LastIncome;
 
             return $"Income: {projected:N0} zł";
         }
@@ -56,25 +58,10 @@ public sealed partial class MainWindowViewModel
                 GetDisplayedHouseholdHead();
 
             var projected =
-                (head is null
+                head is null
                     ? finance.LastIncomeBreakdown
-                    : _economyService?.GetProjectedIncomeBreakdown(head)
-                        ?? finance.LastIncomeBreakdown)
-                .ToList();
-
-            if (head is not null)
-            {
-                var loanIncome =
-                    GetProjectedLoanIncome(head);
-
-                if (loanIncome > 0)
-                {
-                    projected.Add(
-                        new FinanceBreakdownItem(
-                            "loan repayments",
-                            loanIncome));
-                }
-            }
+                    : _economyService?.GetAnnualForecast(head)?.IncomeBreakdown
+                        ?? finance.LastIncomeBreakdown;
 
             return FormatFinanceBreakdown(
                 projected,
@@ -89,10 +76,16 @@ public sealed partial class MainWindowViewModel
             var finance =
                 GetDisplayedHouseholdFinance();
 
-            return finance is null
-                ? string.Empty
-                : $"Expenses: " +
-                  $"{finance.LastExpenses:N0} zł";
+            if (finance is null)
+                return string.Empty;
+
+            var head = GetDisplayedHouseholdHead();
+            var projected = head is null
+                ? finance.LastExpenses
+                : _economyService?.GetAnnualForecast(head)?.ProjectedExpenses
+                    ?? finance.LastExpenses;
+
+            return $"Expenses: {projected:N0} zł";
         }
     }
 
@@ -106,9 +99,15 @@ public sealed partial class MainWindowViewModel
             if (finance is null)
                 return string.Empty;
 
+            var head = GetDisplayedHouseholdHead();
+            var projected = head is null
+                ? finance.LastExpenseBreakdown
+                : _economyService?.GetAnnualForecast(head)?.ExpenseBreakdown
+                    ?? finance.LastExpenseBreakdown;
+
             return FormatFinanceBreakdown(
-                finance.LastExpenseBreakdown,
-                "No expenses were recorded in the last annual finance pass.");
+                projected,
+                "No projected annual expenses.");
         }
     }
 
@@ -232,15 +231,6 @@ public sealed partial class MainWindowViewModel
                 value =>
                     !string.IsNullOrWhiteSpace(
                         value)));
-
-    private decimal GetProjectedLoanIncome(
-        IPerson householdRepresentative)
-    {
-        return _loanService?
-            .GetLoansGiven(householdRepresentative)
-            .Sum(loan => loan.AnnualPayment)
-            ?? 0m;
-    }
 
     private HouseholdFinanceSnapshot?
         GetDisplayedHouseholdFinance()

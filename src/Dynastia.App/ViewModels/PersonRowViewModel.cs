@@ -39,9 +39,8 @@ public sealed class PersonRowViewModel
 
         if (economy is not null)
         {
-            var projectedIncome =
-                economyService?.GetProjectedAnnualIncome(person)
-                ?? economy.LastIncome;
+            var forecast =
+                economyService?.GetAnnualForecast(person);
 
             ShowHousehold = true;
             BudgetText = $"${economy.Wealth:N0}";
@@ -51,7 +50,8 @@ public sealed class PersonRowViewModel
 
             HousesText = $"Houses: {economy.HousesOwned}   •   Farmland: {farmlandCount}";
             IncomeExpensesText =
-                $"+${projectedIncome:N0} / -${economy.LastExpenses:N0}";
+                $"+${(forecast?.ProjectedIncome ?? economy.LastIncome):N0} / " +
+                $"-${(forecast?.ProjectedExpenses ?? economy.LastExpenses):N0}";
 
             var status =
                 householdService?.GetStatus(person);

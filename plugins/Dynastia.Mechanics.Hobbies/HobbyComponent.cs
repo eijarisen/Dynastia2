@@ -1,5 +1,8 @@
+using Dynastia.Contracts;
+
 namespace Dynastia.Mechanics.Hobbies;
 
+[PersistedComponentId("hobbies.person")]
 public sealed class HobbyComponent
 {
     public int HobbyCapacity { get; set; }

@@ -1,5 +1,8 @@
+using Dynastia.Contracts;
+
 namespace Dynastia.Mechanics.RareEvents;
 
+[PersistedComponentId("rare_events.recent_life_event")]
 public sealed class RecentLifeEventComponent
 {
     public List<RecentLifeEventFlagState> Flags { get; set; } = [];

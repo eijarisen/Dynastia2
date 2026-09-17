@@ -136,7 +136,7 @@ public sealed class ContentReworkBatch2CareerCrimeTests
         var sanguine = Chance(new ContextWeightContext(2026, 40, Sex.Male, "Sanguine", "Neutral"));
         var choleric = Chance(new ContextWeightContext(2026, 40, Sex.Male, "Choleric", "Neutral"));
 
-        Assert.Equal(0.0216, phlegmatic, 6);
+        Assert.Equal(0.00864, phlegmatic, 6);
         Assert.Equal(melancholic, phlegmatic, 6);
         Assert.True(sanguine < phlegmatic);
         Assert.True(choleric > phlegmatic);
@@ -148,21 +148,21 @@ public sealed class ContentReworkBatch2CareerCrimeTests
         Assert.True(evil > neutral);
 
         Assert.Equal(
-            0.0069,
+            0.001656,
             Chance(new ContextWeightContext(2026, 40, Sex.Female, "Sanguine", "Good")),
             6);
         Assert.Equal(
-            0.0577368,
+            0.02309472,
             Chance(new ContextWeightContext(2026, 25, Sex.Male, "Choleric", "Evil")),
             6);
         Assert.Equal(
-            0.0539136,
+            0.02156544,
             Chance(new ContextWeightContext(2026, 25, Sex.Male, "Phlegmatic", "Neutral"), broke: true, stress: 5),
             6);
     }
 
     [Fact]
-    public void PovertyAndStressRaiseAttemptChanceWithoutExceedingTenPercentCap()
+    public void PovertyAndStressRaiseAttemptChanceWithoutExceedingConfiguredCap()
     {
         var rules = LoadAttemptRules(CreateRepositoryData());
         var baseline = CrimeRules.CalculateAttemptChance(rules, 1.0, broke: false, stress: 0);
@@ -170,10 +170,10 @@ public sealed class ContentReworkBatch2CareerCrimeTests
         var stressed = CrimeRules.CalculateAttemptChance(rules, 1.0, broke: false, stress: 5);
         var extreme = CrimeRules.CalculateAttemptChance(rules, 99, broke: true, stress: 999);
 
-        Assert.Equal(0.02, baseline, 6);
+        Assert.Equal(0.008, baseline, 6);
         Assert.True(poor > baseline);
         Assert.True(stressed > baseline);
-        Assert.Equal(0.10, extreme, 6);
+        Assert.Equal(0.04, extreme, 6);
     }
 
     [Fact]

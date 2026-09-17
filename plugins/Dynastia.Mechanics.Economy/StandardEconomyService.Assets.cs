@@ -237,7 +237,7 @@ public sealed partial class StandardEconomyService
             new HousePropertyState
             {
                 Id =
-                    Guid.NewGuid(),
+                    _random.NextGuid(),
 
                 Town =
                     assignedTown

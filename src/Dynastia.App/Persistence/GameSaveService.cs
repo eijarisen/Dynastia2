@@ -6,10 +6,10 @@ using Dynastia.Contracts;
 
 namespace Dynastia.App.Persistence;
 
-public sealed partial class GameSaveService
+public sealed partial class GameSaveService : IYearExecutionBoundary
 {
     private const int CurrentFormatVersion =
-        1;
+        2;
 
     private const string CipherKey =
         "dynastia_secret_key";
@@ -20,6 +20,7 @@ public sealed partial class GameSaveService
     private readonly IGameEventBus _events;
     private readonly IActionRegistry _actions;
     private readonly IBiographyService? _biography;
+    private readonly IStatefulGameRandom _random;
 
     private static readonly JsonSerializerOptions
         SaveJsonOptions =
@@ -52,7 +53,8 @@ public sealed partial class GameSaveService
         ISuccessionService succession,
         IGameEventBus events,
         IActionRegistry actions,
-        IBiographyService? biography)
+        IBiographyService? biography,
+        IStatefulGameRandom random)
     {
         _gameState = gameState;
         _selection = selection;
@@ -60,6 +62,8 @@ public sealed partial class GameSaveService
         _events = events;
         _actions = actions;
         _biography = biography;
+        _random = random
+            ?? throw new ArgumentNullException(nameof(random));
     }
 
     public string GetSuggestedFileName()
@@ -181,6 +185,10 @@ public sealed partial class GameSaveService
             PrepareComponents(
                 loaded);
 
+        ValidatePreparedReferences(
+            loaded,
+            prepared);
+
         DesktopSaveEnvelope? backup =
             null;
 
@@ -231,6 +239,48 @@ public sealed partial class GameSaveService
             loaded.AlbumYear,
             loaded.IsLivingFamilyView,
             loaded.DetailsTabIndex);
+    }
+
+    public IYearExecutionCheckpoint Capture()
+    {
+        var activeId = _succession.ActiveController?.Id;
+        var snapshot = Capture(
+            new GameUiSaveState(
+                _selection.SelectedPersonId,
+                activeId,
+                _gameState.Year,
+                true,
+                0));
+
+        var prepared = PrepareComponents(snapshot);
+        return new SaveCheckpoint(this, snapshot, prepared);
+    }
+
+    private sealed class SaveCheckpoint : IYearExecutionCheckpoint
+    {
+        private readonly GameSaveService _owner;
+        private readonly DesktopSaveEnvelope _snapshot;
+        private readonly PreparedComponents _prepared;
+        private bool _restored;
+
+        public SaveCheckpoint(
+            GameSaveService owner,
+            DesktopSaveEnvelope snapshot,
+            PreparedComponents prepared)
+        {
+            _owner = owner;
+            _snapshot = snapshot;
+            _prepared = prepared;
+        }
+
+        public void Restore()
+        {
+            if (_restored)
+                return;
+
+            _owner.Apply(_snapshot, _prepared);
+            _restored = true;
+        }
     }
 
 }

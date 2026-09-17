@@ -34,6 +34,8 @@ public sealed partial class GameSaveService
 
         public int StartYear { get; set; }
 
+        public GameRandomState? RandomState { get; set; }
+
         public Guid? SelectedPersonId { get; set; }
 
         public Guid? ActiveControllerId { get; set; }
@@ -85,6 +87,9 @@ public sealed partial class GameSaveService
 
     private sealed class ComponentSaveData
     {
+        public string ComponentId { get; set; } =
+            string.Empty;
+
         public string AssemblyName { get; set; } =
             string.Empty;
 
@@ -172,6 +177,8 @@ public sealed partial class GameSaveService
 
         public YearPhase Phase { get; set; }
 
+        public string? Description { get; set; }
+
         public Guid ActorId { get; set; }
 
         public Guid TargetId { get; set; }
@@ -192,6 +199,9 @@ public sealed partial class GameSaveService
 
                 Phase =
                     action.Phase,
+
+                Description =
+                    action.Description,
 
                 ActorId =
                     action.ActorId,
@@ -216,7 +226,8 @@ public sealed partial class GameSaveService
                 Phase,
                 ActorId,
                 TargetId,
-                Parameters: Parameters);
+                Description,
+                Parameters);
         }
     }
 

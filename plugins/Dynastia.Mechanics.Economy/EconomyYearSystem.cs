@@ -5,12 +5,6 @@ namespace Dynastia.Mechanics.Economy;
 public sealed class EconomyYearSystem :
     IYearSystem
 {
-    private const decimal NannyExpense =
-        250m;
-
-    private const decimal EfficientHouseholdMultiplier =
-        0.95m;
-
     private const double CarefulManagementChance =
         0.05;
 
@@ -233,20 +227,10 @@ public sealed class EconomyYearSystem :
         var homeTown = _locations.GetLocation(head).HomeTown;
 
         var livingCosts =
-            members.Count
-            * _economy.GetLivingCostPerPerson(homeTown);
-
-        if (HasExceptionalIntellect(head))
-        {
-            livingCosts *=
-                EfficientHouseholdMultiplier;
-        }
-
-        livingCosts =
-            Math.Round(
-                livingCosts,
-                0,
-                MidpointRounding.AwayFromZero);
+            EconomyAnnualRules.CalculateLivingCosts(
+                members.Count,
+                _economy.GetLivingCostPerPerson(homeTown),
+                HasExceptionalIntellect(head));
 
         if (livingCosts > 0)
         {
@@ -281,12 +265,12 @@ public sealed class EconomyYearSystem :
                 });
         }
 
-        if (ShouldChargeNanny(
+        if (EconomyAnnualRules.ShouldChargeNanny(
             gameState,
             household))
         {
             expenses +=
-                NannyExpense;
+                EconomyAnnualRules.NannyExpense;
 
             household.LastExpenseBreakdown.Add(
                 new LedgerLineState
@@ -295,7 +279,7 @@ public sealed class EconomyYearSystem :
                         "nanny",
 
                     Amount =
-                        NannyExpense
+                        EconomyAnnualRules.NannyExpense
                 });
         }
 
@@ -326,28 +310,6 @@ public sealed class EconomyYearSystem :
                     "intellect",
                     StringComparison.OrdinalIgnoreCase)
                 && stat.Value == 5);
-    }
-
-    private static bool ShouldChargeNanny(
-        IGameState gameState,
-        HouseholdEconomyComponent household)
-    {
-        if (household.NannyId
-            is not Guid nannyId)
-        {
-            return false;
-        }
-
-        var nanny =
-            gameState.People
-                .FirstOrDefault(
-                    person =>
-                        person.Id
-                        == nannyId);
-
-        return nanny is null
-            || !nanny.Tags.Has(
-                "role.family_nanny");
     }
 
     private decimal AddPersonIncome(

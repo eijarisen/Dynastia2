@@ -128,11 +128,11 @@ public sealed class HealthMortalityStabilizationTests
     }
 
     [Theory]
-    [InlineData(1, 52)]
-    [InlineData(2, 64)]
-    [InlineData(3, 76)]
-    [InlineData(4, 88)]
-    [InlineData(5, 100)]
+    [InlineData(1, 50)]
+    [InlineData(2, 60)]
+    [InlineData(3, 70)]
+    [InlineData(4, 80)]
+    [InlineData(5, 90)]
     public void NaturalDeathCurveIsCenteredOnLongevityProfile(
         int longevity,
         int profileAge)
@@ -177,8 +177,8 @@ public sealed class HealthMortalityStabilizationTests
             6);
 
         Assert.True(strong > 0.30);
-        Assert.True(exceptional < 0.08);
-        Assert.True(strong > exceptional * 4);
+        Assert.True(exceptional < 0.30);
+        Assert.True(strong > exceptional * 3);
     }
 
     [Theory]

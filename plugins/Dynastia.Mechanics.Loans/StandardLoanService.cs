@@ -9,17 +9,20 @@ public sealed partial class StandardLoanService :
     private readonly IFamilyService _family;
     private readonly IEconomyService _economy;
     private readonly LoanEraCatalog _loanEras;
+    private readonly IGameRandom _random;
 
     public StandardLoanService(
         IGameState gameState,
         IFamilyService family,
         IEconomyService economy,
-        LoanEraCatalog loanEras)
+        LoanEraCatalog loanEras,
+        IGameRandom random)
     {
         _gameState = gameState;
         _family = family;
         _economy = economy;
         _loanEras = loanEras;
+        _random = random;
     }
 
     public LoanTermsInfo CalculateTerms(
@@ -129,6 +132,7 @@ public sealed partial class StandardLoanService :
         var contract =
             new LoanContractState
             {
+                ContractId = _random.NextGuid(),
                 CreditorType = LoanCreditorType.Bank,
                 Principal = terms.Principal,
                 DurationYears = terms.DurationYears,
@@ -162,6 +166,7 @@ public sealed partial class StandardLoanService :
         var contract =
             new LoanContractState
             {
+                ContractId = _random.NextGuid(),
                 CreditorType = LoanCreditorType.Private,
                 Principal = terms.Principal,
                 DurationYears = terms.DurationYears,
@@ -212,6 +217,10 @@ public sealed partial class StandardLoanService :
             }
         }
     }
+
+
+    internal Guid NextContractId() =>
+        _random.NextGuid();
 
     internal LoanPortfolioComponent? GetPortfolio(
         IPerson person,

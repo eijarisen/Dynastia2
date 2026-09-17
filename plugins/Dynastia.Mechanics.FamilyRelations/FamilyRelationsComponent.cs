@@ -1,5 +1,8 @@
+using Dynastia.Contracts;
+
 namespace Dynastia.Mechanics.FamilyRelations;
 
+[PersistedComponentId("family_relations.person")]
 public sealed class FamilyRelationsComponent
 {
     public List<FamilyRelationshipData> Relationships { get; set; } = [];

@@ -2,6 +2,8 @@ namespace Dynastia.Contracts;
 
 public interface IActionRegistry
 {
+    IReadOnlyList<QueuedActionOutcome> LastQueuedActionOutcomes { get; }
+
     void Register(
         GameActionDefinition action);
 
@@ -11,6 +13,12 @@ public interface IActionRegistry
     IReadOnlyList<GameActionDefinition> GetAvailableActions(
         IPerson actor,
         IPerson target);
+
+    ActionEvaluationResult Evaluate(
+        string actionId,
+        IPerson actor,
+        IPerson target,
+        IReadOnlyDictionary<string, string>? parameters = null);
 
     IReadOnlyList<GameActionDefinition> GetAvailableActions(
         IPerson actor,
@@ -42,7 +50,7 @@ public interface IActionRegistry
     void CancelQueuedActions(
         IPerson actor);
 
-    void ExecuteQueued(
+    IReadOnlyList<QueuedActionOutcome> ExecuteQueued(
         YearPhase phase);
 
     void RestoreQueuedActions(

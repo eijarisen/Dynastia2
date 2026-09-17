@@ -1,7 +1,7 @@
 {
-  "baseAttemptChance": 0.02,
-  "minimumAttemptChance": 0.002,
-  "maximumAttemptChance": 0.1,
+  "baseAttemptChance": 0.008,
+  "minimumAttemptChance": 0.0004,
+  "maximumAttemptChance": 0.04,
   "povertyMultiplier": 1.6,
   "stressMultiplierPerPoint": 0.06,
   "maximumStressMultiplier": 1.6,

@@ -1,5 +1,8 @@
+using Dynastia.Contracts;
+
 namespace Dynastia.Mechanics.Education;
 
+[PersistedComponentId("education.person")]
 public sealed class EducationComponent
 {
     public int Level { get; set; }

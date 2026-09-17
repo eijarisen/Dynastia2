@@ -30,7 +30,7 @@ public sealed partial class StandardEconomyService
 
         var state = new FarmlandAssetState
         {
-            Id = Guid.NewGuid(),
+            Id = _random.NextGuid(),
             TownId = town.Id,
             AcquiredYear = acquiredYear,
             AcquisitionSource = string.IsNullOrWhiteSpace(acquisitionSource)
@@ -56,7 +56,7 @@ public sealed partial class StandardEconomyService
 
         household.Farmland.Add(new FarmlandAssetState
         {
-            Id = farmland.Id == Guid.Empty ? Guid.NewGuid() : farmland.Id,
+            Id = farmland.Id == Guid.Empty ? _random.NextGuid() : farmland.Id,
             TownId = farmland.Town.Id,
             AcquiredYear = farmland.AcquiredYear,
             AcquisitionSource = farmland.AcquisitionSource,
@@ -152,7 +152,7 @@ public sealed partial class StandardEconomyService
 
         claim.PendingFarmland.Add(new FarmlandAssetState
         {
-            Id = farmland.Id == Guid.Empty ? Guid.NewGuid() : farmland.Id,
+            Id = farmland.Id == Guid.Empty ? _random.NextGuid() : farmland.Id,
             TownId = farmland.Town.Id,
             AcquiredYear = farmland.AcquiredYear,
             AcquisitionSource = farmland.AcquisitionSource,
@@ -194,7 +194,7 @@ public sealed partial class StandardEconomyService
         FarmlandAssetState asset)
     {
         asset.Id = asset.Id == Guid.Empty
-            ? Guid.NewGuid()
+            ? _random.NextGuid()
             : asset.Id;
 
         asset.AcquisitionSource = string.IsNullOrWhiteSpace(asset.AcquisitionSource)

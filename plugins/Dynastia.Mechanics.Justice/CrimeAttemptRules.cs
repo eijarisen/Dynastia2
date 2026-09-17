@@ -2,9 +2,9 @@ namespace Dynastia.Mechanics.Justice;
 
 public sealed class CrimeAttemptRules
 {
-    public double BaseAttemptChance { get; init; } = 0.02;
-    public double MinimumAttemptChance { get; init; } = 0.002;
-    public double MaximumAttemptChance { get; init; } = 0.10;
+    public double BaseAttemptChance { get; init; } = 0.008;
+    public double MinimumAttemptChance { get; init; } = 0.0004;
+    public double MaximumAttemptChance { get; init; } = 0.04;
     public double PovertyMultiplier { get; init; } = 1.60;
     public double StressMultiplierPerPoint { get; init; } = 0.06;
     public double MaximumStressMultiplier { get; init; } = 1.60;

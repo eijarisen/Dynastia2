@@ -20,7 +20,7 @@ public sealed partial class AboutTextBuilder
         40;
 
     private const int LongevityMultiplier =
-        12;
+        10;
 
     private readonly IGameState _gameState;
     private readonly IFamilyService _family;

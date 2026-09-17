@@ -76,7 +76,7 @@ public sealed partial class MainWindowViewModel
                 : new EconomyViewModel(
                     snapshot,
                     status,
-                    _economyService.GetProjectedAnnualIncome(person));
+                    _economyService.GetAnnualForecast(person));
     }
 
     private void RefreshEducation()

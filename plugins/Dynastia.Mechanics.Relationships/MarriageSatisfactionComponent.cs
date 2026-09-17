@@ -1,5 +1,8 @@
+using Dynastia.Contracts;
+
 namespace Dynastia.Mechanics.Relationships;
 
+[PersistedComponentId("relationships.marriage_satisfaction")]
 public sealed class MarriageSatisfactionComponent
 {
     public Guid SpouseId { get; set; }

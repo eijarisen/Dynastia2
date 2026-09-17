@@ -2,6 +2,7 @@ using Dynastia.Contracts;
 
 namespace Dynastia.Mechanics.Family;
 
+[PersistedComponentId("family.person")]
 public sealed class FamilyComponent
 {
     public Sex Sex { get; set; }

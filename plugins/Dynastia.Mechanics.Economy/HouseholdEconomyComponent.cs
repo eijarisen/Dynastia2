@@ -1,5 +1,8 @@
+using Dynastia.Contracts;
+
 namespace Dynastia.Mechanics.Economy;
 
+[PersistedComponentId("economy.household")]
 public sealed class HouseholdEconomyComponent
 {
     public Guid HouseholdId { get; set; }

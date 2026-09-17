@@ -28,37 +28,18 @@ public sealed partial class MainWindowViewModel
         var farming =
             _farmingService?.GetSnapshot(actor);
 
+        var forecast =
+            _economyService.GetAnnualForecast(actor);
+
         var incomeLines =
-            _economyService
-                .GetProjectedIncomeBreakdown(actor)
-                .Where(line =>
-                    !line.Label.Equals(
-                        "farming",
-                        StringComparison.OrdinalIgnoreCase))
-                .Select(FormatInventoryIncomeLine)
-                .ToList();
-
-        if (farming is { TotalParcelCount: > 0 })
-        {
-            incomeLines.Add(
-                new FinanceBreakdownItem(
-                    "Farming",
-                    farming.LastAnnualIncome));
-        }
-
-        var loanIncome =
-            GetProjectedLoanIncome(actor);
-
-        if (loanIncome > 0)
-        {
-            incomeLines.Add(
-                new FinanceBreakdownItem(
-                    "loan repayments",
-                    loanIncome));
-        }
+            (forecast?.IncomeBreakdown
+                ?? finance.LastIncomeBreakdown)
+            .Select(FormatInventoryIncomeLine)
+            .ToList();
 
         var incomeTotal =
-            incomeLines.Sum(line => line.Amount);
+            forecast?.ProjectedIncome
+            ?? finance.LastIncome;
 
         var debts =
             _loanService?.GetDebts(actor)
@@ -69,19 +50,13 @@ public sealed partial class MainWindowViewModel
             ?? Array.Empty<LoanContractInfo>();
 
         var expenseLines =
-            finance.LastExpenseBreakdown
-                .ToList();
+            (forecast?.ExpenseBreakdown
+                ?? finance.LastExpenseBreakdown)
+            .ToList();
 
-        var debtPayments =
-            debts.Sum(debt => debt.AnnualPayment);
-
-        if (debtPayments > 0)
-        {
-            expenseLines.Add(
-                new FinanceBreakdownItem(
-                    "loan repayments",
-                    debtPayments));
-        }
+        var projectedExpenses =
+            forecast?.ProjectedExpenses
+            ?? finance.LastExpenses;
 
         var children =
             (_familyService?.GetChildren(actor)
@@ -113,7 +88,7 @@ public sealed partial class MainWindowViewModel
             householdName,
             finance.Wealth,
             incomeTotal,
-            finance.LastExpenses + debtPayments,
+            projectedExpenses,
             incomeLines,
             expenseLines,
             debts,

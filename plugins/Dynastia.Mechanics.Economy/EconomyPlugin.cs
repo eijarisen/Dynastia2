@@ -51,19 +51,28 @@ public sealed class EconomyPlugin : IGamePlugin
         var householdIncomeRegistry =
             new HouseholdIncomeProviderRegistry();
 
+        var financeProjectionRegistry =
+            new HouseholdFinanceProjectionProviderRegistry();
+
         var economy =
             new StandardEconomyService(
                 gameState,
                 family,
                 locations,
                 incomeRegistry,
-                householdIncomeRegistry);
+                householdIncomeRegistry,
+                financeProjectionRegistry,
+                stats,
+                random);
 
         context.AddService<IIncomeProviderRegistry>(
             incomeRegistry);
 
         context.AddService<IHouseholdIncomeProviderRegistry>(
             householdIncomeRegistry);
+
+        context.AddService<IHouseholdFinanceProjectionProviderRegistry>(
+            financeProjectionRegistry);
 
         context.AddService<IEconomyService>(
             economy);

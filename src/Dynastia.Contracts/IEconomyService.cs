@@ -19,6 +19,9 @@ public interface IEconomyService
     IReadOnlyList<FinanceBreakdownItem> GetProjectedIncomeBreakdown(
         IPerson person);
 
+    HouseholdAnnualForecast? GetAnnualForecast(
+        IPerson person);
+
     Guid? GetHouseholdId(
         IPerson person);
 

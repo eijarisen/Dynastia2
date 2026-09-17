@@ -2,6 +2,7 @@ using Dynastia.Contracts;
 
 namespace Dynastia.Mechanics.Appearance;
 
+[PersistedComponentId("appearance.person")]
 public sealed class AppearanceComponent
 {
     public HairColor HairGeneA { get; set; }

@@ -1,5 +1,8 @@
+using Dynastia.Contracts;
+
 namespace Dynastia.Mechanics.Stats;
 
+[PersistedComponentId("stats.person")]
 public sealed class StatsComponent
 {
     // Hereditary/base values. Genetics reads only this dictionary.

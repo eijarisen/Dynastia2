@@ -29,17 +29,17 @@ public partial class App : Application
         if (ApplicationLifetime
             is IClassicDesktopStyleApplicationLifetime desktop)
         {
+            var gameRandom =
+                new GameRandom();
+
             var gameState =
-                new GameState();
+                new GameState(gameRandom);
 
             var registry =
                 new YearSystemRegistry();
 
             var selectionService =
                 new SelectionService();
-
-            var gameRandom =
-                new GameRandom();
 
             var gameCalendar =
                 new GameCalendar();
@@ -153,11 +153,6 @@ public partial class App : Application
                     "No Succession service was registered. " +
                     "Is dynastia.succession installed?");
 
-            var yearProcessor =
-                new YearProcessor(
-                    gameState,
-                    registry);
-
             var statsService =
                 pluginContext.GetService<IStatsService>();
 
@@ -249,7 +244,14 @@ public partial class App : Application
                     successionService,
                     eventBus,
                     actionRegistry,
-                    biographyService);
+                    biographyService,
+                    gameRandom);
+
+            var yearProcessor =
+                new YearProcessor(
+                    gameState,
+                    registry,
+                    saveService);
 
             var genealogyDataSource =
                 familyService is null

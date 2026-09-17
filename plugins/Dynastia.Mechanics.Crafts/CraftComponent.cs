@@ -1,5 +1,8 @@
+using Dynastia.Contracts;
+
 namespace Dynastia.Mechanics.Crafts;
 
+[PersistedComponentId("crafts.person")]
 public sealed class CraftComponent
 {
     public List<string> CraftIds { get; set; } = [];

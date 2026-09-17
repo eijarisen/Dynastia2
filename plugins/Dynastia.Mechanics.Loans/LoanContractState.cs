@@ -4,7 +4,7 @@ namespace Dynastia.Mechanics.Loans;
 
 public sealed class LoanContractState
 {
-    public Guid ContractId { get; set; } = Guid.NewGuid();
+    public Guid ContractId { get; set; }
     public LoanCreditorType CreditorType { get; set; }
     public decimal Principal { get; set; }
     public int DurationYears { get; set; }

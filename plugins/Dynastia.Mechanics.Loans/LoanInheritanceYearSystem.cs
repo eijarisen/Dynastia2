@@ -197,6 +197,7 @@ internal sealed class LoanInheritanceYearSystem :
             portfolio.Contracts.Add(
                 new LoanContractState
                 {
+                    ContractId = _loans.NextContractId(),
                     CreditorType = contract.CreditorType,
                     Principal = principals[index],
                     DurationYears = remainingYears,

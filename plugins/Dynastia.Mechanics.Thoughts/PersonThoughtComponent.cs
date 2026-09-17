@@ -1,5 +1,8 @@
+using Dynastia.Contracts;
+
 namespace Dynastia.Mechanics.Thoughts;
 
+[PersistedComponentId("thoughts.person")]
 public sealed class PersonThoughtComponent
 {
     public int Year { get; set; }

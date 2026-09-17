@@ -15,6 +15,9 @@ public sealed class LoansPlugin :
         var gameState =
             Require<IGameState>(context, "Game state");
 
+        var random =
+            Require<IGameRandom>(context, "Random service");
+
         var family =
             Require<IFamilyService>(context, "Family service");
 
@@ -62,10 +65,14 @@ public sealed class LoansPlugin :
                 gameState,
                 family,
                 economy,
-                loanEras);
+                loanEras,
+                random);
 
         context.AddService<ILoanService>(
             loans);
+
+        context.GetService<IHouseholdFinanceProjectionProviderRegistry>()
+            ?.Register(new LoanFinanceProjectionProvider(loans));
 
         RegisterActions(
             actions,

@@ -2,6 +2,7 @@ using Dynastia.Contracts;
 
 namespace Dynastia.Mechanics.Adoption;
 
+[PersistedComponentId("adoption.placement")]
 public sealed class AdoptionPlacementComponent
 {
     public AdoptionPlacementKind Kind { get; set; }

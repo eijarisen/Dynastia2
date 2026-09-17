@@ -12,6 +12,11 @@ public sealed partial class GameSaveService
         DesktopSaveEnvelope envelope,
         PreparedComponents prepared)
     {
+        if (envelope.RandomState is not null)
+        {
+            _random.RestoreState(envelope.RandomState);
+        }
+
         _actions.RestoreQueuedActions(
             []);
 
@@ -220,6 +225,13 @@ public sealed partial class GameSaveService
                 "The save file contains an invalid dynasty start year.");
         }
 
+        if (envelope.FormatVersion >= 2
+            && envelope.RandomState is null)
+        {
+            throw new InvalidDataException(
+                "The save file is missing its simulation random-number state.");
+        }
+
         if (envelope.People.Count == 0)
         {
             throw new InvalidDataException(
@@ -252,12 +264,16 @@ public sealed partial class GameSaveService
             foreach (var component in
                 person.Components)
             {
-                if (string.IsNullOrWhiteSpace(
-                        component.AssemblyName)
-                    || string.IsNullOrWhiteSpace(
-                        component.TypeName)
-                    || string.IsNullOrWhiteSpace(
-                        component.Json))
+                var hasStableId =
+                    !string.IsNullOrWhiteSpace(component.ComponentId);
+                var hasLegacyType =
+                    !string.IsNullOrWhiteSpace(component.AssemblyName)
+                    && !string.IsNullOrWhiteSpace(component.TypeName);
+
+                if (string.IsNullOrWhiteSpace(component.Json)
+                    || (envelope.FormatVersion >= 2
+                        ? !hasStableId
+                        : !hasLegacyType))
                 {
                     throw new InvalidDataException(
                         $"Person {person.Id} contains an invalid component record.");

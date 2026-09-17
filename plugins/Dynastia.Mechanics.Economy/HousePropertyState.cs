@@ -4,8 +4,7 @@ namespace Dynastia.Mechanics.Economy;
 
 public sealed class HousePropertyState
 {
-    public Guid Id { get; set; } =
-        Guid.NewGuid();
+    public Guid Id { get; set; }
 
     public TownInfo? Town { get; set; }
 

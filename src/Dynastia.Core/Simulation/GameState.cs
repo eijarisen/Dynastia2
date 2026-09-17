@@ -8,6 +8,13 @@ public sealed class GameState : IGameState
     private readonly List<IPerson>
         _people = [];
 
+    private readonly IGameRandom? _random;
+
+    public GameState(IGameRandom? random = null)
+    {
+        _random = random;
+    }
+
     public string DynastySurname { get; set; } =
         string.Empty;
 
@@ -31,7 +38,7 @@ public sealed class GameState : IGameState
                 name,
                 surname,
                 age,
-                id);
+                id ?? _random?.NextGuid());
 
         _people.Add(
             person);

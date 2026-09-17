@@ -7,7 +7,7 @@ public static class MortalityRules
 
     public const int NaturalDeathStartAge = 30;
     public const int NaturalLifespanBase = 40;
-    public const int NaturalLifespanPerLongevity = 12;
+    public const int NaturalLifespanPerLongevity = 10;
     public const double NaturalDeathChanceAtProfileAge = 0.08;
     public const double NaturalDeathCurveYears = 8.0;
     public const double MaximumNaturalDeathChance = 0.95;

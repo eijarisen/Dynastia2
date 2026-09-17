@@ -1,5 +1,8 @@
+using Dynastia.Contracts;
+
 namespace Dynastia.Mechanics.Personality;
 
+[PersistedComponentId("personality.person")]
 public sealed class PersonalityComponent
 {
     public string? Temperament { get; set; }

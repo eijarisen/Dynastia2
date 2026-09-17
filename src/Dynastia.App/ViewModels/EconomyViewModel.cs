@@ -7,7 +7,7 @@ public sealed class EconomyViewModel
     public EconomyViewModel(
         HouseholdFinanceSnapshot snapshot,
         HouseholdStatusSnapshot? status,
-        decimal? projectedAnnualIncome = null)
+        HouseholdAnnualForecast? forecast = null)
     {
         Wealth = snapshot.Wealth;
         HousesOwned = snapshot.HousesOwned;
@@ -15,9 +15,11 @@ public sealed class EconomyViewModel
         PendingInheritance = snapshot.PendingInheritance;
         PendingHouses = snapshot.PendingHouses;
         LastIncome =
-            projectedAnnualIncome
+            forecast?.ProjectedIncome
             ?? snapshot.LastIncome;
-        LastExpenses = snapshot.LastExpenses;
+        LastExpenses =
+            forecast?.ProjectedExpenses
+            ?? snapshot.LastExpenses;
 
         var nannyRoleLabel =
             status?.NannyRoleLabel

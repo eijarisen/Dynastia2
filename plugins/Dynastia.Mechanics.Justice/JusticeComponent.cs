@@ -1,5 +1,8 @@
+using Dynastia.Contracts;
+
 namespace Dynastia.Mechanics.Justice;
 
+[PersistedComponentId("justice.person")]
 public sealed class JusticeComponent
 {
     public int PrisonSentence { get; set; }

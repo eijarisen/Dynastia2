@@ -43,4 +43,6 @@ public interface ICareerService
         double chanceBonus = 0);
 
     bool RelocateEmployment(IPerson person);
+
+    IReadOnlyDictionary<string, int> GetExperienceYearsByCareer(IPerson person);
 }

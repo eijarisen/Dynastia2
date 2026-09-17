@@ -176,8 +176,11 @@ internal static class ActionPresentationPolicy
         }
 
         if (actionId.StartsWith(
-            "craft.start.",
-            StringComparison.OrdinalIgnoreCase))
+                "craft.start.",
+                StringComparison.OrdinalIgnoreCase)
+            || actionId.Equals(
+                "craft.stop_occupation",
+                StringComparison.OrdinalIgnoreCase))
         {
             categories.Add(
                 ActionCategory.Career);

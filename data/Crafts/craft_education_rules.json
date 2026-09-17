@@ -1,0 +1,41 @@
+{
+  "educationWindow": {
+    "standardEducationFirst": true,
+    "priceForEveryOption": 3000,
+    "unknownCraftsVisibleOnlyWhenChosenSlotEmpty": true,
+    "knownCraftsVisibleForImprovement": true,
+    "masterCraftsDisabled": true,
+    "craftsRequireCurrentEraAndLocalTrainingAvailability": true
+  },
+  "slots": {
+    "maximumCrafts": 2,
+    "inheritedSlot": {
+      "filledOnlyByParentalLearning": true,
+      "mayRemainEmpty": true,
+      "replaceable": false
+    },
+    "chosenSlot": {
+      "filledBySuccessfulCraftEducation": true,
+      "mayRemainEmpty": true,
+      "replaceable": false
+    }
+  },
+  "newCraft": {
+    "learningStat": "CraftDefinition.PrimaryStat",
+    "successFormula": "clamp(0.35 + 0.10 * stat, 0.10, 0.95)",
+    "costChargedOnAttempt": true,
+    "costChargedWhenInvalidatedBeforeAttempt": false,
+    "unlockedBaseLevel": 1,
+    "unlockedBaseLevelName": "Novice",
+    "educationProgressGranted": 0,
+    "seedPriorRelevantExperienceAfterUnlock": true
+  },
+  "existingCraftImprovement": {
+    "learningStat": "CraftDefinition.PrimaryStat",
+    "successFormula": "clamp(0.55 + 0.08 * stat - 0.10 * currentMasteryLevel, 0.10, 0.85)",
+    "successfulProgressGain": 3.0,
+    "costChargedOnAttempt": true,
+    "costChargedWhenInvalidatedBeforeAttempt": false,
+    "levelGain": "derived_from_combined_progress_not_direct"
+  }
+}

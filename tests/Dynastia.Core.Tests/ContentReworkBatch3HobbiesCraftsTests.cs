@@ -45,6 +45,12 @@ public sealed class ContentReworkBatch3HobbiesCraftsTests
     }
 
     [Fact]
+    public void RefinedCraftVocationDataMatchesImplementedRules()
+    {
+        CraftVocationDataValidation.Validate(CreateRepositoryData());
+    }
+
+    [Fact]
     public void CraftCatalogLoadsTwentyFiveBroadCraftsAndMigratesLegacyIds()
     {
         var catalog = CraftCatalog.Load(CreateRepositoryData());

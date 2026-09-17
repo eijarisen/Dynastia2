@@ -154,7 +154,7 @@ public sealed partial class StandardCareerService :
                 career.JobSatisfaction),
             career.LastIncome,
             annualIncome,
-            career.IsRetired,
+            isCraftSelfEmployed ? false : career.IsRetired,
             isCraftSelfEmployed ? null : definition?.Id,
             isCraftSelfEmployed
                 ? activeCraft!.Name

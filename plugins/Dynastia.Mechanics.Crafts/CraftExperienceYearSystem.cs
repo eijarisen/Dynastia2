@@ -14,7 +14,7 @@ internal sealed class CraftExperienceYearSystem : IYearSystem
     public string Id => "craft.record_experience";
     public YearPhase Phase => YearPhase.Aging;
     public IReadOnlyCollection<string> Before => Array.Empty<string>();
-    public IReadOnlyCollection<string> After => ["aging.increment_age"];
+    public IReadOnlyCollection<string> After => ["aging.increment_age", "career.record_experience"];
 
     public void Execute(IGameState gameState)
     {

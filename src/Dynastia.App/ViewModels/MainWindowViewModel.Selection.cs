@@ -91,11 +91,19 @@ public sealed partial class MainWindowViewModel
             return;
         }
 
+        var craftProgress = _craftService is null
+            ? Array.Empty<CraftProgressSnapshot>()
+            : _craftService.GetKnownCrafts(person)
+                .Select(craft => _craftService.GetProgress(person, craft.Id))
+                .Where(progress => progress is not null)
+                .Cast<CraftProgressSnapshot>()
+                .ToList();
+
         SelectedEducation =
             new EducationViewModel(
                 person.Age,
                 _educationService.GetEducationLevel(person),
-                _craftService?.GetKnownCrafts(person));
+                craftProgress);
     }
 
     private void RefreshHobbies()

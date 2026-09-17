@@ -22,6 +22,7 @@ public sealed class CraftsPlugin : IGamePlugin
         var income = Require<IIncomeProviderRegistry>(context, "Income provider registry");
 
         var catalog = CraftCatalog.Load(data);
+        CraftVocationDataValidation.Validate(data);
         ValidateCareerReferences(catalog, career);
 
         var service = new StandardCraftService(
@@ -42,7 +43,6 @@ public sealed class CraftsPlugin : IGamePlugin
 
         RegisterActions(actions, service, family, economy, career, stats, random, events, catalog);
         RegisterGeneratedAdultInitialization(gameState, service, career, events);
-        RegisterRelocationCleanup(gameState, service, events);
 
         systems.Register(new CraftExperienceYearSystem(service));
         systems.Register(new PassiveCraftLearningYearSystem(
@@ -73,7 +73,7 @@ public sealed class CraftsPlugin : IGamePlugin
             actions.Register(new GameActionDefinition
             {
                 Id = $"craft.start.{definition.Id}",
-                Label = $"Start {definition.Name} Occupation",
+                Label = "Work in a Profession",
                 Description =
                     $"Leave any formal career and earn a living through {definition.Name}. Income varies month to month.",
                 Mode = ActionExecutionMode.Queued,
@@ -84,9 +84,11 @@ public sealed class CraftsPlugin : IGamePlugin
                     && context.Actor.Tags.Has("control.playable")
                     && context.Actor.Age >= 18
                     && !context.Actor.Tags.Has("state.imprisoned")
-                    && definition.IsHistoricallyAvailable(context.GameState.Year)
                     && crafts.KnowsCraft(context.Actor, definition.Id)
-                    && !crafts.IsSelfEmployed(context.Actor),
+                    && !string.Equals(
+                        crafts.GetActiveCraft(context.Actor)?.Id,
+                        definition.Id,
+                        StringComparison.OrdinalIgnoreCase),
                 Execute = context =>
                     new GameActionResult(crafts.StartOccupation(context.Actor, definition.Id))
             });
@@ -165,6 +167,24 @@ public sealed class CraftsPlugin : IGamePlugin
                 }
             });
         }
+
+        actions.Register(new GameActionDefinition
+        {
+            Id = "craft.stop_occupation",
+            Label = "Stop Working in a Profession",
+            Description =
+                "End Craft self-employment. The Craft and all Mastery progress are preserved.",
+            Mode = ActionExecutionMode.Queued,
+            QueuePhase = YearPhase.LifeEvents,
+            IsAvailable = context =>
+                context.Actor.Id == context.Target.Id
+                && context.Actor.Tags.Has("state.alive")
+                && context.Actor.Tags.Has("control.playable")
+                && !context.Actor.Tags.Has("state.imprisoned")
+                && crafts.IsSelfEmployed(context.Actor),
+            Execute = context =>
+                new GameActionResult(crafts.EndOccupation(context.Actor, "stopped"))
+        });
     }
 
     private static IPerson? FindTeacher(
@@ -216,32 +236,6 @@ public sealed class CraftsPlugin : IGamePlugin
                         InitializeGeneratedAdult(person, gameState.Year, crafts, career);
                     }
                 }
-            }
-        };
-    }
-
-    private static void RegisterRelocationCleanup(
-        IGameState gameState,
-        ICraftService crafts,
-        IGameEventBus events)
-    {
-        events.EventPublished += (_, gameEvent) =>
-        {
-            if (!gameEvent.Type.Equals(
-                    "household.moved",
-                    StringComparison.OrdinalIgnoreCase))
-            {
-                return;
-            }
-
-            var ids = new HashSet<Guid>(gameEvent.RelatedPersonIds);
-            if (gameEvent.SubjectId is Guid subjectId)
-                ids.Add(subjectId);
-
-            foreach (var person in gameState.People.Where(person => ids.Contains(person.Id)))
-            {
-                if (crafts.IsSelfEmployed(person))
-                    crafts.EndOccupation(person, "relocation");
             }
         };
     }

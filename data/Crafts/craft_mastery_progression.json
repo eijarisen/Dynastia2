@@ -1,0 +1,72 @@
+{
+  "progressModel": "combined",
+  "description": "Mastery is derived from one cumulative progress score. Relevant work experience and successful Craft education both add to the same score. Higher tiers also require minimum real relevant experience, so Master cannot be purchased through education alone.",
+  "experience": {
+    "progressPerCompletedRelevantYearFormula": "0.50 + 0.15 * primaryStat",
+    "byStat": {
+      "1": 0.65,
+      "2": 0.8,
+      "3": 0.95,
+      "4": 1.1,
+      "5": 1.25
+    },
+    "counts": [
+      "one year of self-employment using this Craft",
+      "one year in a Primary-linked Career",
+      "one year in a Secondary-linked Career"
+    ],
+    "maximumCreditPerCalendarYearPerCraft": 1,
+    "preLearningRelatedCareerYears": {
+      "count": true,
+      "initializationRule": "When a Craft is first learned, seed experience progress from previously recorded relevant Career years using the learner's current PrimaryStat. Do this once; later stat changes do not retroactively recalculate old years."
+    }
+  },
+  "education": {
+    "cost": 3000,
+    "successfulImprovementProgress": 3.0,
+    "successChanceFormula": "clamp(0.55 + 0.08 * primaryStat - 0.10 * currentMasteryLevel, 0.10, 0.85)",
+    "learningNewCraft": {
+      "successChanceFormula": "clamp(0.35 + 0.10 * primaryStat, 0.10, 0.95)",
+      "newCraftBaseLevel": 1,
+      "educationProgressGrantedByUnlockCourse": 0,
+      "note": "The first successful course unlocks the Craft. Existing relevant Career experience may immediately place the learner above Novice once seeded."
+    }
+  },
+  "levels": [
+    {
+      "level": 1,
+      "name": "Novice",
+      "requiredProgress": 0,
+      "minimumRelevantExperienceYears": 0
+    },
+    {
+      "level": 2,
+      "name": "Apprentice",
+      "requiredProgress": 3,
+      "minimumRelevantExperienceYears": 0
+    },
+    {
+      "level": 3,
+      "name": "Adept",
+      "requiredProgress": 8,
+      "minimumRelevantExperienceYears": 1
+    },
+    {
+      "level": 4,
+      "name": "Expert",
+      "requiredProgress": 15,
+      "minimumRelevantExperienceYears": 3
+    },
+    {
+      "level": 5,
+      "name": "Master",
+      "requiredProgress": 25,
+      "minimumRelevantExperienceYears": 8
+    }
+  ],
+  "automaticLeveling": true,
+  "retirement": {
+    "automaticRetirement": false,
+    "appliesToAllMasteryLevels": true
+  }
+}

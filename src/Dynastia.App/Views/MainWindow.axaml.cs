@@ -135,6 +135,50 @@ public partial class MainWindow : Window
             }
 
             if (e.ActionId.Equals(
+                    "ui.craft_profession",
+                    StringComparison.OrdinalIgnoreCase))
+            {
+                var options = viewModel.GetCraftProfessionOptions();
+                if (options.Count == 0)
+                {
+                    viewModel.ReportPersistenceStatus(
+                        "No known Craft is currently available for self-employment.");
+                    return;
+                }
+
+                var window = new PropertySelectionWindow(
+                    "Work in a Profession",
+                    "Work",
+                    options);
+                var selectedActionId = await window.ShowDialog<string?>(this);
+                if (!string.IsNullOrWhiteSpace(selectedActionId))
+                    viewModel.QueueCraftProfessionAction(selectedActionId);
+                return;
+            }
+
+            if (e.ActionId.Equals(
+                    "education.get_education",
+                    StringComparison.OrdinalIgnoreCase))
+            {
+                var options = viewModel.GetEducationSelectionOptions();
+                if (!options.Any(option => option.IsEnabled))
+                {
+                    viewModel.ReportPersistenceStatus(
+                        "No education option is currently available.");
+                    return;
+                }
+
+                var window = new PropertySelectionWindow(
+                    "Get Education",
+                    "Study",
+                    options);
+                var selectedOptionId = await window.ShowDialog<string?>(this);
+                if (!string.IsNullOrWhiteSpace(selectedOptionId))
+                    viewModel.QueueEducationAction(selectedOptionId);
+                return;
+            }
+
+            if (e.ActionId.Equals(
                     "career.seek_employment",
                     StringComparison.OrdinalIgnoreCase)
                 || e.ActionId.Equals(

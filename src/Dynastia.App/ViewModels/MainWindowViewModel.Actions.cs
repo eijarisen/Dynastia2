@@ -57,6 +57,8 @@ public sealed partial class MainWindowViewModel
             {
                 var selfImprovementAdded =
                     false;
+                var craftProfessionAdded =
+                    false;
 
                 foreach (var action in
                     ActionPresentationPolicy.Order(
@@ -67,6 +69,27 @@ public sealed partial class MainWindowViewModel
                 {
                     var actionId =
                         action.Id;
+
+                    if (actionId.StartsWith(
+                            "craft.start.",
+                            StringComparison.OrdinalIgnoreCase))
+                    {
+                        if (!craftProfessionAdded)
+                        {
+                            craftProfessionAdded = true;
+                            var profession = CreateCraftProfessionPresentationAction();
+                            _allAvailableActions.Add(
+                                new AvailableActionViewModel(
+                                    profession,
+                                    new HashSet<ActionCategory>
+                                    {
+                                        ActionCategory.Career
+                                    },
+                                    () => ExecuteAction(CraftProfessionUiActionId)));
+                        }
+
+                        continue;
+                    }
 
                     if (IsStatImprovementAction(actionId))
                     {
@@ -228,6 +251,12 @@ public sealed partial class MainWindowViewModel
 
         if (actionId.Equals(
                 SelfImprovementUiActionId,
+                StringComparison.OrdinalIgnoreCase)
+            || actionId.Equals(
+                CraftProfessionUiActionId,
+                StringComparison.OrdinalIgnoreCase)
+            || actionId.Equals(
+                "education.get_education",
                 StringComparison.OrdinalIgnoreCase)
             || actionId.Equals(
                 "household.buy_house",
@@ -584,6 +613,22 @@ public sealed partial class MainWindowViewModel
 
         if (parameters is null)
             return string.Empty;
+
+        if (queued.ActionId.Equals(
+                "education.get_education",
+                StringComparison.OrdinalIgnoreCase)
+            && parameters.TryGetValue("summaryEducationOption", out var educationOption))
+        {
+            return educationOption;
+        }
+
+        if (queued.ActionId.StartsWith(
+                "craft.start.",
+                StringComparison.OrdinalIgnoreCase)
+            && parameters.TryGetValue("summaryCraft", out var craftName))
+        {
+            return craftName;
+        }
 
         if (queued.ActionId.StartsWith(
                 "loan.",

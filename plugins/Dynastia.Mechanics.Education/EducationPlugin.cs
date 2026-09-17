@@ -64,7 +64,8 @@ public sealed class EducationPlugin : IGamePlugin
                 stats,
                 economy,
                 random,
-                events));
+                events,
+                () => context.GetService<ICraftService>()));
 
         actions.Register(
             CreateHelpLearningAction(
@@ -227,16 +228,15 @@ public sealed class EducationPlugin : IGamePlugin
         IStatsService stats,
         IEconomyService economy,
         IGameRandom random,
-        IGameEventBus events)
+        IGameEventBus events,
+        Func<ICraftService?> craftResolver)
     {
         return new GameActionDefinition
         {
             Id = "education.get_education",
             Label = "Get Education (3,000 zł)",
             Description =
-                "Pay for private instruction or formal study appropriate to the period. " +
-                "The cost is paid whether the attempt succeeds or fails. " +
-                "Success depends on Intellect.",
+                "Choose standard education or study a Craft. Every option costs 3,000 zł when the attempt is made.",
             Mode = ActionExecutionMode.Queued,
             QueuePhase = YearPhase.QueuedActionsEarly,
 
@@ -253,105 +253,122 @@ public sealed class EducationPlugin : IGamePlugin
                 }
 
                 var spouse = family.GetSpouse(actor);
+                var validTarget = target.Id == actor.Id || spouse?.Id == target.Id;
+                if (!validTarget)
+                    return false;
 
-                var validTarget =
-                    target.Id == actor.Id
-                    || spouse?.Id == target.Id;
+                var household = economy.GetHousehold(actor);
+                if (household is null || household.Wealth < EducationCost)
+                    return false;
 
-                if (!validTarget
-                    || education.GetEducationLevel(target) >= 5)
+                var crafts = craftResolver();
+                if (actionContext.Parameters.TryGetValue("educationOption", out var selected))
                 {
+                    if (selected.Equals("standard", StringComparison.OrdinalIgnoreCase))
+                        return education.GetEducationLevel(target) < 5;
+
+                    if (selected.StartsWith("craft:", StringComparison.OrdinalIgnoreCase)
+                        && crafts is not null)
+                    {
+                        var craftId = selected["craft:".Length..];
+                        return crafts.GetEducationOptions(target)
+                            .Any(option => option.CraftId.Equals(craftId, StringComparison.OrdinalIgnoreCase));
+                    }
+
                     return false;
                 }
 
-                var household = economy.GetHousehold(actor);
-
-                return household is not null
-                    && household.Wealth >= EducationCost;
+                return education.GetEducationLevel(target) < 5
+                    || crafts?.GetEducationOptions(target).Count > 0;
             },
 
             Execute = actionContext =>
             {
                 var actor = actionContext.Actor;
                 var target = actionContext.Target;
-
                 var household = economy.GetHousehold(actor);
-
-                if (household is null
-                    || household.Wealth < EducationCost
-                    || education.GetEducationLevel(target) >= 5)
+                if (household is null || household.Wealth < EducationCost)
                 {
-                    return new GameActionResult(
-                        false,
-                        "Education is no longer available.");
+                    return new GameActionResult(false, "Education is no longer available.");
                 }
 
-                economy.ChangeWealth(
-                    actor,
-                    -EducationCost);
+                var selected = actionContext.Parameters.TryGetValue("educationOption", out var option)
+                    ? option
+                    : "standard";
+
+                if (selected.StartsWith("craft:", StringComparison.OrdinalIgnoreCase))
+                {
+                    var crafts = craftResolver();
+                    var craftId = selected["craft:".Length..];
+                    if (crafts is null
+                        || !crafts.GetEducationOptions(target)
+                            .Any(item => item.CraftId.Equals(craftId, StringComparison.OrdinalIgnoreCase)))
+                    {
+                        return new GameActionResult(false, "Craft education is no longer available.");
+                    }
+
+                    economy.ChangeWealth(actor, -EducationCost);
+                    var result = crafts.StudyCraft(target, craftId);
+                    return new GameActionResult(
+                        result.Attempted,
+                        result.Message,
+                        result.Attempted
+                            ? ActionReasonCodes.Executed
+                            : ActionReasonCodes.NoLongerEligible);
+                }
+
+                if (!selected.Equals("standard", StringComparison.OrdinalIgnoreCase)
+                    || education.GetEducationLevel(target) >= 5)
+                {
+                    return new GameActionResult(false, "Standard education is no longer available.");
+                }
+
+                economy.ChangeWealth(actor, -EducationCost);
 
                 var intellect = stats.GetStats(target)
-                    .First(stat =>
-                        stat.Id.Equals(
-                            "intellect",
-                            StringComparison.OrdinalIgnoreCase))
+                    .First(stat => stat.Id.Equals("intellect", StringComparison.OrdinalIgnoreCase))
                     .Value;
 
                 var successChance =
                     PersonalityInfluence.AdjustProbability(
-                        EducationProgressionRules
-                            .GetPaidEducationSuccessChance(
-                                intellect),
+                        EducationProgressionRules.GetPaidEducationSuccessChance(intellect),
                         target,
                         melancholic: 0.10,
                         choleric: -0.10);
 
-                var success =
-                    random.NextDouble() < successChance;
-
+                var success = random.NextDouble() < successChance;
                 if (success)
                 {
                     education.IncreaseEducation(target);
-
-                    events.Publish(
-                        new GameEvent
+                    events.Publish(new GameEvent
+                    {
+                        Type = "education.success",
+                        Year = actionContext.GameState.Year,
+                        SubjectId = target.Id,
+                        RelatedPersonIds = actor.Id == target.Id ? [] : [actor.Id],
+                        Data = new Dictionary<string, string>
                         {
-                            Type = "education.success",
-                            Year = actionContext.GameState.Year,
-                            SubjectId = target.Id,
-                            RelatedPersonIds =
-                                actor.Id == target.Id
-                                    ? []
-                                    : [actor.Id],
-                            Data = new Dictionary<string, string>
-                            {
-                                ["level"] =
-                                    education.GetEducationLevel(target).ToString(),
-                                ["text"] =
-                                    $"{family.GetDisplayName(target)} successfully completed a course, " +
-                                    $"reaching education level {education.GetEducationLevel(target)}."
-                            }
-                        });
+                            ["level"] = education.GetEducationLevel(target).ToString(),
+                            ["text"] =
+                                $"{family.GetDisplayName(target)} successfully completed a course, " +
+                                $"reaching education level {education.GetEducationLevel(target)}."
+                        }
+                    });
                 }
                 else
                 {
-                    events.Publish(
-                        new GameEvent
+                    events.Publish(new GameEvent
+                    {
+                        Type = "education.failure",
+                        Year = actionContext.GameState.Year,
+                        SubjectId = target.Id,
+                        RelatedPersonIds = actor.Id == target.Id ? [] : [actor.Id],
+                        Data = new Dictionary<string, string>
                         {
-                            Type = "education.failure",
-                            Year = actionContext.GameState.Year,
-                            SubjectId = target.Id,
-                            RelatedPersonIds =
-                                actor.Id == target.Id
-                                    ? []
-                                    : [actor.Id],
-                            Data = new Dictionary<string, string>
-                            {
-                                ["text"] =
-                                    $"{family.GetDisplayName(target)} attempted to further " +
-                                    "their education but failed the course."
-                            }
-                        });
+                            ["text"] =
+                                $"{family.GetDisplayName(target)} attempted further education, but did not advance this year."
+                        }
+                    });
                 }
 
                 return new GameActionResult(true);

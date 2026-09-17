@@ -86,6 +86,100 @@ public sealed class CraftRulesTests
             > CraftRules.GetStatSelectionMultiplier(technical, strong));
     }
 
+
+    [Fact]
+    public void MasteryLevels_UseRefinedNamesAndThresholds()
+    {
+        var expected = new[]
+        {
+            (1, "Novice", 0.0, 0),
+            (2, "Apprentice", 3.0, 0),
+            (3, "Adept", 8.0, 1),
+            (4, "Expert", 15.0, 3),
+            (5, "Master", 25.0, 8)
+        };
+
+        Assert.Equal(expected.Length, CraftRules.MasteryLevels.Count);
+        foreach (var item in expected)
+        {
+            var rule = CraftRules.GetMasteryRule(item.Item1);
+            Assert.Equal(item.Item2, rule.DisplayName);
+            Assert.Equal(item.Item3, rule.RequiredMasteryProgress, 10);
+            Assert.Equal(item.Item4, rule.MinimumRelevantExperienceYears);
+        }
+    }
+
+    [Theory]
+    [InlineData(1, 0.65)]
+    [InlineData(3, 0.95)]
+    [InlineData(5, 1.25)]
+    public void RelevantWorkProgress_DependsOnPrimaryStat(int stat, double expected)
+    {
+        Assert.Equal(expected, CraftRules.GetExperienceProgressGain(stat), 10);
+    }
+
+    [Fact]
+    public void MasteryExperienceGates_CannotBeBoughtAround()
+    {
+        Assert.Equal(4, CraftRules.GetMasteryLevel(25.0, 7));
+        Assert.Equal(5, CraftRules.GetMasteryLevel(25.0, 8));
+        Assert.Equal(2, CraftRules.GetMasteryLevel(8.0, 0));
+        Assert.Equal(3, CraftRules.GetMasteryLevel(8.0, 1));
+        Assert.Equal(3, CraftRules.GetMasteryLevel(15.0, 2));
+        Assert.Equal(4, CraftRules.GetMasteryLevel(15.0, 3));
+    }
+
+    [Theory]
+    [InlineData(1, 1, 0.53)]
+    [InlineData(3, 3, 0.49)]
+    [InlineData(5, 4, 0.55)]
+    public void ExistingCraftEducationChance_MatchesRefinedFormula(
+        int stat,
+        int level,
+        double expected)
+    {
+        Assert.Equal(
+            expected,
+            CraftRules.GetCraftImprovementChance(stat, level),
+            10);
+    }
+
+    [Theory]
+    [InlineData(1, 0.45)]
+    [InlineData(3, 0.65)]
+    [InlineData(5, 0.85)]
+    public void NewCraftEducationChance_UsesPrimaryStat(int stat, double expected)
+    {
+        Assert.Equal(expected, CraftRules.GetNewCraftStudyChance(stat), 10);
+    }
+
+    [Theory]
+    [InlineData(1, 16096.08)]
+    [InlineData(2, 17424.87)]
+    [InlineData(3, 19247.66)]
+    [InlineData(4, 22086.07)]
+    [InlineData(5, 28061.69)]
+    public void ExpectedAnnualIncome_MatchesApprovedReference(
+        int level,
+        double expected)
+    {
+        Assert.Equal(expected, (double)CraftRules.GetExpectedAnnualIncome(level), 2);
+    }
+
+    [Theory]
+    [InlineData(1, 8000.0)]
+    [InlineData(2, 10000.0)]
+    [InlineData(3, 13333.333333333334)]
+    [InlineData(4, 20000.0)]
+    [InlineData(5, 40000.0)]
+    public void MaximumMonthlyIncome_UsesApprovedExponentialFormula(
+        int level,
+        double expected)
+    {
+        var actual = (double)CraftRules.CalculateMonthlyIncome(94.0, level);
+        Assert.Equal(expected, actual, 6);
+    }
+
     [Fact]
     public void PassiveLearningChance_IsFivePercent()
     {

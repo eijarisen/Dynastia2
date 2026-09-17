@@ -14,6 +14,12 @@ public interface ICraftService
 
     CraftInfo? GetActiveCraft(IPerson person);
 
+    CraftProgressSnapshot? GetProgress(IPerson person, string craftId);
+
+    IReadOnlyList<CraftEducationOption> GetEducationOptions(IPerson person);
+
+    CraftEducationResult StudyCraft(IPerson person, string craftId);
+
     bool CanLearnCraft(IPerson person, string craftId);
 
     double GetLearningWeight(IPerson person, string craftId);

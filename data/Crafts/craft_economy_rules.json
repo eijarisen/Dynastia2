@@ -1,0 +1,26 @@
+{
+  "educationCost": 3000,
+  "monthlyIncomeBase": 400,
+  "monthsPerYear": 12,
+  "incomeRoll": {
+    "integerMinimum": 0,
+    "integerMaximumInclusive": 94,
+    "addDecimalWhenIntegerBelowMaximum": true,
+    "maximumIntegerUsesExactValue": true,
+    "effectiveRollCap": 99
+  },
+  "incomeFormula": "monthlyIncome = monthlyIncomeBase * (100 / (100 - min(effectiveRollCap, rawRoll + masteryBonus)))",
+  "majorCommission": {
+    "integerRollRequired": 94,
+    "requiresEffectiveRollCap": true,
+    "emitNews": true
+  },
+  "selfEmployment": {
+    "subjectToRandomFiring": false,
+    "subjectToCareerVacancy": false,
+    "usesOneActiveCraft": true,
+    "canEmployOtherWorkers": false,
+    "continuesAcrossHouseholdMoves": true,
+    "automaticRetirement": false
+  }
+}

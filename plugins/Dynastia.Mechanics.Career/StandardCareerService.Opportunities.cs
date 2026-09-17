@@ -394,6 +394,19 @@ public sealed partial class StandardCareerService
         return level;
     }
 
+    public IReadOnlyDictionary<string, int> GetExperienceYearsByCareer(IPerson person)
+    {
+        ArgumentNullException.ThrowIfNull(person);
+        var component = GetRequired(person);
+        component.ExperienceYearsByCareer ??=
+            new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+
+        return component.ExperienceYearsByCareer.ToDictionary(
+            pair => pair.Key,
+            pair => pair.Value,
+            StringComparer.OrdinalIgnoreCase);
+    }
+
     internal void RecordCurrentExperience(
         IPerson person)
     {

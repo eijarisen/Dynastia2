@@ -43,7 +43,32 @@ public sealed class HealthPlugin : IGamePlugin
         context.AddService<IStressService>(stress);
 
         var genetics = new GeneticPredispositionService(state, family);
-        genetics.ReconcileAll();
+
+        var reconciliation = context.GetService<IStateReconciliationLifecycle>()
+            ?? throw new InvalidOperationException(
+                "State reconciliation lifecycle is unavailable.");
+
+        reconciliation.Register(
+            "health.components",
+            [
+                ReconciliationLifecycleStage.AfterNewGame,
+                ReconciliationLifecycleStage.AfterLoad,
+                ReconciliationLifecycleStage.BeforeYear,
+                ReconciliationLifecycleStage.AfterYear,
+                ReconciliationLifecycleStage.AfterImmediateAction
+            ],
+            _ => health.ReconcileAll(state.People),
+            order: 40);
+
+        reconciliation.Register(
+            "health.genetic_predispositions",
+            [
+                ReconciliationLifecycleStage.AfterNewGame,
+                ReconciliationLifecycleStage.AfterLoad
+            ],
+            _ => genetics.ReconcileAll(),
+            order: 45);
+
         systems.Register(new GeneticPredispositionYearSystem(genetics));
         systems.Register(new HealthYearSystem(
             health,

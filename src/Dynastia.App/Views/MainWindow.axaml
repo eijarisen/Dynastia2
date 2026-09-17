@@ -1174,6 +1174,13 @@
                                             Spacing="4">
                                             <TextBlock
                                                 HorizontalAlignment="Center"
+                                                FontSize="10.5"
+                                                FontWeight="SemiBold"
+                                                Foreground="#D8C79E"
+                                                Text="{Binding HouseholdResidentsText}" />
+
+                                            <TextBlock
+                                                HorizontalAlignment="Center"
                                                 TextAlignment="Center"
                                                 TextWrapping="Wrap"
                                                 FontSize="10.5"
@@ -1715,8 +1722,8 @@
 
                     <Button
                         x:Name="MusicToggleButton"
-                        Canvas.Left="1140"
-                        Canvas.Top="16"
+                        Canvas.Left="1145"
+                        Canvas.Top="11"
                         Width="28"
                         Height="28"
                         Padding="0"

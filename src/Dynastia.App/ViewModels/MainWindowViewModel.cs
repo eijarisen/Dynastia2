@@ -43,6 +43,7 @@ public sealed partial class MainWindowViewModel : ViewModelBase
     private readonly IGameEventBus _eventBus;
     private readonly IActionRegistry _actionRegistry;
     private readonly GameSaveService _saveService;
+    private readonly IStateReconciliationLifecycle _reconciliation;
 
     private PersonRowViewModel? _selectedPerson;
     private FamilyDetailsViewModel? _selectedFamily;
@@ -114,7 +115,8 @@ public sealed partial class MainWindowViewModel : ViewModelBase
         ISuccessionService succession,
         IGameEventBus eventBus,
         IActionRegistry actionRegistry,
-        GameSaveService saveService)
+        GameSaveService saveService,
+        IStateReconciliationLifecycle reconciliation)
     {
         _gameState = gameState;
         _newGameService = newGameService;
@@ -158,6 +160,7 @@ public sealed partial class MainWindowViewModel : ViewModelBase
         _eventBus = eventBus;
         _actionRegistry = actionRegistry;
         _saveService = saveService;
+        _reconciliation = reconciliation;
 
         _albumYear =
             GameCalendarConfiguration.GameStartYear;

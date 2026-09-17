@@ -11,6 +11,7 @@ public sealed partial class CareerPlugin
         IHealthService health,
         IGameRandom random,
         IFamilyService family,
+        IEconomyService economy,
         IGameEventBus events)
     {
         actions.Register(
@@ -19,7 +20,7 @@ public sealed partial class CareerPlugin
                 Id = "career.help_seek_employment",
                 Label = "Help to Seek Employment",
                 Description =
-                    "Browse vacancies for your unemployed spouse or unmarried adult daughter " +
+                    "Browse vacancies for your unemployed spouse or adult child living in this household " +
                     "and help them apply for a specific position.",
                 Mode = ActionExecutionMode.Queued,
                 QueuePhase = YearPhase.QueuedActionsEarly,
@@ -29,10 +30,9 @@ public sealed partial class CareerPlugin
                     var actor = actionContext.Actor;
                     var target = actionContext.Target;
 
-                    if (!CanActorSupport(actor)
+                    if (!CanActorSupport(actor, actionContext.ActorHasControl)
                         || !target.Tags.Has("state.alive")
                         || target.Id == actor.Id
-                        || family.GetSex(target) != Sex.Female
                         || target.Age < 18)
                     {
                         return false;
@@ -45,12 +45,14 @@ public sealed partial class CareerPlugin
                         return false;
                     }
 
-                    var isWife = family.GetSpouse(actor)?.Id == target.Id;
-                    var isUnmarriedDaughter = family.GetChildren(actor)
-                        .Any(child => child.Id == target.Id)
-                        && family.GetSpouse(target) is null;
+                    var isSpouse = family.GetSpouse(actor)?.Id == target.Id;
+                    var isResidentAdultChild = IsResidentAdultChild(
+                        actor,
+                        target,
+                        family,
+                        economy);
 
-                    return isWife || isUnmarriedDaughter;
+                    return isSpouse || isResidentAdultChild;
                 },
 
                 Execute = actionContext =>
@@ -58,22 +60,23 @@ public sealed partial class CareerPlugin
                     var actor = actionContext.Actor;
                     var target = actionContext.Target;
 
-                    if (!CanActorSupport(actor)
+                    if (!CanActorSupport(actor, actionContext.ActorHasControl)
                         || !target.Tags.Has("state.alive")
                         || target.Id == actor.Id
-                        || family.GetSex(target) != Sex.Female
                         || target.Age < 18)
                     {
                         return new GameActionResult(false);
                     }
 
                     var targetCareer = career.GetCareer(target);
-                    var isWife = family.GetSpouse(actor)?.Id == target.Id;
-                    var isUnmarriedDaughter = family.GetChildren(actor)
-                        .Any(child => child.Id == target.Id)
-                        && family.GetSpouse(target) is null;
+                    var isSpouse = family.GetSpouse(actor)?.Id == target.Id;
+                    var isResidentAdultChild = IsResidentAdultChild(
+                        actor,
+                        target,
+                        family,
+                        economy);
 
-                    if ((!isWife && !isUnmarriedDaughter)
+                    if ((!isSpouse && !isResidentAdultChild)
                         || targetCareer.IsRetired
                         || targetCareer.IsEmployed)
                     {
@@ -134,7 +137,7 @@ public sealed partial class CareerPlugin
                 Id = "career.help_find_better_job",
                 Label = "Find a Better Job",
                 Description =
-                    "Browse better-paying vacancies for your employed spouse or unmarried adult daughter.",
+                    "Browse better-paying vacancies for your employed spouse or adult child living in this household.",
                 Mode = ActionExecutionMode.Queued,
                 QueuePhase = YearPhase.QueuedActionsEarly,
 
@@ -143,21 +146,22 @@ public sealed partial class CareerPlugin
                     var actor = actionContext.Actor;
                     var target = actionContext.Target;
 
-                    if (!CanActorSupport(actor)
+                    if (!CanActorSupport(actor, actionContext.ActorHasControl)
                         || !target.Tags.Has("state.alive")
                         || target.Id == actor.Id
-                        || family.GetSex(target) != Sex.Female
                         || target.Age < 18
                         || target.Tags.Has("state.imprisoned"))
                     {
                         return false;
                     }
 
-                    var isWife = family.GetSpouse(actor)?.Id == target.Id;
-                    var isUnmarriedDaughter = family.GetChildren(actor)
-                        .Any(child => child.Id == target.Id)
-                        && family.GetSpouse(target) is null;
-                    if (!isWife && !isUnmarriedDaughter)
+                    var isSpouse = family.GetSpouse(actor)?.Id == target.Id;
+                    var isResidentAdultChild = IsResidentAdultChild(
+                        actor,
+                        target,
+                        family,
+                        economy);
+                    if (!isSpouse && !isResidentAdultChild)
                         return false;
 
                     var targetCareer = career.GetCareer(target);
@@ -171,22 +175,23 @@ public sealed partial class CareerPlugin
                     var actor = actionContext.Actor;
                     var target = actionContext.Target;
 
-                    if (!CanActorSupport(actor)
+                    if (!CanActorSupport(actor, actionContext.ActorHasControl)
                         || !target.Tags.Has("state.alive")
                         || target.Id == actor.Id
-                        || family.GetSex(target) != Sex.Female
                         || target.Age < 18)
                     {
                         return new GameActionResult(false);
                     }
 
-                    var isWife = family.GetSpouse(actor)?.Id == target.Id;
-                    var isUnmarriedDaughter = family.GetChildren(actor)
-                        .Any(child => child.Id == target.Id)
-                        && family.GetSpouse(target) is null;
+                    var isSpouse = family.GetSpouse(actor)?.Id == target.Id;
+                    var isResidentAdultChild = IsResidentAdultChild(
+                        actor,
+                        target,
+                        family,
+                        economy);
                     var targetCareer = career.GetCareer(target);
 
-                    if ((!isWife && !isUnmarriedDaughter)
+                    if ((!isSpouse && !isResidentAdultChild)
                         || targetCareer.IsRetired
                         || !targetCareer.IsEmployed
                         || !targetCareer.IsSelfEmployed && targetCareer.JobLevel >= 3)
@@ -212,7 +217,7 @@ public sealed partial class CareerPlugin
                 Id = "career.ask_to_recover",
                 Label = "Ask to Recover",
                 Description =
-                    "Ask your unhappy employed spouse or miserable adult daughter to take a year easier. " +
+                    "Ask your unhappy employed spouse or miserable adult child living in this household to take a year easier. " +
                     "There is a 50% refusal chance. On success their salary is reduced by 10-50% for the year.",
                 Mode = ActionExecutionMode.Queued,
                 QueuePhase = YearPhase.QueuedActionsEarly,
@@ -222,7 +227,7 @@ public sealed partial class CareerPlugin
                     var actor = actionContext.Actor;
                     var target = actionContext.Target;
 
-                    if (!CanActorSupport(actor)
+                    if (!CanActorSupport(actor, actionContext.ActorHasControl)
                         || !target.Tags.Has("state.alive")
                         || target.Id == actor.Id)
                     {
@@ -232,8 +237,8 @@ public sealed partial class CareerPlugin
                     if (!IsRecoverOrQuitTarget(
                         actor,
                         target,
-                        career,
-                        family))
+                        family,
+                        economy))
                     {
                         return false;
                     }
@@ -256,13 +261,13 @@ public sealed partial class CareerPlugin
                     var actor = actionContext.Actor;
                     var target = actionContext.Target;
 
-                    if (!CanActorSupport(actor)
+                    if (!CanActorSupport(actor, actionContext.ActorHasControl)
                         || !target.Tags.Has("state.alive")
                         || !IsRecoverOrQuitTarget(
                             actor,
                             target,
-                            career,
-                            family))
+                            family,
+                            economy))
                     {
                         return new GameActionResult(false);
                     }
@@ -354,7 +359,7 @@ public sealed partial class CareerPlugin
                 Id = "career.ask_to_quit",
                 Label = "Ask to Quit Job",
                 Description =
-                    "Ask your employed spouse or adult daughter to quit so they can focus on the household, including farm work. " +
+                    "Ask your employed spouse or adult child living in this household to quit so they can focus on the household, including farm work. " +
                     "There is a 50% refusal chance.",
                 Mode = ActionExecutionMode.Queued,
                 QueuePhase = YearPhase.QueuedActionsEarly,
@@ -364,14 +369,14 @@ public sealed partial class CareerPlugin
                     var actor = actionContext.Actor;
                     var target = actionContext.Target;
 
-                    if (!CanActorSupport(actor)
+                    if (!CanActorSupport(actor, actionContext.ActorHasControl)
                         || !target.Tags.Has("state.alive")
                         || target.Id == actor.Id
                         || !IsRecoverOrQuitTarget(
                             actor,
                             target,
-                            career,
-                            family))
+                            family,
+                            economy))
                     {
                         return false;
                     }
@@ -387,13 +392,13 @@ public sealed partial class CareerPlugin
                     var actor = actionContext.Actor;
                     var target = actionContext.Target;
 
-                    if (!CanActorSupport(actor)
+                    if (!CanActorSupport(actor, actionContext.ActorHasControl)
                         || !target.Tags.Has("state.alive")
                         || !IsRecoverOrQuitTarget(
                             actor,
                             target,
-                            career,
-                            family))
+                            family,
+                            economy))
                     {
                         return new GameActionResult(false);
                     }

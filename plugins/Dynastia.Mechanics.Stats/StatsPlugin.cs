@@ -16,12 +16,27 @@ public sealed class StatsPlugin : IGamePlugin
 
         var statsService = new StandardStatsService(random);
 
-        foreach (var person in gameState.People)
-        {
-            statsService.EnsureStats(person);
-        }
-
         context.AddService<IStatsService>(statsService);
+
+        var reconciliation = context.GetService<IStateReconciliationLifecycle>()
+            ?? throw new InvalidOperationException(
+                "State reconciliation lifecycle is unavailable.");
+
+        reconciliation.Register(
+            "stats.components",
+            [
+                ReconciliationLifecycleStage.AfterNewGame,
+                ReconciliationLifecycleStage.AfterLoad,
+                ReconciliationLifecycleStage.BeforeYear,
+                ReconciliationLifecycleStage.AfterYear,
+                ReconciliationLifecycleStage.AfterImmediateAction
+            ],
+            _ =>
+            {
+                foreach (var person in gameState.People)
+                    statsService.EnsureStats(person);
+            },
+            order: 10);
 
         context.Log("Stats mechanics registered.");
     }

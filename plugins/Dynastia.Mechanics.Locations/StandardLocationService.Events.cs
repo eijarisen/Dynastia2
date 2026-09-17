@@ -258,8 +258,60 @@ public sealed partial class StandardLocationService
             location);
     }
 
+    internal void ReconcileAll()
+    {
+        var resolving = new HashSet<Guid>();
+
+        foreach (var person in _gameState.People)
+            ReconcilePersonLocation(person, resolving);
+    }
+
+    private void ReconcilePersonLocation(
+        IPerson person,
+        HashSet<Guid> resolving)
+    {
+        if (!resolving.Add(person.Id))
+            return;
+
+        try
+        {
+            var component =
+                person.Components.Get<LocationComponent>();
+
+            if (component is not null
+                && CanonicalizeComponent(component))
+            {
+                person.Components.Set(component);
+            }
+
+            if (component?.Birthplace is null
+                || component.HomeTown is null)
+            {
+                EnsureFallbackLocation(person, resolving);
+                component = person.Components.Get<LocationComponent>();
+            }
+
+            if (component?.HomeTown is not null
+                && person.Tags.Has("state.dead")
+                && component.DeathTown is null)
+            {
+                component.DeathTown = component.HomeTown;
+                person.Components.Set(component);
+            }
+        }
+        finally
+        {
+            resolving.Remove(person.Id);
+        }
+    }
+
     private void EnsureFallbackLocation(
-        IPerson person)
+        IPerson person) =>
+        EnsureFallbackLocation(person, new HashSet<Guid>());
+
+    private void EnsureFallbackLocation(
+        IPerson person,
+        HashSet<Guid> resolving)
     {
         var existing =
             person.Components.Get<
@@ -278,22 +330,32 @@ public sealed partial class StandardLocationService
         if (father is not null
             && father.Id != person.Id)
         {
-            var parentLocation =
-                GetLocation(
-                    father);
+            ReconcilePersonLocation(father, resolving);
 
-            SetLocation(
-                person,
-                ChooseChildBirthplace(
-                    parentLocation.HomeTown),
-                parentLocation.HomeTown);
+            var parentComponent =
+                father.Components.Get<LocationComponent>();
 
-            return;
+            if (parentComponent?.HomeTown is not null)
+            {
+                SetLocation(
+                    person,
+                    ChooseChildBirthplace(
+                        parentComponent.HomeTown),
+                    parentComponent.HomeTown);
+
+                return;
+            }
         }
 
         var spouse =
             _family.GetSpouse(
                 person);
+
+        if (spouse is not null
+            && spouse.Id != person.Id)
+        {
+            ReconcilePersonLocation(spouse, resolving);
+        }
 
         var spouseComponent =
             spouse?.Components.Get<

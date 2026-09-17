@@ -9,6 +9,10 @@ public static class ActionReasonCodes
     public const string ActorBlocked = "actor_blocked";
     public const string AlreadyQueued = "already_queued";
     public const string NoLongerEligible = "no_longer_eligible";
+    public const string InsufficientFunds = "insufficient_funds";
+    public const string AssetNoLongerOwned = "asset_no_longer_owned";
+    public const string InvalidParameter = "invalid_parameter";
+    public const string ResourceUnavailable = "resource_unavailable";
     public const string MechanicFailure = "mechanic_failure";
     public const string Executed = "executed";
 }

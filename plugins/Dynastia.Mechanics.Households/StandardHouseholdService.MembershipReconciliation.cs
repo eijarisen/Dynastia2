@@ -19,6 +19,10 @@ public sealed partial class StandardHouseholdService
                             person) == Sex.Male)
                 .ToList())
         {
+            // Existing independent households are authoritative, including
+            // adult sons loaded from older saves. Never merge them back into
+            // a parental household merely because the new residence rules
+            // would have kept them resident today.
             if (_economy.HasHousehold(
                 person))
             {
@@ -29,31 +33,78 @@ public sealed partial class StandardHouseholdService
                 ResolveHouseholdHead(
                     person);
 
-            var spouse =
-                _family.GetSpouse(
-                    person);
-
             var explicitlyIndependent =
                 person.Tags.Has(
                     "residence.independent")
                 || person.Tags.Has(
                     "household.independent_orphan");
 
-            // Newly reaching adulthood still creates the autonomous
-            // household required by the new design. Older adults loaded
-            // from a pre-rework save are not retroactively split from
-            // their parents unless the old state already marks them as
-            // independent or they have since married.
-            var shouldBecomeIndependent =
-                currentHead is null
-                || person.Age == 18
-                || explicitlyIndependent
-                || spouse is not null;
-
-            if (!shouldBecomeIndependent)
+            // Adulthood and marriage no longer establish a separate
+            // household. A resident adult son stays where he is until a
+            // mechanic explicitly makes him independent or succession makes
+            // him the head of the existing household.
+            if (currentHead is not null
+                && !explicitlyIndependent)
             {
                 continue;
             }
+
+            if (currentHead is null
+                && !explicitlyIndependent)
+            {
+                var mother =
+                    _family.GetMother(
+                        person);
+
+                var father =
+                    _family.GetFather(
+                        person);
+
+                var parentHead =
+                    mother is not null
+                    && mother.Tags.Has(
+                        "state.alive")
+                        ? ResolveHouseholdHead(
+                            mother)
+                        : null;
+
+                parentHead ??=
+                    father is not null
+                    && father.Tags.Has(
+                        "state.alive")
+                        ? ResolveHouseholdHead(
+                            father)
+                        : null;
+
+                if (parentHead is not null)
+                {
+                    _economy.AddHouseholdMember(
+                        parentHead,
+                        person);
+
+                    var residentSpouse =
+                        _family.GetSpouse(
+                            person);
+
+                    if (residentSpouse is not null
+                        && residentSpouse.Tags.Has(
+                            "state.alive"))
+                    {
+                        _economy.AddHouseholdMember(
+                            parentHead,
+                            residentSpouse);
+                    }
+
+                    continue;
+                }
+            }
+
+            // With no valid household to remain in, an adult bloodline man
+            // must still receive a household so orphaned/otherwise detached
+            // branches cannot become permanently homeless.
+            var spouse =
+                _family.GetSpouse(
+                    person);
 
             if (currentHead is not null)
             {
@@ -363,7 +414,11 @@ public sealed partial class StandardHouseholdService
 
             if (person.Age >= 18
                 && _family.GetSex(
-                    person) == Sex.Male)
+                    person) == Sex.Male
+                && (person.Tags.Has(
+                        "residence.independent")
+                    || person.Tags.Has(
+                        "household.independent_orphan")))
             {
                 continue;
             }

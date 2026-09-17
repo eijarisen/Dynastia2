@@ -19,8 +19,16 @@ public sealed class ChildhoodPlugin : IGamePlugin
         var happiness = new StandardChildHappinessService();
         context.AddService<IChildHappinessService>(happiness);
 
-        foreach (var child in gameState.People.Where(p => p.Age < 18))
-            happiness.EnsureHappiness(child);
+        context.GetService<IStateReconciliationLifecycle>()?
+            .Register(
+                "childhood.happiness",
+                Enum.GetValues<ReconciliationLifecycleStage>(),
+                _ =>
+                {
+                    foreach (var person in gameState.People)
+                        happiness.EnsureHappiness(person);
+                },
+                order: 75);
 
         events.EventPublished += (_, e) => ApplyEvent(e, gameState, family, happiness, random);
 
@@ -44,7 +52,7 @@ public sealed class ChildhoodPlugin : IGamePlugin
             Description = "Spend the year giving the selected child extra guidance and attention. Improves Happiness and may gently improve Morals.",
             Mode = ActionExecutionMode.Queued,
             QueuePhase = YearPhase.QueuedActionsEarly,
-            IsAvailable = c => c.Actor.Tags.Has("control.playable")
+            IsAvailable = c => c.ActorHasControl
                 && c.Target.Tags.Has("state.alive")
                 && c.Target.Age < 18
                 && family.GetChildren(c.Actor).Any(x => x.Id == c.Target.Id),

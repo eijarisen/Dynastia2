@@ -250,6 +250,32 @@ public sealed partial class MainWindowViewModel
         }
 
         if (actionId.Equals(
+                "household.ask_move_out",
+                StringComparison.OrdinalIgnoreCase))
+        {
+            var options = GetPropertySelectionOptions(actionId);
+
+            if (options.Count == 1)
+            {
+                QueueActionWithSelection(
+                    actionId,
+                    options[0].Id);
+                return;
+            }
+
+            if (options.Count > 1)
+            {
+                ActionSelectionRequested?.Invoke(
+                    this,
+                    new ActionSelectionRequestedEventArgs(actionId));
+                return;
+            }
+
+            // No spare property means the queued action uses the rental
+            // branch and can be submitted without an additional dialog.
+        }
+
+        if (actionId.Equals(
                 SelfImprovementUiActionId,
                 StringComparison.OrdinalIgnoreCase)
             || actionId.Equals(
@@ -287,6 +313,9 @@ public sealed partial class MainWindowViewModel
                 StringComparison.OrdinalIgnoreCase)
             || actionId.Equals(
                 "relationship.marry_off_daughter",
+                StringComparison.OrdinalIgnoreCase)
+            || actionId.Equals(
+                "relationship.marry_off_son",
                 StringComparison.OrdinalIgnoreCase))
         {
             ActionSelectionRequested?.Invoke(
@@ -392,6 +421,30 @@ public sealed partial class MainWindowViewModel
                 .ToList();
         }
 
+        if (actionId.Equals(
+                "household.ask_move_out",
+                StringComparison.OrdinalIgnoreCase))
+        {
+            return _economyService.GetHouses(actor)
+                .Where(house => !house.IsResidence)
+                .Select(house =>
+                {
+                    var opportunities =
+                        _localCareerOpportunityService?.GetOpportunitySnapshot(house.Town);
+                    var rentalIncome = _economyService.GetRentalIncome(house.Town);
+                    var region = opportunities?.RegionName ?? house.Town.RegionId;
+                    return new PropertySelectionOption(
+                        house.Id.ToString(),
+                        house.Town.Town,
+                        $"{house.Town.County} • {region}",
+                        $"Spare property • {house.Town.SettlementClassDisplayName}\nCurrently yields {rentalIncome:N0} zł/year as rental income. It will become the son's residence.",
+                        "Give to son",
+                        $"{house.Town.Town} {house.Town.County} {region} move out son");
+                })
+                .OrderBy(option => option.PrimaryText, StringComparer.CurrentCultureIgnoreCase)
+                .ToList();
+        }
+
         return Array.Empty<PropertySelectionOption>();
     }
 
@@ -403,9 +456,18 @@ public sealed partial class MainWindowViewModel
         if (actor is null || _succession.IsGameOver)
             return;
 
-        // Property inventory actions always belong to the active household,
-        // regardless of which family member is currently selected in the UI.
-        var target = actor;
+        var moveOut = actionId.Equals(
+            "household.ask_move_out",
+            StringComparison.OrdinalIgnoreCase);
+
+        // Inventory actions belong to the active household. Move Out is the
+        // exception: the selected resident son remains the queued target.
+        var target = moveOut
+            ? FindSelectedPerson()
+            : actor;
+
+        if (target is null)
+            return;
 
         var key = actionId.Equals("household.buy_house", StringComparison.OrdinalIgnoreCase)
             ? "townId"
@@ -446,6 +508,16 @@ public sealed partial class MainWindowViewModel
                     _economyService.GetHouseSaleValue(house.Town)
                         .ToString(CultureInfo.InvariantCulture);
             }
+        }
+        else if (moveOut
+                 && _economyService is not null
+                 && Guid.TryParse(selectedId, out var movePropertyId))
+        {
+            var house = _economyService.GetHouses(actor)
+                .FirstOrDefault(candidate => candidate.Id == movePropertyId);
+
+            if (house is not null)
+                parameters["summaryTown"] = house.Town.Town;
         }
 
         var result = _actionRegistry.Execute(

@@ -167,6 +167,13 @@ public sealed partial class RelationshipsPlugin : IGamePlugin
         context.AddService<IMarriageSatisfactionService>(
             marriageSatisfaction);
 
+        context.GetService<IStateReconciliationLifecycle>()?
+            .Register(
+                "relationships.marriage_satisfaction",
+                Enum.GetValues<ReconciliationLifecycleStage>(),
+                _ => marriageSatisfaction.ReconcileAll(),
+                order: 85);
+
         var stressModifiers =
             context.GetService<IStressModifierRegistry>()
             ?? throw new InvalidOperationException(
@@ -220,6 +227,19 @@ public sealed partial class RelationshipsPlugin : IGamePlugin
                         RequireHistoricalVariant(
                             historical,
                             "relationship.marry_off_daughter",
+                            gameState.Year))
+                ]);
+
+        actions.RegisterDynamicProvider(
+            (_, _) =>
+                [
+                    CreateMarryOffSonAction(
+                        family,
+                        households,
+                        partnerSearch,
+                        RequireHistoricalVariant(
+                            historical,
+                            "relationship.marry_off_son",
                             gameState.Year))
                 ]);
 
@@ -337,8 +357,7 @@ public sealed partial class RelationshipsPlugin : IGamePlugin
                             == actionContext.Target.Id
                         && actionContext.Actor.Tags.Has(
                             "state.alive")
-                        && actionContext.Actor.Tags.Has(
-                            "control.playable")
+                        && actionContext.ActorHasControl
                         && actionContext.Actor.Age >= 18
                         && family.GetSpouse(
                             actionContext.Actor) is null
@@ -413,6 +432,7 @@ public sealed partial class RelationshipsPlugin : IGamePlugin
                     IsEligibleDaughter(
                         actionContext.Actor,
                         actionContext.Target,
+                        actionContext.ActorHasControl,
                         family,
                         households),
 
@@ -428,6 +448,7 @@ public sealed partial class RelationshipsPlugin : IGamePlugin
                     if (!IsEligibleDaughter(
                         father,
                         daughter,
+                        actionContext.ActorHasControl,
                         family,
                         households))
                     {
@@ -524,6 +545,69 @@ public sealed partial class RelationshipsPlugin : IGamePlugin
 
                     return new GameActionResult(
                         true);
+                }
+        };
+    }
+
+    private static GameActionDefinition
+        CreateMarryOffSonAction(
+            IFamilyService family,
+            IHouseholdService households,
+            IPartnerSearchService partnerSearch,
+            HistoricalActionVariant variant)
+    {
+        return new GameActionDefinition
+        {
+            Id =
+                "relationship.marry_off_son",
+
+            Label =
+                variant.Label,
+
+            Description =
+                variant.Description,
+
+            Mode =
+                ActionExecutionMode.Queued,
+
+            QueuePhase =
+                YearPhase.LifeEvents,
+
+            IsAvailable =
+                actionContext =>
+                    IsEligibleSon(
+                        actionContext.Actor,
+                        actionContext.Target,
+                        actionContext.ActorHasControl,
+                        family,
+                        households),
+
+            Execute =
+                actionContext =>
+                {
+                    if (!IsEligibleSon(
+                            actionContext.Actor,
+                            actionContext.Target,
+                            actionContext.ActorHasControl,
+                            family,
+                            households))
+                    {
+                        return new GameActionResult(
+                            false,
+                            "The selected son is no longer eligible.");
+                    }
+
+                    if (!actionContext.Parameters.ContainsKey(
+                            "partner.candidateKey"))
+                    {
+                        return new GameActionResult(
+                            false,
+                            "A proposed wife must be selected.");
+                    }
+
+                    return partnerSearch.ResolveArrangedMarriage(
+                        actionContext,
+                        variant);
                 }
         };
     }

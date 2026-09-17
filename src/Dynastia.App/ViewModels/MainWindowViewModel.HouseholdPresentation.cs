@@ -259,6 +259,28 @@ public sealed partial class MainWindowViewModel
                     $"{item.Label}"));
     }
 
+    public string HouseholdResidentsText
+    {
+        get
+        {
+            var head =
+                GetDisplayedHouseholdHead();
+
+            var status =
+                head is null
+                    ? null
+                    : _householdService?.GetStatus(
+                        head);
+
+            if (status is null)
+                return string.Empty;
+
+            return status.IsOvercrowded
+                ? $"Residents: {status.ResidentCount}   •   Overcrowded"
+                : $"Residents: {status.ResidentCount}";
+        }
+    }
+
     public string HouseholdWarningText
     {
         get

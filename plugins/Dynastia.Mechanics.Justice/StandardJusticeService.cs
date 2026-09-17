@@ -50,7 +50,7 @@ public sealed class StandardJusticeService :
         string? reasonDescription = null)
     {
         var justice =
-            GetRequired(
+            GetMutable(
                 person);
 
         justice.PrisonSentence =
@@ -96,7 +96,7 @@ public sealed class StandardJusticeService :
         IPerson person)
     {
         var justice =
-            GetRequired(
+            GetMutable(
                 person);
 
         if (justice.PrisonSentence <= 0)
@@ -119,15 +119,21 @@ public sealed class StandardJusticeService :
         return true;
     }
 
-    private JusticeComponent GetRequired(
-        IPerson person)
+    internal void ReconcileAll(IEnumerable<IPerson> people)
     {
-        EnsureJustice(
-            person);
+        foreach (var person in people)
+            EnsureJustice(person);
+    }
 
-        return person.Components.Get<
-            JusticeComponent>()
-            ?? throw new InvalidOperationException(
-                "Justice component could not be created.");
+    private static JusticeComponent GetRequired(
+        IPerson person) =>
+        person.Components.Get<JusticeComponent>()
+        ?? throw new InvalidOperationException(
+            "Justice state is missing. Run state reconciliation before reading it.");
+
+    private JusticeComponent GetMutable(IPerson person)
+    {
+        EnsureJustice(person);
+        return GetRequired(person);
     }
 }

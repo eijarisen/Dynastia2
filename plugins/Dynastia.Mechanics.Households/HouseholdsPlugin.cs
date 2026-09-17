@@ -113,6 +113,22 @@ public sealed partial class HouseholdsPlugin : IGamePlugin
         context.AddService<IHouseholdService>(
             households);
 
+        var reconciliation = context.GetService<IStateReconciliationLifecycle>()
+            ?? throw new InvalidOperationException(
+                "State reconciliation lifecycle is unavailable.");
+
+        reconciliation.Register(
+            "households.membership_and_headship",
+            [
+                ReconciliationLifecycleStage.AfterNewGame,
+                ReconciliationLifecycleStage.AfterLoad,
+                ReconciliationLifecycleStage.BeforeYear,
+                ReconciliationLifecycleStage.AfterYear,
+                ReconciliationLifecycleStage.AfterImmediateAction
+            ],
+            _ => households.ReconcileHouseholds(),
+            order: 60);
+
         systems.Register(
             new HouseholdReconcileYearSystem(
                 households,
@@ -207,12 +223,6 @@ public sealed partial class HouseholdsPlugin : IGamePlugin
                 households.UpdatePeripheralRelationshipState(
                     gameEvent);
 
-                if (gameEvent.Type.Equals(
-                    "game.started",
-                    StringComparison.OrdinalIgnoreCase))
-                {
-                    households.ReconcileHouseholds();
-                }
             };
 
         healthModifiers.Register(

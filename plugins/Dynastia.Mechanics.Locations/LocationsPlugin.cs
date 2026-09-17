@@ -47,6 +47,13 @@ public sealed class LocationsPlugin :
         context.AddService<IExistingLocationService>(
             locations);
 
+        context.GetService<IStateReconciliationLifecycle>()?
+            .Register(
+                "locations.components",
+                Enum.GetValues<ReconciliationLifecycleStage>(),
+                _ => locations.ReconcileAll(),
+                order: 15);
+
         var localCareers =
             new StandardLocalCareerOpportunityService(
                 gameState,

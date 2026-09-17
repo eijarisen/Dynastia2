@@ -138,6 +138,8 @@ public static class EventEmojiMap
                 ["household.house_bought"] = "🏠",
                 ["household.house_sold"] = "💵",
                 ["household.moved"] = "🚚",
+                ["household.son_moved_out"] = "🚪",
+                ["household.move_out_refused"] = "🚫",
                 ["household.house_rented"] = "🏘️",
                 ["household.house_given"] = "🎁",
                 ["farmland.bought"] = "🌾",

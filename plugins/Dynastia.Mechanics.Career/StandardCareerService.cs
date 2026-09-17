@@ -120,6 +120,13 @@ public sealed partial class StandardCareerService :
             component);
     }
 
+    internal void ReconcileAll(
+        IEnumerable<IPerson> people)
+    {
+        foreach (var person in people)
+            EnsureCareer(person);
+    }
+
     public CareerSnapshot GetCareer(
         IPerson person)
     {
@@ -140,7 +147,7 @@ public sealed partial class StandardCareerService :
             ? crafts!.GetExpectedAnnualIncome(person)
             : GetAnnualIncome(person);
         var jobTitle = isCraftSelfEmployed
-            ? $"Self-employed {activeCraft!.SelfEmploymentTitle}"
+            ? activeCraft!.SelfEmploymentTitle
             : ResolveJobTitle(person, career, definition);
         var statusId = isCraftSelfEmployed
             ? null
@@ -209,7 +216,7 @@ public sealed partial class StandardCareerService :
             "status.unemployed" => "Unemployed",
             "status.housewife" => "Housewife",
             "role.nanny" => "Nanny",
-            "role.family_nanny" => "Family Nanny",
+            "role.family_nanny" => "Family Caregiver",
             _ => statusId
         };
 
@@ -229,6 +236,9 @@ public sealed partial class StandardCareerService :
                 jobLevel,
                 0,
                 5);
+
+        if (level > 0)
+            _stats.EnsureStats(person);
 
         var component =
             new CareerComponent
@@ -382,10 +392,6 @@ public sealed partial class StandardCareerService :
         IPerson person,
         CareerComponent career)
     {
-        EnsureValidAssignment(
-            person,
-            career);
-
         return _catalog.Find(
             career.CareerId);
     }
@@ -461,15 +467,12 @@ public sealed partial class StandardCareerService :
         }
     }
 
-    private CareerComponent GetRequired(
+    private static CareerComponent GetRequired(
         IPerson person)
     {
-        EnsureCareer(
-            person);
-
         return person.Components.Get<
             CareerComponent>()
             ?? throw new InvalidOperationException(
-                "Career component could not be created.");
+                "Career state is missing. Run state reconciliation before reading career data.");
     }
 }

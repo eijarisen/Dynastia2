@@ -38,17 +38,21 @@ public sealed class HobbiesPlugin :
         systems.Register(
             new HobbyYearSystem(hobbies));
 
-        events.EventPublished += (_, gameEvent) =>
-        {
-            if (gameEvent.Type.Equals(
-                    "game.started",
-                    StringComparison.OrdinalIgnoreCase))
-            {
-                hobbies.ReconcileAll();
-            }
-        };
+        var reconciliation = Require<IStateReconciliationLifecycle>(
+            context,
+            "State reconciliation lifecycle");
 
-        hobbies.ReconcileAll();
+        reconciliation.Register(
+            "hobbies.components",
+            [
+                ReconciliationLifecycleStage.AfterNewGame,
+                ReconciliationLifecycleStage.AfterLoad,
+                ReconciliationLifecycleStage.BeforeYear,
+                ReconciliationLifecycleStage.AfterYear,
+                ReconciliationLifecycleStage.AfterImmediateAction
+            ],
+            _ => hobbies.ReconcileAll(),
+            order: 70);
 
         context.Log(
             "Flavor-only hobbies and pastime thoughts registered.");

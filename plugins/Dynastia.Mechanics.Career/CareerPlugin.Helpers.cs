@@ -5,26 +5,48 @@ namespace Dynastia.Mechanics.Career;
 public sealed partial class CareerPlugin
 {
     private static bool CanActorSupport(
-        IPerson actor)
+        IPerson actor,
+        bool actorHasControl)
     {
         return actor.Tags.Has("state.alive")
-            && actor.Tags.Has("control.playable")
+            && actorHasControl
             && !actor.Tags.Has("state.imprisoned");
+    }
+
+    private static bool IsResidentAdultChild(
+        IPerson actor,
+        IPerson target,
+        IFamilyService family,
+        IEconomyService economy)
+    {
+        if (target.Id == actor.Id
+            || !target.Tags.Has("state.alive")
+            || target.Age < 18
+            || !family.GetChildren(actor)
+                .Any(child => child.Id == target.Id))
+        {
+            return false;
+        }
+
+        var actorHouseholdId = economy.GetHouseholdId(actor);
+        return actorHouseholdId is not null
+            && economy.GetHouseholdId(target) == actorHouseholdId;
     }
 
     private static bool IsRecoverOrQuitTarget(
         IPerson actor,
         IPerson target,
-        ICareerService career,
-        IFamilyService family)
+        IFamilyService family,
+        IEconomyService economy)
     {
         if (family.GetSpouse(actor)?.Id == target.Id)
             return true;
 
-        return family.GetChildren(actor)
-            .Any(child => child.Id == target.Id)
-            && family.GetSex(target) == Sex.Female
-            && target.Age >= 18;
+        return IsResidentAdultChild(
+            actor,
+            target,
+            family,
+            economy);
     }
 
     private static IPerson? FindFirstRelatedPerson(

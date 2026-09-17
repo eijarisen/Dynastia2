@@ -7,7 +7,11 @@ public sealed partial class StandardEconomyService
     public TownInfo GetResidenceTown(
         IPerson person)
     {
-        var household = GetRequiredHousehold(person);
+        var resolved = FindHousehold(person)
+            ?? throw new InvalidOperationException(
+                $"{_family.GetDisplayName(person)} does not belong to an active dynasty household.");
+
+        var household = resolved.Value.Household;
         var head = GetHead(household);
 
         var town =
@@ -17,15 +21,8 @@ public sealed partial class StandardEconomyService
                     household.ResidenceTownId)
                 : null;
 
-        town ??=
-            _locations.GetLocation(
-                head)
-            .HomeTown;
-
-        household.ResidenceTownId =
-            town.Id;
-
-        return town;
+        return town
+            ?? _locations.GetLocation(head).HomeTown;
     }
 
     public void SetResidenceTown(
@@ -182,13 +179,11 @@ public sealed partial class StandardEconomyService
     public IReadOnlyList<HousePropertyInfo> GetHouses(
         IPerson person)
     {
-        var household =
-            GetRequiredHousehold(
-                person);
+        var resolved = FindHousehold(person);
+        if (resolved is null)
+            return Array.Empty<HousePropertyInfo>();
 
-        SynchronizeHouses(
-            GetHead(household),
-            household);
+        var household = resolved.Value.Household;
 
         return household.Houses
             .Select(
@@ -429,9 +424,8 @@ public sealed partial class StandardEconomyService
     public decimal GetPendingInheritance(
         IPerson person)
     {
-        return GetClaim(
-            person)
-            .PendingInheritance;
+        return FindClaim(person)?.PendingInheritance
+            ?? 0m;
     }
 
     public void SetPendingInheritance(
@@ -460,17 +454,10 @@ public sealed partial class StandardEconomyService
     public int GetPendingHouses(
         IPerson person)
     {
-        var claim =
-            GetClaim(
-                person);
-
-        SynchronizePendingHouses(
-            person,
-            claim);
-
-        return claim
-            .PendingHouseProperties
-            .Count;
+        var claim = FindClaim(person);
+        return claim?.PendingHouseProperties.Count
+            ?? claim?.PendingHouses
+            ?? 0;
     }
 
     public void SetPendingHouses(

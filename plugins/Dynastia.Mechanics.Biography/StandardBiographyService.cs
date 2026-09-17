@@ -49,9 +49,6 @@ public sealed partial class StandardBiographyService :
         GetBiography(
             IPerson person)
     {
-        EnsureGeneratedAdultLifeMilestones(
-            person);
-
         if (!_entries.TryGetValue(
             person.Id,
             out var entries))
@@ -87,13 +84,6 @@ public sealed partial class StandardBiographyService :
         IReadOnlyList<BiographyEntry>>
         ExportBiographyState()
     {
-        foreach (var person in
-            _gameState.People)
-        {
-            EnsureGeneratedAdultLifeMilestones(
-                person);
-        }
-
         return _entries.ToDictionary(
             pair =>
                 pair.Key,
@@ -191,6 +181,12 @@ public sealed partial class StandardBiographyService :
             founder,
             gameEvent.Year,
             "🧑 Became an adult.");
+    }
+
+    internal void ReconcileGeneratedAdultLifeMilestones()
+    {
+        foreach (var person in _gameState.People)
+            EnsureGeneratedAdultLifeMilestones(person);
     }
 
     private int GetCompletedBiographyYear(

@@ -62,6 +62,11 @@ public sealed class HouseholdHealthModifierProvider :
                     change -= penalty;
                 }
 
+                if (status.IsOvercrowded)
+                {
+                    change -= HouseholdCrowdingRules.AnnualHealthPenalty;
+                }
+
                 if (status.IsBroke)
                 {
                     var immunity =

@@ -35,7 +35,6 @@ public sealed partial class MainWindowViewModel
             return [];
         }
 
-        _familyRelationService.ReconcileAll();
         var parameters = new Dictionary<string, string>
         {
             ["familyRelations"] = "true"

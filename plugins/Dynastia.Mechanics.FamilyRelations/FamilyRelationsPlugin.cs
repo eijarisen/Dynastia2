@@ -22,13 +22,28 @@ public sealed class FamilyRelationsPlugin : IGamePlugin
         var relations = new StandardFamilyRelationService(
             gameState, family, economy, households, personality, marriage, random);
         context.AddService<IFamilyRelationService>(relations);
-        relations.ReconcileAll();
+
+        var reconciliation = context.GetService<IStateReconciliationLifecycle>()
+            ?? throw new InvalidOperationException(
+                "State reconciliation lifecycle is unavailable.");
+
+        reconciliation.Register(
+            "family_relations.network",
+            [
+                ReconciliationLifecycleStage.AfterNewGame,
+                ReconciliationLifecycleStage.AfterLoad,
+                ReconciliationLifecycleStage.BeforeYear,
+                ReconciliationLifecycleStage.AfterYear,
+                ReconciliationLifecycleStage.AfterImmediateAction
+            ],
+            _ => relations.ReconcileAll(),
+            order: 80);
 
         _ = new FamilyRelationEventBridge(gameState, family, economy, households, relations, events);
         systems.Register(new FamilyRelationYearSystem(relations, gameState, family, economy, households, personality, random));
 
         FamilyRelationActions.Register(
-            actions, gameState, family, relations, households, economy, locations, career, random, events);
+            actions, gameState, family, relations, households, economy, locations, career, personality, random, events);
         LegacyFamilyRelationActions.Register(actions);
 
         context.GetService<IThoughtProviderRegistry>()?

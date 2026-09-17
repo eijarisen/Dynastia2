@@ -7,8 +7,11 @@ public sealed partial class StandardEconomyService
     public IReadOnlyList<FarmlandAssetInfo> GetFarmland(
         IPerson person)
     {
-        var household = GetRequiredHousehold(person);
-        NormalizeFarmland(household);
+        var resolved = FindHousehold(person);
+        if (resolved is null)
+            return Array.Empty<FarmlandAssetInfo>();
+
+        var household = resolved.Value.Household;
 
         return household.Farmland
             .Select(ToFarmlandInfo)
@@ -128,8 +131,9 @@ public sealed partial class StandardEconomyService
     public IReadOnlyList<FarmlandAssetInfo> GetPendingFarmland(
         IPerson person)
     {
-        var claim = GetClaim(person);
-        NormalizePendingFarmland(claim);
+        var claim = FindClaim(person);
+        if (claim is null)
+            return Array.Empty<FarmlandAssetInfo>();
 
         return claim.PendingFarmland
             .Select(ToFarmlandInfo)

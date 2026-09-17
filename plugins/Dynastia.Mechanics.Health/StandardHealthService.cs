@@ -30,16 +30,40 @@ public sealed class StandardHealthService : IHealthService
     public HealthSnapshot GetHealth(IPerson person)
     {
         var health = GetRequired(person);
-        ReconcileStoredConditionImpacts(health);
         return new HealthSnapshot(
             health.Current,
             health.Maximum,
-            health.Conditions.Select(c => new HealthConditionInfo(c.Id, c.Name, c.Type, c.HealthImpact, c.RemainingYears)).ToList());
+            health.Conditions.Select(c =>
+            {
+                var definition = GetDefinition(c.Id);
+                var impact = definition is null
+                    ? c.HealthImpact
+                    : HealthSeverityRules.ScaleAnnualImpact(definition);
+
+                return new HealthConditionInfo(
+                    c.Id,
+                    c.Name,
+                    c.Type,
+                    impact,
+                    c.RemainingYears);
+            }).ToList());
+    }
+
+    internal void ReconcileAll(IEnumerable<IPerson> people)
+    {
+        foreach (var person in people)
+        {
+            EnsureHealth(person);
+            var health = GetRequired(person);
+            health.Maximum = Math.Max(0, health.Maximum);
+            health.Current = Math.Clamp(health.Current, 0, health.Maximum);
+            ReconcileStoredConditionImpacts(health);
+        }
     }
 
     public void SetHealth(IPerson person, double value)
     {
-        var health = GetRequired(person);
+        var health = GetMutable(person);
         health.Current = Math.Clamp(value, 0, health.Maximum);
     }
 
@@ -48,13 +72,13 @@ public sealed class StandardHealthService : IHealthService
 
     public void ChangeHealthUnclamped(IPerson person, double amount)
     {
-        var health = GetRequired(person);
+        var health = GetMutable(person);
         health.Current = Math.Max(0, health.Current + amount);
     }
     public bool HasCondition(IPerson person, string conditionId) => GetRequired(person).Conditions.Any(x => x.Id.Equals(conditionId, StringComparison.OrdinalIgnoreCase));
     public bool AddCondition(IPerson person, string conditionId) => TryAddCondition(person, conditionId, null, out _);
     public bool AddCondition(IPerson person, string conditionId, int year) => TryAddCondition(person, conditionId, year, out _);
-    public bool RemoveCondition(IPerson person, string conditionId) => GetRequired(person).Conditions.RemoveAll(x => x.Id.Equals(conditionId, StringComparison.OrdinalIgnoreCase)) > 0;
+    public bool RemoveCondition(IPerson person, string conditionId) => GetMutable(person).Conditions.RemoveAll(x => x.Id.Equals(conditionId, StringComparison.OrdinalIgnoreCase)) > 0;
 
     internal IReadOnlyCollection<string> ConditionIds => _definitions.Keys;
     internal IReadOnlyCollection<HealthConditionDefinition> Definitions => _definitions.Values;
@@ -67,7 +91,7 @@ public sealed class StandardHealthService : IHealthService
 
     internal double ApplyAnnualConditionEffects(IPerson person)
     {
-        var health = GetRequired(person);
+        var health = GetMutable(person);
         var change = 0.0;
         foreach (var condition in health.Conditions)
         {
@@ -159,7 +183,7 @@ public sealed class StandardHealthService : IHealthService
 
     private bool TryAddCondition(IPerson person, string conditionId, int? year, out HealthConditionState? added)
     {
-        var health = GetRequired(person);
+        var health = GetMutable(person);
         if (health.Conditions.Any(x => x.Id.Equals(conditionId, StringComparison.OrdinalIgnoreCase)))
         {
             added = null;
@@ -201,12 +225,17 @@ public sealed class StandardHealthService : IHealthService
         }
     }
 
-    private HealthComponent GetRequired(IPerson person)
+    private static HealthComponent GetRequired(IPerson person)
+    {
+        return person.Components.Get<HealthComponent>()
+            ?? throw new InvalidOperationException(
+                "Health state is missing. Run state reconciliation before reading health data.");
+    }
+
+    private HealthComponent GetMutable(IPerson person)
     {
         EnsureHealth(person);
-        var health = person.Components.Get<HealthComponent>()
-            ?? throw new InvalidOperationException("Health component could not be created.");
-
+        var health = GetRequired(person);
         health.Maximum = Math.Max(0, health.Maximum);
         health.Current = Math.Clamp(health.Current, 0, health.Maximum);
         return health;

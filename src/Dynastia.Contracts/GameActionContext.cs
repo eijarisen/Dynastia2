@@ -8,7 +8,8 @@ public sealed class GameActionContext
         IPerson target,
         IGameEventBus eventBus,
         IGameRandom random,
-        IReadOnlyDictionary<string, string>? parameters = null)
+        IReadOnlyDictionary<string, string>? parameters = null,
+        ActionExecutionContext? execution = null)
     {
         GameState = gameState;
         Actor = actor;
@@ -16,6 +17,7 @@ public sealed class GameActionContext
         EventBus = eventBus;
         Random = random;
         Parameters = parameters ?? new Dictionary<string, string>();
+        Execution = execution ?? ActionExecutionContext.Player;
     }
 
     public IGameState GameState { get; }
@@ -24,4 +26,14 @@ public sealed class GameActionContext
     public IGameEventBus EventBus { get; }
     public IGameRandom Random { get; }
     public IReadOnlyDictionary<string, string> Parameters { get; }
+    public ActionExecutionContext Execution { get; }
+
+    public ActionExecutionOrigin Origin => Execution.Origin;
+    public Guid? ActorHouseholdId => Execution.ActorHouseholdId;
+    public YearPhase? ExecutionPhase => Execution.Phase;
+
+    public bool ActorHasControl =>
+        Actor.Tags.Has("control.playable")
+        || Origin is ActionExecutionOrigin.Autonomous
+            or ActionExecutionOrigin.System;
 }

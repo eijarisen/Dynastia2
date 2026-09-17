@@ -75,7 +75,7 @@ public sealed class TownMapPanel :
             {
                 Width = 220,
                 Height = 31,
-                Watermark = "Search town...",
+                PlaceholderText = "Search town...",
                 FontSize = 12,
                 Background =
                     new SolidColorBrush(

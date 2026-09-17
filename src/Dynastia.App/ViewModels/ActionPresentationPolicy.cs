@@ -213,8 +213,11 @@ internal static class ActionPresentationPolicy
             StringComparison.OrdinalIgnoreCase))
         {
             if (actionId.Contains(
-                "nanny",
-                StringComparison.OrdinalIgnoreCase))
+                    "nanny",
+                    StringComparison.OrdinalIgnoreCase)
+                || actionId.Equals(
+                    "household.ask_move_out",
+                    StringComparison.OrdinalIgnoreCase))
             {
                 categories.Add(
                     ActionCategory.Family);

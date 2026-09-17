@@ -54,8 +54,7 @@ public sealed partial class WellbeingPlugin
                             return false;
                         }
 
-                        if (!CanActorAct(
-                            actionContext.Actor)
+                        if (!CanActorAct(actionContext)
                             || !actionContext.Target.Tags.Has(
                                 "state.alive"))
                         {
@@ -266,7 +265,7 @@ public sealed partial class WellbeingPlugin
                                 var target =
                                     actionContext.Target;
 
-                                if (!CanActorAct(actor)
+                                if (!CanActorAct(actionContext)
                                     || !target.Tags.Has(
                                         "state.alive"))
                                 {
@@ -386,18 +385,16 @@ public sealed partial class WellbeingPlugin
     {
         return context.Actor.Id
                 == context.Target.Id
-            && CanActorAct(
-                context.Actor);
+            && CanActorAct(context);
     }
 
     private static bool CanActorAct(
-        IPerson actor)
+        GameActionContext context)
     {
-        return actor.Tags.Has(
+        return context.Actor.Tags.Has(
                 "state.alive")
-            && actor.Tags.Has(
-                "control.playable")
-            && !actor.Tags.Has(
+            && context.ActorHasControl
+            && !context.Actor.Tags.Has(
                 "state.imprisoned");
     }
 

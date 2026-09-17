@@ -204,7 +204,7 @@ public sealed partial class StandardCareerService
         {
             return _presentation.ResolveStatus(
                 "role.family_nanny",
-                "Family Nanny",
+                "Family Caregiver",
                 year);
         }
 

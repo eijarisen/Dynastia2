@@ -97,7 +97,7 @@ public sealed partial class MainWindowViewModel
                 .Select(craft => _craftService.GetProgress(person, craft.Id))
                 .Where(progress => progress is not null)
                 .Cast<CraftProgressSnapshot>()
-                .ToList();
+                .ToArray();
 
         SelectedEducation =
             new EducationViewModel(

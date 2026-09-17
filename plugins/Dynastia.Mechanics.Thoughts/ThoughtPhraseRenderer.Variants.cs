@@ -1026,6 +1026,30 @@ internal sealed partial class ThoughtPhraseRenderer
                         ["This household is exhausting.", "There's too much to manage at home lately."]
                 },
 
+            "household.overcrowded" =>
+                voice switch
+                {
+                    ThoughtVoice.Child =>
+                        ["There never seems to be enough room or quiet at home.",
+                         "It's hard to find any space for myself here."],
+
+                    ThoughtVoice.Adolescent =>
+                        ["The house feels crowded all the time.",
+                         "There are too many people under one roof."],
+
+                    ThoughtVoice.AdultRough =>
+                        ["Too many of us are packed into this house.",
+                         "We need more room in this place."],
+
+                    ThoughtVoice.AdultElaborate =>
+                        ["There are simply too many of us sharing this home comfortably.",
+                         "The lack of space and privacy in this household is becoming difficult to bear."],
+
+                    _ =>
+                        ["There are too many of us sharing this home.",
+                         "This household has become far too crowded."]
+                },
+
             "role.family_nanny.started" =>
                 voice switch
                 {
@@ -1045,7 +1069,7 @@ internal sealed partial class ThoughtPhraseRenderer
                 voice switch
                 {
                     ThoughtVoice.AdultRough =>
-                        ["I'm done looking after the kids now.", "That nanny work is over now."],
+                        ["I'm done looking after the kids now.", "That childcare work is over now."],
 
                     ThoughtVoice.AdultElaborate =>
                         ["My period of looking after the younger children has come to an end.",
@@ -1053,7 +1077,7 @@ internal sealed partial class ThoughtPhraseRenderer
 
                     _ =>
                         ["I'm no longer the one looking after the younger children.",
-                         "My time helping as the family nanny has come to an end."]
+                         "My time helping as the family caregiver has come to an end."]
                 },
 
             "role.family_nanny" =>

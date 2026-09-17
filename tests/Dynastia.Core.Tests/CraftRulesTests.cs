@@ -154,11 +154,11 @@ public sealed class CraftRulesTests
     }
 
     [Theory]
-    [InlineData(1, 16096.08)]
-    [InlineData(2, 17424.87)]
-    [InlineData(3, 19247.66)]
-    [InlineData(4, 22086.07)]
-    [InlineData(5, 28061.69)]
+    [InlineData(1, 1609.61)]
+    [InlineData(2, 1742.49)]
+    [InlineData(3, 1924.77)]
+    [InlineData(4, 2208.61)]
+    [InlineData(5, 2806.17)]
     public void ExpectedAnnualIncome_MatchesApprovedReference(
         int level,
         double expected)
@@ -167,11 +167,11 @@ public sealed class CraftRulesTests
     }
 
     [Theory]
-    [InlineData(1, 8000.0)]
-    [InlineData(2, 10000.0)]
-    [InlineData(3, 13333.333333333334)]
-    [InlineData(4, 20000.0)]
-    [InlineData(5, 40000.0)]
+    [InlineData(1, 800.0)]
+    [InlineData(2, 1000.0)]
+    [InlineData(3, 1333.3333333333333)]
+    [InlineData(4, 2000.0)]
+    [InlineData(5, 4000.0)]
     public void MaximumMonthlyIncome_UsesApprovedExponentialFormula(
         int level,
         double expected)

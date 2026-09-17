@@ -24,14 +24,11 @@ public sealed partial class HouseholdsPlugin
                     "Choose any town and queue a property purchase. The local house price is paid when the action resolves next year. Buying elsewhere creates a rented investment and never moves the household.",
                 Mode = ActionExecutionMode.Queued,
                 QueuePhase = YearPhase.QueuedActionsEarly,
-                IsAvailable = context =>
-                {
-                    if (!CanActOnSelf(context))
-                        return false;
-
-                    return economy.GetHousehold(context.Actor)
-                        is { Wealth: >= 15000m };
-                },
+                EvaluateAvailability = context =>
+                    EvaluateBuyHouseAvailability(
+                        context,
+                        economy,
+                        locations),
                 Execute = context =>
                 {
                     context.Parameters.TryGetValue("townId", out var townId);
@@ -40,11 +37,21 @@ public sealed partial class HouseholdsPlugin
                         : locations.FindTown(townId);
                     var household = economy.GetHousehold(context.Actor);
                     if (town is null || household is null)
-                        return new GameActionResult(false);
+                    {
+                        return new GameActionResult(
+                            false,
+                            "The selected property purchase is no longer valid.",
+                            ActionReasonCodes.NoLongerEligible);
+                    }
 
                     var price = economy.GetHousePrice(town);
                     if (household.Wealth < price)
-                        return new GameActionResult(false, "The household can no longer afford this property.");
+                    {
+                        return new GameActionResult(
+                            false,
+                            "The household can no longer afford this property.",
+                            ActionReasonCodes.InsufficientFunds);
+                    }
 
                     economy.ChangeWealth(context.Actor, -price);
                     var house = economy.AddHouse(context.Actor, town);
@@ -76,9 +83,10 @@ public sealed partial class HouseholdsPlugin
                     "Choose one owned property and sell it for 80% of that town's current local house price. Selling the residence never causes relocation; the household simply rents in the same town if no local house remains.",
                 Mode = ActionExecutionMode.Queued,
                 QueuePhase = YearPhase.QueuedActionsEarly,
-                IsAvailable = context =>
-                    CanActOnSelf(context)
-                    && economy.GetHouses(context.Actor).Count > 0,
+                EvaluateAvailability = context =>
+                    EvaluateSellHouseAvailability(
+                        context,
+                        economy),
                 Execute = context =>
                 {
                     context.Parameters.TryGetValue("propertyId", out var propertyIdRaw);
@@ -99,7 +107,12 @@ public sealed partial class HouseholdsPlugin
                     var existing = owned
                         .FirstOrDefault(house => house.Id == propertyId);
                     if (existing is null)
-                        return new GameActionResult(false, "The selected property is no longer owned.");
+                    {
+                        return new GameActionResult(
+                            false,
+                            "The selected property is no longer owned.",
+                            ActionReasonCodes.AssetNoLongerOwned);
+                    }
 
                     var sold = economy.TakeHouse(context.Actor, propertyId);
                     if (sold is null)
@@ -217,7 +230,7 @@ public sealed partial class HouseholdsPlugin
                     var actor = context.Actor;
                     var target = context.Target;
                     if (!actor.Tags.Has("state.alive")
-                        || !actor.Tags.Has("control.playable")
+                        || !context.ActorHasControl
                         || !target.Tags.Has("state.alive")
                         || target.Id == actor.Id
                         || family.GetSex(target) != Sex.Male
@@ -451,6 +464,113 @@ public sealed partial class HouseholdsPlugin
                 return new GameActionResult(true);
             }
         });
+    }
+
+    private static ActionEvaluationResult EvaluateBuyHouseAvailability(
+        GameActionContext context,
+        IEconomyService economy,
+        ILocationService locations)
+    {
+        if (!CanActOnSelf(context))
+        {
+            return ActionEvaluationResult.Denied(
+                ActionReasonCodes.NoLongerEligible,
+                "Only the active household head can buy a house.");
+        }
+
+        var household = economy.GetHousehold(context.Actor);
+        if (household is null)
+        {
+            return ActionEvaluationResult.Denied(
+                ActionReasonCodes.NoLongerEligible,
+                "The acting character no longer has a household.");
+        }
+
+        var required = 15000m;
+        var metadata = new Dictionary<string, string>(
+            StringComparer.OrdinalIgnoreCase);
+
+        if (context.Parameters.TryGetValue("townId", out var townId)
+            && !string.IsNullOrWhiteSpace(townId))
+        {
+            var town = locations.FindTown(townId);
+            if (town is null)
+            {
+                return ActionEvaluationResult.Denied(
+                    ActionReasonCodes.InvalidParameter,
+                    "The selected town is no longer available.",
+                    economy.GetHouseholdId(context.Actor));
+            }
+
+            required = economy.GetHousePrice(town);
+            metadata["townId"] = town.Id;
+            metadata["town"] = town.Town;
+        }
+
+        var requirements = new[]
+        {
+            new ActionResourceRequirement(
+                "household.wealth",
+                required,
+                household.Wealth,
+                "Household wealth",
+                "zł")
+        };
+
+        if (household.Wealth < required)
+        {
+            return ActionEvaluationResult.Denied(
+                ActionReasonCodes.InsufficientFunds,
+                "The household cannot afford this property.",
+                economy.GetHouseholdId(context.Actor),
+                requirements,
+                metadata);
+        }
+
+        return ActionEvaluationResult.Allowed(
+            economy.GetHouseholdId(context.Actor),
+            requirements,
+            metadata);
+    }
+
+    private static ActionEvaluationResult EvaluateSellHouseAvailability(
+        GameActionContext context,
+        IEconomyService economy)
+    {
+        if (!CanActOnSelf(context))
+        {
+            return ActionEvaluationResult.Denied(
+                ActionReasonCodes.NoLongerEligible,
+                "Only the active household head can sell a house.");
+        }
+
+        var houses = economy.GetHouses(context.Actor);
+        var householdId = economy.GetHouseholdId(context.Actor);
+        if (houses.Count == 0)
+        {
+            return ActionEvaluationResult.Denied(
+                ActionReasonCodes.AssetNoLongerOwned,
+                "The household no longer owns a house to sell.",
+                householdId);
+        }
+
+        if (context.Parameters.TryGetValue(
+                "propertyId",
+                out var propertyIdRaw)
+            && Guid.TryParse(propertyIdRaw, out var propertyId)
+            && houses.All(house => house.Id != propertyId))
+        {
+            return ActionEvaluationResult.Denied(
+                ActionReasonCodes.AssetNoLongerOwned,
+                "The selected property is no longer owned.",
+                householdId,
+                presentationMetadata: new Dictionary<string, string>
+                {
+                    ["propertyId"] = propertyId.ToString()
+                });
+        }
+
+        return ActionEvaluationResult.Allowed(householdId);
     }
 
     private static void RelocateHousehold(

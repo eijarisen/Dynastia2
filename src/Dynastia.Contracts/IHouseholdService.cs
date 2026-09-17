@@ -19,6 +19,11 @@ public interface IHouseholdService
     bool IsAutonomousHousehold(
         IPerson person);
 
+    MoveResidentBranchResult EstablishIndependentResidentBranch(
+        IPerson sourceHead,
+        IPerson newHead,
+        Guid? propertyId = null);
+
     void ReconcileHouseholds();
 
     bool ShouldShowFamilyNews(

@@ -3,17 +3,17 @@
     "actionId": "household.ask_daughter_nanny",
     "startYear": 1700,
     "endYear": 1849,
-    "label": "Ask Daughter to Care for Children",
-    "description": "Ask the selected adult unmarried and unemployed daughter to take responsibility for caring for the younger children. The family-nanny mechanics are unchanged.",
-    "narrative": "asked their daughter to take responsibility for the younger children"
+    "label": "Ask Child to Care for Children",
+    "description": "Ask the selected adult unmarried and unemployed child living in this household to take responsibility for caring for the younger children.",
+    "narrative": "asked their child to take responsibility for the younger children"
   },
   {
     "actionId": "household.ask_daughter_nanny",
     "startYear": 1850,
     "endYear": null,
-    "label": "Ask to Become Nanny",
-    "description": "Ask the selected adult unmarried and unemployed daughter to care for the younger children for free. The family-nanny mechanics are unchanged.",
-    "narrative": "asked their daughter to become the family nanny"
+    "label": "Ask to Help with Children",
+    "description": "Ask the selected adult unmarried and unemployed child living in this household to care for the younger children for free.",
+    "narrative": "asked their child to become the family caregiver"
   },
   {
     "actionId": "household.fire_nanny",
@@ -110,6 +110,22 @@
     "label": "Marry Off Daughter",
     "description": "Help the selected adult unmarried daughter find a husband. Her Appeal still matters, and success is not guaranteed.",
     "narrative": "helped their daughter look for a husband"
+  },
+  {
+    "actionId": "relationship.marry_off_son",
+    "startYear": 1700,
+    "endYear": 1945,
+    "label": "Arrange a Marriage for Son",
+    "description": "Use family contacts to seek a suitable wife for the selected adult unmarried son who still lives in this household. The proposed match may refuse.",
+    "narrative": "used family contacts to arrange a marriage for their son"
+  },
+  {
+    "actionId": "relationship.marry_off_son",
+    "startYear": 1946,
+    "endYear": null,
+    "label": "Help Son Find a Wife",
+    "description": "Help the selected adult unmarried son who still lives in this household find a wife. The proposed match may refuse.",
+    "narrative": "helped their son look for a wife"
   },
   {
     "actionId": "relationship.repair_marriage",

@@ -186,6 +186,11 @@ public sealed partial class GameSaveService
         public Dictionary<string, string> Parameters { get; set; } =
             new(StringComparer.OrdinalIgnoreCase);
 
+        public ActionExecutionOrigin Origin { get; set; } =
+            ActionExecutionOrigin.Player;
+
+        public Guid? ActorHouseholdId { get; set; }
+
         public static QueuedActionSaveData FromAction(
             QueuedActionInfo action)
         {
@@ -209,6 +214,12 @@ public sealed partial class GameSaveService
                 TargetId =
                     action.TargetId,
 
+                Origin =
+                    action.Origin,
+
+                ActorHouseholdId =
+                    action.ActorHouseholdId,
+
                 Parameters = action.Parameters is null
                     ? new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
                     : action.Parameters.ToDictionary(
@@ -227,7 +238,9 @@ public sealed partial class GameSaveService
                 ActorId,
                 TargetId,
                 Description,
-                Parameters);
+                Parameters,
+                Origin,
+                ActorHouseholdId);
         }
     }
 

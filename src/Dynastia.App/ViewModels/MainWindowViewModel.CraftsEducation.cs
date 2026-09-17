@@ -114,9 +114,14 @@ public sealed partial class MainWindowViewModel
         foreach (var craft in _craftService.GetEducationOptions(target))
         {
             var statName = CultureInfo.InvariantCulture.TextInfo.ToTitleCase(craft.PrimaryStat);
+            var emoji = _craftService.Catalog
+                .FirstOrDefault(info => info.Id.Equals(
+                    craft.CraftId,
+                    StringComparison.OrdinalIgnoreCase))?.Emoji
+                ?? "🛠️";
             var heading = craft.IsKnownCraft
-                ? $"{craft.CraftName} — {craft.CurrentMasteryName}"
-                : $"Learn {craft.CraftName}";
+                ? $"{emoji} {craft.CraftName} — {craft.CurrentMasteryName}"
+                : $"{emoji} Learn {craft.CraftName}";
             var secondary = craft.IsKnownCraft
                 ? $"{craft.MasteryProgress:0.##} Mastery progress · {craft.RelevantExperienceYears} years relevant experience"
                 : $"New chosen Craft · {statName} {craft.PrimaryStatValue}";

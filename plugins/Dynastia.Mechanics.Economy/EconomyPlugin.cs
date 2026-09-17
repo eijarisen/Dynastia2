@@ -80,6 +80,22 @@ public sealed class EconomyPlugin : IGamePlugin
         context.AddService<IEconomyBalanceService>(
             economy);
 
+        var reconciliation = context.GetService<IStateReconciliationLifecycle>()
+            ?? throw new InvalidOperationException(
+                "State reconciliation lifecycle is unavailable.");
+
+        reconciliation.Register(
+            "economy.households_and_assets",
+            [
+                ReconciliationLifecycleStage.AfterNewGame,
+                ReconciliationLifecycleStage.AfterLoad,
+                ReconciliationLifecycleStage.BeforeYear,
+                ReconciliationLifecycleStage.AfterYear,
+                ReconciliationLifecycleStage.AfterImmediateAction
+            ],
+            _ => economy.ReconcileState(),
+            order: 55);
+
         systems.Register(
             new EconomyYearSystem(
                 economy,

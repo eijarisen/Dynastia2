@@ -41,6 +41,13 @@ public sealed class CraftsPlugin : IGamePlugin
         context.AddService<ICraftService>(service);
         income.Register(service);
 
+        context.GetService<IStateReconciliationLifecycle>()?
+            .Register(
+                "crafts.components",
+                Enum.GetValues<ReconciliationLifecycleStage>(),
+                _ => service.ReconcileAll(),
+                order: 65);
+
         RegisterActions(actions, service, family, economy, career, stats, random, events, catalog);
         RegisterGeneratedAdultInitialization(gameState, service, career, events);
 
@@ -81,7 +88,7 @@ public sealed class CraftsPlugin : IGamePlugin
                 IsAvailable = context =>
                     context.Actor.Id == context.Target.Id
                     && context.Actor.Tags.Has("state.alive")
-                    && context.Actor.Tags.Has("control.playable")
+                    && context.ActorHasControl
                     && context.Actor.Age >= 18
                     && !context.Actor.Tags.Has("state.imprisoned")
                     && crafts.KnowsCraft(context.Actor, definition.Id)
@@ -96,7 +103,7 @@ public sealed class CraftsPlugin : IGamePlugin
             actions.Register(new GameActionDefinition
             {
                 Id = $"craft.teach.{definition.Id}",
-                Label = $"Teach Craft: {definition.Name}",
+                Label = "Teach Craft",
                 Description =
                     $"Teach {definition.Name} to a child who is old enough to learn it. Success depends on the craft's relevant aptitude.",
                 Mode = ActionExecutionMode.Queued,
@@ -104,7 +111,7 @@ public sealed class CraftsPlugin : IGamePlugin
                 IsAvailable = context =>
                 {
                     if (!context.Actor.Tags.Has("state.alive")
-                        || !context.Actor.Tags.Has("control.playable")
+                        || !context.ActorHasControl
                         || !context.Target.Tags.Has("state.alive")
                         || context.Target.Age >= 18
                         || crafts.GetKnownCrafts(context.Target).Count >= CraftRules.MaximumCrafts
@@ -157,6 +164,7 @@ public sealed class CraftsPlugin : IGamePlugin
                             ["learningMode"] = "taught",
                             ["chance"] = chance.ToString("0.00", System.Globalization.CultureInfo.InvariantCulture),
                             ["suppressChronicle"] = success ? "false" : "true",
+                            ["familyNews"] = success ? "true" : "false",
                             ["text"] = success
                                 ? $"At age {context.Target.Age}, {family.GetDisplayName(context.Target)} learned {displayName} from {family.GetDisplayName(teacher)}."
                                 : $"{family.GetDisplayName(teacher)} tried to teach {family.GetDisplayName(context.Target)} {displayName}, but the lesson did not take."
@@ -179,7 +187,7 @@ public sealed class CraftsPlugin : IGamePlugin
             IsAvailable = context =>
                 context.Actor.Id == context.Target.Id
                 && context.Actor.Tags.Has("state.alive")
-                && context.Actor.Tags.Has("control.playable")
+                && context.ActorHasControl
                 && !context.Actor.Tags.Has("state.imprisoned")
                 && crafts.IsSelfEmployed(context.Actor),
             Execute = context =>
@@ -246,6 +254,8 @@ public sealed class CraftsPlugin : IGamePlugin
         StandardCraftService crafts,
         ICareerService career)
     {
+        crafts.ReconcilePerson(person);
+
         if (crafts.GetKnownCrafts(person).Count > 0)
             return;
 

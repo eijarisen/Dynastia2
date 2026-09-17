@@ -53,10 +53,6 @@ public sealed class StandardPersonalityService :
         if (person.Age < AssignmentAge)
             return null;
 
-        EnsurePersonality(
-            person,
-            []);
-
         var component =
             person.Components.Get<
                 PersonalityComponent>();
@@ -67,7 +63,8 @@ public sealed class StandardPersonalityService :
             || string.IsNullOrWhiteSpace(
                 component.Morals))
         {
-            return null;
+            throw new InvalidOperationException(
+                "Personality state is incomplete. Run state reconciliation before reading it.");
         }
 
         return new PersonalitySnapshot(

@@ -146,6 +146,30 @@ internal sealed class StandardFarmingService :
             GetStaffingFactors(
                 householdRepresentative);
 
+        return GetExpectedAnnualIncome(staffing);
+    }
+
+    public decimal GetExpectedAnnualIncomeAfterAddingLocalParcel(
+        IPerson householdRepresentative)
+    {
+        var localParcels =
+            GetLocalParcelCount(
+                householdRepresentative);
+
+        var workers =
+            GetAvailableWorkers(
+                householdRepresentative)
+            .Count;
+
+        return GetExpectedAnnualIncome(
+            FarmingRules.GetStaffingFactors(
+                localParcels + 1,
+                workers));
+    }
+
+    private decimal GetExpectedAnnualIncome(
+        IReadOnlyList<decimal> staffing)
+    {
         if (staffing.Count == 0)
             return 0m;
 

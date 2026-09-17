@@ -6,6 +6,7 @@
   "assembly": "Dynastia.Mechanics.Succession.dll",
   "entryType": "Dynastia.Mechanics.Succession.SuccessionPlugin",
   "dependencies": [
-    "dynastia.family"
+    "dynastia.family",
+    "dynastia.economy"
   ]
 }

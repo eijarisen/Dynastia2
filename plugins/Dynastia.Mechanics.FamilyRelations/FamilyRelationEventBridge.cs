@@ -28,12 +28,6 @@ internal sealed class FamilyRelationEventBridge
 
     private void OnEvent(object? sender, GameEvent e)
     {
-        if (e.Type.Equals("game.started", StringComparison.OrdinalIgnoreCase))
-        {
-            _relations.ReconcileAll();
-            return;
-        }
-
         if (e.Type.Equals("life.birth", StringComparison.OrdinalIgnoreCase))
         {
             var child = FindOptional(e.SubjectId);

@@ -176,13 +176,13 @@ public sealed partial class HouseholdsPlugin
                     "household.ask_daughter_nanny",
 
                 Label =
-                    "Ask to Become Nanny",
+                    "Ask to Help with Children",
 
                 Description =
-                    "Ask the selected adult unmarried and unemployed daughter " +
+                    "Ask the selected adult unmarried and unemployed child " +
                     "who still lives in this household to care for the younger " +
-                    "children for free. Her help removes the large-family strain. " +
-                    "It ends automatically if she dies, finds work, marries, or " +
+                    "children for free. Their help removes the large-family strain. " +
+                    "It ends automatically if they die, find work, marry, leave the household, or " +
                     "the household no longer has large-family strain.",
 
                 Mode =
@@ -197,31 +197,28 @@ public sealed partial class HouseholdsPlugin
                         var actor =
                             actionContext.Actor;
 
-                        var daughter =
+                        var child =
                             actionContext.Target;
 
                         if (!actor.Tags.Has(
                                 "state.alive")
-                            || !actor.Tags.Has(
-                                "control.playable")
-                            || !daughter.Tags.Has(
+                            || !actionContext.ActorHasControl
+                            || !child.Tags.Has(
                                 "state.alive")
-                            || daughter.Tags.Has(
+                            || child.Tags.Has(
                                 "state.dead")
-                            || daughter.Id == actor.Id
-                            || daughter.Age < 18
-                            || family.GetSex(
-                                daughter) != Sex.Female
+                            || child.Id == actor.Id
+                            || child.Age < 18
                             || family.GetSpouse(
-                                daughter) is not null
+                                child) is not null
                             || !family.GetChildren(
                                 actor)
                                 .Any(
-                                    child =>
-                                        child.Id
-                                        == daughter.Id)
+                                    directChild =>
+                                        directChild.Id
+                                        == child.Id)
                             || households.ResolveHouseholdHead(
-                                daughter)?.Id
+                                child)?.Id
                                 != actor.Id)
                         {
                             return false;
@@ -235,17 +232,17 @@ public sealed partial class HouseholdsPlugin
                             households.GetStatus(
                                 actor);
 
-                        var daughterCareer =
+                        var childCareer =
                             career.GetCareer(
-                                daughter);
+                                child);
 
                         return finance is not null
                             && status is not null
                             && !status.HasNannyReference
                             && status.UnderageChildren
                                 > status.BaseChildCapacity
-                            && !daughterCareer.IsRetired
-                            && !daughterCareer.IsEmployed;
+                            && !childCareer.IsRetired
+                            && !childCareer.IsEmployed;
                     },
 
                 Execute =
@@ -254,7 +251,7 @@ public sealed partial class HouseholdsPlugin
                         var actor =
                             actionContext.Actor;
 
-                        var daughter =
+                        var child =
                             actionContext.Target;
 
                         var finance =
@@ -265,33 +262,36 @@ public sealed partial class HouseholdsPlugin
                             households.GetStatus(
                                 actor);
 
-                        var daughterCareer =
+                        var childCareer =
                             career.GetCareer(
-                                daughter);
+                                child);
 
                         if (finance is null
                             || status is null
                             || status.HasNannyReference
                             || status.UnderageChildren
                                 <= status.BaseChildCapacity
-                            || daughterCareer.IsRetired
-                            || daughterCareer.IsEmployed
+                            || childCareer.IsRetired
+                            || childCareer.IsEmployed
+                            || child.Age < 18
+                            || !family.GetChildren(actor)
+                                .Any(directChild => directChild.Id == child.Id)
                             || family.GetSpouse(
-                                daughter) is not null
+                                child) is not null
                             || households.ResolveHouseholdHead(
-                                daughter)?.Id
+                                child)?.Id
                                 != actor.Id)
                         {
                             return new GameActionResult(
                                 false);
                         }
 
-                        daughter.Tags.Add(
+                        child.Tags.Add(
                             FamilyNannyTracker.FamilyNannyTag);
 
                         economy.SetNanny(
                             actor,
-                            daughter.Id);
+                            child.Id);
 
                         var wording =
                             RequireHistoricalVariant(
@@ -312,7 +312,7 @@ public sealed partial class HouseholdsPlugin
                                     actor.Id,
 
                                 RelatedPersonIds =
-                                    [daughter.Id],
+                                    [child.Id],
 
                                 Data =
                                     new Dictionary<string, string>
@@ -320,7 +320,7 @@ public sealed partial class HouseholdsPlugin
                                         ["text"] =
                                             $"{family.GetDisplayName(actor)} " +
                                             $"{wording.Narrative}. " +
-                                            $"{family.GetDisplayName(daughter)} agreed and " +
+                                            $"{family.GetDisplayName(child)} agreed and " +
                                             "began caring for the younger children without pay."
                                     }
                             });
@@ -462,6 +462,7 @@ public sealed partial class HouseholdsPlugin
             QueuePhase = action.QueuePhase,
             BypassGuards = action.BypassGuards,
             IsAvailable = action.IsAvailable,
+            EvaluateAvailability = action.EvaluateAvailability,
             Execute = action.Execute
         };
     }

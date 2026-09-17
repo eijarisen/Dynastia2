@@ -51,7 +51,21 @@ public sealed class PersonalityPlugin :
         context.AddService<IPersonalityService>(
             personality);
 
-        personality.ReconcileAll();
+        var reconciliation = context.GetService<IStateReconciliationLifecycle>()
+            ?? throw new InvalidOperationException(
+                "State reconciliation lifecycle is unavailable.");
+
+        reconciliation.Register(
+            "personality.components_and_tags",
+            [
+                ReconciliationLifecycleStage.AfterNewGame,
+                ReconciliationLifecycleStage.AfterLoad,
+                ReconciliationLifecycleStage.BeforeYear,
+                ReconciliationLifecycleStage.AfterYear,
+                ReconciliationLifecycleStage.AfterImmediateAction
+            ],
+            _ => personality.ReconcileAll(),
+            order: 25);
 
         events.EventPublished +=
             (_, gameEvent) =>
@@ -60,6 +74,9 @@ public sealed class PersonalityPlugin :
                         "game.started",
                         StringComparison.OrdinalIgnoreCase))
                 {
+                    // New-game profile creation is an explicit creation path,
+                    // not a presentation-time repair. Career initialization
+                    // later in the same event needs temperament tags.
                     personality.ReconcileAll();
                     return;
                 }
@@ -121,7 +138,7 @@ public sealed class PersonalityPlugin :
                 IsAvailable = actionContext =>
                     actionContext.Actor.Id == actionContext.Target.Id
                     && actionContext.Actor.Tags.Has("state.alive")
-                    && actionContext.Actor.Tags.Has("control.playable")
+                    && actionContext.ActorHasControl
                     && actionContext.Actor.Age >= 18
                     && !actionContext.Actor.Tags.Has("state.imprisoned"),
                 Execute = actionContext =>

@@ -68,6 +68,14 @@ public sealed class JusticePlugin : IGamePlugin
 
         var justice = new StandardJusticeService();
         context.AddService<IJusticeService>(justice);
+
+        context.GetService<IStateReconciliationLifecycle>()?
+            .Register(
+                "justice.components",
+                Enum.GetValues<ReconciliationLifecycleStage>(),
+                _ => justice.ReconcileAll(context.GetService<IGameState>()!.People),
+                order: 42);
+
         stressModifiers.Register(new JusticeStressModifierProvider(justice));
         guards.Register(new PrisonActionGuard(justice));
         systems.Register(new PrisonStatusYearSystem(justice, family, events));

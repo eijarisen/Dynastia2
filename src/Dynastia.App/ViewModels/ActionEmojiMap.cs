@@ -14,6 +14,7 @@ public static class ActionEmojiMap
                 ["reproduction.try_for_baby"] = "👶",
                 ["relationship.divorce_spouse"] = "💔",
                 ["relationship.marry_off_daughter"] = "💒",
+                ["relationship.marry_off_son"] = "💒",
                 ["relationship.repair_marriage"] = "❤️‍🩹",
 
                 ["career.quit_job"] = "🚶",
@@ -53,6 +54,7 @@ public static class ActionEmojiMap
                 ["household.ask_mother_house"] = "🙏",
                 ["household.hire_nanny"] = "🧑‍🍼",
                 ["household.ask_daughter_nanny"] = "🧑‍🍼",
+                ["household.ask_move_out"] = "🚪",
                 ["household.fire_nanny"] = "👋",
 
                 ["family_support.ask_parents"] = "🙏",

@@ -267,8 +267,7 @@ public sealed class StatImprovementsPlugin :
 
         if (!actor.Tags.Has(
                 "state.alive")
-            || !actor.Tags.Has(
-                "control.playable")
+            || !actionContext.ActorHasControl
             || !target.Tags.Has(
                 "state.alive")
             || target.Age < 18)

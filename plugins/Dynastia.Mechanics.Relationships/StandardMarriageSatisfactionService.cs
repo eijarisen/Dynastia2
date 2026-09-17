@@ -59,9 +59,13 @@ public sealed class StandardMarriageSatisfactionService :
         }
 
         var component =
-            EnsurePair(
-                person,
-                spouse);
+            person.Components.Get<MarriageSatisfactionComponent>();
+
+        if (component?.SpouseId != spouse.Id)
+        {
+            throw new InvalidOperationException(
+                "Marriage Satisfaction state is missing. Run state reconciliation before reading it.");
+        }
 
         return ToSnapshot(
             component);
@@ -83,6 +87,30 @@ public sealed class StandardMarriageSatisfactionService :
         return secondComponent?.SpouseId == first.Id
             ? ToSnapshot(secondComponent)
             : null;
+    }
+
+    internal void ReconcileAll()
+    {
+        var processed = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+        foreach (var person in _gameState.People)
+        {
+            var spouse = _family.GetSpouse(person);
+            if (spouse is null
+                || !person.Tags.Has("state.alive")
+                || !spouse.Tags.Has("state.alive")
+                || !TryResolveHusbandAndWife(person, spouse, out _, out _))
+            {
+                continue;
+            }
+
+            var key = person.Id.CompareTo(spouse.Id) < 0
+                ? $"{person.Id:N}:{spouse.Id:N}"
+                : $"{spouse.Id:N}:{person.Id:N}";
+
+            if (processed.Add(key))
+                EnsurePair(person, spouse);
+        }
     }
 
     public void InitializeMarriage(

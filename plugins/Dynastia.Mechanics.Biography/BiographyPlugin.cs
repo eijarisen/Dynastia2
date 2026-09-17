@@ -49,6 +49,13 @@ public sealed class BiographyPlugin : IGamePlugin
         context.AddService<IBiographyService>(
             biography);
 
+        context.GetService<IStateReconciliationLifecycle>()?
+            .Register(
+                "biography.generated_adult_milestones",
+                Enum.GetValues<ReconciliationLifecycleStage>(),
+                _ => biography.ReconcileGeneratedAdultLifeMilestones(),
+                order: 95);
+
         context.Log(
             "Biography mechanics registered.");
     }

@@ -41,6 +41,10 @@ public sealed class FamilyPlugin : IGamePlugin
             StandardHistoricalNameService.Load(
                 data);
 
+        var reconciliation = context.GetService<IStateReconciliationLifecycle>()
+            ?? throw new InvalidOperationException(
+                "State reconciliation lifecycle is unavailable.");
+
         var familyService =
             new StandardFamilyService(
                 gameState,
@@ -56,7 +60,8 @@ public sealed class FamilyPlugin : IGamePlugin
                 historicalNames,
                 random,
                 calendar,
-                events);
+                events,
+                reconciliation);
 
         context.AddService<IHistoricalNameService>(
             historicalNames);
@@ -66,6 +71,18 @@ public sealed class FamilyPlugin : IGamePlugin
 
         context.AddService<INewGameService>(
             newGameService);
+
+        reconciliation.Register(
+            "family.legacy_state",
+            [
+                ReconciliationLifecycleStage.AfterNewGame,
+                ReconciliationLifecycleStage.AfterLoad,
+                ReconciliationLifecycleStage.BeforeYear,
+                ReconciliationLifecycleStage.AfterYear,
+                ReconciliationLifecycleStage.AfterImmediateAction
+            ],
+            _ => familyService.ReconcileLegacyState(),
+            order: 5);
 
         context.Log(
             "Family mechanics registered.");

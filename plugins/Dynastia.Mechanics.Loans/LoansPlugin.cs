@@ -139,6 +139,7 @@ public sealed class LoansPlugin :
                     CanInitiateLoan(
                         actionContext.Actor,
                         actionContext.Target,
+                        actionContext.ActorHasControl,
                         family)
                     && !loans.HasActiveSelfOriginatedBankLoan(
                         actionContext.Actor),
@@ -149,6 +150,7 @@ public sealed class LoansPlugin :
                     if (!CanInitiateLoan(
                             actor,
                             actionContext.Target,
+                            actionContext.ActorHasControl,
                             family)
                         || loans.HasActiveSelfOriginatedBankLoan(actor)
                         || !TryReadTerms(
@@ -217,6 +219,7 @@ public sealed class LoansPlugin :
                     if (!CanInitiateLoan(
                             actionContext.Actor,
                             actionContext.Target,
+                            actionContext.ActorHasControl,
                             family))
                     {
                         return false;
@@ -250,6 +253,7 @@ public sealed class LoansPlugin :
                     if (!CanInitiateLoan(
                             lender,
                             actionContext.Target,
+                            actionContext.ActorHasControl,
                             family)
                         || !TryReadTerms(
                             actionContext.Parameters,
@@ -344,6 +348,7 @@ public sealed class LoansPlugin :
             QueuePhase = action.QueuePhase,
             BypassGuards = action.BypassGuards,
             IsAvailable = action.IsAvailable,
+            EvaluateAvailability = action.EvaluateAvailability,
             Execute = action.Execute
         };
     }
@@ -361,11 +366,12 @@ public sealed class LoansPlugin :
     private static bool CanInitiateLoan(
         IPerson actor,
         IPerson target,
+        bool actorHasControl,
         IFamilyService family)
     {
         return actor.Id == target.Id
             && actor.Tags.Has("state.alive")
-            && actor.Tags.Has("control.playable")
+            && actorHasControl
             && !actor.Tags.Has("state.imprisoned")
             && actor.Age >= 18
             && family.GetSex(actor) == Sex.Male

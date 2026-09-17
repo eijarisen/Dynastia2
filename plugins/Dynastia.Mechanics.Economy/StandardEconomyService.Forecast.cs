@@ -11,7 +11,6 @@ public sealed partial class StandardEconomyService
             return null;
 
         var (owner, household) = resolved.Value;
-        SynchronizeHouses(owner, household);
 
         var incomeLines = GetProjectedIncomeBreakdown(owner).ToList();
         var expenseLines = new List<FinanceBreakdownItem>();

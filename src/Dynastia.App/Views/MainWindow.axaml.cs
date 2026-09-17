@@ -138,19 +138,19 @@ public partial class MainWindow : Window
                     "ui.craft_profession",
                     StringComparison.OrdinalIgnoreCase))
             {
-                var options = viewModel.GetCraftProfessionOptions();
-                if (options.Count == 0)
+                var craftOptions = viewModel.GetCraftProfessionOptions();
+                if (craftOptions.Count == 0)
                 {
                     viewModel.ReportPersistenceStatus(
                         "No known Craft is currently available for self-employment.");
                     return;
                 }
 
-                var window = new PropertySelectionWindow(
+                var craftWindow = new PropertySelectionWindow(
                     "Work in a Profession",
                     "Work",
-                    options);
-                var selectedActionId = await window.ShowDialog<string?>(this);
+                    craftOptions);
+                var selectedActionId = await craftWindow.ShowDialog<string?>(this);
                 if (!string.IsNullOrWhiteSpace(selectedActionId))
                     viewModel.QueueCraftProfessionAction(selectedActionId);
                 return;
@@ -160,19 +160,19 @@ public partial class MainWindow : Window
                     "education.get_education",
                     StringComparison.OrdinalIgnoreCase))
             {
-                var options = viewModel.GetEducationSelectionOptions();
-                if (!options.Any(option => option.IsEnabled))
+                var educationOptions = viewModel.GetEducationSelectionOptions();
+                if (!educationOptions.Any(option => option.IsEnabled))
                 {
                     viewModel.ReportPersistenceStatus(
                         "No education option is currently available.");
                     return;
                 }
 
-                var window = new PropertySelectionWindow(
+                var educationWindow = new PropertySelectionWindow(
                     "Get Education",
                     "Study",
-                    options);
-                var selectedOptionId = await window.ShowDialog<string?>(this);
+                    educationOptions);
+                var selectedOptionId = await educationWindow.ShowDialog<string?>(this);
                 if (!string.IsNullOrWhiteSpace(selectedOptionId))
                     viewModel.QueueEducationAction(selectedOptionId);
                 return;
@@ -224,6 +224,9 @@ public partial class MainWindow : Window
                     StringComparison.OrdinalIgnoreCase)
                 || e.ActionId.Equals(
                     "relationship.marry_off_daughter",
+                    StringComparison.OrdinalIgnoreCase)
+                || e.ActionId.Equals(
+                    "relationship.marry_off_son",
                     StringComparison.OrdinalIgnoreCase))
             {
                 var model =
@@ -299,10 +302,13 @@ public partial class MainWindow : Window
             var isBuy = e.ActionId.Equals(
                 "household.buy_house",
                 StringComparison.OrdinalIgnoreCase);
+            var isMoveOut = e.ActionId.Equals(
+                "household.ask_move_out",
+                StringComparison.OrdinalIgnoreCase);
 
             var window = new PropertySelectionWindow(
                 isBuy ? "Select Town" : "Select Property",
-                isBuy ? "Buy" : "Sell",
+                isBuy ? "Buy" : isMoveOut ? "Give House" : "Sell",
                 options);
 
             var selectedId =

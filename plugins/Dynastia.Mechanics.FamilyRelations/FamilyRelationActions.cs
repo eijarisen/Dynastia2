@@ -16,6 +16,7 @@ internal static partial class FamilyRelationActions
         IEconomyService economy,
         ILocationService locations,
         ICareerService career,
+        IPersonalityService? personality,
         IGameRandom random,
         IGameEventBus events)
     {
@@ -28,6 +29,7 @@ internal static partial class FamilyRelationActions
         actions.Register(CreateGiveFarmland(relations, households, economy, events, family));
         actions.Register(CreateAskJobHelp(relations, households, economy, career, random, events, family, gameState));
         actions.Register(CreateGiveJobHelp(relations, households, economy, career, random, events, family, gameState));
+        actions.Register(CreateAskMoveOut(family, relations, households, economy, personality, random, events));
     }
 
     private static GameActionDefinition CreateImprove(
@@ -71,7 +73,7 @@ internal static partial class FamilyRelationActions
         c.Parameters.TryGetValue("familyRelations", out var value)
         && value.Equals("true", StringComparison.OrdinalIgnoreCase)
         && c.Actor.Tags.Has("state.alive")
-        && c.Actor.Tags.Has("control.playable")
+        && c.ActorHasControl
         && c.Actor.Age >= 18;
 
     private static bool IsValidRelation(GameActionContext c, IFamilyRelationService relations) =>

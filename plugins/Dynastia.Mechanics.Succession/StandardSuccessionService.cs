@@ -6,6 +6,7 @@ public sealed class StandardSuccessionService : ISuccessionService
 {
     private readonly IGameState _gameState;
     private readonly IFamilyService _family;
+    private readonly IEconomyService _economy;
     private readonly ISelectionService _selection;
 
     private bool _isGameOver;
@@ -15,10 +16,12 @@ public sealed class StandardSuccessionService : ISuccessionService
     public StandardSuccessionService(
         IGameState gameState,
         IFamilyService family,
+        IEconomyService economy,
         ISelectionService selection)
     {
         _gameState = gameState;
         _family = family;
+        _economy = economy;
         _selection = selection;
     }
 
@@ -43,7 +46,8 @@ public sealed class StandardSuccessionService : ISuccessionService
         return person.Tags.Has("state.alive")
             && _family.GetSex(person) == Sex.Male
             && _family.IsMaleLineage(person)
-            && person.Age >= 18;
+            && person.Age >= 18
+            && _economy.HasHousehold(person);
     }
 
     public bool SetActiveController(IPerson person)

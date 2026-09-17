@@ -127,6 +127,26 @@ public sealed class ThoughtsPlugin :
         context.AddService<IThoughtService>(
             thoughts);
 
+        var reconciliation = Require<IStateReconciliationLifecycle>(
+            context,
+            "State reconciliation lifecycle");
+
+        reconciliation.Register(
+            "thoughts.current_state",
+            [
+                ReconciliationLifecycleStage.AfterNewGame,
+                ReconciliationLifecycleStage.AfterYear,
+                ReconciliationLifecycleStage.AfterImmediateAction
+            ],
+            _ => thoughts.EnsureCurrentThoughts(),
+            order: 90);
+
+        reconciliation.Register(
+            "thoughts.load_state",
+            [ReconciliationLifecycleStage.AfterLoad],
+            _ => thoughts.ResetAfterLoad(),
+            order: 90);
+
         systems.Register(
             new ThoughtYearSystem(
                 thoughts));

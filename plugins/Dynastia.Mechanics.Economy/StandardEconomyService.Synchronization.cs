@@ -14,6 +14,34 @@ public sealed partial class StandardEconomyService
             household);
     }
 
+    internal void ReconcileState()
+    {
+        foreach (var person in _gameState.People)
+        {
+            var household =
+                person.Components.Get<HouseholdEconomyComponent>();
+
+            if (household is not null)
+            {
+                MigrateHousehold(person, household);
+                SynchronizeHouses(GetHead(household), household);
+                NormalizeFarmland(household);
+            }
+
+            var claim =
+                person.Components.Get<PersonalEstateComponent>();
+
+            if (claim is null)
+                continue;
+
+            claim.PendingInheritance =
+                RoundCurrency(claim.PendingInheritance);
+
+            SynchronizePendingHouses(person, claim);
+            NormalizePendingFarmland(claim);
+        }
+    }
+
     private void CreateHousehold(
         IPerson head,
         IPerson dynastyAnchor)
@@ -67,10 +95,6 @@ public sealed partial class StandardEconomyService
 
         if (direct is not null)
         {
-            MigrateHousehold(
-                person,
-                direct);
-
             return (
                 person,
                 direct);
@@ -85,10 +109,6 @@ public sealed partial class StandardEconomyService
 
             if (household is null)
                 continue;
-
-            MigrateHousehold(
-                candidate,
-                household);
 
             if (household.MemberIds.Contains(
                 person.Id))
@@ -386,6 +406,11 @@ public sealed partial class StandardEconomyService
             AssignedHeirId:
                 house.AssignedHeirId);
     }
+
+    private static PersonalEstateComponent?
+        FindClaim(
+            IPerson person) =>
+        person.Components.Get<PersonalEstateComponent>();
 
     private static PersonalEstateComponent
         GetClaim(

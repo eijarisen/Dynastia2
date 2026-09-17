@@ -18,4 +18,7 @@ public interface IFarmingService
 
     decimal GetExpectedAnnualIncome(
         IPerson householdRepresentative);
+
+    decimal GetExpectedAnnualIncomeAfterAddingLocalParcel(
+        IPerson householdRepresentative);
 }

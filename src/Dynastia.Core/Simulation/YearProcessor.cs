@@ -7,15 +7,18 @@ public sealed class YearProcessor
     private readonly IGameState _gameState;
     private readonly IYearSystemRegistry _registry;
     private readonly IYearExecutionBoundary? _boundary;
+    private readonly IStateReconciliationLifecycle? _reconciliation;
 
     public YearProcessor(
         IGameState gameState,
         IYearSystemRegistry registry,
-        IYearExecutionBoundary? boundary = null)
+        IYearExecutionBoundary? boundary = null,
+        IStateReconciliationLifecycle? reconciliation = null)
     {
         _gameState = gameState;
         _registry = registry;
         _boundary = boundary;
+        _reconciliation = reconciliation;
     }
 
     public void AdvanceYear()
@@ -28,6 +31,9 @@ public sealed class YearProcessor
 
         try
         {
+            _reconciliation?.Reconcile(
+                ReconciliationLifecycleStage.BeforeYear);
+
             _gameState.Year++;
 
             foreach (var system in systems)
@@ -39,6 +45,9 @@ public sealed class YearProcessor
 
                 system.Execute(_gameState);
             }
+
+            _reconciliation?.Reconcile(
+                ReconciliationLifecycleStage.AfterYear);
         }
         catch (Exception exception)
         {

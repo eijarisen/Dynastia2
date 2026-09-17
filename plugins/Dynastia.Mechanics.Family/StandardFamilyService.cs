@@ -250,17 +250,16 @@ public sealed class StandardFamilyService : IFamilyService
 
     public bool IsBloodline(IPerson person)
     {
-        ReconcileFoundingParents();
-
         return person.Tags.Has("family.bloodline");
     }
 
     public bool IsMaleLineage(IPerson person)
     {
-        ReconcileFoundingParents();
-
         return person.Tags.Has("lineage.male");
     }
+
+    internal void ReconcileLegacyState() =>
+        ReconcileFoundingParents();
 
     private static void AddMarriageRecord(
         FamilyComponent family,
@@ -320,14 +319,12 @@ public sealed class StandardFamilyService : IFamilyService
             person => person.Id == id.Value);
     }
 
-    private FamilyComponent GetRequired(IPerson person)
+    private static FamilyComponent GetRequired(IPerson person)
     {
-        ReconcileFoundingParents();
-
         return person.Components.Get<FamilyComponent>()
             ?? throw new InvalidOperationException(
                 $"Person '{person.Name} {person.Surname}' " +
-                "has no family component.");
+                "has no family component. Run state reconciliation before reading family data.");
     }
 
     private void ReconcileFoundingParents()

@@ -20,10 +20,23 @@ public interface IActionRegistry
         IPerson target,
         IReadOnlyDictionary<string, string>? parameters = null);
 
+    ActionEvaluationResult Evaluate(
+        string actionId,
+        IPerson actor,
+        IPerson target,
+        IReadOnlyDictionary<string, string>? parameters,
+        ActionExecutionContext executionContext);
+
     IReadOnlyList<GameActionDefinition> GetAvailableActions(
         IPerson actor,
         IPerson target,
         IReadOnlyDictionary<string, string>? parameters);
+
+    IReadOnlyList<GameActionDefinition> GetAvailableActions(
+        IPerson actor,
+        IPerson target,
+        IReadOnlyDictionary<string, string>? parameters,
+        ActionExecutionContext executionContext);
 
     IReadOnlyList<GameActionDefinition>
         GetMechanicallyAvailableActions(
@@ -40,7 +53,16 @@ public interface IActionRegistry
         string actionId,
         IPerson actor,
         IPerson target,
-        IReadOnlyDictionary<string, string>? parameters = null);
+        IReadOnlyDictionary<string, string>? parameters = null,
+        Guid? actorHouseholdId = null);
+
+    GameActionResult ExecuteSystem(
+        string actionId,
+        IPerson actor,
+        IPerson target,
+        IReadOnlyDictionary<string, string>? parameters = null,
+        Guid? actorHouseholdId = null,
+        YearPhase? phase = null);
 
     IReadOnlyList<QueuedActionInfo> GetQueuedActions(
         IPerson actor);

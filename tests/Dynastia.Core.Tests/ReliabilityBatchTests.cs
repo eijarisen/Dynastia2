@@ -171,6 +171,285 @@ public sealed class ReliabilityBatchTests
         Assert.Equal(ActionReasonCodes.TargetMissing, outcome.ReasonCode);
     }
 
+    [Fact]
+    public void StructuredActionEvaluationCarriesContextResourcesAndMetadata()
+    {
+        var state = new MutableGameState();
+        var actor = state.CreatePerson("Jan", "Test", 30);
+        var target = state.CreatePerson("Anna", "Test", 28);
+        var householdId = Guid.NewGuid();
+        var registry = new ActionRegistry(
+            state,
+            new GameEventBus(),
+            new GameRandom(3),
+            new ActionGuardRegistry());
+
+        registry.Register(new GameActionDefinition
+        {
+            Id = "test.structured_evaluation",
+            Label = "Structured",
+            Description = "Test structured action evaluation",
+            Mode = ActionExecutionMode.Queued,
+            QueuePhase = YearPhase.Finances,
+            IsAvailable = _ => throw new InvalidOperationException(
+                "The structured evaluator should be authoritative."),
+            EvaluateAvailability = _ => ActionEvaluationResult.Allowed(
+                householdId,
+                [
+                    new ActionResourceRequirement(
+                        "household.wealth",
+                        1000m,
+                        1500m,
+                        "Household wealth",
+                        "zł")
+                ],
+                new Dictionary<string, string>
+                {
+                    ["presentation.kind"] = "test"
+                }),
+            Execute = _ => new GameActionResult(true)
+        });
+
+        var evaluation = registry.Evaluate(
+            "test.structured_evaluation",
+            actor,
+            target);
+
+        Assert.True(evaluation.Available);
+        Assert.Equal(ActionReasonCodes.Available, evaluation.ReasonCode);
+        Assert.Equal("test.structured_evaluation", evaluation.ActionId);
+        Assert.Equal(actor.Id, evaluation.ActorId);
+        Assert.Equal(target.Id, evaluation.TargetId);
+        Assert.Equal(householdId, evaluation.HouseholdId);
+        Assert.Equal(ActionExecutionMode.Queued, evaluation.ExecutionMode);
+        Assert.Equal(YearPhase.Finances, evaluation.QueuePhase);
+        var requirement = Assert.Single(evaluation.ResourceRequirements);
+        Assert.Equal("household.wealth", requirement.ResourceId);
+        Assert.Equal(1000m, requirement.RequiredAmount);
+        Assert.Equal(1500m, requirement.AvailableAmount);
+        Assert.True(requirement.IsSatisfied);
+        Assert.Equal("test", evaluation.PresentationMetadata["presentation.kind"]);
+    }
+
+    [Fact]
+    public void UiQueueAndExecutionRevalidationUseTheSameStructuredRulePath()
+    {
+        var state = new MutableGameState();
+        var actor = state.CreatePerson("Jan", "Test", 30);
+        var target = state.CreatePerson("Anna", "Test", 28);
+        target.Tags.Add("eligible");
+        var evaluations = 0;
+        var registry = new ActionRegistry(
+            state,
+            new GameEventBus(),
+            new GameRandom(4),
+            new ActionGuardRegistry());
+
+        registry.Register(new GameActionDefinition
+        {
+            Id = "test.shared_rule_path",
+            Label = "Shared Rule Path",
+            Description = "Test shared evaluation path",
+            Mode = ActionExecutionMode.Queued,
+            QueuePhase = YearPhase.LifeEvents,
+            IsAvailable = _ => throw new InvalidOperationException(
+                "The structured evaluator should be authoritative."),
+            EvaluateAvailability = context =>
+            {
+                evaluations++;
+                return context.Target.Tags.Has("eligible")
+                    ? ActionEvaluationResult.Allowed()
+                    : ActionEvaluationResult.Denied(
+                        ActionReasonCodes.NoLongerEligible,
+                        "The target is no longer eligible.");
+            },
+            Execute = _ => new GameActionResult(true)
+        });
+
+        Assert.Contains(
+            registry.GetAvailableActions(actor, target),
+            action => action.Id == "test.shared_rule_path");
+
+        var queued = registry.Execute(
+            "test.shared_rule_path",
+            actor,
+            target);
+        Assert.True(queued.Success);
+
+        target.Tags.Remove("eligible");
+        var outcome = Assert.Single(
+            registry.ExecuteQueued(YearPhase.LifeEvents));
+
+        Assert.Equal(3, evaluations);
+        Assert.Equal(QueuedActionResultCategory.Invalidated, outcome.Category);
+        Assert.Equal(ActionReasonCodes.NoLongerEligible, outcome.ReasonCode);
+    }
+
+    [Fact]
+    public void StructuredReasonIsSharedByEvaluationAndQueueRejection()
+    {
+        var state = new MutableGameState();
+        var actor = state.CreatePerson("Jan", "Test", 30);
+        var registry = new ActionRegistry(
+            state,
+            new GameEventBus(),
+            new GameRandom(5),
+            new ActionGuardRegistry());
+
+        registry.Register(new GameActionDefinition
+        {
+            Id = "test.insufficient_funds",
+            Label = "Expensive",
+            Description = "Test insufficient funds reason",
+            Mode = ActionExecutionMode.Queued,
+            QueuePhase = YearPhase.Finances,
+            IsAvailable = _ => false,
+            EvaluateAvailability = _ => ActionEvaluationResult.Denied(
+                ActionReasonCodes.InsufficientFunds,
+                "The household cannot afford this action.",
+                resourceRequirements:
+                [
+                    new ActionResourceRequirement(
+                        "household.wealth",
+                        2000m,
+                        1000m,
+                        "Household wealth",
+                        "zł")
+                ]),
+            Execute = _ => new GameActionResult(true)
+        });
+
+        var evaluation = registry.Evaluate(
+            "test.insufficient_funds",
+            actor,
+            actor);
+        var execution = registry.Execute(
+            "test.insufficient_funds",
+            actor,
+            actor);
+
+        Assert.False(evaluation.Available);
+        Assert.Equal(ActionReasonCodes.InsufficientFunds, evaluation.ReasonCode);
+        Assert.False(evaluation.ResourceRequirements.Single().IsSatisfied);
+        Assert.False(execution.Success);
+        Assert.Equal(evaluation.ReasonCode, execution.ReasonCode);
+        Assert.Empty(registry.GetQueuedActions(actor));
+    }
+
+    [Fact]
+    public void AutonomousExecutionUsesExplicitContextWithoutSpoofingPlayableTag()
+    {
+        var state = new MutableGameState();
+        var actor = state.CreatePerson("Jan", "Test", 30);
+        var householdId = Guid.NewGuid();
+        ActionExecutionOrigin? observedOrigin = null;
+        Guid? observedHouseholdId = null;
+        YearPhase? observedPhase = null;
+
+        var registry = new ActionRegistry(
+            state,
+            new GameEventBus(),
+            new GameRandom(6),
+            new ActionGuardRegistry());
+
+        registry.Register(new GameActionDefinition
+        {
+            Id = "test.autonomous_context",
+            Label = "Autonomous Context",
+            Description = "Test explicit autonomous execution context",
+            Mode = ActionExecutionMode.Queued,
+            QueuePhase = YearPhase.LifeEvents,
+            IsAvailable = context => context.ActorHasControl,
+            Execute = context =>
+            {
+                observedOrigin = context.Origin;
+                observedHouseholdId = context.ActorHouseholdId;
+                observedPhase = context.ExecutionPhase;
+                return new GameActionResult(true);
+            }
+        });
+
+        Assert.False(actor.Tags.Has("control.playable"));
+        Assert.DoesNotContain(
+            registry.GetAvailableActions(actor, actor),
+            action => action.Id == "test.autonomous_context");
+        Assert.Contains(
+            registry.GetMechanicallyAvailableActions(actor, actor),
+            action => action.Id == "test.autonomous_context");
+        Assert.False(actor.Tags.Has("control.playable"));
+
+        var autonomousAvailable = registry.GetAvailableActions(
+            actor,
+            actor,
+            null,
+            ActionExecutionContext.Autonomous(householdId));
+
+        Assert.Contains(
+            autonomousAvailable,
+            action => action.Id == "test.autonomous_context");
+        Assert.False(actor.Tags.Has("control.playable"));
+
+        var queued = registry.ExecuteAutonomous(
+            "test.autonomous_context",
+            actor,
+            actor,
+            actorHouseholdId: householdId);
+
+        Assert.True(queued.Success);
+        var queuedInfo = Assert.Single(registry.GetQueuedActions(actor));
+        Assert.Equal(ActionExecutionOrigin.Autonomous, queuedInfo.Origin);
+        Assert.Equal(householdId, queuedInfo.ActorHouseholdId);
+        Assert.False(actor.Tags.Has("control.playable"));
+
+        var outcome = Assert.Single(registry.ExecuteQueued(YearPhase.LifeEvents));
+        Assert.Equal(QueuedActionResultCategory.ExecutedSuccessfully, outcome.Category);
+        Assert.Equal(ActionExecutionOrigin.Autonomous, observedOrigin.GetValueOrDefault());
+        Assert.Equal(householdId, observedHouseholdId);
+        Assert.Equal(YearPhase.LifeEvents, observedPhase.GetValueOrDefault());
+        Assert.False(actor.Tags.Has("control.playable"));
+    }
+
+    [Fact]
+    public void SystemExecutionUsesExplicitContextWithoutGrantingPlayerControl()
+    {
+        var state = new MutableGameState();
+        var actor = state.CreatePerson("Jan", "Test", 30);
+        ActionExecutionOrigin? observedOrigin = null;
+
+        var registry = new ActionRegistry(
+            state,
+            new GameEventBus(),
+            new GameRandom(7),
+            new ActionGuardRegistry());
+
+        registry.Register(new GameActionDefinition
+        {
+            Id = "test.system_context",
+            Label = "System Context",
+            Description = "Test explicit system execution context",
+            Mode = ActionExecutionMode.Queued,
+            QueuePhase = YearPhase.Status,
+            IsAvailable = context => context.ActorHasControl,
+            Execute = context =>
+            {
+                observedOrigin = context.Origin;
+                return new GameActionResult(true);
+            }
+        });
+
+        Assert.True(registry.ExecuteSystem(
+            "test.system_context",
+            actor,
+            actor,
+            phase: YearPhase.Status).Success);
+        Assert.False(actor.Tags.Has("control.playable"));
+
+        var outcome = Assert.Single(registry.ExecuteQueued(YearPhase.Status));
+        Assert.Equal(QueuedActionResultCategory.ExecutedSuccessfully, outcome.Category);
+        Assert.Equal(ActionExecutionOrigin.System, observedOrigin.GetValueOrDefault());
+        Assert.False(actor.Tags.Has("control.playable"));
+    }
+
     private sealed class TestBoundary : IYearExecutionBoundary
     {
         private readonly IGameState _state;

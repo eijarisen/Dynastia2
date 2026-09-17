@@ -16,6 +16,11 @@ public sealed class SuccessionPlugin : IGamePlugin
             ?? throw new InvalidOperationException(
                 "Family service is unavailable.");
 
+        var economy =
+            context.GetService<IEconomyService>()
+            ?? throw new InvalidOperationException(
+                "Economy service is unavailable.");
+
         var selection =
             context.GetService<ISelectionService>()
             ?? throw new InvalidOperationException(
@@ -30,6 +35,7 @@ public sealed class SuccessionPlugin : IGamePlugin
             new StandardSuccessionService(
                 gameState,
                 family,
+                economy,
                 selection);
 
         context.AddService<ISuccessionService>(

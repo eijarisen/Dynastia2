@@ -7,13 +7,13 @@ public sealed partial class RelationshipsPlugin
     private static bool IsEligibleDaughter(
         IPerson father,
         IPerson daughter,
+        bool fatherHasControl,
         IFamilyService family,
         IHouseholdService households)
     {
         if (!father.Tags.Has(
                 "state.alive")
-            || !father.Tags.Has(
-                "control.playable")
+            || !fatherHasControl
             || !daughter.Tags.Has(
                 "state.alive")
             || daughter.Tags.Has(
@@ -47,6 +47,42 @@ public sealed partial class RelationshipsPlugin
                 daughter)?
             .Id
             == father.Id;
+    }
+
+    private static bool IsEligibleSon(
+        IPerson father,
+        IPerson son,
+        bool fatherHasControl,
+        IFamilyService family,
+        IHouseholdService households)
+    {
+        if (!father.Tags.Has(
+                "state.alive")
+            || !fatherHasControl
+            || !son.Tags.Has(
+                "state.alive")
+            || son.Tags.Has(
+                "state.dead")
+            || son.Tags.Has(
+                "state.imprisoned")
+            || son.Id == father.Id
+            || son.Age < 18
+            || family.GetSex(son) != Sex.Male
+            || family.GetSpouse(son) is not null
+            || !RelationshipPersonalityRules.CanFindPartner(
+                son,
+                Sex.Female))
+        {
+            return false;
+        }
+
+        var isSon = family.GetChildren(father)
+            .Any(child => child.Id == son.Id);
+
+        if (!isSon)
+            return false;
+
+        return households.ResolveHouseholdHead(son)?.Id == father.Id;
     }
 
     private static void CreateArrangedHusband(
@@ -312,8 +348,7 @@ public sealed partial class RelationshipsPlugin
 
                     if (!actor.Tags.Has(
                             "state.alive")
-                        || !actor.Tags.Has(
-                            "control.playable")
+                        || !actionContext.ActorHasControl
                         || family.GetSex(
                             actor) != Sex.Male)
                     {
@@ -439,8 +474,7 @@ public sealed partial class RelationshipsPlugin
 
                     return actor.Tags.Has(
                             "state.alive")
-                        && actor.Tags.Has(
-                            "control.playable")
+                        && actionContext.ActorHasControl
                         && spouse is not null
                         && spouse.Tags.Has(
                             "state.alive")

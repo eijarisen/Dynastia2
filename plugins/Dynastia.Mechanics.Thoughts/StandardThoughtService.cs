@@ -78,8 +78,6 @@ internal sealed class StandardThoughtService :
             new ThoughtPhraseRenderer(
                 stats);
 
-        events.EventPublished +=
-            OnEventPublished;
     }
 
     public PersonThoughtSnapshot? GetCurrentThought(
@@ -92,9 +90,6 @@ internal sealed class StandardThoughtService :
                 "state.dead")
             || person.Age < 5)
         {
-            person.Components.Remove<
-                PersonThoughtComponent>();
-
             return null;
         }
 
@@ -105,16 +100,7 @@ internal sealed class StandardThoughtService :
         if (component?.Year
             != _gameState.Year)
         {
-            // Lazy state-only generation is important for old saves and
-            // for any UI that asks before the first explicit refresh.
-            GenerateForPerson(
-                person,
-                events:
-                    []);
-
-            component =
-                person.Components.Get<
-                    PersonThoughtComponent>();
+            return null;
         }
 
         return component is null
@@ -619,19 +605,4 @@ internal sealed class StandardThoughtService :
             component.SourceId);
     }
 
-    private void OnEventPublished(
-        object? sender,
-        GameEvent gameEvent)
-    {
-        if (!gameEvent.Type.Equals(
-            "game.started",
-            StringComparison.OrdinalIgnoreCase))
-        {
-            return;
-        }
-
-        // New games should already have a visible thought before the
-        // player makes the first annual choice.
-        EnsureCurrentThoughts();
-    }
 }

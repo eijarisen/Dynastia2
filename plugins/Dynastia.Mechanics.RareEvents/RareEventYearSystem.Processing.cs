@@ -26,7 +26,7 @@ internal sealed partial class RareEventYearSystem
 
             var selected = SelectWeighted(candidates);
             if (selected is not null)
-                ExecuteHouseholdEvent(gameState, household, selected);
+                ExecuteHouseholdEvent(gameState, household, selected.Definition);
         }
     }
 
@@ -46,7 +46,7 @@ internal sealed partial class RareEventYearSystem
 
         var selected = SelectWeighted(candidates);
         if (selected is not null)
-            ExecutePersonalEvent(gameState, person, financeHead, selected);
+            ExecutePersonalEvent(gameState, person, financeHead, selected.Definition);
     }
 
     private void ProcessSpecialEvents(IGameState gameState, IPerson person)

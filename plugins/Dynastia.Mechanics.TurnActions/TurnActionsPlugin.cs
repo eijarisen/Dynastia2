@@ -43,8 +43,7 @@ public sealed class TurnActionsPlugin :
                             "state.alive")
                         && !actionContext.Target.Tags.Has(
                             "state.dead")
-                        && actionContext.Actor.Tags.Has(
-                            "control.playable"),
+                        && actionContext.ActorHasControl,
 
                 Execute =
                     _ =>

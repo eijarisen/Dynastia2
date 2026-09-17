@@ -119,6 +119,18 @@ public sealed partial class StandardHouseholdService
             gameEvent.Type;
 
         if (type.Equals(
+                "craft.learned",
+                StringComparison.OrdinalIgnoreCase))
+        {
+            return gameEvent.Data.TryGetValue(
+                    "familyNews",
+                    out var familyNews)
+                && familyNews.Equals(
+                    "true",
+                    StringComparison.OrdinalIgnoreCase);
+        }
+
+        if (type.Equals(
                 "personality.religious_study",
                 StringComparison.OrdinalIgnoreCase))
         {

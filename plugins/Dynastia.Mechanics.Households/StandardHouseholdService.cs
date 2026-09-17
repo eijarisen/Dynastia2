@@ -89,6 +89,19 @@ public sealed partial class StandardHouseholdService :
                     && !member.Tags.Has(
                         "role.nanny"));
 
+        var residentCount =
+            members.Count(
+                member =>
+                    !member.Tags.Has(
+                        "role.nanny"));
+
+        var overcrowdingThreshold =
+            HouseholdCrowdingRules.OvercrowdingThreshold;
+        var overcrowded =
+            HouseholdCrowdingRules.IsOvercrowded(
+                residentCount);
+
+
         var spouse =
             _family.GetSpouse(
                 actualHead);
@@ -164,6 +177,13 @@ public sealed partial class StandardHouseholdService :
                 "Being broke is negatively impacting the family's health.");
         }
 
+        if (overcrowded)
+        {
+            warnings.Add(
+                "The household is overcrowded. More than eight people are sharing the home, " +
+                "increasing stress and harming everyone's health.");
+        }
+
         return new HouseholdStatusSnapshot(
             actualHead.Id,
             underageChildren,
@@ -180,7 +200,10 @@ public sealed partial class StandardHouseholdService :
             broke,
             warnings,
             _career.GetStatusLabel(
-                "role.nanny"));
+                "role.nanny"),
+            residentCount,
+            overcrowdingThreshold,
+            overcrowded);
     }
 
     public IPerson? GetNanny(

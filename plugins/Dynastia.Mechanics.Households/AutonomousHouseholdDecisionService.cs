@@ -40,8 +40,6 @@ internal sealed class AutonomousHouseholdDecisionService :
         bool includeLineage,
         bool replaceExisting)
     {
-        _households.ReconcileHouseholds();
-
         var households =
             _households
                 .GetActiveHouseholds()

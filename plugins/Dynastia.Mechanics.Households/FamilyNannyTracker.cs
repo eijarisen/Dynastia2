@@ -49,26 +49,26 @@ internal sealed class FamilyNannyTracker
             return;
         }
 
-        var daughter =
+        var caregiver =
             FindPerson(
                 gameEvent.SubjectId);
 
-        if (daughter is null
-            || !daughter.Tags.Has(
+        if (caregiver is null
+            || !caregiver.Tags.Has(
                 FamilyNannyTag))
         {
             return;
         }
 
         EndService(
-            daughter,
+            caregiver,
             gameEvent.Year,
             ResolveReason(
                 gameEvent.Type));
     }
 
     private void EndService(
-        IPerson daughter,
+        IPerson caregiver,
         int year,
         string reason)
     {
@@ -80,10 +80,10 @@ internal sealed class FamilyNannyTracker
                             person)
                         && _economy.GetHousehold(
                             person)?.NannyId
-                            == daughter.Id)
+                            == caregiver.Id)
                 .ToList();
 
-        daughter.Tags.Remove(
+        caregiver.Tags.Remove(
             FamilyNannyTag);
 
         foreach (var head in
@@ -106,7 +106,7 @@ internal sealed class FamilyNannyTracker
                         head.Id,
 
                     RelatedPersonIds =
-                        [daughter.Id],
+                        [caregiver.Id],
 
                     Data =
                         new Dictionary<string, string>
@@ -115,7 +115,7 @@ internal sealed class FamilyNannyTracker
                                 reason,
 
                             ["text"] =
-                                $"{_family.GetDisplayName(daughter)}'s " +
+                                $"{_family.GetDisplayName(caregiver)}'s " +
                                 $"{_career.GetStatusLabel(FamilyNannyTag)} role " +
                                 $"ended because {reason}."
                         }
@@ -151,17 +151,17 @@ internal sealed class FamilyNannyTracker
                 "life.death",
                 StringComparison.OrdinalIgnoreCase))
         {
-            return "she died";
+            return "they died";
         }
 
         if (type.StartsWith(
             "relationship.",
             StringComparison.OrdinalIgnoreCase))
         {
-            return "she married";
+            return "they married";
         }
 
-        return "she found employment";
+        return "they found employment";
     }
 
     private IPerson? FindPerson(

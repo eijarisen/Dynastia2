@@ -96,9 +96,13 @@ public sealed partial class MainWindowViewModel
         if (actor is null || _partnerSearchService is null)
             return null;
 
-        var arrangedMarriage = actionId.Equals(
+        var arrangedDaughter = actionId.Equals(
             "relationship.marry_off_daughter",
             StringComparison.OrdinalIgnoreCase);
+        var arrangedSon = actionId.Equals(
+            "relationship.marry_off_son",
+            StringComparison.OrdinalIgnoreCase);
+        var arrangedMarriage = arrangedDaughter || arrangedSon;
         var seeker = arrangedMarriage
             ? FindSelectedPerson()
             : actor;
@@ -113,8 +117,8 @@ public sealed partial class MainWindowViewModel
         var candidateProfiles = arrangedMarriage
             ? _partnerSearchService.GetCandidatesFor(
                 seeker,
-                Sex.Male,
-                "arranged-marriage")
+                arrangedSon ? Sex.Female : Sex.Male,
+                arrangedSon ? "arranged-marriage-son" : "arranged-marriage")
             : _partnerSearchService.GetCandidates(seeker);
 
         var candidates = candidateProfiles
@@ -132,9 +136,11 @@ public sealed partial class MainWindowViewModel
         return new PotentialPartnerDialogViewModel(
             name,
             candidates,
-            arrangedMarriage
-                ? "Choose a proposed husband."
-                : "Choose whom to approach.");
+            arrangedSon
+                ? "Choose a proposed wife."
+                : arrangedDaughter
+                    ? "Choose a proposed husband."
+                    : "Choose whom to approach.");
     }
 
     public void QueueCourtship(
@@ -149,9 +155,14 @@ public sealed partial class MainWindowViewModel
             return;
         }
 
-        var target = actionId.Equals(
-            "relationship.marry_off_daughter",
-            StringComparison.OrdinalIgnoreCase)
+        var arrangedMarriage = actionId.Equals(
+                "relationship.marry_off_daughter",
+                StringComparison.OrdinalIgnoreCase)
+            || actionId.Equals(
+                "relationship.marry_off_son",
+                StringComparison.OrdinalIgnoreCase);
+
+        var target = arrangedMarriage
             ? FindSelectedPerson()
             : actor;
 

@@ -237,8 +237,9 @@ public sealed class ContentReworkBatch2CareerCrimeTests
     public void TransportTheftKeepsStableIdWhilePresentationChangesByEra()
     {
         var data = CreateRepositoryData();
-        var crime = LoadCrimes(data).Single(definition => definition.Id == "transport_theft");
-        var catalog = CrimeHistoricalCatalog.Load(data, [crime.Id]);
+        var crimes = LoadCrimes(data);
+        var crime = crimes.Single(definition => definition.Id == "transport_theft");
+        var catalog = CrimeHistoricalCatalog.Load(data, crimes.Select(definition => definition.Id));
 
         Assert.Equal("horse theft", catalog.Resolve(crime, 1850).DisplayName);
         Assert.Equal("motor vehicle theft", catalog.Resolve(crime, 1920).DisplayName);

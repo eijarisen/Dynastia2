@@ -61,15 +61,8 @@ public sealed partial class StandardEconomyService :
             person.Components.Get<
                 HouseholdEconomyComponent>();
 
-        if (direct is null)
-            return false;
-
-        MigrateHousehold(
-            person,
-            direct);
-
-        return direct.HeadId
-            == person.Id;
+        return direct is not null
+            && direct.HeadId == person.Id;
     }
 
     public void EnsureHousehold(
@@ -133,17 +126,9 @@ public sealed partial class StandardEconomyService :
             household) =
                 resolved.Value;
 
-        SynchronizeHouses(
-            owner,
-            household);
-
         var claim =
-            GetClaim(
-                person);
-
-        SynchronizePendingHouses(
-            person,
-            claim);
+            person.Components.Get<
+                PersonalEstateComponent>();
 
         var houses =
             household.Houses
@@ -160,8 +145,8 @@ public sealed partial class StandardEconomyService :
             household.Wealth,
             houses.Count,
             houses.Count(house => house.IsRented),
-            claim.PendingInheritance,
-            claim.PendingHouseProperties.Count,
+            claim?.PendingInheritance ?? 0m,
+            claim?.PendingHouseProperties.Count ?? 0,
             household.NannyId,
             household.LastIncome,
             household.LastExpenses,

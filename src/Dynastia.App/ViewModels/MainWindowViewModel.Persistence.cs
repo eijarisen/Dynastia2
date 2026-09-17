@@ -66,17 +66,8 @@ public sealed partial class MainWindowViewModel
         IsGameOverOverlayVisible =
             _succession.IsGameOver;
 
-        _personalityService?
-            .ReconcileAll();
-
-        _householdService?
-            .ReconcileHouseholds();
-
-        _hobbyService?
-            .ReconcileAfterLoad();
-
-        _thoughtService?
-            .ResetAfterLoad();
+        _reconciliation.Reconcile(
+            ReconciliationLifecycleStage.AfterLoad);
 
         RefreshPeople();
         RefreshAlbum();

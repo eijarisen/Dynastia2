@@ -116,8 +116,13 @@ public sealed class StandardAppearanceService : IAppearanceService
     {
         ArgumentNullException.ThrowIfNull(person);
 
+        var component = person.Components.Get<AppearanceComponent>()
+            ?? throw new InvalidOperationException(
+                $"Appearance state is missing for {_family.GetDisplayName(person)}. " +
+                "Run state reconciliation before reading portraits.");
+
         return GetPortrait(
-            EnsureAppearance(person),
+            ToSnapshot(component),
             _family.GetSex(person),
             person.Age,
             person.Id,

@@ -19,9 +19,6 @@ public sealed partial class MainWindowViewModel
 
         _succession.Refresh();
 
-        _thoughtService?
-            .EnsureCurrentThoughts();
-
         IsLivingFamilyView = true;
 
         IsGameOverOverlayVisible =
@@ -65,6 +62,9 @@ public sealed partial class MainWindowViewModel
 
         PersistenceStatusText =
             string.Empty;
+
+        _reconciliation.Reconcile(
+            ReconciliationLifecycleStage.BeforeYear);
 
         _autonomousHouseholdDecisionService
             .QueueActionsForAllHouseholds();

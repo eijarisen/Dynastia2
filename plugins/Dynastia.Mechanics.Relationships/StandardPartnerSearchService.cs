@@ -522,14 +522,18 @@ internal sealed class StandardPartnerSearchService :
         GameActionContext actionContext,
         HistoricalActionVariant variant)
     {
-        var father = actionContext.Actor;
-        var daughter = actionContext.Target;
+        var parent = actionContext.Actor;
+        var child = actionContext.Target;
+        var childSex = _family.GetSex(child);
+        var expectedPartnerSex = childSex == Sex.Female
+            ? Sex.Male
+            : Sex.Female;
 
-        if (_family.GetSpouse(daughter) is not null
+        if (_family.GetSpouse(child) is not null
             || !TryReadCandidate(
                 actionContext.Parameters,
                 out var candidate)
-            || candidate.Sex != Sex.Male)
+            || candidate.Sex != expectedPartnerSex)
         {
             return new GameActionResult(false);
         }
@@ -546,8 +550,8 @@ internal sealed class StandardPartnerSearchService :
         // Preserve the exact proposal odds presented in the chooser.
         var acceptanceChance = candidate.AcceptanceChance;
 
-        var fatherName = _family.GetDisplayName(father);
-        var daughterName = _family.GetDisplayName(daughter);
+        var parentName = _family.GetDisplayName(parent);
+        var childName = _family.GetDisplayName(child);
 
         if (_random.NextDouble() >= acceptanceChance)
         {
@@ -555,8 +559,8 @@ internal sealed class StandardPartnerSearchService :
             {
                 Type = "relationship.marry_off_failed",
                 Year = actionContext.GameState.Year,
-                SubjectId = father.Id,
-                RelatedPersonIds = [daughter.Id],
+                SubjectId = parent.Id,
+                RelatedPersonIds = [child.Id],
                 Data = new Dictionary<string, string>
                 {
                     ["candidateName"] = candidate.DisplayName,
@@ -564,46 +568,59 @@ internal sealed class StandardPartnerSearchService :
                         "0.00",
                         CultureInfo.InvariantCulture),
                     ["text"] =
-                        $"{fatherName} {variant.Narrative}, but {candidate.DisplayName} declined the match with {daughterName}."
+                        $"{parentName} {variant.Narrative}, but {candidate.DisplayName} declined the match with {childName}."
                 }
             });
 
             return new GameActionResult(true);
         }
 
-        var husband = CreatePersonFromCandidate(
+        var partner = CreatePersonFromCandidate(
             candidate,
             currentCandidateAge);
-        var husbandName = _family.GetDisplayName(husband);
 
-        daughter.MaidenName ??= daughter.Surname;
-        _family.SetSpouses(
-            daughter,
-            husband,
-            actionContext.GameState.Year);
-        daughter.Surname = husband.Surname;
+        if (childSex == Sex.Female)
+        {
+            child.MaidenName ??= child.Surname;
+            _family.SetSpouses(
+                child,
+                partner,
+                actionContext.GameState.Year);
+            child.Surname = partner.Surname;
 
-        SeedArrangedHusbandResources(
-            husband,
-            daughter,
-            candidate);
+            SeedArrangedHusbandResources(
+                partner,
+                child,
+                candidate);
+        }
+        else
+        {
+            partner.MaidenName ??= candidate.Surname;
+            partner.Surname = child.Surname;
+            _family.SetSpouses(
+                child,
+                partner,
+                actionContext.GameState.Year);
+        }
+
+        var partnerName = _family.GetDisplayName(partner);
 
         _events.Publish(new GameEvent
         {
             Type = "relationship.married",
             Year = actionContext.GameState.Year,
-            SubjectId = daughter.Id,
-            RelatedPersonIds = [husband.Id, father.Id],
+            SubjectId = child.Id,
+            RelatedPersonIds = [partner.Id, parent.Id],
             Data = new Dictionary<string, string>
             {
-                ["spouseId"] = husband.Id.ToString(),
-                ["arrangedByFatherId"] = father.Id.ToString(),
+                ["spouseId"] = partner.Id.ToString(),
+                ["arrangedByFatherId"] = parent.Id.ToString(),
                 ["chance"] = acceptanceChance.ToString(
                     "0.00",
                     CultureInfo.InvariantCulture),
                 ["preserveGeneratedProfile"] = "true",
                 ["text"] =
-                    $"{fatherName} {variant.Narrative}. {daughterName} married {husbandName}."
+                    $"{parentName} {variant.Narrative}. {childName} married {partnerName}."
             }
         });
 
@@ -652,12 +669,11 @@ internal sealed class StandardPartnerSearchService :
             person,
             candidate.Crafts.Select(craft => craft.Id));
 
-        if (candidate.Sex == Sex.Male
-            && _locations.FindTown(candidate.TownId) is TownInfo originTown)
+        if (_locations.FindTown(candidate.TownId) is TownInfo originTown)
         {
-            // Seed the generated husband's birthplace before the marriage
-            // event. The Locations plugin will then move his HomeTown into
-            // the wife's household while preserving this origin.
+            // Seed the generated partner's birthplace before the marriage
+            // event. The Locations plugin then moves HomeTown into the
+            // spouse's household while preserving this origin.
             _locations.SetPersonHomeTown(
                 person,
                 originTown);

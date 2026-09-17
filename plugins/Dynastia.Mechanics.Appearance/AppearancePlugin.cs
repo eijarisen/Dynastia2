@@ -16,10 +16,18 @@ public sealed class AppearancePlugin : IGamePlugin
 
         var service = new StandardAppearanceService(family);
 
-        foreach (var person in gameState.People)
-            service.EnsureAppearance(person);
-
         context.AddService<IAppearanceService>(service);
+
+        context.GetService<IStateReconciliationLifecycle>()?
+            .Register(
+                "appearance.components",
+                Enum.GetValues<ReconciliationLifecycleStage>(),
+                _ =>
+                {
+                    foreach (var person in gameState.People)
+                        service.EnsureAppearance(person);
+                },
+                order: 18);
 
         context.Log("Emoji portrait appearance mechanics registered.");
     }

@@ -16,6 +16,7 @@ public sealed class StandardNewGameService : INewGameService
     private readonly IGameRandom _random;
     private readonly IGameCalendar _calendar;
     private readonly IGameEventBus _events;
+    private readonly IStateReconciliationLifecycle _reconciliation;
 
     public StandardNewGameService(
         IGameState gameState,
@@ -25,7 +26,8 @@ public sealed class StandardNewGameService : INewGameService
         IHistoricalNameService historicalNames,
         IGameRandom random,
         IGameCalendar calendar,
-        IGameEventBus events)
+        IGameEventBus events,
+        IStateReconciliationLifecycle reconciliation)
     {
         _gameState = gameState;
         _family = family;
@@ -35,6 +37,7 @@ public sealed class StandardNewGameService : INewGameService
         _random = random;
         _calendar = calendar;
         _events = events;
+        _reconciliation = reconciliation;
     }
 
     public IPerson StartNewGame(
@@ -279,6 +282,9 @@ public sealed class StandardNewGameService : INewGameService
                             $"The {surname} dynasty began."
                     }
             });
+
+        _reconciliation.Reconcile(
+            ReconciliationLifecycleStage.AfterNewGame);
 
         return founder;
     }

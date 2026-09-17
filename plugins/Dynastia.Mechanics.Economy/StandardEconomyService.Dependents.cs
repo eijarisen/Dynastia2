@@ -17,10 +17,10 @@ public sealed partial class StandardEconomyService
     public IReadOnlyList<Guid> GetHostedDependentIds(
         IPerson householdHead)
     {
-        return GetRequiredHousehold(
-                householdHead)
-            .HostedDependentIds
-            .ToList();
+        var resolved = FindHousehold(householdHead);
+        return resolved is null
+            ? Array.Empty<Guid>()
+            : resolved.Value.Household.HostedDependentIds.ToList();
     }
 
     public void AddHostedDependent(

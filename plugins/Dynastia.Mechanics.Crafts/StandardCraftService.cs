@@ -65,7 +65,7 @@ internal sealed class StandardCraftService : ICraftService, IIncomeProvider
         return new CraftSnapshot(
             GetKnownCrafts(person),
             active?.Id,
-            presented is null ? null : $"Self-employed {presented.SelfEmploymentTitle}",
+            presented?.SelfEmploymentTitle,
             presented?.Emoji,
             workYears,
             GetExpectedAnnualIncome(person),
@@ -195,7 +195,7 @@ internal sealed class StandardCraftService : ICraftService, IIncomeProvider
         if (craft is null)
             return InvalidStudy(craftId, craftId, "Unknown Craft.");
 
-        var component = GetRequired(person);
+        var component = GetMutable(person);
         var known = GetKnownCraftIds(component).Contains(craft.Id, StringComparer.OrdinalIgnoreCase);
         var displayName = _catalog.ResolveDisplayName(craft.Id, _gameState.Year);
         var primaryStat = GetPrimaryStat(person, craft);
@@ -327,7 +327,7 @@ internal sealed class StandardCraftService : ICraftService, IIncomeProvider
         if (craft is null || !CanLearnCraft(person, craft.Id))
             return false;
 
-        var component = GetRequired(person);
+        var component = GetMutable(person);
         component.InheritedCraftId = craft.Id;
         SynchronizeCraftIds(component);
         var state = GetProgressState(component, craft.Id);
@@ -338,7 +338,7 @@ internal sealed class StandardCraftService : ICraftService, IIncomeProvider
     public void SetCrafts(IPerson person, IEnumerable<string> craftIds)
     {
         ArgumentNullException.ThrowIfNull(craftIds);
-        var component = GetRequired(person);
+        var component = GetMutable(person);
         var ids = craftIds
             .Select(_catalog.CanonicalizeId)
             .Where(id => !string.IsNullOrWhiteSpace(id))
@@ -429,6 +429,8 @@ internal sealed class StandardCraftService : ICraftService, IIncomeProvider
         string? formalCareerId,
         int year)
     {
+        _stats.EnsureStats(person);
+
         var location = _localOpportunities.GetOpportunitySnapshot(person);
         var stats = GetCraftStats(person);
         return GenerateCandidateCraftIds(
@@ -455,7 +457,7 @@ internal sealed class StandardCraftService : ICraftService, IIncomeProvider
             return false;
         }
 
-        var component = GetRequired(person);
+        var component = GetMutable(person);
         if (component.ActiveCraftOccupationId?.Equals(craft.Id, StringComparison.OrdinalIgnoreCase) == true)
             return true;
 
@@ -492,7 +494,7 @@ internal sealed class StandardCraftService : ICraftService, IIncomeProvider
 
     public bool EndOccupation(IPerson person, string reason = "ended")
     {
-        var component = GetRequired(person);
+        var component = GetMutable(person);
         var craft = _catalog.Find(component.ActiveCraftOccupationId);
         if (craft is null)
         {
@@ -565,7 +567,7 @@ internal sealed class StandardCraftService : ICraftService, IIncomeProvider
 
     public decimal GetAnnualIncome(IPerson person)
     {
-        var component = GetRequired(person);
+        var component = GetMutable(person);
         var active = _catalog.Find(component.ActiveCraftOccupationId);
         if (active is null)
             return 0m;
@@ -659,7 +661,7 @@ internal sealed class StandardCraftService : ICraftService, IIncomeProvider
             return;
         }
 
-        var component = GetRequired(person);
+        var component = GetMutable(person);
         var activeCraftId = _catalog.CanonicalizeId(component.ActiveCraftOccupationId);
         var career = _career.GetCareer(person);
         var formalCareerId = !career.IsRetired && career.JobLevel > 0
@@ -895,7 +897,13 @@ internal sealed class StandardCraftService : ICraftService, IIncomeProvider
         return 0m;
     }
 
-    private CraftComponent GetRequired(IPerson person)
+    internal void ReconcileAll()
+    {
+        foreach (var person in _gameState.People)
+            ReconcilePerson(person);
+    }
+
+    internal void ReconcilePerson(IPerson person)
     {
         var component = person.Components.Get<CraftComponent>();
         if (component is null)
@@ -905,7 +913,17 @@ internal sealed class StandardCraftService : ICraftService, IIncomeProvider
         }
 
         NormalizeAndMigrate(person, component);
-        return component;
+    }
+
+    private CraftComponent GetRequired(IPerson person) =>
+        person.Components.Get<CraftComponent>()
+        ?? throw new InvalidOperationException(
+            "Craft state is missing. Run state reconciliation before reading it.");
+
+    private CraftComponent GetMutable(IPerson person)
+    {
+        ReconcilePerson(person);
+        return GetRequired(person);
     }
 
     private void NormalizeAndMigrate(IPerson person, CraftComponent component)

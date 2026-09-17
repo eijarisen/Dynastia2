@@ -9,7 +9,7 @@ public sealed partial class HouseholdsPlugin
     {
         return context.Actor.Id == context.Target.Id
             && context.Actor.Tags.Has("state.alive")
-            && context.Actor.Tags.Has("control.playable")
+            && context.ActorHasControl
             && !context.Actor.Tags.Has("state.imprisoned");
     }
 

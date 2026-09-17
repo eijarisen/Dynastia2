@@ -30,30 +30,38 @@ public sealed class StandardEducationService : IEducationService
 
     public int GetEducationLevel(IPerson person)
     {
+        return GetRequired(person).Level;
+    }
+
+    internal void ReconcilePerson(IPerson person)
+    {
+        EnsureEducation(person);
+
         var component =
-            GetRequired(person);
+            person.Components.Get<EducationComponent>()
+            ?? throw new InvalidOperationException(
+                "Education component could not be created during reconciliation.");
 
-        if (!component.IsInitialized)
+        if (component.IsInitialized)
+            return;
+
+        if (component.Level == 0
+            && _family.GetGeneration(person) == 0
+            && _family.IsBloodline(person))
         {
-            if (component.Level == 0
-                && _family.GetGeneration(person) == 0
-                && _family.IsBloodline(person))
-            {
-                var bytes =
-                    person.Id.ToByteArray();
+            var bytes =
+                person.Id.ToByteArray();
 
-                component.Level =
-                    1 + bytes[6] % 3;
-            }
-
-            component.IsInitialized = true;
+            component.Level =
+                1 + bytes[6] % 3;
         }
 
-        return component.Level;
+        component.IsInitialized = true;
     }
 
     public void SetEducationLevel(IPerson person, int level)
     {
+        EnsureEducation(person);
         var component = GetRequired(person);
         component.Level =
             Math.Clamp(level, 0, 5);
@@ -77,12 +85,10 @@ public sealed class StandardEducationService : IEducationService
             rule.GeneratedAdultMaxLevel);
     }
 
-    private EducationComponent GetRequired(IPerson person)
+    private static EducationComponent GetRequired(IPerson person)
     {
-        EnsureEducation(person);
-
         return person.Components.Get<EducationComponent>()
             ?? throw new InvalidOperationException(
-                "Education component could not be created.");
+                "Education state is missing. Run state reconciliation before reading education.");
     }
 }

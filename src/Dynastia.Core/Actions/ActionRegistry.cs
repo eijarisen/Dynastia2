@@ -13,27 +13,24 @@ public sealed class ActionRegistry : IActionRegistry
     private readonly List<QueuedAction> _queued = [];
     private readonly List<QueuedActionOutcome> _lastQueuedOutcomes = [];
 
-    // Autonomous actions still use the historical temporary playable-tag
-    // compatibility path. Batch 4 replaces that with an explicit execution
-    // context; keeping it here prevents this corrective batch from changing
-    // autonomous action eligibility.
-    private readonly HashSet<AutonomousQueuedAction> _autonomousQueued = [];
-
     private readonly IGameState _gameState;
     private readonly IGameEventBus _eventBus;
     private readonly IGameRandom _random;
     private readonly IActionGuardRegistry _guards;
+    private readonly IStateReconciliationLifecycle? _reconciliation;
 
     public ActionRegistry(
         IGameState gameState,
         IGameEventBus eventBus,
         IGameRandom random,
-        IActionGuardRegistry guards)
+        IActionGuardRegistry guards,
+        IStateReconciliationLifecycle? reconciliation = null)
     {
         _gameState = gameState;
         _eventBus = eventBus;
         _random = random;
         _guards = guards;
+        _reconciliation = reconciliation;
     }
 
     public IReadOnlyList<QueuedActionOutcome> LastQueuedActionOutcomes =>
@@ -42,6 +39,8 @@ public sealed class ActionRegistry : IActionRegistry
     public void Register(GameActionDefinition action)
     {
         ArgumentNullException.ThrowIfNull(action);
+
+        EnsureActionCanBeEvaluated(action);
 
         if (!_actions.TryAdd(action.Id, action))
         {
@@ -60,15 +59,29 @@ public sealed class ActionRegistry : IActionRegistry
     public IReadOnlyList<GameActionDefinition> GetAvailableActions(
         IPerson actor,
         IPerson target) =>
-        GetAvailableActions(actor, target, null);
+        GetAvailableActions(
+            actor,
+            target,
+            null,
+            ActionExecutionContext.Player);
 
     public IReadOnlyList<GameActionDefinition> GetAvailableActions(
         IPerson actor,
         IPerson target,
-        IReadOnlyDictionary<string, string>? parameters)
+        IReadOnlyDictionary<string, string>? parameters) =>
+        GetAvailableActions(
+            actor,
+            target,
+            parameters,
+            ActionExecutionContext.Player);
+
+    public IReadOnlyList<GameActionDefinition> GetAvailableActions(
+        IPerson actor,
+        IPerson target,
+        IReadOnlyDictionary<string, string>? parameters,
+        ActionExecutionContext executionContext)
     {
-        if (_queued.Any(queued => queued.ActorId == actor.Id))
-            return [];
+        ArgumentNullException.ThrowIfNull(executionContext);
 
         return GetActionCandidates(actor, target)
             .Where(action =>
@@ -77,7 +90,8 @@ public sealed class ActionRegistry : IActionRegistry
                     actor,
                     target,
                     parameters,
-                    checkExistingQueue: false).Available)
+                    executionContext,
+                    checkExistingQueue: true).Available)
             .OrderBy(action => action.Label)
             .ToList();
     }
@@ -86,14 +100,35 @@ public sealed class ActionRegistry : IActionRegistry
         string actionId,
         IPerson actor,
         IPerson target,
-        IReadOnlyDictionary<string, string>? parameters = null)
+        IReadOnlyDictionary<string, string>? parameters = null) =>
+        Evaluate(
+            actionId,
+            actor,
+            target,
+            parameters,
+            ActionExecutionContext.Player);
+
+    public ActionEvaluationResult Evaluate(
+        string actionId,
+        IPerson actor,
+        IPerson target,
+        IReadOnlyDictionary<string, string>? parameters,
+        ActionExecutionContext executionContext)
     {
+        ArgumentNullException.ThrowIfNull(executionContext);
+
         var action = ResolveAction(actionId, actor, target);
         if (action is null)
         {
             return ActionEvaluationResult.Denied(
                 ActionReasonCodes.UnknownAction,
-                $"Unknown action '{actionId}'.");
+                $"Unknown action '{actionId}'.")
+                with
+                {
+                    ActionId = actionId,
+                    ActorId = actor.Id,
+                    TargetId = target.Id
+                };
         }
 
         return EvaluateDefinition(
@@ -101,27 +136,18 @@ public sealed class ActionRegistry : IActionRegistry
             actor,
             target,
             parameters,
+            executionContext,
             checkExistingQueue: true);
     }
 
     public IReadOnlyList<GameActionDefinition> GetMechanicallyAvailableActions(
         IPerson actor,
-        IPerson target)
-    {
-        var hadPlayableTag = actor.Tags.Has("control.playable");
-        if (!hadPlayableTag)
-            actor.Tags.Add("control.playable");
-
-        try
-        {
-            return GetAvailableActions(actor, target);
-        }
-        finally
-        {
-            if (!hadPlayableTag)
-                actor.Tags.Remove("control.playable");
-        }
-    }
+        IPerson target) =>
+        GetAvailableActions(
+            actor,
+            target,
+            null,
+            ActionExecutionContext.Autonomous());
 
     public GameActionResult Execute(
         string actionId,
@@ -143,6 +169,7 @@ public sealed class ActionRegistry : IActionRegistry
             actor,
             target,
             parameters,
+            ActionExecutionContext.Player,
             checkExistingQueue: true);
 
         if (!evaluation.Available)
@@ -153,7 +180,12 @@ public sealed class ActionRegistry : IActionRegistry
                 evaluation.ReasonCode);
         }
 
-        _queued.Add(CreateQueuedAction(action, actor, target, parameters));
+        _queued.Add(CreateQueuedAction(
+            action,
+            actor,
+            target,
+            parameters,
+            ActionExecutionContext.Player));
 
         return new GameActionResult(
             true,
@@ -165,7 +197,38 @@ public sealed class ActionRegistry : IActionRegistry
         string actionId,
         IPerson actor,
         IPerson target,
-        IReadOnlyDictionary<string, string>? parameters = null)
+        IReadOnlyDictionary<string, string>? parameters = null,
+        Guid? actorHouseholdId = null) =>
+        ExecuteWithContext(
+            actionId,
+            actor,
+            target,
+            parameters,
+            ActionExecutionContext.Autonomous(actorHouseholdId),
+            "selected autonomously");
+
+    public GameActionResult ExecuteSystem(
+        string actionId,
+        IPerson actor,
+        IPerson target,
+        IReadOnlyDictionary<string, string>? parameters = null,
+        Guid? actorHouseholdId = null,
+        YearPhase? phase = null) =>
+        ExecuteWithContext(
+            actionId,
+            actor,
+            target,
+            parameters,
+            ActionExecutionContext.System(actorHouseholdId, phase),
+            "selected by the simulation");
+
+    private GameActionResult ExecuteWithContext(
+        string actionId,
+        IPerson actor,
+        IPerson target,
+        IReadOnlyDictionary<string, string>? parameters,
+        ActionExecutionContext executionContext,
+        string queuedMessage)
     {
         var action = ResolveAction(actionId, actor, target);
         if (action is null)
@@ -176,62 +239,33 @@ public sealed class ActionRegistry : IActionRegistry
                 ActionReasonCodes.UnknownAction);
         }
 
-        if (_queued.Any(queued => queued.ActorId == actor.Id))
+        var evaluation = EvaluateDefinition(
+            action,
+            actor,
+            target,
+            parameters,
+            executionContext,
+            checkExistingQueue: true);
+
+        if (!evaluation.Available)
         {
             return new GameActionResult(
                 false,
-                "This character already has a queued action.",
-                ActionReasonCodes.AlreadyQueued);
+                evaluation.Reason,
+                evaluation.ReasonCode);
         }
 
-        var guardResult = _guards.Evaluate(actor);
-        if (!guardResult.Allowed && !action.BypassGuards)
-        {
-            return new GameActionResult(
-                false,
-                guardResult.Reason ?? "This character cannot perform actions.",
-                ActionReasonCodes.ActorBlocked);
-        }
+        _queued.Add(CreateQueuedAction(
+            action,
+            actor,
+            target,
+            parameters,
+            executionContext));
 
-        var hadPlayableTag = actor.Tags.Has("control.playable");
-        if (!hadPlayableTag)
-            actor.Tags.Add("control.playable");
-
-        try
-        {
-            var evaluation = EvaluateDefinition(
-                action,
-                actor,
-                target,
-                parameters,
-                checkExistingQueue: false);
-
-            if (!evaluation.Available)
-            {
-                return new GameActionResult(
-                    false,
-                    evaluation.Reason,
-                    evaluation.ReasonCode);
-            }
-
-            var queued = CreateQueuedAction(action, actor, target, parameters);
-            _queued.Add(queued);
-            _autonomousQueued.Add(
-                new AutonomousQueuedAction(
-                    queued.ActionId,
-                    queued.ActorId,
-                    queued.TargetId));
-
-            return new GameActionResult(
-                true,
-                $"{action.Label} selected autonomously.",
-                ActionReasonCodes.Available);
-        }
-        finally
-        {
-            if (!hadPlayableTag)
-                actor.Tags.Remove("control.playable");
-        }
+        return new GameActionResult(
+            true,
+            $"{action.Label} {queuedMessage}.",
+            ActionReasonCodes.Available);
     }
 
     public IReadOnlyList<QueuedActionInfo> GetQueuedActions(IPerson actor) =>
@@ -248,7 +282,6 @@ public sealed class ActionRegistry : IActionRegistry
     public void CancelQueuedActions(IPerson actor)
     {
         _queued.RemoveAll(queued => queued.ActorId == actor.Id);
-        _autonomousQueued.RemoveWhere(queued => queued.ActorId == actor.Id);
     }
 
     public void RestoreQueuedActions(
@@ -298,12 +331,13 @@ public sealed class ActionRegistry : IActionRegistry
                         ? definition.Label
                         : saved.Label,
                     saved.Description ?? definition.Description,
-                    restoredParameters));
+                    restoredParameters,
+                    saved.Origin,
+                    saved.ActorHouseholdId));
         }
 
         _queued.Clear();
         _queued.AddRange(restored);
-        _autonomousQueued.Clear();
         _lastQueuedOutcomes.Clear();
     }
 
@@ -346,8 +380,6 @@ public sealed class ActionRegistry : IActionRegistry
         var actor = _gameState.People.FirstOrDefault(person => person.Id == queued.ActorId);
         if (actor is null)
         {
-            _autonomousQueued.Remove(
-                new AutonomousQueuedAction(queued.ActionId, queued.ActorId, queued.TargetId));
             return Outcome(
                 queued,
                 QueuedActionResultCategory.ActorMissing,
@@ -358,8 +390,6 @@ public sealed class ActionRegistry : IActionRegistry
         var target = _gameState.People.FirstOrDefault(person => person.Id == queued.TargetId);
         if (target is null)
         {
-            _autonomousQueued.Remove(
-                new AutonomousQueuedAction(queued.ActionId, queued.ActorId, queued.TargetId));
             return Outcome(
                 queued,
                 QueuedActionResultCategory.TargetMissing,
@@ -370,8 +400,6 @@ public sealed class ActionRegistry : IActionRegistry
         var action = ResolveAction(queued.ActionId, actor, target);
         if (action is null)
         {
-            _autonomousQueued.Remove(
-                new AutonomousQueuedAction(queued.ActionId, queued.ActorId, queued.TargetId));
             return Outcome(
                 queued,
                 QueuedActionResultCategory.ActionMissing,
@@ -382,8 +410,6 @@ public sealed class ActionRegistry : IActionRegistry
         var guardResult = _guards.Evaluate(actor);
         if (!guardResult.Allowed && !action.BypassGuards)
         {
-            _autonomousQueued.Remove(
-                new AutonomousQueuedAction(queued.ActionId, queued.ActorId, queued.TargetId));
             return Outcome(
                 queued,
                 QueuedActionResultCategory.ActorBlocked,
@@ -391,51 +417,52 @@ public sealed class ActionRegistry : IActionRegistry
                 guardResult.Reason ?? "The actor can no longer perform this action.");
         }
 
-        var autonomousKey =
-            new AutonomousQueuedAction(queued.ActionId, queued.ActorId, queued.TargetId);
-        var isAutonomous = _autonomousQueued.Remove(autonomousKey);
-        var hadPlayableTag = actor.Tags.Has("control.playable");
+        var executionContext = new ActionExecutionContext(
+            queued.Origin,
+            queued.ActorHouseholdId,
+            queued.Phase);
 
-        if (isAutonomous && !hadPlayableTag)
-            actor.Tags.Add("control.playable");
+        var evaluation = EvaluateDefinition(
+            action,
+            actor,
+            target,
+            queued.Parameters,
+            executionContext,
+            checkExistingQueue: false);
 
-        try
+        if (!evaluation.Available)
         {
-            var evaluation = EvaluateDefinition(
-                action,
+            return Outcome(
+                queued,
+                QueuedActionResultCategory.Invalidated,
+                evaluation.ReasonCode,
+                evaluation.Reason ?? "The action is no longer available.");
+        }
+
+        var result = action.Execute(
+            CreateContext(
                 actor,
                 target,
                 queued.Parameters,
-                checkExistingQueue: false);
+                executionContext));
 
-            if (!evaluation.Available)
-            {
-                return Outcome(
-                    queued,
-                    QueuedActionResultCategory.Invalidated,
-                    evaluation.ReasonCode,
-                    evaluation.Reason ?? "The action is no longer available.");
-            }
-
-            var result = action.Execute(
-                CreateContext(actor, target, queued.Parameters));
-
-            return Outcome(
-                queued,
-                result.Success
-                    ? QueuedActionResultCategory.ExecutedSuccessfully
-                    : QueuedActionResultCategory.ExecutedWithFailure,
-                result.ReasonCode
-                    ?? (result.Success
-                        ? ActionReasonCodes.Executed
-                        : ActionReasonCodes.MechanicFailure),
-                result.Message);
-        }
-        finally
+        if (result.Success
+            && action.Mode == ActionExecutionMode.Immediate)
         {
-            if (isAutonomous && !hadPlayableTag)
-                actor.Tags.Remove("control.playable");
+            _reconciliation?.Reconcile(
+                ReconciliationLifecycleStage.AfterImmediateAction);
         }
+
+        return Outcome(
+            queued,
+            result.Success
+                ? QueuedActionResultCategory.ExecutedSuccessfully
+                : QueuedActionResultCategory.ExecutedWithFailure,
+            result.ReasonCode
+                ?? (result.Success
+                    ? ActionReasonCodes.Executed
+                    : ActionReasonCodes.MechanicFailure),
+            result.Message);
     }
 
     private void PublishInvalidatedOutcome(QueuedActionOutcome outcome)
@@ -475,34 +502,86 @@ public sealed class ActionRegistry : IActionRegistry
         IPerson actor,
         IPerson target,
         IReadOnlyDictionary<string, string>? parameters,
+        ActionExecutionContext executionContext,
         bool checkExistingQueue)
     {
         var guardResult = _guards.Evaluate(actor);
         if (!guardResult.Allowed && !action.BypassGuards)
         {
-            return ActionEvaluationResult.Denied(
-                ActionReasonCodes.ActorBlocked,
-                guardResult.Reason ?? "This character cannot perform actions.");
+            return CompleteEvaluation(
+                ActionEvaluationResult.Denied(
+                    ActionReasonCodes.ActorBlocked,
+                    guardResult.Reason ?? "This character cannot perform actions."),
+                action,
+                actor,
+                target);
         }
 
         if (checkExistingQueue
             && _queued.Any(queued => queued.ActorId == actor.Id))
         {
-            return ActionEvaluationResult.Denied(
-                ActionReasonCodes.AlreadyQueued,
-                "This character already has a queued action.");
+            return CompleteEvaluation(
+                ActionEvaluationResult.Denied(
+                    ActionReasonCodes.AlreadyQueued,
+                    "This character already has a queued action."),
+                action,
+                actor,
+                target);
         }
 
-        var context = CreateContext(actor, target, parameters);
-        if (!action.IsAvailable(context))
+        var context = CreateContext(
+            actor,
+            target,
+            parameters,
+            executionContext);
+        var evaluation = action.EvaluateAvailability is not null
+            ? action.EvaluateAvailability(context)
+            : action.IsAvailable!(context)
+                ? ActionEvaluationResult.Allowed()
+                : ActionEvaluationResult.Denied(
+                    ActionReasonCodes.NoLongerEligible,
+                    "This action is no longer available because circumstances changed.");
+
+        if (evaluation.Available
+            && !string.Equals(
+                evaluation.ReasonCode,
+                ActionReasonCodes.Available,
+                StringComparison.OrdinalIgnoreCase))
         {
-            return ActionEvaluationResult.Denied(
-                ActionReasonCodes.NoLongerEligible,
-                "This action is no longer available because circumstances changed.");
+            evaluation = evaluation with
+            {
+                ReasonCode = ActionReasonCodes.Available
+            };
+        }
+        else if (!evaluation.Available
+                 && string.IsNullOrWhiteSpace(evaluation.ReasonCode))
+        {
+            evaluation = evaluation with
+            {
+                ReasonCode = ActionReasonCodes.NoLongerEligible
+            };
         }
 
-        return ActionEvaluationResult.Allowed();
+        return CompleteEvaluation(
+            evaluation,
+            action,
+            actor,
+            target);
     }
+
+    private static ActionEvaluationResult CompleteEvaluation(
+        ActionEvaluationResult evaluation,
+        GameActionDefinition action,
+        IPerson actor,
+        IPerson target) =>
+        evaluation with
+        {
+            ActionId = action.Id,
+            ActorId = actor.Id,
+            TargetId = target.Id,
+            ExecutionMode = action.Mode,
+            QueuePhase = ResolveQueuePhase(action)
+        };
 
     private IReadOnlyList<GameActionDefinition> GetActionCandidates(
         IPerson actor,
@@ -516,6 +595,8 @@ public sealed class ActionRegistry : IActionRegistry
         {
             foreach (var action in provider(actor, target) ?? Array.Empty<GameActionDefinition>())
             {
+                EnsureActionCanBeEvaluated(action);
+
                 if (result.ContainsKey(action.Id))
                 {
                     throw new InvalidOperationException(
@@ -544,10 +625,24 @@ public sealed class ActionRegistry : IActionRegistry
                     actionId,
                     StringComparison.OrdinalIgnoreCase));
             if (resolved is not null)
+            {
+                EnsureActionCanBeEvaluated(resolved);
                 return resolved;
+            }
         }
 
         return null;
+    }
+
+    private static void EnsureActionCanBeEvaluated(
+        GameActionDefinition action)
+    {
+        if (action.EvaluateAvailability is null
+            && action.IsAvailable is null)
+        {
+            throw new InvalidOperationException(
+                $"Action '{action.Id}' must provide an availability evaluator.");
+        }
     }
 
     private static YearPhase ResolveQueuePhase(GameActionDefinition action) =>
@@ -558,20 +653,23 @@ public sealed class ActionRegistry : IActionRegistry
     private GameActionContext CreateContext(
         IPerson actor,
         IPerson target,
-        IReadOnlyDictionary<string, string>? parameters = null) =>
+        IReadOnlyDictionary<string, string>? parameters,
+        ActionExecutionContext executionContext) =>
         new(
             _gameState,
             actor,
             target,
             _eventBus,
             _random,
-            parameters);
+            parameters,
+            executionContext);
 
     private QueuedAction CreateQueuedAction(
         GameActionDefinition action,
         IPerson actor,
         IPerson target,
-        IReadOnlyDictionary<string, string>? parameters) =>
+        IReadOnlyDictionary<string, string>? parameters,
+        ActionExecutionContext executionContext) =>
         new(
             action.Id,
             actor.Id,
@@ -579,7 +677,9 @@ public sealed class ActionRegistry : IActionRegistry
             ResolveQueuePhase(action),
             action.Label,
             action.Description,
-            CloneParameters(parameters));
+            CloneParameters(parameters),
+            executionContext.Origin,
+            executionContext.ActorHouseholdId);
 
     private QueuedActionInfo ToInfo(QueuedAction queued) =>
         new(
@@ -589,7 +689,9 @@ public sealed class ActionRegistry : IActionRegistry
             queued.ActorId,
             queued.TargetId,
             queued.Description,
-            queued.Parameters);
+            queued.Parameters,
+            queued.Origin,
+            queued.ActorHouseholdId);
 
     private static QueuedActionOutcome Outcome(
         QueuedAction queued,
@@ -622,10 +724,7 @@ public sealed class ActionRegistry : IActionRegistry
         YearPhase Phase,
         string Label,
         string? Description,
-        IReadOnlyDictionary<string, string> Parameters);
-
-    private sealed record AutonomousQueuedAction(
-        string ActionId,
-        Guid ActorId,
-        Guid TargetId);
+        IReadOnlyDictionary<string, string> Parameters,
+        ActionExecutionOrigin Origin,
+        Guid? ActorHouseholdId);
 }

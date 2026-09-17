@@ -161,7 +161,8 @@ internal sealed class AdvancedAutonomousHouseholdStrategy :
             foreach (var action in GetMechanicallyAvailableActions(
                 snapshot.Head,
                 member.Person,
-                parameters))
+                parameters,
+                snapshot.Household.HouseholdId))
             {
                 var actionParameters = BuildParametersForAction(
                     action.Id,
@@ -197,7 +198,8 @@ internal sealed class AdvancedAutonomousHouseholdStrategy :
                 foreach (var action in GetMechanicallyAvailableActions(
                     snapshot.Head,
                     relative,
-                    baseParameters))
+                    baseParameters,
+                    snapshot.Household.HouseholdId))
                 {
                     if (!action.Id.StartsWith(
                         "family_relations.",
@@ -307,7 +309,8 @@ internal sealed class AdvancedAutonomousHouseholdStrategy :
             action.Action.Id,
             snapshot.Head,
             action.Target,
-            action.Parameters).Success;
+            action.Parameters,
+            snapshot.Household.HouseholdId).Success;
     }
 
     private AutonomousActionCandidate? ScoreCore(
@@ -423,6 +426,9 @@ internal sealed class AdvancedAutonomousHouseholdStrategy :
 
             "relationship.marry_off_daughter" =>
                 ScoreMarryOffDaughter(option, snapshot),
+
+            "household.ask_move_out" =>
+                ScoreMoveOut(option, snapshot),
 
             "personality.religious_study" =>
                 ScoreReligiousStudy(option, snapshot),
@@ -1112,6 +1118,7 @@ internal sealed class AdvancedAutonomousHouseholdStrategy :
         if (snapshot.FinancialState != AutonomousFinancialState.Secure
             || snapshot.HasSeriousMedicalDanger
             || snapshot.Status?.IsLargeFamilyStrained == true
+            || snapshot.Status?.IsOvercrowded == true
             || snapshot.LivingChildCount < 2 && snapshot.HasRealisticReproductivePath)
         {
             return null;
@@ -1122,19 +1129,57 @@ internal sealed class AdvancedAutonomousHouseholdStrategy :
             return null;
 
         var farm = farming.GetSnapshot(snapshot.Head);
-        if (farm.AvailableWorkers == 0)
+
+        // Farmland is an investment in household labour, not a generic place
+        // to park spare cash. Do not buy another parcel while the current
+        // local land already consumes all available farm labour.
+        if (farm.AvailableWorkers <= farm.LocalWorkerCapacity)
             return null;
 
-        var reserve = snapshot.ExpectedExpenses * 2m;
+        var reserve = Math.Max(
+            snapshot.ExpectedExpenses * 2m,
+            farming.PurchasePrice * 0.5m);
+
         if (snapshot.Finance.Wealth - farming.PurchasePrice < reserve)
             return null;
 
-        var earlyEraBonus = Math.Clamp((2000 - _gameState.Year) / 25.0, 0, 12);
-        var workerBonus = Math.Min(farm.AvailableWorkers, 2) * 5;
+        var projectedIncome =
+            farming.GetExpectedAnnualIncomeAfterAddingLocalParcel(
+                snapshot.Head);
 
-        return WithScore(option, AutonomyCategory.Property,
+        var marginalIncome =
+            projectedIncome - farm.ExpectedAnnualIncome;
+
+        if (marginalIncome <= 0m)
+            return null;
+
+        // Require the additional parcel to recover its purchase price within
+        // roughly a decade at expected output. This naturally makes farmland
+        // rarer in later eras as its income multiplier declines, while still
+        // allowing productive agrarian households to expand.
+        var paybackYears =
+            farming.PurchasePrice / marginalIncome;
+
+        if (paybackYears > 10m)
+            return null;
+
+        var spareWorkers =
+            farm.AvailableWorkers - farm.LocalWorkerCapacity;
+
+        var earlyEraBonus =
+            Math.Clamp((1950 - _gameState.Year) / 50.0, 0, 5);
+
+        var returnBonus =
+            Math.Clamp((10.0 - (double)paybackYears) * 2.5, 0, 15);
+
+        var labourBonus =
+            Math.Min(spareWorkers, 2) * 4;
+
+        return WithScore(
+            option,
+            AutonomyCategory.Property,
             AutonomousPriorityBands.LongTermImprovement,
-            45 + earlyEraBonus + workerBonus);
+            38 + earlyEraBonus + returnBonus + labourBonus);
     }
 
     private AutonomousActionCandidate? ScoreStartCraft(
@@ -1266,6 +1311,32 @@ internal sealed class AdvancedAutonomousHouseholdStrategy :
 
         return WithScore(option, AutonomyCategory.FamilyRelations,
             AutonomousPriorityBands.LongTermImprovement, 42);
+    }
+
+    private AutonomousActionCandidate? ScoreMoveOut(
+        AutonomousActionCandidate option,
+        AutonomousHouseholdSnapshot snapshot)
+    {
+        var hasSpareHouse = snapshot.Finance?.Houses
+            .Any(house => !house.IsResidence) == true;
+
+        if (hasSpareHouse)
+        {
+            return WithScore(
+                option,
+                AutonomyCategory.FamilyRelations,
+                AutonomousPriorityBands.FamilyStability,
+                86);
+        }
+
+        if (snapshot.Status?.IsOvercrowded != true)
+            return null;
+
+        return WithScore(
+            option,
+            AutonomyCategory.FamilyRelations,
+            AutonomousPriorityBands.FamilyStability,
+            68);
     }
 
     private AutonomousActionCandidate? ScoreReligiousStudy(
@@ -1431,6 +1502,22 @@ internal sealed class AdvancedAutonomousHouseholdStrategy :
 
             foreach (var pair in partnerSearch.BuildActionParameters(best))
                 parameters[pair.Key] = pair.Value;
+        }
+        else if (actionId.Equals("household.ask_move_out", StringComparison.OrdinalIgnoreCase))
+        {
+            var residence = _economy.GetResidenceTown(snapshot.Head);
+            var spareHouse = snapshot.Finance?.Houses
+                .Where(house => !house.IsResidence)
+                .OrderByDescending(house => house.Town.Id.Equals(
+                    residence.Id,
+                    StringComparison.OrdinalIgnoreCase))
+                .ThenBy(house => house.Town.Town, StringComparer.CurrentCultureIgnoreCase)
+                .FirstOrDefault();
+
+            if (spareHouse is not null)
+                parameters["propertyId"] = spareHouse.Id.ToString();
+            else if (snapshot.Status?.IsOvercrowded != true)
+                return null;
         }
         else if (actionId.Equals("household.sell_house", StringComparison.OrdinalIgnoreCase))
         {
@@ -1773,22 +1860,13 @@ internal sealed class AdvancedAutonomousHouseholdStrategy :
     private IReadOnlyList<GameActionDefinition> GetMechanicallyAvailableActions(
         IPerson actor,
         IPerson target,
-        IReadOnlyDictionary<string, string> parameters)
-    {
-        var hadPlayable = actor.Tags.Has("control.playable");
-        if (!hadPlayable)
-            actor.Tags.Add("control.playable");
-
-        try
-        {
-            return _actions.GetAvailableActions(actor, target, parameters);
-        }
-        finally
-        {
-            if (!hadPlayable)
-                actor.Tags.Remove("control.playable");
-        }
-    }
+        IReadOnlyDictionary<string, string> parameters,
+        Guid actorHouseholdId) =>
+        _actions.GetAvailableActions(
+            actor,
+            target,
+            parameters,
+            ActionExecutionContext.Autonomous(actorHouseholdId));
 
     private AutonomousActionCandidate ApplyPersonality(
         AutonomousActionCandidate option,

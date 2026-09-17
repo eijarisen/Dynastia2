@@ -121,44 +121,13 @@ public sealed partial class StandardLocationService :
             person.Components.Get<
                 LocationComponent>();
 
-        if (component is not null
-            && CanonicalizeComponent(
-                component))
-        {
-            person.Components.Set(
-                component);
-        }
-
-        if (component?.Birthplace is null
-            || component.HomeTown is null)
-        {
-            EnsureFallbackLocation(
-                person);
-
-            component =
-                person.Components.Get<
-                    LocationComponent>();
-        }
-
         if (component?.Birthplace is null
             || component.HomeTown is null)
         {
             throw new InvalidOperationException(
-                $"Could not determine a location for " +
-                $"{_family.GetDisplayName(person)}.");
-        }
-
-        if (person.Tags.Has(
-                "state.dead")
-            && component.DeathTown is null)
-        {
-            // Older saves predate explicit death-town storage.
-            // Their last known home town is the best available fallback.
-            component.DeathTown =
-                component.HomeTown;
-
-            person.Components.Set(
-                component);
+                $"Location state is missing for " +
+                $"{_family.GetDisplayName(person)}. " +
+                "Run state reconciliation before reading locations.");
         }
 
         return new LocationSnapshot(
@@ -166,6 +135,7 @@ public sealed partial class StandardLocationService :
             component.HomeTown,
             component.DeathTown);
     }
+
 
 
     public LocationSnapshot? GetExistingLocation(

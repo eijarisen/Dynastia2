@@ -50,6 +50,26 @@ public sealed class EducationPlugin : IGamePlugin
 
         context.AddService<IEducationService>(education);
 
+        var reconciliation = context.GetService<IStateReconciliationLifecycle>()
+            ?? throw new InvalidOperationException(
+                "State reconciliation lifecycle is unavailable.");
+
+        reconciliation.Register(
+            "education.components",
+            [
+                ReconciliationLifecycleStage.AfterNewGame,
+                ReconciliationLifecycleStage.AfterLoad,
+                ReconciliationLifecycleStage.BeforeYear,
+                ReconciliationLifecycleStage.AfterYear,
+                ReconciliationLifecycleStage.AfterImmediateAction
+            ],
+            _ =>
+            {
+                foreach (var person in gameState.People)
+                    education.ReconcilePerson(person);
+            },
+            order: 20);
+
         InitializeFromEvents(
             gameState,
             education,
@@ -246,7 +266,7 @@ public sealed class EducationPlugin : IGamePlugin
                 var target = actionContext.Target;
 
                 if (!actor.Tags.Has("state.alive")
-                    || !actor.Tags.Has("control.playable")
+                    || !actionContext.ActorHasControl
                     || !target.Tags.Has("state.alive"))
                 {
                     return false;
@@ -417,8 +437,7 @@ public sealed class EducationPlugin : IGamePlugin
 
                     if (!father.Tags.Has(
                             "state.alive")
-                        || !father.Tags.Has(
-                            "control.playable")
+                        || !actionContext.ActorHasControl
                         || !child.Tags.Has(
                             "state.alive")
                         || child.Id == father.Id

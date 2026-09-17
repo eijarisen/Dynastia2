@@ -22,5 +22,10 @@ internal sealed class HouseholdStressModifierProvider : IStressModifierProvider
         var status = _households.GetStatus(head);
         if (status?.IsLargeFamilyStrained == true)
             yield return new StressContribution("household.large_family_strain", 1);
+
+        if (status?.IsOvercrowded == true)
+            yield return new StressContribution(
+                "household.overcrowded",
+                HouseholdCrowdingRules.AnnualStressPenalty);
     }
 }

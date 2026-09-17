@@ -19,10 +19,10 @@ public sealed class HealthContentReworkBatch1Tests
             "Health/health_condition_context_weights.csv",
             conditions.Select(condition => condition.Id));
 
-        Assert.Equal(2.5, catalog.GetMultiplier(
+        Assert.Equal(3.75, catalog.GetMultiplier(
             "tuberculosis",
             new ContextWeightContext(1750, 30, Sex.Male)), 6);
-        Assert.Equal(0.15, catalog.GetMultiplier(
+        Assert.Equal(0.225, catalog.GetMultiplier(
             "tuberculosis",
             new ContextWeightContext(2000, 30, Sex.Male)), 6);
 

@@ -7,4 +7,6 @@ public sealed record QueuedActionInfo(
     Guid ActorId,
     Guid TargetId,
     string? Description = null,
-    IReadOnlyDictionary<string, string>? Parameters = null);
+    IReadOnlyDictionary<string, string>? Parameters = null,
+    ActionExecutionOrigin Origin = ActionExecutionOrigin.Player,
+    Guid? ActorHouseholdId = null);

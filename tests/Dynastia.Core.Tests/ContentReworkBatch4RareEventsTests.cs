@@ -125,8 +125,8 @@ public sealed class ContentReworkBatch4RareEventsTests
         var below = RareEventRules.GetSuicideChance(4.99, true, true, true, true, true, true, true, true, "Melancholic");
         Assert.Equal(0.0, below, 10);
 
-        var withoutDrug = RareEventRules.GetSuicideChance(7, true, true, false, false, true, true, false, false, "Melancholic");
-        var withDrug = RareEventRules.GetSuicideChance(7, true, true, false, true, true, true, false, false, "Melancholic");
+        var withoutDrug = RareEventRules.GetSuicideChance(5, false, false, false, false, false, false, false, false, "Melancholic");
+        var withDrug = RareEventRules.GetSuicideChance(5, false, false, false, true, false, false, false, false, "Melancholic");
         Assert.True(withDrug > withoutDrug);
         Assert.InRange(withDrug, 0.0, RareEventRules.MaximumSuicideChance);
 

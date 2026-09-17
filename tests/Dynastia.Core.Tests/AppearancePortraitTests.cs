@@ -285,6 +285,21 @@ public sealed class AppearancePortraitTests
     }
 
     [Fact]
+    public void PersonPortraitReadDoesNotCreateMissingAppearanceState()
+    {
+        var family = new TestFamilyService();
+        var service = new StandardAppearanceService(family);
+        var person = CreatePerson("Jan", Sex.Male, family);
+
+        Assert.False(person.Components.Has<AppearanceComponent>());
+        Assert.Throws<InvalidOperationException>(() => service.GetPortrait(person));
+        Assert.False(person.Components.Has<AppearanceComponent>());
+
+        service.EnsureAppearance(person);
+        Assert.False(string.IsNullOrWhiteSpace(service.GetPortrait(person)));
+    }
+
+    [Fact]
     public void EnsureAppearance_DoesNotRerollExistingAppearance()
     {
         var family = new TestFamilyService();

@@ -21,10 +21,6 @@ public sealed partial class StandardEconomyService
         var (owner, household) =
             resolved.Value;
 
-        SynchronizeHouses(
-            owner,
-            household);
-
         var lines =
             new List<FinanceBreakdownItem>();
 

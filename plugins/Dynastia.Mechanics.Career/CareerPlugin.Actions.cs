@@ -26,7 +26,7 @@ public sealed partial class CareerPlugin
                 {
                     if (actionContext.Actor.Id != actionContext.Target.Id
                         || !actionContext.Actor.Tags.Has("state.alive")
-                        || !actionContext.Actor.Tags.Has("control.playable"))
+                        || !actionContext.ActorHasControl)
                     {
                         return false;
                     }
@@ -87,7 +87,7 @@ public sealed partial class CareerPlugin
                 {
                     if (actionContext.Actor.Id != actionContext.Target.Id
                         || !actionContext.Actor.Tags.Has("state.alive")
-                        || !actionContext.Actor.Tags.Has("control.playable")
+                        || !actionContext.ActorHasControl
                         || actionContext.Actor.Age < 18)
                     {
                         return false;
@@ -165,7 +165,7 @@ public sealed partial class CareerPlugin
                 {
                     if (actionContext.Actor.Id != actionContext.Target.Id
                         || !actionContext.Actor.Tags.Has("state.alive")
-                        || !actionContext.Actor.Tags.Has("control.playable")
+                        || !actionContext.ActorHasControl
                         || actionContext.Actor.Age < 18)
                     {
                         return false;
@@ -249,7 +249,7 @@ public sealed partial class CareerPlugin
                 {
                     if (actionContext.Actor.Id != actionContext.Target.Id
                         || !actionContext.Actor.Tags.Has("state.alive")
-                        || !actionContext.Actor.Tags.Has("control.playable")
+                        || !actionContext.ActorHasControl
                         || actionContext.Actor.Age < 18
                         || actionContext.Actor.Tags.Has("state.imprisoned"))
                     {

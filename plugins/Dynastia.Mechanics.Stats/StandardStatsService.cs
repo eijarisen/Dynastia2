@@ -246,16 +246,13 @@ public sealed class StandardStatsService :
         return true;
     }
 
-    private StatsComponent GetRequired(
+    private static StatsComponent GetRequired(
         IPerson person)
     {
-        EnsureStats(
-            person);
-
         return person.Components.Get<
             StatsComponent>()
             ?? throw new InvalidOperationException(
-                "Stats component could not be created.");
+                "Stats state is missing. Run state reconciliation before reading stats.");
     }
 
     private void EnsureComponentCompleteness(

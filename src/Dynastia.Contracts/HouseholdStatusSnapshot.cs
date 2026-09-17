@@ -12,4 +12,7 @@ public sealed record HouseholdStatusSnapshot(
     bool IsAtCapacityWarning,
     bool IsBroke,
     IReadOnlyList<string> Warnings,
-    string? NannyRoleLabel = null);
+    string? NannyRoleLabel = null,
+    int ResidentCount = 0,
+    int OvercrowdingThreshold = 8,
+    bool IsOvercrowded = false);

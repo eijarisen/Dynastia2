@@ -40,7 +40,6 @@ public sealed class StandardFamilyRelationService : IFamilyRelationService
         var data = Find(first, second);
         if (data is null)
             return null;
-        NormalizeData(data);
         return ToSnapshot(data);
     }
 
@@ -140,8 +139,19 @@ public sealed class StandardFamilyRelationService : IFamilyRelationService
                 var info = head is null
                     ? null
                     : _households.GetActiveHouseholds().FirstOrDefault(h => h.HouseholdId == householdId);
-                var relation = GetRelation(activeHouseholdHead, relative.Person)
-                    ?? EnsureRelation(activeHouseholdHead, relative.Person, relative.Type, DefaultSympathy(relative.Type));
+                var relation = GetRelation(activeHouseholdHead, relative.Person);
+                if (relation is null)
+                {
+                    ReportMissingRelationRead(
+                        activeHouseholdHead,
+                        relative.Person,
+                        relative.Type);
+
+                    relation = CreateTransientRelationSnapshot(
+                        activeHouseholdHead,
+                        relative.Person,
+                        relative.Type);
+                }
                 return new
                 {
                     relative.Person,
@@ -208,7 +218,7 @@ public sealed class StandardFamilyRelationService : IFamilyRelationService
         _gameState.People
             .SelectMany(person => person.Components.Get<FamilyRelationsComponent>()?.Relationships
                 ?? Enumerable.Empty<FamilyRelationshipData>())
-            .Select(data => { NormalizeData(data); return ToSnapshot(data); })
+            .Select(ToSnapshot)
             .ToList();
 
     internal void DriftSympathyTowardNeutral(IPerson first, IPerson second, double amount = 0.50)
@@ -496,19 +506,73 @@ public sealed class StandardFamilyRelationService : IFamilyRelationService
 
     private FamilyRelationshipSnapshot ToSnapshot(FamilyRelationshipData data)
     {
-        NormalizeData(data);
+        var type = Enum.IsDefined(typeof(FamilyRelationshipType), data.Type)
+            ? (FamilyRelationshipType)data.Type
+            : FamilyRelationshipType.ExSpouse;
+
+        var sympathy = data.Sympathy < 0
+            ? Math.Clamp(data.Score, 0, 100)
+            : Math.Clamp(data.Sympathy, 0, 100);
+
+        var familiarity = data.Familiarity < 0
+            ? Math.Clamp(Math.Max(DefaultFamiliarity(type), data.Score), 0, 100)
+            : Math.Clamp(data.Familiarity, 0, 100);
+
+        var score = FamilyRelationScoreRules.GetCompositeScore(
+            familiarity,
+            sympathy);
+
         return new FamilyRelationshipSnapshot(
             data.PersonAId,
             data.PersonBId,
-            (FamilyRelationshipType)data.Type,
-            data.Score,
-            FamilyRelationScoreRules.GetSympathyState(data.Sympathy),
-            data.Familiarity,
-            FamilyRelationScoreRules.GetFamiliarityState(data.Familiarity),
-            data.Sympathy,
-            FamilyRelationScoreRules.GetSympathyState(data.Sympathy),
+            type,
+            score,
+            FamilyRelationScoreRules.GetSympathyState(sympathy),
+            familiarity,
+            FamilyRelationScoreRules.GetFamiliarityState(familiarity),
+            sympathy,
+            FamilyRelationScoreRules.GetSympathyState(sympathy),
             data.CreatedYear,
             data.LastMajorInteractionYear);
+    }
+
+    private FamilyRelationshipSnapshot CreateTransientRelationSnapshot(
+        IPerson first,
+        IPerson second,
+        FamilyRelationshipType type)
+    {
+        var (_, a, b) = ResolveCanonical(first, second);
+        var familiarity = DefaultFamiliarity(type);
+        var sympathy = DefaultSympathy(type);
+        var score = FamilyRelationScoreRules.GetCompositeScore(
+            familiarity,
+            sympathy);
+
+        return new FamilyRelationshipSnapshot(
+            a.Id,
+            b.Id,
+            type,
+            score,
+            FamilyRelationScoreRules.GetSympathyState(sympathy),
+            familiarity,
+            FamilyRelationScoreRules.GetFamiliarityState(familiarity),
+            sympathy,
+            FamilyRelationScoreRules.GetSympathyState(sympathy),
+            _gameState.Year,
+            0);
+    }
+
+    private static void ReportMissingRelationRead(
+        IPerson first,
+        IPerson second,
+        FamilyRelationshipType type)
+    {
+        var message =
+            $"[STATE] Missing reconciled family relation {type} between {first.Id} and {second.Id}. " +
+            "Presentation used a non-persistent fallback; lifecycle reconciliation should repair the state.";
+
+        Console.Error.WriteLine(message);
+        System.Diagnostics.Debug.WriteLine(message);
     }
 
     private IPerson? FindPerson(Guid id) => _gameState.People.FirstOrDefault(p => p.Id == id);

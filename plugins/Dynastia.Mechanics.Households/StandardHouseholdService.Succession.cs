@@ -63,11 +63,42 @@ public sealed partial class StandardHouseholdService
                 continue;
             }
 
+            var adultMaleLineageResident =
+                FindOldestAdultMaleLineageResident(
+                    livingMembers);
+
             if (oldHead.Tags.Has(
                     "state.alive")
                 && !SimulationState.IsInactive(
                     oldHead))
             {
+                var oldHeadIsEligibleLineageHead =
+                    oldHead.Age >= 18
+                    && _family.GetSex(
+                        oldHead) == Sex.Male
+                    && _family.IsMaleLineage(
+                        oldHead);
+
+                // A surviving widow/caregiver may temporarily head a lineage
+                // household while all male-lineage sons are minors. As soon
+                // as the oldest resident son is an adult, headship passes to
+                // him and the caregiver remains a resident member.
+                if (!oldHeadIsEligibleLineageHead
+                    && adultMaleLineageResident is not null
+                    && adultMaleLineageResident.Id
+                        != oldHead.Id)
+                {
+                    _economy.TransferHouseholdHead(
+                        oldHead,
+                        adultMaleLineageResident);
+
+                    _economy.AddHouseholdMember(
+                        adultMaleLineageResident,
+                        oldHead);
+
+                    continue;
+                }
+
                 if (!_family.IsBloodline(
                         oldHead)
                     && !IsCurrentSpouseOfBloodline(
@@ -116,7 +147,8 @@ public sealed partial class StandardHouseholdService
             }
 
             var successor =
-                FindLivingFormerSpouse(
+                adultMaleLineageResident
+                ?? FindLivingFormerSpouse(
                     oldHead,
                     livingMembers)
                 ?? FindContinuingBloodlineCaregiver(
@@ -134,6 +166,27 @@ public sealed partial class StandardHouseholdService
                 oldHead,
                 successor);
         }
+    }
+
+    private IPerson? FindOldestAdultMaleLineageResident(
+        IReadOnlyList<IPerson> livingMembers)
+    {
+        return livingMembers
+            .Where(
+                candidate =>
+                    candidate.Age >= 18
+                    && _family.GetSex(
+                        candidate) == Sex.Male
+                    && _family.IsMaleLineage(
+                        candidate)
+                    && !SimulationState.IsInactive(
+                        candidate))
+            .OrderBy(
+                BirthSortKey)
+            .ThenBy(
+                candidate =>
+                    candidate.Id)
+            .FirstOrDefault();
     }
 
     private IPerson? FindContinuingBloodlineCaregiver(

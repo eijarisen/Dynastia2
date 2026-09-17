@@ -12,6 +12,9 @@ public sealed partial class CareerPlugin : IGamePlugin
         var family = context.GetService<IFamilyService>()
             ?? throw new InvalidOperationException("Family service is unavailable.");
 
+        var economy = context.GetService<IEconomyService>()
+            ?? throw new InvalidOperationException("Economy service is unavailable.");
+
         var stats = context.GetService<IStatsService>()
             ?? throw new InvalidOperationException("Stats service is unavailable.");
 
@@ -93,6 +96,22 @@ public sealed partial class CareerPlugin : IGamePlugin
         context.AddService<ICareerService>(career);
         context.AddService<ICareerPresentationService>(career);
 
+        var reconciliation = context.GetService<IStateReconciliationLifecycle>()
+            ?? throw new InvalidOperationException(
+                "State reconciliation lifecycle is unavailable.");
+
+        reconciliation.Register(
+            "career.components",
+            [
+                ReconciliationLifecycleStage.AfterNewGame,
+                ReconciliationLifecycleStage.AfterLoad,
+                ReconciliationLifecycleStage.BeforeYear,
+                ReconciliationLifecycleStage.AfterYear,
+                ReconciliationLifecycleStage.AfterImmediateAction
+            ],
+            _ => career.ReconcileAll(gameState.People),
+            order: 30);
+
         InitializeFromEvents(
             gameState,
             career,
@@ -126,6 +145,7 @@ public sealed partial class CareerPlugin : IGamePlugin
             health,
             random,
             family,
+            economy,
             events);
 
         systems.Register(

@@ -9,8 +9,10 @@ public sealed class StandardChildHappinessService : IChildHappinessService
         if (person.Age >= 18)
             return null;
 
-        EnsureHappiness(person);
-        var value = person.Components.Get<ChildHappinessComponent>()!.Value;
+        var component = person.Components.Get<ChildHappinessComponent>()
+            ?? throw new InvalidOperationException(
+                "Child Happiness state is missing. Run state reconciliation before reading it.");
+        var value = component.Value;
         return new ChildHappinessSnapshot(value, Label(value));
     }
 

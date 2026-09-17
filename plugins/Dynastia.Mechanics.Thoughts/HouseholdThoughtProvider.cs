@@ -58,6 +58,24 @@ internal sealed class HouseholdThoughtProvider :
                 "household.strain");
         }
 
+        if (status?.IsOvercrowded
+            == true)
+        {
+            yield return new ThoughtCandidate(
+                "household.overcrowded",
+                "household.overcrowded",
+                "household.overcrowded",
+                person.Age <= 11
+                    ? 42
+                    : person.Age <= 17
+                        ? 52
+                        : 68,
+                "🏠",
+                "state",
+                "household.overcrowded",
+                "household.overcrowded");
+        }
+
         if (person.Age >= 18)
         {
             if (person.Tags.Has(

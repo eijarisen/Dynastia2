@@ -160,8 +160,7 @@ public sealed class ReproductionPlugin : IGamePlugin
 
                     if (!actor.Tags.Has(
                             "state.alive")
-                        || !actor.Tags.Has(
-                            "control.playable"))
+                        || !actionContext.ActorHasControl)
                     {
                         return false;
                     }

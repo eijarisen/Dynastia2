@@ -59,12 +59,16 @@ public partial class App : Application
             var actionGuardRegistry =
                 new ActionGuardRegistry();
 
+            var reconciliation =
+                new StateReconciliationLifecycle();
+
             var actionRegistry =
                 new ActionRegistry(
                     gameState,
                     eventBus,
                     gameRandom,
-                    actionGuardRegistry);
+                    actionGuardRegistry,
+                    reconciliation);
 
             registry.Register(
                 new QueuedActionYearSystem(
@@ -128,6 +132,9 @@ public partial class App : Application
 
             pluginContext.AddService<IActionRegistry>(
                 actionRegistry);
+
+            pluginContext.AddService<IStateReconciliationLifecycle>(
+                reconciliation);
 
             var pluginsDirectory =
                 Path.Combine(
@@ -251,7 +258,8 @@ public partial class App : Application
                 new YearProcessor(
                     gameState,
                     registry,
-                    saveService);
+                    saveService,
+                    reconciliation);
 
             var genealogyDataSource =
                 familyService is null
@@ -339,7 +347,8 @@ public partial class App : Application
                             successionService,
                             eventBus,
                             actionRegistry,
-                            saveService)
+                            saveService,
+                            reconciliation)
                 };
 
             mainWindow.Opened +=

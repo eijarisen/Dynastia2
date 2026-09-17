@@ -1,6 +1,6 @@
 {
   "educationCost": 3000,
-  "monthlyIncomeBase": 400,
+  "monthlyIncomeBase": 40,
   "monthsPerYear": 12,
   "incomeRoll": {
     "integerMinimum": 0,

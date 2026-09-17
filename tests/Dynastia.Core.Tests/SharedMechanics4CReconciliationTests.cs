@@ -68,7 +68,7 @@ public sealed class SharedMechanics4CReconciliationTests
     [Fact]
     public void SuccessfulImmediateActionRunsImmediateReconciliation()
     {
-        var state = new MutableGameState();
+        var state = new GameState();
         var actor = state.CreatePerson("Jan", "Test", 30);
         var events = new GameEventBus();
         var lifecycle = new StateReconciliationLifecycle();

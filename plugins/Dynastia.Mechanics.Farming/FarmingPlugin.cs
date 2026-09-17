@@ -56,18 +56,18 @@ public sealed class FarmingPlugin : IGamePlugin
                 Id = "farming.buy_farmland",
                 Label = $"Buy Farmland ({farming.PurchasePrice:N0} zł)",
                 Description =
-                    "Queue the purchase of one farmland parcel in the household's current town for 10,000 zł. The household must own a house in that town.",
+                    $"Queue the purchase of one farmland parcel in the household's current town for {farming.PurchasePrice:N0} zł. The household must own a house in that town.",
                 Mode = ActionExecutionMode.Queued,
                 QueuePhase = YearPhase.QueuedActionsEarly,
                 IsAvailable = context =>
                     context.Actor.Id == context.Target.Id
-                    && economy.GetHousehold(context.Actor) is { } household
-                    && household.Wealth >= farming.PurchasePrice
+                    && economy.GetHousehold(context.Actor) is not null
+                    && economy.CanAfford(context.Actor, farming.PurchasePrice)
                     && OwnsHouseInResidenceTown(economy, context.Actor),
                 Execute = context =>
                 {
                     var finance = economy.GetHousehold(context.Actor);
-                    if (finance is null || finance.Wealth < farming.PurchasePrice)
+                    if (finance is null || !economy.CanAfford(context.Actor, farming.PurchasePrice))
                     {
                         return new GameActionResult(
                             false,
@@ -115,7 +115,7 @@ public sealed class FarmingPlugin : IGamePlugin
                 Id = "farming.sell_farmland",
                 Label = $"Sell Farmland ({farming.SalePrice:N0} zł)",
                 Description =
-                    "Queue the sale of one farmland parcel for 8,000 zł. Local land is sold first; otherwise the oldest owned parcel is sold.",
+                    $"Queue the sale of one farmland parcel for {farming.SalePrice:N0} zł. Local land is sold first; otherwise the oldest owned parcel is sold.",
                 Mode = ActionExecutionMode.Queued,
                 QueuePhase = YearPhase.QueuedActionsEarly,
                 IsAvailable = context =>

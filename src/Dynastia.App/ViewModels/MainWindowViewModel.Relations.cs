@@ -245,7 +245,7 @@ public sealed partial class MainWindowViewModel
         var careerText = career is null
             ? string.Empty
             : _farmingService?.IsWorkingFarmWorker(member, member) == true
-                ? "Farm Worker"
+                ? FarmingPresentationDefaults.WorkerOccupationLabel
                 : career.IsEmployed && career.JobLevel > 0
                     ? $"{career.JobTitle} ({career.JobLevel})"
                     : career.JobTitle;

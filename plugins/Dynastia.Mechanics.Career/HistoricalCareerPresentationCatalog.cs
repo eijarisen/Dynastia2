@@ -1,4 +1,3 @@
-using System.Globalization;
 using Dynastia.Contracts;
 
 namespace Dynastia.Mechanics.Career;
@@ -176,8 +175,10 @@ public sealed class HistoricalCareerPresentationCatalog
                     expectedHeader,
                     StringComparison.Ordinal))
         {
-            throw new InvalidDataException(
-                $"{CareerVariantsPath} has an unexpected header or is empty.");
+            throw CatalogValidation.UnexpectedHeader(
+                CareerVariantsPath,
+                lines.Length == 0 ? null : lines[0].TrimStart('\uFEFF'),
+                expectedHeader);
         }
 
         var result = new List<CareerTitleVariant>();
@@ -185,17 +186,24 @@ public sealed class HistoricalCareerPresentationCatalog
         for (var index = 1; index < lines.Length; index++)
         {
             var fields = lines[index].Split(',');
+            var row = index + 1;
             if (fields.Length != 9)
             {
-                throw new InvalidDataException(
-                    $"Invalid {CareerVariantsPath} row {index + 1}: expected 9 fields.");
+                throw CatalogValidation.FieldCount(
+                    CareerVariantsPath,
+                    row,
+                    fields.Length,
+                    9);
             }
 
             result.Add(
                 new CareerTitleVariant(
+                    row,
                     fields[0].Trim(),
-                    ParseInt(fields[1], CareerVariantsPath, index),
-                    ParseOptionalInt(fields[2], CareerVariantsPath, index),
+                    CatalogValidation.ParseInt(CareerVariantsPath, row, "StartYear", fields[1]),
+                    string.IsNullOrWhiteSpace(fields[2])
+                        ? null
+                        : CatalogValidation.ParseInt(CareerVariantsPath, row, "EndYear", fields[2]),
                     Optional(fields[3]),
                     Optional(fields[4]),
                     Optional(fields[5]),
@@ -224,8 +232,10 @@ public sealed class HistoricalCareerPresentationCatalog
                     expectedHeader,
                     StringComparison.Ordinal))
         {
-            throw new InvalidDataException(
-                $"{StatusVariantsPath} has an unexpected header or is empty.");
+            throw CatalogValidation.UnexpectedHeader(
+                StatusVariantsPath,
+                lines.Length == 0 ? null : lines[0].TrimStart('\uFEFF'),
+                expectedHeader);
         }
 
         var result = new List<PersonStatusVariant>();
@@ -233,17 +243,24 @@ public sealed class HistoricalCareerPresentationCatalog
         for (var index = 1; index < lines.Length; index++)
         {
             var fields = lines[index].Split(',');
+            var row = index + 1;
             if (fields.Length != 4)
             {
-                throw new InvalidDataException(
-                    $"Invalid {StatusVariantsPath} row {index + 1}: expected 4 fields.");
+                throw CatalogValidation.FieldCount(
+                    StatusVariantsPath,
+                    row,
+                    fields.Length,
+                    4);
             }
 
             result.Add(
                 new PersonStatusVariant(
+                    row,
                     fields[0].Trim(),
-                    ParseInt(fields[1], StatusVariantsPath, index),
-                    ParseOptionalInt(fields[2], StatusVariantsPath, index),
+                    CatalogValidation.ParseInt(StatusVariantsPath, row, "StartYear", fields[1]),
+                    string.IsNullOrWhiteSpace(fields[2])
+                        ? null
+                        : CatalogValidation.ParseInt(StatusVariantsPath, row, "EndYear", fields[2]),
                     fields[3].Trim()));
         }
 
@@ -258,27 +275,38 @@ public sealed class HistoricalCareerPresentationCatalog
         {
             if (!knownCareerIds.Contains(variant.CareerId))
             {
-                throw new InvalidDataException(
-                    $"{CareerVariantsPath}: unknown career ID '{variant.CareerId}'.");
+                throw CatalogValidation.Error(
+                    CareerVariantsPath,
+                    "a CareerId defined in Career/careers.csv",
+                    variant.SourceRow,
+                    variant.CareerId,
+                    "CareerId",
+                    variant.CareerId);
             }
 
             ValidateRange(
                 variant.CareerId,
                 variant.StartYear,
                 variant.EndYear,
+                variant.SourceRow,
                 CareerVariantsPath);
 
             if (variant.AllOverridesBlank)
             {
-                throw new InvalidDataException(
-                    $"{CareerVariantsPath}: '{variant.CareerId}' has no presentation overrides.");
+                throw CatalogValidation.Error(
+                    CareerVariantsPath,
+                    "at least one non-empty presentation override",
+                    variant.SourceRow,
+                    variant.CareerId,
+                    "DisplayName/LevelTitles",
+                    "<all blank>");
             }
         }
 
         ValidateNoOverlaps(
             variants.Select(
                 variant =>
-                    (variant.CareerId, variant.StartYear, variant.EndYear)),
+                    (variant.CareerId, variant.StartYear, variant.EndYear, variant.SourceRow)),
             CareerVariantsPath);
     }
 
@@ -289,27 +317,38 @@ public sealed class HistoricalCareerPresentationCatalog
         {
             if (!KnownStatusIds.Contains(variant.StatusId))
             {
-                throw new InvalidDataException(
-                    $"{StatusVariantsPath}: unknown status ID '{variant.StatusId}'.");
+                throw CatalogValidation.Error(
+                    StatusVariantsPath,
+                    $"one of: {string.Join(", ", KnownStatusIds.OrderBy(value => value))}",
+                    variant.SourceRow,
+                    variant.StatusId,
+                    "StatusId",
+                    variant.StatusId);
             }
 
             if (string.IsNullOrWhiteSpace(variant.Label))
             {
-                throw new InvalidDataException(
-                    $"{StatusVariantsPath}: labels may not be blank.");
+                throw CatalogValidation.Error(
+                    StatusVariantsPath,
+                    "a non-empty label",
+                    variant.SourceRow,
+                    variant.StatusId,
+                    "Label",
+                    variant.Label);
             }
 
             ValidateRange(
                 variant.StatusId,
                 variant.StartYear,
                 variant.EndYear,
+                variant.SourceRow,
                 StatusVariantsPath);
         }
 
         ValidateNoOverlaps(
             variants.Select(
                 variant =>
-                    (variant.StatusId, variant.StartYear, variant.EndYear)),
+                    (variant.StatusId, variant.StartYear, variant.EndYear, variant.SourceRow)),
             StatusVariantsPath);
     }
 
@@ -317,24 +356,35 @@ public sealed class HistoricalCareerPresentationCatalog
         string id,
         int startYear,
         int? endYear,
+        int sourceRow,
         string path)
     {
         if (startYear < GameCalendarConfiguration.GameStartYear)
         {
-            throw new InvalidDataException(
-                $"{path}: '{id}' starts before {GameCalendarConfiguration.GameStartYear}.");
+            throw CatalogValidation.Error(
+                path,
+                $"a year at or after {GameCalendarConfiguration.GameStartYear}",
+                sourceRow,
+                id,
+                "StartYear",
+                startYear);
         }
 
         if (endYear is int end
             && end < startYear)
         {
-            throw new InvalidDataException(
-                $"{path}: '{id}' has end year before start year.");
+            throw CatalogValidation.Error(
+                path,
+                $"a year at or after StartYear ({startYear})",
+                sourceRow,
+                id,
+                "EndYear",
+                end);
         }
     }
 
     private static void ValidateNoOverlaps(
-        IEnumerable<(string Id, int StartYear, int? EndYear)> rows,
+        IEnumerable<(string Id, int StartYear, int? EndYear, int SourceRow)> rows,
         string path)
     {
         foreach (var group in rows.GroupBy(
@@ -353,38 +403,17 @@ public sealed class HistoricalCareerPresentationCatalog
                 if (previous.EndYear is null
                     || previous.EndYear.Value >= current.StartYear)
                 {
-                    throw new InvalidDataException(
-                        $"{path}: overlapping ranges for '{group.Key}'.");
+                    throw CatalogValidation.Error(
+                        path,
+                        $"a StartYear after the previous range from row {previous.SourceRow}",
+                        current.SourceRow,
+                        group.Key,
+                        "StartYear",
+                        current.StartYear);
                 }
             }
         }
     }
-
-    private static int ParseInt(
-        string value,
-        string path,
-        int rowIndex)
-    {
-        if (!int.TryParse(
-                value,
-                NumberStyles.Integer,
-                CultureInfo.InvariantCulture,
-                out var parsed))
-        {
-            throw new InvalidDataException(
-                $"Invalid year in {path} row {rowIndex + 2}.");
-        }
-
-        return parsed;
-    }
-
-    private static int? ParseOptionalInt(
-        string value,
-        string path,
-        int rowIndex) =>
-        string.IsNullOrWhiteSpace(value)
-            ? null
-            : ParseInt(value, path, rowIndex);
 
     private static string? Optional(string value)
     {
@@ -395,6 +424,7 @@ public sealed class HistoricalCareerPresentationCatalog
     }
 
     private sealed record CareerTitleVariant(
+        int SourceRow,
         string CareerId,
         int StartYear,
         int? EndYear,
@@ -419,6 +449,7 @@ public sealed class HistoricalCareerPresentationCatalog
     }
 
     private sealed record PersonStatusVariant(
+        int SourceRow,
         string StatusId,
         int StartYear,
         int? EndYear,

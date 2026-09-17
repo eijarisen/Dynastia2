@@ -461,7 +461,10 @@ public sealed partial class StandardCareerService
                 year),
             level,
             definition.BaseSalary * level,
-            CareerAptitude.GetDisplayName(definition),
+            CareerAptitude.GetDisplayName(
+                definition,
+                person,
+                _stats),
             requirements.Ability,
             requirements.Education,
             requirements.Experience,

@@ -1,4 +1,3 @@
-using System.Globalization;
 using Dynastia.Contracts;
 
 namespace Dynastia.Mechanics.Career;
@@ -70,21 +69,20 @@ public sealed class RetirementRuleCatalog
                 ['\r', '\n'],
                 StringSplitOptions.RemoveEmptyEntries);
 
-        if (lines.Length < 2)
-        {
-            throw new InvalidDataException(
-                $"{DataPath} is empty.");
-        }
-
-        var expectedHeader =
+        const string expectedHeader =
             "StartYear,EndYear,MaleRetirementAge,FemaleRetirementAge,PensionRate";
 
-        if (!lines[0].Equals(
+        if (lines.Length < 2
+            || !lines[0].TrimStart('\uFEFF').Equals(
                 expectedHeader,
                 StringComparison.Ordinal))
         {
-            throw new InvalidDataException(
-                $"{DataPath} has an unexpected header.");
+            throw CatalogValidation.UnexpectedHeader(
+                DataPath,
+                lines.Length == 0
+                    ? null
+                    : lines[0].TrimStart('\uFEFF'),
+                expectedHeader);
         }
 
         var result =
@@ -96,23 +94,46 @@ public sealed class RetirementRuleCatalog
         {
             var fields =
                 lines[index].Split(',');
+            var row = index + 1;
 
             if (fields.Length != 5)
             {
-                throw new InvalidDataException(
-                    $"Invalid {DataPath} row {index + 1}: " +
-                    "expected 5 fields.");
+                throw CatalogValidation.FieldCount(
+                    DataPath,
+                    row,
+                    fields.Length,
+                    5);
             }
 
             result.Add(
                 new RetirementRule(
-                    ParseInt(fields[0], index),
+                    CatalogValidation.ParseInt(
+                        DataPath,
+                        row,
+                        "StartYear",
+                        fields[0]),
                     string.IsNullOrWhiteSpace(fields[1])
                         ? null
-                        : ParseInt(fields[1], index),
-                    ParseInt(fields[2], index),
-                    ParseInt(fields[3], index),
-                    ParseDecimal(fields[4], index)));
+                        : CatalogValidation.ParseInt(
+                            DataPath,
+                            row,
+                            "EndYear",
+                            fields[1]),
+                    CatalogValidation.ParseInt(
+                        DataPath,
+                        row,
+                        "MaleRetirementAge",
+                        fields[2]),
+                    CatalogValidation.ParseInt(
+                        DataPath,
+                        row,
+                        "FemaleRetirementAge",
+                        fields[3]),
+                    CatalogValidation.ParseDecimal(
+                        DataPath,
+                        row,
+                        "PensionRate",
+                        fields[4])));
         }
 
         return result;
@@ -123,99 +144,104 @@ public sealed class RetirementRuleCatalog
     {
         if (rules.Count == 0)
         {
-            throw new InvalidDataException(
-                $"{DataPath} contains no rules.");
+            throw CatalogValidation.Error(
+                DataPath,
+                "at least one retirement rule",
+                field: "Rows",
+                value: 0);
         }
 
         var ordered =
-            rules.OrderBy(rule => rule.StartYear)
+            rules.Select(
+                    (rule, index) =>
+                        (Rule: rule, Row: index + 2))
+                .OrderBy(entry => entry.Rule.StartYear)
                 .ToList();
 
-        if (ordered[0].StartYear
+        if (ordered[0].Rule.StartYear
             != GameCalendarConfiguration.GameStartYear)
         {
-            throw new InvalidDataException(
-                $"{DataPath} must begin in " +
-                $"{GameCalendarConfiguration.GameStartYear}.");
+            throw CatalogValidation.Error(
+                DataPath,
+                $"{GameCalendarConfiguration.GameStartYear} for the first rule",
+                ordered[0].Row,
+                field: "StartYear",
+                value: ordered[0].Rule.StartYear);
         }
 
         for (var index = 0;
             index < ordered.Count;
             index++)
         {
-            var rule = ordered[index];
+            var (rule, row) = ordered[index];
 
-            if (rule.MaleRetirementAge <= 0
-                || rule.FemaleRetirementAge <= 0)
+            if (rule.MaleRetirementAge <= 0)
             {
-                throw new InvalidDataException(
-                    $"{DataPath}: retirement ages must be positive.");
+                throw CatalogValidation.Error(
+                    DataPath,
+                    "an age greater than 0",
+                    row,
+                    field: "MaleRetirementAge",
+                    value: rule.MaleRetirementAge);
+            }
+
+            if (rule.FemaleRetirementAge <= 0)
+            {
+                throw CatalogValidation.Error(
+                    DataPath,
+                    "an age greater than 0",
+                    row,
+                    field: "FemaleRetirementAge",
+                    value: rule.FemaleRetirementAge);
             }
 
             if (rule.PensionRate < 0
                 || rule.PensionRate > 1)
             {
-                throw new InvalidDataException(
-                    $"{DataPath}: pension rate must be between 0 and 1.");
+                throw CatalogValidation.Error(
+                    DataPath,
+                    "a number from 0 through 1",
+                    row,
+                    field: "PensionRate",
+                    value: rule.PensionRate);
             }
 
             if (rule.EndYear is int endYear
                 && endYear < rule.StartYear)
             {
-                throw new InvalidDataException(
-                    $"{DataPath}: end year precedes start year.");
+                throw CatalogValidation.Error(
+                    DataPath,
+                    $"a year at or after StartYear ({rule.StartYear})",
+                    row,
+                    field: "EndYear",
+                    value: endYear);
             }
 
             if (index < ordered.Count - 1)
             {
+                var next = ordered[index + 1];
                 if (rule.EndYear is not int currentEnd
-                    || ordered[index + 1].StartYear
-                        != currentEnd + 1)
+                    || next.Rule.StartYear != currentEnd + 1)
                 {
-                    throw new InvalidDataException(
-                        $"{DataPath} contains a gap or overlap " +
-                        "in retirement coverage.");
+                    throw CatalogValidation.Error(
+                        DataPath,
+                        rule.EndYear is int closedEnd
+                            ? $"{closedEnd + 1} so era coverage is contiguous"
+                            : "an open-ended final rule only; non-final rules require EndYear",
+                        next.Row,
+                        field: "StartYear",
+                        value: next.Rule.StartYear);
                 }
             }
             else if (rule.EndYear is not null)
             {
-                throw new InvalidDataException(
-                    $"{DataPath} must end with an open-ended rule.");
+                throw CatalogValidation.Error(
+                    DataPath,
+                    "an empty EndYear for the final open-ended rule",
+                    row,
+                    field: "EndYear",
+                    value: rule.EndYear.Value);
             }
         }
-    }
-
-    private static int ParseInt(
-        string value,
-        int rowIndex)
-    {
-        if (!int.TryParse(
-                value,
-                NumberStyles.Integer,
-                CultureInfo.InvariantCulture,
-                out var parsed))
-        {
-            throw new InvalidDataException(
-                $"Invalid integer in {DataPath} row {rowIndex + 2}.");
-        }
-
-        return parsed;
-    }
-
-    private static decimal ParseDecimal(
-        string value,
-        int rowIndex)
-    {
-        if (!decimal.TryParse(
-                value,
-                NumberStyles.Number,
-                CultureInfo.InvariantCulture,
-                out var parsed))
-        {
-            throw new InvalidDataException(
-                $"Invalid decimal in {DataPath} row {rowIndex + 2}.");
-        }
-
-        return parsed;
     }
 }

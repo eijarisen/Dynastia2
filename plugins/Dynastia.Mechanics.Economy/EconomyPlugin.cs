@@ -100,12 +100,7 @@ public sealed class EconomyPlugin : IGamePlugin
             new EconomyYearSystem(
                 economy,
                 family,
-                stats,
-                incomeRegistry,
-                householdIncomeRegistry,
-                random,
-                events,
-                locations));
+                events));
 
         events.EventPublished +=
             (_, gameEvent) =>

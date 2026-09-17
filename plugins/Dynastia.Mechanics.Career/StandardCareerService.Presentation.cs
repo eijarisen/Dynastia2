@@ -4,22 +4,20 @@ namespace Dynastia.Mechanics.Career;
 
 public sealed partial class StandardCareerService
 {
-    private const string DefaultCareerEmoji = "💼";
-
     public string GetCareerEmoji(
         string? careerId)
     {
         if (string.IsNullOrWhiteSpace(
             careerId))
         {
-            return DefaultCareerEmoji;
+            return CareerPresentationDefaults.DefaultCareerEmoji;
         }
 
         var emoji =
             _catalog.Find(careerId)?.Emoji;
 
         return string.IsNullOrWhiteSpace(emoji)
-            ? DefaultCareerEmoji
+            ? CareerPresentationDefaults.DefaultCareerEmoji
             : emoji;
     }
 

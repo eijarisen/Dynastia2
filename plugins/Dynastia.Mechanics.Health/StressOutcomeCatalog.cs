@@ -1,4 +1,3 @@
-using System.Globalization;
 using Dynastia.Contracts;
 
 namespace Dynastia.Mechanics.Health;
@@ -19,59 +18,138 @@ public sealed class StressOutcomeCatalog
         IGameDataService data,
         IEnumerable<HealthConditionDefinition> conditions)
     {
-        var known = conditions.ToDictionary(condition => condition.Id, StringComparer.OrdinalIgnoreCase);
-        var lines = data.ReadText(Path).Split(['\r', '\n'], StringSplitOptions.RemoveEmptyEntries);
-        const string header = "ConditionId,StartYear,EndYear,MinimumAge,MinimumStress,BaseWeight";
-        if (lines.Length < 2 || !lines[0].TrimStart('\uFEFF').Equals(header, StringComparison.Ordinal))
-            throw new InvalidDataException($"{Path} has an unexpected header or is empty.");
+        var known = conditions.ToDictionary(
+            condition => condition.Id,
+            StringComparer.OrdinalIgnoreCase);
+        var lines = data.ReadText(Path)
+            .Split(['\r', '\n'], StringSplitOptions.RemoveEmptyEntries);
+        const string header =
+            "ConditionId,StartYear,EndYear,MinimumAge,MinimumStress,BaseWeight";
+        if (lines.Length < 2
+            || !lines[0].TrimStart('\uFEFF').Equals(header, StringComparison.Ordinal))
+        {
+            throw CatalogValidation.UnexpectedHeader(
+                Path,
+                lines.Length == 0 ? null : lines[0].TrimStart('\uFEFF'),
+                header);
+        }
 
         var result = new List<StressOutcomeDefinition>();
+        var firstRows = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+
         for (var index = 1; index < lines.Length; index++)
         {
             var fields = lines[index].Split(',');
             var row = index + 1;
             if (fields.Length != 6)
-                throw new InvalidDataException($"{Path} row {row}: expected 6 fields.");
+                throw CatalogValidation.FieldCount(Path, row, fields.Length, 6);
 
             var conditionId = fields[0].Trim();
             if (!known.TryGetValue(conditionId, out var condition))
-                throw new InvalidDataException($"{Path} row {row} ConditionId: unknown condition '{conditionId}'.");
-            if (condition.Weight != 0)
-                throw new InvalidDataException($"{Path} row {row} ConditionId: stress outcome '{conditionId}' must have ordinary selection weight 0.");
+            {
+                throw CatalogValidation.Error(
+                    Path,
+                    "a ConditionId present in Common/health_conditions.json",
+                    row,
+                    field: "ConditionId",
+                    value: conditionId);
+            }
 
-            var start = ParseInt(fields[1], row, "StartYear");
-            int? end = string.IsNullOrWhiteSpace(fields[2]) ? null : ParseInt(fields[2], row, "EndYear");
-            var minimumAge = ParseInt(fields[3], row, "MinimumAge");
-            var minimumStress = ParseDouble(fields[4], row, "MinimumStress");
-            var baseWeight = ParseDouble(fields[5], row, "BaseWeight");
+            if (condition.Weight != 0)
+            {
+                throw CatalogValidation.Error(
+                    Path,
+                    "a condition whose ordinary selection weight is 0",
+                    row,
+                    conditionId,
+                    "ConditionId",
+                    conditionId);
+            }
+
+            if (firstRows.TryGetValue(conditionId, out var firstRow))
+            {
+                throw CatalogValidation.Error(
+                    Path,
+                    $"a unique ConditionId; first defined at row {firstRow}",
+                    row,
+                    conditionId,
+                    "ConditionId",
+                    conditionId);
+            }
+            firstRows[conditionId] = row;
+
+            var start = CatalogValidation.ParseInt(Path, row, "StartYear", fields[1]);
+            var end = string.IsNullOrWhiteSpace(fields[2])
+                ? (int?)null
+                : CatalogValidation.ParseInt(Path, row, "EndYear", fields[2]);
+            var minimumAge = CatalogValidation.ParseInt(Path, row, "MinimumAge", fields[3]);
+            var minimumStress = CatalogValidation.ParseDouble(Path, row, "MinimumStress", fields[4]);
+            var baseWeight = CatalogValidation.ParseDouble(Path, row, "BaseWeight", fields[5]);
 
             if (start < GameCalendarConfiguration.GameStartYear)
-                throw new InvalidDataException($"{Path} row {row} StartYear: may not precede {GameCalendarConfiguration.GameStartYear}.");
-            if (end is int endYear && endYear < start)
-                throw new InvalidDataException($"{Path} row {row} EndYear: may not precede StartYear.");
-            if (minimumAge < 0 || minimumStress < 0 || baseWeight <= 0)
-                throw new InvalidDataException($"{Path} row {row}: age/stress must be nonnegative and BaseWeight positive.");
+            {
+                throw CatalogValidation.Error(
+                    Path,
+                    $"a year at or after {GameCalendarConfiguration.GameStartYear}",
+                    row,
+                    conditionId,
+                    "StartYear",
+                    start);
+            }
 
-            result.Add(new StressOutcomeDefinition(conditionId, start, end, minimumAge, minimumStress, baseWeight));
+            if (end is int endYear && endYear < start)
+            {
+                throw CatalogValidation.Error(
+                    Path,
+                    $"a year at or after StartYear ({start})",
+                    row,
+                    conditionId,
+                    "EndYear",
+                    endYear);
+            }
+
+            if (minimumAge < 0)
+            {
+                throw CatalogValidation.Error(
+                    Path,
+                    "an age greater than or equal to 0",
+                    row,
+                    conditionId,
+                    "MinimumAge",
+                    minimumAge);
+            }
+
+            if (minimumStress < 0)
+            {
+                throw CatalogValidation.Error(
+                    Path,
+                    "a number greater than or equal to 0",
+                    row,
+                    conditionId,
+                    "MinimumStress",
+                    minimumStress);
+            }
+
+            if (baseWeight <= 0)
+            {
+                throw CatalogValidation.Error(
+                    Path,
+                    "a number greater than 0",
+                    row,
+                    conditionId,
+                    "BaseWeight",
+                    baseWeight);
+            }
+
+            result.Add(new StressOutcomeDefinition(
+                conditionId,
+                start,
+                end,
+                minimumAge,
+                minimumStress,
+                baseWeight));
         }
 
-        if (result.Select(definition => definition.ConditionId).Distinct(StringComparer.OrdinalIgnoreCase).Count() != result.Count)
-            throw new InvalidDataException($"{Path}: duplicate condition IDs are not allowed.");
-
         return new StressOutcomeCatalog(result);
-    }
-
-    private static int ParseInt(string value, int row, string field)
-    {
-        if (!int.TryParse(value.Trim(), NumberStyles.Integer, CultureInfo.InvariantCulture, out var parsed))
-            throw new InvalidDataException($"{Path} row {row} {field}: invalid integer '{value}'.");
-        return parsed;
-    }
-
-    private static double ParseDouble(string value, int row, string field)
-    {
-        if (!double.TryParse(value.Trim(), NumberStyles.Float, CultureInfo.InvariantCulture, out var parsed))
-            throw new InvalidDataException($"{Path} row {row} {field}: invalid number '{value}'.");
-        return parsed;
     }
 }

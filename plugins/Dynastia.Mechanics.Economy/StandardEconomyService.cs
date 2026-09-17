@@ -9,6 +9,7 @@ public sealed partial class StandardEconomyService :
     private const decimal BaseHousePrice = 20000m;
 
     public decimal OrdinaryLivingCostUnit => 250m;
+    public decimal NannyAnnualCost => EconomyAnnualRules.NannyExpense;
 
     private readonly IGameState _gameState;
     private readonly IFamilyService _family;
@@ -165,6 +166,18 @@ public sealed partial class StandardEconomyService :
                             line.Amount))
                 .ToList(),
             houses);
+    }
+
+    public bool CanAfford(
+        IPerson person,
+        decimal amount)
+    {
+        if (amount < 0m)
+            return false;
+
+        var resolved = FindHousehold(person);
+        return resolved is not null
+            && resolved.Value.Household.Wealth >= RoundCurrency(amount);
     }
 
     public Guid? GetHouseholdId(

@@ -27,20 +27,16 @@ internal sealed class RecoveryActivityCatalog
         ArgumentNullException.ThrowIfNull(
             data);
 
-        var text =
-            data.ReadText(
-                DataPath);
-
         var activities =
-            JsonSerializer.Deserialize<
+            CatalogValidation.DeserializeJson<
                 List<RecoveryActivityDefinition>>(
-                text,
+                data,
+                DataPath,
                 new JsonSerializerOptions
                 {
                     PropertyNameCaseInsensitive =
                         true
-                })
-            ?? [];
+                });
 
         Validate(
             activities);
@@ -113,57 +109,83 @@ internal sealed class RecoveryActivityCatalog
     {
         if (activities.Count == 0)
         {
-            throw new InvalidDataException(
-                $"{DataPath} is empty.");
+            throw CatalogValidation.Error(
+                DataPath,
+                "at least one recovery activity",
+                field: "Root",
+                value: activities.Count);
         }
 
-        if (activities
-            .Select(
-                activity =>
-                    activity.Id)
-            .Distinct(
-                StringComparer.OrdinalIgnoreCase)
-            .Count()
-            != activities.Count)
-        {
-            throw new InvalidDataException(
-                $"{DataPath} contains duplicate IDs.");
-        }
+        var ids = new Dictionary<string, int>(
+            StringComparer.OrdinalIgnoreCase);
 
-        foreach (var activity in
-            activities)
+        for (var index = 0; index < activities.Count; index++)
         {
-            if (string.IsNullOrWhiteSpace(
-                    activity.Id)
-                || string.IsNullOrWhiteSpace(
-                    activity.Text))
+            var activity = activities[index];
+            var item = string.IsNullOrWhiteSpace(activity.Id)
+                ? $"index {index}"
+                : activity.Id;
+
+            if (string.IsNullOrWhiteSpace(activity.Id))
             {
-                throw new InvalidDataException(
-                    $"{DataPath} contains an activity " +
-                    "without an ID or text.");
+                throw CatalogValidation.Error(
+                    DataPath,
+                    "a non-empty activity ID",
+                    item: item,
+                    field: "id",
+                    value: activity.Id);
+            }
+
+            if (string.IsNullOrWhiteSpace(activity.Text))
+            {
+                throw CatalogValidation.Error(
+                    DataPath,
+                    "non-empty activity text",
+                    item: activity.Id,
+                    field: "text",
+                    value: activity.Text);
+            }
+
+            if (!ids.TryAdd(activity.Id, index))
+            {
+                throw CatalogValidation.Error(
+                    DataPath,
+                    $"a unique ID; first defined at item index {ids[activity.Id]}",
+                    item: activity.Id,
+                    field: "id",
+                    value: activity.Id);
             }
 
             if (activity.StartYear
                 < GameCalendarConfiguration.GameStartYear)
             {
-                throw new InvalidDataException(
-                    $"{activity.Id}: startYear may not " +
-                    $"precede {GameCalendarConfiguration.GameStartYear}.");
+                throw CatalogValidation.Error(
+                    DataPath,
+                    $"a year at or after {GameCalendarConfiguration.GameStartYear}",
+                    item: activity.Id,
+                    field: "startYear",
+                    value: activity.StartYear);
             }
 
             if (activity.EndYear is int endYear
                 && endYear < activity.StartYear)
             {
-                throw new InvalidDataException(
-                    $"{activity.Id}: endYear precedes " +
-                    "startYear.");
+                throw CatalogValidation.Error(
+                    DataPath,
+                    $"a year at or after startYear ({activity.StartYear})",
+                    item: activity.Id,
+                    field: "endYear",
+                    value: endYear);
             }
 
             if (activity.Weight <= 0)
             {
-                throw new InvalidDataException(
-                    $"{activity.Id}: weight must be " +
-                    "positive.");
+                throw CatalogValidation.Error(
+                    DataPath,
+                    "a number greater than 0",
+                    item: activity.Id,
+                    field: "weight",
+                    value: activity.Weight);
             }
         }
 
@@ -191,10 +213,14 @@ internal sealed class RecoveryActivityCatalog
                                 >= probeYear
                         )))
             {
-                throw new InvalidDataException(
-                    $"{DataPath} has no recovery pool " +
-                    $"for year {probeYear}.");
+                throw CatalogValidation.Error(
+                    DataPath,
+                    $"at least one recovery activity available in year {probeYear}",
+                    item: $"year {probeYear}",
+                    field: "era coverage",
+                    value: "<missing>");
             }
         }
     }
+
 }

@@ -9,6 +9,7 @@ public sealed partial class HouseholdsPlugin
         IGameState gameState,
         IFamilyService family,
         IEconomyService economy,
+        IEconomyBalanceService economyBalance,
         ICareerService career,
         IEducationService education,
         IStatsService stats,
@@ -28,7 +29,7 @@ public sealed partial class HouseholdsPlugin
                         new GameActionDefinition
             {
                 Id = "household.hire_nanny",
-                Label = "Hire a Nanny (250 zł/year)",
+                Label = $"Hire a Nanny ({economyBalance.NannyAnnualCost:N0} zł/year)",
                 Description =
                     "Hire help for an oversized household. " +
                     "The annual nanny cost is charged during finances. " +
@@ -53,7 +54,7 @@ public sealed partial class HouseholdsPlugin
                     return finance is not null
                         && status is not null
                         && !status.HasNannyReference
-                        && finance.Wealth >= NannyCost
+                        && economy.CanAfford(actor, economyBalance.NannyAnnualCost)
                         && status.UnderageChildren
                             > status.BaseChildCapacity;
                 },
@@ -72,7 +73,7 @@ public sealed partial class HouseholdsPlugin
                     if (finance is null
                         || status is null
                         || status.HasNannyReference
-                        || finance.Wealth < NannyCost
+                        || !economy.CanAfford(actor, economyBalance.NannyAnnualCost)
                         || status.UnderageChildren
                             <= status.BaseChildCapacity)
                     {

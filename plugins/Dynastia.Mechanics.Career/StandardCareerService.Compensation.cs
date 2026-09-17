@@ -184,10 +184,8 @@ public sealed partial class StandardCareerService
         if (person.Tags.Has(
             "role.nanny"))
         {
-            return _presentation.ResolveStatus(
-                "role.nanny",
-                "Nanny",
-                year);
+            return GetStatusLabel(
+                "role.nanny");
         }
 
         if (person.Tags.Has(
@@ -202,10 +200,8 @@ public sealed partial class StandardCareerService
         if (person.Tags.Has(
             "role.family_nanny"))
         {
-            return _presentation.ResolveStatus(
-                "role.family_nanny",
-                "Family Caregiver",
-                year);
+            return GetStatusLabel(
+                "role.family_nanny");
         }
 
         if (_family.GetSex(
@@ -216,34 +212,26 @@ public sealed partial class StandardCareerService
                 person)
                 .Count > 0)
         {
-            return _presentation.ResolveStatus(
-                "status.housewife",
-                "Housewife",
-                year);
+            return GetStatusLabel(
+                "status.housewife");
         }
 
         if (person.Age < 6)
         {
-            return _presentation.ResolveStatus(
-                "status.preschool",
-                "Preschool",
-                year);
+            return GetStatusLabel(
+                "status.preschool");
         }
 
         if (person.Age < 18)
         {
-            return _presentation.ResolveStatus(
-                "status.student",
-                "Student",
-                year);
+            return GetStatusLabel(
+                "status.student");
         }
 
         if (career.JobLevel <= 0)
         {
-            return _presentation.ResolveStatus(
-                "status.unemployed",
-                "Unemployed",
-                year);
+            return GetStatusLabel(
+                "status.unemployed");
         }
 
         if (definition is not null)
@@ -265,10 +253,8 @@ public sealed partial class StandardCareerService
             3 => "Manager",
             4 => "Director",
             5 => "Magnate",
-            _ => _presentation.ResolveStatus(
-                "status.unemployed",
-                "Unemployed",
-                year)
+            _ => GetStatusLabel(
+                "status.unemployed")
         };
     }
 

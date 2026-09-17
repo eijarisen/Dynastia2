@@ -1,4 +1,3 @@
-using System.Globalization;
 using Dynastia.Contracts;
 
 namespace Dynastia.Mechanics.Locations;
@@ -376,12 +375,12 @@ public sealed class StandardLocalCareerOpportunityService :
             var fields = lines[index].Split(',');
 
             if (fields.Length != 4)
-                InvalidRow(OpportunityTagsPath, index, 4);
+                InvalidRow(OpportunityTagsPath, index, fields.Length, 4);
 
             var tag = fields[0].Trim();
             var displayName = fields[1].Trim();
-            var startYear = ParseYear(fields[2], OpportunityTagsPath, index);
-            var endYear = ParseOptionalYear(fields[3], OpportunityTagsPath, index);
+            var startYear = ParseYear(fields[2], OpportunityTagsPath, index, "DefaultStartYear");
+            var endYear = ParseOptionalYear(fields[3], OpportunityTagsPath, index, "EndYear");
 
             ValidatePeriod(
                 OpportunityTagsPath,
@@ -389,9 +388,29 @@ public sealed class StandardLocalCareerOpportunityService :
                 startYear,
                 endYear);
 
-            if (tag.Length == 0
-                || displayName.Length == 0
-                || !result.TryAdd(
+            var row = index + 1;
+            if (tag.Length == 0)
+            {
+                throw CatalogValidation.Error(
+                    OpportunityTagsPath,
+                    "a non-empty opportunity tag ID",
+                    row,
+                    field: "Tag",
+                    value: tag);
+            }
+
+            if (displayName.Length == 0)
+            {
+                throw CatalogValidation.Error(
+                    OpportunityTagsPath,
+                    "a non-empty display name",
+                    row,
+                    tag,
+                    "DisplayName",
+                    displayName);
+            }
+
+            if (!result.TryAdd(
                     tag,
                     new OpportunityTagInfo(
                         tag,
@@ -399,9 +418,13 @@ public sealed class StandardLocalCareerOpportunityService :
                         startYear,
                         endYear)))
             {
-                throw new InvalidDataException(
-                    $"Invalid or duplicate opportunity tag in " +
-                    $"{OpportunityTagsPath} row {index + 1}.");
+                throw CatalogValidation.Error(
+                    OpportunityTagsPath,
+                    "a unique opportunity tag ID",
+                    row,
+                    tag,
+                    "Tag",
+                    tag);
             }
         }
 
@@ -434,7 +457,7 @@ public sealed class StandardLocalCareerOpportunityService :
             var fields = lines[index].Split(',');
 
             if (fields.Length != 5)
-                InvalidRow(RegionOpportunitiesPath, index, 5);
+                InvalidRow(RegionOpportunitiesPath, index, fields.Length, 5);
 
             var id = fields[0].Trim();
             var name = fields[1].Trim();
@@ -445,12 +468,26 @@ public sealed class StandardLocalCareerOpportunityService :
                 RegionOpportunitiesPath,
                 index);
 
-            if (id.Length == 0
-                || name.Length == 0)
+            var row = index + 1;
+            if (id.Length == 0)
             {
-                throw new InvalidDataException(
-                    $"Invalid {RegionOpportunitiesPath} row " +
-                    $"{index + 1}: region ID and name are required.");
+                throw CatalogValidation.Error(
+                    RegionOpportunitiesPath,
+                    "a non-empty region ID",
+                    row,
+                    field: "RegionId",
+                    value: id);
+            }
+
+            if (name.Length == 0)
+            {
+                throw CatalogValidation.Error(
+                    RegionOpportunitiesPath,
+                    "a non-empty region name",
+                    row,
+                    id,
+                    "RegionName",
+                    name);
             }
 
             if (!working.TryGetValue(id, out var entry))
@@ -462,9 +499,13 @@ public sealed class StandardLocalCareerOpportunityService :
                 name,
                 StringComparison.Ordinal))
             {
-                throw new InvalidDataException(
-                    $"Region '{id}' has inconsistent names in " +
-                    $"{RegionOpportunitiesPath}.");
+                throw CatalogValidation.Error(
+                    RegionOpportunitiesPath,
+                    $"the same RegionName as earlier rows for '{id}' ('{entry.Name}')",
+                    row,
+                    id,
+                    "RegionName",
+                    name);
             }
 
             entry.Opportunities.Add(opportunity);
@@ -503,15 +544,18 @@ public sealed class StandardLocalCareerOpportunityService :
             var fields = lines[index].Split(',');
 
             if (fields.Length != 4)
-                InvalidRow(TownOpportunitiesPath, index, 4);
+                InvalidRow(TownOpportunitiesPath, index, fields.Length, 4);
 
             var townId = fields[0].Trim();
 
             if (townId.Length == 0)
             {
-                throw new InvalidDataException(
-                    $"Invalid {TownOpportunitiesPath} row " +
-                    $"{index + 1}: town ID is required.");
+                throw CatalogValidation.Error(
+                    TownOpportunitiesPath,
+                    "a non-empty town ID",
+                    index + 1,
+                    field: "TownId",
+                    value: townId);
             }
 
             var opportunity = ParseTimedOpportunity(
@@ -547,16 +591,19 @@ public sealed class StandardLocalCareerOpportunityService :
 
         if (!_opportunityTags.ContainsKey(tag))
         {
-            throw new InvalidDataException(
-                $"Unknown opportunity tag '{tag}' in " +
-                $"{path} row {rowIndex + 1}.");
+            throw CatalogValidation.Error(
+                path,
+                "an opportunity tag defined in Towns/opportunity_tags.csv",
+                rowIndex + 1,
+                field: "OpportunityTag",
+                value: tag);
         }
 
         var startYear =
-            ParseYear(startField, path, rowIndex);
+            ParseYear(startField, path, rowIndex, "StartYear");
 
         var endYear =
-            ParseOptionalYear(endField, path, rowIndex);
+            ParseOptionalYear(endField, path, rowIndex, "EndYear");
 
         ValidatePeriod(
             path,
@@ -591,9 +638,12 @@ public sealed class StandardLocalCareerOpportunityService :
         {
             if (!knownTownIds.Contains(townId))
             {
-                throw new InvalidDataException(
-                    $"{TownOpportunitiesPath} references unknown " +
-                    $"town '{townId}'.");
+                throw CatalogValidation.Error(
+                    TownOpportunitiesPath,
+                    "a TownId defined in Towns/towns.csv",
+                    item: townId,
+                    field: "TownId",
+                    value: townId);
             }
         }
 
@@ -601,9 +651,12 @@ public sealed class StandardLocalCareerOpportunityService :
         {
             if (!knownRegionIds.Contains(regionId))
             {
-                throw new InvalidDataException(
-                    $"{RegionOpportunitiesPath} references unknown " +
-                    $"region '{regionId}'.");
+                throw CatalogValidation.Error(
+                    RegionOpportunitiesPath,
+                    "a RegionId used by at least one town",
+                    item: regionId,
+                    field: "RegionId",
+                    value: regionId);
             }
         }
     }
@@ -621,47 +674,40 @@ public sealed class StandardLocalCareerOpportunityService :
         string path,
         string expectedHeader)
     {
-        if (lines.Count < 2)
-        {
-            throw new InvalidDataException(
-                $"{path} is empty.");
-        }
-
-        if (!lines[0].Equals(
+        if (lines.Count < 2
+            || !lines[0].TrimStart('\uFEFF').Equals(
                 expectedHeader,
                 StringComparison.Ordinal))
         {
-            throw new InvalidDataException(
-                $"{path} has an unexpected header.");
+            throw CatalogValidation.UnexpectedHeader(
+                path,
+                lines.Count == 0 ? null : lines[0].TrimStart('\uFEFF'),
+                expectedHeader);
         }
     }
 
     private static int ParseYear(
         string value,
         string path,
-        int rowIndex)
+        int rowIndex,
+        string field)
     {
-        if (!int.TryParse(
-                value,
-                NumberStyles.Integer,
-                CultureInfo.InvariantCulture,
-                out var year))
-        {
-            throw new InvalidDataException(
-                $"Invalid year in {path} row {rowIndex + 1}.");
-        }
-
-        return year;
+        return CatalogValidation.ParseInt(
+            path,
+            rowIndex + 1,
+            field,
+            value);
     }
 
     private static int? ParseOptionalYear(
         string value,
         string path,
-        int rowIndex)
+        int rowIndex,
+        string field)
     {
         return string.IsNullOrWhiteSpace(value)
             ? null
-            : ParseYear(value, path, rowIndex);
+            : ParseYear(value, path, rowIndex, field);
     }
 
     private static void ValidatePeriod(
@@ -670,29 +716,40 @@ public sealed class StandardLocalCareerOpportunityService :
         int startYear,
         int? endYear)
     {
+        var row = rowIndex + 1;
         if (startYear < GameCalendarConfiguration.GameStartYear)
         {
-            throw new InvalidDataException(
-                $"{path} row {rowIndex + 1} starts before " +
-                $"{GameCalendarConfiguration.GameStartYear}.");
+            throw CatalogValidation.Error(
+                path,
+                $"a year at or after {GameCalendarConfiguration.GameStartYear}",
+                row,
+                field: "StartYear",
+                value: startYear);
         }
 
         if (endYear is int end
             && end < startYear)
         {
-            throw new InvalidDataException(
-                $"{path} row {rowIndex + 1} ends before it starts.");
+            throw CatalogValidation.Error(
+                path,
+                $"a year at or after StartYear ({startYear})",
+                row,
+                field: "EndYear",
+                value: end);
         }
     }
 
     private static void InvalidRow(
         string path,
         int rowIndex,
+        int actualFields,
         int expectedFields)
     {
-        throw new InvalidDataException(
-            $"Invalid {path} row {rowIndex + 1}: expected " +
-            $"{expectedFields} fields.");
+        throw CatalogValidation.FieldCount(
+            path,
+            rowIndex + 1,
+            actualFields,
+            expectedFields);
     }
 
     private static CareerLocationEvaluation Unavailable()

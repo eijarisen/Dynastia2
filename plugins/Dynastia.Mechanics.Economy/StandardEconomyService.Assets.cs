@@ -11,7 +11,7 @@ public sealed partial class StandardEconomyService
             ?? throw new InvalidOperationException(
                 $"{_family.GetDisplayName(person)} does not belong to an active dynasty household.");
 
-        var household = resolved.Value.Household;
+        var household = resolved.Household;
         var head = GetHead(household);
 
         var town =

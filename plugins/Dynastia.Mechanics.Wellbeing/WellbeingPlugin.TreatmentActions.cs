@@ -68,9 +68,9 @@ public sealed partial class WellbeingPlugin
                             return false;
                         }
 
-                        return economy.GetHousehold(
-                            actionContext.Actor)
-                            ?.Wealth >= TherapyCost;
+                        return economy.CanAfford(
+                            actionContext.Actor,
+                            TherapyCost);
                     },
 
                 Execute =
@@ -95,12 +95,9 @@ public sealed partial class WellbeingPlugin
                             return new GameActionResult(false);
                         }
 
-                        var household =
-                            economy.GetHousehold(
-                                actor);
-
-                        if (household is null
-                            || household.Wealth < TherapyCost
+                        if (!economy.CanAfford(
+                                actor,
+                                TherapyCost)
                             || !target.Tags.Has(
                                 "state.alive")
                             || !HasTherapyCondition(
@@ -281,8 +278,9 @@ public sealed partial class WellbeingPlugin
                                     return false;
                                 }
 
-                                return economy.GetHousehold(actor)
-                                    ?.Wealth >= HealCost;
+                                return economy.CanAfford(
+                                    actor,
+                                    HealCost);
                             },
 
                         Execute =
@@ -294,14 +292,12 @@ public sealed partial class WellbeingPlugin
                                 var target =
                                     actionContext.Target;
 
-                                var household =
-                                    economy.GetHousehold(actor);
-
                                 var targetHealth =
                                     health.GetHealth(target);
 
-                                if (household is null
-                                    || household.Wealth < HealCost
+                                if (!economy.CanAfford(
+                                        actor,
+                                        HealCost)
                                     || !target.Tags.Has(
                                         "state.alive")
                                     || targetHealth.Current

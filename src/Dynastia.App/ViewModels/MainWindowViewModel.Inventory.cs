@@ -226,7 +226,7 @@ public sealed partial class MainWindowViewModel
         var emoji =
             _careerPresentationService?
                 .GetOccupationEmoji(person)
-            ?? "💼";
+            ?? CareerPresentationDefaults.DefaultCareerEmoji;
 
         if (_careerService is null)
         {

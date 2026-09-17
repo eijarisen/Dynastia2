@@ -277,8 +277,7 @@ public sealed class EducationPlugin : IGamePlugin
                 if (!validTarget)
                     return false;
 
-                var household = economy.GetHousehold(actor);
-                if (household is null || household.Wealth < EducationCost)
+                if (!economy.CanAfford(actor, EducationCost))
                     return false;
 
                 var crafts = craftResolver();
@@ -306,8 +305,7 @@ public sealed class EducationPlugin : IGamePlugin
             {
                 var actor = actionContext.Actor;
                 var target = actionContext.Target;
-                var household = economy.GetHousehold(actor);
-                if (household is null || household.Wealth < EducationCost)
+                if (!economy.CanAfford(actor, EducationCost))
                 {
                     return new GameActionResult(false, "Education is no longer available.");
                 }

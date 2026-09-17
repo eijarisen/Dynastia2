@@ -16,7 +16,12 @@ public sealed class RareEventAvailabilityCatalog
     public bool IsAvailable(string eventId, int year)
     {
         var definition = _catalog.Find(eventId)
-            ?? throw new InvalidDataException($"Rare event catalog has no event '{eventId}'.");
+            ?? throw CatalogValidation.Error(
+                "RareEvents/rare_events.csv",
+                "an EventId defined in the rare event catalog",
+                item: eventId,
+                field: "EventId",
+                value: eventId);
         return year >= definition.StartYear && (definition.EndYear is null || year <= definition.EndYear.Value);
     }
 }

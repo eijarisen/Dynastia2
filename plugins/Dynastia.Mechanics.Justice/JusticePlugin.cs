@@ -42,16 +42,16 @@ public sealed class JusticePlugin : IGamePlugin
         var stress = context.GetService<IStressService>();
 
         var jsonOptions = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
-        var crimes = JsonSerializer.Deserialize<List<CrimeDefinition>>(
-            data.ReadText(CrimesPath),
-            jsonOptions)
-            ?? throw new InvalidDataException($"Could not read {CrimesPath}.");
+        var crimes = CatalogValidation.DeserializeJson<List<CrimeDefinition>>(
+            data,
+            CrimesPath,
+            jsonOptions);
 
-        var attemptRules = JsonSerializer.Deserialize<CrimeAttemptRules>(
-            data.ReadText(AttemptRulesPath),
-            jsonOptions)
-            ?? throw new InvalidDataException($"Could not read {AttemptRulesPath}.");
-        attemptRules.Validate();
+        var attemptRules = CatalogValidation.DeserializeJson<CrimeAttemptRules>(
+            data,
+            AttemptRulesPath,
+            jsonOptions);
+        attemptRules.Validate(AttemptRulesPath);
 
         ValidateCrimes(
             crimes,
@@ -104,49 +104,76 @@ public sealed class JusticePlugin : IGamePlugin
         IReadOnlyCollection<string> knownCareerFamilies)
     {
         if (crimes.Count == 0)
-            throw new InvalidDataException("Crime data is empty.");
+            throw CatalogValidation.Error(CrimesPath, "at least one crime definition", field: "Root", value: crimes.Count);
 
         var families = knownCareerFamilies.ToHashSet(StringComparer.OrdinalIgnoreCase);
-        var ids = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-        foreach (var crime in crimes)
+        var ids = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+        for (var index = 0; index < crimes.Count; index++)
         {
-            if (string.IsNullOrWhiteSpace(crime.Id)
-                || string.IsNullOrWhiteSpace(crime.Name)
-                || string.IsNullOrWhiteSpace(crime.Description)
-                || string.IsNullOrWhiteSpace(crime.Category))
-                throw new InvalidDataException("Every crime needs id, name, category and description.");
-            if (!ids.Add(crime.Id))
-                throw new InvalidDataException($"Duplicate crime ID '{crime.Id}'.");
-            if (crime.StartYear < GameCalendarConfiguration.GameStartYear
-                || crime.EndYear is int endYear && endYear < crime.StartYear)
-                throw new InvalidDataException($"Crime '{crime.Id}' has an invalid era range.");
-            if (crime.MinimumAge < 18
-                || crime.MaximumAge is int maxAge && maxAge < crime.MinimumAge)
-                throw new InvalidDataException($"Crime '{crime.Id}' has an invalid age range.");
-            if (!AllowedStats.Contains(crime.PrimaryStat)
-                || crime.SecondaryStat is not null
-                    && (!AllowedStats.Contains(crime.SecondaryStat)
-                        || crime.SecondaryStat.Equals(crime.PrimaryStat, StringComparison.OrdinalIgnoreCase)))
-                throw new InvalidDataException($"Crime '{crime.Id}' has invalid aptitude stat metadata.");
+            var crime = crimes[index];
+            var item = string.IsNullOrWhiteSpace(crime.Id) ? $"index {index}" : crime.Id;
+
+            if (string.IsNullOrWhiteSpace(crime.Id))
+                throw CatalogValidation.Error(CrimesPath, "a non-empty crime ID", item: item, field: "id", value: crime.Id);
+            if (string.IsNullOrWhiteSpace(crime.Name))
+                throw CatalogValidation.Error(CrimesPath, "a non-empty display name", item: item, field: "name", value: crime.Name);
+            if (string.IsNullOrWhiteSpace(crime.Category))
+                throw CatalogValidation.Error(CrimesPath, "a non-empty category", item: item, field: "category", value: crime.Category);
+            if (string.IsNullOrWhiteSpace(crime.Description))
+                throw CatalogValidation.Error(CrimesPath, "a non-empty description", item: item, field: "description", value: crime.Description);
+            if (!ids.TryAdd(crime.Id, index))
+                throw CatalogValidation.Error(CrimesPath, $"a unique ID; first defined at item index {ids[crime.Id]}", item: crime.Id, field: "id", value: crime.Id);
+
+            if (crime.StartYear < GameCalendarConfiguration.GameStartYear)
+                throw CatalogValidation.Error(CrimesPath, $"a year at or after {GameCalendarConfiguration.GameStartYear}", item: crime.Id, field: "startYear", value: crime.StartYear);
+            if (crime.EndYear is int endYear && endYear < crime.StartYear)
+                throw CatalogValidation.Error(CrimesPath, $"a year at or after startYear ({crime.StartYear})", item: crime.Id, field: "endYear", value: endYear);
+            if (crime.MinimumAge < 18)
+                throw CatalogValidation.Error(CrimesPath, "an age of at least 18", item: crime.Id, field: "minimumAge", value: crime.MinimumAge);
+            if (crime.MaximumAge is int maxAge && maxAge < crime.MinimumAge)
+                throw CatalogValidation.Error(CrimesPath, $"an age at or above minimumAge ({crime.MinimumAge})", item: crime.Id, field: "maximumAge", value: maxAge);
+
+            if (!AllowedStats.Contains(crime.PrimaryStat))
+                throw CatalogValidation.Error(CrimesPath, $"one of: {string.Join(", ", AllowedStats)}", item: crime.Id, field: "primaryStat", value: crime.PrimaryStat);
+            if (crime.SecondaryStat is not null && !AllowedStats.Contains(crime.SecondaryStat))
+                throw CatalogValidation.Error(CrimesPath, $"one of: {string.Join(", ", AllowedStats)}, or null", item: crime.Id, field: "secondaryStat", value: crime.SecondaryStat);
+            if (crime.SecondaryStat?.Equals(crime.PrimaryStat, StringComparison.OrdinalIgnoreCase) == true)
+                throw CatalogValidation.Error(CrimesPath, "a stat different from primaryStat", item: crime.Id, field: "secondaryStat", value: crime.SecondaryStat);
             if (!AllowedSettlementPreferences.Contains(crime.SettlementPreference))
-                throw new InvalidDataException($"Crime '{crime.Id}' has invalid settlement preference '{crime.SettlementPreference}'.");
-            if (crime.BehaviorTags.Any(tag => !AllowedBehaviorTags.Contains(tag)))
-                throw new InvalidDataException($"Crime '{crime.Id}' has an unknown behavior tag.");
-            if (crime.PreferredOpportunityTags.Any(tag => !knownOpportunityTags.Contains(tag)))
-                throw new InvalidDataException($"Crime '{crime.Id}' references an unknown opportunity tag.");
-            if (crime.PreferredCareerFamilies.Any(family => !families.Contains(family)))
-                throw new InvalidDataException($"Crime '{crime.Id}' references an unknown CareerFamily.");
-            if (crime.SentenceMin <= 0 || crime.SentenceMax < crime.SentenceMin)
-                throw new InvalidDataException($"Crime '{crime.Id}' has an invalid sentence range.");
+                throw CatalogValidation.Error(CrimesPath, $"one of: {string.Join(", ", AllowedSettlementPreferences)}", item: crime.Id, field: "settlementPreference", value: crime.SettlementPreference);
+
+            var unknownBehaviorTag = crime.BehaviorTags.FirstOrDefault(tag => !AllowedBehaviorTags.Contains(tag));
+            if (unknownBehaviorTag is not null)
+                throw CatalogValidation.Error(CrimesPath, "a known behavior tag", item: crime.Id, field: "behaviorTags", value: unknownBehaviorTag);
+            var unknownOpportunityTag = crime.PreferredOpportunityTags.FirstOrDefault(tag => !knownOpportunityTags.Contains(tag));
+            if (unknownOpportunityTag is not null)
+                throw CatalogValidation.Error(CrimesPath, "a known opportunity tag", item: crime.Id, field: "preferredOpportunityTags", value: unknownOpportunityTag);
+            var unknownCareerFamily = crime.PreferredCareerFamilies.FirstOrDefault(family => !families.Contains(family));
+            if (unknownCareerFamily is not null)
+                throw CatalogValidation.Error(CrimesPath, "a known CareerFamily", item: crime.Id, field: "preferredCareerFamilies", value: unknownCareerFamily);
+
+            if (crime.SentenceMin <= 0)
+                throw CatalogValidation.Error(CrimesPath, "an integer greater than 0", item: crime.Id, field: "sentenceMin", value: crime.SentenceMin);
+            if (crime.SentenceMax < crime.SentenceMin)
+                throw CatalogValidation.Error(CrimesPath, $"an integer of at least sentenceMin ({crime.SentenceMin})", item: crime.Id, field: "sentenceMax", value: crime.SentenceMax);
             if (crime.Weight <= 0)
-                throw new InvalidDataException($"Crime '{crime.Id}' needs a positive weight.");
+                throw CatalogValidation.Error(CrimesPath, "a number greater than 0", item: crime.Id, field: "weight", value: crime.Weight);
             if (crime.DetectionBase is < 0 or > 1)
-                throw new InvalidDataException($"Crime '{crime.Id}' has invalid detectionBase.");
-            if (crime.PovertyMultiplier <= 0 || crime.StressWeightPerPoint is < 0 or > 0.50)
-                throw new InvalidDataException($"Crime '{crime.Id}' has invalid poverty/stress weighting.");
-            if (crime.IsProfitCrime
-                && (crime.ProfitMin <= 0 || crime.ProfitMax < crime.ProfitMin || crime.SuccessBase is < 0 or > 1))
-                throw new InvalidDataException($"Crime '{crime.Id}' has invalid profit/success data.");
+                throw CatalogValidation.Error(CrimesPath, "a number from 0 through 1", item: crime.Id, field: "detectionBase", value: crime.DetectionBase);
+            if (crime.PovertyMultiplier <= 0)
+                throw CatalogValidation.Error(CrimesPath, "a number greater than 0", item: crime.Id, field: "povertyMultiplier", value: crime.PovertyMultiplier);
+            if (crime.StressWeightPerPoint is < 0 or > 0.50)
+                throw CatalogValidation.Error(CrimesPath, "a number from 0 through 0.5", item: crime.Id, field: "stressWeightPerPoint", value: crime.StressWeightPerPoint);
+
+            if (crime.IsProfitCrime)
+            {
+                if (crime.ProfitMin <= 0)
+                    throw CatalogValidation.Error(CrimesPath, "an integer greater than 0 for a profit crime", item: crime.Id, field: "profitMin", value: crime.ProfitMin);
+                if (crime.ProfitMax < crime.ProfitMin)
+                    throw CatalogValidation.Error(CrimesPath, $"an integer of at least profitMin ({crime.ProfitMin})", item: crime.Id, field: "profitMax", value: crime.ProfitMax);
+                if (crime.SuccessBase is < 0 or > 1)
+                    throw CatalogValidation.Error(CrimesPath, "a number from 0 through 1", item: crime.Id, field: "successBase", value: crime.SuccessBase);
+            }
         }
     }
 

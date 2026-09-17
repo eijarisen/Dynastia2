@@ -1,3 +1,5 @@
+using Dynastia.Contracts;
+
 namespace Dynastia.Mechanics.Justice;
 
 public sealed class CrimeAttemptRules
@@ -10,18 +12,23 @@ public sealed class CrimeAttemptRules
     public double MaximumStressMultiplier { get; init; } = 1.60;
     public int MinimumAge { get; init; } = 18;
 
-    public void Validate()
+    public void Validate(string path = "Justice/crime_attempt_rules.json")
     {
-        if (BaseAttemptChance <= 0
-            || MinimumAttemptChance < 0
-            || MaximumAttemptChance < BaseAttemptChance
-            || MinimumAttemptChance > MaximumAttemptChance)
-            throw new InvalidDataException("Crime attempt chance configuration is invalid.");
+        if (BaseAttemptChance <= 0)
+            throw CatalogValidation.Error(path, "a number greater than 0", item: "root", field: "baseAttemptChance", value: BaseAttemptChance);
+        if (MinimumAttemptChance < 0)
+            throw CatalogValidation.Error(path, "a number of at least 0", item: "root", field: "minimumAttemptChance", value: MinimumAttemptChance);
+        if (MaximumAttemptChance < BaseAttemptChance)
+            throw CatalogValidation.Error(path, $"a number of at least baseAttemptChance ({BaseAttemptChance})", item: "root", field: "maximumAttemptChance", value: MaximumAttemptChance);
+        if (MinimumAttemptChance > MaximumAttemptChance)
+            throw CatalogValidation.Error(path, $"a number no greater than maximumAttemptChance ({MaximumAttemptChance})", item: "root", field: "minimumAttemptChance", value: MinimumAttemptChance);
         if (PovertyMultiplier <= 0)
-            throw new InvalidDataException("Crime poverty multiplier must be positive.");
-        if (StressMultiplierPerPoint < 0 || MaximumStressMultiplier < 1)
-            throw new InvalidDataException("Crime stress scaling is invalid.");
+            throw CatalogValidation.Error(path, "a number greater than 0", item: "root", field: "povertyMultiplier", value: PovertyMultiplier);
+        if (StressMultiplierPerPoint < 0)
+            throw CatalogValidation.Error(path, "a number of at least 0", item: "root", field: "stressMultiplierPerPoint", value: StressMultiplierPerPoint);
+        if (MaximumStressMultiplier < 1)
+            throw CatalogValidation.Error(path, "a number of at least 1", item: "root", field: "maximumStressMultiplier", value: MaximumStressMultiplier);
         if (MinimumAge < 18)
-            throw new InvalidDataException("Crime minimum age may not introduce juvenile justice in this batch.");
+            throw CatalogValidation.Error(path, "an age of at least 18", item: "root", field: "minimumAge", value: MinimumAge);
     }
 }

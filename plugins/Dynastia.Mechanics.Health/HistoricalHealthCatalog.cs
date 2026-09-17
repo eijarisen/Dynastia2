@@ -1,4 +1,3 @@
-using System.Globalization;
 using Dynastia.Contracts;
 
 namespace Dynastia.Mechanics.Health;
@@ -48,19 +47,28 @@ public sealed class HistoricalHealthCatalog
         var lines = text.Split(['\r', '\n'], StringSplitOptions.RemoveEmptyEntries);
         const string expectedHeader = "ConditionId,StartYear,EndYear,DisplayName";
         if (lines.Length < 2 || !lines[0].TrimStart('\uFEFF').Equals(expectedHeader, StringComparison.Ordinal))
-            throw new InvalidDataException($"{VariantsPath} has an unexpected header or is empty.");
+        {
+            throw CatalogValidation.UnexpectedHeader(
+                VariantsPath,
+                lines.Length == 0 ? null : lines[0].TrimStart('\uFEFF'),
+                expectedHeader);
+        }
 
         var result = new List<ConditionVariantRule>();
         for (var index = 1; index < lines.Length; index++)
         {
             var fields = lines[index].Split(',');
+            var row = index + 1;
             if (fields.Length != 4)
-                throw new InvalidDataException($"Invalid {VariantsPath} row {index + 1}: expected 4 fields.");
+                throw CatalogValidation.FieldCount(VariantsPath, row, fields.Length, 4);
 
             result.Add(new ConditionVariantRule(
+                row,
                 fields[0].Trim(),
-                ParseInt(fields[1], index),
-                string.IsNullOrWhiteSpace(fields[2]) ? null : ParseInt(fields[2], index),
+                CatalogValidation.ParseInt(VariantsPath, row, "StartYear", fields[1]),
+                string.IsNullOrWhiteSpace(fields[2])
+                    ? null
+                    : CatalogValidation.ParseInt(VariantsPath, row, "EndYear", fields[2]),
                 fields[3].Trim()));
         }
         return result;
@@ -73,13 +81,13 @@ public sealed class HistoricalHealthCatalog
         foreach (var rule in rules)
         {
             if (!knownIds.Contains(rule.ConditionId))
-                throw new InvalidDataException($"{VariantsPath}: unknown condition ID '{rule.ConditionId}'.");
+                throw CatalogValidation.Error(VariantsPath, "a ConditionId defined in the health catalog", rule.SourceRow, rule.ConditionId, "ConditionId", rule.ConditionId);
             if (string.IsNullOrWhiteSpace(rule.DisplayName))
-                throw new InvalidDataException($"{VariantsPath}: display name may not be blank.");
+                throw CatalogValidation.Error(VariantsPath, "a non-empty display name", rule.SourceRow, rule.ConditionId, "DisplayName", rule.DisplayName);
             if (rule.StartYear < GameCalendarConfiguration.GameStartYear)
-                throw new InvalidDataException($"{VariantsPath}: '{rule.ConditionId}' starts before {GameCalendarConfiguration.GameStartYear}.");
+                throw CatalogValidation.Error(VariantsPath, $"a year at or after {GameCalendarConfiguration.GameStartYear}", rule.SourceRow, rule.ConditionId, "StartYear", rule.StartYear);
             if (rule.EndYear is int end && end < rule.StartYear)
-                throw new InvalidDataException($"{VariantsPath}: '{rule.ConditionId}' has end year before start year.");
+                throw CatalogValidation.Error(VariantsPath, $"a year at or after StartYear ({rule.StartYear})", rule.SourceRow, rule.ConditionId, "EndYear", end);
         }
 
         foreach (var group in rules.GroupBy(rule => rule.ConditionId, StringComparer.OrdinalIgnoreCase))
@@ -88,20 +96,23 @@ public sealed class HistoricalHealthCatalog
             for (var index = 1; index < ordered.Count; index++)
             {
                 var previous = ordered[index - 1];
-                if (previous.EndYear is null || previous.EndYear.Value >= ordered[index].StartYear)
-                    throw new InvalidDataException($"{VariantsPath}: overlapping ranges for '{group.Key}'.");
+                var current = ordered[index];
+                if (previous.EndYear is null || previous.EndYear.Value >= current.StartYear)
+                {
+                    throw CatalogValidation.Error(
+                        VariantsPath,
+                        $"a StartYear after the previous range from row {previous.SourceRow}",
+                        current.SourceRow,
+                        current.ConditionId,
+                        "StartYear",
+                        current.StartYear);
+                }
             }
         }
     }
 
-    private static int ParseInt(string value, int rowIndex)
-    {
-        if (!int.TryParse(value, NumberStyles.Integer, CultureInfo.InvariantCulture, out var parsed))
-            throw new InvalidDataException($"Invalid year in {VariantsPath} row {rowIndex + 2}.");
-        return parsed;
-    }
-
     private sealed record ConditionVariantRule(
+        int SourceRow,
         string ConditionId,
         int StartYear,
         int? EndYear,

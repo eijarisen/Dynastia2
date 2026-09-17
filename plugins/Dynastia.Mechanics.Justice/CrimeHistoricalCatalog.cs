@@ -1,4 +1,3 @@
-using System.Globalization;
 using Dynastia.Contracts;
 
 namespace Dynastia.Mechanics.Justice;
@@ -52,22 +51,32 @@ public sealed class CrimeHistoricalCatalog
     private static IReadOnlyList<CrimeVariantRule> ParseVariants(string text)
     {
         var lines = text.Split(['\r', '\n'], StringSplitOptions.RemoveEmptyEntries);
-        const string expectedHeader = "CrimeId,StartYear,EndYear,DisplayName,Description";
+        const string expectedHeader =
+            "CrimeId,StartYear,EndYear,DisplayName,Description";
         if (lines.Length < 2
             || !lines[0].TrimStart('\uFEFF').Equals(expectedHeader, StringComparison.Ordinal))
-            throw new InvalidDataException($"{VariantsPath} has an unexpected header or is empty.");
+        {
+            throw CatalogValidation.UnexpectedHeader(
+                VariantsPath,
+                lines.Length == 0 ? null : lines[0].TrimStart('\uFEFF'),
+                expectedHeader);
+        }
 
         var result = new List<CrimeVariantRule>();
         for (var index = 1; index < lines.Length; index++)
         {
             var fields = lines[index].Split(',');
+            var row = index + 1;
             if (fields.Length != 5)
-                throw new InvalidDataException($"Invalid {VariantsPath} row {index + 1}: expected 5 fields.");
+                throw CatalogValidation.FieldCount(VariantsPath, row, fields.Length, 5);
 
             result.Add(new CrimeVariantRule(
+                row,
                 fields[0].Trim(),
-                ParseInt(fields[1], VariantsPath, index),
-                string.IsNullOrWhiteSpace(fields[2]) ? null : ParseInt(fields[2], VariantsPath, index),
+                CatalogValidation.ParseInt(VariantsPath, row, "StartYear", fields[1]),
+                string.IsNullOrWhiteSpace(fields[2])
+                    ? null
+                    : CatalogValidation.ParseInt(VariantsPath, row, "EndYear", fields[2]),
                 fields[3].Trim(),
                 fields[4].Trim()));
         }
@@ -81,35 +90,86 @@ public sealed class CrimeHistoricalCatalog
         foreach (var rule in variants)
         {
             if (!known.Contains(rule.CrimeId))
-                throw new InvalidDataException($"{VariantsPath}: unknown crime ID '{rule.CrimeId}'.");
+            {
+                throw CatalogValidation.Error(
+                    VariantsPath,
+                    "a CrimeId present in Common/crimes.json",
+                    rule.SourceRow,
+                    field: "CrimeId",
+                    value: rule.CrimeId);
+            }
+
             if (rule.StartYear < GameCalendarConfiguration.GameStartYear)
-                throw new InvalidDataException($"{VariantsPath}: invalid start year {rule.StartYear}.");
+            {
+                throw CatalogValidation.Error(
+                    VariantsPath,
+                    $"a year at or after {GameCalendarConfiguration.GameStartYear}",
+                    rule.SourceRow,
+                    rule.CrimeId,
+                    "StartYear",
+                    rule.StartYear);
+            }
+
             if (rule.EndYear is int end && end < rule.StartYear)
-                throw new InvalidDataException($"{VariantsPath}: end year precedes start year for '{rule.CrimeId}'.");
-            if (string.IsNullOrWhiteSpace(rule.DisplayName) || string.IsNullOrWhiteSpace(rule.Description))
-                throw new InvalidDataException($"{VariantsPath}: display name and description are required.");
+            {
+                throw CatalogValidation.Error(
+                    VariantsPath,
+                    $"a year at or after StartYear ({rule.StartYear})",
+                    rule.SourceRow,
+                    rule.CrimeId,
+                    "EndYear",
+                    end);
+            }
+
+            if (string.IsNullOrWhiteSpace(rule.DisplayName))
+            {
+                throw CatalogValidation.Error(
+                    VariantsPath,
+                    "a non-empty display name",
+                    rule.SourceRow,
+                    rule.CrimeId,
+                    "DisplayName",
+                    rule.DisplayName);
+            }
+
+            if (string.IsNullOrWhiteSpace(rule.Description))
+            {
+                throw CatalogValidation.Error(
+                    VariantsPath,
+                    "a non-empty description",
+                    rule.SourceRow,
+                    rule.CrimeId,
+                    "Description",
+                    rule.Description);
+            }
         }
 
-        foreach (var group in variants.GroupBy(rule => rule.CrimeId, StringComparer.OrdinalIgnoreCase))
+        foreach (var group in variants.GroupBy(
+            rule => rule.CrimeId,
+            StringComparer.OrdinalIgnoreCase))
         {
             var ordered = group.OrderBy(rule => rule.StartYear).ToList();
             for (var index = 1; index < ordered.Count; index++)
             {
                 var previous = ordered[index - 1];
-                if (previous.EndYear is null || previous.EndYear.Value >= ordered[index].StartYear)
-                    throw new InvalidDataException($"{VariantsPath}: overlapping variants for '{group.Key}'.");
+                var current = ordered[index];
+                if (previous.EndYear is null
+                    || previous.EndYear.Value >= current.StartYear)
+                {
+                    throw CatalogValidation.Error(
+                        VariantsPath,
+                        $"a year range that does not overlap row {previous.SourceRow}",
+                        current.SourceRow,
+                        current.CrimeId,
+                        "StartYear",
+                        current.StartYear);
+                }
             }
         }
     }
 
-    private static int ParseInt(string value, string path, int rowIndex)
-    {
-        if (int.TryParse(value, NumberStyles.Integer, CultureInfo.InvariantCulture, out var result))
-            return result;
-        throw new InvalidDataException($"{path} row {rowIndex + 1}: '{value}' is not an integer.");
-    }
-
     private sealed record CrimeVariantRule(
+        int SourceRow,
         string CrimeId,
         int StartYear,
         int? EndYear,

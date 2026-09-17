@@ -1,4 +1,3 @@
-using System.Globalization;
 using Dynastia.Contracts;
 
 namespace Dynastia.Mechanics.Career;
@@ -81,34 +80,45 @@ internal sealed class CareerCatalog
     {
         var lines = text.Split(['\r', '\n'], StringSplitOptions.RemoveEmptyEntries);
         const string header = "Number,Id,Name,Emoji,StartYear,EndYear,MaleEarly,FemaleEarly,MaleLate,FemaleLate,BaseSalary,Level1Title,Level2Title,Level3Title,Level4Title,Level5Title,LocationType,MinimumSettlementClass,RequiredOpportunityTags,PrimaryStat,SecondaryStat,EducationProfile,CareerFamily";
-        if (lines.Length < 2 || !lines[0].TrimStart('\uFEFF').Equals(header, StringComparison.Ordinal))
-            throw new InvalidDataException($"{DataPath} has an unexpected header or is empty.");
+        if (lines.Length < 2
+            || !lines[0].TrimStart('\uFEFF').Equals(header, StringComparison.Ordinal))
+        {
+            throw CatalogValidation.UnexpectedHeader(
+                DataPath,
+                lines.Length == 0 ? null : lines[0].TrimStart('\uFEFF'),
+                header);
+        }
 
         var result = new List<CareerDefinition>();
         for (var index = 1; index < lines.Length; index++)
         {
             var fields = lines[index].Split(',');
+            var row = index + 1;
             if (fields.Length != 23)
-                throw new InvalidDataException($"{DataPath} row {index + 1} has {fields.Length} fields; expected 23.");
+                throw CatalogValidation.FieldCount(DataPath, row, fields.Length, 23);
 
             result.Add(new CareerDefinition(
                 Id: fields[1].Trim(),
                 Name: fields[2].Trim(),
                 Emoji: fields[3].Trim(),
-                StartYear: ParseInt(fields[4], index),
-                EndYear: string.IsNullOrWhiteSpace(fields[5]) ? null : ParseInt(fields[5], index),
-                MaleEarly: ParseInt(fields[6], index),
-                FemaleEarly: ParseInt(fields[7], index),
-                MaleLate: ParseInt(fields[8], index),
-                FemaleLate: ParseInt(fields[9], index),
-                BaseSalary: ParseDecimal(fields[10], index),
+                StartYear: CatalogValidation.ParseInt(DataPath, row, "StartYear", fields[4]),
+                EndYear: string.IsNullOrWhiteSpace(fields[5])
+                    ? null
+                    : CatalogValidation.ParseInt(DataPath, row, "EndYear", fields[5]),
+                MaleEarly: CatalogValidation.ParseInt(DataPath, row, "MaleEarly", fields[6]),
+                FemaleEarly: CatalogValidation.ParseInt(DataPath, row, "FemaleEarly", fields[7]),
+                MaleLate: CatalogValidation.ParseInt(DataPath, row, "MaleLate", fields[8]),
+                FemaleLate: CatalogValidation.ParseInt(DataPath, row, "FemaleLate", fields[9]),
+                BaseSalary: CatalogValidation.ParseDecimal(DataPath, row, "BaseSalary", fields[10]),
                 Level1Title: fields[11].Trim(),
                 Level2Title: fields[12].Trim(),
                 Level3Title: fields[13].Trim(),
                 Level4Title: fields[14].Trim(),
                 Level5Title: fields[15].Trim(),
-                LocationType: ParseLocationType(fields[16], index),
-                MinimumSettlementClass: ParseSettlementClass(fields[17], index),
+                LocationType: CatalogValidation.ParseEnum<CareerLocationType>(
+                    DataPath, row, "LocationType", fields[16]),
+                MinimumSettlementClass: CatalogValidation.ParseEnum<SettlementClass>(
+                    DataPath, row, "MinimumSettlementClass", fields[17]),
                 RequiredOpportunityTags: ParseTags(fields[18]),
                 PrimaryStat: fields[19].Trim(),
                 SecondaryStat: NormalizeOptional(fields[20]),
@@ -124,74 +134,199 @@ internal sealed class CareerCatalog
         CareerEducationProfileCatalog educationProfiles)
     {
         if (careers.Count == 0)
-            throw new InvalidDataException($"{DataPath} is empty.");
-
-        var ids = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-        foreach (var career in careers)
         {
-            if (string.IsNullOrWhiteSpace(career.Id) || !ids.Add(career.Id))
-                throw new InvalidDataException($"{DataPath} contains a duplicate or empty career ID '{career.Id}'.");
+            throw CatalogValidation.Error(
+                DataPath,
+                "at least one career row",
+                field: "Rows",
+                value: 0);
         }
 
-
-        foreach (var career in careers)
+        var ids = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+        for (var index = 0; index < careers.Count; index++)
         {
-            if (string.IsNullOrWhiteSpace(career.Name) || string.IsNullOrWhiteSpace(career.Emoji))
-                throw new InvalidDataException($"Career '{career.Id}' needs a name and emoji.");
+            var career = careers[index];
+            var row = index + 2;
+
+            if (string.IsNullOrWhiteSpace(career.Id))
+            {
+                throw CatalogValidation.Error(
+                    DataPath,
+                    "a non-empty career ID",
+                    row,
+                    field: "Id",
+                    value: career.Id);
+            }
+
+            if (!ids.TryAdd(career.Id, row))
+            {
+                throw CatalogValidation.Error(
+                    DataPath,
+                    $"a unique career ID; first defined at row {ids[career.Id]}",
+                    row,
+                    career.Id,
+                    "Id",
+                    career.Id);
+            }
+
+            if (string.IsNullOrWhiteSpace(career.Name))
+                throw CatalogValidation.Error(DataPath, "a non-empty name", row, career.Id, "Name", career.Name);
+            if (string.IsNullOrWhiteSpace(career.Emoji))
+                throw CatalogValidation.Error(DataPath, "a non-empty emoji", row, career.Id, "Emoji", career.Emoji);
+
             if (career.StartYear < GameCalendarConfiguration.GameStartYear
                 || career.StartYear > CareerDefinition.TechnologyFreezeYear)
-                throw new InvalidDataException($"{career.Name}: invalid start year {career.StartYear}.");
-            if (career.EndYear is int endYear && endYear < career.StartYear)
-                throw new InvalidDataException($"{career.Name}: end year precedes start year.");
-            if (career.MaleEarly <= 0 || career.FemaleEarly <= 0 || career.MaleLate <= 0 || career.FemaleLate <= 0)
-                throw new InvalidDataException($"{career.Name}: sex weighting must remain positive.");
-            if (career.BaseSalary <= 0)
-                throw new InvalidDataException($"{career.Name}: base salary must be positive.");
-            if (!AllowedAptitudeStats.Contains(career.PrimaryStat))
-                throw new InvalidDataException($"{career.Name}: invalid primary stat '{career.PrimaryStat}'.");
-            if (career.SecondaryStat is not null
-                && (!AllowedAptitudeStats.Contains(career.SecondaryStat)
-                    || career.SecondaryStat.Equals(career.PrimaryStat, StringComparison.OrdinalIgnoreCase)))
-                throw new InvalidDataException($"{career.Name}: invalid secondary stat '{career.SecondaryStat}'.");
-            if (!educationProfiles.Contains(career.EducationProfile))
-                throw new InvalidDataException($"{career.Name}: unknown education profile '{career.EducationProfile}'.");
-            if (string.IsNullOrWhiteSpace(career.CareerFamily))
-                throw new InvalidDataException($"{career.Name}: CareerFamily is required.");
-
-            if (career.LocationType == CareerLocationType.Specialist && career.RequiredOpportunityTags.Count == 0)
-                throw new InvalidDataException($"{career.Name}: specialist careers require at least one opportunity tag.");
-            if (career.RequiredOpportunityTags.Any(tag => !knownOpportunityTags.Contains(tag)))
             {
-                var unknown = career.RequiredOpportunityTags.First(tag => !knownOpportunityTags.Contains(tag));
-                throw new InvalidDataException($"{career.Name}: unknown opportunity tag '{unknown}'.");
+                throw CatalogValidation.Error(
+                    DataPath,
+                    $"a year from {GameCalendarConfiguration.GameStartYear} through {CareerDefinition.TechnologyFreezeYear}",
+                    row,
+                    career.Id,
+                    "StartYear",
+                    career.StartYear);
             }
-            if (career.LocationType != CareerLocationType.Specialist && career.RequiredOpportunityTags.Count > 0)
-                throw new InvalidDataException($"{career.Name}: opportunity tags are only valid for specialist careers.");
 
-            if (new[] { career.Level1Title, career.Level2Title, career.Level3Title, career.Level4Title, career.Level5Title }
-                .Any(string.IsNullOrWhiteSpace))
-                throw new InvalidDataException($"{career.Name}: all five job titles are required.");
+            if (career.EndYear is int endYear && endYear < career.StartYear)
+            {
+                throw CatalogValidation.Error(
+                    DataPath,
+                    $"a year at or after StartYear ({career.StartYear})",
+                    row,
+                    career.Id,
+                    "EndYear",
+                    endYear);
+            }
+
+            ValidatePositiveWeight(row, career.Id, "MaleEarly", career.MaleEarly);
+            ValidatePositiveWeight(row, career.Id, "FemaleEarly", career.FemaleEarly);
+            ValidatePositiveWeight(row, career.Id, "MaleLate", career.MaleLate);
+            ValidatePositiveWeight(row, career.Id, "FemaleLate", career.FemaleLate);
+
+            if (career.BaseSalary <= 0)
+                throw CatalogValidation.Error(DataPath, "a number greater than 0", row, career.Id, "BaseSalary", career.BaseSalary);
+
+            if (!AllowedAptitudeStats.Contains(career.PrimaryStat))
+            {
+                throw CatalogValidation.Error(
+                    DataPath,
+                    $"one of: {string.Join(", ", AllowedAptitudeStats.OrderBy(value => value))}",
+                    row,
+                    career.Id,
+                    "PrimaryStat",
+                    career.PrimaryStat);
+            }
+
+            if (career.SecondaryStat is not null
+                && !AllowedAptitudeStats.Contains(career.SecondaryStat))
+            {
+                throw CatalogValidation.Error(
+                    DataPath,
+                    $"one of: {string.Join(", ", AllowedAptitudeStats.OrderBy(value => value))}, or empty",
+                    row,
+                    career.Id,
+                    "SecondaryStat",
+                    career.SecondaryStat);
+            }
+
+            if (career.SecondaryStat is not null
+                && career.SecondaryStat.Equals(career.PrimaryStat, StringComparison.OrdinalIgnoreCase))
+            {
+                throw CatalogValidation.Error(
+                    DataPath,
+                    "a stat different from PrimaryStat",
+                    row,
+                    career.Id,
+                    "SecondaryStat",
+                    career.SecondaryStat);
+            }
+
+            if (!educationProfiles.Contains(career.EducationProfile))
+            {
+                throw CatalogValidation.Error(
+                    DataPath,
+                    "an EducationProfile defined in career_education_profiles.csv",
+                    row,
+                    career.Id,
+                    "EducationProfile",
+                    career.EducationProfile);
+            }
+
+            if (string.IsNullOrWhiteSpace(career.CareerFamily))
+                throw CatalogValidation.Error(DataPath, "a non-empty career family", row, career.Id, "CareerFamily", career.CareerFamily);
+
+            if (career.LocationType == CareerLocationType.Specialist
+                && career.RequiredOpportunityTags.Count == 0)
+            {
+                throw CatalogValidation.Error(
+                    DataPath,
+                    "at least one opportunity tag for Specialist careers",
+                    row,
+                    career.Id,
+                    "RequiredOpportunityTags",
+                    string.Empty);
+            }
+
+            var unknownTag = career.RequiredOpportunityTags
+                .FirstOrDefault(tag => !knownOpportunityTags.Contains(tag));
+            if (unknownTag is not null)
+            {
+                throw CatalogValidation.Error(
+                    DataPath,
+                    "opportunity tags defined in Towns/opportunity_tags.csv",
+                    row,
+                    career.Id,
+                    "RequiredOpportunityTags",
+                    unknownTag);
+            }
+
+            if (career.LocationType != CareerLocationType.Specialist
+                && career.RequiredOpportunityTags.Count > 0)
+            {
+                throw CatalogValidation.Error(
+                    DataPath,
+                    "an empty value unless LocationType is Specialist",
+                    row,
+                    career.Id,
+                    "RequiredOpportunityTags",
+                    string.Join(';', career.RequiredOpportunityTags));
+            }
+
+            var titles = new[]
+            {
+                ("Level1Title", career.Level1Title),
+                ("Level2Title", career.Level2Title),
+                ("Level3Title", career.Level3Title),
+                ("Level4Title", career.Level4Title),
+                ("Level5Title", career.Level5Title)
+            };
+            var missingTitle = titles.FirstOrDefault(item => string.IsNullOrWhiteSpace(item.Item2));
+            if (missingTitle != default)
+            {
+                throw CatalogValidation.Error(
+                    DataPath,
+                    "a non-empty job title",
+                    row,
+                    career.Id,
+                    missingTitle.Item1,
+                    missingTitle.Item2);
+            }
         }
+    }
+
+    private static void ValidatePositiveWeight(
+        int row,
+        string item,
+        string field,
+        int value)
+    {
+        if (value <= 0)
+            throw CatalogValidation.Error(DataPath, "an integer greater than 0", row, item, field, value);
     }
 
     private static string? NormalizeOptional(string value)
     {
         var trimmed = value.Trim();
         return string.IsNullOrWhiteSpace(trimmed) || trimmed == "-" ? null : trimmed;
-    }
-
-    private static CareerLocationType ParseLocationType(string value, int rowIndex)
-    {
-        if (Enum.TryParse<CareerLocationType>(value, true, out var result))
-            return result;
-        throw new InvalidDataException($"{DataPath} row {rowIndex + 1}: '{value}' is not a valid location type.");
-    }
-
-    private static SettlementClass ParseSettlementClass(string value, int rowIndex)
-    {
-        if (Enum.TryParse<SettlementClass>(value, true, out var result))
-            return result;
-        throw new InvalidDataException($"{DataPath} row {rowIndex + 1}: '{value}' is not a valid settlement class.");
     }
 
     private static IReadOnlyList<string> ParseTags(string value)
@@ -206,32 +341,31 @@ internal sealed class CareerCatalog
     private static IReadOnlySet<string> ParseOpportunityTags(string text)
     {
         var lines = text.Split(['\r', '\n'], StringSplitOptions.RemoveEmptyEntries);
-        if (lines.Length < 2)
-            throw new InvalidDataException($"{OpportunityTagsPath} is empty.");
+        const string header = "Tag,DisplayName,DefaultStartYear,EndYear";
+        if (lines.Length < 2
+            || !lines[0].TrimStart('\uFEFF').Equals(header, StringComparison.Ordinal))
+        {
+            throw CatalogValidation.UnexpectedHeader(
+                OpportunityTagsPath,
+                lines.Length == 0 ? null : lines[0].TrimStart('\uFEFF'),
+                header);
+        }
 
         var result = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         for (var index = 1; index < lines.Length; index++)
         {
             var fields = lines[index].Split(',');
-            if (fields.Length != 4 || string.IsNullOrWhiteSpace(fields[0]))
-                throw new InvalidDataException($"Invalid {OpportunityTagsPath} row {index + 1}.");
-            result.Add(fields[0].Trim());
+            var row = index + 1;
+            if (fields.Length != 4)
+                throw CatalogValidation.FieldCount(OpportunityTagsPath, row, fields.Length, 4);
+
+            var tag = fields[0].Trim();
+            if (string.IsNullOrWhiteSpace(tag))
+                throw CatalogValidation.Error(OpportunityTagsPath, "a non-empty tag ID", row, field: "Tag", value: tag);
+            if (!result.Add(tag))
+                throw CatalogValidation.Error(OpportunityTagsPath, "a unique tag ID", row, tag, "Tag", tag);
         }
         return result;
-    }
-
-    private static int ParseInt(string value, int rowIndex)
-    {
-        if (int.TryParse(value, NumberStyles.Integer, CultureInfo.InvariantCulture, out var result))
-            return result;
-        throw new InvalidDataException($"{DataPath} row {rowIndex + 1}: '{value}' is not an integer.");
-    }
-
-    private static decimal ParseDecimal(string value, int rowIndex)
-    {
-        if (decimal.TryParse(value, NumberStyles.Number, CultureInfo.InvariantCulture, out var result))
-            return result;
-        throw new InvalidDataException($"{DataPath} row {rowIndex + 1}: '{value}' is not a decimal.");
     }
 
     private sealed record WeightedCareer(CareerDefinition Career, double Weight);

@@ -1,4 +1,3 @@
-using System.Globalization;
 using Dynastia.Contracts;
 
 namespace Dynastia.Mechanics.Family;
@@ -218,48 +217,59 @@ public sealed class StandardHistoricalNameService : IHistoricalNameService
             }
 
             var parts = line.Split(',');
-
-            if (parts.Length != 4
-                || !int.TryParse(
-                    parts[0].Trim(),
-                    NumberStyles.Integer,
-                    CultureInfo.InvariantCulture,
-                    out var startYear))
+            if (parts.Length != 4)
             {
-                throw new InvalidDataException(
-                    $"{EraPath}:{lineNumber}: invalid name-era row.");
+                throw CatalogValidation.FieldCount(
+                    EraPath,
+                    lineNumber,
+                    parts.Length,
+                    4);
             }
+
+            var startYear = CatalogValidation.ParseInt(
+                EraPath,
+                lineNumber,
+                "StartYear",
+                parts[0]);
 
             int? endYear = null;
             var endText = parts[1].Trim();
 
             if (endText.Length > 0)
             {
-                if (!int.TryParse(
-                        endText,
-                        NumberStyles.Integer,
-                        CultureInfo.InvariantCulture,
-                        out var parsedEnd))
-                {
-                    throw new InvalidDataException(
-                        $"{EraPath}:{lineNumber}: invalid end year.");
-                }
-
-                endYear = parsedEnd;
+                endYear = CatalogValidation.ParseInt(
+                    EraPath,
+                    lineNumber,
+                    "EndYear",
+                    endText);
             }
 
             var maleFile = parts[2].Trim();
             var femaleFile = parts[3].Trim();
 
-            if (maleFile.Length == 0
-                || femaleFile.Length == 0)
+            if (maleFile.Length == 0)
             {
-                throw new InvalidDataException(
-                    $"{EraPath}:{lineNumber}: both male and female catalogues are required.");
+                throw CatalogValidation.Error(
+                    EraPath,
+                    "a non-empty male catalogue path",
+                    lineNumber,
+                    field: "MaleFile",
+                    value: maleFile);
+            }
+
+            if (femaleFile.Length == 0)
+            {
+                throw CatalogValidation.Error(
+                    EraPath,
+                    "a non-empty female catalogue path",
+                    lineNumber,
+                    field: "FemaleFile",
+                    value: femaleFile);
             }
 
             rows.Add(
                 new NameEra(
+                    lineNumber,
                     startYear,
                     endYear,
                     maleFile,
@@ -268,8 +278,11 @@ public sealed class StandardHistoricalNameService : IHistoricalNameService
 
         if (rows.Count == 0)
         {
-            throw new InvalidDataException(
-                $"{EraPath}: no name eras were defined.");
+            throw CatalogValidation.Error(
+                EraPath,
+                "at least one name era",
+                field: "Rows",
+                value: 0);
         }
 
         return rows;
@@ -278,10 +291,14 @@ public sealed class StandardHistoricalNameService : IHistoricalNameService
     private static void ValidateCoverage(
         IReadOnlyList<NameEra> eras)
     {
-        if (eras[0].StartYear != 1700)
+        if (eras[0].StartYear != GameCalendarConfiguration.GameStartYear)
         {
-            throw new InvalidDataException(
-                $"{EraPath}: coverage must begin in 1700.");
+            throw CatalogValidation.Error(
+                EraPath,
+                $"{GameCalendarConfiguration.GameStartYear} for the first era",
+                eras[0].SourceRow,
+                field: "StartYear",
+                value: eras[0].StartYear);
         }
 
         for (var index = 0;
@@ -293,8 +310,12 @@ public sealed class StandardHistoricalNameService : IHistoricalNameService
             if (era.EndYear is int endYear
                 && endYear < era.StartYear)
             {
-                throw new InvalidDataException(
-                    $"{EraPath}: era beginning {era.StartYear} ends before it starts.");
+                throw CatalogValidation.Error(
+                    EraPath,
+                    $"a year at or after StartYear ({era.StartYear})",
+                    era.SourceRow,
+                    field: "EndYear",
+                    value: endYear);
             }
 
             var isLast =
@@ -304,8 +325,12 @@ public sealed class StandardHistoricalNameService : IHistoricalNameService
             {
                 if (era.EndYear is not null)
                 {
-                    throw new InvalidDataException(
-                        $"{EraPath}: final era must be open-ended.");
+                    throw CatalogValidation.Error(
+                        EraPath,
+                        "an empty EndYear for the final open-ended era",
+                        era.SourceRow,
+                        field: "EndYear",
+                        value: era.EndYear.Value);
                 }
 
                 continue;
@@ -313,8 +338,12 @@ public sealed class StandardHistoricalNameService : IHistoricalNameService
 
             if (era.EndYear is null)
             {
-                throw new InvalidDataException(
-                    $"{EraPath}: only the final era may be open-ended.");
+                throw CatalogValidation.Error(
+                    EraPath,
+                    "an EndYear on every non-final era",
+                    era.SourceRow,
+                    field: "EndYear",
+                    value: null);
             }
 
             var next = eras[index + 1];
@@ -322,15 +351,21 @@ public sealed class StandardHistoricalNameService : IHistoricalNameService
             if (next.StartYear
                 != era.EndYear.Value + 1)
             {
-                throw new InvalidDataException(
-                    $"{EraPath}: gap or overlap between {era.StartYear} and {next.StartYear}.");
+                throw CatalogValidation.Error(
+                    EraPath,
+                    $"{era.EndYear.Value + 1} so era coverage is contiguous",
+                    next.SourceRow,
+                    field: "StartYear",
+                    value: next.StartYear);
             }
         }
     }
 
     private sealed record NameEra(
+        int SourceRow,
         int StartYear,
         int? EndYear,
         string MaleFile,
         string FemaleFile);
+
 }

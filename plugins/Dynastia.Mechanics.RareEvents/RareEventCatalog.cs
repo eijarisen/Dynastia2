@@ -103,7 +103,10 @@ public sealed class RareEventCatalog
         var lines = text.Split(['\r', '\n'], StringSplitOptions.RemoveEmptyEntries);
         const string header = "EventId,Name,Pool,Category,StartYear,EndYear,BaseWeight,MinimumAge,MaximumAge,RequiresFinanceHousehold,MinimumHouseholdWealth,RequiresEmployment,RequiresOwnedHouse,RequiresFarmland,RequiresCraft,MinimumStress,StatId,StatDirection,TownPreference,MinimumSettlementClass,RequiredOpportunityTags,PreferredOpportunityTags,PreferredCareerFamilies,HandlerId";
         if (lines.Length < 2 || !lines[0].TrimStart('\uFEFF').Equals(header, StringComparison.Ordinal))
-            throw new InvalidDataException($"{DataPath}: unexpected header or empty file.");
+            throw CatalogValidation.UnexpectedHeader(
+                DataPath,
+                lines.Length == 0 ? null : lines[0].TrimStart('\uFEFF'),
+                header);
 
         var result = new List<RareEventDefinition>();
         for (var index = 1; index < lines.Length; index++)
@@ -111,7 +114,7 @@ public sealed class RareEventCatalog
             var fields = lines[index].Split(',');
             var row = index + 1;
             if (fields.Length != 24)
-                throw new InvalidDataException($"{DataPath} row {row}: expected 24 fields.");
+                throw CatalogValidation.FieldCount(DataPath, row, fields.Length, 24);
 
             var stat = NormalizeOptional(fields[16]);
             if (stat == "-") stat = null;
@@ -133,38 +136,219 @@ public sealed class RareEventCatalog
     private static void Validate(IReadOnlyList<RareEventDefinition> events)
     {
         if (events.Count == 0)
-            throw new InvalidDataException($"{DataPath} contains no events.");
-        if (events.Select(e => e.EventId).Distinct(StringComparer.OrdinalIgnoreCase).Count() != events.Count)
-            throw new InvalidDataException($"{DataPath} contains duplicate EventId values.");
-
-        foreach (var item in events)
         {
-            if (string.IsNullOrWhiteSpace(item.EventId) || string.IsNullOrWhiteSpace(item.Name))
-                throw new InvalidDataException($"{DataPath}: EventId and Name are required.");
+            throw CatalogValidation.Error(
+                DataPath,
+                "at least one rare event",
+                field: "Rows",
+                value: 0);
+        }
+
+        var ids = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+        for (var index = 0; index < events.Count; index++)
+        {
+            var item = events[index];
+            var row = index + 2;
+
+            if (string.IsNullOrWhiteSpace(item.EventId))
+            {
+                throw CatalogValidation.Error(
+                    DataPath,
+                    "a non-empty event ID",
+                    row,
+                    field: "EventId",
+                    value: item.EventId);
+            }
+
+            if (!ids.TryAdd(item.EventId, row))
+            {
+                throw CatalogValidation.Error(
+                    DataPath,
+                    $"a unique EventId; first defined at row {ids[item.EventId]}",
+                    row,
+                    item.EventId,
+                    "EventId",
+                    item.EventId);
+            }
+
+            if (string.IsNullOrWhiteSpace(item.Name))
+            {
+                throw CatalogValidation.Error(
+                    DataPath,
+                    "a non-empty event name",
+                    row,
+                    item.EventId,
+                    "Name",
+                    item.Name);
+            }
+
             if (!Pools.Contains(item.Pool))
-                throw new InvalidDataException($"{item.EventId}: unknown pool '{item.Pool}'.");
+            {
+                throw CatalogValidation.Error(
+                    DataPath,
+                    $"one of: {string.Join(", ", Pools.OrderBy(value => value))}",
+                    row,
+                    item.EventId,
+                    "Pool",
+                    item.Pool);
+            }
+
             if (!Categories.Contains(item.Category))
-                throw new InvalidDataException($"{item.EventId}: unknown category '{item.Category}'.");
-            if (item.StartYear < GameCalendarConfiguration.GameStartYear || item.EndYear is int end && end < item.StartYear)
-                throw new InvalidDataException($"{item.EventId}: invalid era.");
-            if (!item.Pool.Equals("Special", StringComparison.OrdinalIgnoreCase) && item.BaseWeight <= 0)
-                throw new InvalidDataException($"{item.EventId}: ordinary events require BaseWeight > 0.");
-            if (item.Pool.Equals("Special", StringComparison.OrdinalIgnoreCase) && item.BaseWeight < 0)
-                throw new InvalidDataException($"{item.EventId}: BaseWeight may not be negative.");
-            if (item.MinimumAge < 0 || item.MaximumAge is int maxAge && maxAge < item.MinimumAge)
-                throw new InvalidDataException($"{item.EventId}: invalid age range.");
-            if (item.MinimumHouseholdWealth < 0 || item.MinimumStress < 0)
-                throw new InvalidDataException($"{item.EventId}: wealth/stress requirements may not be negative.");
+            {
+                throw CatalogValidation.Error(
+                    DataPath,
+                    $"one of the configured rare-event categories: {string.Join(", ", Categories.OrderBy(value => value))}",
+                    row,
+                    item.EventId,
+                    "Category",
+                    item.Category);
+            }
+
+            if (item.StartYear < GameCalendarConfiguration.GameStartYear)
+            {
+                throw CatalogValidation.Error(
+                    DataPath,
+                    $"a year at or after {GameCalendarConfiguration.GameStartYear}",
+                    row,
+                    item.EventId,
+                    "StartYear",
+                    item.StartYear);
+            }
+
+            if (item.EndYear is int end && end < item.StartYear)
+            {
+                throw CatalogValidation.Error(
+                    DataPath,
+                    $"a year at or after StartYear ({item.StartYear})",
+                    row,
+                    item.EventId,
+                    "EndYear",
+                    end);
+            }
+
+            if (!item.Pool.Equals("Special", StringComparison.OrdinalIgnoreCase)
+                && item.BaseWeight <= 0)
+            {
+                throw CatalogValidation.Error(
+                    DataPath,
+                    "a number greater than 0 for ordinary events",
+                    row,
+                    item.EventId,
+                    "BaseWeight",
+                    item.BaseWeight);
+            }
+
+            if (item.Pool.Equals("Special", StringComparison.OrdinalIgnoreCase)
+                && item.BaseWeight < 0)
+            {
+                throw CatalogValidation.Error(
+                    DataPath,
+                    "a number greater than or equal to 0 for special events",
+                    row,
+                    item.EventId,
+                    "BaseWeight",
+                    item.BaseWeight);
+            }
+
+            if (item.MinimumAge < 0)
+            {
+                throw CatalogValidation.Error(
+                    DataPath,
+                    "an age greater than or equal to 0",
+                    row,
+                    item.EventId,
+                    "MinimumAge",
+                    item.MinimumAge);
+            }
+
+            if (item.MaximumAge is int maxAge && maxAge < item.MinimumAge)
+            {
+                throw CatalogValidation.Error(
+                    DataPath,
+                    $"an age at least MinimumAge ({item.MinimumAge})",
+                    row,
+                    item.EventId,
+                    "MaximumAge",
+                    maxAge);
+            }
+
+            if (item.MinimumHouseholdWealth < 0)
+            {
+                throw CatalogValidation.Error(
+                    DataPath,
+                    "a value greater than or equal to 0",
+                    row,
+                    item.EventId,
+                    "MinimumHouseholdWealth",
+                    item.MinimumHouseholdWealth);
+            }
+
+            if (item.MinimumStress < 0)
+            {
+                throw CatalogValidation.Error(
+                    DataPath,
+                    "a value greater than or equal to 0",
+                    row,
+                    item.EventId,
+                    "MinimumStress",
+                    item.MinimumStress);
+            }
+
             if (item.StatId is not null && !Stats.Contains(item.StatId))
-                throw new InvalidDataException($"{item.EventId}: unknown stat '{item.StatId}'.");
+            {
+                throw CatalogValidation.Error(
+                    DataPath,
+                    $"one of: {string.Join(", ", Stats.OrderBy(value => value))}, or empty",
+                    row,
+                    item.EventId,
+                    "StatId",
+                    item.StatId);
+            }
+
             if (!Directions.Contains(item.StatDirection))
-                throw new InvalidDataException($"{item.EventId}: unknown StatDirection '{item.StatDirection}'.");
-            if (item.StatId is null && !item.StatDirection.Equals("None", StringComparison.OrdinalIgnoreCase))
-                throw new InvalidDataException($"{item.EventId}: StatDirection requires StatId.");
+            {
+                throw CatalogValidation.Error(
+                    DataPath,
+                    $"one of: {string.Join(", ", Directions.OrderBy(value => value))}",
+                    row,
+                    item.EventId,
+                    "StatDirection",
+                    item.StatDirection);
+            }
+
+            if (item.StatId is null
+                && !item.StatDirection.Equals("None", StringComparison.OrdinalIgnoreCase))
+            {
+                throw CatalogValidation.Error(
+                    DataPath,
+                    "None when StatId is empty",
+                    row,
+                    item.EventId,
+                    "StatDirection",
+                    item.StatDirection);
+            }
+
             if (!TownPreferences.Contains(item.TownPreference))
-                throw new InvalidDataException($"{item.EventId}: unknown TownPreference '{item.TownPreference}'.");
+            {
+                throw CatalogValidation.Error(
+                    DataPath,
+                    $"one of: {string.Join(", ", TownPreferences.OrderBy(value => value))}",
+                    row,
+                    item.EventId,
+                    "TownPreference",
+                    item.TownPreference);
+            }
+
             if (!Handlers.Contains(item.HandlerId))
-                throw new InvalidDataException($"{item.EventId}: unknown HandlerId '{item.HandlerId}'.");
+            {
+                throw CatalogValidation.Error(
+                    DataPath,
+                    "a registered rare-event handler ID",
+                    row,
+                    item.EventId,
+                    "HandlerId",
+                    item.HandlerId);
+            }
         }
     }
 
@@ -183,25 +367,31 @@ public sealed class RareEventCatalog
     }
 
     private static int ParseInt(string value, int row, string field) =>
-        int.TryParse(value.Trim(), NumberStyles.Integer, CultureInfo.InvariantCulture, out var parsed)
-            ? parsed : throw new InvalidDataException($"{DataPath} row {row} {field}: invalid integer '{value}'.");
+        CatalogValidation.ParseInt(DataPath, row, field, value);
 
     private static int? ParseNullableInt(string value, int row, string field) =>
         string.IsNullOrWhiteSpace(value) ? null : ParseInt(value, row, field);
 
     private static double ParseDouble(string value, int row, string field) =>
-        double.TryParse(value.Trim(), NumberStyles.Float, CultureInfo.InvariantCulture, out var parsed)
-            ? parsed : throw new InvalidDataException($"{DataPath} row {row} {field}: invalid number '{value}'.");
+        CatalogValidation.ParseDouble(DataPath, row, field, value);
 
     private static decimal ParseDecimal(string value, int row, string field) =>
         decimal.TryParse(value.Trim(), NumberStyles.Float, CultureInfo.InvariantCulture, out var parsed)
-            ? parsed : throw new InvalidDataException($"{DataPath} row {row} {field}: invalid decimal '{value}'.");
+            ? parsed
+            : throw CatalogValidation.Error(
+                DataPath,
+                "a decimal number",
+                row,
+                field: field,
+                value: value);
 
     private static bool ParseBool(string value, int row, string field) =>
-        bool.TryParse(value.Trim(), out var parsed)
-            ? parsed : throw new InvalidDataException($"{DataPath} row {row} {field}: invalid boolean '{value}'.");
+        CatalogValidation.ParseBool(DataPath, row, field, value);
 
     private static SettlementClass ParseSettlement(string value, int row) =>
-        Enum.TryParse<SettlementClass>(value.Trim(), true, out var parsed)
-            ? parsed : throw new InvalidDataException($"{DataPath} row {row} MinimumSettlementClass: invalid value '{value}'.");
+        CatalogValidation.ParseEnum<SettlementClass>(
+            DataPath,
+            row,
+            "MinimumSettlementClass",
+            value);
 }

@@ -39,7 +39,7 @@ internal static partial class FamilyRelationActions
 
             if (!IsValidMoneyAmount(amount)
                 || targetFinance is null
-                || targetFinance.Wealth < amount)
+                || !economy.CanAfford(targetHead, amount))
             {
                 return new(false, "That household can no longer afford the selected amount.");
             }
@@ -102,7 +102,7 @@ internal static partial class FamilyRelationActions
 
             if (targetHead is null
                 || !IsValidMoneyAmount(amount)
-                || economy.GetHousehold(c.Actor)?.Wealth < amount)
+                || !economy.CanAfford(c.Actor, amount))
             {
                 return new(false, "The selected gift can no longer be afforded.");
             }

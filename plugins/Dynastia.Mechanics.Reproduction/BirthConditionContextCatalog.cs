@@ -1,4 +1,3 @@
-using System.Globalization;
 using Dynastia.Contracts;
 
 namespace Dynastia.Mechanics.Reproduction;
@@ -22,10 +21,18 @@ public sealed class BirthConditionContextCatalog
         IEnumerable<string> knownConditionIds)
     {
         var known = knownConditionIds.ToHashSet(StringComparer.OrdinalIgnoreCase);
-        var lines = data.ReadText(Path).Split(['\r', '\n'], StringSplitOptions.RemoveEmptyEntries);
-        const string header = "ConditionId,StartYear,EndYear,MotherAgeBand,WeightMultiplier";
-        if (lines.Length < 2 || !lines[0].TrimStart('\uFEFF').Equals(header, StringComparison.Ordinal))
-            throw new InvalidDataException($"{Path} has an unexpected header or is empty.");
+        var lines = data.ReadText(Path)
+            .Split(['\r', '\n'], StringSplitOptions.RemoveEmptyEntries);
+        const string header =
+            "ConditionId,StartYear,EndYear,MotherAgeBand,WeightMultiplier";
+        if (lines.Length < 2
+            || !lines[0].TrimStart('\uFEFF').Equals(header, StringComparison.Ordinal))
+        {
+            throw CatalogValidation.UnexpectedHeader(
+                Path,
+                lines.Length == 0 ? null : lines[0].TrimStart('\uFEFF'),
+                header);
+        }
 
         var rows = new List<Rule>();
         for (var index = 1; index < lines.Length; index++)
@@ -33,38 +40,98 @@ public sealed class BirthConditionContextCatalog
             var fields = lines[index].Split(',');
             var row = index + 1;
             if (fields.Length != 5)
-                throw new InvalidDataException($"{Path} row {row}: expected 5 fields.");
+                throw CatalogValidation.FieldCount(Path, row, fields.Length, 5);
 
             var id = fields[0].Trim();
             if (!known.Contains(id))
-                throw new InvalidDataException($"{Path} row {row} ConditionId: unknown condition '{id}'.");
+            {
+                throw CatalogValidation.Error(
+                    Path,
+                    "a ConditionId present in Common/birth_conditions.json",
+                    row,
+                    field: "ConditionId",
+                    value: id);
+            }
 
-            var start = ParseInt(fields[1], row, "StartYear");
-            int? end = string.IsNullOrWhiteSpace(fields[2]) ? null : ParseInt(fields[2], row, "EndYear");
+            var start = CatalogValidation.ParseInt(Path, row, "StartYear", fields[1]);
+            var end = string.IsNullOrWhiteSpace(fields[2])
+                ? (int?)null
+                : CatalogValidation.ParseInt(Path, row, "EndYear", fields[2]);
             var ageBand = fields[3].Trim();
-            var multiplier = ParseDouble(fields[4], row, "WeightMultiplier");
+            var multiplier = CatalogValidation.ParseDouble(
+                Path,
+                row,
+                "WeightMultiplier",
+                fields[4]);
 
             if (start < GameCalendarConfiguration.GameStartYear)
-                throw new InvalidDataException($"{Path} row {row} StartYear: may not precede {GameCalendarConfiguration.GameStartYear}.");
-            if (end is int endYear && endYear < start)
-                throw new InvalidDataException($"{Path} row {row} EndYear: may not precede StartYear.");
-            if (ageBand is not ("YoungAdult" or "Adult"))
-                throw new InvalidDataException($"{Path} row {row} MotherAgeBand: invalid value '{ageBand}'.");
-            if (multiplier <= 0)
-                throw new InvalidDataException($"{Path} row {row} WeightMultiplier: must be greater than 0.");
+            {
+                throw CatalogValidation.Error(
+                    Path,
+                    $"a year at or after {GameCalendarConfiguration.GameStartYear}",
+                    row,
+                    id,
+                    "StartYear",
+                    start);
+            }
 
-            rows.Add(new Rule(id, start, end, ageBand, multiplier));
+            if (end is int endYear && endYear < start)
+            {
+                throw CatalogValidation.Error(
+                    Path,
+                    $"a year at or after StartYear ({start})",
+                    row,
+                    id,
+                    "EndYear",
+                    endYear);
+            }
+
+            if (ageBand is not ("YoungAdult" or "Adult"))
+            {
+                throw CatalogValidation.Error(
+                    Path,
+                    "YoungAdult or Adult",
+                    row,
+                    id,
+                    "MotherAgeBand",
+                    ageBand);
+            }
+
+            if (multiplier <= 0)
+            {
+                throw CatalogValidation.Error(
+                    Path,
+                    "a number greater than 0",
+                    row,
+                    id,
+                    "WeightMultiplier",
+                    multiplier);
+            }
+
+            rows.Add(new Rule(row, id, start, end, ageBand, multiplier));
         }
 
         foreach (var group in rows.GroupBy(
-                     rule => (rule.ConditionId.ToUpperInvariant(), rule.MotherAgeBand.ToUpperInvariant())))
+                     rule => (
+                         rule.ConditionId.ToUpperInvariant(),
+                         rule.MotherAgeBand.ToUpperInvariant())))
         {
             var ordered = group.OrderBy(rule => rule.StartYear).ToList();
             for (var index = 1; index < ordered.Count; index++)
             {
                 var previous = ordered[index - 1];
-                if (previous.EndYear is null || previous.EndYear.Value >= ordered[index].StartYear)
-                    throw new InvalidDataException($"{Path}: overlapping rows for '{ordered[index].ConditionId}'/{ordered[index].MotherAgeBand}.");
+                var current = ordered[index];
+                if (previous.EndYear is null
+                    || previous.EndYear.Value >= current.StartYear)
+                {
+                    throw CatalogValidation.Error(
+                        Path,
+                        $"a year range that does not overlap row {previous.SourceRow}",
+                        current.SourceRow,
+                        current.ConditionId,
+                        "StartYear",
+                        current.StartYear);
+                }
             }
         }
 
@@ -82,21 +149,8 @@ public sealed class BirthConditionContextCatalog
             && rule.Covers(year))?.WeightMultiplier ?? 1.0;
     }
 
-    private static int ParseInt(string value, int row, string field)
-    {
-        if (!int.TryParse(value.Trim(), NumberStyles.Integer, CultureInfo.InvariantCulture, out var parsed))
-            throw new InvalidDataException($"{Path} row {row} {field}: invalid integer '{value}'.");
-        return parsed;
-    }
-
-    private static double ParseDouble(string value, int row, string field)
-    {
-        if (!double.TryParse(value.Trim(), NumberStyles.Float, CultureInfo.InvariantCulture, out var parsed))
-            throw new InvalidDataException($"{Path} row {row} {field}: invalid number '{value}'.");
-        return parsed;
-    }
-
     private sealed record Rule(
+        int SourceRow,
         string ConditionId,
         int StartYear,
         int? EndYear,

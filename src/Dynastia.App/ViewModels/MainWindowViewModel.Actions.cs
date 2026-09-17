@@ -366,10 +366,6 @@ public sealed partial class MainWindowViewModel
                     .Select(house => house.Town.Id)
                     .ToHashSet(StringComparer.OrdinalIgnoreCase);
 
-            var wealth =
-                _economyService.GetHousehold(actor)?.Wealth
-                ?? 0m;
-
             return _locationService.GetTowns()
                 .Select(town =>
                 {
@@ -378,7 +374,7 @@ public sealed partial class MainWindowViewModel
                     var livingCost = _economyService.GetLivingCostPerPerson(town);
                     var rentalIncome = _economyService.GetRentalIncome(town);
                     var region = opportunities?.RegionName ?? town.RegionId;
-                    var affordable = wealth >= price;
+                    var affordable = _economyService.CanAfford(actor, price);
                     var details = $"Population: {town.Population:N0} • {town.SettlementClassDisplayName}\n"
                         + $"{opportunities?.Description ?? "General local work and services."}\n"
                         + $"Living costs: {livingCost:N0} zł per person/year • Rental income: {rentalIncome:N0} zł/year";

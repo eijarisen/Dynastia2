@@ -26,14 +26,14 @@ public sealed class HistoricalActionVariantService :
     {
         ArgumentNullException.ThrowIfNull(data);
 
-        var variants = JsonSerializer.Deserialize<
-                List<HistoricalActionVariant>>(
-                data.ReadText(DataPath),
-                new JsonSerializerOptions
-                {
-                    PropertyNameCaseInsensitive = true
-                })
-            ?? [];
+        var variants = CatalogValidation.DeserializeJson<
+            List<HistoricalActionVariant>>(
+            data,
+            DataPath,
+            new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true
+            });
 
         Validate(variants);
 
@@ -79,34 +79,47 @@ public sealed class HistoricalActionVariantService :
     {
         if (variants.Count == 0)
         {
-            throw new InvalidDataException(
-                $"{DataPath} contains no action variants.");
+            throw CatalogValidation.Error(
+                DataPath,
+                "at least one action variant",
+                field: "Items",
+                value: 0);
         }
 
-        foreach (var variant in variants)
+        for (var index = 0; index < variants.Count; index++)
         {
-            if (string.IsNullOrWhiteSpace(variant.ActionId)
-                || string.IsNullOrWhiteSpace(variant.Label)
-                || string.IsNullOrWhiteSpace(variant.Description)
-                || string.IsNullOrWhiteSpace(variant.Narrative))
+            var variant = variants[index];
+            var item = string.IsNullOrWhiteSpace(variant.ActionId)
+                ? $"index {index}"
+                : variant.ActionId;
+
+            if (string.IsNullOrWhiteSpace(variant.ActionId))
+                throw CatalogValidation.Error(DataPath, "a non-empty action ID", item: item, field: "actionId", value: variant.ActionId);
+            if (string.IsNullOrWhiteSpace(variant.Label))
+                throw CatalogValidation.Error(DataPath, "a non-empty label", item: item, field: "label", value: variant.Label);
+            if (string.IsNullOrWhiteSpace(variant.Description))
+                throw CatalogValidation.Error(DataPath, "a non-empty description", item: item, field: "description", value: variant.Description);
+            if (string.IsNullOrWhiteSpace(variant.Narrative))
+                throw CatalogValidation.Error(DataPath, "a non-empty narrative", item: item, field: "narrative", value: variant.Narrative);
+
+            if (variant.StartYear < GameCalendarConfiguration.GameStartYear)
             {
-                throw new InvalidDataException(
-                    $"{DataPath} contains an incomplete action variant.");
+                throw CatalogValidation.Error(
+                    DataPath,
+                    $"a year at or after {GameCalendarConfiguration.GameStartYear}",
+                    item: item,
+                    field: "startYear",
+                    value: variant.StartYear);
             }
 
-            if (variant.StartYear
-                < GameCalendarConfiguration.GameStartYear)
+            if (variant.EndYear is int endYear && endYear < variant.StartYear)
             {
-                throw new InvalidDataException(
-                    $"{variant.ActionId}: startYear may not precede " +
-                    $"{GameCalendarConfiguration.GameStartYear}.");
-            }
-
-            if (variant.EndYear is int endYear
-                && endYear < variant.StartYear)
-            {
-                throw new InvalidDataException(
-                    $"{variant.ActionId}: endYear precedes startYear.");
+                throw CatalogValidation.Error(
+                    DataPath,
+                    $"a year at or after startYear ({variant.StartYear})",
+                    item: item,
+                    field: "endYear",
+                    value: endYear);
             }
         }
 
@@ -114,21 +127,20 @@ public sealed class HistoricalActionVariantService :
             variant => variant.ActionId,
             StringComparer.OrdinalIgnoreCase))
         {
-            var ordered = group.OrderBy(
-                    variant => variant.StartYear)
-                .ToList();
-
+            var ordered = group.OrderBy(variant => variant.StartYear).ToList();
             for (var index = 1; index < ordered.Count; index++)
             {
                 var previous = ordered[index - 1];
                 var current = ordered[index];
-
                 if (previous.EndYear is null
                     || previous.EndYear.Value >= current.StartYear)
                 {
-                    throw new InvalidDataException(
-                        $"{DataPath} contains overlapping variants for " +
-                        $"'{group.Key}'.");
+                    throw CatalogValidation.Error(
+                        DataPath,
+                        $"a non-overlapping year range after the variant beginning {previous.StartYear}",
+                        item: group.Key,
+                        field: "startYear",
+                        value: current.StartYear);
                 }
             }
         }

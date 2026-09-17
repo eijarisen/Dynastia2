@@ -1,4 +1,3 @@
-using System.Globalization;
 using Dynastia.Contracts;
 
 namespace Dynastia.Mechanics.Locations;
@@ -243,14 +242,22 @@ public sealed partial class StandardLocationService
                 StringSplitOptions
                     .RemoveEmptyEntries);
 
+        const string expectedHeader =
+            "TownId,Town,County,Longitude,Latitude,Population,RegionId";
+
         if (lines.Length < 2
-            || !lines[0].Equals(
-                "TownId,Town,County,Longitude,Latitude,Population,RegionId",
+            || !lines[0].TrimStart('\uFEFF').Equals(
+                expectedHeader,
                 StringComparison.Ordinal))
         {
-            throw new InvalidDataException(
-                $"{TownsPath} has an unexpected header.");
+            throw CatalogValidation.UnexpectedHeader(
+                TownsPath,
+                lines.Length == 0 ? null : lines[0].TrimStart('\uFEFF'),
+                expectedHeader);
         }
+
+        var ids = new Dictionary<string, int>(
+            StringComparer.OrdinalIgnoreCase);
 
         for (var index = 1;
             index < lines.Length;
@@ -259,48 +266,58 @@ public sealed partial class StandardLocationService
             var fields =
                 lines[index]
                     .Split(',');
+            var row = index + 1;
 
             if (fields.Length != 7)
             {
-                throw new InvalidDataException(
-                    $"Invalid towns.csv row "
-                    + $"{index + 1}: expected 7 fields.");
+                throw CatalogValidation.FieldCount(
+                    TownsPath,
+                    row,
+                    fields.Length,
+                    7);
             }
 
-            if (!double.TryParse(
-                    fields[3],
-                    NumberStyles.Float,
-                    CultureInfo.InvariantCulture,
-                    out var longitude)
-                || !double.TryParse(
-                    fields[4],
-                    NumberStyles.Float,
-                    CultureInfo.InvariantCulture,
-                    out var latitude)
-                || !int.TryParse(
-                    fields[5],
-                    NumberStyles.Integer,
-                    CultureInfo.InvariantCulture,
-                    out var population))
+            var townId = fields[0].Trim();
+            var regionId = fields[6].Trim();
+
+            if (townId.Length == 0)
             {
-                throw new InvalidDataException(
-                    $"Invalid numeric town data on row "
-                    + $"{index + 1}.");
+                throw CatalogValidation.Error(
+                    TownsPath,
+                    "a non-empty town ID",
+                    row,
+                    field: "TownId",
+                    value: townId);
             }
 
-            var townId =
-                fields[0].Trim();
-
-            var regionId =
-                fields[6].Trim();
-
-            if (townId.Length == 0
-                || regionId.Length == 0)
+            if (!ids.TryAdd(townId, row))
             {
-                throw new InvalidDataException(
-                    $"Invalid towns.csv row {index + 1}: "
-                    + "TownId and RegionId are required.");
+                throw CatalogValidation.Error(
+                    TownsPath,
+                    $"a unique TownId; first defined at row {ids[townId]}",
+                    row,
+                    townId,
+                    "TownId",
+                    townId);
             }
+
+            if (regionId.Length == 0)
+            {
+                throw CatalogValidation.Error(
+                    TownsPath,
+                    "a non-empty region ID",
+                    row,
+                    townId,
+                    "RegionId",
+                    regionId);
+            }
+
+            var longitude = CatalogValidation.ParseDouble(
+                TownsPath, row, "Longitude", fields[3]);
+            var latitude = CatalogValidation.ParseDouble(
+                TownsPath, row, "Latitude", fields[4]);
+            var population = CatalogValidation.ParseInt(
+                TownsPath, row, "Population", fields[5]);
 
             result.Add(
                 new TownInfo(
@@ -313,16 +330,6 @@ public sealed partial class StandardLocationService
                     Id = townId,
                     RegionId = regionId
                 });
-        }
-
-        if (result
-            .Select(town => town.Id)
-            .Distinct(StringComparer.OrdinalIgnoreCase)
-            .Count()
-            != result.Count)
-        {
-            throw new InvalidDataException(
-                $"{TownsPath} contains duplicate TownIds.");
         }
 
         return result;

@@ -20,6 +20,9 @@ public sealed class EconomyViewModel
         LastExpenses =
             forecast?.ProjectedExpenses
             ?? snapshot.LastExpenses;
+        Net =
+            forecast?.ProjectedNet
+            ?? snapshot.LastNet;
 
         var nannyRoleLabel =
             status?.NannyRoleLabel
@@ -48,6 +51,7 @@ public sealed class EconomyViewModel
     public int PendingHouses { get; }
     public decimal LastIncome { get; }
     public decimal LastExpenses { get; }
+    public decimal Net { get; }
 
     public string WealthText =>
         $"Budget: ${Wealth:N0}";
@@ -69,7 +73,7 @@ public sealed class EconomyViewModel
         $"Expenses: ${LastExpenses:N0}";
 
     public string NetText =>
-        $"Net: ${(LastIncome - LastExpenses):N0}";
+        $"Net: ${Net:N0}";
 
     public string PendingInheritanceText =>
         $"Pending inheritance: ${PendingInheritance:N0}";

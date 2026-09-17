@@ -154,7 +154,7 @@ public sealed class FamilyMemberCardViewModel
 
             OccupationText =
                 farming?.IsWorkingFarmWorker(person, person) == true
-                    ? "Farm Worker"
+                    ? FarmingPresentationDefaults.WorkerOccupationLabel
                     : FormatOccupation(
                         careerSnapshot.JobTitle,
                         careerSnapshot.JobLevel);

@@ -13,10 +13,10 @@ public sealed class StandardHealthService : IHealthService
     public StandardHealthService(IGameDataService data, IGameRandom random)
     {
         _random = random;
-        var definitions = JsonSerializer.Deserialize<List<HealthConditionDefinition>>(
-            data.ReadText(ConditionsPath),
-            new JsonSerializerOptions { PropertyNameCaseInsensitive = true })
-            ?? throw new InvalidDataException($"Could not read {ConditionsPath}.");
+        var definitions = CatalogValidation.DeserializeJson<List<HealthConditionDefinition>>(
+            data,
+            ConditionsPath,
+            new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
         ValidateDefinitions(definitions);
         _definitions = definitions.ToDictionary(x => x.Id, StringComparer.OrdinalIgnoreCase);
     }
@@ -30,6 +30,7 @@ public sealed class StandardHealthService : IHealthService
     public HealthSnapshot GetHealth(IPerson person)
     {
         var health = GetRequired(person);
+        NormalizeHealthBounds(health);
         return new HealthSnapshot(
             health.Current,
             health.Maximum,
@@ -55,8 +56,7 @@ public sealed class StandardHealthService : IHealthService
         {
             EnsureHealth(person);
             var health = GetRequired(person);
-            health.Maximum = Math.Max(0, health.Maximum);
-            health.Current = Math.Clamp(health.Current, 0, health.Maximum);
+            NormalizeHealthBounds(health);
             ReconcileStoredConditionImpacts(health);
         }
     }
@@ -236,9 +236,14 @@ public sealed class StandardHealthService : IHealthService
     {
         EnsureHealth(person);
         var health = GetRequired(person);
+        NormalizeHealthBounds(health);
+        return health;
+    }
+
+    private static void NormalizeHealthBounds(HealthComponent health)
+    {
         health.Maximum = Math.Max(0, health.Maximum);
         health.Current = Math.Clamp(health.Current, 0, health.Maximum);
-        return health;
     }
 
     private bool ShouldRetain(HealthConditionState condition)
@@ -265,34 +270,131 @@ public sealed class StandardHealthService : IHealthService
                || condition.Type.Equals("childhood", StringComparison.OrdinalIgnoreCase);
     }
 
-    private static void ValidateDefinitions(IReadOnlyList<HealthConditionDefinition> definitions)
+    private static void ValidateDefinitions(
+        IReadOnlyList<HealthConditionDefinition> definitions)
     {
-        if (definitions.Count == 0) throw new InvalidDataException("Health condition data is empty.");
-        var ids = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-        foreach (var d in definitions)
+        if (definitions.Count == 0)
         {
-            if (string.IsNullOrWhiteSpace(d.Id)
-                || string.IsNullOrWhiteSpace(d.Name)
-                || string.IsNullOrWhiteSpace(d.Type)
-                || string.IsNullOrWhiteSpace(d.Category)
-                || string.IsNullOrWhiteSpace(d.Course))
+            throw CatalogValidation.Error(
+                ConditionsPath,
+                "at least one health condition",
+                field: "Items",
+                value: 0);
+        }
+
+        var ids = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+        for (var index = 0; index < definitions.Count; index++)
+        {
+            var definition = definitions[index];
+            var item = string.IsNullOrWhiteSpace(definition.Id)
+                ? $"index {index}"
+                : definition.Id;
+
+            if (string.IsNullOrWhiteSpace(definition.Id))
+                throw CatalogValidation.Error(ConditionsPath, "a non-empty condition ID", item: item, field: "id", value: definition.Id);
+            if (string.IsNullOrWhiteSpace(definition.Name))
+                throw CatalogValidation.Error(ConditionsPath, "a non-empty condition name", item: item, field: "name", value: definition.Name);
+            if (string.IsNullOrWhiteSpace(definition.Type))
+                throw CatalogValidation.Error(ConditionsPath, "a non-empty condition type", item: item, field: "type", value: definition.Type);
+            if (string.IsNullOrWhiteSpace(definition.Category))
+                throw CatalogValidation.Error(ConditionsPath, "a non-empty condition category", item: item, field: "category", value: definition.Category);
+            if (string.IsNullOrWhiteSpace(definition.Course))
+                throw CatalogValidation.Error(ConditionsPath, "a non-empty condition course", item: item, field: "course", value: definition.Course);
+
+            if (!ids.TryAdd(definition.Id, index))
             {
-                throw new InvalidDataException(
-                    "Every health condition needs id, name, type, category and course.");
+                throw CatalogValidation.Error(
+                    ConditionsPath,
+                    $"a unique ID; first defined at item index {ids[definition.Id]}",
+                    item: definition.Id,
+                    field: "id",
+                    value: definition.Id);
             }
-            if (!ids.Add(d.Id)) throw new InvalidDataException($"Duplicate health condition ID '{d.Id}'.");
-            if (d.MinimumAge < 0) throw new InvalidDataException($"Condition '{d.Id}' has a negative minimumAge.");
-            if (d.MaximumAge is int maximumAge && maximumAge < d.MinimumAge) throw new InvalidDataException($"Condition '{d.Id}' has maximumAge below minimumAge.");
-            if (d.StartYear < GameCalendarConfiguration.GameStartYear) throw new InvalidDataException($"Condition '{d.Id}' starts before {GameCalendarConfiguration.GameStartYear}.");
-            if (d.EndYear is int endYear && endYear < d.StartYear) throw new InvalidDataException($"Condition '{d.Id}' has endYear before startYear.");
-            if (d.DurationMin.HasValue != d.DurationMax.HasValue) throw new InvalidDataException($"Condition '{d.Id}' must specify both durationMin and durationMax, or neither.");
-            if (d.DurationMin.HasValue && (d.DurationMin <= 0 || d.DurationMax < d.DurationMin)) throw new InvalidDataException($"Condition '{d.Id}' has an invalid duration.");
-            if ((d.Category.Equals("Mild", StringComparison.OrdinalIgnoreCase)
-                 || d.Category.Equals("Serious", StringComparison.OrdinalIgnoreCase))
-                && d.Weight <= 0)
+
+            if (definition.MinimumAge < 0)
             {
-                throw new InvalidDataException(
-                    $"Condition '{d.Id}' needs a positive selection weight.");
+                throw CatalogValidation.Error(
+                    ConditionsPath,
+                    "an age greater than or equal to 0",
+                    item: definition.Id,
+                    field: "minimumAge",
+                    value: definition.MinimumAge);
+            }
+
+            if (definition.MaximumAge is int maximumAge
+                && maximumAge < definition.MinimumAge)
+            {
+                throw CatalogValidation.Error(
+                    ConditionsPath,
+                    $"an age at least minimumAge ({definition.MinimumAge})",
+                    item: definition.Id,
+                    field: "maximumAge",
+                    value: maximumAge);
+            }
+
+            if (definition.StartYear < GameCalendarConfiguration.GameStartYear)
+            {
+                throw CatalogValidation.Error(
+                    ConditionsPath,
+                    $"a year at or after {GameCalendarConfiguration.GameStartYear}",
+                    item: definition.Id,
+                    field: "startYear",
+                    value: definition.StartYear);
+            }
+
+            if (definition.EndYear is int endYear
+                && endYear < definition.StartYear)
+            {
+                throw CatalogValidation.Error(
+                    ConditionsPath,
+                    $"a year at or after startYear ({definition.StartYear})",
+                    item: definition.Id,
+                    field: "endYear",
+                    value: endYear);
+            }
+
+            if (definition.DurationMin.HasValue != definition.DurationMax.HasValue)
+            {
+                throw CatalogValidation.Error(
+                    ConditionsPath,
+                    "both durationMin and durationMax, or neither",
+                    item: definition.Id,
+                    field: definition.DurationMin.HasValue ? "durationMax" : "durationMin",
+                    value: null);
+            }
+
+            if (definition.DurationMin.HasValue
+                && (definition.DurationMin <= 0
+                    || definition.DurationMax < definition.DurationMin))
+            {
+                if (definition.DurationMin <= 0)
+                {
+                    throw CatalogValidation.Error(
+                        ConditionsPath,
+                        "an integer greater than 0",
+                        item: definition.Id,
+                        field: "durationMin",
+                        value: definition.DurationMin);
+                }
+
+                throw CatalogValidation.Error(
+                    ConditionsPath,
+                    $"a duration at least durationMin ({definition.DurationMin})",
+                    item: definition.Id,
+                    field: "durationMax",
+                    value: definition.DurationMax);
+            }
+
+            if ((definition.Category.Equals("Mild", StringComparison.OrdinalIgnoreCase)
+                 || definition.Category.Equals("Serious", StringComparison.OrdinalIgnoreCase))
+                && definition.Weight <= 0)
+            {
+                throw CatalogValidation.Error(
+                    ConditionsPath,
+                    "a selection weight greater than 0 for Mild and Serious conditions",
+                    item: definition.Id,
+                    field: "weight",
+                    value: definition.Weight);
             }
         }
     }

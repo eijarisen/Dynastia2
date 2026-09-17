@@ -13,6 +13,10 @@ public interface IEconomyService
     HouseholdFinanceSnapshot? GetHousehold(
         IPerson person);
 
+    bool CanAfford(
+        IPerson person,
+        decimal amount);
+
     decimal GetProjectedAnnualIncome(
         IPerson person);
 

@@ -1,15 +1,9 @@
+using Dynastia.Contracts;
+
 namespace Dynastia.Mechanics.Career;
 
 internal static class CareerAptitude
 {
-    private static readonly IReadOnlyDictionary<string, string> DisplayNames =
-        new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
-        {
-            ["strength"] = "Strength",
-            ["intellect"] = "Intellect",
-            ["appeal"] = "Appeal"
-        };
-
     public static double GetComposite(
         CareerDefinition career,
         Func<string, int> getStat)
@@ -21,16 +15,38 @@ internal static class CareerAptitude
                 : getStat(career.SecondaryStat));
     }
 
-    public static string GetDisplayName(CareerDefinition career)
+    public static string GetDisplayName(
+        CareerDefinition career,
+        IPerson person,
+        IStatsService stats)
     {
-        var primary = ResolveDisplay(career.PrimaryStat);
+        ArgumentNullException.ThrowIfNull(person);
+        ArgumentNullException.ThrowIfNull(stats);
+
+        var names = stats.GetStats(person)
+            .ToDictionary(
+                stat => stat.Id,
+                stat => stat.Name,
+                StringComparer.OrdinalIgnoreCase);
+
+        var primary = ResolveDisplay(
+            career.PrimaryStat,
+            names);
+
         return string.IsNullOrWhiteSpace(career.SecondaryStat)
             ? primary
-            : $"{primary} / {ResolveDisplay(career.SecondaryStat)}";
+            : $"{primary} / "
+              + ResolveDisplay(
+                  career.SecondaryStat,
+                  names);
     }
 
-    private static string ResolveDisplay(string statId) =>
-        DisplayNames.TryGetValue(statId, out var value) ? value : statId;
+    private static string ResolveDisplay(
+        string statId,
+        IReadOnlyDictionary<string, string> names) =>
+        names.TryGetValue(statId, out var value)
+            ? value
+            : statId;
 }
 
 internal sealed record EmploymentOpportunity(

@@ -45,7 +45,7 @@ public sealed partial class HouseholdsPlugin
                     }
 
                     var price = economy.GetHousePrice(town);
-                    if (household.Wealth < price)
+                    if (!economy.CanAfford(context.Actor, price))
                     {
                         return new GameActionResult(
                             false,
@@ -517,7 +517,7 @@ public sealed partial class HouseholdsPlugin
                 "zł")
         };
 
-        if (household.Wealth < required)
+        if (!economy.CanAfford(context.Actor, required))
         {
             return ActionEvaluationResult.Denied(
                 ActionReasonCodes.InsufficientFunds,

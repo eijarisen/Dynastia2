@@ -72,7 +72,7 @@ public sealed class PersonRowViewModel
 
             OccupationText =
                 farmingService?.IsWorkingFarmWorker(person, person) == true
-                    ? "Farm Worker"
+                    ? FarmingPresentationDefaults.WorkerOccupationLabel
                     : career.IsEmployed && career.JobLevel > 0
                         ? $"{career.JobTitle} ({career.JobLevel})"
                         : career.JobTitle;

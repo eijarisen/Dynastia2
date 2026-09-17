@@ -26,41 +26,49 @@ public static class CraftVocationDataValidation
 
     private static void ValidateMasteryLevels(string text)
     {
-        var rows = NonEmptyLines(text).Skip(1).ToList();
+        const string header = "Level,DisplayName,MasteryBonus,RequiredMasteryProgress,MinimumRelevantExperienceYears";
+        var lines = NonEmptyLines(text).ToList();
+        ValidateHeader(lines, MasteryLevelsPath, header);
+        var rows = lines.Skip(1).ToList();
         if (rows.Count != CraftRules.MasteryLevels.Count)
-            Fail(MasteryLevelsPath, $"expected {CraftRules.MasteryLevels.Count} mastery rows but found {rows.Count}");
+        {
+            throw CatalogValidation.Error(
+                MasteryLevelsPath,
+                $"exactly {CraftRules.MasteryLevels.Count} mastery rows",
+                field: "RowCount",
+                value: rows.Count);
+        }
 
         for (var index = 0; index < rows.Count; index++)
         {
             var columns = rows[index].Split(',');
+            var row = index + 2;
             if (columns.Length != 5)
-                Fail(MasteryLevelsPath, $"row {index + 2} must contain 5 columns");
+                throw CatalogValidation.FieldCount(MasteryLevelsPath, row, columns.Length, 5);
 
             var expected = CraftRules.MasteryLevels[index];
-            var level = ParseInt(columns[0], MasteryLevelsPath);
-            var bonus = ParseInt(columns[2], MasteryLevelsPath);
-            var progress = ParseDouble(columns[3], MasteryLevelsPath);
-            var years = ParseInt(columns[4], MasteryLevelsPath);
+            var level = CatalogValidation.ParseInt(MasteryLevelsPath, row, "Level", columns[0]);
+            var bonus = CatalogValidation.ParseInt(MasteryLevelsPath, row, "MasteryBonus", columns[2]);
+            var progress = CatalogValidation.ParseDouble(MasteryLevelsPath, row, "RequiredMasteryProgress", columns[3]);
+            var years = CatalogValidation.ParseInt(MasteryLevelsPath, row, "MinimumRelevantExperienceYears", columns[4]);
 
-            if (level != expected.Level
-                || !columns[1].Equals(expected.DisplayName, StringComparison.Ordinal)
-                || bonus != expected.MasteryBonus
-                || Math.Abs(progress - expected.RequiredMasteryProgress) > 0.0000001
-                || years != expected.MinimumRelevantExperienceYears)
-            {
-                Fail(MasteryLevelsPath, $"row for level {expected.Level} does not match the implemented mastery rule");
-            }
+            RequireEqual(MasteryLevelsPath, row, level.ToString(CultureInfo.InvariantCulture), expected.Level.ToString(CultureInfo.InvariantCulture), "Level", expected.Level);
+            RequireEqual(MasteryLevelsPath, row, columns[1], expected.DisplayName, "DisplayName", expected.DisplayName);
+            RequireEqual(MasteryLevelsPath, row, bonus.ToString(CultureInfo.InvariantCulture), expected.MasteryBonus.ToString(CultureInfo.InvariantCulture), "MasteryBonus", expected.MasteryBonus);
+            if (Math.Abs(progress - expected.RequiredMasteryProgress) > 0.0000001)
+                throw CatalogValidation.Error(MasteryLevelsPath, expected.RequiredMasteryProgress.ToString(CultureInfo.InvariantCulture), row, expected.DisplayName, "RequiredMasteryProgress", progress);
+            RequireEqual(MasteryLevelsPath, row, years.ToString(CultureInfo.InvariantCulture), expected.MinimumRelevantExperienceYears.ToString(CultureInfo.InvariantCulture), "MinimumRelevantExperienceYears", expected.MinimumRelevantExperienceYears);
         }
     }
 
     private static void ValidateEducationRules(string text)
     {
-        using var document = JsonDocument.Parse(text);
-        var root = document.RootElement;
-        var educationWindow = root.GetProperty("educationWindow");
-        var slots = root.GetProperty("slots");
-        var improvement = root.GetProperty("existingCraftImprovement");
-        var unlock = root.GetProperty("newCraft");
+        using var document = ParseDocument(text, EducationRulesPath);
+        var root = RequireObjectRoot(document, EducationRulesPath);
+        var educationWindow = RequireObject(root, "educationWindow", EducationRulesPath);
+        var slots = RequireObject(root, "slots", EducationRulesPath);
+        var improvement = RequireObject(root, "existingCraftImprovement", EducationRulesPath);
+        var unlock = RequireObject(root, "newCraft", EducationRulesPath);
 
         RequireDecimal(educationWindow, "priceForEveryOption", CraftRules.EducationCost, EducationRulesPath);
         RequireInt(slots, "maximumCrafts", CraftRules.MaximumCrafts, EducationRulesPath);
@@ -70,17 +78,17 @@ public static class CraftVocationDataValidation
         RequireBool(educationWindow, "unknownCraftsVisibleOnlyWhenChosenSlotEmpty", true, EducationRulesPath);
         RequireBool(educationWindow, "knownCraftsVisibleForImprovement", true, EducationRulesPath);
         RequireBool(educationWindow, "masterCraftsDisabled", true, EducationRulesPath);
-        RequireBool(slots.GetProperty("inheritedSlot"), "replaceable", false, EducationRulesPath);
-        RequireBool(slots.GetProperty("chosenSlot"), "replaceable", false, EducationRulesPath);
+        RequireBool(RequireObject(slots, "inheritedSlot", EducationRulesPath), "replaceable", false, EducationRulesPath);
+        RequireBool(RequireObject(slots, "chosenSlot", EducationRulesPath), "replaceable", false, EducationRulesPath);
     }
 
     private static void ValidateProgressionRules(string text)
     {
-        using var document = JsonDocument.Parse(text);
-        var root = document.RootElement;
-        var experience = root.GetProperty("experience");
-        var education = root.GetProperty("education");
-        var retirement = root.GetProperty("retirement");
+        using var document = ParseDocument(text, ProgressionRulesPath);
+        var root = RequireObjectRoot(document, ProgressionRulesPath);
+        var experience = RequireObject(root, "experience", ProgressionRulesPath);
+        var education = RequireObject(root, "education", ProgressionRulesPath);
+        var retirement = RequireObject(root, "retirement", ProgressionRulesPath);
 
         RequireInt(experience, "maximumCreditPerCalendarYearPerCraft", 1, ProgressionRulesPath);
         RequireDecimal(education, "cost", CraftRules.EducationCost, ProgressionRulesPath);
@@ -88,30 +96,53 @@ public static class CraftVocationDataValidation
         RequireBool(root, "automaticLeveling", true, ProgressionRulesPath);
         RequireBool(retirement, "automaticRetirement", false, ProgressionRulesPath);
 
-        var levels = root.GetProperty("levels").EnumerateArray().ToList();
+        var levelsProperty = RequireProperty(root, "levels", ProgressionRulesPath);
+        if (levelsProperty.ValueKind != JsonValueKind.Array)
+        {
+            throw CatalogValidation.Error(
+                ProgressionRulesPath,
+                "a JSON array",
+                field: "levels",
+                value: levelsProperty.ValueKind);
+        }
+
+        var levels = levelsProperty.EnumerateArray().ToList();
         if (levels.Count != CraftRules.MasteryLevels.Count)
-            Fail(ProgressionRulesPath, "mastery level count does not match the implementation");
+        {
+            throw CatalogValidation.Error(
+                ProgressionRulesPath,
+                $"exactly {CraftRules.MasteryLevels.Count} mastery level objects",
+                field: "levels",
+                value: levels.Count);
+        }
 
         foreach (var expected in CraftRules.MasteryLevels)
         {
-            var level = levels.FirstOrDefault(item => item.GetProperty("level").GetInt32() == expected.Level);
-            if (level.ValueKind == JsonValueKind.Undefined
-                || !level.GetProperty("name").GetString()!.Equals(expected.DisplayName, StringComparison.Ordinal)
-                || Math.Abs(level.GetProperty("requiredProgress").GetDouble() - expected.RequiredMasteryProgress) > 0.0000001
-                || level.GetProperty("minimumRelevantExperienceYears").GetInt32() != expected.MinimumRelevantExperienceYears)
+            var level = levels.FirstOrDefault(item =>
+                TryGetInt(item, "level", out var value) && value == expected.Level);
+            if (level.ValueKind == JsonValueKind.Undefined)
             {
-                Fail(ProgressionRulesPath, $"level {expected.Level} does not match the implemented mastery rule");
+                throw CatalogValidation.Error(
+                    ProgressionRulesPath,
+                    $"an object for mastery level {expected.Level}",
+                    item: expected.DisplayName,
+                    field: "levels",
+                    value: "<missing>");
             }
+
+            RequireString(level, "name", expected.DisplayName, ProgressionRulesPath, expected.DisplayName);
+            RequireDouble(level, "requiredProgress", expected.RequiredMasteryProgress, ProgressionRulesPath, expected.DisplayName);
+            RequireInt(level, "minimumRelevantExperienceYears", expected.MinimumRelevantExperienceYears, ProgressionRulesPath, expected.DisplayName);
         }
     }
 
     private static void ValidateEconomyRules(string text)
     {
-        using var document = JsonDocument.Parse(text);
-        var root = document.RootElement;
-        var incomeRoll = root.GetProperty("incomeRoll");
-        var commission = root.GetProperty("majorCommission");
-        var selfEmployment = root.GetProperty("selfEmployment");
+        using var document = ParseDocument(text, EconomyRulesPath);
+        var root = RequireObjectRoot(document, EconomyRulesPath);
+        var incomeRoll = RequireObject(root, "incomeRoll", EconomyRulesPath);
+        var commission = RequireObject(root, "majorCommission", EconomyRulesPath);
+        var selfEmployment = RequireObject(root, "selfEmployment", EconomyRulesPath);
 
         RequireDecimal(root, "educationCost", CraftRules.EducationCost, EconomyRulesPath);
         RequireDecimal(root, "monthlyIncomeBase", CraftRules.MonthlyIncomeBase, EconomyRulesPath);
@@ -128,52 +159,96 @@ public static class CraftVocationDataValidation
 
     private static void ValidateIncomeReference(string text)
     {
-        var rows = NonEmptyLines(text).Skip(1).ToList();
+        const string header = "Level,DisplayName,MasteryBonus,ExpectedMonthlyMultiplier,ExpectedMonthlyIncome,ApproxMonthlyMedian,ExpectedAnnualIncome,ApproxAnnualMedian,ApproxAnnualP90,MaximumMonthlyIncome,MajorCommissionFrequency";
+        var lines = NonEmptyLines(text).ToList();
+        ValidateHeader(lines, IncomeReferencePath, header);
+        var rows = lines.Skip(1).ToList();
         if (rows.Count != CraftRules.MasteryLevels.Count)
-            Fail(IncomeReferencePath, $"expected {CraftRules.MasteryLevels.Count} income rows but found {rows.Count}");
-
-        foreach (var row in rows)
         {
-            var columns = row.Split(',');
-            if (columns.Length < 10)
-                Fail(IncomeReferencePath, "income rows must contain at least 10 columns");
+            throw CatalogValidation.Error(
+                IncomeReferencePath,
+                $"exactly {CraftRules.MasteryLevels.Count} income rows",
+                field: "RowCount",
+                value: rows.Count);
+        }
 
-            var level = ParseInt(columns[0], IncomeReferencePath);
+        for (var index = 0; index < rows.Count; index++)
+        {
+            var columns = rows[index].Split(',');
+            var row = index + 2;
+            if (columns.Length < 10)
+            {
+                throw CatalogValidation.Error(
+                    IncomeReferencePath,
+                    "at least 10 columns",
+                    row,
+                    field: "FieldCount",
+                    value: columns.Length);
+            }
+
+            var level = CatalogValidation.ParseInt(IncomeReferencePath, row, "Level", columns[0]);
             var rule = CraftRules.GetMasteryRule(level);
-            var expectedAnnual = ParseDecimal(columns[6], IncomeReferencePath);
-            var maximumMonthly = ParseDecimal(columns[9], IncomeReferencePath);
+            var expectedAnnual = CatalogValidation.ParseDecimal(IncomeReferencePath, row, "ExpectedAnnualIncome", columns[6]);
+            var maximumMonthly = CatalogValidation.ParseDecimal(IncomeReferencePath, row, "MaximumMonthlyIncome", columns[9]);
+            var masteryBonus = CatalogValidation.ParseInt(IncomeReferencePath, row, "MasteryBonus", columns[2]);
             var calculatedMaximum = Math.Round(
                 CraftRules.CalculateMonthlyIncome(94.0, level),
                 2,
                 MidpointRounding.AwayFromZero);
 
-            if (!columns[1].Equals(rule.DisplayName, StringComparison.Ordinal)
-                || ParseInt(columns[2], IncomeReferencePath) != rule.MasteryBonus
-                || Math.Abs(expectedAnnual - rule.ExpectedAnnualIncome) > 0.01m
-                || Math.Abs(maximumMonthly - calculatedMaximum) > 0.01m)
-            {
-                Fail(IncomeReferencePath, $"income reference for level {level} does not match the implemented rule");
-            }
+            if (!columns[1].Equals(rule.DisplayName, StringComparison.Ordinal))
+                throw CatalogValidation.Error(IncomeReferencePath, rule.DisplayName, row, rule.DisplayName, "DisplayName", columns[1]);
+            if (masteryBonus != rule.MasteryBonus)
+                throw CatalogValidation.Error(IncomeReferencePath, rule.MasteryBonus.ToString(CultureInfo.InvariantCulture), row, rule.DisplayName, "MasteryBonus", masteryBonus);
+            if (Math.Abs(expectedAnnual - rule.ExpectedAnnualIncome) > 0.01m)
+                throw CatalogValidation.Error(IncomeReferencePath, rule.ExpectedAnnualIncome.ToString(CultureInfo.InvariantCulture), row, rule.DisplayName, "ExpectedAnnualIncome", expectedAnnual);
+            if (Math.Abs(maximumMonthly - calculatedMaximum) > 0.01m)
+                throw CatalogValidation.Error(IncomeReferencePath, calculatedMaximum.ToString(CultureInfo.InvariantCulture), row, rule.DisplayName, "MaximumMonthlyIncome", maximumMonthly);
         }
     }
 
     private static void ValidateCalibration(string text)
     {
-        var rows = NonEmptyLines(text).Skip(1).ToList();
+        const string header = "PrimaryStat,ProgressPerRelevantWorkYear,EducationSuccessByCurrentLevel_Novice_Apprentice_Adept_Expert,ApproxWorkOnlyYearsToMaster,ApproxYearsToMaster_WithRelevantWorkAndAnnualEducation";
+        var lines = NonEmptyLines(text).ToList();
+        ValidateHeader(lines, CalibrationPath, header);
+        var rows = lines.Skip(1).ToList();
         if (rows.Count != 5)
-            Fail(CalibrationPath, $"expected 5 calibration rows but found {rows.Count}");
-
-        foreach (var row in rows)
         {
-            var columns = row.Split(',');
-            if (columns.Length < 5)
-                Fail(CalibrationPath, "calibration rows must contain 5 columns");
+            throw CatalogValidation.Error(
+                CalibrationPath,
+                "exactly 5 calibration rows",
+                field: "RowCount",
+                value: rows.Count);
+        }
 
-            var stat = ParseInt(columns[0], CalibrationPath);
+        for (var index = 0; index < rows.Count; index++)
+        {
+            var columns = rows[index].Split(',');
+            var row = index + 2;
+            if (columns.Length < 5)
+            {
+                throw CatalogValidation.Error(
+                    CalibrationPath,
+                    "at least 5 columns",
+                    row,
+                    field: "FieldCount",
+                    value: columns.Length);
+            }
+
+            var stat = CatalogValidation.ParseInt(CalibrationPath, row, "PrimaryStat", columns[0]);
             var expectedGain = CraftRules.GetExperienceProgressGain(stat);
-            var listedGain = ParseDouble(columns[1], CalibrationPath);
+            var listedGain = CatalogValidation.ParseDouble(CalibrationPath, row, "ProgressPerRelevantWorkYear", columns[1]);
             if (Math.Abs(expectedGain - listedGain) > 0.0000001)
-                Fail(CalibrationPath, $"experience progress for stat {stat} does not match the implementation");
+            {
+                throw CatalogValidation.Error(
+                    CalibrationPath,
+                    expectedGain.ToString(CultureInfo.InvariantCulture),
+                    row,
+                    item: $"PrimaryStat {stat}",
+                    field: "ProgressPerRelevantWorkYear",
+                    value: listedGain);
+            }
         }
     }
 
@@ -181,51 +256,218 @@ public static class CraftVocationDataValidation
         text.Split(['\r', '\n'], StringSplitOptions.RemoveEmptyEntries)
             .Select(line => line.TrimStart('\uFEFF'));
 
-    private static int ParseInt(string value, string path) =>
-        int.TryParse(value, NumberStyles.Integer, CultureInfo.InvariantCulture, out var result)
-            ? result
-            : throw new InvalidDataException($"{path}: invalid integer '{value}'.");
-
-    private static double ParseDouble(string value, string path) =>
-        double.TryParse(value, NumberStyles.Float, CultureInfo.InvariantCulture, out var result)
-            ? result
-            : throw new InvalidDataException($"{path}: invalid number '{value}'.");
-
-    private static decimal ParseDecimal(string value, string path) =>
-        decimal.TryParse(value, NumberStyles.Number, CultureInfo.InvariantCulture, out var result)
-            ? result
-            : throw new InvalidDataException($"{path}: invalid decimal '{value}'.");
-
-    private static void RequireInt(JsonElement element, string name, int expected, string path)
+    private static void ValidateHeader(
+        IReadOnlyList<string> lines,
+        string path,
+        string expected)
     {
-        if (!element.TryGetProperty(name, out var property) || property.GetInt32() != expected)
-            Fail(path, $"'{name}' must be {expected}");
-    }
-
-    private static void RequireDouble(JsonElement element, string name, double expected, string path)
-    {
-        if (!element.TryGetProperty(name, out var property)
-            || Math.Abs(property.GetDouble() - expected) > 0.0000001)
+        if (lines.Count < 2
+            || !lines[0].Equals(expected, StringComparison.Ordinal))
         {
-            Fail(path, $"'{name}' must be {expected.ToString(CultureInfo.InvariantCulture)}");
+            throw CatalogValidation.UnexpectedHeader(
+                path,
+                lines.Count == 0 ? null : lines[0],
+                expected);
         }
     }
 
-    private static void RequireDecimal(JsonElement element, string name, decimal expected, string path)
+    private static JsonDocument ParseDocument(string text, string path)
     {
-        if (!element.TryGetProperty(name, out var property)
-            || Math.Abs(property.GetDecimal() - expected) > 0.0000001m)
+        try
         {
-            Fail(path, $"'{name}' must be {expected.ToString(CultureInfo.InvariantCulture)}");
+            return JsonDocument.Parse(text);
+        }
+        catch (JsonException exception)
+        {
+            var row = exception.LineNumber is long lineNumber && lineNumber < int.MaxValue
+                ? (int)lineNumber + 1
+                : (int?)null;
+            throw new InvalidDataException(
+                $"{path}" +
+                (row is int sourceRow ? $" row {sourceRow}" : string.Empty) +
+                $" field '{exception.Path ?? "$"}': invalid JSON; expected a valid configuration document. {exception.Message}",
+                exception);
         }
     }
 
-    private static void RequireBool(JsonElement element, string name, bool expected, string path)
+    private static JsonElement RequireObjectRoot(JsonDocument document, string path)
     {
-        if (!element.TryGetProperty(name, out var property) || property.GetBoolean() != expected)
-            Fail(path, $"'{name}' must be {expected.ToString().ToLowerInvariant()}");
+        if (document.RootElement.ValueKind != JsonValueKind.Object)
+        {
+            throw CatalogValidation.Error(
+                path,
+                "a JSON object",
+                field: "Root",
+                value: document.RootElement.ValueKind);
+        }
+        return document.RootElement;
     }
 
-    private static void Fail(string path, string message) =>
-        throw new InvalidDataException($"{path}: {message}.");
+    private static JsonElement RequireObject(JsonElement element, string name, string path)
+    {
+        var property = RequireProperty(element, name, path);
+        if (property.ValueKind != JsonValueKind.Object)
+        {
+            throw CatalogValidation.Error(
+                path,
+                "a JSON object",
+                field: name,
+                value: property.ValueKind);
+        }
+        return property;
+    }
+
+    private static JsonElement RequireProperty(JsonElement element, string name, string path)
+    {
+        if (!element.TryGetProperty(name, out var property))
+        {
+            throw CatalogValidation.Error(
+                path,
+                "a required property",
+                field: name,
+                value: null);
+        }
+        return property;
+    }
+
+    private static bool TryGetInt(JsonElement element, string name, out int value)
+    {
+        value = default;
+        return element.TryGetProperty(name, out var property)
+            && property.ValueKind == JsonValueKind.Number
+            && property.TryGetInt32(out value);
+    }
+
+    private static void RequireInt(
+        JsonElement element,
+        string name,
+        int expected,
+        string path,
+        string? item = null)
+    {
+        if (!element.TryGetProperty(name, out var property)
+            || property.ValueKind != JsonValueKind.Number
+            || !property.TryGetInt32(out var actual)
+            || actual != expected)
+        {
+            throw CatalogValidation.Error(
+                path,
+                expected.ToString(CultureInfo.InvariantCulture),
+                item: item,
+                field: name,
+                value: element.TryGetProperty(name, out property) ? JsonValue(property) : null);
+        }
+    }
+
+    private static void RequireDouble(
+        JsonElement element,
+        string name,
+        double expected,
+        string path,
+        string? item = null)
+    {
+        if (!element.TryGetProperty(name, out var property)
+            || property.ValueKind != JsonValueKind.Number
+            || !property.TryGetDouble(out var actual)
+            || Math.Abs(actual - expected) > 0.0000001)
+        {
+            throw CatalogValidation.Error(
+                path,
+                expected.ToString(CultureInfo.InvariantCulture),
+                item: item,
+                field: name,
+                value: element.TryGetProperty(name, out property) ? JsonValue(property) : null);
+        }
+    }
+
+    private static void RequireDecimal(
+        JsonElement element,
+        string name,
+        decimal expected,
+        string path,
+        string? item = null)
+    {
+        if (!element.TryGetProperty(name, out var property)
+            || property.ValueKind != JsonValueKind.Number
+            || !property.TryGetDecimal(out var actual)
+            || Math.Abs(actual - expected) > 0.0000001m)
+        {
+            throw CatalogValidation.Error(
+                path,
+                expected.ToString(CultureInfo.InvariantCulture),
+                item: item,
+                field: name,
+                value: element.TryGetProperty(name, out property) ? JsonValue(property) : null);
+        }
+    }
+
+    private static void RequireBool(
+        JsonElement element,
+        string name,
+        bool expected,
+        string path,
+        string? item = null)
+    {
+        if (!element.TryGetProperty(name, out var property)
+            || property.ValueKind is not (JsonValueKind.True or JsonValueKind.False)
+            || property.GetBoolean() != expected)
+        {
+            throw CatalogValidation.Error(
+                path,
+                expected.ToString().ToLowerInvariant(),
+                item: item,
+                field: name,
+                value: element.TryGetProperty(name, out property) ? JsonValue(property) : null);
+        }
+    }
+
+    private static void RequireString(
+        JsonElement element,
+        string name,
+        string expected,
+        string path,
+        string? item = null)
+    {
+        if (!element.TryGetProperty(name, out var property)
+            || property.ValueKind != JsonValueKind.String
+            || !string.Equals(property.GetString(), expected, StringComparison.Ordinal))
+        {
+            throw CatalogValidation.Error(
+                path,
+                expected,
+                item: item,
+                field: name,
+                value: element.TryGetProperty(name, out property) ? JsonValue(property) : null);
+        }
+    }
+
+    private static object? JsonValue(JsonElement property) =>
+        property.ValueKind switch
+        {
+            JsonValueKind.String => property.GetString(),
+            JsonValueKind.Number => property.GetRawText(),
+            JsonValueKind.True => true,
+            JsonValueKind.False => false,
+            JsonValueKind.Null => null,
+            _ => property.ValueKind.ToString()
+        };
+
+    private static void RequireEqual(
+        string path,
+        int row,
+        string actual,
+        string expected,
+        string field,
+        object expectedValue)
+    {
+        if (!actual.Equals(expected, StringComparison.Ordinal))
+        {
+            throw CatalogValidation.Error(
+                path,
+                Convert.ToString(expectedValue, CultureInfo.InvariantCulture) ?? expected,
+                row,
+                field: field,
+                value: actual);
+        }
+    }
 }

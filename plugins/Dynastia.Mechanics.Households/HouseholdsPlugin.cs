@@ -4,8 +4,6 @@ namespace Dynastia.Mechanics.Households;
 
 public sealed partial class HouseholdsPlugin : IGamePlugin
 {
-    private const decimal NannyCost = 250m;
-
     private const string SurnamesPath =
         "Names/polish_surnames.csv";
 
@@ -26,6 +24,11 @@ public sealed partial class HouseholdsPlugin : IGamePlugin
             context.GetService<IEconomyService>()
             ?? throw new InvalidOperationException(
                 "Economy service is unavailable.");
+
+        var economyBalance =
+            context.GetService<IEconomyBalanceService>()
+            ?? throw new InvalidOperationException(
+                "Economy balance service is unavailable.");
 
         var locations =
             context.GetService<ILocationService>()
@@ -260,6 +263,7 @@ public sealed partial class HouseholdsPlugin : IGamePlugin
             gameState,
             family,
             economy,
+            economyBalance,
             career,
             education,
             stats,

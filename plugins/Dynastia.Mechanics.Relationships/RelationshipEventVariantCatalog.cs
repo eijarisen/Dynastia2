@@ -25,14 +25,14 @@ public sealed class RelationshipEventVariantCatalog
     {
         ArgumentNullException.ThrowIfNull(data);
 
-        var variants = JsonSerializer.Deserialize<
-                List<RelationshipEventVariant>>(
-                data.ReadText(DataPath),
-                new JsonSerializerOptions
-                {
-                    PropertyNameCaseInsensitive = true
-                })
-            ?? [];
+        var variants = CatalogValidation.DeserializeJson<
+            List<RelationshipEventVariant>>(
+            data,
+            DataPath,
+            new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true
+            });
 
         Validate(variants);
 
@@ -54,8 +54,12 @@ public sealed class RelationshipEventVariantCatalog
     {
         if (!_variants.TryGetValue(eventId, out var variants))
         {
-            throw new InvalidDataException(
-                $"{DataPath} has no variants for '{eventId}'.");
+            throw CatalogValidation.Error(
+                DataPath,
+                "an event ID with configured variants",
+                item: eventId,
+                field: "eventId",
+                value: eventId);
         }
 
         var effectiveYear = Math.Max(
@@ -70,26 +74,38 @@ public sealed class RelationshipEventVariantCatalog
     {
         if (variants.Count == 0)
         {
-            throw new InvalidDataException(
-                $"{DataPath} contains no variants.");
+            throw CatalogValidation.Error(
+                DataPath,
+                "at least one relationship event variant",
+                field: "Items",
+                value: 0);
         }
 
-        foreach (var variant in variants)
+        for (var index = 0; index < variants.Count; index++)
         {
-            if (string.IsNullOrWhiteSpace(variant.EventId)
-                || string.IsNullOrWhiteSpace(variant.EventType)
-                || string.IsNullOrWhiteSpace(variant.TextTemplate)
-                || string.IsNullOrWhiteSpace(variant.BiographyTemplate))
-            {
-                throw new InvalidDataException(
-                    $"{DataPath} contains an incomplete event variant.");
-            }
+            var variant = variants[index];
+            var item = string.IsNullOrWhiteSpace(variant.EventId)
+                ? $"index {index}"
+                : variant.EventId;
+
+            if (string.IsNullOrWhiteSpace(variant.EventId))
+                throw CatalogValidation.Error(DataPath, "a non-empty event ID", item: item, field: "eventId", value: variant.EventId);
+            if (string.IsNullOrWhiteSpace(variant.EventType))
+                throw CatalogValidation.Error(DataPath, "a non-empty event type", item: item, field: "eventType", value: variant.EventType);
+            if (string.IsNullOrWhiteSpace(variant.TextTemplate))
+                throw CatalogValidation.Error(DataPath, "a non-empty text template", item: item, field: "textTemplate", value: variant.TextTemplate);
+            if (string.IsNullOrWhiteSpace(variant.BiographyTemplate))
+                throw CatalogValidation.Error(DataPath, "a non-empty biography template", item: item, field: "biographyTemplate", value: variant.BiographyTemplate);
 
             if (variant.EndYear is int endYear
                 && endYear < variant.StartYear)
             {
-                throw new InvalidDataException(
-                    $"{variant.EventId}: endYear precedes startYear.");
+                throw CatalogValidation.Error(
+                    DataPath,
+                    $"a year at or after startYear ({variant.StartYear})",
+                    item: item,
+                    field: "endYear",
+                    value: endYear);
             }
         }
 
@@ -102,9 +118,12 @@ public sealed class RelationshipEventVariantCatalog
             if (ordered[0].StartYear
                 != GameCalendarConfiguration.GameStartYear)
             {
-                throw new InvalidDataException(
-                    $"{group.Key}: event variants must begin in " +
-                    $"{GameCalendarConfiguration.GameStartYear}.");
+                throw CatalogValidation.Error(
+                    DataPath,
+                    $"{GameCalendarConfiguration.GameStartYear} for the first variant",
+                    item: group.Key,
+                    field: "startYear",
+                    value: ordered[0].StartYear);
             }
 
             for (var index = 0; index < ordered.Count; index++)
@@ -113,17 +132,28 @@ public sealed class RelationshipEventVariantCatalog
 
                 if (index < ordered.Count - 1)
                 {
+                    var next = ordered[index + 1];
                     if (current.EndYear is not int endYear
-                        || ordered[index + 1].StartYear != endYear + 1)
+                        || next.StartYear != endYear + 1)
                     {
-                        throw new InvalidDataException(
-                            $"{group.Key}: event variants contain a gap or overlap.");
+                        throw CatalogValidation.Error(
+                            DataPath,
+                            current.EndYear is int closedEnd
+                                ? $"{closedEnd + 1} so event-variant coverage is contiguous"
+                                : "an endYear on every non-final variant",
+                            item: group.Key,
+                            field: "startYear",
+                            value: next.StartYear);
                     }
                 }
                 else if (current.EndYear is not null)
                 {
-                    throw new InvalidDataException(
-                        $"{group.Key}: event variants must end with an open-ended row.");
+                    throw CatalogValidation.Error(
+                        DataPath,
+                        "an empty endYear for the final open-ended variant",
+                        item: group.Key,
+                        field: "endYear",
+                        value: current.EndYear.Value);
                 }
             }
         }

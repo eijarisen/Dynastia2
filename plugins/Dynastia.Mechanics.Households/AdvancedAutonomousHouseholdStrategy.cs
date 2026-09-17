@@ -6,8 +6,6 @@ namespace Dynastia.Mechanics.Households;
 internal sealed class AdvancedAutonomousHouseholdStrategy :
     IAutonomousHouseholdStrategy
 {
-    private const decimal NannyExpenseEstimate = 250m;
-
     private readonly IGamePluginContext _context;
     private readonly IGameState _gameState;
     private readonly IHouseholdService _households;
@@ -67,21 +65,22 @@ internal sealed class AdvancedAutonomousHouseholdStrategy :
         var status = _households.GetStatus(head);
         var loans = _context.GetService<ILoanService>();
 
-        var projectedIncome = _economy.GetProjectedAnnualIncome(head);
-        if (loans is not null)
-        {
-            projectedIncome += loans.GetLoansGiven(head)
-                .Sum(loan => loan.AnnualPayment);
-        }
+        var forecast = _economy.GetAnnualForecast(head);
+        var projectedIncome = forecast?.ProjectedIncome ?? 0m;
 
         var debtPayments = loans?.GetDebts(head)
             .Sum(loan => loan.AnnualPayment) ?? 0m;
 
-        var expectedExpenses = EstimateOrdinaryExpenses(
-            head,
-            members.Count,
-            finance,
-            debtPayments);
+        var expectedExpenses = forecast?.ProjectedExpenses ?? 0m;
+        if (finance is not null
+            && finance.LastExpenses > expectedExpenses)
+        {
+            // Preserve the existing conservative autonomous-household policy:
+            // a historically higher ordinary expense year remains the planning
+            // floor, while current debt payments stay explicit. The underlying
+            // expense formulas themselves now come only from Economy.
+            expectedExpenses = finance.LastExpenses + debtPayments;
+        }
 
         var wealth = finance?.Wealth ?? 0m;
         var financialState = AutonomousStrategyRules.GetFinancialState(
@@ -1655,32 +1654,6 @@ internal sealed class AdvancedAutonomousHouseholdStrategy :
 
         desired = Math.Min(desired, availableWealth);
         return Math.Floor(desired / 1000m) * 1000m;
-    }
-
-    private decimal EstimateOrdinaryExpenses(
-        IPerson head,
-        int memberCount,
-        HouseholdFinanceSnapshot? finance,
-        decimal debtPayments)
-    {
-        var town = _economy.GetResidenceTown(head);
-        var expenses = memberCount * _economy.GetLivingCostPerPerson(town);
-
-        var ownsLocalResidence = finance?.Houses.Any(house =>
-            house.Town.Id.Equals(town.Id, StringComparison.OrdinalIgnoreCase)) == true;
-
-        if (!ownsLocalResidence)
-            expenses += _economy.GetResidenceRent(town);
-
-        if (finance?.NannyId is not null)
-            expenses += NannyExpenseEstimate;
-
-        expenses += debtPayments;
-
-        if (finance is not null && finance.LastExpenses > expenses)
-            expenses = finance.LastExpenses + debtPayments;
-
-        return expenses;
     }
 
     private AutonomousMemberSnapshot BuildMemberSnapshot(

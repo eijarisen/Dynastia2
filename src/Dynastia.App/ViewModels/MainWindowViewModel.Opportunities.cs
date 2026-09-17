@@ -32,7 +32,7 @@ public sealed partial class MainWindowViewModel
                     opportunity,
                     _careerPresentationService?
                         .GetCareerEmoji(opportunity.CareerId)
-                        ?? "💼"))
+                        ?? CareerPresentationDefaults.DefaultCareerEmoji))
             .ToList();
 
         var town = _locationService
@@ -128,7 +128,7 @@ public sealed partial class MainWindowViewModel
                     candidate.JobLevel > 0
                         ? _careerPresentationService?
                             .GetCareerEmoji(candidate.CareerId)
-                            ?? "💼"
+                            ?? CareerPresentationDefaults.DefaultCareerEmoji
                         : "🔎",
                     arrangedMarriage ? "Choose" : "Approach"))
             .ToList();

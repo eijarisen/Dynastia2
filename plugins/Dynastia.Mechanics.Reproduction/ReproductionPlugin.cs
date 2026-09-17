@@ -82,16 +82,14 @@ public sealed class ReproductionPlugin : IGamePlugin
                 "Action registry is unavailable.");
 
         var birthConditions =
-            JsonSerializer.Deserialize<
+            CatalogValidation.DeserializeJson<
                 List<BirthConditionDefinition>>(
-                    data.ReadText(
-                        BirthConditionsPath),
+                    data,
+                    BirthConditionsPath,
                     new JsonSerializerOptions
                     {
                         PropertyNameCaseInsensitive = true
-                    })
-            ?? throw new InvalidDataException(
-                $"Could not read {BirthConditionsPath}.");
+                    });
 
         ValidateBirthConditions(
             birthConditions);
@@ -214,69 +212,81 @@ public sealed class ReproductionPlugin : IGamePlugin
     {
         if (definitions.Count == 0)
         {
-            throw new InvalidDataException(
-                "Birth condition data is empty.");
+            throw CatalogValidation.Error(
+                BirthConditionsPath,
+                "at least one birth condition",
+                field: "Items",
+                value: 0);
         }
 
-        var ids =
-            new HashSet<string>(
-                StringComparer.OrdinalIgnoreCase);
+        var ids = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+        var totalProbability = 0.0;
 
-        var totalProbability =
-            0.0;
-
-        foreach (var definition in definitions)
+        for (var index = 0; index < definitions.Count; index++)
         {
-            if (string.IsNullOrWhiteSpace(
-                    definition.Id)
-                || string.IsNullOrWhiteSpace(
-                    definition.Name)
-                || string.IsNullOrWhiteSpace(
-                    definition.HealthConditionId))
+            var definition = definitions[index];
+            var item = string.IsNullOrWhiteSpace(definition.Id)
+                ? $"index {index}"
+                : definition.Id;
+
+            if (string.IsNullOrWhiteSpace(definition.Id))
+                throw CatalogValidation.Error(BirthConditionsPath, "a non-empty condition ID", item: item, field: "id", value: definition.Id);
+            if (string.IsNullOrWhiteSpace(definition.Name))
+                throw CatalogValidation.Error(BirthConditionsPath, "a non-empty condition name", item: item, field: "name", value: definition.Name);
+            if (string.IsNullOrWhiteSpace(definition.HealthConditionId))
+                throw CatalogValidation.Error(BirthConditionsPath, "a non-empty health condition ID", item: item, field: "healthConditionId", value: definition.HealthConditionId);
+
+            if (!ids.TryAdd(definition.Id, index))
             {
-                throw new InvalidDataException(
-                    "Every birth condition needs id, name " +
-                    "and healthConditionId.");
+                throw CatalogValidation.Error(
+                    BirthConditionsPath,
+                    $"a unique ID; first defined at item index {ids[definition.Id]}",
+                    item: definition.Id,
+                    field: "id",
+                    value: definition.Id);
             }
 
-            if (!ids.Add(
-                definition.Id))
+            if (definition.Probability <= 0 || definition.Probability > 1)
             {
-                throw new InvalidDataException(
-                    $"Duplicate birth condition ID " +
-                    $"'{definition.Id}'.");
-            }
-
-            if (definition.Probability <= 0
-                || definition.Probability > 1)
-            {
-                throw new InvalidDataException(
-                    $"Birth condition '{definition.Id}' " +
-                    "must have probability > 0 and <= 1.");
+                throw CatalogValidation.Error(
+                    BirthConditionsPath,
+                    "a number greater than 0 and no greater than 1",
+                    item: definition.Id,
+                    field: "probability",
+                    value: definition.Probability);
             }
 
             if (definition.StartYear < GameCalendarConfiguration.GameStartYear)
             {
-                throw new InvalidDataException(
-                    $"Birth condition '{definition.Id}' starts before {GameCalendarConfiguration.GameStartYear}.");
+                throw CatalogValidation.Error(
+                    BirthConditionsPath,
+                    $"a year at or after {GameCalendarConfiguration.GameStartYear}",
+                    item: definition.Id,
+                    field: "startYear",
+                    value: definition.StartYear);
             }
 
             if (definition.EndYear is int endYear
                 && endYear < definition.StartYear)
             {
-                throw new InvalidDataException(
-                    $"Birth condition '{definition.Id}' has endYear before startYear.");
+                throw CatalogValidation.Error(
+                    BirthConditionsPath,
+                    $"a year at or after startYear ({definition.StartYear})",
+                    item: definition.Id,
+                    field: "endYear",
+                    value: endYear);
             }
 
-            totalProbability +=
-                definition.Probability;
+            totalProbability += definition.Probability;
         }
 
         if (totalProbability > 1.0 + 1e-12)
         {
-            throw new InvalidDataException(
-                $"Birth condition probabilities add up to " +
-                $"{totalProbability:P4}. They must total 100% or less.");
+            throw CatalogValidation.Error(
+                BirthConditionsPath,
+                "a combined probability no greater than 1",
+                field: "probability",
+                value: totalProbability);
         }
     }
 }

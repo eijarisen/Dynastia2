@@ -1,4 +1,3 @@
-using System.Globalization;
 using Dynastia.Contracts;
 
 namespace Dynastia.Core.Data;
@@ -56,7 +55,10 @@ public sealed class ContextWeightService : IContextWeightService
         if (lines.Length < 2
             || !lines[0].TrimStart('\uFEFF').Equals(header, StringComparison.Ordinal))
         {
-            throw new InvalidDataException($"{relativePath}: unexpected header or empty file.");
+            throw CatalogValidation.UnexpectedHeader(
+                relativePath,
+                lines.Length == 0 ? null : lines[0].TrimStart('\uFEFF'),
+                header);
         }
 
         var normalized = new List<string>
@@ -90,7 +92,10 @@ public sealed class ContextWeightService : IContextWeightService
         var lines = text.Split(['\r', '\n'], StringSplitOptions.RemoveEmptyEntries);
         const string header = "ItemId,StartYear,EndYear,Dimension,Value,WeightMultiplier";
         if (lines.Length < 2 || !lines[0].TrimStart('\uFEFF').Equals(header, StringComparison.Ordinal))
-            throw new InvalidDataException($"{path}: unexpected header or empty file.");
+            throw CatalogValidation.UnexpectedHeader(
+                path,
+                lines.Length == 0 ? null : lines[0].TrimStart('\uFEFF'),
+                header);
 
         var rows = new List<Row>();
         for (var index = 1; index < lines.Length; index++)
@@ -98,31 +103,54 @@ public sealed class ContextWeightService : IContextWeightService
             var fields = lines[index].Split(',');
             var rowNumber = index + 1;
             if (fields.Length != 6)
-                throw new InvalidDataException($"{path} row {rowNumber}: expected 6 fields.");
+                throw CatalogValidation.FieldCount(path, rowNumber, fields.Length, 6);
 
             var itemId = fields[0].Trim();
             var dimension = fields[3].Trim();
             var value = fields[4].Trim();
 
             if (!known.Contains(itemId))
-                throw new InvalidDataException($"{path} row {rowNumber} ItemId: unknown item '{itemId}'.");
+                throw CatalogValidation.Error(
+                    path,
+                    "an ItemId present in the owning catalog",
+                    rowNumber,
+                    field: "ItemId",
+                    value: itemId);
 
             var startYear = ParseInt(fields[1], path, rowNumber, "StartYear");
             int? endYear = string.IsNullOrWhiteSpace(fields[2])
                 ? null
                 : ParseInt(fields[2], path, rowNumber, "EndYear");
             if (startYear < GameCalendarConfiguration.GameStartYear)
-                throw new InvalidDataException($"{path} row {rowNumber} StartYear: may not be before {GameCalendarConfiguration.GameStartYear}.");
+                throw CatalogValidation.Error(
+                    path,
+                    $"a year at or after {GameCalendarConfiguration.GameStartYear}",
+                    rowNumber,
+                    itemId,
+                    "StartYear",
+                    startYear);
             if (endYear is int end && end < startYear)
-                throw new InvalidDataException($"{path} row {rowNumber} EndYear: may not precede StartYear.");
+                throw CatalogValidation.Error(
+                    path,
+                    $"a year at or after StartYear ({startYear})",
+                    rowNumber,
+                    itemId,
+                    "EndYear",
+                    end);
 
             ValidateDimension(path, rowNumber, dimension, value);
 
             var multiplier = ParseDouble(fields[5], path, rowNumber, "WeightMultiplier");
             if (multiplier <= 0)
-                throw new InvalidDataException($"{path} row {rowNumber} WeightMultiplier: must be greater than 0.");
+                throw CatalogValidation.Error(
+                    path,
+                    "a number greater than 0",
+                    rowNumber,
+                    itemId,
+                    "WeightMultiplier",
+                    multiplier);
 
-            rows.Add(new Row(itemId, startYear, endYear, dimension, value, multiplier));
+            rows.Add(new Row(rowNumber, itemId, startYear, endYear, dimension, value, multiplier));
         }
 
         foreach (var group in rows.GroupBy(
@@ -135,8 +163,13 @@ public sealed class ContextWeightService : IContextWeightService
                 var current = ordered[index];
                 if (previous.EndYear is null || previous.EndYear.Value >= current.StartYear)
                 {
-                    throw new InvalidDataException(
-                        $"{path}: overlapping rows for item '{current.ItemId}', dimension '{current.Dimension}', value '{current.Value}'.");
+                    throw CatalogValidation.Error(
+                        path,
+                        $"a year range that does not overlap row {previous.SourceRow}",
+                        current.SourceRow,
+                        current.ItemId,
+                        "StartYear",
+                        current.StartYear);
                 }
             }
         }
@@ -153,66 +186,105 @@ public sealed class ContextWeightService : IContextWeightService
         if (dimension.Equals("All", StringComparison.OrdinalIgnoreCase))
         {
             if (!string.IsNullOrEmpty(value))
-                throw new InvalidDataException($"{path} row {row} Value: All requires an empty value.");
+                throw CatalogValidation.Error(
+                    path,
+                    "an empty value when Dimension is All",
+                    row,
+                    field: "Value",
+                    value: value);
             return;
         }
 
         if (string.IsNullOrWhiteSpace(value))
-            throw new InvalidDataException($"{path} row {row} Value: '{dimension}' requires a value.");
+            throw CatalogValidation.Error(
+                path,
+                $"a non-empty value for Dimension '{dimension}'",
+                row,
+                field: "Value",
+                value: value);
 
         if (dimension.Equals("AgeBand", StringComparison.OrdinalIgnoreCase))
         {
             if (!AgeBands.Contains(value))
-                throw new InvalidDataException($"{path} row {row} Value: invalid AgeBand '{value}'.");
+                throw CatalogValidation.Error(
+                    path,
+                    $"one of: {string.Join(", ", AgeBands.OrderBy(item => item))} (canonical AgeBand values)",
+                    row,
+                    field: "Value",
+                    value: value);
             return;
         }
 
         if (dimension.Equals("Sex", StringComparison.OrdinalIgnoreCase))
         {
-            if (!Enum.TryParse<Sex>(value, ignoreCase: true, out _))
-                throw new InvalidDataException($"{path} row {row} Value: invalid Sex '{value}'.");
+            if (!Enum.TryParse<Sex>(value, ignoreCase: true, out var sex)
+                || !Enum.IsDefined(typeof(Sex), sex))
+                throw CatalogValidation.Error(
+                    path,
+                    $"one of: {string.Join(", ", Enum.GetNames<Sex>())} (canonical Sex values)",
+                    row,
+                    field: "Value",
+                    value: value);
             return;
         }
 
         if (dimension.Equals("Temperament", StringComparison.OrdinalIgnoreCase))
         {
             if (!Temperaments.Contains(value))
-                throw new InvalidDataException($"{path} row {row} Value: invalid Temperament '{value}'.");
+                throw CatalogValidation.Error(
+                    path,
+                    $"one of: {string.Join(", ", Temperaments.OrderBy(item => item))} (canonical Temperament values)",
+                    row,
+                    field: "Value",
+                    value: value);
             return;
         }
 
         if (dimension.Equals("Morals", StringComparison.OrdinalIgnoreCase))
         {
             if (!Morals.Contains(value))
-                throw new InvalidDataException($"{path} row {row} Value: invalid Morals '{value}'.");
+                throw CatalogValidation.Error(
+                    path,
+                    $"one of: {string.Join(", ", Morals.OrderBy(item => item))} (canonical Morals values)",
+                    row,
+                    field: "Value",
+                    value: value);
             return;
         }
 
         if (dimension.Equals("SettlementClass", StringComparison.OrdinalIgnoreCase))
         {
-            if (!Enum.TryParse<SettlementClass>(value, ignoreCase: true, out _))
-                throw new InvalidDataException($"{path} row {row} Value: invalid SettlementClass '{value}'.");
+            if (!Enum.TryParse<SettlementClass>(value, ignoreCase: true, out var settlementClass)
+                || !Enum.IsDefined(typeof(SettlementClass), settlementClass))
+                throw CatalogValidation.Error(
+                    path,
+                    $"one of: {string.Join(", ", Enum.GetNames<SettlementClass>())} (canonical SettlementClass values)",
+                    row,
+                    field: "Value",
+                    value: value);
             return;
         }
 
-        throw new InvalidDataException($"{path} row {row} Dimension: unsupported dimension '{dimension}'.");
+        throw CatalogValidation.Error(
+            path,
+            "one of: All, AgeBand, Sex, Temperament, Morals, SettlementClass",
+            row,
+            field: "Dimension",
+            value: dimension);
     }
 
     private static int ParseInt(string value, string path, int row, string field)
     {
-        if (!int.TryParse(value.Trim(), NumberStyles.Integer, CultureInfo.InvariantCulture, out var parsed))
-            throw new InvalidDataException($"{path} row {row} {field}: invalid integer '{value}'.");
-        return parsed;
+        return CatalogValidation.ParseInt(path, row, field, value);
     }
 
     private static double ParseDouble(string value, string path, int row, string field)
     {
-        if (!double.TryParse(value.Trim(), NumberStyles.Float, CultureInfo.InvariantCulture, out var parsed))
-            throw new InvalidDataException($"{path} row {row} {field}: invalid number '{value}'.");
-        return parsed;
+        return CatalogValidation.ParseDouble(path, row, field, value);
     }
 
     private sealed record Row(
+        int SourceRow,
         string ItemId,
         int StartYear,
         int? EndYear,

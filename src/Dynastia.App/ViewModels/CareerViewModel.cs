@@ -32,7 +32,7 @@ public sealed class CareerViewModel
 
         OccupationText =
             isFarmWorker
-                ? "Occupation: Farm Worker"
+                ? $"Occupation: {FarmingPresentationDefaults.WorkerOccupationLabel}"
                 : snapshot.JobLevel > 0
                     ? $"Occupation: " +
                       $"{snapshot.JobTitle} " +

@@ -1,4 +1,3 @@
-using System.Globalization;
 using Dynastia.Contracts;
 
 namespace Dynastia.Mechanics.Crafts;
@@ -17,6 +16,8 @@ public sealed class CraftCatalog
     private static readonly IReadOnlySet<string> TownPreferences =
         new HashSet<string>(["Universal", "Rural", "Urban"], StringComparer.OrdinalIgnoreCase);
 
+    // Compatibility-only aliases for legacy save/content IDs. Current craft
+    // authoring metadata belongs in the validated CSV catalog below.
     private static readonly IReadOnlyDictionary<string, string> LegacyAliases =
         new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
         {
@@ -47,36 +48,6 @@ public sealed class CraftCatalog
             ["web_design"] = "photography",
             ["digital_media_editing"] = "photography",
             ["cybersecurity"] = "computer_hardware_repair"
-        };
-
-    private static readonly IReadOnlyDictionary<string, string> SelfEmploymentTitles =
-        new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
-        {
-            ["metalworking"] = "Metalworker",
-            ["woodworking_carpentry"] = "Carpenter",
-            ["masonry"] = "Mason",
-            ["pottery_ceramics"] = "Potter / Ceramist",
-            ["glassworking"] = "Glassworker",
-            ["tailoring_sewing"] = "Tailor",
-            ["weaving_textiles"] = "Weaver",
-            ["leatherworking_shoemaking"] = "Leatherworker / Shoemaker",
-            ["jewellery_watchmaking"] = "Jeweller / Watchmaker",
-            ["printing_bookbinding"] = "Printer / Bookbinder",
-            ["baking_confectionery"] = "Baker / Confectioner",
-            ["food_processing_preservation"] = "Food Processor",
-            ["hairdressing_cosmetics"] = "Hairdresser",
-            ["shipwrighting"] = "Shipwright",
-            ["photography"] = "Photographer",
-            ["plumbing"] = "Plumber",
-            ["machining"] = "Machinist",
-            ["mechanical_repair"] = "Mechanic",
-            ["electrical_work"] = "Electrician",
-            ["automotive_repair"] = "Auto Mechanic",
-            ["welding_metal_fabrication"] = "Welder / Metal Fabricator",
-            ["radio_electronics"] = "Electronics Technician",
-            ["aircraft_maintenance"] = "Aircraft Mechanic",
-            ["plastics_fabrication"] = "Plastics Fabricator",
-            ["computer_hardware_repair"] = "Computer Technician"
         };
 
     private readonly IReadOnlyList<CraftInfo> _all;
@@ -146,7 +117,12 @@ public sealed class CraftCatalog
             var secondary = craftLinks.Where(link => link.Relevance.Equals("Secondary", StringComparison.OrdinalIgnoreCase))
                 .Select(link => link.CareerId).Distinct(StringComparer.OrdinalIgnoreCase).ToList();
             if (primary.Count == 0)
-                throw new InvalidDataException($"Craft '{row.Id}' must have at least one Primary career link.");
+                throw CatalogValidation.Error(
+                    LinksPath,
+                    "at least one Primary career link for every craft",
+                    item: row.Id,
+                    field: "Relevance",
+                    value: "<missing>");
 
             return new CraftInfo(
                 row.Id,
@@ -162,13 +138,17 @@ public sealed class CraftCatalog
                 row.RequiredOpportunityTags,
                 row.PreferredOpportunityTags,
                 row.Emoji,
-                SelfEmploymentTitles[row.Id],
+                row.SelfEmploymentTitle,
                 primary,
                 secondary);
         }).ToList();
 
         if (crafts.Count != 25)
-            throw new InvalidDataException($"{DataPath} must define exactly 25 target crafts; found {crafts.Count}.");
+            throw CatalogValidation.Error(
+                DataPath,
+                "exactly 25 target crafts",
+                field: "RowCount",
+                value: crafts.Count);
 
         ValidateContextRows(data.ReadText(ContextPath), crafts);
         var variants = ParseVariants(data.ReadText(VariantsPath), crafts);
@@ -178,47 +158,55 @@ public sealed class CraftCatalog
     private static IReadOnlyList<BaseCraft> ParseCrafts(string text)
     {
         var lines = text.Split(['\r', '\n'], StringSplitOptions.RemoveEmptyEntries);
-        const string header = "Id,Name,StartYear,EndYear,MinimumLearningAge,BaseWeight,PrimaryStat,SecondaryStat,TownPreference,MinimumSettlementClass,RequiredOpportunityTags,PreferredOpportunityTags,Emoji";
+        const string header = "Id,Name,StartYear,EndYear,MinimumLearningAge,BaseWeight,PrimaryStat,SecondaryStat,TownPreference,MinimumSettlementClass,RequiredOpportunityTags,PreferredOpportunityTags,Emoji,SelfEmploymentTitle";
         if (lines.Length < 2 || !lines[0].TrimStart('\uFEFF').Equals(header, StringComparison.Ordinal))
-            throw new InvalidDataException($"{DataPath} has an unexpected header.");
+            throw CatalogValidation.UnexpectedHeader(
+                DataPath,
+                lines.Length == 0 ? null : lines[0].TrimStart('\uFEFF'),
+                header);
 
         var result = new List<BaseCraft>();
         var ids = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         for (var index = 1; index < lines.Length; index++)
         {
             var fields = lines[index].Split(',');
-            if (fields.Length != 13)
-                throw new InvalidDataException($"{DataPath} line {index + 1} has {fields.Length} fields; expected 13.");
+            var row = index + 1;
+            if (fields.Length != 14)
+                throw CatalogValidation.FieldCount(DataPath, row, fields.Length, 14);
 
             var id = fields[0].Trim();
             if (!ids.Add(id))
-                throw new InvalidDataException($"{DataPath} contains duplicate craft ID '{id}'.");
+                throw CatalogValidation.Error(DataPath, "a unique craft ID", row, id, "Id", id);
 
-            var startYear = ParseInt(fields[2], DataPath, index);
-            var endYear = ParseOptionalInt(fields[3], DataPath, index);
-            var minimumAge = ParseInt(fields[4], DataPath, index);
-            var baseWeight = ParseDouble(fields[5], DataPath, index);
+            var startYear = CatalogValidation.ParseInt(DataPath, row, "StartYear", fields[2]);
+            var endYear = string.IsNullOrWhiteSpace(fields[3]) ? (int?)null : CatalogValidation.ParseInt(DataPath, row, "EndYear", fields[3]);
+            var minimumAge = CatalogValidation.ParseInt(DataPath, row, "MinimumLearningAge", fields[4]);
+            var baseWeight = CatalogValidation.ParseDouble(DataPath, row, "BaseWeight", fields[5]);
             var primaryStat = fields[6].Trim();
             var secondaryStat = OptionalDash(fields[7]);
             var townPreference = fields[8].Trim();
+            var selfEmploymentTitle = fields[13].Trim();
 
-            if (!Enum.TryParse<SettlementClass>(fields[9].Trim(), true, out var minimumSettlement))
-                throw new InvalidDataException($"{DataPath} line {index + 1} has invalid MinimumSettlementClass '{fields[9]}'.");
-            if (startYear < GameCalendarConfiguration.GameStartYear || endYear is int end && end < startYear)
-                throw new InvalidDataException($"Craft '{id}' has invalid historical availability.");
+            var minimumSettlement = CatalogValidation.ParseEnum<SettlementClass>(
+                DataPath, row, "MinimumSettlementClass", fields[9]);
+            if (startYear < GameCalendarConfiguration.GameStartYear)
+                throw CatalogValidation.Error(DataPath, $"a year at or after {GameCalendarConfiguration.GameStartYear}", row, id, "StartYear", startYear);
+            if (endYear is int end && end < startYear)
+                throw CatalogValidation.Error(DataPath, $"a year at or after StartYear ({startYear})", row, id, "EndYear", end);
             if (minimumAge < 0)
-                throw new InvalidDataException($"Craft '{id}' has a negative MinimumLearningAge.");
+                throw CatalogValidation.Error(DataPath, "an age of at least 0", row, id, "MinimumLearningAge", minimumAge);
             if (baseWeight <= 0)
-                throw new InvalidDataException($"Craft '{id}' has a non-positive BaseWeight.");
-            if (!AllowedStats.Contains(primaryStat)
-                || secondaryStat is not null && !AllowedStats.Contains(secondaryStat))
-                throw new InvalidDataException($"Craft '{id}' has invalid aptitude stats.");
+                throw CatalogValidation.Error(DataPath, "a number greater than 0", row, id, "BaseWeight", baseWeight);
+            if (!AllowedStats.Contains(primaryStat))
+                throw CatalogValidation.Error(DataPath, $"one of: {string.Join(", ", AllowedStats)}", row, id, "PrimaryStat", primaryStat);
+            if (secondaryStat is not null && !AllowedStats.Contains(secondaryStat))
+                throw CatalogValidation.Error(DataPath, $"one of: {string.Join(", ", AllowedStats)}, or blank", row, id, "SecondaryStat", secondaryStat);
             if (secondaryStat?.Equals(primaryStat, StringComparison.OrdinalIgnoreCase) == true)
-                throw new InvalidDataException($"Craft '{id}' repeats its PrimaryStat as SecondaryStat.");
+                throw CatalogValidation.Error(DataPath, "a stat different from PrimaryStat", row, id, "SecondaryStat", secondaryStat);
             if (!TownPreferences.Contains(townPreference))
-                throw new InvalidDataException($"Craft '{id}' has invalid TownPreference '{townPreference}'.");
-            if (!SelfEmploymentTitles.ContainsKey(id))
-                throw new InvalidDataException($"Craft '{id}' has no self-employment presentation title.");
+                throw CatalogValidation.Error(DataPath, $"one of: {string.Join(", ", TownPreferences)}", row, id, "TownPreference", townPreference);
+            if (string.IsNullOrWhiteSpace(selfEmploymentTitle))
+                throw CatalogValidation.Error(DataPath, "a non-empty self-employment title", row, id, "SelfEmploymentTitle", selfEmploymentTitle);
 
             result.Add(new BaseCraft(
                 id,
@@ -233,7 +221,8 @@ public sealed class CraftCatalog
                 minimumSettlement,
                 ParseList(fields[10]),
                 ParseList(fields[11]),
-                fields[12].Trim()));
+                fields[12].Trim(),
+                selfEmploymentTitle));
         }
 
         return result;
@@ -244,25 +233,26 @@ public sealed class CraftCatalog
         var lines = text.Split(['\r', '\n'], StringSplitOptions.RemoveEmptyEntries);
         const string header = "CraftId,CareerId,Relevance";
         if (lines.Length < 2 || !lines[0].TrimStart('\uFEFF').Equals(header, StringComparison.Ordinal))
-            throw new InvalidDataException($"{LinksPath} has an unexpected header.");
+            throw CatalogValidation.UnexpectedHeader(LinksPath, lines.Length == 0 ? null : lines[0].TrimStart('\uFEFF'), header);
 
         var result = new List<CraftCareerLink>();
         var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         for (var index = 1; index < lines.Length; index++)
         {
             var fields = lines[index].Split(',');
+            var row = index + 1;
             if (fields.Length != 3)
-                throw new InvalidDataException($"{LinksPath} row {index + 1}: expected 3 fields.");
+                throw CatalogValidation.FieldCount(LinksPath, row, fields.Length, 3);
             var craftId = fields[0].Trim();
             var careerId = fields[1].Trim();
             var relevance = fields[2].Trim();
             if (!craftIds.Contains(craftId))
-                throw new InvalidDataException($"{LinksPath} row {index + 1}: unknown CraftId '{craftId}'.");
+                throw CatalogValidation.Error(LinksPath, "a CraftId defined in Crafts/crafts.csv", row, craftId, "CraftId", craftId);
             if (!relevance.Equals("Primary", StringComparison.OrdinalIgnoreCase)
                 && !relevance.Equals("Secondary", StringComparison.OrdinalIgnoreCase))
-                throw new InvalidDataException($"{LinksPath} row {index + 1}: invalid Relevance '{relevance}'.");
+                throw CatalogValidation.Error(LinksPath, "Primary or Secondary", row, craftId, "Relevance", relevance);
             if (!seen.Add($"{craftId}|{careerId}"))
-                throw new InvalidDataException($"{LinksPath} contains duplicate link '{craftId}' -> '{careerId}'.");
+                throw CatalogValidation.Error(LinksPath, "a unique CraftId/CareerId pair", row, craftId, "CareerId", careerId);
             result.Add(new CraftCareerLink(craftId, careerId, relevance));
         }
         return result;
@@ -276,22 +266,23 @@ public sealed class CraftCatalog
         var lines = text.Split(['\r', '\n'], StringSplitOptions.RemoveEmptyEntries);
         const string header = "CraftId,StartYear,EndYear,DisplayName";
         if (lines.Length < 1 || !lines[0].TrimStart('\uFEFF').Equals(header, StringComparison.Ordinal))
-            throw new InvalidDataException($"{VariantsPath} has an unexpected header.");
+            throw CatalogValidation.UnexpectedHeader(VariantsPath, lines.Length == 0 ? null : lines[0].TrimStart('\uFEFF'), header);
 
         var rows = new List<CraftVariant>();
         for (var index = 1; index < lines.Length; index++)
         {
             var fields = lines[index].Split(',');
+            var row = index + 1;
             if (fields.Length != 4)
-                throw new InvalidDataException($"{VariantsPath} row {index + 1}: expected 4 fields.");
+                throw CatalogValidation.FieldCount(VariantsPath, row, fields.Length, 4);
             var craftId = fields[0].Trim();
             if (!known.Contains(craftId))
-                throw new InvalidDataException($"{VariantsPath} row {index + 1}: unknown CraftId '{craftId}'.");
-            var start = ParseInt(fields[1], VariantsPath, index);
-            var end = ParseOptionalInt(fields[2], VariantsPath, index);
+                throw CatalogValidation.Error(VariantsPath, "a CraftId defined in Crafts/crafts.csv", row, craftId, "CraftId", craftId);
+            var start = CatalogValidation.ParseInt(VariantsPath, row, "StartYear", fields[1]);
+            var end = string.IsNullOrWhiteSpace(fields[2]) ? (int?)null : CatalogValidation.ParseInt(VariantsPath, row, "EndYear", fields[2]);
             if (end is int endYear && endYear < start)
-                throw new InvalidDataException($"{VariantsPath} row {index + 1}: invalid range.");
-            rows.Add(new CraftVariant(craftId, start, end, fields[3].Trim()));
+                throw CatalogValidation.Error(VariantsPath, $"a year at or after StartYear ({start})", row, craftId, "EndYear", endYear);
+            rows.Add(new CraftVariant(row, craftId, start, end, fields[3].Trim()));
         }
 
         foreach (var group in rows.GroupBy(row => row.CraftId, StringComparer.OrdinalIgnoreCase))
@@ -301,7 +292,13 @@ public sealed class CraftCatalog
             {
                 var previous = ordered[i - 1];
                 if (previous.EndYear is null || previous.EndYear.Value >= ordered[i].StartYear)
-                    throw new InvalidDataException($"{VariantsPath}: overlapping variants for '{group.Key}'.");
+                    throw CatalogValidation.Error(
+                        VariantsPath,
+                        $"a StartYear after the previous variant ending at {previous.EndYear?.ToString() ?? "open-ended"}",
+                        ordered[i].SourceRow,
+                        group.Key,
+                        "StartYear",
+                        ordered[i].StartYear);
             }
         }
 
@@ -318,36 +315,43 @@ public sealed class CraftCatalog
         var lines = text.Split(['\r', '\n'], StringSplitOptions.RemoveEmptyEntries);
         const string header = "ItemId,StartYear,EndYear,Dimension,Value,WeightMultiplier";
         if (lines.Length < 2 || !lines[0].TrimStart('\uFEFF').Equals(header, StringComparison.Ordinal))
-            throw new InvalidDataException($"{ContextPath} has an unexpected header.");
+            throw CatalogValidation.UnexpectedHeader(ContextPath, lines.Length == 0 ? null : lines[0].TrimStart('\uFEFF'), header);
 
         var ageProfiles = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         for (var index = 1; index < lines.Length; index++)
         {
             var fields = lines[index].Split(',');
+            var row = index + 1;
             if (fields.Length != 6)
-                throw new InvalidDataException($"{ContextPath} row {index + 1}: expected 6 fields.");
+                throw CatalogValidation.FieldCount(ContextPath, row, fields.Length, 6);
             var id = fields[0].Trim();
             if (!byId.TryGetValue(id, out var craft))
-                throw new InvalidDataException($"{ContextPath} row {index + 1}: unknown craft '{id}'.");
-            var start = ParseInt(fields[1], ContextPath, index);
-            var end = ParseOptionalInt(fields[2], ContextPath, index);
-            if (start < craft.StartYear
-                || craft.EndYear is int craftEnd && (end ?? int.MaxValue) > craftEnd)
-                throw new InvalidDataException($"{ContextPath} row {index + 1}: context years fall outside craft '{id}' availability.");
+                throw CatalogValidation.Error(ContextPath, "a craft ID defined in Crafts/crafts.csv", row, id, "ItemId", id);
+            var start = CatalogValidation.ParseInt(ContextPath, row, "StartYear", fields[1]);
+            var end = string.IsNullOrWhiteSpace(fields[2]) ? (int?)null : CatalogValidation.ParseInt(ContextPath, row, "EndYear", fields[2]);
+            if (start < craft.StartYear)
+                throw CatalogValidation.Error(ContextPath, $"a year at or after craft StartYear ({craft.StartYear})", row, id, "StartYear", start);
+            if (craft.EndYear is int craftEnd && (end ?? int.MaxValue) > craftEnd)
+                throw CatalogValidation.Error(ContextPath, $"a year no later than craft EndYear ({craftEnd})", row, id, "EndYear", end);
             if (fields[3].Trim().Equals("AgeBand", StringComparison.OrdinalIgnoreCase))
                 ageProfiles.Add(id);
         }
 
         var missing = crafts.FirstOrDefault(craft => !ageProfiles.Contains(craft.Id));
         if (missing is not null)
-            throw new InvalidDataException($"{ContextPath} is missing an AgeBand profile for craft '{missing.Id}'.");
+            throw CatalogValidation.Error(ContextPath, "at least one AgeBand row for every craft", item: missing.Id, field: "Dimension", value: "<missing>");
     }
 
     private static IReadOnlySet<string> ParseOpportunityTags(string text)
     {
         var lines = text.Split(['\r', '\n'], StringSplitOptions.RemoveEmptyEntries);
         if (lines.Length < 2 || !lines[0].TrimStart('\uFEFF').StartsWith("Tag,", StringComparison.Ordinal))
-            throw new InvalidDataException($"{OpportunityTagsPath} has an unexpected header.");
+            throw CatalogValidation.Error(
+                OpportunityTagsPath,
+                "a header beginning with 'Tag,' and at least one data row",
+                row: 1,
+                field: "Header",
+                value: lines.Length == 0 ? null : lines[0].TrimStart('\uFEFF'));
         return lines.Skip(1)
             .Select(line => line.Split(',')[0].Trim())
             .ToHashSet(StringComparer.OrdinalIgnoreCase);
@@ -358,7 +362,12 @@ public sealed class CraftCatalog
         var invalid = craft.RequiredOpportunityTags.Concat(craft.PreferredOpportunityTags)
             .FirstOrDefault(tag => !known.Contains(tag));
         if (invalid is not null)
-            throw new InvalidDataException($"Craft '{craft.Id}' references unknown opportunity tag '{invalid}'.");
+            throw CatalogValidation.Error(
+                DataPath,
+                "an opportunity tag defined in Towns/opportunity_tags.csv",
+                item: craft.Id,
+                field: "RequiredOpportunityTags/PreferredOpportunityTags",
+                value: invalid);
     }
 
     private static IReadOnlyList<string> ParseList(string value) =>
@@ -368,23 +377,6 @@ public sealed class CraftCatalog
 
     private static string? OptionalDash(string value) =>
         string.IsNullOrWhiteSpace(value) || value.Trim() == "-" ? null : value.Trim();
-
-    private static int ParseInt(string value, string path, int row)
-    {
-        if (!int.TryParse(value.Trim(), NumberStyles.Integer, CultureInfo.InvariantCulture, out var parsed))
-            throw new InvalidDataException($"{path} row {row + 1}: invalid integer '{value}'.");
-        return parsed;
-    }
-
-    private static int? ParseOptionalInt(string value, string path, int row) =>
-        string.IsNullOrWhiteSpace(value) ? null : ParseInt(value, path, row);
-
-    private static double ParseDouble(string value, string path, int row)
-    {
-        if (!double.TryParse(value.Trim(), NumberStyles.Float, CultureInfo.InvariantCulture, out var parsed))
-            throw new InvalidDataException($"{path} row {row + 1}: invalid number '{value}'.");
-        return parsed;
-    }
 
     private sealed record BaseCraft(
         string Id,
@@ -399,8 +391,9 @@ public sealed class CraftCatalog
         SettlementClass MinimumSettlementClass,
         IReadOnlyList<string> RequiredOpportunityTags,
         IReadOnlyList<string> PreferredOpportunityTags,
-        string Emoji);
+        string Emoji,
+        string SelfEmploymentTitle);
 
     private sealed record CraftCareerLink(string CraftId, string CareerId, string Relevance);
-    private sealed record CraftVariant(string CraftId, int StartYear, int? EndYear, string DisplayName);
+    private sealed record CraftVariant(int SourceRow, string CraftId, int StartYear, int? EndYear, string DisplayName);
 }

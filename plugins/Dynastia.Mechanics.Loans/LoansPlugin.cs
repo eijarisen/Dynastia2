@@ -241,10 +241,10 @@ public sealed class LoansPlugin :
                             CultureInfo.InvariantCulture,
                             out var queuedPrincipal))
                     {
-                        return finance.Wealth >= queuedPrincipal;
+                        return economy.CanAfford(actionContext.Actor, queuedPrincipal);
                     }
 
-                    return finance.Wealth >= 1000m;
+                    return economy.CanAfford(actionContext.Actor, 1000m);
                 },
                 Execute = actionContext =>
                 {
@@ -263,11 +263,9 @@ public sealed class LoansPlugin :
                         return new GameActionResult(false);
                     }
 
-                    var lenderHousehold =
-                        economy.GetHousehold(lender);
-
-                    if (lenderHousehold is null
-                        || lenderHousehold.Wealth < terms.Principal)
+                    if (!economy.CanAfford(
+                            lender,
+                            terms.Principal))
                     {
                         return new GameActionResult(false);
                     }

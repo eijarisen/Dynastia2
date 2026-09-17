@@ -278,8 +278,12 @@ public sealed class CraftsPlugin : IGamePlugin
             {
                 if (career.GetLevelOneSalary(careerId) <= 0m)
                 {
-                    throw new InvalidDataException(
-                        $"Craft '{craft.Id}' references unknown career '{careerId}'.");
+                    throw CatalogValidation.Error(
+                        "Crafts/craft_career_links.csv",
+                        "a CareerId defined by the career catalog",
+                        item: craft.Id,
+                        field: "CareerId",
+                        value: careerId);
                 }
             }
         }

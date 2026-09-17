@@ -1,4 +1,3 @@
-using System.Globalization;
 using Dynastia.Contracts;
 
 namespace Dynastia.Mechanics.Farming;
@@ -22,32 +21,48 @@ internal sealed class FarmingEraSchedule
         var lines = data.ReadText(DataPath)
             .Split(['\r', '\n'], StringSplitOptions.RemoveEmptyEntries);
 
+        const string expectedHeader = "Year,Multiplier";
         if (lines.Length < 2
-            || !lines[0].Equals("Year,Multiplier", StringComparison.Ordinal))
+            || !lines[0].TrimStart('\uFEFF').Equals(expectedHeader, StringComparison.Ordinal))
         {
-            throw new InvalidDataException(
-                $"{DataPath} must use the header Year,Multiplier.");
+            throw CatalogValidation.UnexpectedHeader(
+                DataPath,
+                lines.Length == 0 ? null : lines[0].TrimStart('\uFEFF'),
+                expectedHeader);
         }
 
         var anchors = new List<(int Year, decimal Multiplier)>();
 
-        foreach (var line in lines.Skip(1))
+        for (var index = 1; index < lines.Length; index++)
         {
-            var fields = line.Split(',');
-            if (fields.Length != 2
-                || !int.TryParse(fields[0], NumberStyles.Integer, CultureInfo.InvariantCulture, out var year)
-                || !decimal.TryParse(fields[1], NumberStyles.Number, CultureInfo.InvariantCulture, out var multiplier)
-                || multiplier < 0)
+            var fields = lines[index].Split(',');
+            var row = index + 1;
+            if (fields.Length != 2)
+                throw CatalogValidation.FieldCount(DataPath, row, fields.Length, 2);
+
+            var year = CatalogValidation.ParseInt(DataPath, row, "Year", fields[0]);
+            var multiplier = CatalogValidation.ParseDecimal(DataPath, row, "Multiplier", fields[1]);
+            if (multiplier < 0)
             {
-                throw new InvalidDataException(
-                    $"Invalid farming-era row: {line}");
+                throw CatalogValidation.Error(
+                    DataPath,
+                    "a number greater than or equal to 0",
+                    row,
+                    field: "Multiplier",
+                    value: multiplier);
             }
 
             anchors.Add((year, multiplier));
         }
 
         if (anchors.Count < 2)
-            throw new InvalidDataException($"{DataPath} must contain at least two anchors.");
+        {
+            throw CatalogValidation.Error(
+                DataPath,
+                "at least two anchor rows",
+                field: "Rows",
+                value: anchors.Count);
+        }
 
         return new FarmingEraSchedule(anchors);
     }

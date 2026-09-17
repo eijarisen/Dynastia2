@@ -10,53 +10,14 @@ public sealed partial class StandardEconomyService
         if (resolved is null)
             return null;
 
-        var (owner, household) = resolved.Value;
+        var owner = resolved.Value.Owner;
 
-        var incomeLines = GetProjectedIncomeBreakdown(owner).ToList();
-        var expenseLines = new List<FinanceBreakdownItem>();
+        var core = CalculateAnnualFinances(
+            person,
+            AnnualFinanceCalculationMode.Forecast);
 
-        var members = household.MemberIds
-            .Select(id => _gameState.People.FirstOrDefault(candidate => candidate.Id == id))
-            .Where(candidate =>
-                candidate is not null
-                && candidate.Tags.Has("state.alive")
-                && !candidate.Tags.Has("role.nanny"))
-            .Cast<IPerson>()
-            .DistinctBy(candidate => candidate.Id)
-            .ToList();
-
-        var homeTown = _locations.GetLocation(owner).HomeTown;
-        var exceptionalIntellect = _stats.GetStats(owner).Any(stat =>
-            stat.Id.Equals("intellect", StringComparison.OrdinalIgnoreCase)
-            && stat.Value == 5);
-
-        var livingCosts = EconomyAnnualRules.CalculateLivingCosts(
-            members.Count,
-            GetLivingCostPerPerson(homeTown),
-            exceptionalIntellect);
-
-        if (livingCosts > 0)
-            expenseLines.Add(new FinanceBreakdownItem("living costs", livingCosts));
-
-        var ownsLocalResidence = household.Houses.Any(house =>
-            house.Town is not null
-            && house.Town.Id.Equals(homeTown.Id, StringComparison.OrdinalIgnoreCase));
-
-        if (!ownsLocalResidence)
-        {
-            expenseLines.Add(
-                new FinanceBreakdownItem(
-                    "rented home",
-                    GetResidenceRent(homeTown)));
-        }
-
-        if (EconomyAnnualRules.ShouldChargeNanny(_gameState, household))
-        {
-            expenseLines.Add(
-                new FinanceBreakdownItem(
-                    "nanny",
-                    EconomyAnnualRules.NannyExpense));
-        }
+        var incomeLines = core.IncomeBreakdown.ToList();
+        var expenseLines = core.ExpenseBreakdown.ToList();
 
         foreach (var provider in _financeProjections.Providers)
         {

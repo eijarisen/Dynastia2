@@ -347,7 +347,7 @@ public sealed class GameGenealogyDataSource :
 
             occupation =
                 isFarmWorker
-                    ? "Farm Worker"
+                    ? FarmingPresentationDefaults.WorkerOccupationLabel
                     : displayedCareerLevel > 0
                         ? $"{career.JobTitle} ({displayedCareerLevel})"
                         : career.JobTitle;

@@ -1,4 +1,3 @@
-using System.Globalization;
 using Dynastia.Contracts;
 
 namespace Dynastia.Mechanics.RareEvents;
@@ -8,34 +7,92 @@ public sealed class RareEventPoolRulesCatalog
     private const string DataPath = "RareEvents/rare_event_pool_rules.csv";
     private readonly IReadOnlyDictionary<string, double> _gates;
 
-    private RareEventPoolRulesCatalog(IReadOnlyDictionary<string, double> gates) => _gates = gates;
+    private RareEventPoolRulesCatalog(IReadOnlyDictionary<string, double> gates) =>
+        _gates = gates;
 
     public double GetGateChance(string pool) =>
         _gates.TryGetValue(pool, out var chance)
             ? chance
-            : throw new InvalidDataException($"{DataPath}: missing pool '{pool}'.");
+            : throw CatalogValidation.Error(
+                DataPath,
+                "a configured rare-event pool",
+                item: pool,
+                field: "Pool",
+                value: pool);
 
     public static RareEventPoolRulesCatalog Load(IGameDataService data)
     {
-        var lines = data.ReadText(DataPath).Split(['\r', '\n'], StringSplitOptions.RemoveEmptyEntries);
+        var lines = data.ReadText(DataPath)
+            .Split(['\r', '\n'], StringSplitOptions.RemoveEmptyEntries);
         const string header = "Pool,AnnualGateChance,Notes";
-        if (lines.Length < 2 || !lines[0].TrimStart('\uFEFF').Equals(header, StringComparison.Ordinal))
-            throw new InvalidDataException($"{DataPath}: unexpected header or empty file.");
+        if (lines.Length < 2
+            || !lines[0].TrimStart('\uFEFF').Equals(header, StringComparison.Ordinal))
+        {
+            throw CatalogValidation.UnexpectedHeader(
+                DataPath,
+                lines.Length == 0 ? null : lines[0].TrimStart('\uFEFF'),
+                header);
+        }
 
         var gates = new Dictionary<string, double>(StringComparer.OrdinalIgnoreCase);
-        for (var i = 1; i < lines.Length; i++)
+        for (var index = 1; index < lines.Length; index++)
         {
-            var fields = lines[i].Split(',', 3);
-            if (fields.Length != 3 || !double.TryParse(fields[1], NumberStyles.Float, CultureInfo.InvariantCulture, out var chance))
-                throw new InvalidDataException($"{DataPath} row {i + 1}: invalid row.");
+            var fields = lines[index].Split(',', 3);
+            var row = index + 1;
+            if (fields.Length != 3)
+                throw CatalogValidation.FieldCount(DataPath, row, fields.Length, 3);
+
+            var pool = fields[0].Trim();
+            if (string.IsNullOrWhiteSpace(pool))
+            {
+                throw CatalogValidation.Error(
+                    DataPath,
+                    "a non-empty pool ID",
+                    row,
+                    field: "Pool",
+                    value: pool);
+            }
+
+            var chance = CatalogValidation.ParseDouble(
+                DataPath,
+                row,
+                "AnnualGateChance",
+                fields[1]);
             if (chance < 0 || chance > 1)
-                throw new InvalidDataException($"{DataPath} row {i + 1}: gate must be between 0 and 1.");
-            if (!gates.TryAdd(fields[0].Trim(), chance))
-                throw new InvalidDataException($"{DataPath}: duplicate pool '{fields[0].Trim()}'.");
+            {
+                throw CatalogValidation.Error(
+                    DataPath,
+                    "a number from 0 through 1",
+                    row,
+                    pool,
+                    "AnnualGateChance",
+                    chance);
+            }
+
+            if (!gates.TryAdd(pool, chance))
+            {
+                throw CatalogValidation.Error(
+                    DataPath,
+                    "a unique pool ID",
+                    row,
+                    pool,
+                    "Pool",
+                    pool);
+            }
         }
 
         foreach (var required in new[] { "Household", "Personal", "Special" })
-            if (!gates.ContainsKey(required)) throw new InvalidDataException($"{DataPath}: missing {required} pool.");
+        {
+            if (!gates.ContainsKey(required))
+            {
+                throw CatalogValidation.Error(
+                    DataPath,
+                    "required pools Household, Personal and Special",
+                    item: required,
+                    field: "Pool",
+                    value: "missing");
+            }
+        }
 
         return new RareEventPoolRulesCatalog(gates);
     }

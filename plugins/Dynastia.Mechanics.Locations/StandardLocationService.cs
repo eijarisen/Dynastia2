@@ -91,8 +91,11 @@ public sealed partial class StandardLocationService :
 
         if (_towns.Count == 0)
         {
-            throw new InvalidDataException(
-                $"{TownsPath} contains no towns.");
+            throw CatalogValidation.Error(
+                TownsPath,
+                "at least one town",
+                field: "Rows",
+                value: 0);
         }
 
         _townsById =

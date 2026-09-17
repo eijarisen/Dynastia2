@@ -1,4 +1,3 @@
-using System.Globalization;
 using Dynastia.Contracts;
 
 namespace Dynastia.Mechanics.RareEvents;
@@ -20,48 +19,154 @@ public sealed class RareEventSimpleEffectCatalog
     private RareEventSimpleEffectCatalog(IReadOnlyList<RareEventSimpleEffect> effects)
     {
         Effects = effects;
-        _byEvent = effects.GroupBy(effect => effect.EventId, StringComparer.OrdinalIgnoreCase)
-            .ToDictionary(group => group.Key, group => (IReadOnlyList<RareEventSimpleEffect>)group.ToList(), StringComparer.OrdinalIgnoreCase);
+        _byEvent = effects
+            .GroupBy(effect => effect.EventId, StringComparer.OrdinalIgnoreCase)
+            .ToDictionary(
+                group => group.Key,
+                group => (IReadOnlyList<RareEventSimpleEffect>)group.ToList(),
+                StringComparer.OrdinalIgnoreCase);
     }
 
     public IReadOnlyList<RareEventSimpleEffect> Effects { get; }
+
     public IReadOnlyList<RareEventSimpleEffect> GetEffects(string eventId) =>
         _byEvent.TryGetValue(eventId, out var effects) ? effects : [];
 
-    public static RareEventSimpleEffectCatalog Load(IGameDataService data, RareEventCatalog events)
+    public static RareEventSimpleEffectCatalog Load(
+        IGameDataService data,
+        RareEventCatalog events)
     {
-        var lines = data.ReadText(DataPath).Split(['\r', '\n'], StringSplitOptions.RemoveEmptyEntries);
-        const string header = "EventId,EffectType,Target,MinimumValue,MaximumValue,Chance,Parameter";
-        if (lines.Length < 2 || !lines[0].TrimStart('\uFEFF').Equals(header, StringComparison.Ordinal))
-            throw new InvalidDataException($"{DataPath}: unexpected header or empty file.");
-
-        var known = events.Events.Select(item => item.EventId).ToHashSet(StringComparer.OrdinalIgnoreCase);
-        var list = new List<RareEventSimpleEffect>();
-        var validEffects = new HashSet<string>(["WealthGain", "WealthLoss", "HealthDamage", "DeathChance"], StringComparer.OrdinalIgnoreCase);
-        var validTargets = new HashSet<string>(["Subject", "Household"], StringComparer.OrdinalIgnoreCase);
-        for (var i = 1; i < lines.Length; i++)
+        var lines = data.ReadText(DataPath)
+            .Split(['\r', '\n'], StringSplitOptions.RemoveEmptyEntries);
+        const string header =
+            "EventId,EffectType,Target,MinimumValue,MaximumValue,Chance,Parameter";
+        if (lines.Length < 2
+            || !lines[0].TrimStart('\uFEFF').Equals(header, StringComparison.Ordinal))
         {
-            var fields = lines[i].Split(',');
-            if (fields.Length != 7) throw new InvalidDataException($"{DataPath} row {i + 1}: expected 7 fields.");
-            if (!known.Contains(fields[0].Trim())) throw new InvalidDataException($"{DataPath} row {i + 1}: unknown event '{fields[0]}'.");
-            if (!validEffects.Contains(fields[1].Trim())) throw new InvalidDataException($"{DataPath} row {i + 1}: unknown effect '{fields[1]}'.");
-            if (!validTargets.Contains(fields[2].Trim())) throw new InvalidDataException($"{DataPath} row {i + 1}: unknown target '{fields[2]}'.");
-            var min = Parse(fields[3], i, "MinimumValue");
-            var max = Parse(fields[4], i, "MaximumValue");
-            var chance = Parse(fields[5], i, "Chance");
-            if (max < min || chance < 0 || chance > 1) throw new InvalidDataException($"{DataPath} row {i + 1}: invalid bounds/chance.");
-            list.Add(new RareEventSimpleEffect(fields[0].Trim(), fields[1].Trim(), fields[2].Trim(), min, max, chance,
+            throw CatalogValidation.UnexpectedHeader(
+                DataPath,
+                lines.Length == 0 ? null : lines[0].TrimStart('\uFEFF'),
+                header);
+        }
+
+        var known = events.Events
+            .Select(item => item.EventId)
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+        var list = new List<RareEventSimpleEffect>();
+        var validEffects = new HashSet<string>(
+            ["WealthGain", "WealthLoss", "HealthDamage", "DeathChance"],
+            StringComparer.OrdinalIgnoreCase);
+        var validTargets = new HashSet<string>(
+            ["Subject", "Household"],
+            StringComparer.OrdinalIgnoreCase);
+
+        for (var index = 1; index < lines.Length; index++)
+        {
+            var fields = lines[index].Split(',');
+            var row = index + 1;
+            if (fields.Length != 7)
+                throw CatalogValidation.FieldCount(DataPath, row, fields.Length, 7);
+
+            var eventId = fields[0].Trim();
+            var effectType = fields[1].Trim();
+            var target = fields[2].Trim();
+
+            if (!known.Contains(eventId))
+            {
+                throw CatalogValidation.Error(
+                    DataPath,
+                    "an EventId present in rare_events.csv",
+                    row,
+                    field: "EventId",
+                    value: eventId);
+            }
+
+            if (!validEffects.Contains(effectType))
+            {
+                throw CatalogValidation.Error(
+                    DataPath,
+                    $"one of: {string.Join(", ", validEffects.OrderBy(item => item))}",
+                    row,
+                    eventId,
+                    "EffectType",
+                    effectType);
+            }
+
+            if (!validTargets.Contains(target))
+            {
+                throw CatalogValidation.Error(
+                    DataPath,
+                    $"one of: {string.Join(", ", validTargets.OrderBy(item => item))}",
+                    row,
+                    eventId,
+                    "Target",
+                    target);
+            }
+
+            var minimum = CatalogValidation.ParseDouble(
+                DataPath,
+                row,
+                "MinimumValue",
+                fields[3]);
+            var maximum = CatalogValidation.ParseDouble(
+                DataPath,
+                row,
+                "MaximumValue",
+                fields[4]);
+            var chance = CatalogValidation.ParseDouble(
+                DataPath,
+                row,
+                "Chance",
+                fields[5]);
+
+            if (maximum < minimum)
+            {
+                throw CatalogValidation.Error(
+                    DataPath,
+                    $"a value at least MinimumValue ({minimum})",
+                    row,
+                    eventId,
+                    "MaximumValue",
+                    maximum);
+            }
+
+            if (chance < 0 || chance > 1)
+            {
+                throw CatalogValidation.Error(
+                    DataPath,
+                    "a number from 0 through 1",
+                    row,
+                    eventId,
+                    "Chance",
+                    chance);
+            }
+
+            list.Add(new RareEventSimpleEffect(
+                eventId,
+                effectType,
+                target,
+                minimum,
+                maximum,
+                chance,
                 string.IsNullOrWhiteSpace(fields[6]) ? null : fields[6].Trim()));
         }
 
-        foreach (var item in events.Events.Where(item => item.HandlerId.StartsWith("generic.", StringComparison.OrdinalIgnoreCase)))
-            if (!list.Any(effect => effect.EventId.Equals(item.EventId, StringComparison.OrdinalIgnoreCase)))
-                throw new InvalidDataException($"{item.EventId}: generic handler has no simple effects.");
+        foreach (var item in events.Events.Where(
+            item => item.HandlerId.StartsWith("generic.", StringComparison.OrdinalIgnoreCase)))
+        {
+            if (!list.Any(effect => effect.EventId.Equals(
+                    item.EventId,
+                    StringComparison.OrdinalIgnoreCase)))
+            {
+                throw CatalogValidation.Error(
+                    DataPath,
+                    "at least one simple effect for every generic rare event",
+                    item: item.EventId,
+                    field: "EventId",
+                    value: item.EventId);
+            }
+        }
 
         return new RareEventSimpleEffectCatalog(list);
     }
-
-    private static double Parse(string value, int row, string field) =>
-        double.TryParse(value.Trim(), NumberStyles.Float, CultureInfo.InvariantCulture, out var parsed)
-            ? parsed : throw new InvalidDataException($"{DataPath} row {row + 1} {field}: invalid value '{value}'.");
 }

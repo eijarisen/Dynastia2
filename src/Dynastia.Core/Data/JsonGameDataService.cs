@@ -1,5 +1,4 @@
 using System.Globalization;
-using System.Text.Json;
 using Dynastia.Contracts;
 
 namespace Dynastia.Core.Data;
@@ -25,17 +24,17 @@ public sealed class JsonGameDataService : IGameDataService
         if (_stringLists.TryGetValue(relativePath, out var cached))
             return cached;
 
-        var fullPath = ResolvePath(relativePath);
-
-        var values = JsonSerializer.Deserialize<List<string>>(
-            File.ReadAllText(fullPath))
-            ?? throw new InvalidDataException(
-                $"Could not read string-list data: {relativePath}");
+        var values = CatalogValidation.DeserializeJson<List<string>>(
+            this,
+            relativePath);
 
         if (values.Count == 0)
         {
-            throw new InvalidDataException(
-                $"Game data list is empty: {relativePath}");
+            throw CatalogValidation.Error(
+                relativePath,
+                "at least one list item",
+                field: "Root",
+                value: 0);
         }
 
         _stringLists[relativePath] = values;
@@ -67,8 +66,12 @@ public sealed class JsonGameDataService : IGameDataService
 
             if (separator <= 0 || separator == line.Length - 1)
             {
-                throw new InvalidDataException(
-                    $"{relativePath}:{lineNumber}: expected 'Name, weight'.");
+                throw CatalogValidation.Error(
+                    relativePath,
+                    "a weighted row in the form 'Name, weight'",
+                    lineNumber,
+                    field: "Row",
+                    value: rawLine);
             }
 
             var value = line[..separator].Trim();
@@ -82,8 +85,12 @@ public sealed class JsonGameDataService : IGameDataService
 
             if (value.Length == 0)
             {
-                throw new InvalidDataException(
-                    $"{relativePath}:{lineNumber}: name cannot be empty.");
+                throw CatalogValidation.Error(
+                    relativePath,
+                    "a non-empty name",
+                    lineNumber,
+                    field: "Name",
+                    value: value);
             }
 
             if (!long.TryParse(
@@ -93,14 +100,23 @@ public sealed class JsonGameDataService : IGameDataService
                 out var weight)
                 || weight <= 0)
             {
-                throw new InvalidDataException(
-                    $"{relativePath}:{lineNumber}: weight must be a positive integer.");
+                throw CatalogValidation.Error(
+                    relativePath,
+                    "a positive integer",
+                    lineNumber,
+                    field: "Weight",
+                    value: weightText);
             }
 
             if (!seen.Add(value))
             {
-                throw new InvalidDataException(
-                    $"{relativePath}:{lineNumber}: duplicate entry '{value}'.");
+                throw CatalogValidation.Error(
+                    relativePath,
+                    "a unique name",
+                    lineNumber,
+                    item: value,
+                    field: "Name",
+                    value: value);
             }
 
             result.Add(new WeightedStringEntry(value, weight));
@@ -108,8 +124,11 @@ public sealed class JsonGameDataService : IGameDataService
 
         if (result.Count == 0)
         {
-            throw new InvalidDataException(
-                $"Weighted game data list is empty: {relativePath}");
+            throw CatalogValidation.Error(
+                relativePath,
+                "at least one weighted item",
+                field: "Rows",
+                value: 0);
         }
 
         _weightedStringLists[relativePath] = result;

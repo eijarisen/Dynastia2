@@ -93,7 +93,7 @@ public sealed class HealthContentReworkBatch1Tests
 
         foreach (var id in new[] { "depression", "anxiety", "alcoholism", "drug_dependence" })
         {
-            var definition = Assert.Single(conditions.Where(condition => condition.Id == id));
+            var definition = Assert.Single(conditions, condition => condition.Id == id);
             Assert.Equal("Mental", definition.Category);
             Assert.Equal(0d, definition.Weight);
         }

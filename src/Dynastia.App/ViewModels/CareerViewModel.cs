@@ -7,7 +7,8 @@ public sealed class CareerViewModel
     public CareerViewModel(
         CareerSnapshot snapshot,
         bool isAlive,
-        bool isFarmWorker = false)
+        bool isFarmWorker = false,
+        decimal? displayedCraftIncome = null)
     {
         JobLevel =
             snapshot.JobLevel;
@@ -25,7 +26,9 @@ public sealed class CareerViewModel
             snapshot.JobSatisfaction;
 
         AnnualIncome =
-            snapshot.AnnualIncome;
+            snapshot.IsSelfEmployed && displayedCraftIncome is decimal realizedCraftIncome
+                ? realizedCraftIncome
+                : snapshot.AnnualIncome;
 
         IsRetired =
             snapshot.IsRetired;
@@ -94,14 +97,14 @@ public sealed class CareerViewModel
             !isAlive
                 ? string.Empty
                 : snapshot.IsSelfEmployed
-                    ? $"Income: " +
-                      $"{snapshot.AnnualIncome:N0} zł/year"
+                    ? $"Last earnings: " +
+                      $"{AnnualIncome:N0} zł/year"
                     : snapshot.IsRetired
                         ? $"Pension: " +
-                          $"{snapshot.AnnualIncome:N0} zł/year"
+                          $"{AnnualIncome:N0} zł/year"
                         : snapshot.IsEmployed
                             ? $"Income: " +
-                              $"{snapshot.AnnualIncome:N0} zł/year"
+                              $"{AnnualIncome:N0} zł/year"
                             : nonWorkingAdult
                                 ? "Income: 0 zł"
                                 : string.Empty;

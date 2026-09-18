@@ -126,7 +126,7 @@ internal sealed class StandardCraftService : ICraftService, IIncomeProvider
             relevantYears,
             state.SelfEmploymentYears,
             state.CreditedPreLearningCareerYears,
-            CraftRules.GetExpectedAnnualIncome(level),
+            GetExpectedAnnualIncome(craft, level),
             next?.RequiredMasteryProgress,
             next?.MinimumRelevantExperienceYears);
     }
@@ -562,7 +562,7 @@ internal sealed class StandardCraftService : ICraftService, IIncomeProvider
         var progress = GetProgress(person, active.Id);
         return progress is null
             ? 0m
-            : CraftRules.GetExpectedAnnualIncome(progress.MasteryLevel);
+            : GetExpectedAnnualIncome(active, progress.MasteryLevel);
     }
 
     public decimal GetAnnualIncome(IPerson person)
@@ -580,31 +580,23 @@ internal sealed class StandardCraftService : ICraftService, IIncomeProvider
         }
 
         var progress = GetProgress(person, active.Id)!;
-        decimal total = 0m;
-        var majorCommissions = 0;
-
-        for (var month = 0; month < 12; month++)
-        {
-            var integerRoll = _random.NextInt(0, 94);
-            var rawRoll = integerRoll == 94
-                ? 94.0
-                : integerRoll + _random.NextDouble();
-            var monthly = CraftRules.CalculateMonthlyIncome(rawRoll, progress.MasteryLevel);
-            total += monthly;
-
-            if (integerRoll == 94
-                && CraftRules.GetMasteryRule(progress.MasteryLevel).MasteryBonus >= 5)
-            {
-                majorCommissions++;
-            }
-        }
+        var baseSalary = active.BaseSalary;
+        var randomRoll = _random.NextInt(0, 94);
+        var income = CraftRules.CalculateAnnualIncome(
+            baseSalary,
+            progress.MasteryLevel,
+            randomRoll);
 
         var recoverReduction = ReadPercent(person, "modifier.salary.recover.");
         if (recoverReduction > 0m)
-            total *= 1m - recoverReduction / 100m;
+        {
+            income = Math.Round(
+                income * (1m - recoverReduction / 100m),
+                0,
+                MidpointRounding.AwayFromZero);
+        }
 
-        var rounded = Math.Round(total, 0, MidpointRounding.AwayFromZero);
-        component.LastAnnualIncome = rounded;
+        component.LastAnnualIncome = income;
         component.LastIncomeYear = _gameState.Year;
 
         _events.Publish(new GameEvent
@@ -617,18 +609,22 @@ internal sealed class StandardCraftService : ICraftService, IIncomeProvider
                 ["craftId"] = active.Id,
                 ["craftName"] = _catalog.ResolveDisplayName(active.Id, _gameState.Year),
                 ["mastery"] = progress.MasteryName,
-                ["amount"] = rounded.ToString(CultureInfo.InvariantCulture),
+                ["amount"] = income.ToString(CultureInfo.InvariantCulture),
                 ["expected"] = GetExpectedAnnualIncome(person).ToString(CultureInfo.InvariantCulture),
+                ["baseSalary"] = baseSalary.ToString(CultureInfo.InvariantCulture),
+                ["randomRoll"] = randomRoll.ToString(CultureInfo.InvariantCulture),
                 ["suppressChronicle"] = "true"
             }
         });
 
-        if (majorCommissions > 0)
+        if (randomRoll == 94
+            && progress.MasteryLevel >= 5)
         {
-            var commissionValue = Math.Round(
-                CraftRules.CalculateMonthlyIncome(94.0, 5),
-                0,
-                MidpointRounding.AwayFromZero);
+            var commissionValue = CraftRules.CalculateAnnualIncome(
+                baseSalary,
+                progress.MasteryLevel,
+                94);
+
             _events.Publish(new GameEvent
             {
                 Type = "craft.major_commission",
@@ -638,16 +634,14 @@ internal sealed class StandardCraftService : ICraftService, IIncomeProvider
                 {
                     ["craftId"] = active.Id,
                     ["craftName"] = _catalog.ResolveDisplayName(active.Id, _gameState.Year),
-                    ["count"] = majorCommissions.ToString(CultureInfo.InvariantCulture),
+                    ["count"] = "1",
                     ["commissionValue"] = commissionValue.ToString(CultureInfo.InvariantCulture),
-                    ["text"] = majorCommissions == 1
-                        ? $"{_family.GetDisplayName(person)} secured a major {active.Name} commission worth {commissionValue:N0} zł."
-                        : $"{_family.GetDisplayName(person)} secured {majorCommissions} major {active.Name} commissions worth {commissionValue:N0} zł each."
+                    ["text"] = $"{_family.GetDisplayName(person)} secured a major {active.Name} commission worth {commissionValue:N0} zł."
                 }
             });
         }
 
-        return rounded;
+        return income;
     }
 
     decimal IIncomeProvider.GetExpectedAnnualIncome(IPerson person) =>
@@ -695,6 +689,13 @@ internal sealed class StandardCraftService : ICraftService, IIncomeProvider
                 PublishMasteryIncrease(person, craft, before.MasteryLevel, after);
         }
     }
+
+    private decimal GetExpectedAnnualIncome(
+        CraftInfo craft,
+        int masteryLevel) =>
+        CraftRules.GetExpectedAnnualIncome(
+            craft.BaseSalary,
+            masteryLevel);
 
     private bool CanLearnChosenCraft(IPerson person, CraftInfo craft)
     {

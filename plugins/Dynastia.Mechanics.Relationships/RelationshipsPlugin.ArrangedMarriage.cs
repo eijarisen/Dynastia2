@@ -31,22 +31,15 @@ public sealed partial class RelationshipsPlugin
             return false;
         }
 
-        var isDaughter =
-            family.GetChildren(
-                father)
-            .Any(
-                child =>
-                    child.Id
-                    == daughter.Id);
-
-        if (!isDaughter)
-            return false;
-
-        return households
-            .ResolveHouseholdHead(
-                daughter)?
-            .Id
-            == father.Id;
+        return HouseholdKinshipRules.IsSupportedRelative(
+                father,
+                daughter,
+                family)
+            && households
+                .ResolveHouseholdHead(
+                    daughter)?
+                .Id
+                == father.Id;
     }
 
     private static bool IsEligibleSon(
@@ -76,13 +69,11 @@ public sealed partial class RelationshipsPlugin
             return false;
         }
 
-        var isSon = family.GetChildren(father)
-            .Any(child => child.Id == son.Id);
-
-        if (!isSon)
-            return false;
-
-        return households.ResolveHouseholdHead(son)?.Id == father.Id;
+        return HouseholdKinshipRules.IsSupportedRelative(
+                father,
+                son,
+                family)
+            && households.ResolveHouseholdHead(son)?.Id == father.Id;
     }
 
     private static void CreateArrangedHusband(
@@ -215,6 +206,10 @@ public sealed partial class RelationshipsPlugin
         daughter.Surname =
             husband.Surname;
 
+        var arrangedNarrative = gameState.Year <= 1945
+            ? "used family contacts to arrange a marriage for their relative"
+            : "helped their relative look for a spouse";
+
         events.Publish(
             new GameEvent
             {
@@ -248,7 +243,7 @@ public sealed partial class RelationshipsPlugin
 
                         ["text"] =
                             $"{family.GetDisplayName(father)} " +
-                            $"{variant.Narrative}. " +
+                            $"{arrangedNarrative}. " +
                             $"{daughterEventName} married {husbandEventName}."
                     }
             });

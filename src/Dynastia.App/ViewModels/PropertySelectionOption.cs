@@ -11,6 +11,9 @@ public sealed record PropertySelectionOption(
 {
     public double DisplayOpacity =>
         IsEnabled ? 1.0 : 0.42;
+
+    public bool HasDetailsText =>
+        !string.IsNullOrWhiteSpace(DetailsText);
 }
 
 public sealed class ActionSelectionRequestedEventArgs : EventArgs

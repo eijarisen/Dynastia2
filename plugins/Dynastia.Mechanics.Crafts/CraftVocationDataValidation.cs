@@ -26,7 +26,7 @@ public static class CraftVocationDataValidation
 
     private static void ValidateMasteryLevels(string text)
     {
-        const string header = "Level,DisplayName,MasteryBonus,RequiredMasteryProgress,MinimumRelevantExperienceYears";
+        const string header = "Level,DisplayName,RequiredMasteryProgress,MinimumRelevantExperienceYears";
         var lines = NonEmptyLines(text).ToList();
         ValidateHeader(lines, MasteryLevelsPath, header);
         var rows = lines.Skip(1).ToList();
@@ -43,18 +43,16 @@ public static class CraftVocationDataValidation
         {
             var columns = rows[index].Split(',');
             var row = index + 2;
-            if (columns.Length != 5)
-                throw CatalogValidation.FieldCount(MasteryLevelsPath, row, columns.Length, 5);
+            if (columns.Length != 4)
+                throw CatalogValidation.FieldCount(MasteryLevelsPath, row, columns.Length, 4);
 
             var expected = CraftRules.MasteryLevels[index];
             var level = CatalogValidation.ParseInt(MasteryLevelsPath, row, "Level", columns[0]);
-            var bonus = CatalogValidation.ParseInt(MasteryLevelsPath, row, "MasteryBonus", columns[2]);
-            var progress = CatalogValidation.ParseDouble(MasteryLevelsPath, row, "RequiredMasteryProgress", columns[3]);
-            var years = CatalogValidation.ParseInt(MasteryLevelsPath, row, "MinimumRelevantExperienceYears", columns[4]);
+            var progress = CatalogValidation.ParseDouble(MasteryLevelsPath, row, "RequiredMasteryProgress", columns[2]);
+            var years = CatalogValidation.ParseInt(MasteryLevelsPath, row, "MinimumRelevantExperienceYears", columns[3]);
 
             RequireEqual(MasteryLevelsPath, row, level.ToString(CultureInfo.InvariantCulture), expected.Level.ToString(CultureInfo.InvariantCulture), "Level", expected.Level);
             RequireEqual(MasteryLevelsPath, row, columns[1], expected.DisplayName, "DisplayName", expected.DisplayName);
-            RequireEqual(MasteryLevelsPath, row, bonus.ToString(CultureInfo.InvariantCulture), expected.MasteryBonus.ToString(CultureInfo.InvariantCulture), "MasteryBonus", expected.MasteryBonus);
             if (Math.Abs(progress - expected.RequiredMasteryProgress) > 0.0000001)
                 throw CatalogValidation.Error(MasteryLevelsPath, expected.RequiredMasteryProgress.ToString(CultureInfo.InvariantCulture), row, expected.DisplayName, "RequiredMasteryProgress", progress);
             RequireEqual(MasteryLevelsPath, row, years.ToString(CultureInfo.InvariantCulture), expected.MinimumRelevantExperienceYears.ToString(CultureInfo.InvariantCulture), "MinimumRelevantExperienceYears", expected.MinimumRelevantExperienceYears);
@@ -140,17 +138,21 @@ public static class CraftVocationDataValidation
     {
         using var document = ParseDocument(text, EconomyRulesPath);
         var root = RequireObjectRoot(document, EconomyRulesPath);
+        var baseSalary = RequireObject(root, "baseSalary", EconomyRulesPath);
         var incomeRoll = RequireObject(root, "incomeRoll", EconomyRulesPath);
         var commission = RequireObject(root, "majorCommission", EconomyRulesPath);
         var selfEmployment = RequireObject(root, "selfEmployment", EconomyRulesPath);
 
         RequireDecimal(root, "educationCost", CraftRules.EducationCost, EconomyRulesPath);
-        RequireDecimal(root, "monthlyIncomeBase", CraftRules.MonthlyIncomeBase, EconomyRulesPath);
-        RequireInt(root, "monthsPerYear", 12, EconomyRulesPath);
+        RequireString(baseSalary, "source", "Crafts/crafts.csv#BaseSalary", EconomyRulesPath);
+        RequireInt(baseSalary, "minimum", 400, EconomyRulesPath);
+        RequireInt(baseSalary, "maximum", 800, EconomyRulesPath);
         RequireInt(incomeRoll, "integerMinimum", 0, EconomyRulesPath);
         RequireInt(incomeRoll, "integerMaximumInclusive", 94, EconomyRulesPath);
-        RequireInt(incomeRoll, "effectiveRollCap", 99, EconomyRulesPath);
+        RequireInt(incomeRoll, "denominatorMaximum", 99, EconomyRulesPath);
+        RequireString(root, "incomeFormula", "yearlyIncome = round(baseSalary * 100 / min(99, (100 - randomRoll - masteryLevel)))", EconomyRulesPath);
         RequireInt(commission, "integerRollRequired", 94, EconomyRulesPath);
+        RequireInt(commission, "minimumMasteryLevel", 5, EconomyRulesPath);
         RequireBool(selfEmployment, "subjectToRandomFiring", false, EconomyRulesPath);
         RequireBool(selfEmployment, "subjectToCareerVacancy", false, EconomyRulesPath);
         RequireBool(selfEmployment, "continuesAcrossHouseholdMoves", true, EconomyRulesPath);
@@ -159,7 +161,7 @@ public static class CraftVocationDataValidation
 
     private static void ValidateIncomeReference(string text)
     {
-        const string header = "Level,DisplayName,MasteryBonus,ExpectedMonthlyMultiplier,ExpectedMonthlyIncome,ApproxMonthlyMedian,ExpectedAnnualIncome,ApproxAnnualMedian,ApproxAnnualP90,MaximumMonthlyIncome,MajorCommissionFrequency";
+        const string header = "Level,DisplayName,ExpectedIncomeMultiplier,MedianIncomeMultiplier,MaximumIncomeMultiplier,RollRange";
         var lines = NonEmptyLines(text).ToList();
         ValidateHeader(lines, IncomeReferencePath, header);
         var rows = lines.Skip(1).ToList();
@@ -176,34 +178,25 @@ public static class CraftVocationDataValidation
         {
             var columns = rows[index].Split(',');
             var row = index + 2;
-            if (columns.Length < 10)
-            {
-                throw CatalogValidation.Error(
-                    IncomeReferencePath,
-                    "at least 10 columns",
-                    row,
-                    field: "FieldCount",
-                    value: columns.Length);
-            }
+            if (columns.Length != 6)
+                throw CatalogValidation.FieldCount(IncomeReferencePath, row, columns.Length, 6);
 
             var level = CatalogValidation.ParseInt(IncomeReferencePath, row, "Level", columns[0]);
             var rule = CraftRules.GetMasteryRule(level);
-            var expectedAnnual = CatalogValidation.ParseDecimal(IncomeReferencePath, row, "ExpectedAnnualIncome", columns[6]);
-            var maximumMonthly = CatalogValidation.ParseDecimal(IncomeReferencePath, row, "MaximumMonthlyIncome", columns[9]);
-            var masteryBonus = CatalogValidation.ParseInt(IncomeReferencePath, row, "MasteryBonus", columns[2]);
-            var calculatedMaximum = Math.Round(
-                CraftRules.CalculateMonthlyIncome(94.0, level),
-                2,
-                MidpointRounding.AwayFromZero);
+            var expectedMultiplier = CatalogValidation.ParseDecimal(IncomeReferencePath, row, "ExpectedIncomeMultiplier", columns[2]);
+            var medianMultiplier = CatalogValidation.ParseDecimal(IncomeReferencePath, row, "MedianIncomeMultiplier", columns[3]);
+            var maximumMultiplier = CatalogValidation.ParseDecimal(IncomeReferencePath, row, "MaximumIncomeMultiplier", columns[4]);
 
             if (!columns[1].Equals(rule.DisplayName, StringComparison.Ordinal))
                 throw CatalogValidation.Error(IncomeReferencePath, rule.DisplayName, row, rule.DisplayName, "DisplayName", columns[1]);
-            if (masteryBonus != rule.MasteryBonus)
-                throw CatalogValidation.Error(IncomeReferencePath, rule.MasteryBonus.ToString(CultureInfo.InvariantCulture), row, rule.DisplayName, "MasteryBonus", masteryBonus);
-            if (Math.Abs(expectedAnnual - rule.ExpectedAnnualIncome) > 0.01m)
-                throw CatalogValidation.Error(IncomeReferencePath, rule.ExpectedAnnualIncome.ToString(CultureInfo.InvariantCulture), row, rule.DisplayName, "ExpectedAnnualIncome", expectedAnnual);
-            if (Math.Abs(maximumMonthly - calculatedMaximum) > 0.01m)
-                throw CatalogValidation.Error(IncomeReferencePath, calculatedMaximum.ToString(CultureInfo.InvariantCulture), row, rule.DisplayName, "MaximumMonthlyIncome", maximumMonthly);
+            if (Math.Abs(expectedMultiplier - CraftRules.GetExpectedIncomeMultiplier(level)) > 0.000001m)
+                throw CatalogValidation.Error(IncomeReferencePath, CraftRules.GetExpectedIncomeMultiplier(level).ToString("0.######", CultureInfo.InvariantCulture), row, rule.DisplayName, "ExpectedIncomeMultiplier", expectedMultiplier);
+            if (Math.Abs(medianMultiplier - CraftRules.GetMedianIncomeMultiplier(level)) > 0.000001m)
+                throw CatalogValidation.Error(IncomeReferencePath, CraftRules.GetMedianIncomeMultiplier(level).ToString("0.######", CultureInfo.InvariantCulture), row, rule.DisplayName, "MedianIncomeMultiplier", medianMultiplier);
+            if (Math.Abs(maximumMultiplier - CraftRules.GetMaximumIncomeMultiplier(level)) > 0.000001m)
+                throw CatalogValidation.Error(IncomeReferencePath, CraftRules.GetMaximumIncomeMultiplier(level).ToString("0.######", CultureInfo.InvariantCulture), row, rule.DisplayName, "MaximumIncomeMultiplier", maximumMultiplier);
+            if (!columns[5].Equals("0-94", StringComparison.Ordinal))
+                throw CatalogValidation.Error(IncomeReferencePath, "0-94", row, rule.DisplayName, "RollRange", columns[5]);
         }
     }
 

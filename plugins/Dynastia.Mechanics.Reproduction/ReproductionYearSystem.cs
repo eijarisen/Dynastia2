@@ -448,14 +448,29 @@ public sealed class ReproductionYearSystem : IYearSystem
         var children =
             new List<IPerson>(birthCount);
 
+        AppearanceSnapshot? sharedMultipleBirthAppearance = null;
+        Guid? sharedPortraitSeedId = null;
+
         for (var index = 0; index < birthCount; index++)
         {
-            children.Add(
-                CreateChildEntity(
-                    gameState,
-                    father,
-                    mother,
-                    birthDate));
+            var child = CreateChildEntity(
+                gameState,
+                father,
+                mother,
+                birthDate);
+
+            if (sharedMultipleBirthAppearance is null)
+            {
+                sharedMultipleBirthAppearance = _appearance.EnsureAppearance(child);
+                sharedPortraitSeedId = child.Id;
+            }
+
+            _appearance.SetAppearance(
+                child,
+                sharedMultipleBirthAppearance,
+                sharedPortraitSeedId);
+
+            children.Add(child);
         }
 
         for (var index = 0; index < children.Count; index++)

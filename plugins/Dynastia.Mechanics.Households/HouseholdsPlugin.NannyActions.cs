@@ -188,7 +188,7 @@ public sealed partial class HouseholdsPlugin
                     "Ask to Help with Children",
 
                 Description =
-                    "Ask the selected adult unmarried and unemployed child " +
+                    "Ask the selected adult unmarried and unemployed relative " +
                     "who still lives in this household to care for the younger " +
                     "children for free. Their help removes the large-family strain. " +
                     "It ends automatically if they die, find work, marry, leave the household, or " +
@@ -220,12 +220,12 @@ public sealed partial class HouseholdsPlugin
                             || child.Age < 18
                             || family.GetSpouse(
                                 child) is not null
-                            || !family.GetChildren(
-                                actor)
-                                .Any(
-                                    directChild =>
-                                        directChild.Id
-                                        == child.Id)
+                            || !HouseholdKinshipRules.IsSupportedResidentRelative(
+                                actor,
+                                child,
+                                family,
+                                economy,
+                                requireAdult: true)
                             || households.ResolveHouseholdHead(
                                 child)?.Id
                                 != actor.Id)
@@ -283,8 +283,12 @@ public sealed partial class HouseholdsPlugin
                             || childCareer.IsRetired
                             || childCareer.IsEmployed
                             || child.Age < 18
-                            || !family.GetChildren(actor)
-                                .Any(directChild => directChild.Id == child.Id)
+                            || !HouseholdKinshipRules.IsSupportedResidentRelative(
+                                actor,
+                                child,
+                                family,
+                                economy,
+                                requireAdult: true)
                             || family.GetSpouse(
                                 child) is not null
                             || households.ResolveHouseholdHead(

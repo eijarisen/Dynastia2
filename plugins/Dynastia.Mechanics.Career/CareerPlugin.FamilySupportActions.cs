@@ -20,7 +20,7 @@ public sealed partial class CareerPlugin
                 Id = "career.help_seek_employment",
                 Label = "Help to Seek Employment",
                 Description =
-                    "Browse vacancies for your unemployed spouse or adult child living in this household " +
+                    "Browse vacancies for an unemployed adult relative living in this household " +
                     "and help them apply for a specific position.",
                 Mode = ActionExecutionMode.Queued,
                 QueuePhase = YearPhase.QueuedActionsEarly,
@@ -45,14 +45,11 @@ public sealed partial class CareerPlugin
                         return false;
                     }
 
-                    var isSpouse = family.GetSpouse(actor)?.Id == target.Id;
-                    var isResidentAdultChild = IsResidentAdultChild(
+                    return IsResidentSupportedRelative(
                         actor,
                         target,
                         family,
                         economy);
-
-                    return isSpouse || isResidentAdultChild;
                 },
 
                 Execute = actionContext =>
@@ -69,14 +66,11 @@ public sealed partial class CareerPlugin
                     }
 
                     var targetCareer = career.GetCareer(target);
-                    var isSpouse = family.GetSpouse(actor)?.Id == target.Id;
-                    var isResidentAdultChild = IsResidentAdultChild(
-                        actor,
-                        target,
-                        family,
-                        economy);
-
-                    if ((!isSpouse && !isResidentAdultChild)
+                    if (!IsResidentSupportedRelative(
+                            actor,
+                            target,
+                            family,
+                            economy)
                         || targetCareer.IsRetired
                         || targetCareer.IsEmployed)
                     {
@@ -137,7 +131,7 @@ public sealed partial class CareerPlugin
                 Id = "career.help_find_better_job",
                 Label = "Find a Better Job",
                 Description =
-                    "Browse better-paying vacancies for your employed spouse or adult child living in this household.",
+                    "Browse better-paying vacancies for an employed adult relative living in this household.",
                 Mode = ActionExecutionMode.Queued,
                 QueuePhase = YearPhase.QueuedActionsEarly,
 
@@ -155,14 +149,14 @@ public sealed partial class CareerPlugin
                         return false;
                     }
 
-                    var isSpouse = family.GetSpouse(actor)?.Id == target.Id;
-                    var isResidentAdultChild = IsResidentAdultChild(
-                        actor,
-                        target,
-                        family,
-                        economy);
-                    if (!isSpouse && !isResidentAdultChild)
+                    if (!IsResidentSupportedRelative(
+                            actor,
+                            target,
+                            family,
+                            economy))
+                    {
                         return false;
+                    }
 
                     var targetCareer = career.GetCareer(target);
                     return !targetCareer.IsRetired
@@ -183,15 +177,13 @@ public sealed partial class CareerPlugin
                         return new GameActionResult(false);
                     }
 
-                    var isSpouse = family.GetSpouse(actor)?.Id == target.Id;
-                    var isResidentAdultChild = IsResidentAdultChild(
-                        actor,
-                        target,
-                        family,
-                        economy);
                     var targetCareer = career.GetCareer(target);
 
-                    if ((!isSpouse && !isResidentAdultChild)
+                    if (!IsResidentSupportedRelative(
+                            actor,
+                            target,
+                            family,
+                            economy)
                         || targetCareer.IsRetired
                         || !targetCareer.IsEmployed
                         || !targetCareer.IsSelfEmployed && targetCareer.JobLevel >= 3)
@@ -217,7 +209,7 @@ public sealed partial class CareerPlugin
                 Id = "career.ask_to_recover",
                 Label = "Ask to Recover",
                 Description =
-                    "Ask your unhappy employed spouse or miserable adult child living in this household to take a year easier. " +
+                    "Ask an unhappy employed adult relative living in this household to take a year easier. " +
                     "There is a 50% refusal chance. On success their salary is reduced by 10-50% for the year.",
                 Mode = ActionExecutionMode.Queued,
                 QueuePhase = YearPhase.QueuedActionsEarly,
@@ -359,7 +351,7 @@ public sealed partial class CareerPlugin
                 Id = "career.ask_to_quit",
                 Label = "Ask to Quit Job",
                 Description =
-                    "Ask your employed spouse or adult child living in this household to quit so they can focus on the household, including farm work. " +
+                    "Ask an employed adult relative living in this household to quit so they can focus on the household, including farm work. " +
                     "There is a 50% refusal chance.",
                 Mode = ActionExecutionMode.Queued,
                 QueuePhase = YearPhase.QueuedActionsEarly,

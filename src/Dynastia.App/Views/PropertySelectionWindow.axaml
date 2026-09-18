@@ -43,6 +43,19 @@
             <Setter Property="FontSize" Value="14" />
             <Setter Property="Padding" Value="10,8" />
         </Style>
+
+        <Style Selector="ListBox.compact Border.selectionOption">
+            <Setter Property="Margin" Value="2" />
+            <Setter Property="Padding" Value="10,5" />
+        </Style>
+
+        <Style Selector="ListBox.compact TextBlock.optionPrimary">
+            <Setter Property="FontSize" Value="14" />
+        </Style>
+
+        <Style Selector="ListBox.compact TextBlock.optionSecondary">
+            <Setter Property="FontSize" Value="11.5" />
+        </Style>
     </Window.Styles>
 
     <Grid>
@@ -55,13 +68,26 @@
             RowDefinitions="Auto,Auto,*,Auto"
             RowSpacing="14">
 
-            <TextBlock
-                x:Name="TitleText"
+            <StackPanel
                 HorizontalAlignment="Center"
-                FontFamily="avares://Dynastia.App/Assets/Fonts#UnifrakturCook"
-                FontSize="42"
-                Foreground="#2F1D0E"
-                Text="Select Property" />
+                Spacing="2">
+                <TextBlock
+                    x:Name="TitleText"
+                    HorizontalAlignment="Center"
+                    FontFamily="avares://Dynastia.App/Assets/Fonts#UnifrakturCook"
+                    FontSize="42"
+                    Foreground="#2F1D0E"
+                    Text="Select Property" />
+                <TextBlock
+                    x:Name="ContextText"
+                    IsVisible="False"
+                    HorizontalAlignment="Center"
+                    FontFamily="Georgia"
+                    FontSize="13"
+                    FontWeight="SemiBold"
+                    Foreground="#5A4024"
+                    TextAlignment="Center" />
+            </StackPanel>
 
             <TextBox
                 x:Name="SearchBox"
@@ -86,6 +112,7 @@
                     <ListBox.ItemTemplate>
                         <DataTemplate x:DataType="vm:PropertySelectionOption">
                             <Border
+                                Classes="selectionOption"
                                 Margin="3"
                                 Padding="12,9"
                                 Opacity="{Binding DisplayOpacity}"
@@ -95,17 +122,20 @@
                                 <Grid ColumnDefinitions="*,Auto" ColumnSpacing="18">
                                     <StackPanel Spacing="3">
                                         <TextBlock
+                                            Classes="optionPrimary"
                                             FontFamily="Georgia"
                                             FontSize="16"
                                             FontWeight="Bold"
                                             Foreground="#352615"
                                             Text="{Binding PrimaryText}" />
                                         <TextBlock
+                                            Classes="optionSecondary"
                                             FontFamily="Georgia"
                                             FontSize="12"
                                             Foreground="#6B5434"
                                             Text="{Binding SecondaryText}" />
                                         <TextBlock
+                                            IsVisible="{Binding HasDetailsText}"
                                             Margin="0,4,0,0"
                                             FontFamily="Georgia"
                                             FontSize="12"

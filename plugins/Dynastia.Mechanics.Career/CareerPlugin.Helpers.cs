@@ -13,41 +13,28 @@ public sealed partial class CareerPlugin
             && !actor.Tags.Has("state.imprisoned");
     }
 
-    private static bool IsResidentAdultChild(
+    private static bool IsResidentSupportedRelative(
         IPerson actor,
         IPerson target,
         IFamilyService family,
-        IEconomyService economy)
-    {
-        if (target.Id == actor.Id
-            || !target.Tags.Has("state.alive")
-            || target.Age < 18
-            || !family.GetChildren(actor)
-                .Any(child => child.Id == target.Id))
-        {
-            return false;
-        }
-
-        var actorHouseholdId = economy.GetHouseholdId(actor);
-        return actorHouseholdId is not null
-            && economy.GetHouseholdId(target) == actorHouseholdId;
-    }
+        IEconomyService economy) =>
+        HouseholdKinshipRules.IsSupportedResidentRelative(
+            actor,
+            target,
+            family,
+            economy,
+            requireAdult: true);
 
     private static bool IsRecoverOrQuitTarget(
         IPerson actor,
         IPerson target,
         IFamilyService family,
-        IEconomyService economy)
-    {
-        if (family.GetSpouse(actor)?.Id == target.Id)
-            return true;
-
-        return IsResidentAdultChild(
+        IEconomyService economy) =>
+        IsResidentSupportedRelative(
             actor,
             target,
             family,
             economy);
-    }
 
     private static IPerson? FindFirstRelatedPerson(
         IGameState gameState,

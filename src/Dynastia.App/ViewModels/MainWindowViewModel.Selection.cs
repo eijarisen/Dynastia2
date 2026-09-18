@@ -77,8 +77,7 @@ public sealed partial class MainWindowViewModel
                 ? null
                 : new EconomyViewModel(
                     snapshot,
-                    status,
-                    _economyService.GetAnnualForecast(person));
+                    status);
     }
 
     private void RefreshEducation()
@@ -126,11 +125,20 @@ public sealed partial class MainWindowViewModel
             return;
         }
 
+        var career = _careerService.GetCareer(person);
+        decimal? realizedCraftIncome = null;
+        if (career.IsSelfEmployed && _craftService is not null)
+        {
+            var craft = _craftService.GetSnapshot(person);
+            realizedCraftIncome = craft.LastAnnualIncome;
+        }
+
         SelectedCareer =
             new CareerViewModel(
-                _careerService.GetCareer(person),
+                career,
                 person.Tags.Has("state.alive"),
-                _farmingService?.IsWorkingFarmWorker(person, person) == true);
+                _farmingService?.IsWorkingFarmWorker(person, person) == true,
+                realizedCraftIncome);
     }
 
     private void RefreshMarriageSatisfaction()

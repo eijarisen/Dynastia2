@@ -60,6 +60,9 @@ public sealed class ContentReworkBatch3HobbiesCraftsTests
         Assert.Equal("woodworking_carpentry", catalog.Find("carpentry")!.Id);
         Assert.Equal("computer_hardware_repair", catalog.Find("computer_hardware")!.Id);
         Assert.Equal("welding_metal_fabrication", catalog.Find("welding")!.Id);
+        Assert.All(catalog.All, craft => Assert.InRange(craft.BaseSalary, 400m, 800m));
+        Assert.Equal(650m, catalog.Find("metalworking")!.BaseSalary);
+        Assert.Equal(800m, catalog.Find("aircraft_maintenance")!.BaseSalary);
     }
 
     [Fact]

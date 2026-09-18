@@ -9,34 +9,27 @@ public sealed class FarmingRulesTests
     {
         Assert.Equal(10000m, FarmingRules.PurchasePrice);
         Assert.Equal(8000m, FarmingRules.SalePrice);
-        Assert.Equal(5m, FarmingRules.IncomeScale);
+        Assert.Equal(2m, FarmingRules.WorkerBaseIncomeScale);
     }
 
     [Theory]
-    [InlineData(1, 0, "")]
-    [InlineData(1, 1, "0.5")]
-    [InlineData(1, 2, "1.0")]
-    [InlineData(2, 3, "1.0,0.5")]
-    [InlineData(2, 4, "1.0,1.0")]
-    [InlineData(3, 5, "1.0,1.0,0.5")]
-    [InlineData(3, 6, "1.0,1.0,1.0")]
-    public void StaffingFactors_MatchDesign(
+    [InlineData(1, 0, 0)]
+    [InlineData(1, 1, 1)]
+    [InlineData(1, 2, 2)]
+    [InlineData(1, 3, 2)]
+    [InlineData(2, 3, 3)]
+    [InlineData(2, 4, 4)]
+    [InlineData(2, 5, 4)]
+    [InlineData(3, 5, 5)]
+    [InlineData(3, 6, 6)]
+    public void FarmlandCapacity_AllowsTwoWorkersPerParcel(
         int parcels,
         int workers,
-        string expectedText)
+        int expectedActiveWorkers)
     {
-        var expected = string.IsNullOrEmpty(expectedText)
-            ? Array.Empty<decimal>()
-            : expectedText
-                .Split(',')
-                .Select(value => decimal.Parse(
-                    value,
-                    System.Globalization.CultureInfo.InvariantCulture))
-                .ToArray();
-
-        var actual = FarmingRules.GetStaffingFactors(parcels, workers);
-        Assert.Equal(expected.Length, actual.Count);
-        Assert.Equal(expected, actual.ToArray());
+        Assert.Equal(
+            expectedActiveWorkers,
+            FarmingRules.GetActiveWorkerCount(parcels, workers));
     }
 
     [Theory]

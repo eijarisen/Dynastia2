@@ -7,6 +7,7 @@ public sealed record CraftInfo(
     int? EndYear,
     int MinimumLearningAge,
     double BaseWeight,
+    decimal BaseSalary,
     string PrimaryStat,
     string? SecondaryStat,
     string TownPreference,

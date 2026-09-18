@@ -416,10 +416,12 @@ public sealed partial class RelationshipsPlugin : IGamePlugin
                 "relationship.marry_off_daughter",
 
             Label =
-                variant.Label,
+                variant.EndYear == 1945
+                    ? "Arrange Marriage"
+                    : "Help Find a Spouse",
 
             Description =
-                variant.Description,
+                "Help the selected unmarried adult relative living in this household find a suitable spouse.",
 
             Mode =
                 ActionExecutionMode.Queued,
@@ -454,7 +456,7 @@ public sealed partial class RelationshipsPlugin : IGamePlugin
                     {
                         return new GameActionResult(
                             false,
-                            "The selected daughter is no longer eligible.");
+                            "The selected relative is no longer eligible for an arranged marriage.");
                     }
 
                     if (actionContext.Parameters.ContainsKey(
@@ -515,9 +517,8 @@ public sealed partial class RelationshipsPlugin : IGamePlugin
                                                 "0.00"),
 
                                         ["text"] =
-                                            $"{family.GetDisplayName(father)} " +
-                                            $"{variant.Narrative}, but no suitable match " +
-                                            $"was found for {family.GetDisplayName(daughter)}."
+                                            $"{family.GetDisplayName(father)} helped their relative look for a spouse, " +
+                                            $"but no suitable match was found for {family.GetDisplayName(daughter)}."
                                     }
                             });
 
@@ -562,10 +563,12 @@ public sealed partial class RelationshipsPlugin : IGamePlugin
                 "relationship.marry_off_son",
 
             Label =
-                variant.Label,
+                variant.EndYear == 1945
+                    ? "Arrange Marriage"
+                    : "Help Find a Spouse",
 
             Description =
-                variant.Description,
+                "Help the selected unmarried adult relative living in this household find a suitable spouse.",
 
             Mode =
                 ActionExecutionMode.Queued,
@@ -594,7 +597,7 @@ public sealed partial class RelationshipsPlugin : IGamePlugin
                     {
                         return new GameActionResult(
                             false,
-                            "The selected son is no longer eligible.");
+                            "The selected relative is no longer eligible for an arranged marriage.");
                     }
 
                     if (!actionContext.Parameters.ContainsKey(
@@ -602,7 +605,7 @@ public sealed partial class RelationshipsPlugin : IGamePlugin
                     {
                         return new GameActionResult(
                             false,
-                            "A proposed wife must be selected.");
+                            "A proposed spouse must be selected.");
                     }
 
                     return partnerSearch.ResolveArrangedMarriage(

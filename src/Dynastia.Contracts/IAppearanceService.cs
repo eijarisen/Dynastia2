@@ -10,7 +10,8 @@ public interface IAppearanceService
 
     void SetAppearance(
         IPerson person,
-        AppearanceSnapshot appearance);
+        AppearanceSnapshot appearance,
+        Guid? portraitSeedId = null);
 
     string GetPortrait(
         IPerson person,

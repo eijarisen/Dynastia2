@@ -154,30 +154,31 @@ public sealed class CraftRulesTests
     }
 
     [Theory]
-    [InlineData(1, 1609.61)]
-    [InlineData(2, 1742.49)]
-    [InlineData(3, 1924.77)]
-    [InlineData(4, 2208.61)]
-    [InlineData(5, 2806.17)]
-    public void ExpectedAnnualIncome_MatchesApprovedReference(
-        int level,
+    [InlineData(600, 1, 0, 606)]
+    [InlineData(600, 3, 47, 1200)]
+    [InlineData(600, 5, 94, 60000)]
+    [InlineData(800, 5, 94, 80000)]
+    public void AnnualProfessionIncome_UsesBaseMasteryAndSingleZeroToNinetyFourRoll(
+        double baseSalary,
+        int masteryLevel,
+        int randomRoll,
         double expected)
     {
-        Assert.Equal(expected, (double)CraftRules.GetExpectedAnnualIncome(level), 2);
+        var actual = CraftRules.CalculateAnnualIncome(
+            (decimal)baseSalary,
+            masteryLevel,
+            randomRoll);
+
+        Assert.Equal(expected, (double)actual, 6);
     }
 
-    [Theory]
-    [InlineData(1, 800.0)]
-    [InlineData(2, 1000.0)]
-    [InlineData(3, 1333.3333333333333)]
-    [InlineData(4, 2000.0)]
-    [InlineData(5, 4000.0)]
-    public void MaximumMonthlyIncome_UsesApprovedExponentialFormula(
-        int level,
-        double expected)
+    [Fact]
+    public void ExpectedProfessionIncome_ScalesDirectlyFromAuthoredBaseSalary()
     {
-        var actual = (double)CraftRules.CalculateMonthlyIncome(94.0, level);
-        Assert.Equal(expected, actual, 6);
+        var lower = CraftRules.GetExpectedAnnualIncome(400m, 3);
+        var higher = CraftRules.GetExpectedAnnualIncome(800m, 3);
+
+        Assert.Equal(lower * 2m, higher);
     }
 
     [Fact]
@@ -199,6 +200,7 @@ public sealed class CraftRulesTests
             null,
             8,
             1.0,
+            600m,
             primaryStat,
             secondaryStat,
             "Universal",

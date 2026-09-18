@@ -16,6 +16,7 @@ internal static partial class FamilyRelationActions
         IEconomyService economy,
         ILocationService locations,
         ICareerService career,
+        IMarriageSatisfactionService marriage,
         IPersonalityService? personality,
         IGameRandom random,
         IGameEventBus events)
@@ -29,7 +30,7 @@ internal static partial class FamilyRelationActions
         actions.Register(CreateGiveFarmland(relations, households, economy, events, family));
         actions.Register(CreateAskJobHelp(relations, households, economy, career, random, events, family, gameState));
         actions.Register(CreateGiveJobHelp(relations, households, economy, career, random, events, family, gameState));
-        actions.Register(CreateAskMoveOut(family, relations, households, economy, personality, random, events));
+        actions.Register(CreateAskMoveOut(family, relations, households, economy, marriage, personality, random, events));
     }
 
     private static GameActionDefinition CreateImprove(

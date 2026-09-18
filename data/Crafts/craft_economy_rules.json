@@ -1,18 +1,19 @@
 {
   "educationCost": 3000,
-  "monthlyIncomeBase": 40,
-  "monthsPerYear": 12,
+  "baseSalary": {
+    "source": "Crafts/crafts.csv#BaseSalary",
+    "minimum": 400,
+    "maximum": 800
+  },
   "incomeRoll": {
     "integerMinimum": 0,
     "integerMaximumInclusive": 94,
-    "addDecimalWhenIntegerBelowMaximum": true,
-    "maximumIntegerUsesExactValue": true,
-    "effectiveRollCap": 99
+    "denominatorMaximum": 99
   },
-  "incomeFormula": "monthlyIncome = monthlyIncomeBase * (100 / (100 - min(effectiveRollCap, rawRoll + masteryBonus)))",
+  "incomeFormula": "yearlyIncome = round(baseSalary * 100 / min(99, (100 - randomRoll - masteryLevel)))",
   "majorCommission": {
     "integerRollRequired": 94,
-    "requiresEffectiveRollCap": true,
+    "minimumMasteryLevel": 5,
     "emitNews": true
   },
   "selfEmployment": {

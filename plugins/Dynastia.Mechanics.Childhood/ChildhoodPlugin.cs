@@ -32,7 +32,7 @@ public sealed class ChildhoodPlugin : IGamePlugin
 
         events.EventPublished += (_, e) => ApplyEvent(e, gameState, family, happiness, random);
 
-        actions.Register(CreateRaiseChildAction(family, happiness, personality, random, events));
+        actions.Register(CreateRaiseChildAction(family, economy, happiness, personality, random, events));
         systems.Register(new ChildHappinessYearSystem(happiness, health, economy, personality, random));
 
         context.Log("Child happiness mechanics registered.");
@@ -40,6 +40,7 @@ public sealed class ChildhoodPlugin : IGamePlugin
 
     private static GameActionDefinition CreateRaiseChildAction(
         IFamilyService family,
+        IEconomyService economy,
         IChildHappinessService happiness,
         IPersonalityService personality,
         IGameRandom random,
@@ -49,18 +50,31 @@ public sealed class ChildhoodPlugin : IGamePlugin
         {
             Id = "childhood.raise_child",
             Label = "Raise Child",
-            Description = "Spend the year giving the selected child extra guidance and attention. Improves Happiness and may gently improve Morals.",
+            Description = "Spend the year giving the selected young relative in this household extra guidance and attention. Improves Happiness and may gently improve Morals.",
             Mode = ActionExecutionMode.Queued,
             QueuePhase = YearPhase.QueuedActionsEarly,
             IsAvailable = c => c.ActorHasControl
+                && c.Actor.Tags.Has("state.alive")
                 && c.Target.Tags.Has("state.alive")
                 && c.Target.Age < 18
-                && family.GetChildren(c.Actor).Any(x => x.Id == c.Target.Id),
+                && HouseholdKinshipRules.IsSupportedResidentRelative(
+                    c.Actor,
+                    c.Target,
+                    family,
+                    economy),
             Execute = c =>
             {
-                if (!c.Target.Tags.Has("state.alive") || c.Target.Age >= 18
-                    || !family.GetChildren(c.Actor).Any(x => x.Id == c.Target.Id))
+                if (!c.Actor.Tags.Has("state.alive")
+                    || !c.Target.Tags.Has("state.alive")
+                    || c.Target.Age >= 18
+                    || !HouseholdKinshipRules.IsSupportedResidentRelative(
+                        c.Actor,
+                        c.Target,
+                        family,
+                        economy))
+                {
                     return new GameActionResult(false);
+                }
 
                 happiness.ChangeHappiness(c.Target, 1);
 
@@ -85,7 +99,7 @@ public sealed class ChildhoodPlugin : IGamePlugin
                     RelatedPersonIds = [c.Actor.Id],
                     Data = new Dictionary<string, string>
                     {
-                        ["text"] = $"{family.GetDisplayName(c.Actor)} spent extra time raising {family.GetDisplayName(c.Target)}, improving the child's happiness."
+                        ["text"] = $"{family.GetDisplayName(c.Actor)} spent extra time guiding {family.GetDisplayName(c.Target)}, improving the child's happiness."
                     }
                 });
                 return new GameActionResult(true);

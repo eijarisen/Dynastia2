@@ -131,6 +131,7 @@ public sealed class CraftCatalog
                 row.EndYear,
                 row.MinimumLearningAge,
                 row.BaseWeight,
+                row.BaseSalary,
                 row.PrimaryStat,
                 row.SecondaryStat,
                 row.TownPreference,
@@ -158,7 +159,7 @@ public sealed class CraftCatalog
     private static IReadOnlyList<BaseCraft> ParseCrafts(string text)
     {
         var lines = text.Split(['\r', '\n'], StringSplitOptions.RemoveEmptyEntries);
-        const string header = "Id,Name,StartYear,EndYear,MinimumLearningAge,BaseWeight,PrimaryStat,SecondaryStat,TownPreference,MinimumSettlementClass,RequiredOpportunityTags,PreferredOpportunityTags,Emoji,SelfEmploymentTitle";
+        const string header = "Id,Name,StartYear,EndYear,MinimumLearningAge,BaseWeight,BaseSalary,PrimaryStat,SecondaryStat,TownPreference,MinimumSettlementClass,RequiredOpportunityTags,PreferredOpportunityTags,Emoji,SelfEmploymentTitle";
         if (lines.Length < 2 || !lines[0].TrimStart('\uFEFF').Equals(header, StringComparison.Ordinal))
             throw CatalogValidation.UnexpectedHeader(
                 DataPath,
@@ -171,8 +172,8 @@ public sealed class CraftCatalog
         {
             var fields = lines[index].Split(',');
             var row = index + 1;
-            if (fields.Length != 14)
-                throw CatalogValidation.FieldCount(DataPath, row, fields.Length, 14);
+            if (fields.Length != 15)
+                throw CatalogValidation.FieldCount(DataPath, row, fields.Length, 15);
 
             var id = fields[0].Trim();
             if (!ids.Add(id))
@@ -182,13 +183,14 @@ public sealed class CraftCatalog
             var endYear = string.IsNullOrWhiteSpace(fields[3]) ? (int?)null : CatalogValidation.ParseInt(DataPath, row, "EndYear", fields[3]);
             var minimumAge = CatalogValidation.ParseInt(DataPath, row, "MinimumLearningAge", fields[4]);
             var baseWeight = CatalogValidation.ParseDouble(DataPath, row, "BaseWeight", fields[5]);
-            var primaryStat = fields[6].Trim();
-            var secondaryStat = OptionalDash(fields[7]);
-            var townPreference = fields[8].Trim();
-            var selfEmploymentTitle = fields[13].Trim();
+            var baseSalary = CatalogValidation.ParseDecimal(DataPath, row, "BaseSalary", fields[6]);
+            var primaryStat = fields[7].Trim();
+            var secondaryStat = OptionalDash(fields[8]);
+            var townPreference = fields[9].Trim();
+            var selfEmploymentTitle = fields[14].Trim();
 
             var minimumSettlement = CatalogValidation.ParseEnum<SettlementClass>(
-                DataPath, row, "MinimumSettlementClass", fields[9]);
+                DataPath, row, "MinimumSettlementClass", fields[10]);
             if (startYear < GameCalendarConfiguration.GameStartYear)
                 throw CatalogValidation.Error(DataPath, $"a year at or after {GameCalendarConfiguration.GameStartYear}", row, id, "StartYear", startYear);
             if (endYear is int end && end < startYear)
@@ -197,6 +199,8 @@ public sealed class CraftCatalog
                 throw CatalogValidation.Error(DataPath, "an age of at least 0", row, id, "MinimumLearningAge", minimumAge);
             if (baseWeight <= 0)
                 throw CatalogValidation.Error(DataPath, "a number greater than 0", row, id, "BaseWeight", baseWeight);
+            if (baseSalary < 400m || baseSalary > 800m)
+                throw CatalogValidation.Error(DataPath, "a base salary from 400 through 800", row, id, "BaseSalary", baseSalary);
             if (!AllowedStats.Contains(primaryStat))
                 throw CatalogValidation.Error(DataPath, $"one of: {string.Join(", ", AllowedStats)}", row, id, "PrimaryStat", primaryStat);
             if (secondaryStat is not null && !AllowedStats.Contains(secondaryStat))
@@ -215,13 +219,14 @@ public sealed class CraftCatalog
                 endYear,
                 minimumAge,
                 baseWeight,
+                baseSalary,
                 primaryStat,
                 secondaryStat,
                 townPreference,
                 minimumSettlement,
-                ParseList(fields[10]),
                 ParseList(fields[11]),
-                fields[12].Trim(),
+                ParseList(fields[12]),
+                fields[13].Trim(),
                 selfEmploymentTitle));
         }
 
@@ -385,6 +390,7 @@ public sealed class CraftCatalog
         int? EndYear,
         int MinimumLearningAge,
         double BaseWeight,
+        decimal BaseSalary,
         string PrimaryStat,
         string? SecondaryStat,
         string TownPreference,

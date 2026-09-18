@@ -45,7 +45,7 @@ public sealed class FamilyRelationsPlugin : IGamePlugin
         systems.Register(new FamilyRelationYearSystem(relations, gameState, family, economy, households, personality, random));
 
         FamilyRelationActions.Register(
-            actions, gameState, family, relations, households, economy, locations, career, personality, random, events);
+            actions, gameState, family, relations, households, economy, locations, career, marriage, personality, random, events);
         LegacyFamilyRelationActions.Register(actions);
 
         context.GetService<IThoughtProviderRegistry>()?

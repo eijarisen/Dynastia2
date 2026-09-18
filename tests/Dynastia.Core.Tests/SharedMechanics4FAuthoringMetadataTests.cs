@@ -95,6 +95,37 @@ public sealed class SharedMechanics4FAuthoringMetadataTests
         Assert.Contains("non-empty self-employment title", error.Message);
     }
 
+
+    [Fact]
+    public void CraftBaseSalaryComesFromCatalogAndMustRemainWithinApprovedRange()
+    {
+        var data = CreateRepositoryData();
+        var catalog = CraftCatalog.Load(data);
+
+        Assert.Equal(650m, catalog.Find("metalworking")!.BaseSalary);
+        Assert.All(catalog.All, craft => Assert.InRange(craft.BaseSalary, 400m, 800m));
+
+        var source = data.ReadText("Crafts/crafts.csv");
+        var invalid = source.Replace(
+            "metalworking,Metalworking,1700,,12,1.25,650,",
+            "metalworking,Metalworking,1700,,12,1.25,900,",
+            StringComparison.Ordinal);
+
+        Assert.NotEqual(source, invalid);
+
+        var error = Assert.Throws<InvalidDataException>(() =>
+            CraftCatalog.Load(
+                new OverlayDataService(
+                    data,
+                    new Dictionary<string, string>
+                    {
+                        ["Crafts/crafts.csv"] = invalid
+                    })));
+
+        Assert.Contains("field 'BaseSalary'", error.Message);
+        Assert.Contains("400 through 800", error.Message);
+    }
+
     private static IGameDataService CreateRepositoryData()
     {
         var directory = new DirectoryInfo(AppContext.BaseDirectory);

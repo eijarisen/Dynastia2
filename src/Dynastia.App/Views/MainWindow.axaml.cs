@@ -67,6 +67,37 @@ public partial class MainWindow : Window
             OnWindowKeyDown,
             RoutingStrategies.Tunnel,
             handledEventsToo: true);
+
+        AddHandler(
+            InputElement.PointerMovedEvent,
+            OnWindowPointerMoved,
+            RoutingStrategies.Tunnel,
+            handledEventsToo: true);
+
+        AddHandler(
+            InputElement.PointerExitedEvent,
+            OnWindowPointerExited,
+            RoutingStrategies.Tunnel,
+            handledEventsToo: true);
+    }
+
+
+    private void OnWindowPointerMoved(
+        object? sender,
+        PointerEventArgs e)
+    {
+        if (!MainMenuParallax.IsVisible)
+            return;
+
+        MainMenuParallax.SetPointerPosition(
+            e.GetPosition(MainMenuParallax));
+    }
+
+    private void OnWindowPointerExited(
+        object? sender,
+        PointerEventArgs e)
+    {
+        MainMenuParallax.ResetPointer();
     }
 
     private void OnDataContextChanged(object? sender, EventArgs e)
@@ -91,11 +122,21 @@ public partial class MainWindow : Window
         object? sender,
         ActionSelectionRequestedEventArgs e)
     {
-        if (_actionSelectionDialogOpen
-            || DataContext is not MainWindowViewModel viewModel)
+        if (DataContext is not MainWindowViewModel viewModel)
+            return;
+
+        if (e.ActionId.Equals(
+                "ui.manage_properties",
+                StringComparison.OrdinalIgnoreCase))
         {
+            if (!_actionSelectionDialogOpen)
+                await OpenFamilyInventoryAsync(viewModel);
+
             return;
         }
+
+        if (_actionSelectionDialogOpen)
+            return;
 
         _actionSelectionDialogOpen = true;
         SetPaperDialogBackdrop(true);
@@ -171,7 +212,10 @@ public partial class MainWindow : Window
                 var educationWindow = new PropertySelectionWindow(
                     "Get Education",
                     "Study",
-                    educationOptions);
+                    educationOptions,
+                    viewModel.GetEducationSelectionContextText(),
+                    showSearch: false,
+                    compact: true);
                 var selectedOptionId = await educationWindow.ShowDialog<string?>(this);
                 if (!string.IsNullOrWhiteSpace(selectedOptionId))
                     viewModel.QueueEducationAction(selectedOptionId);
@@ -308,7 +352,7 @@ public partial class MainWindow : Window
 
             var window = new PropertySelectionWindow(
                 isBuy ? "Select Town" : "Select Property",
-                isBuy ? "Buy" : isMoveOut ? "Give House" : "Sell",
+                isBuy ? "Buy" : isMoveOut ? "Provide House" : "Sell",
                 options);
 
             var selectedId =
@@ -667,6 +711,18 @@ public partial class MainWindow : Window
         }
 
         e.Handled = true;
+        await OpenFamilyInventoryAsync(viewModel);
+    }
+
+    private async Task OpenFamilyInventoryAsync(
+        MainWindowViewModel viewModel)
+    {
+        if (_familyInventoryDialogOpen
+            || !viewModel.CanOpenFamilyInventory)
+        {
+            return;
+        }
+
         _familyInventoryDialogOpen = true;
         SetPaperDialogBackdrop(true);
 

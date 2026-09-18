@@ -9,6 +9,7 @@ internal static partial class FamilyRelationActions
         IFamilyRelationService relations,
         IHouseholdService households,
         IEconomyService economy,
+        IMarriageSatisfactionService marriage,
         IPersonalityService? personality,
         IGameRandom random,
         IGameEventBus events)
@@ -18,7 +19,7 @@ internal static partial class FamilyRelationActions
             Id = "household.ask_move_out",
             Label = "Ask to Move Out",
             Description =
-                "Ask the selected resident adult son or eligible male-line relative to establish his own household. Providing a spare house guarantees acceptance; asking him to rent may be refused and harms the relationship.",
+                "Ask any selected adult resident to establish a separate household. A spare house guarantees the move; otherwise they may refuse and the relationship deteriorates.",
             Mode = ActionExecutionMode.Queued,
             QueuePhase = YearPhase.QueuedActionsEarly,
             EvaluateAvailability = context =>
@@ -39,8 +40,7 @@ internal static partial class FamilyRelationActions
                         context.ActorHasControl,
                         family,
                         households,
-                        economy)
-                    || relations.GetRelation(actor, target) is null)
+                        economy))
                 {
                     return new GameActionResult(
                         false,
@@ -92,11 +92,19 @@ internal static partial class FamilyRelationActions
                     // The social cost belongs to making the request, not to
                     // the outcome. Parent/child or sibling kinship modifiers
                     // inside the relation service continue to apply.
-                    relations.ModifyRelation(
-                        actor,
-                        target,
-                        -10,
-                        majorInteraction: true);
+                    var trackedRelation = relations.GetRelation(actor, target);
+                    if (trackedRelation is not null)
+                    {
+                        relations.ModifyRelation(
+                            actor,
+                            target,
+                            -10,
+                            majorInteraction: true);
+                    }
+                    else if (family.GetSpouse(actor)?.Id == target.Id)
+                    {
+                        marriage.ChangeSatisfactionExact(target, -10);
+                    }
 
                     var profile = personality?.GetPersonality(target);
                     var refusalChance = MoveOutRules.CalculateRefusalChance(
@@ -118,7 +126,7 @@ internal static partial class FamilyRelationActions
                                     System.Globalization.CultureInfo.InvariantCulture),
                                 ["familyNews"] = "true",
                                 ["text"] =
-                                    $"{family.GetDisplayName(actor)} asked {family.GetDisplayName(target)} to move out and rent a home of his own, but {family.GetDisplayName(target)} refused."
+                                    $"{family.GetDisplayName(actor)} asked {family.GetDisplayName(target)} to move out and rent a home of their own, but {family.GetDisplayName(target)} refused."
                             }
                         });
 
@@ -149,20 +157,20 @@ internal static partial class FamilyRelationActions
 
                 events.Publish(new GameEvent
                 {
-                    Type = "household.son_moved_out",
+                    Type = "household.member_moved_out",
                     Year = context.GameState.Year,
                     SubjectId = actor.Id,
                     RelatedPersonIds = relatedIds,
                     Data = new Dictionary<string, string>
                     {
-                        ["targetSonId"] = target.Id.ToString(),
+                        ["targetId"] = target.Id.ToString(),
                         ["propertyId"] = move.TransferredHouse?.Id.ToString() ?? string.Empty,
                         ["town"] = destination,
                         ["providedHouse"] = move.ProvidedHouse ? "true" : "false",
                         ["rented"] = move.ProvidedHouse ? "false" : "true",
                         ["familyNews"] = "true",
                         ["text"] = move.ProvidedHouse
-                            ? $"{family.GetDisplayName(actor)} asked {family.GetDisplayName(target)} to establish his own household. {family.GetDisplayName(target)} accepted the house in {destination} and moved there with his family."
+                            ? $"{family.GetDisplayName(actor)} asked {family.GetDisplayName(target)} to establish a separate household. {family.GetDisplayName(target)} accepted the house in {destination} and moved there."
                             : $"{family.GetDisplayName(actor)} asked {family.GetDisplayName(target)} to move out. {family.GetDisplayName(target)} agreed and established a rented household in {destination}."
                     }
                 });
@@ -187,10 +195,7 @@ internal static partial class FamilyRelationActions
                 context.ActorHasControl,
                 family,
                 households,
-                economy)
-            || relations.GetRelation(
-                context.Actor,
-                context.Target) is null)
+                economy))
         {
             return ActionEvaluationResult.Denied(
                 ActionReasonCodes.NoLongerEligible,
@@ -255,24 +260,13 @@ internal static partial class FamilyRelationActions
             || target.Tags.Has("state.imprisoned")
             || target.Id == actor.Id
             || target.Age < 18
-            || family.GetSex(target) != Sex.Male
-            || !family.IsBloodline(target)
-            || !family.IsMaleLineage(target)
             || economy.HasHousehold(target)
+            || economy.GetHouseholdId(target) != economy.GetHouseholdId(actor)
             || households.ResolveHouseholdHead(target)?.Id != actor.Id)
         {
             return false;
         }
 
-        var directSon = family.GetChildren(actor)
-            .Any(child => child.Id == target.Id);
-
-        if (directSon)
-            return true;
-
-        var father = family.GetFather(target);
-        return father is null
-            || !father.Tags.Has("state.alive")
-            || households.ResolveHouseholdHead(father)?.Id != actor.Id;
+        return true;
     }
 }

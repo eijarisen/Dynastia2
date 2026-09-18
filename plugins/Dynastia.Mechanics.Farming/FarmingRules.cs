@@ -4,35 +4,16 @@ public static class FarmingRules
 {
     public const decimal PurchasePrice = 10000m;
     public const decimal SalePrice = 8000m;
-    public const decimal IncomeScale = 5m;
+    public const decimal WorkerBaseIncomeScale = 2m;
 
-    public static IReadOnlyList<decimal> GetStaffingFactors(
+    public static int GetActiveWorkerCount(
         int localParcelCount,
         int eligibleWorkers)
     {
         if (localParcelCount <= 0 || eligibleWorkers <= 0)
-            return [];
+            return 0;
 
-        var factors = new List<decimal>();
-        var remainingWorkers = eligibleWorkers;
-
-        for (var parcel = 0;
-            parcel < localParcelCount && remainingWorkers > 0;
-            parcel++)
-        {
-            if (remainingWorkers >= 2)
-            {
-                factors.Add(1.0m);
-                remainingWorkers -= 2;
-            }
-            else
-            {
-                factors.Add(0.5m);
-                remainingWorkers = 0;
-            }
-        }
-
-        return factors;
+        return Math.Min(localParcelCount * 2, eligibleWorkers);
     }
 
     public static decimal InterpolateEraMultiplier(

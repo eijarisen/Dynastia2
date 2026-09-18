@@ -142,11 +142,11 @@ internal sealed class StandardFarmingService :
     public decimal GetExpectedAnnualIncome(
         IPerson householdRepresentative)
     {
-        var staffing =
-            GetStaffingFactors(
+        var activeWorkers =
+            GetActiveWorkerCount(
                 householdRepresentative);
 
-        return GetExpectedAnnualIncome(staffing);
+        return GetExpectedAnnualIncome(activeWorkers);
     }
 
     public decimal GetExpectedAnnualIncomeAfterAddingLocalParcel(
@@ -162,30 +162,19 @@ internal sealed class StandardFarmingService :
             .Count;
 
         return GetExpectedAnnualIncome(
-            FarmingRules.GetStaffingFactors(
+            FarmingRules.GetActiveWorkerCount(
                 localParcels + 1,
                 workers));
     }
 
     private decimal GetExpectedAnnualIncome(
-        IReadOnlyList<decimal> staffing)
+        int activeWorkers)
     {
-        if (staffing.Count == 0)
+        if (activeWorkers <= 0)
             return 0m;
 
-        var referenceIncome =
-            _career.GetLevelOneSalary(
-                AgricultureCareerId);
-
-        var multiplier =
-            _eraSchedule.GetMultiplier(
-                _gameState.Year);
-
         return Math.Round(
-            referenceIncome
-            * multiplier
-            * FarmingRules.IncomeScale
-            * staffing.Sum(),
+            GetWorkerBaseIncome() * activeWorkers,
             0,
             MidpointRounding.AwayFromZero);
     }
@@ -193,34 +182,22 @@ internal sealed class StandardFarmingService :
     decimal IHouseholdIncomeProvider.GetAnnualIncome(
         IPerson householdRepresentative)
     {
-        var staffing =
-            GetStaffingFactors(
+        var activeWorkers =
+            GetActiveWorkerCount(
                 householdRepresentative);
 
-        if (staffing.Count == 0)
+        if (activeWorkers <= 0)
             return 0m;
 
-        var annualReference =
-            _career.GetLevelOneSalary(
-                AgricultureCareerId)
-            * _eraSchedule.GetMultiplier(
-                _gameState.Year)
-            * FarmingRules.IncomeScale;
+        var workerBaseIncome =
+            GetWorkerBaseIncome();
 
         decimal total = 0m;
 
-        foreach (var staffingFactor in staffing)
+        for (var worker = 0; worker < activeWorkers; worker++)
         {
-            var monthlyExpected =
-                annualReference
-                / 12m
-                * staffingFactor;
-
-            for (var month = 0; month < 12; month++)
-            {
-                total += monthlyExpected
-                    * (decimal)(_random.NextDouble() * 2.0);
-            }
+            total += workerBaseIncome
+                * (decimal)(_random.NextDouble() * 2.0);
         }
 
         var rounded =
@@ -307,7 +284,7 @@ internal sealed class StandardFarmingService :
             .ToList();
     }
 
-    private IReadOnlyList<decimal> GetStaffingFactors(
+    private int GetActiveWorkerCount(
         IPerson householdRepresentative)
     {
         var localParcels =
@@ -319,10 +296,17 @@ internal sealed class StandardFarmingService :
                 householdRepresentative)
             .Count;
 
-        return FarmingRules.GetStaffingFactors(
+        return FarmingRules.GetActiveWorkerCount(
             localParcels,
             workers);
     }
+
+    private decimal GetWorkerBaseIncome() =>
+        _career.GetLevelOneSalary(
+            AgricultureCareerId)
+        * _eraSchedule.GetMultiplier(
+            _gameState.Year)
+        * FarmingRules.WorkerBaseIncomeScale;
 
     private int GetLocalParcelCount(
         IPerson householdRepresentative)

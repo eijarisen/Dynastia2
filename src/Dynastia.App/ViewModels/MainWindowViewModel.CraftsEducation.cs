@@ -102,9 +102,9 @@ public sealed partial class MainWindowViewModel
         {
             new(
                 "standard",
-                "Standard Education",
+                "🎓 Standard Education",
                 $"Current formal Education: Level {_educationService.GetEducationLevel(target)}",
-                "Attempt to increase formal Education by one level. Success uses the existing Intellect-based education rules.",
+                string.Empty,
                 "3,000 zł",
                 "standard education formal study",
                 _educationService.GetEducationLevel(target) < 5)
@@ -124,25 +124,38 @@ public sealed partial class MainWindowViewModel
             var heading = craft.IsKnownCraft
                 ? $"{emoji} {craft.CraftName} — {craft.CurrentMasteryName}"
                 : $"{emoji} Learn {craft.CraftName}";
-            var secondary = craft.IsKnownCraft
-                ? $"{craft.MasteryProgress:0.##} Mastery progress · {craft.RelevantExperienceYears} years relevant experience"
-                : $"New chosen Craft · {statName} {craft.PrimaryStatValue}";
-            var details = craft.IsKnownCraft
-                ? $"Successful study adds 3 Mastery progress. Chance: {craft.SuccessChance:P0}. " +
-                  "Higher tiers also require real relevant professional experience."
-                : $"Unlock this Craft in the chosen slot. Chance: {craft.SuccessChance:P0}. " +
-                  "Prior related Career experience is credited immediately on success.";
+            var secondary =
+                $"Requires: {statName} · Chance: {craft.SuccessChance:P0}";
 
             options.Add(new PropertySelectionOption(
                 $"craft:{craft.CraftId}",
                 heading,
                 secondary,
-                details,
+                string.Empty,
                 "3,000 zł",
                 $"{craft.CraftName} craft education {craft.CurrentMasteryName} {craft.PrimaryStat}"));
         }
 
         return options;
+    }
+
+    public string GetEducationSelectionContextText()
+    {
+        var target = FindSelectedPerson();
+        if (target is null)
+            return string.Empty;
+
+        var displayName = _familyService?.GetDisplayName(target)
+            ?? $"{target.Name} {target.Surname}";
+
+        var stats = _statsService?.GetStats(target)
+            .ToDictionary(stat => stat.Id, stat => stat.Value, StringComparer.OrdinalIgnoreCase)
+            ?? new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+
+        var intellect = stats.GetValueOrDefault("intellect", 3);
+        var strength = stats.GetValueOrDefault("strength", 3);
+
+        return $"{displayName} · Intellect {intellect} · Strength {strength}";
     }
 
     public void QueueEducationAction(string selectedOptionId)

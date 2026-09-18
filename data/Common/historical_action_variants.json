@@ -3,17 +3,17 @@
     "actionId": "household.ask_daughter_nanny",
     "startYear": 1700,
     "endYear": 1849,
-    "label": "Ask Child to Care for Children",
-    "description": "Ask the selected adult unmarried and unemployed child living in this household to take responsibility for caring for the younger children.",
-    "narrative": "asked their child to take responsibility for the younger children"
+    "label": "Ask Relative to Care for Children",
+    "description": "Ask the selected adult unmarried and unemployed relative living in this household to take responsibility for caring for the younger children.",
+    "narrative": "asked their relative to take responsibility for the younger children"
   },
   {
     "actionId": "household.ask_daughter_nanny",
     "startYear": 1850,
     "endYear": null,
     "label": "Ask to Help with Children",
-    "description": "Ask the selected adult unmarried and unemployed child living in this household to care for the younger children for free.",
-    "narrative": "asked their child to become the family caregiver"
+    "description": "Ask the selected adult unmarried and unemployed relative living in this household to care for the younger children for free.",
+    "narrative": "asked their relative to become the family caregiver"
   },
   {
     "actionId": "household.fire_nanny",

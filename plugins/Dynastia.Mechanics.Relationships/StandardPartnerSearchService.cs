@@ -552,6 +552,9 @@ internal sealed class StandardPartnerSearchService :
 
         var parentName = _family.GetDisplayName(parent);
         var childName = _family.GetDisplayName(child);
+        var arrangedNarrative = actionContext.GameState.Year <= 1945
+            ? "used family contacts to arrange a marriage for their relative"
+            : "helped their relative look for a spouse";
 
         if (_random.NextDouble() >= acceptanceChance)
         {
@@ -568,7 +571,7 @@ internal sealed class StandardPartnerSearchService :
                         "0.00",
                         CultureInfo.InvariantCulture),
                     ["text"] =
-                        $"{parentName} {variant.Narrative}, but {candidate.DisplayName} declined the match with {childName}."
+                        $"{parentName} {arrangedNarrative}, but {candidate.DisplayName} declined the match with {childName}."
                 }
             });
 
@@ -620,7 +623,7 @@ internal sealed class StandardPartnerSearchService :
                     CultureInfo.InvariantCulture),
                 ["preserveGeneratedProfile"] = "true",
                 ["text"] =
-                    $"{parentName} {variant.Narrative}. {childName} married {partnerName}."
+                    $"{parentName} {arrangedNarrative}. {childName} married {partnerName}."
             }
         });
 

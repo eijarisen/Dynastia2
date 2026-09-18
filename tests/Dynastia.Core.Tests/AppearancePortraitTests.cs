@@ -285,6 +285,34 @@ public sealed class AppearancePortraitTests
     }
 
     [Fact]
+    public void SharedPortraitSeedKeepsMultipleBirthPortraitTimingAligned()
+    {
+        var family = new TestFamilyService();
+        var service = new StandardAppearanceService(family);
+        var first = CreatePerson("Twin A", Sex.Male, family);
+        var second = CreatePerson("Twin B", Sex.Male, family);
+        first.Age = 52;
+        second.Age = 52;
+
+        var appearance = new AppearanceSnapshot(
+            HairColor.Brown,
+            HairColor.Brown,
+            HairColor.Brown,
+            HairTexture.Straight,
+            45,
+            BaldingTendency.Mild,
+            BeardDensity.Normal);
+        var sharedSeed = Guid.Parse("420a4f5f-77d5-4a4c-a1a5-9e4e04f7f26c");
+
+        service.SetAppearance(first, appearance, sharedSeed);
+        service.SetAppearance(second, appearance, sharedSeed);
+
+        Assert.Equal(
+            service.GetPortrait(first),
+            service.GetPortrait(second));
+    }
+
+    [Fact]
     public void PersonPortraitReadDoesNotCreateMissingAppearanceState()
     {
         var family = new TestFamilyService();

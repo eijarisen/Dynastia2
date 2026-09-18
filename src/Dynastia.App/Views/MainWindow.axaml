@@ -392,8 +392,17 @@
     </Window.Styles>
 
     <Grid>
-        <!-- Always fills the physical window. -->
+        <!-- The start screen uses the Family Tree scenery directly at physical-window size. -->
+        <ui:TreeParallaxBackground
+            x:Name="MainMenuParallax"
+            IsHitTestVisible="False"
+            IsVisible="{Binding IsStartScreenVisible}"
+            HorizontalAlignment="Stretch"
+            VerticalAlignment="Stretch" />
+
+        <!-- The original game background is used only after a dynasty has started. -->
         <Image
+            IsVisible="{Binding IsGameStarted}"
             Source="/Assets/UI/bg.png"
             Stretch="UniformToFill" />
 
@@ -413,26 +422,18 @@
                     IsVisible="{Binding IsStartScreenVisible}">
 
                     <Image
-                        Width="190"
-                        Height="190"
-                        Margin="28,18,0,0"
-                        HorizontalAlignment="Left"
+                        Width="900"
+                        Height="252"
+                        Margin="0,28,0,0"
+                        HorizontalAlignment="Center"
                         VerticalAlignment="Top"
-                        Source="/Assets/UI/coat_of_arms.png"
+                        Source="/Assets/UI/main_menu_logo.png"
                         Stretch="Uniform" />
-
-                    <TextBlock
-                        Margin="252,70,0,0"
-                        HorizontalAlignment="Left"
-                        VerticalAlignment="Top"
-                        FontFamily="avares://Dynastia.App/Assets/Fonts#UnifrakturCook"
-                        FontSize="56"
-                        Foreground="#DDB64E"
-                        Text="Dynastia" />
 
                     <Grid
                         Width="760"
                         Height="390"
+                        Margin="0,110,0,0"
                         HorizontalAlignment="Center"
                         VerticalAlignment="Center">
 
@@ -1715,7 +1716,7 @@
 
                     <Button
                         x:Name="MusicToggleButton"
-                        Canvas.Left="1145"
+                        Canvas.Left="1150"
                         Canvas.Top="11"
                         Width="28"
                         Height="28"

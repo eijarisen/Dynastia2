@@ -48,7 +48,7 @@ public sealed class CraftsPlugin : IGamePlugin
                 _ => service.ReconcileAll(),
                 order: 65);
 
-        RegisterActions(actions, service, family, economy, career, stats, random, events, catalog);
+        RegisterActions(actions, service, gameState, family, economy, career, stats, random, events, catalog);
         RegisterGeneratedAdultInitialization(gameState, service, career, events);
 
         systems.Register(new CraftExperienceYearSystem(service));
@@ -65,6 +65,7 @@ public sealed class CraftsPlugin : IGamePlugin
     private static void RegisterActions(
         IActionRegistry actions,
         StandardCraftService crafts,
+        IGameState gameState,
         IFamilyService family,
         IEconomyService economy,
         ICareerService career,
@@ -82,7 +83,7 @@ public sealed class CraftsPlugin : IGamePlugin
                 Id = $"craft.start.{definition.Id}",
                 Label = "Work in a Profession",
                 Description =
-                    $"Leave any formal career and earn a living through {definition.Name}. Income varies month to month.",
+                    $"Leave any formal career and earn a living through {definition.Name}. Income varies sharply from year to year.",
                 Mode = ActionExecutionMode.Queued,
                 QueuePhase = YearPhase.LifeEvents,
                 IsAvailable = context =>
@@ -107,7 +108,7 @@ public sealed class CraftsPlugin : IGamePlugin
                 Id = $"craft.teach.{definition.Id}",
                 Label = "Teach Craft",
                 Description =
-                    $"Teach {definition.Name} to a child who is old enough to learn it. Success depends on the craft's relevant aptitude.",
+                    $"Teach {definition.Name} to a young relative in the household who is old enough to learn it. Success depends on the craft's relevant aptitude.",
                 Mode = ActionExecutionMode.Queued,
                 QueuePhase = YearPhase.LifeEvents,
                 IsAvailable = context =>
@@ -130,11 +131,18 @@ public sealed class CraftsPlugin : IGamePlugin
                         return false;
                     }
 
-                    return FindTeacher(context.Target, definition.Id, crafts, family, economy) is not null;
+                    return FindTeacher(
+                        gameState,
+                        context.Target,
+                        definition.Id,
+                        crafts,
+                        family,
+                        economy) is not null;
                 },
                 Execute = context =>
                 {
                     var teacher = FindTeacher(
+                        gameState,
                         context.Target,
                         definition.Id,
                         crafts,
@@ -213,24 +221,16 @@ public sealed class CraftsPlugin : IGamePlugin
         if (context.Actor.Id == context.Target.Id)
             return true;
 
-        var actorHouseholdId = economy.GetHouseholdId(context.Actor);
-        if (actorHouseholdId is null
-            || economy.GetHouseholdId(context.Target) != actorHouseholdId)
-        {
-            return false;
-        }
-
-        var isSpouse =
-            family.GetSpouse(context.Actor)?.Id == context.Target.Id;
-
-        var isResidentAdultChild =
-            family.GetChildren(context.Actor)
-                .Any(child => child.Id == context.Target.Id);
-
-        return isSpouse || isResidentAdultChild;
+        return HouseholdKinshipRules.IsSupportedResidentRelative(
+            context.Actor,
+            context.Target,
+            family,
+            economy,
+            requireAdult: true);
     }
 
     private static IPerson? FindTeacher(
+        IGameState gameState,
         IPerson child,
         string craftId,
         ICraftService crafts,
@@ -241,12 +241,22 @@ public sealed class CraftsPlugin : IGamePlugin
         if (householdId is null)
             return null;
 
-        return new[] { family.GetFather(child), family.GetMother(child) }
-            .Where(parent => parent is not null
-                && parent.Tags.Has("state.alive")
-                && economy.GetHouseholdId(parent) == householdId
-                && crafts.KnowsCraft(parent, craftId))
-            .Cast<IPerson>()
+        return gameState.People
+            .Where(candidate =>
+                candidate.Id != child.Id
+                && candidate.Age >= 18
+                && candidate.Tags.Has("state.alive")
+                && !candidate.Tags.Has("state.imprisoned")
+                && economy.GetHouseholdId(candidate) == householdId
+                && HouseholdKinshipRules.IsSupportedRelative(
+                    candidate,
+                    child,
+                    family)
+                && crafts.KnowsCraft(candidate, craftId))
+            .OrderByDescending(candidate =>
+                crafts.GetProgress(candidate, craftId)?.MasteryLevel ?? 0)
+            .ThenByDescending(candidate => candidate.Age)
+            .ThenBy(candidate => candidate.Id)
             .FirstOrDefault();
     }
 

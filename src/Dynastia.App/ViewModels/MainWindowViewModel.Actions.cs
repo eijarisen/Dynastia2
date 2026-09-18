@@ -59,6 +59,8 @@ public sealed partial class MainWindowViewModel
                     false;
                 var craftProfessionAdded =
                     false;
+                var managePropertiesAdded =
+                    false;
 
                 foreach (var action in
                     ActionPresentationPolicy.Order(
@@ -69,6 +71,28 @@ public sealed partial class MainWindowViewModel
                 {
                     var actionId =
                         action.Id;
+
+                    if (IsPropertyManagementAction(actionId))
+                    {
+                        if (!managePropertiesAdded)
+                        {
+                            managePropertiesAdded = true;
+                            var manageProperties =
+                                CreateManagePropertiesPresentationAction();
+
+                            _allAvailableActions.Add(
+                                new AvailableActionViewModel(
+                                    manageProperties,
+                                    new HashSet<ActionCategory>
+                                    {
+                                        ActionCategory.Finances
+                                    },
+                                    () => ExecuteAction(
+                                        ManagePropertiesUiActionId)));
+                        }
+
+                        continue;
+                    }
 
                     if (actionId.StartsWith(
                             "craft.start.",
@@ -149,6 +173,21 @@ public sealed partial class MainWindowViewModel
         OnPropertyChanged(
             nameof(ActionsEmptyText));
     }
+
+    private static bool IsPropertyManagementAction(
+        string actionId) =>
+        actionId.Equals(
+            "household.buy_house",
+            StringComparison.OrdinalIgnoreCase)
+        || actionId.Equals(
+            "household.sell_house",
+            StringComparison.OrdinalIgnoreCase)
+        || actionId.Equals(
+            "farming.buy_farmland",
+            StringComparison.OrdinalIgnoreCase)
+        || actionId.Equals(
+            "farming.sell_farmland",
+            StringComparison.OrdinalIgnoreCase);
 
     private void RebuildActionFilters()
     {
@@ -276,6 +315,9 @@ public sealed partial class MainWindowViewModel
         }
 
         if (actionId.Equals(
+                ManagePropertiesUiActionId,
+                StringComparison.OrdinalIgnoreCase)
+            || actionId.Equals(
                 SelfImprovementUiActionId,
                 StringComparison.OrdinalIgnoreCase)
             || actionId.Equals(
@@ -433,9 +475,9 @@ public sealed partial class MainWindowViewModel
                         house.Id.ToString(),
                         house.Town.Town,
                         $"{house.Town.County} • {region}",
-                        $"Spare property • {house.Town.SettlementClassDisplayName}\nCurrently yields {rentalIncome:N0} zł/year as rental income. It will become the son's residence.",
-                        "Give to son",
-                        $"{house.Town.Town} {house.Town.County} {region} move out son");
+                        $"Spare property • {house.Town.SettlementClassDisplayName}\nCurrently yields {rentalIncome:N0} zł/year as rental income. It will become the selected resident's new home.",
+                        "Provide house",
+                        $"{house.Town.Town} {house.Town.County} {region} move out resident");
                 })
                 .OrderBy(option => option.PrimaryText, StringComparer.CurrentCultureIgnoreCase)
                 .ToList();
@@ -457,7 +499,7 @@ public sealed partial class MainWindowViewModel
             StringComparison.OrdinalIgnoreCase);
 
         // Inventory actions belong to the active household. Move Out is the
-        // exception: the selected resident son remains the queued target.
+        // exception: the selected resident remains the queued target.
         var target = moveOut
             ? FindSelectedPerson()
             : actor;

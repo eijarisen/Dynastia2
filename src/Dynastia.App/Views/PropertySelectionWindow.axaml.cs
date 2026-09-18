@@ -16,13 +16,28 @@ public partial class PropertySelectionWindow : Window
     public PropertySelectionWindow(
         string title,
         string confirmLabel,
-        IReadOnlyList<PropertySelectionOption> options)
+        IReadOnlyList<PropertySelectionOption> options,
+        string? contextText = null,
+        bool showSearch = true,
+        bool compact = false)
     {
         InitializeComponent();
         _allOptions = options;
         Title = title;
         TitleText.Text = title;
+        ContextText.Text = contextText ?? string.Empty;
+        ContextText.IsVisible = !string.IsNullOrWhiteSpace(contextText);
+        SearchBox.IsVisible = showSearch;
         ConfirmButton.Content = confirmLabel;
+
+        if (compact)
+        {
+            Width = 900;
+            Height = 610;
+            MinWidth = 900;
+            MinHeight = 610;
+            OptionsList.Classes.Add("compact");
+        }
 
         var isBuy = confirmLabel.Equals(
             "Buy",

@@ -174,7 +174,7 @@ public sealed partial class StandardCareerService :
                         definition.Name,
                         year),
             isCraftSelfEmployed
-                ? GetLevelOneSalary(activeCraft!.PrimaryCareerId)
+                ? activeCraft!.BaseSalary
                 : definition?.BaseSalary ?? 0,
             career.PeakJobLevel,
             career.PeakCareerId,

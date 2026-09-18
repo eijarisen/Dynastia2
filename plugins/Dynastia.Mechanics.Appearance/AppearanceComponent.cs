@@ -18,4 +18,6 @@ public sealed class AppearanceComponent
     public BaldingTendency BaldingTendency { get; set; }
 
     public BeardDensity BeardDensity { get; set; }
+
+    public Guid? PortraitSeedId { get; set; }
 }

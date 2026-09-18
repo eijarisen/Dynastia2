@@ -89,7 +89,8 @@ public sealed class StandardAppearanceService : IAppearanceService
 
     public void SetAppearance(
         IPerson person,
-        AppearanceSnapshot appearance)
+        AppearanceSnapshot appearance,
+        Guid? portraitSeedId = null)
     {
         ArgumentNullException.ThrowIfNull(person);
         ArgumentNullException.ThrowIfNull(appearance);
@@ -106,7 +107,8 @@ public sealed class StandardAppearanceService : IAppearanceService
                     35,
                     70),
                 BaldingTendency = appearance.BaldingTendency,
-                BeardDensity = appearance.BeardDensity
+                BeardDensity = appearance.BeardDensity,
+                PortraitSeedId = portraitSeedId
             });
     }
 
@@ -125,7 +127,7 @@ public sealed class StandardAppearanceService : IAppearanceService
             ToSnapshot(component),
             _family.GetSex(person),
             person.Age,
-            person.Id,
+            component.PortraitSeedId ?? person.Id,
             useDeadOverride && person.Tags.Has("state.dead"));
     }
 

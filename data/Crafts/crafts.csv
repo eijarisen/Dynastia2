@@ -1,26 +1,26 @@
-﻿Id,Name,StartYear,EndYear,MinimumLearningAge,BaseWeight,PrimaryStat,SecondaryStat,TownPreference,MinimumSettlementClass,RequiredOpportunityTags,PreferredOpportunityTags,Emoji,SelfEmploymentTitle
-metalworking,Metalworking,1700,,12,1.25,strength,intellect,Universal,SmallTown,-,steel;heavy_industry;manufacturing,⚒️,Metalworker
-woodworking_carpentry,Woodworking & Carpentry,1700,,10,1.40,strength,intellect,Universal,SmallTown,-,forestry,🪚,Carpenter
-masonry,Masonry,1700,,12,1.00,strength,intellect,Universal,SmallTown,-,manufacturing,🧱,Mason
-pottery_ceramics,Pottery & Ceramics,1700,,10,0.85,intellect,strength,Universal,SmallTown,-,manufacturing,🏺,Potter / Ceramist
-glassworking,Glassworking,1700,,12,0.60,intellect,strength,Urban,SmallTown,-,chemicals;manufacturing,🪟,Glassworker
-tailoring_sewing,Tailoring & Sewing,1700,,8,1.40,intellect,-,Universal,SmallTown,-,textiles,🧵,Tailor
-weaving_textiles,Weaving & Textile Work,1700,,8,1.00,intellect,strength,Universal,SmallTown,-,textiles,🧶,Weaver
-leatherworking_shoemaking,Leatherworking & Shoemaking,1700,,10,1.00,strength,intellect,Universal,SmallTown,-,-,👞,Leatherworker / Shoemaker
-jewellery_watchmaking,Jewellery & Watchmaking,1700,,12,0.60,intellect,-,Urban,SmallTown,-,finance,⌚,Jeweller / Watchmaker
-printing_bookbinding,Printing & Bookbinding,1700,,10,0.70,intellect,strength,Urban,SmallTown,-,media,📚,Printer / Bookbinder
-baking_confectionery,Baking & Confectionery,1700,,8,1.20,intellect,strength,Universal,SmallTown,-,food,🥖,Baker / Confectioner
-food_processing_preservation,Food Processing & Preservation,1700,,8,1.10,intellect,strength,Rural,SmallTown,-,food;agriculture,🫙,Food Processor
-hairdressing_cosmetics,Hairdressing & Cosmetics,1700,,10,1.00,intellect,-,Universal,SmallTown,-,-,✂️,Hairdresser
-shipwrighting,Shipwrighting,1700,,12,0.50,strength,intellect,Urban,SmallTown,shipbuilding,port;shipping,⛵,Shipwright
-photography,Photography,1840,,12,0.70,intellect,-,Urban,SmallTown,-,media;tourism,📷,Photographer
-plumbing,Plumbing & Pipework,1850,,12,1.00,strength,intellect,Urban,SmallTown,-,-,🚰,Plumber
-machining,Machining,1850,,14,0.80,intellect,strength,Urban,SmallTown,-,manufacturing;heavy_industry;steel,⚙️,Machinist
-mechanical_repair,Mechanical Repair,1850,,12,1.00,intellect,strength,Universal,SmallTown,-,manufacturing,🔧,Mechanic
-electrical_work,Electrical Work,1880,,14,1.00,intellect,strength,Urban,SmallTown,-,electric_power;manufacturing,⚡,Electrician
-automotive_repair,Automotive Repair,1900,,14,1.10,intellect,strength,Universal,SmallTown,-,automotive,🚗,Auto Mechanic
-welding_metal_fabrication,Welding & Metal Fabrication,1900,,14,0.90,strength,intellect,Urban,SmallTown,-,steel;heavy_industry;shipbuilding;automotive;manufacturing,🔥,Welder / Metal Fabricator
-radio_electronics,Radio & Electronics,1920,,12,0.80,intellect,-,Urban,SmallTown,-,electric_power;technology;manufacturing,📻,Electronics Technician
-aircraft_maintenance,Aircraft Maintenance,1930,,14,0.40,intellect,strength,Urban,SmallTown,aviation,manufacturing,🛩️,Aircraft Mechanic
-plastics_fabrication,Plastics Fabrication,1950,,14,0.70,intellect,strength,Urban,SmallTown,-,chemicals;manufacturing,🧪,Plastics Fabricator
-computer_hardware_repair,Computer Hardware & Repair,1970,,12,0.80,intellect,-,Urban,SmallTown,-,technology;manufacturing,🖥️,Computer Technician
+﻿Id,Name,StartYear,EndYear,MinimumLearningAge,BaseWeight,BaseSalary,PrimaryStat,SecondaryStat,TownPreference,MinimumSettlementClass,RequiredOpportunityTags,PreferredOpportunityTags,Emoji,SelfEmploymentTitle
+metalworking,Metalworking,1700,,12,1.25,650,strength,intellect,Universal,SmallTown,-,steel;heavy_industry;manufacturing,⚒️,Metalworker
+woodworking_carpentry,Woodworking & Carpentry,1700,,10,1.40,550,strength,intellect,Universal,SmallTown,-,forestry,🪚,Carpenter
+masonry,Masonry,1700,,12,1.00,600,strength,intellect,Universal,SmallTown,-,manufacturing,🧱,Mason
+pottery_ceramics,Pottery & Ceramics,1700,,10,0.85,500,intellect,strength,Universal,SmallTown,-,manufacturing,🏺,Potter / Ceramist
+glassworking,Glassworking,1700,,12,0.60,600,intellect,strength,Urban,SmallTown,-,chemicals;manufacturing,🪟,Glassworker
+tailoring_sewing,Tailoring & Sewing,1700,,8,1.40,500,intellect,-,Universal,SmallTown,-,textiles,🧵,Tailor
+weaving_textiles,Weaving & Textile Work,1700,,8,1.00,450,intellect,strength,Universal,SmallTown,-,textiles,🧶,Weaver
+leatherworking_shoemaking,Leatherworking & Shoemaking,1700,,10,1.00,500,strength,intellect,Universal,SmallTown,-,-,👞,Leatherworker / Shoemaker
+jewellery_watchmaking,Jewellery & Watchmaking,1700,,12,0.60,750,intellect,-,Urban,SmallTown,-,finance,⌚,Jeweller / Watchmaker
+printing_bookbinding,Printing & Bookbinding,1700,,10,0.70,600,intellect,strength,Urban,SmallTown,-,media,📚,Printer / Bookbinder
+baking_confectionery,Baking & Confectionery,1700,,8,1.20,500,intellect,strength,Universal,SmallTown,-,food,🥖,Baker / Confectioner
+food_processing_preservation,Food Processing & Preservation,1700,,8,1.10,500,intellect,strength,Rural,SmallTown,-,food;agriculture,🫙,Food Processor
+hairdressing_cosmetics,Hairdressing & Cosmetics,1700,,10,1.00,500,intellect,-,Universal,SmallTown,-,-,✂️,Hairdresser
+shipwrighting,Shipwrighting,1700,,12,0.50,700,strength,intellect,Urban,SmallTown,shipbuilding,port;shipping,⛵,Shipwright
+photography,Photography,1840,,12,0.70,650,intellect,-,Urban,SmallTown,-,media;tourism,📷,Photographer
+plumbing,Plumbing & Pipework,1850,,12,1.00,650,strength,intellect,Urban,SmallTown,-,-,🚰,Plumber
+machining,Machining,1850,,14,0.80,700,intellect,strength,Urban,SmallTown,-,manufacturing;heavy_industry;steel,⚙️,Machinist
+mechanical_repair,Mechanical Repair,1850,,12,1.00,650,intellect,strength,Universal,SmallTown,-,manufacturing,🔧,Mechanic
+electrical_work,Electrical Work,1880,,14,1.00,700,intellect,strength,Urban,SmallTown,-,electric_power;manufacturing,⚡,Electrician
+automotive_repair,Automotive Repair,1900,,14,1.10,650,intellect,strength,Universal,SmallTown,-,automotive,🚗,Auto Mechanic
+welding_metal_fabrication,Welding & Metal Fabrication,1900,,14,0.90,700,strength,intellect,Urban,SmallTown,-,steel;heavy_industry;shipbuilding;automotive;manufacturing,🔥,Welder / Metal Fabricator
+radio_electronics,Radio & Electronics,1920,,12,0.80,700,intellect,-,Urban,SmallTown,-,electric_power;technology;manufacturing,📻,Electronics Technician
+aircraft_maintenance,Aircraft Maintenance,1930,,14,0.40,800,intellect,strength,Urban,SmallTown,aviation,manufacturing,🛩️,Aircraft Mechanic
+plastics_fabrication,Plastics Fabrication,1950,,14,0.70,650,intellect,strength,Urban,SmallTown,-,chemicals;manufacturing,🧪,Plastics Fabricator
+computer_hardware_repair,Computer Hardware & Repair,1970,,12,0.80,750,intellect,-,Urban,SmallTown,-,technology;manufacturing,🖥️,Computer Technician

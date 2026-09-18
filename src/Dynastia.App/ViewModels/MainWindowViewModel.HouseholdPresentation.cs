@@ -22,25 +22,10 @@ public sealed partial class MainWindowViewModel
     {
         get
         {
-            var finance =
-                GetDisplayedHouseholdFinance();
-
-            if (finance is null)
-                return string.Empty;
-
-            var head =
-                GetDisplayedHouseholdHead();
-
-            var forecast =
-                head is null
-                    ? null
-                    : _economyService?.GetAnnualForecast(head);
-
-            var projected =
-                forecast?.ProjectedIncome
-                ?? finance.LastIncome;
-
-            return $"Income: {projected:N0} zł";
+            var finance = GetDisplayedHouseholdFinance();
+            return finance is null
+                ? string.Empty
+                : $"Income (last year): {finance.LastIncome:N0} zł";
         }
     }
 
@@ -48,24 +33,12 @@ public sealed partial class MainWindowViewModel
     {
         get
         {
-            var finance =
-                GetDisplayedHouseholdFinance();
-
-            if (finance is null)
-                return string.Empty;
-
-            var head =
-                GetDisplayedHouseholdHead();
-
-            var projected =
-                head is null
-                    ? finance.LastIncomeBreakdown
-                    : _economyService?.GetAnnualForecast(head)?.IncomeBreakdown
-                        ?? finance.LastIncomeBreakdown;
-
-            return FormatFinanceBreakdown(
-                projected,
-                "No current recurring income.");
+            var finance = GetDisplayedHouseholdFinance();
+            return finance is null
+                ? string.Empty
+                : FormatFinanceBreakdown(
+                    finance.LastIncomeBreakdown,
+                    "No income was recorded last year.");
         }
     }
 

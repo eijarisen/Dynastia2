@@ -93,6 +93,7 @@ public sealed class EducationPlugin : IGamePlugin
             CreateHelpLearningAction(
                 education,
                 family,
+                economy,
                 stats,
                 random,
                 events,
@@ -256,7 +257,7 @@ public sealed class EducationPlugin : IGamePlugin
         return new GameActionDefinition
         {
             Id = "education.get_education",
-            Label = "Get Education (3,000 zł)",
+            Label = "Get Education",
             Description =
                 "Choose standard education or study a Craft. Every option costs 3,000 zł when the attempt is made.",
             Mode = ActionExecutionMode.Queued,
@@ -274,8 +275,12 @@ public sealed class EducationPlugin : IGamePlugin
                     return false;
                 }
 
-                var spouse = family.GetSpouse(actor);
-                var validTarget = target.Id == actor.Id || spouse?.Id == target.Id;
+                var validTarget = target.Id == actor.Id
+                    || HouseholdKinshipRules.IsSupportedResidentRelative(
+                        actor,
+                        target,
+                        family,
+                        economy);
                 if (!validTarget)
                     return false;
 
@@ -399,6 +404,7 @@ public sealed class EducationPlugin : IGamePlugin
     private static GameActionDefinition CreateHelpLearningAction(
         IEducationService education,
         IFamilyService family,
+        IEconomyService economy,
         IStatsService stats,
         IGameRandom random,
         IGameEventBus events,
@@ -413,11 +419,11 @@ public sealed class EducationPlugin : IGamePlugin
                 "Help in Learning",
 
             Description =
-                "Spend the year helping the selected child study. " +
+                "Spend the year helping the selected young relative in this household study. " +
                 "Available from age 6 through 17. Natural childhood Education " +
-                "now broadly follows Intellect; parental help can raise a child " +
+                "broadly follows Intellect; household help can raise a child " +
                 "one level beyond that natural ceiling. Success depends on the " +
-                "father's Education level: 10%, 25%, 40%, 55%, 70% or 85% " +
+                "helper's Education level: 10%, 25%, 40%, 55%, 70% or 85% " +
                 "at levels 0-5.",
 
             Mode =
@@ -429,18 +435,18 @@ public sealed class EducationPlugin : IGamePlugin
             IsAvailable =
                 actionContext =>
                 {
-                    var father =
+                    var helper =
                         actionContext.Actor;
 
                     var child =
                         actionContext.Target;
 
-                    if (!father.Tags.Has(
+                    if (!helper.Tags.Has(
                             "state.alive")
                         || !actionContext.ActorHasControl
                         || !child.Tags.Has(
                             "state.alive")
-                        || child.Id == father.Id
+                        || child.Id == helper.Id
                         || child.Age < HelpLearningMinimumAge
                         || child.Age >= HelpLearningAdultAge)
                     {
@@ -467,37 +473,33 @@ public sealed class EducationPlugin : IGamePlugin
                         return false;
                     }
 
-                    return family
-                        .GetChildren(
-                            father)
-                        .Any(
-                            candidate =>
-                                candidate.Id
-                                == child.Id);
+                    return HouseholdKinshipRules.IsSupportedResidentRelative(
+                        helper,
+                        child,
+                        family,
+                        economy);
                 },
 
             Execute =
                 actionContext =>
                 {
-                    var father =
+                    var helper =
                         actionContext.Actor;
 
                     var child =
                         actionContext.Target;
 
-                    if (!father.Tags.Has(
+                    if (!helper.Tags.Has(
                             "state.alive")
                         || !child.Tags.Has(
                             "state.alive")
                         || child.Age < HelpLearningMinimumAge
                         || child.Age >= HelpLearningAdultAge
-                        || !family
-                            .GetChildren(
-                                father)
-                            .Any(
-                                candidate =>
-                                    candidate.Id
-                                    == child.Id))
+                        || !HouseholdKinshipRules.IsSupportedResidentRelative(
+                            helper,
+                            child,
+                            family,
+                            economy))
                     {
                         return new GameActionResult(
                             false,
@@ -523,16 +525,16 @@ public sealed class EducationPlugin : IGamePlugin
                     {
                         return new GameActionResult(
                             false,
-                            "The child has reached the Education level that parental help can currently support.");
+                            "The child has reached the Education level that household help can currently support.");
                     }
 
-                    var fatherEducation =
+                    var helperEducation =
                         education.GetEducationLevel(
-                            father);
+                            helper);
 
                     var successChance =
                         HelpLearningBaseChance
-                        + fatherEducation
+                        + helperEducation
                             * HelpLearningEducationStep;
 
                     successChance =
@@ -564,7 +566,7 @@ public sealed class EducationPlugin : IGamePlugin
                                     child.Id,
 
                                 RelatedPersonIds =
-                                    [father.Id],
+                                    [helper.Id],
 
                                 Data =
                                     new Dictionary<string, string>
@@ -581,7 +583,7 @@ public sealed class EducationPlugin : IGamePlugin
                                                     "0.00"),
 
                                         ["text"] =
-                                            $"{family.GetDisplayName(father)} " +
+                                            $"{family.GetDisplayName(helper)} " +
                                             $"helped {family.GetDisplayName(child)} " +
                                             "with their studies, raising the child's " +
                                             $"Education to level " +
@@ -604,7 +606,7 @@ public sealed class EducationPlugin : IGamePlugin
                                     child.Id,
 
                                 RelatedPersonIds =
-                                    [father.Id],
+                                    [helper.Id],
 
                                 Data =
                                     new Dictionary<string, string>
@@ -615,7 +617,7 @@ public sealed class EducationPlugin : IGamePlugin
                                                     "0.00"),
 
                                         ["text"] =
-                                            $"{family.GetDisplayName(father)} " +
+                                            $"{family.GetDisplayName(helper)} " +
                                             $"spent time helping " +
                                             $"{family.GetDisplayName(child)} study, " +
                                             "but the child's Education did not improve."

@@ -27,6 +27,7 @@ public sealed partial class MainWindowViewModel
             .OrderByDescending(opportunity => opportunity.AnnualSalary)
             .ThenByDescending(opportunity => opportunity.JobLevel)
             .ThenBy(opportunity => opportunity.JobTitle, StringComparer.OrdinalIgnoreCase)
+            .Take(4)
             .Select(opportunity =>
                 new JobOpportunityCardViewModel(
                     opportunity,

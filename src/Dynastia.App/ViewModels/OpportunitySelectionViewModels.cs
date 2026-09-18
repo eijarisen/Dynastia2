@@ -26,7 +26,7 @@ public sealed class JobOpportunityCardViewModel
     public string CareerEmoji { get; }
 
     public string Heading =>
-        $"{Opportunity.JobTitle} ({Opportunity.JobLevel}) -- {Opportunity.CareerName}";
+        $"{Opportunity.JobTitle} ({Opportunity.JobLevel}) – {Opportunity.CareerName}";
 
     public string RequirementsText =>
         $"Requires: {Opportunity.PrimaryAbility} {Opportunity.RequiredAbilityLevel} · " +

@@ -35,7 +35,10 @@ public sealed partial class StandardHouseholdService
         if (!residentIds.Contains(newHead.Id))
             return Failed("The selected resident no longer lives in this household.");
 
-        var branch = CollectResidentBranch(newHead, residentIds);
+        var branch = CollectResidentBranch(
+            newHead,
+            residentIds,
+            sourceHead.Id);
         if (branch.Count == 0)
             return Failed("No resident family branch could be moved.");
 
@@ -140,43 +143,54 @@ public sealed partial class StandardHouseholdService
 
     private IReadOnlyList<IPerson> CollectResidentBranch(
         IPerson root,
-        IReadOnlySet<Guid> residentIds)
+        IReadOnlySet<Guid> residentIds,
+        Guid sourceHeadId)
     {
         var result = new List<IPerson>();
         var seen = new HashSet<Guid>();
 
-        void AddBranch(IPerson person)
+        void Add(IPerson person)
         {
-            if (!residentIds.Contains(person.Id)
+            if (person.Id == sourceHeadId
+                || !residentIds.Contains(person.Id)
                 || !seen.Add(person.Id))
             {
                 return;
             }
 
             result.Add(person);
+        }
 
-            var spouse = _family.GetSpouse(person);
-            if (spouse is not null
-                && spouse.Tags.Has("state.alive")
-                && residentIds.Contains(spouse.Id)
-                && seen.Add(spouse.Id))
-            {
-                result.Add(spouse);
-            }
-
-            foreach (var child in _family.GetChildren(person))
+        void AddDependentChildren(IPerson parent)
+        {
+            foreach (var child in _family.GetChildren(parent))
             {
                 if (!child.Tags.Has("state.alive")
+                    || child.Age >= 18
+                    || child.Id == sourceHeadId
                     || !residentIds.Contains(child.Id))
                 {
                     continue;
                 }
 
-                AddBranch(child);
+                Add(child);
+                AddDependentChildren(child);
             }
         }
 
-        AddBranch(root);
+        Add(root);
+
+        var spouse = _family.GetSpouse(root);
+        if (spouse is not null
+            && spouse.Tags.Has("state.alive")
+            && spouse.Id != sourceHeadId
+            && residentIds.Contains(spouse.Id))
+        {
+            Add(spouse);
+            AddDependentChildren(spouse);
+        }
+
+        AddDependentChildren(root);
         return result;
     }
 

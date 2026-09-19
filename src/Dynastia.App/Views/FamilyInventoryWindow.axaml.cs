@@ -16,14 +16,17 @@ public partial class FamilyInventoryWindow : Window
     }
 
     public FamilyInventoryWindow(
-        MainWindowViewModel main)
+        MainWindowViewModel main,
+        FamilyInventoryTab initialTab = FamilyInventoryTab.Money)
     {
         InitializeComponent();
 
         _main = main;
         _viewModel = main is null
             ? null!
-            : new FamilyInventoryWindowViewModel(main);
+            : new FamilyInventoryWindowViewModel(
+                main,
+                initialTab);
 
         if (main is not null)
             DataContext = _viewModel;
@@ -53,11 +56,21 @@ public partial class FamilyInventoryWindow : Window
         string actionId,
         bool isGivingLoan)
     {
+        var maximumPrincipal =
+            _main.GetMaximumLoanPrincipal(actionId);
+
+        var offers =
+            _main.GetLoanOffers(
+                isGivingLoan,
+                maximumPrincipal);
+
+        if (offers.Count == 0)
+            return;
+
         var window =
             new LoanSelectionWindow(
                 isGivingLoan,
-                _main.GetLoanTerms,
-                _main.GetMaximumLoanPrincipal(actionId));
+                offers);
 
         var selection =
             await window.ShowDialog<LoanSelectionResult?>(this);

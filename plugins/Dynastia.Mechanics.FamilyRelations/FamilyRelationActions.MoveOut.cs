@@ -259,6 +259,7 @@ internal static partial class FamilyRelationActions
             || !target.Tags.Has("state.alive")
             || target.Tags.Has("state.imprisoned")
             || target.Id == actor.Id
+            || family.GetSpouse(actor)?.Id == target.Id
             || target.Age < 18
             || economy.HasHousehold(target)
             || economy.GetHouseholdId(target) != economy.GetHouseholdId(actor)

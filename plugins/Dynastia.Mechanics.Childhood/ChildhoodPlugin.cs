@@ -99,7 +99,7 @@ public sealed class ChildhoodPlugin : IGamePlugin
                     RelatedPersonIds = [c.Actor.Id],
                     Data = new Dictionary<string, string>
                     {
-                        ["text"] = $"{family.GetDisplayName(c.Actor)} spent extra time guiding {family.GetDisplayName(c.Target)}, improving the child's happiness."
+                        ["text"] = $"{family.GetDisplayName(c.Actor)} spent extra time supporting {family.GetDisplayName(c.Target)}, improving their happiness."
                     }
                 });
                 return new GameActionResult(true);

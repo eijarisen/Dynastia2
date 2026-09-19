@@ -112,6 +112,11 @@ internal sealed class LoanPaymentYearSystem :
                 representative,
                 -payment);
 
+            _economy.RecordRealizedExpense(
+                representative,
+                "loan repayments",
+                payment);
+
             if (contract.CreditorType
                 == LoanCreditorType.Private)
             {

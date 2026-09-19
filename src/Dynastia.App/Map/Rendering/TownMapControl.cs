@@ -41,6 +41,10 @@ public sealed class TownMapControl :
         new SolidColorBrush(
             Color.FromRgb(255, 220, 112));
 
+    private static readonly IBrush HouseholdTownFill =
+        new SolidColorBrush(
+            Color.FromRgb(244, 203, 94));
+
     private static readonly IBrush CurrentTownFill =
         new SolidColorBrush(
             Color.FromRgb(255, 226, 124));
@@ -379,9 +383,11 @@ public sealed class TownMapControl :
                 ? 5.9
                 : item.HasPlayableHousehold
                     ? 5.0
-                    : item.HasDynastyResidents
-                        ? 4.1
-                        : 0.0;
+                    : item.HasActiveHousehold
+                        ? 4.6
+                        : item.HasDynastyResidents
+                            ? 4.1
+                            : 0.0;
 
         var radius =
             Math.Max(
@@ -393,9 +399,11 @@ public sealed class TownMapControl :
                 ? CurrentTownFill
                 : item.HasPlayableHousehold
                     ? PlayableTownFill
-                    : item.HasDynastyResidents
-                        ? DynastyTownFill
-                        : OrdinaryTownFill;
+                    : item.HasActiveHousehold
+                        ? HouseholdTownFill
+                        : item.HasDynastyResidents
+                            ? DynastyTownFill
+                            : OrdinaryTownFill;
 
         context.DrawEllipse(
             fill,
@@ -620,6 +628,7 @@ public sealed class TownMapControl :
         if (Zoom < 2.4)
         {
             return item.Population >= 100000
+                   || item.HasActiveHousehold
                    || item.HasPlayableHousehold
                    || item.HasDynastyResidents;
         }
@@ -627,12 +636,14 @@ public sealed class TownMapControl :
         if (Zoom < 4.0)
         {
             return item.Population >= 20000
+                   || item.HasActiveHousehold
                    || item.HasDynastyResidents;
         }
 
         if (Zoom < 6.0)
         {
             return item.Population >= 5000
+                   || item.HasActiveHousehold
                    || item.HasDynastyResidents;
         }
 
@@ -655,6 +666,7 @@ public sealed class TownMapControl :
         TownMapItem item) =>
             (item.IsCurrentHouseholdTown ? 10000 : 0)
             + (item.HasPlayableHousehold ? 5000 : 0)
+            + (item.HasActiveHousehold ? 3500 : 0)
             + (item.HasDynastyResidents ? 2500 : 0)
             + (item.HasOwnedHouse ? 1000 : 0)
             + Math.Min(

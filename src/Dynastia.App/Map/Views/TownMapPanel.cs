@@ -353,6 +353,7 @@ public sealed class TownMapPanel :
         _townSummary.Text =
             $"Current household: {currentText}\n"
             + $"Dynasty members: {town.DynastyResidents.Count}\n"
+            + $"Active households: {town.ActiveHouseholds}\n"
             + $"Playable households: {town.PlayableHouseholds}\n"
             + $"Owned houses: {town.OwnedHouses}";
 

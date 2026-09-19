@@ -73,9 +73,11 @@ public sealed class PersonRowViewModel
             OccupationText =
                 farmingService?.IsWorkingFarmWorker(person, person) == true
                     ? FarmingPresentationDefaults.WorkerOccupationLabel
-                    : career.IsEmployed && career.JobLevel > 0
-                        ? $"{career.JobTitle} ({career.JobLevel})"
-                        : career.JobTitle;
+                    : career.IsSelfEmployed
+                        ? career.JobTitle
+                        : career.IsEmployed && career.JobLevel > 0
+                            ? $"{career.JobTitle} ({career.JobLevel})"
+                            : career.JobTitle;
         }
 
         if (locationService is not null)

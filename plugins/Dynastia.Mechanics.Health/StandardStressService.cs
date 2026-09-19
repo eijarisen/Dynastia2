@@ -1,3 +1,4 @@
+using System.Globalization;
 using Dynastia.Contracts;
 
 namespace Dynastia.Mechanics.Health;
@@ -33,7 +34,21 @@ public sealed class StandardStressService : IStressService
     {
         ArgumentNullException.ThrowIfNull(person);
         var contributions = new List<StressContribution>();
-        AddEventStress(person, _events.GetEventsForYear(_state.Year), contributions);
+
+        // Major life events fade rather than disappearing after one year.
+        // The current year is fully salient, then the effect tapers over the
+        // following three years.
+        var eventStressDecay = new[] { 1.0, 0.65, 0.35, 0.15 };
+        for (var yearsAgo = 0; yearsAgo < eventStressDecay.Length; yearsAgo++)
+        {
+            var eventYear = _state.Year - yearsAgo;
+            AddEventStress(
+                person,
+                _events.GetEventsForYear(eventYear),
+                contributions,
+                eventYear,
+                eventStressDecay[yearsAgo]);
+        }
 
         var household = _economy.GetHousehold(person);
         if (household is not null && household.Wealth <= 0)
@@ -79,16 +94,45 @@ public sealed class StandardStressService : IStressService
             .ThenBy(contribution => contribution.SourceId, StringComparer.OrdinalIgnoreCase)
             .ToList();
 
+        var drinkRelief = _events.GetEventsForYear(_state.Year)
+            .Where(gameEvent => gameEvent.SubjectId == person.Id
+                && gameEvent.Type.Equals("wellbeing.drink", StringComparison.OrdinalIgnoreCase))
+            .Sum(gameEvent =>
+            {
+                if (gameEvent.Data.TryGetValue("stressRelief", out var raw)
+                    && double.TryParse(
+                        raw,
+                        NumberStyles.Float,
+                        CultureInfo.InvariantCulture,
+                        out var parsed))
+                {
+                    return Math.Max(0, parsed);
+                }
+
+                return 0.0;
+            });
+
         return new StressSnapshot(
-            Math.Clamp(normalized.Sum(contribution => contribution.Value), 0, MaximumStress),
+            Math.Clamp(
+                normalized.Sum(contribution => contribution.Value) - drinkRelief,
+                0,
+                MaximumStress),
             normalized);
     }
 
     private void AddEventStress(
         IPerson person,
         IReadOnlyList<GameEvent> events,
-        List<StressContribution> contributions)
+        List<StressContribution> contributions,
+        int eventYear,
+        double multiplier)
     {
+        void Add(string sourceId, double value)
+        {
+            var scaled = value * multiplier;
+            if (scaled > 0.0001)
+                contributions.Add(new StressContribution(sourceId, scaled));
+        }
         foreach (var gameEvent in events)
         {
             var subject = Find(gameEvent.SubjectId);
@@ -100,18 +144,18 @@ public sealed class StandardStressService : IStressService
                 if (subject.Id == person.Id)
                     continue;
 
-                if (WasSpouseThisYear(person, subject, _state.Year))
-                    contributions.Add(new("bereavement.spouse", 5));
+                if (WasSpouseThisYear(person, subject, eventYear))
+                    Add("bereavement.spouse", 5);
                 else if (IsParentOf(person, subject) || IsChildOf(person, subject))
                 {
                     var same = SameHousehold(person, subject);
                     var value = same ? (IsParentOf(person, subject) ? 4 : 5) : 2;
-                    contributions.Add(new(IsParentOf(person, subject) ? "bereavement.parent" : "bereavement.child", value));
+                    Add(IsParentOf(person, subject) ? "bereavement.parent" : "bereavement.child", value);
                     if (person.Age < 18 && IsParentOf(person, subject) && BothParentsDead(person))
-                        contributions.Add(new("family.orphaned_recent", 5));
+                        Add("family.orphaned_recent", 5);
                 }
                 else if (AreSiblings(person, subject))
-                    contributions.Add(new("bereavement.sibling", 2));
+                    Add("bereavement.sibling", 2);
 
                 continue;
             }
@@ -124,13 +168,13 @@ public sealed class StandardStressService : IStressService
                     .FirstOrDefault(candidate => candidate is not null && candidate.Id != subject.Id);
 
                 if (subject.Id == person.Id || partner?.Id == person.Id)
-                    contributions.Add(new("relationship.divorce", 4));
+                    Add("relationship.divorce", 4);
                 else if (partner is not null && IsSharedBiologicalChild(person, subject, partner))
-                    contributions.Add(new("family.parental_divorce", person.Age < 18 ? 4 : 1));
+                    Add("family.parental_divorce", person.Age < 18 ? 4 : 1);
                 else if (!IsBiologicalChildOf(person, subject)
                          && (partner is null || !IsBiologicalChildOf(person, partner))
                          && IsCloseRelative(person, subject))
-                    contributions.Add(new("relationship.relative_divorce", 1));
+                    Add("relationship.relative_divorce", 1);
 
                 continue;
             }
@@ -139,15 +183,15 @@ public sealed class StandardStressService : IStressService
                 || gameEvent.Type.Equals("rare.wrongful_arrest", StringComparison.OrdinalIgnoreCase))
             {
                 if (subject.Id == person.Id)
-                    contributions.Add(new(gameEvent.Type.Equals("justice.crime", StringComparison.OrdinalIgnoreCase)
+                    Add(gameEvent.Type.Equals("justice.crime", StringComparison.OrdinalIgnoreCase)
                         ? "justice.conviction"
-                        : "justice.wrongful_arrest", 4));
-                else if (WasSpouseThisYear(person, subject, _state.Year)
+                        : "justice.wrongful_arrest", 4);
+                else if (WasSpouseThisYear(person, subject, eventYear)
                          || IsParentOf(person, subject)
                          || IsChildOf(person, subject))
-                    contributions.Add(new("justice.close_relative", SameHousehold(person, subject) ? 4 : 1));
+                    Add("justice.close_relative", SameHousehold(person, subject) ? 4 : 1);
                 else if (IsCloseRelative(person, subject))
-                    contributions.Add(new("justice.relative", 1));
+                    Add("justice.relative", 1);
                 continue;
             }
 
@@ -155,21 +199,21 @@ public sealed class StandardStressService : IStressService
                 && subject.Id == person.Id
                 && IsSevereCrimeEvent(gameEvent))
             {
-                contributions.Add(new("justice.violent_incident", 2));
+                Add("justice.violent_incident", 2);
                 continue;
             }
 
             if (gameEvent.Type is "rare.assault" or "rare.workplace_accident" or "rare.traffic_accident" or "rare.structural_accident")
             {
                 if (subject.Id == person.Id && HasTraumaticDamage(gameEvent))
-                    contributions.Add(new("trauma.major_incident", 3));
+                    Add("trauma.major_incident", 3);
                 continue;
             }
 
             if (gameEvent.Type.Equals("career.fired", StringComparison.OrdinalIgnoreCase)
                 && subject.Id == person.Id)
             {
-                contributions.Add(new("career.job_loss", 2));
+                Add("career.job_loss", 2);
             }
         }
     }

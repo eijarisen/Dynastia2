@@ -67,6 +67,24 @@ public sealed partial class StandardHouseholdService
                 FindOldestAdultMaleLineageResident(
                     livingMembers);
 
+            if (adultMaleLineageResident is null
+                && oldHead.Tags.Has("state.alive")
+                && !(_family.GetSex(oldHead) == Sex.Male
+                    && _family.IsMaleLineage(oldHead))
+                && FindResidentFormerSpouseParent(livingMembers) is IPerson formerSpouseParent
+                && formerSpouseParent.Id != oldHead.Id)
+            {
+                _economy.TransferHouseholdHead(
+                    oldHead,
+                    formerSpouseParent);
+
+                _economy.AddHouseholdMember(
+                    formerSpouseParent,
+                    oldHead);
+
+                continue;
+            }
+
             if (oldHead.Tags.Has(
                     "state.alive")
                 && !SimulationState.IsInactive(
@@ -104,6 +122,18 @@ public sealed partial class StandardHouseholdService
                     && !IsCurrentSpouseOfBloodline(
                         oldHead))
                 {
+                    // A divorced parent who established a custody household
+                    // remains that household's named head. Do not immediately
+                    // rename the household after an adult daughter or other
+                    // non-lineage Bloodline resident. Adult male-lineage
+                    // succession above still takes priority.
+                    if (IsFormerSpouseWithResidentChild(
+                            oldHead,
+                            livingMembers))
+                    {
+                        continue;
+                    }
+
                     var bloodlineSuccessor =
                         livingBloodline
                             .Where(
@@ -285,6 +315,51 @@ public sealed partial class StandardHouseholdService
                 member =>
                     member.Id)
             .ToList();
+    }
+
+    private IPerson? FindResidentFormerSpouseParent(
+        IReadOnlyList<IPerson> livingMembers)
+    {
+        return livingMembers
+            .Where(candidate =>
+                candidate.Age >= 18
+                && !SimulationState.IsInactive(candidate)
+                && !_family.IsBloodline(candidate)
+                && !IsCurrentSpouseOfBloodline(candidate)
+                && HasEndedBloodlineMarriage(candidate)
+                && livingMembers.Any(member =>
+                    member.Id != candidate.Id
+                    && _family.IsBloodline(member)
+                    && (_family.GetMother(member)?.Id == candidate.Id
+                        || _family.GetFather(member)?.Id == candidate.Id)))
+            .OrderBy(BirthSortKey)
+            .FirstOrDefault();
+    }
+
+    private bool HasEndedBloodlineMarriage(
+        IPerson person) =>
+        _family.GetRelationshipHistory(person)
+            .Any(history =>
+            {
+                if (history.EndYear is null)
+                    return false;
+
+                var spouse = FindPerson(history.SpouseId);
+                return spouse is not null
+                    && _family.IsBloodline(spouse);
+            });
+
+    private bool IsFormerSpouseWithResidentChild(
+        IPerson person,
+        IReadOnlyList<IPerson> livingMembers)
+    {
+        if (!HasDirectBloodlineMarriage(person))
+            return false;
+
+        return livingMembers.Any(member =>
+            member.Id != person.Id
+            && (_family.GetMother(member)?.Id == person.Id
+                || _family.GetFather(member)?.Id == person.Id));
     }
 
     private bool IsCurrentSpouseOfBloodline(

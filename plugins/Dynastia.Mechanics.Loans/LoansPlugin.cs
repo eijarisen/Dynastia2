@@ -44,6 +44,11 @@ public sealed class LoansPlugin :
                 context,
                 "Historical action variant service");
 
+        var appearance =
+            Require<IAppearanceService>(
+                context,
+                "Appearance service");
+
         var actions =
             Require<IActionRegistry>(context, "Action registry");
 
@@ -66,7 +71,10 @@ public sealed class LoansPlugin :
                 family,
                 economy,
                 loanEras,
-                random);
+                random,
+                historicalNames,
+                externalBorrowerSurnames,
+                appearance);
 
         context.AddService<ILoanService>(
             loans);
@@ -161,11 +169,16 @@ public sealed class LoansPlugin :
                         return new GameActionResult(false);
                     }
 
+                    actionContext.Parameters.TryGetValue(
+                        "counterpartyName",
+                        out var creditorName);
+
                     loans.CreateBankLoan(
                         actor,
                         terms.Principal,
                         terms.DurationYears,
-                        actionContext.GameState.Year);
+                        actionContext.GameState.Year,
+                        creditorName);
 
                     economy.ChangeWealth(
                         actor,
@@ -188,9 +201,13 @@ public sealed class LoansPlugin :
                                     ["duration"] = terms.DurationYears.ToString(CultureInfo.InvariantCulture),
                                     ["totalRepayment"] = terms.TotalRepayment.ToString(CultureInfo.InvariantCulture),
                                     ["annualPayment"] = terms.AnnualPayment.ToString(CultureInfo.InvariantCulture),
+                                    ["creditorName"] = creditorName ?? string.Empty,
                                     ["text"] =
-                                        $"{family.GetDisplayName(actor)} {era.TakeLoanEventPhrase}: " +
-                                        $"{terms.Principal:N0} zł for {terms.DurationYears} years."
+                                        string.IsNullOrWhiteSpace(creditorName)
+                                            ? $"{family.GetDisplayName(actor)} {era.TakeLoanEventPhrase}: " +
+                                              $"{terms.Principal:N0} zł for {terms.DurationYears} years."
+                                            : $"{family.GetDisplayName(actor)} arranged a loan with {creditorName}: " +
+                                              $"{terms.Principal:N0} zł for {terms.DurationYears} years."
                                 }
                         });
 
@@ -282,12 +299,17 @@ public sealed class LoansPlugin :
                             actionContext.GameState.Year);
 
                     var borrowerName =
-                        GenerateExternalBorrowerName(
-                            contract.ContractId,
-                            actionContext.GameState.Year,
-                            family,
-                            historicalNames,
-                            externalBorrowerSurnames);
+                        actionContext.Parameters.TryGetValue(
+                            "counterpartyName",
+                            out var selectedBorrowerName)
+                        && !string.IsNullOrWhiteSpace(selectedBorrowerName)
+                            ? selectedBorrowerName
+                            : GenerateExternalBorrowerName(
+                                contract.ContractId,
+                                actionContext.GameState.Year,
+                                family,
+                                historicalNames,
+                                externalBorrowerSurnames);
 
                     contract.ExternalBorrowerName =
                         borrowerName;

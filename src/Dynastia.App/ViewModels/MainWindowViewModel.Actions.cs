@@ -61,6 +61,8 @@ public sealed partial class MainWindowViewModel
                     false;
                 var managePropertiesAdded =
                     false;
+                var manageFinancesAdded =
+                    false;
 
                 foreach (var action in
                     ActionPresentationPolicy.Order(
@@ -94,6 +96,28 @@ public sealed partial class MainWindowViewModel
                         continue;
                     }
 
+                    if (IsFinanceManagementAction(actionId))
+                    {
+                        if (!manageFinancesAdded)
+                        {
+                            manageFinancesAdded = true;
+                            var manageFinances =
+                                CreateManageFinancesPresentationAction();
+
+                            _allAvailableActions.Add(
+                                new AvailableActionViewModel(
+                                    manageFinances,
+                                    new HashSet<ActionCategory>
+                                    {
+                                        ActionCategory.Finances
+                                    },
+                                    () => ExecuteAction(
+                                        ManageFinancesUiActionId)));
+                        }
+
+                        continue;
+                    }
+
                     if (actionId.StartsWith(
                             "craft.start.",
                             StringComparison.OrdinalIgnoreCase))
@@ -115,7 +139,7 @@ public sealed partial class MainWindowViewModel
                         continue;
                     }
 
-                    if (IsStatImprovementAction(actionId))
+                    if (IsSelfImprovementAction(actionId))
                     {
                         if (!selfImprovementAdded)
                         {
@@ -149,7 +173,11 @@ public sealed partial class MainWindowViewModel
                             categories,
                             () =>
                                 ExecuteAction(
-                                    actionId));
+                                    actionId),
+                            GetContextualActionLabel(
+                                actionId,
+                                actor,
+                                target));
 
                     if (actionId.Equals(
                         "turn.pass",
@@ -174,6 +202,41 @@ public sealed partial class MainWindowViewModel
             nameof(ActionsEmptyText));
     }
 
+    private string? GetContextualActionLabel(
+        string actionId,
+        IPerson actor,
+        IPerson target)
+    {
+        if (!actionId.Equals(
+                "childhood.raise_child",
+                StringComparison.OrdinalIgnoreCase)
+            || _familyService is null
+            || !AreSiblings(actor, target))
+        {
+            return null;
+        }
+
+        return _familyService.GetSex(target) == Sex.Male
+            ? "Support Brother"
+            : "Support Sister";
+    }
+
+    private bool AreSiblings(
+        IPerson first,
+        IPerson second)
+    {
+        if (_familyService is null || first.Id == second.Id)
+            return false;
+
+        var firstFather = _familyService.GetFather(first)?.Id;
+        var firstMother = _familyService.GetMother(first)?.Id;
+
+        return firstFather is Guid fatherId
+                && _familyService.GetFather(second)?.Id == fatherId
+            || firstMother is Guid motherId
+                && _familyService.GetMother(second)?.Id == motherId;
+    }
+
     private static bool IsPropertyManagementAction(
         string actionId) =>
         actionId.Equals(
@@ -187,6 +250,16 @@ public sealed partial class MainWindowViewModel
             StringComparison.OrdinalIgnoreCase)
         || actionId.Equals(
             "farming.sell_farmland",
+            StringComparison.OrdinalIgnoreCase);
+
+
+    private static bool IsFinanceManagementAction(
+        string actionId) =>
+        actionId.Equals(
+            "loan.take",
+            StringComparison.OrdinalIgnoreCase)
+        || actionId.Equals(
+            "loan.give",
             StringComparison.OrdinalIgnoreCase);
 
     private void RebuildActionFilters()
@@ -316,6 +389,9 @@ public sealed partial class MainWindowViewModel
 
         if (actionId.Equals(
                 ManagePropertiesUiActionId,
+                StringComparison.OrdinalIgnoreCase)
+            || actionId.Equals(
+                ManageFinancesUiActionId,
                 StringComparison.OrdinalIgnoreCase)
             || actionId.Equals(
                 SelfImprovementUiActionId,
@@ -606,6 +682,24 @@ public sealed partial class MainWindowViewModel
             10000m);
     }
 
+    public IReadOnlyList<LoanOfferInfo> GetLoanOffers(
+        bool isGivingLoan,
+        decimal maximumPrincipal)
+    {
+        var actor = _succession.ActiveController;
+        if (actor is null
+            || _loanService is null
+            || maximumPrincipal < 1000m)
+        {
+            return [];
+        }
+
+        return _loanService.GetOffers(
+            actor,
+            isGivingLoan,
+            maximumPrincipal);
+    }
+
     public LoanTermsInfo? GetLoanTerms(
         decimal principal,
         int durationYears)
@@ -652,7 +746,10 @@ public sealed partial class MainWindowViewModel
 
                 ["durationYears"] =
                     selection.DurationYears.ToString(
-                        System.Globalization.CultureInfo.InvariantCulture)
+                        System.Globalization.CultureInfo.InvariantCulture),
+
+                ["counterpartyName"] =
+                    selection.CounterpartyName
             };
 
         var result =
@@ -683,8 +780,19 @@ public sealed partial class MainWindowViewModel
     private string BuildQueuedActionText(
         QueuedActionInfo queued)
     {
+        var queuedActor = _gameState.People.FirstOrDefault(
+            person => person.Id == queued.ActorId);
+        var queuedTarget = _gameState.People.FirstOrDefault(
+            person => person.Id == queued.TargetId);
+        var contextualLabel = queuedActor is not null && queuedTarget is not null
+            ? GetContextualActionLabel(
+                queued.ActionId,
+                queuedActor,
+                queuedTarget)
+            : null;
+
         var text =
-            $"Queued: {ActionEmojiMap.Format(queued.ActionId, queued.Label)}";
+            $"Queued: {ActionEmojiMap.Format(queued.ActionId, contextualLabel ?? queued.Label)}";
 
         var detail =
             BuildQueuedActionDetail(queued);

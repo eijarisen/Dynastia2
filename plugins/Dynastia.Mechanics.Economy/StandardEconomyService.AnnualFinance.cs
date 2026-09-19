@@ -99,10 +99,7 @@ public sealed partial class StandardEconomyService
                     ? provider.GetAnnualIncome(owner)
                     : provider.GetExpectedAnnualIncome(owner));
 
-            // Preserve the old realized ledger behavior: household-level
-            // providers (notably Farming) still leave a zero line in the
-            // previous-year ledger, while forecasts omit zero-value lines.
-            if (amount != 0m || mode == AnnualFinanceCalculationMode.Realized)
+            if (amount != 0m)
             {
                 lines.Add(
                     new FinanceBreakdownItem(

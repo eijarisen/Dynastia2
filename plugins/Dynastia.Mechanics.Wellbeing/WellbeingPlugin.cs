@@ -35,6 +35,11 @@ public sealed partial class WellbeingPlugin : IGamePlugin
             ?? throw new InvalidOperationException(
                 "Health service is unavailable.");
 
+        var stress =
+            context.GetService<IStressService>()
+            ?? throw new InvalidOperationException(
+                "Stress service is unavailable.");
+
         var career =
             context.GetService<ICareerService>()
             ?? throw new InvalidOperationException(
@@ -107,8 +112,8 @@ public sealed partial class WellbeingPlugin : IGamePlugin
         RegisterDrink(
             actions,
             family,
-            career,
             health,
+            stress,
             random,
             events);
 

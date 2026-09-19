@@ -13,6 +13,16 @@ public static class EducationProgressionRules
             _ => 0.70
         };
 
+    public static double GetHelpInEducationSuccessChance(
+        int childIntellect,
+        int helperIntellect) =>
+        Math.Clamp(
+            0.10
+            + Math.Clamp(childIntellect, 1, 5) * 0.05
+            + Math.Clamp(helperIntellect, 1, 5) * 0.10,
+            0,
+            1);
+
     public static int GetPassiveChildhoodCeiling(
         int intellect,
         int eraMaximum = 5) =>

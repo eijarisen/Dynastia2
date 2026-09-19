@@ -69,7 +69,7 @@
                     FontFamily="Georgia"
                     FontSize="12"
                     Foreground="#6A5131"
-                    Text="Choose one improvement. Each costs 10,000 zł and uses this year's action." />
+                    Text="Choose one improvement. Prices are shown per option and each uses this year's action." />
             </StackPanel>
 
             <Border
@@ -101,6 +101,7 @@
                                             Foreground="#352615"
                                             Text="{Binding StatName}" />
                                         <TextBlock
+                                            IsVisible="{Binding HasCurrentValue}"
                                             FontFamily="Georgia"
                                             FontSize="11.5"
                                             Foreground="#6B5434"

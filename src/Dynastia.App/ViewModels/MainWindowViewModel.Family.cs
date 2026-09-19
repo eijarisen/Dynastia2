@@ -287,6 +287,12 @@ public sealed partial class MainWindowViewModel
 
 
         OnPropertyChanged(
+            nameof(HouseholdLastYearText));
+
+        OnPropertyChanged(
+            nameof(HouseholdLastYearDetailsText));
+
+        OnPropertyChanged(
             nameof(HouseholdIncomeText));
 
         OnPropertyChanged(
@@ -622,6 +628,31 @@ public sealed partial class MainWindowViewModel
             household.HeadId);
         SelectFamilyMember(
             personId);
+    }
+
+    public void CyclePlayableHousehold(
+        bool reverse = false)
+    {
+        if (!IsGameStarted || PlayableTabs.Count <= 1)
+            return;
+
+        var activeId = _succession.ActiveController?.Id;
+        var currentIndex = activeId is Guid id
+            ? PlayableTabs
+                .Select((tab, index) => new { tab, index })
+                .FirstOrDefault(item => item.tab.PersonId == id)?.index ?? -1
+            : -1;
+
+        var nextIndex = reverse
+            ? currentIndex <= 0
+                ? PlayableTabs.Count - 1
+                : currentIndex - 1
+            : currentIndex < 0 || currentIndex >= PlayableTabs.Count - 1
+                ? 0
+                : currentIndex + 1;
+
+        SwitchActiveHousehold(
+            PlayableTabs[nextIndex].PersonId);
     }
 
     private void SwitchActiveHousehold(

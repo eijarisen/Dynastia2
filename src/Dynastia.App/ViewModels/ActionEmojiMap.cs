@@ -37,6 +37,8 @@ public static class ActionEmojiMap
                 ["childhood.raise_child"] = "🫂",
 
                 ["ui.self_improvement"] = "🛠️",
+                ["ui.manage_properties"] = "🏘️",
+                ["ui.manage_finances"] = "🏦",
                 ["stats.improve_strength"] = "🏋️",
                 ["stats.improve_intellect"] = "🧠",
                 ["stats.improve_immunity"] = "🛡️",

@@ -119,8 +119,8 @@ public sealed partial class WellbeingPlugin
     private static void RegisterDrink(
         IActionRegistry actions,
         IFamilyService family,
-        ICareerService career,
         IHealthService health,
+        IStressService stress,
         IGameRandom random,
         IGameEventBus events)
     {
@@ -134,9 +134,9 @@ public sealed partial class WellbeingPlugin
                     "Drink",
 
                 Description =
-                    "Turn to alcohol to cope with a miserable job. " +
-                    "Job satisfaction +2, immediate health -10, " +
-                    "with a 20% chance of developing Alcoholism.",
+                    "Use alcohol to blunt current stress. Reduces Stress by 2 " +
+                    "for this year, immediately costs 10 Health, and carries " +
+                    "a 20% base chance of developing Alcoholism.",
 
                 Mode =
                     ActionExecutionMode.Queued,
@@ -153,13 +153,8 @@ public sealed partial class WellbeingPlugin
                             return false;
                         }
 
-                        var current =
-                            career.GetCareer(
-                                actionContext.Actor);
-
-                        return !current.IsRetired
-                            && current.IsEmployed
-                            && current.JobSatisfaction == 1;
+                        return actionContext.Actor.Age >= 18
+                            && stress.GetStress(actionContext.Actor).Total > 0;
                     },
 
                 Execute =
@@ -168,20 +163,12 @@ public sealed partial class WellbeingPlugin
                         var actor =
                             actionContext.Actor;
 
-                        var current =
-                            career.GetCareer(actor);
-
-                        if (current.IsRetired
-                            || !current.IsEmployed
-                            || current.JobSatisfaction != 1)
+                        if (actor.Age < 18
+                            || stress.GetStress(actor).Total <= 0)
                         {
                             return new GameActionResult(
                                 false);
                         }
-
-                        career.ChangeJobSatisfaction(
-                            actor,
-                            2);
 
                         health.ChangeHealth(
                             actor,
@@ -202,9 +189,10 @@ public sealed partial class WellbeingPlugin
                                 Data =
                                     new Dictionary<string, string>
                                     {
+                                        ["stressRelief"] = "2",
                                         ["text"] =
                                             $"{family.GetDisplayName(actor)} " +
-                                            "spent the year drinking to cope with stress."
+                                            "drank to take the edge off mounting stress."
                                     }
                             });
 

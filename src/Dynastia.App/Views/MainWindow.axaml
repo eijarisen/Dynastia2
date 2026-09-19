@@ -1093,56 +1093,29 @@
                                             Foreground="#E3C36D"
                                             Text="{Binding HouseholdBudgetText}" />
 
-                                        <StackPanel
+                                        <TextBlock
                                             HorizontalAlignment="Center"
-                                            Orientation="Horizontal"
-                                            Spacing="18">
-                                            <TextBlock
-                                                FontSize="11.5"
-                                                FontWeight="SemiBold"
-                                                Foreground="#E8DDC2"
-                                                Text="{Binding HouseholdIncomeText}">
-                                                <ToolTip.Tip>
-                                                    <Border
-                                                        MaxWidth="360"
-                                                        Padding="10,7"
-                                                        Background="#F20A1514"
-                                                        BorderBrush="#B88934"
-                                                        BorderThickness="1"
-                                                        CornerRadius="4">
-                                                        <TextBlock
-                                                            FontSize="11"
-                                                            LineHeight="17"
-                                                            Foreground="#F5E6C6"
-                                                            TextWrapping="Wrap"
-                                                            Text="{Binding HouseholdIncomeDetailsText}" />
-                                                    </Border>
-                                                </ToolTip.Tip>
-                                            </TextBlock>
-
-                                            <TextBlock
-                                                FontSize="11.5"
-                                                FontWeight="SemiBold"
-                                                Foreground="#E8DDC2"
-                                                Text="{Binding HouseholdExpensesText}">
-                                                <ToolTip.Tip>
-                                                    <Border
-                                                        MaxWidth="360"
-                                                        Padding="10,7"
-                                                        Background="#F20A1514"
-                                                        BorderBrush="#B88934"
-                                                        BorderThickness="1"
-                                                        CornerRadius="4">
-                                                        <TextBlock
-                                                            FontSize="11"
-                                                            LineHeight="17"
-                                                            Foreground="#F5E6C6"
-                                                            TextWrapping="Wrap"
-                                                            Text="{Binding HouseholdExpenseDetailsText}" />
-                                                    </Border>
-                                                </ToolTip.Tip>
-                                            </TextBlock>
-                                        </StackPanel>
+                                            FontSize="11.5"
+                                            FontWeight="SemiBold"
+                                            Foreground="#E8DDC2"
+                                            Text="{Binding HouseholdLastYearText}">
+                                            <ToolTip.Tip>
+                                                <Border
+                                                    MaxWidth="390"
+                                                    Padding="10,7"
+                                                    Background="#F20A1514"
+                                                    BorderBrush="#B88934"
+                                                    BorderThickness="1"
+                                                    CornerRadius="4">
+                                                    <TextBlock
+                                                        FontSize="11"
+                                                        LineHeight="17"
+                                                        Foreground="#F5E6C6"
+                                                        TextWrapping="Wrap"
+                                                        Text="{Binding HouseholdLastYearDetailsText}" />
+                                                </Border>
+                                            </ToolTip.Tip>
+                                        </TextBlock>
 
                                         <TextBlock
                                             HorizontalAlignment="Center"
@@ -1365,23 +1338,27 @@
 
                                     <Grid
                                         Margin="9"
+                                        RowDefinitions="*"
                                         ColumnDefinitions="*,*"
-                                        ColumnSpacing="18">
+                                        ColumnSpacing="18"
+                                        RowSpacing="5">
 
                                         <StackPanel
+                                            Grid.Row="0"
                                             Grid.Column="0"
                                             Spacing="4">
 
-                                            <TextBlock FontSize="12" Text="{Binding SelectedPerson.AgeText}" />
-                                            <TextBlock FontSize="12" Text="{Binding SelectedFamily.Sex, StringFormat='Sex: {0}'}" />
-                                            <TextBlock FontSize="12" Text="{Binding SelectedEducation.EducationText}" />
-                                            <TextBlock FontSize="12" Text="{Binding SelectedEducation.CraftsText}" />
-                                            <TextBlock FontSize="12" Text="{Binding SelectedHobbiesText}" />
-                                            <TextBlock FontSize="12" Text="{Binding SelectedCareer.OccupationText}" />
+                                            <TextBlock FontSize="12" TextWrapping="Wrap" Text="{Binding SelectedPerson.AgeText}" />
+                                            <TextBlock FontSize="12" TextWrapping="Wrap" Text="{Binding SelectedFamily.Sex, StringFormat='Sex: {0}'}" />
+                                            <TextBlock FontSize="12" TextWrapping="Wrap" Text="{Binding SelectedEducation.EducationText}" />
+                                            <TextBlock FontSize="12" TextWrapping="Wrap" Text="{Binding SelectedHobbiesText}" />
+                                            <TextBlock FontSize="12" TextWrapping="Wrap" Text="{Binding SelectedEducation.CraftsText}" />
+                                            <TextBlock FontSize="12" TextWrapping="Wrap" Text="{Binding SelectedCareer.OccupationText}" />
                                             <TextBlock
                                                 IsVisible="{Binding SelectedCareer.HasSatisfaction}"
                                                 FontSize="12"
                                                 FontWeight="SemiBold"
+                                                TextWrapping="Wrap"
                                                 Foreground="{Binding SelectedCareer.SatisfactionLabel,
                                                                      Converter={StaticResource SatisfactionBrushConverter}}"
                                                 Text="{Binding SelectedCareer.SatisfactionText}" />
@@ -1390,6 +1367,7 @@
                                                 IsVisible="{Binding HasSelectedMarriageSatisfaction}"
                                                 FontSize="12"
                                                 FontWeight="SemiBold"
+                                                TextWrapping="Wrap"
                                                 Foreground="{Binding SelectedMarriageSatisfactionLabel,
                                                                      Converter={StaticResource SatisfactionBrushConverter}}"
                                                 Text="{Binding SelectedMarriageSatisfactionText}">
@@ -1417,15 +1395,17 @@
                                                 IsVisible="{Binding HasSelectedChildHappiness}"
                                                 FontSize="12"
                                                 FontWeight="SemiBold"
+                                                TextWrapping="Wrap"
                                                 Foreground="{Binding SelectedChildHappinessLabel, Converter={StaticResource SatisfactionBrushConverter}}"
                                                 Text="{Binding SelectedChildHappinessText}" />
 
-                                            <TextBlock FontSize="12" Text="{Binding SelectedCareer.IncomeText}" />
-                                            <TextBlock FontSize="12" Text="{Binding SelectedJustice.StatusText}" />
-                                            <TextBlock FontSize="12" Text="{Binding SelectedJustice.CrimeText}" />
+                                            <TextBlock FontSize="12" TextWrapping="Wrap" Text="{Binding SelectedCareer.IncomeText}" />
+                                            <TextBlock FontSize="12" TextWrapping="Wrap" Text="{Binding SelectedJustice.StatusText}" />
+                                            <TextBlock FontSize="12" TextWrapping="Wrap" Text="{Binding SelectedJustice.CrimeText}" />
                                         </StackPanel>
 
                                         <StackPanel
+                                            Grid.Row="0"
                                             Grid.Column="1"
                                             Spacing="2">
 
@@ -1478,6 +1458,7 @@
                                                 Text="{Binding SelectedFamily.MaleLineage, StringFormat='Male lineage: {0}'}" />
 
                                         </StackPanel>
+
                                     </Grid>
                                 </ScrollViewer>
                             </TabItem>
@@ -1913,12 +1894,47 @@
                             RowDefinitions="Auto,Auto,*,Auto"
                             RowSpacing="12">
 
-                            <TextBlock
-                                HorizontalAlignment="Center"
-                                FontFamily="avares://Dynastia.App/Assets/Fonts#UnifrakturCook"
-                                FontSize="42"
-                                Foreground="#2F1D0E"
-                                Text="{Binding YearSummaryTitle}" />
+                            <Grid
+                                ColumnDefinitions="Auto,*,Auto"
+                                ColumnSpacing="14">
+                                <Button
+                                    Grid.Column="0"
+                                    Width="46"
+                                    Height="38"
+                                    Padding="0"
+                                    VerticalAlignment="Center"
+                                    Classes="gameAction"
+                                    Command="{Binding PreviousYearSummaryCommand}">
+                                    <TextBlock
+                                        HorizontalAlignment="Center"
+                                        FontSize="21"
+                                        Foreground="#F8E9C8"
+                                        Text="&lt;" />
+                                </Button>
+
+                                <TextBlock
+                                    Grid.Column="1"
+                                    HorizontalAlignment="Center"
+                                    FontFamily="avares://Dynastia.App/Assets/Fonts#UnifrakturCook"
+                                    FontSize="42"
+                                    Foreground="#2F1D0E"
+                                    Text="{Binding YearSummaryTitle}" />
+
+                                <Button
+                                    Grid.Column="2"
+                                    Width="46"
+                                    Height="38"
+                                    Padding="0"
+                                    VerticalAlignment="Center"
+                                    Classes="gameAction"
+                                    Command="{Binding NextYearSummaryCommand}">
+                                    <TextBlock
+                                        HorizontalAlignment="Center"
+                                        FontSize="21"
+                                        Foreground="#F8E9C8"
+                                        Text="&gt;" />
+                                </Button>
+                            </Grid>
 
                             <TextBlock
                                 Grid.Row="1"
@@ -1983,8 +1999,8 @@
                                                                         <TextBlock
                                                                             Margin="10,2,0,3"
                                                                             FontFamily="Georgia"
-                                                                            FontSize="14"
-                                                                            LineHeight="20"
+                                                                            FontSize="16"
+                                                                            LineHeight="23"
                                                                             Foreground="#46321C"
                                                                             TextWrapping="Wrap"
                                                                             Text="{Binding Text}" />
@@ -2002,13 +2018,11 @@
 
                             <Grid
                                 Grid.Row="3"
-                                ColumnDefinitions="*,Auto"
                                 Margin="4,0">
-
                                 <ui:ImageStateButton
-                                    Grid.Column="1"
                                     Width="170"
                                     Height="70"
+                                    HorizontalAlignment="Right"
                                     IdleSource="avares://Dynastia.App/Assets/UI/b_close_idle.png"
                                     HoverSource="avares://Dynastia.App/Assets/UI/b_close_hover.png"
                                     FallbackText="Close"

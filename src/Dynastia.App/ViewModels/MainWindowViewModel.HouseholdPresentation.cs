@@ -18,6 +18,43 @@ public sealed partial class MainWindowViewModel
         }
     }
 
+
+    public string HouseholdLastYearText
+    {
+        get
+        {
+            var finance = GetDisplayedHouseholdFinance();
+            return finance is null
+                ? string.Empty
+                : $"Last Year: Income: {finance.LastIncome:N0} zł   Expenses: {finance.LastExpenses:N0} zł";
+        }
+    }
+
+    public string HouseholdLastYearDetailsText
+    {
+        get
+        {
+            var finance = GetDisplayedHouseholdFinance();
+            if (finance is null)
+                return string.Empty;
+
+            var income = FormatFinanceBreakdown(
+                finance.LastIncomeBreakdown,
+                "No income was recorded last year.");
+            var expenses = FormatFinanceBreakdown(
+                finance.LastExpenseBreakdown,
+                "No expenses were recorded last year.");
+
+            return string.Join(
+                Environment.NewLine,
+                "Income",
+                income,
+                string.Empty,
+                "Expenses",
+                expenses);
+        }
+    }
+
     public string HouseholdIncomeText
     {
         get
@@ -170,19 +207,6 @@ public sealed partial class MainWindowViewModel
                 lines.Add(string.Empty);
                 lines.Add($"Farmland: {farming.TotalParcelCount} parcel" +
                     $"{(farming.TotalParcelCount == 1 ? string.Empty : "s")}");
-
-                foreach (var group in farming.Farmland
-                    .GroupBy(asset => asset.Town.Id, StringComparer.OrdinalIgnoreCase)
-                    .OrderBy(group => group.First().Town.Town, StringComparer.CurrentCultureIgnoreCase))
-                {
-                    var first = group.First();
-                    var local = group.Key.Equals(
-                        farming.ResidenceTownId,
-                        StringComparison.OrdinalIgnoreCase);
-                    lines.Add(
-                        $"{first.Town.Town} ×{group.Count()} — " +
-                        (local ? "Local" : "Remote / idle"));
-                }
             }
 
             return string.Join(
@@ -221,12 +245,16 @@ public sealed partial class MainWindowViewModel
         IReadOnlyList<FinanceBreakdownItem> items,
         string emptyText)
     {
-        if (items.Count == 0)
+        var visible = items
+            .Where(item => item.Amount != 0m)
+            .ToList();
+
+        if (visible.Count == 0)
             return emptyText;
 
         return string.Join(
             Environment.NewLine,
-            items.Select(
+            visible.Select(
                 item =>
                     $"{item.Amount:N0} zł — " +
                     $"{item.Label}"));

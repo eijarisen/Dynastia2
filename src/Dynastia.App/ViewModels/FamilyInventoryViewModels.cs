@@ -3,6 +3,12 @@ using Dynastia.Contracts;
 
 namespace Dynastia.App.ViewModels;
 
+public enum FamilyInventoryTab
+{
+    Money = 0,
+    Properties = 1
+}
+
 public sealed class FamilyInventoryWindowViewModel :
     ViewModelBase
 {
@@ -17,8 +23,9 @@ public sealed class FamilyInventoryWindowViewModel :
     private string _farmlandTitle = "Farmland";
     private string _farmlandSummaryText = string.Empty;
     private string _farmlandEmptyText = string.Empty;
-    private string _buyFarmlandActionText = "Buy Farmland (10,000 zł)";
-    private string _sellFarmlandActionText = "Sell Farmland (8,000 zł)";
+    private string _buyFarmlandActionText = "Buy Farmland";
+    private string _sellFarmlandActionText = "Sell Farmland";
+    private int _selectedTabIndex;
     private bool _canTakeLoan;
     private bool _canGiveLoan;
     private bool _canBuyHouse;
@@ -27,10 +34,27 @@ public sealed class FamilyInventoryWindowViewModel :
     private bool _canSellFarmland;
 
     public FamilyInventoryWindowViewModel(
-        MainWindowViewModel main)
+        MainWindowViewModel main,
+        FamilyInventoryTab initialTab = FamilyInventoryTab.Money)
     {
         _main = main;
+        _selectedTabIndex = (int)initialTab;
         Refresh();
+    }
+
+
+    public int SelectedTabIndex
+    {
+        get => _selectedTabIndex;
+        set
+        {
+            var normalized = Math.Clamp(value, 0, 1);
+            if (_selectedTabIndex == normalized)
+                return;
+
+            _selectedTabIndex = normalized;
+            OnPropertyChanged();
+        }
     }
 
     public ObservableCollection<InventoryFinanceLineViewModel>
@@ -284,8 +308,8 @@ public sealed class FamilyInventoryWindowViewModel :
             FarmlandTitle = "Farmland";
             FarmlandSummaryText = string.Empty;
             FarmlandEmptyText = "No owned farmland.";
-            BuyFarmlandActionText = "Buy Farmland (10,000 zł)";
-            SellFarmlandActionText = "Sell Farmland (8,000 zł)";
+            BuyFarmlandActionText = "Buy Farmland";
+            SellFarmlandActionText = "Sell Farmland";
             CanTakeLoan = false;
             CanGiveLoan = false;
             CanBuyHouse = false;
@@ -365,6 +389,29 @@ public sealed class FamilyInventoryWindowViewModel :
                     _main.SetHouseInheritanceHeir));
         }
 
+        if (data.Farming is { } farmlandSnapshot)
+        {
+            var parcelNumber = 0;
+            foreach (var farmland in farmlandSnapshot.Farmland
+                         .OrderBy(asset => asset.AcquiredYear)
+                         .ThenBy(asset => asset.Id))
+            {
+                parcelNumber++;
+                var status = farmland.Town.Id.Equals(
+                        farmlandSnapshot.ResidenceTownId,
+                        StringComparison.OrdinalIgnoreCase)
+                    ? $"Parcel {parcelNumber} · Current town"
+                    : $"Parcel {parcelNumber}";
+
+                Farmland.Add(
+                    new InventoryFarmlandViewModel(
+                        farmland,
+                        status,
+                        heirOptions,
+                        _main.SetFarmlandInheritanceHeir));
+            }
+        }
+
         LoanEmptyText =
             Loans.Count == 0
                 ? "No active loans or debts."
@@ -377,36 +424,8 @@ public sealed class FamilyInventoryWindowViewModel :
 
         if (data.Farming is { } farming)
         {
-            foreach (var asset in farming.Farmland
-                .OrderBy(asset => asset.AcquiredYear)
-                .ThenBy(asset => asset.Town.Town, StringComparer.CurrentCultureIgnoreCase)
-                .ThenBy(asset => asset.Id))
-            {
-                var isLocal = asset.Town.Id.Equals(
-                    farming.ResidenceTownId,
-                    StringComparison.OrdinalIgnoreCase);
-
-                var status = isLocal
-                    ? farming.AvailableWorkers <= 0
-                        ? "Local / idle"
-                        : farming.AvailableWorkers >= farming.LocalWorkerCapacity
-                            ? "Local / worked"
-                            : "Local / partly worked"
-                    : "Remote / idle";
-
-                Farmland.Add(new InventoryFarmlandViewModel(
-                    asset,
-                    status,
-                    heirOptions,
-                    _main.SetFarmlandInheritanceHeir));
-            }
-
-            FarmlandTitle = $"Farmland — {farming.TotalParcelCount} " +
-                (farming.TotalParcelCount == 1 ? "parcel" : "parcels");
-            FarmlandSummaryText =
-                $"Available workers: {farming.AvailableWorkers}   •   " +
-                $"Current local capacity: {farming.LocalWorkerCapacity}   •   " +
-                $"This year's farming income: {farming.LastAnnualIncome:N0} zł";
+            FarmlandTitle = "Farmland";
+            FarmlandSummaryText = $"Parcels: {farming.TotalParcelCount}";
             FarmlandEmptyText = farming.TotalParcelCount == 0
                 ? "No owned farmland."
                 : string.Empty;
@@ -414,7 +433,7 @@ public sealed class FamilyInventoryWindowViewModel :
         else
         {
             FarmlandTitle = "Farmland";
-            FarmlandSummaryText = string.Empty;
+            FarmlandSummaryText = "Parcels: 0";
             FarmlandEmptyText = "Farming mechanics are unavailable.";
         }
 
@@ -424,10 +443,8 @@ public sealed class FamilyInventoryWindowViewModel :
         CanSellHouse = data.CanSellHouse;
         CanBuyFarmland = data.CanBuyFarmland;
         CanSellFarmland = data.CanSellFarmland;
-        BuyFarmlandActionText =
-            $"Buy Farmland ({data.FarmlandPurchasePrice:N0} zł)";
-        SellFarmlandActionText =
-            $"Sell Farmland ({data.FarmlandSalePrice:N0} zł)";
+        BuyFarmlandActionText = "Buy Farmland";
+        SellFarmlandActionText = "Sell Farmland";
     }
 }
 

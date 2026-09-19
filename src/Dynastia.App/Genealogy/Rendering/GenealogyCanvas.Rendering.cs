@@ -310,7 +310,7 @@ public sealed partial class GenealogyCanvas
                 FontWeight.Normal,
                 TileSecondaryText,
                 maxLines:
-                    1);
+                    2);
         }
 
         if (UsePortraits && !node.Person.IsAlive)

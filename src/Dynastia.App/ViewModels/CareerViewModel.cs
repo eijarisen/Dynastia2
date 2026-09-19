@@ -36,12 +36,14 @@ public sealed class CareerViewModel
         OccupationText =
             isFarmWorker
                 ? $"Occupation: {FarmingPresentationDefaults.WorkerOccupationLabel}"
-                : snapshot.JobLevel > 0
-                    ? $"Occupation: " +
-                      $"{snapshot.JobTitle} " +
-                      $"({snapshot.JobLevel})"
-                    : $"Occupation: " +
-                      $"{snapshot.JobTitle}";
+                : snapshot.IsSelfEmployed
+                    ? $"Occupation: {snapshot.JobTitle}"
+                    : snapshot.JobLevel > 0
+                        ? $"Occupation: " +
+                          $"{snapshot.JobTitle} " +
+                          $"({snapshot.JobLevel})"
+                        : $"Occupation: " +
+                          $"{snapshot.JobTitle}";
 
         var unemployedAdult =
             isAlive

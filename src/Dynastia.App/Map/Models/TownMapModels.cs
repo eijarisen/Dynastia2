@@ -14,6 +14,7 @@ public sealed record TownMapItem(
     double ProjectedX,
     double ProjectedY,
     IReadOnlyList<TownMapResident> DynastyResidents,
+    int ActiveHouseholds,
     int PlayableHouseholds,
     int OwnedHouses,
     bool IsCurrentHouseholdTown)
@@ -28,6 +29,9 @@ public sealed record TownMapItem(
 
     public bool HasDynastyResidents =>
         DynastyResidents.Count > 0;
+
+    public bool HasActiveHousehold =>
+        ActiveHouseholds > 0;
 
     public bool HasPlayableHousehold =>
         PlayableHouseholds > 0;

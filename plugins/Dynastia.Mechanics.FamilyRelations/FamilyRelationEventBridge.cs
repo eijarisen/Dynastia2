@@ -63,9 +63,59 @@ internal sealed class FamilyRelationEventBridge
             if (first is null || second is null)
                 return;
 
-            var damage = e.Type.Equals("relationship.affair", StringComparison.OrdinalIgnoreCase) ? 30 : 20;
-            _relations.ConvertDivorceToExSpouse(first, second, damage);
-            ApplyParentalDivorceDamage(first, second);
+            var isAffair = e.Type.Equals("relationship.affair", StringComparison.OrdinalIgnoreCase);
+
+            // Even a previously Thriving marriage must not remain Warm after
+            // an actual divorce. Affairs damage the former spouses more.
+            _relations.ConvertDivorceToExSpouse(
+                first,
+                second,
+                isAffair ? 70 : 55);
+
+            ApplyParentalDivorceDamage(
+                first,
+                second,
+                isAffair);
+
+            var formerHouseholdIds = GetFormerHouseholdMemberIds(e);
+            if (isAffair)
+            {
+                ApplyHouseholdFamilyFallout(
+                    first,
+                    30,
+                    formerHouseholdIds,
+                    [second.Id]);
+            }
+            else
+            {
+                ApplyHouseholdFamilyFallout(
+                    first,
+                    18,
+                    formerHouseholdIds,
+                    [second.Id]);
+
+                ApplyHouseholdFamilyFallout(
+                    second,
+                    12,
+                    formerHouseholdIds,
+                    [first.Id]);
+            }
+
+            return;
+        }
+
+        if (e.Type.Equals("justice.crime", StringComparison.OrdinalIgnoreCase)
+            || e.Type.Equals("justice.crime_uncaught", StringComparison.OrdinalIgnoreCase))
+        {
+            var offender = FindOptional(e.SubjectId);
+            if (offender is not null)
+            {
+                ApplyHouseholdFamilyFallout(
+                    offender,
+                    e.Type.Equals("justice.crime", StringComparison.OrdinalIgnoreCase) ? 24 : 12,
+                    GetCurrentHouseholdMemberIds(offender),
+                    []);
+            }
             return;
         }
 
@@ -74,7 +124,42 @@ internal sealed class FamilyRelationEventBridge
             ApplySharedBereavement(deceasedId);
     }
 
-    private void ApplyParentalDivorceDamage(IPerson first, IPerson second)
+    private void ApplyHouseholdFamilyFallout(
+        IPerson subject,
+        double damage,
+        IReadOnlyCollection<Guid> memberIds,
+        IReadOnlyCollection<Guid> excludedPersonIds)
+    {
+        if (damage <= 0)
+            return;
+
+        foreach (var memberId in memberIds)
+        {
+            if (memberId == subject.Id
+                || excludedPersonIds.Contains(memberId))
+            {
+                continue;
+            }
+
+            var member = Find(memberId);
+            if (member is null
+                || !member.Tags.Has("state.alive")
+                || _relations.GetRelation(subject, member) is null)
+            {
+                continue;
+            }
+
+            _relations.ModifyRelation(
+                subject,
+                member,
+                -damage);
+        }
+    }
+
+    private void ApplyParentalDivorceDamage(
+        IPerson first,
+        IPerson second,
+        bool isAffair)
     {
         foreach (var child in _gameState.People.Where(child =>
             child.Tags.Has("state.alive")
@@ -86,14 +171,65 @@ internal sealed class FamilyRelationEventBridge
             {
                 if (_relations.GetRelation(parent, child) is null)
                     continue;
+
                 var childHead = _households.ResolveHouseholdHead(child);
                 var parentHead = _households.ResolveHouseholdHead(parent);
-                var same = childHead is not null && parentHead is not null
+                var sameHousehold = childHead is not null && parentHead is not null
                     && _economy.GetHouseholdId(childHead) == _economy.GetHouseholdId(parentHead);
-                _relations.ModifyRelation(parent, child, same ? -4 : -8);
+
+                var damage = isAffair
+                    ? sameHousehold ? 18 : 30
+                    : sameHousehold ? 12 : 25;
+
+                _relations.ModifyRelation(parent, child, -damage);
             }
         }
     }
+
+    private IReadOnlyCollection<Guid> GetFormerHouseholdMemberIds(
+        GameEvent gameEvent)
+    {
+        if (gameEvent.Data.TryGetValue(
+                "formerHouseholdMemberIds",
+                out var serialized))
+        {
+            var parsed = serialized
+                .Split(';', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+                .Select(value => Guid.TryParseExact(value, "N", out var id) ? id : Guid.Empty)
+                .Where(id => id != Guid.Empty)
+                .Distinct()
+                .ToList();
+
+            if (parsed.Count > 0)
+                return parsed;
+        }
+
+        var fallback = new HashSet<Guid>();
+        var subject = FindOptional(gameEvent.SubjectId);
+        if (subject is not null)
+        {
+            foreach (var id in _economy.GetHouseholdMemberIds(subject))
+                fallback.Add(id);
+        }
+
+        foreach (var relatedId in gameEvent.RelatedPersonIds)
+        {
+            var related = Find(relatedId);
+            if (related is null)
+                continue;
+
+            foreach (var id in _economy.GetHouseholdMemberIds(related))
+                fallback.Add(id);
+        }
+
+        return fallback;
+    }
+
+    private IReadOnlyCollection<Guid> GetCurrentHouseholdMemberIds(
+        IPerson person) =>
+        _economy.GetHouseholdMemberIds(person)
+            .Distinct()
+            .ToList();
 
     private void ApplySharedBereavement(Guid deceasedId)
     {

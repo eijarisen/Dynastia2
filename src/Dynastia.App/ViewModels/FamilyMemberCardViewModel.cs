@@ -155,9 +155,11 @@ public sealed class FamilyMemberCardViewModel
             OccupationText =
                 farming?.IsWorkingFarmWorker(person, person) == true
                     ? FarmingPresentationDefaults.WorkerOccupationLabel
-                    : FormatOccupation(
-                        careerSnapshot.JobTitle,
-                        careerSnapshot.JobLevel);
+                    : careerSnapshot.IsSelfEmployed
+                        ? careerSnapshot.JobTitle
+                        : FormatOccupation(
+                            careerSnapshot.JobTitle,
+                            careerSnapshot.JobLevel);
 
             lastOccupationTooltip =
                 ResolveLastOccupation(
@@ -467,9 +469,11 @@ public sealed class FamilyMemberCardViewModel
     {
         if (career.IsEmployed)
         {
-            return FormatOccupation(
-                career.JobTitle,
-                career.JobLevel);
+            return career.IsSelfEmployed
+                ? career.JobTitle
+                : FormatOccupation(
+                    career.JobTitle,
+                    career.JobLevel);
         }
 
         if (!string.IsNullOrWhiteSpace(

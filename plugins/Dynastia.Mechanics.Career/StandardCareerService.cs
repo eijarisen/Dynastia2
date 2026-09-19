@@ -145,11 +145,14 @@ public sealed partial class StandardCareerService :
             ? crafts?.GetActiveCraft(person)
             : null;
         var isCraftSelfEmployed = activeCraft is not null;
+        var craftProgress = isCraftSelfEmployed
+            ? crafts!.GetProgress(person, activeCraft!.Id)
+            : null;
         var annualIncome = isCraftSelfEmployed
             ? crafts!.GetExpectedAnnualIncome(person)
             : GetAnnualIncome(person);
         var jobTitle = isCraftSelfEmployed
-            ? activeCraft!.SelfEmploymentTitle
+            ? $"{craftProgress?.MasteryName ?? "Novice"} {activeCraft!.SelfEmploymentTitle}"
             : ResolveJobTitle(person, career, definition);
         var statusId = isCraftSelfEmployed
             ? null

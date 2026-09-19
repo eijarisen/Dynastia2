@@ -7,13 +7,28 @@ public sealed partial class MainWindowViewModel
     private const string ManagePropertiesUiActionId =
         "ui.manage_properties";
 
+    private const string ManageFinancesUiActionId =
+        "ui.manage_finances";
+
     private static GameActionDefinition CreateManagePropertiesPresentationAction() =>
         new()
         {
             Id = ManagePropertiesUiActionId,
             Label = "Manage Properties",
             Description =
-                "Open Family Inventory to buy or sell houses and farmland.",
+                "Open Family Inventory to manage houses and farmland.",
+            Mode = ActionExecutionMode.Immediate,
+            IsAvailable = _ => true,
+            Execute = _ => new GameActionResult(false)
+        };
+
+    private static GameActionDefinition CreateManageFinancesPresentationAction() =>
+        new()
+        {
+            Id = ManageFinancesUiActionId,
+            Label = "Manage Finances",
+            Description =
+                "Open Family Inventory to review income, expenses, and loans.",
             Mode = ActionExecutionMode.Immediate,
             IsAvailable = _ => true,
             Execute = _ => new GameActionResult(false)
@@ -43,18 +58,14 @@ public sealed partial class MainWindowViewModel
         var farming =
             _farmingService?.GetSnapshot(actor);
 
-        var forecast =
-            _economyService.GetAnnualForecast(actor);
-
         var incomeLines =
-            (forecast?.IncomeBreakdown
-                ?? finance.LastIncomeBreakdown)
-            .Select(FormatInventoryIncomeLine)
-            .ToList();
+            finance.LastIncomeBreakdown
+                .Where(line => line.Amount != 0m)
+                .Select(FormatInventoryIncomeLine)
+                .ToList();
 
         var incomeTotal =
-            forecast?.ProjectedIncome
-            ?? finance.LastIncome;
+            finance.LastIncome;
 
         var debts =
             _loanService?.GetDebts(actor)
@@ -65,13 +76,11 @@ public sealed partial class MainWindowViewModel
             ?? Array.Empty<LoanContractInfo>();
 
         var expenseLines =
-            (forecast?.ExpenseBreakdown
-                ?? finance.LastExpenseBreakdown)
-            .ToList();
+            finance.LastExpenseBreakdown
+                .ToList();
 
-        var projectedExpenses =
-            forecast?.ProjectedExpenses
-            ?? finance.LastExpenses;
+        var lastExpenses =
+            finance.LastExpenses;
 
         var children =
             (_familyService?.GetChildren(actor)
@@ -103,7 +112,7 @@ public sealed partial class MainWindowViewModel
             householdName,
             finance.Wealth,
             incomeTotal,
-            projectedExpenses,
+            lastExpenses,
             incomeLines,
             expenseLines,
             debts,
@@ -255,9 +264,11 @@ public sealed partial class MainWindowViewModel
             _careerService.GetCareer(person);
 
         var occupation =
-            career.IsEmployed && career.JobLevel > 0
-                ? $"{career.JobTitle} (L{career.JobLevel})"
-                : career.JobTitle;
+            career.IsSelfEmployed
+                ? career.JobTitle
+                : career.JobLevel > 0
+                    ? $"{career.JobTitle} (Level {career.JobLevel})"
+                    : career.JobTitle;
 
         var amount = line.Amount;
         if (_craftService is not null && career.IsSelfEmployed)

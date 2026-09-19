@@ -99,7 +99,9 @@ public sealed partial class MainWindowViewModel
         get
         {
             var person = FindSelectedPerson();
-            if (person is null || _hobbyService is null)
+            if (person is null || person.Age < 6)
+                return string.Empty;
+            if (_hobbyService is null)
                 return "Hobbies: None";
 
             var hobbies = _hobbyService

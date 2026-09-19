@@ -81,7 +81,10 @@ internal static partial class FamilyRelationActions
                 c,
                 "family_relations.job_help_received",
                 family,
-                $"{family.GetDisplayName(c.Target)} used family connections to improve the prospects of {helped} adult household {(helped == 1 ? "member" : "members")}.");
+                FormatCareerHelpSuccess(
+                    family.GetDisplayName(c.Target),
+                    helped,
+                    family));
             return new(true);
         }
     };
@@ -159,7 +162,10 @@ internal static partial class FamilyRelationActions
                 c,
                 "family_relations.job_help_given",
                 family,
-                $"{family.GetDisplayName(c.Actor)} used family connections to improve the prospects of {helped} adult household {(helped == 1 ? "member" : "members")} in {family.GetDisplayName(c.Target)}'s household.");
+                FormatCareerHelpSuccess(
+                    family.GetDisplayName(c.Actor),
+                    helped,
+                    family));
             return new(true);
         }
     };
@@ -183,9 +189,10 @@ internal static partial class FamilyRelationActions
             {
                 var snapshot = career.GetCareer(p);
                 return !snapshot.IsRetired
-                    && FamilyCareerConnectionRules.CanImprove(
-                        snapshot.JobLevel,
-                        connectionLevel);
+                    && !snapshot.IsSelfEmployed
+                    && snapshot.JobLevel
+                        < FamilyCareerConnectionRules.GetStandardPlacementLevel(
+                            connectionLevel);
             })
             .OrderByDescending(p => p.Id == householdRepresentative.Id)
             .ThenBy(p => p.Age)
@@ -214,7 +221,7 @@ internal static partial class FamilyRelationActions
             .Max();
     }
 
-    private static int ApplyCareerHelp(
+    private static IReadOnlyList<IPerson> ApplyCareerHelp(
         IReadOnlyList<IPerson> candidates,
         int connectionLevel,
         ICareerService career,
@@ -228,7 +235,7 @@ internal static partial class FamilyRelationActions
             FamilyCareerConnectionRules.GetExceptionalPlacementLevel(
                 connectionLevel);
 
-        var helped = 0;
+        var helped = new List<IPerson>();
 
         foreach (var person in candidates)
         {
@@ -243,9 +250,31 @@ internal static partial class FamilyRelationActions
                 continue;
 
             career.SetJobLevel(person, targetLevel);
-            helped++;
+            helped.Add(person);
         }
 
         return helped;
+    }
+
+    private static string FormatCareerHelpSuccess(
+        string connectorName,
+        IReadOnlyList<IPerson> helped,
+        IFamilyService family)
+    {
+        if (helped.Count == 0)
+            return $"{connectorName} tried to use family connections, but no suitable placement was found.";
+
+        var names = helped
+            .Select(family.GetDisplayName)
+            .ToList();
+
+        var people = names.Count == 1
+            ? names[0]
+            : string.Join(", ", names.Take(names.Count - 1))
+                + $" and {names[^1]}";
+
+        return helped.Count == 1
+            ? $"{connectorName} used family connections to secure a better position for {people}."
+            : $"{connectorName} used family connections to secure better positions for {people}.";
     }
 }

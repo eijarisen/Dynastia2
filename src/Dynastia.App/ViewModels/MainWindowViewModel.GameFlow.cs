@@ -254,12 +254,34 @@ public sealed partial class MainWindowViewModel
 
         IsYearSummaryVisible =
             true;
+
+        PreviousYearSummaryCommand.RaiseCanExecuteChanged();
+        NextYearSummaryCommand.RaiseCanExecuteChanged();
+    }
+
+    private void PreviousYearSummary()
+    {
+        if (_yearSummaryEventYear <= _gameState.StartYear + 1)
+            return;
+
+        ShowYearSummary(_yearSummaryEventYear - 1);
+    }
+
+    private void NextYearSummary()
+    {
+        if (_yearSummaryEventYear >= Year)
+            return;
+
+        ShowYearSummary(_yearSummaryEventYear + 1);
     }
 
     private void HideYearSummary()
     {
         IsYearSummaryVisible =
             false;
+
+        PreviousYearSummaryCommand.RaiseCanExecuteChanged();
+        NextYearSummaryCommand.RaiseCanExecuteChanged();
 
         if (_succession.IsGameOver)
         {

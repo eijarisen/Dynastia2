@@ -348,9 +348,11 @@ public sealed class GameGenealogyDataSource :
             occupation =
                 isFarmWorker
                     ? FarmingPresentationDefaults.WorkerOccupationLabel
-                    : displayedCareerLevel > 0
-                        ? $"{career.JobTitle} ({displayedCareerLevel})"
-                        : career.JobTitle;
+                    : career.IsSelfEmployed
+                        ? career.JobTitle
+                        : displayedCareerLevel > 0
+                            ? $"{career.JobTitle} ({displayedCareerLevel})"
+                            : career.JobTitle;
 
             occupationTooltip =
                 isFarmWorker
@@ -616,6 +618,11 @@ public sealed class GameGenealogyDataSource :
     private static string ResolveLastOccupation(
         CareerSnapshot career)
     {
+        if (career.IsSelfEmployed)
+        {
+            return career.JobTitle;
+        }
+
         if (career.JobLevel > 0)
         {
             return $"{career.JobTitle} ({career.JobLevel})";

@@ -7,8 +7,6 @@ public sealed class EducationPlugin : IGamePlugin
     private const decimal EducationCost = 3000m;
     private const int HelpLearningMinimumAge = 6;
     private const int HelpLearningAdultAge = 18;
-    private const double HelpLearningBaseChance = 0.10;
-    private const double HelpLearningEducationStep = 0.15;
 
     public void Initialize(IGamePluginContext context)
     {
@@ -270,7 +268,8 @@ public sealed class EducationPlugin : IGamePlugin
 
                 if (!actor.Tags.Has("state.alive")
                     || !actionContext.ActorHasControl
-                    || !target.Tags.Has("state.alive"))
+                    || !target.Tags.Has("state.alive")
+                    || target.Age < 18)
                 {
                     return false;
                 }
@@ -312,6 +311,13 @@ public sealed class EducationPlugin : IGamePlugin
             {
                 var actor = actionContext.Actor;
                 var target = actionContext.Target;
+                if (target.Age < 18)
+                {
+                    return new GameActionResult(
+                        false,
+                        "Children use Help in Education instead of paid education.");
+                }
+
                 if (!economy.CanAfford(actor, EducationCost))
                 {
                     return new GameActionResult(false, "Education is no longer available.");
@@ -416,15 +422,14 @@ public sealed class EducationPlugin : IGamePlugin
                 "education.help_learning",
 
             Label =
-                "Help in Learning",
+                "Help in Education",
 
             Description =
                 "Spend the year helping the selected young relative in this household study. " +
-                "Available from age 6 through 17. Natural childhood Education " +
-                "broadly follows Intellect; household help can raise a child " +
-                "one level beyond that natural ceiling. Success depends on the " +
-                "helper's Education level: 10%, 25%, 40%, 55%, 70% or 85% " +
-                "at levels 0-5.",
+                "Available from age 6 through 17 and costs no money. Natural childhood Education " +
+                "broadly follows the child's Intellect; household help can raise a child " +
+                "one level beyond that natural ceiling. Success depends on both the child's " +
+                "Intellect and the helper's Intellect.",
 
             Mode =
                 ActionExecutionMode.Queued,
@@ -528,14 +533,19 @@ public sealed class EducationPlugin : IGamePlugin
                             "The child has reached the Education level that household help can currently support.");
                     }
 
-                    var helperEducation =
-                        education.GetEducationLevel(
-                            helper);
+                    var helperIntellect =
+                        stats.GetStats(helper)
+                            .First(stat =>
+                                stat.Id.Equals(
+                                    "intellect",
+                                    StringComparison.OrdinalIgnoreCase))
+                            .Value;
 
                     var successChance =
-                        HelpLearningBaseChance
-                        + helperEducation
-                            * HelpLearningEducationStep;
+                        EducationProgressionRules
+                            .GetHelpInEducationSuccessChance(
+                                childIntellect,
+                                helperIntellect);
 
                     successChance =
                         PersonalityInfluence.AdjustProbability(

@@ -915,21 +915,49 @@ internal sealed class AdvancedAutonomousHouseholdStrategy :
         if (!RequestIsReasonable(option))
             return null;
 
-        var willingnessBonus = (option.RequestWillingness ?? 0) * 20;
+        var workingAge = snapshot.Members
+            .Where(member => member.Person.Age >= 18
+                && member.Career is { IsRetired: false })
+            .ToList();
+
+        var unemployed = workingAge.Count(member =>
+            member.Career?.IsEmployed != true);
+        var lowLevelWorkers = workingAge.Count(member =>
+            member.Career is
+            {
+                IsEmployed: true,
+                IsSelfEmployed: false,
+                JobLevel: <= 1
+            });
+
+        if (unemployed == 0
+            && snapshot.FinancialState is AutonomousFinancialState.Stable
+                or AutonomousFinancialState.Secure)
+        {
+            return null;
+        }
+
+        if (unemployed == 0 && lowLevelWorkers == 0)
+            return null;
+
+        var willingnessBonus = (option.RequestWillingness ?? 0) * 18;
+        var needBonus = Math.Min(18, unemployed * 8 + lowLevelWorkers * 3);
+
         return snapshot.FinancialState switch
         {
             AutonomousFinancialState.Critical => WithScore(option,
                 AutonomyCategory.FamilyRelations,
                 AutonomousPriorityBands.HouseholdSolvency,
-                96 + willingnessBonus),
+                88 + willingnessBonus + needBonus),
             AutonomousFinancialState.Poor => WithScore(option,
                 AutonomyCategory.FamilyRelations,
                 AutonomousPriorityBands.HouseholdSolvency,
-                88 + willingnessBonus),
-            _ => WithScore(option,
+                78 + willingnessBonus + needBonus),
+            AutonomousFinancialState.Stable when unemployed > 0 => WithScore(option,
                 AutonomyCategory.CareerDevelopment,
                 AutonomousPriorityBands.LongTermImprovement,
-                58 + willingnessBonus * 0.5)
+                42 + willingnessBonus * 0.5 + needBonus),
+            _ => null
         };
     }
 
@@ -1440,8 +1468,17 @@ internal sealed class AdvancedAutonomousHouseholdStrategy :
         if (head.Health.Percentage < 85 || snapshot.HasSeriousMedicalDanger)
             return null;
 
+        var stress = _context.GetService<IStressService>()?
+            .GetStress(snapshot.Head).Total ?? 0;
+
+        // Alcohol is a risky coping mechanism, not a routine leisure choice.
+        // Autonomous households only consider it under substantial stress.
+        if (stress < 4)
+            return null;
+
         return WithScore(option, AutonomyCategory.Optional,
-            AutonomousPriorityBands.OptionalDevelopment, 6);
+            AutonomousPriorityBands.OptionalDevelopment,
+            8 + stress * 2);
     }
 
     private AutonomousActionCandidate? ScoreSelfImprovement(

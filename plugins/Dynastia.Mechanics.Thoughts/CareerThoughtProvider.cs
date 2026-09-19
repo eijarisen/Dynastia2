@@ -5,6 +5,14 @@ namespace Dynastia.Mechanics.Thoughts;
 internal sealed class CareerThoughtProvider :
     IThoughtProvider
 {
+    private readonly IFarmingService _farming;
+
+    public CareerThoughtProvider(
+        IFarmingService farming)
+    {
+        _farming = farming;
+    }
+
     public string Id =>
         "thoughts.career";
 
@@ -199,6 +207,15 @@ internal sealed class CareerThoughtProvider :
                 "state",
                 "recent.job_loss",
                 "career.jobloss");
+        }
+
+        var householdHead =
+            context.Households.ResolveHouseholdHead(person);
+
+        if (householdHead is not null
+            && _farming.IsWorkingFarmWorker(person, householdHead))
+        {
+            yield break;
         }
 
         if (context.Justice

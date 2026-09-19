@@ -168,6 +168,45 @@ public sealed partial class StandardEconomyService :
             houses);
     }
 
+    public void RecordRealizedExpense(
+        IPerson person,
+        string label,
+        decimal amount)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(label);
+
+        var rounded = RoundCurrency(amount);
+        if (rounded <= 0m)
+            return;
+
+        var resolved = FindHousehold(person);
+        if (resolved is null)
+            return;
+
+        var household = resolved.Value.Household;
+        household.LastExpenses = RoundCurrency(
+            household.LastExpenses + rounded);
+
+        var existing = household.LastExpenseBreakdown
+            .FirstOrDefault(line => line.Label.Equals(
+                label,
+                StringComparison.OrdinalIgnoreCase));
+
+        if (existing is null)
+        {
+            household.LastExpenseBreakdown.Add(
+                new LedgerLineState
+                {
+                    Label = label,
+                    Amount = rounded
+                });
+        }
+        else
+        {
+            existing.Amount = RoundCurrency(existing.Amount + rounded);
+        }
+    }
+
     public bool CanAfford(
         IPerson person,
         decimal amount)

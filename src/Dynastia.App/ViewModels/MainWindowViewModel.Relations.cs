@@ -246,9 +246,11 @@ public sealed partial class MainWindowViewModel
             ? string.Empty
             : _farmingService?.IsWorkingFarmWorker(member, member) == true
                 ? FarmingPresentationDefaults.WorkerOccupationLabel
-                : career.IsEmployed && career.JobLevel > 0
-                    ? $"{career.JobTitle} ({career.JobLevel})"
-                    : career.JobTitle;
+                : career.IsSelfEmployed
+                    ? career.JobTitle
+                    : career.IsEmployed && career.JobLevel > 0
+                        ? $"{career.JobTitle} ({career.JobLevel})"
+                        : career.JobTitle;
 
         var text = string.IsNullOrWhiteSpace(careerText)
             ? $"{kinship} — {name}"

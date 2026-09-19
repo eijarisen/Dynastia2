@@ -5,6 +5,8 @@ namespace Dynastia.Mechanics.Personality;
 public sealed class PersonalityPlugin :
     IGamePlugin
 {
+    private const decimal ReligiousStudyCost = 2000m;
+
     public void Initialize(
         IGamePluginContext context)
     {
@@ -134,7 +136,7 @@ public sealed class PersonalityPlugin :
             {
                 Id = "personality.religious_study",
                 Label = "Religious Study",
-                Description = "Spend the year in deliberate religious or moral reflection. About a 50% chance to improve Morals; a Good person instead gains protection against the next downward Morals shift.",
+                Description = "Spend the year in deliberate religious or moral reflection for 2,000 zł. About a 50% chance to improve Morals; a Good person instead gains protection against the next downward Morals shift.",
                 Mode = ActionExecutionMode.Queued,
                 QueuePhase = YearPhase.MoralsReflection,
                 IsAvailable = actionContext =>
@@ -142,10 +144,19 @@ public sealed class PersonalityPlugin :
                     && actionContext.Actor.Tags.Has("state.alive")
                     && actionContext.ActorHasControl
                     && actionContext.Actor.Age >= 18
-                    && !actionContext.Actor.Tags.Has("state.imprisoned"),
+                    && !actionContext.Actor.Tags.Has("state.imprisoned")
+                    && economy.CanAfford(actionContext.Actor, ReligiousStudyCost),
                 Execute = actionContext =>
                 {
                     var actor = actionContext.Actor;
+                    if (!economy.CanAfford(actor, ReligiousStudyCost))
+                    {
+                        return new GameActionResult(
+                            false,
+                            "Religious Study is no longer affordable.");
+                    }
+
+                    economy.ChangeWealth(actor, -ReligiousStudyCost);
                     var possessive = family.GetSex(actor) == Sex.Female
                         ? "her"
                         : "his";

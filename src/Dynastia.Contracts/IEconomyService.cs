@@ -84,6 +84,11 @@ public interface IEconomyService
         IPerson person,
         decimal amount);
 
+    void RecordRealizedExpense(
+        IPerson person,
+        string label,
+        decimal amount);
+
     void SetHousesOwned(
         IPerson person,
         int housesOwned);

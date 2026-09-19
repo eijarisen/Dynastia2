@@ -212,6 +212,18 @@ public sealed partial class MainWindowViewModel : ViewModelBase
             new RelayCommand(
                 HideYearSummary);
 
+        PreviousYearSummaryCommand =
+            new RelayCommand(
+                PreviousYearSummary,
+                () => IsYearSummaryVisible
+                    && _yearSummaryEventYear > _gameState.StartYear + 1);
+
+        NextYearSummaryCommand =
+            new RelayCommand(
+                NextYearSummary,
+                () => IsYearSummaryVisible
+                    && _yearSummaryEventYear < Year);
+
         ShowLivingFamilyCommand =
             new RelayCommand(
                 ShowLivingFamily);
@@ -619,6 +631,8 @@ public sealed partial class MainWindowViewModel : ViewModelBase
     public RelayCommand HideStatusMessageCommand { get; }
     public RelayCommand ShowAlbumYearSummaryCommand { get; }
     public RelayCommand HideYearSummaryCommand { get; }
+    public RelayCommand PreviousYearSummaryCommand { get; }
+    public RelayCommand NextYearSummaryCommand { get; }
     public RelayCommand ShowLivingFamilyCommand { get; }
     public RelayCommand ShowBloodlineFamilyCommand { get; }
     public RelayCommand ShowDeceasedFamilyCommand { get; }

@@ -266,8 +266,37 @@ public sealed class StandardFamilyRelationService : IFamilyRelationService
             foreach (var history in _family.GetRelationshipHistory(person).Where(h => h.EndYear is not null))
             {
                 var former = FindPerson(history.SpouseId);
-                if (former is not null)
-                    EnsureRelation(person, former, FamilyRelationshipType.ExSpouse, LegacyExSpouseStart);
+                if (former is null)
+                    continue;
+
+                EnsureRelation(
+                    person,
+                    former,
+                    FamilyRelationshipType.ExSpouse,
+                    LegacyExSpouseStart);
+
+                var data = Find(person, former);
+                if (data is null)
+                    continue;
+
+                NormalizeData(data);
+                data.Type = (int)FamilyRelationshipType.ExSpouse;
+
+                // Older builds could leave a newly divorced couple Warm or
+                // Affectionate. Clamp only untouched post-divorce state; a
+                // relation deliberately improved in a later year is preserved.
+                if (history.EndYear is int divorceYear
+                    && data.LastMajorInteractionYear <= divorceYear
+                    && data.Sympathy > LegacyExSpouseStart)
+                {
+                    data.Sympathy = LegacyExSpouseStart;
+                    data.Familiarity = Math.Max(data.Familiarity, 75);
+                    data.Score = FamilyRelationScoreRules.GetCompositeScore(
+                        data.Familiarity,
+                        data.Sympathy);
+                    var owner = ResolveCanonical(person, former).Owner;
+                    owner.Components.Set(GetComponent(owner));
+                }
             }
         }
 

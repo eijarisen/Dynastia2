@@ -75,6 +75,9 @@ public sealed class RelationshipBreakupService
         var spouseEventName =
             _family.GetDisplayName(spouse);
 
+        var formerHouseholdMemberIds =
+            CaptureFormerHouseholdMemberIds(actor, spouse);
+
         var household =
             _economy.GetHousehold(actor);
 
@@ -142,6 +145,9 @@ public sealed class RelationshipBreakupService
                         ["settlement"] =
                             settlement.ToString(),
 
+                        ["formerHouseholdMemberIds"] =
+                            SerializePersonIds(formerHouseholdMemberIds),
+
                         ["text"] =
                             $"{actorEventName} and " +
                             $"{spouseEventName} divorced. " +
@@ -173,6 +179,9 @@ public sealed class RelationshipBreakupService
         var wifeEventName =
             _family.GetDisplayName(
                 wife);
+
+        var formerHouseholdMemberIds =
+            CaptureFormerHouseholdMemberIds(husband, wife);
 
         var household =
             _economy.GetHousehold(
@@ -241,6 +250,9 @@ public sealed class RelationshipBreakupService
                             satisfaction.ToString(
                                 "0"),
 
+                        ["formerHouseholdMemberIds"] =
+                            SerializePersonIds(formerHouseholdMemberIds),
+
                         ["text"] =
                             $"{husbandEventName} and " +
                             $"{wifeEventName} divorced after " +
@@ -261,6 +273,9 @@ public sealed class RelationshipBreakupService
 
         var spouseEventName =
             _family.GetDisplayName(spouse);
+
+        var formerHouseholdMemberIds =
+            CaptureFormerHouseholdMemberIds(actor, spouse);
 
         decimal settlement =
             0;
@@ -356,6 +371,9 @@ public sealed class RelationshipBreakupService
                         ["settlement"] =
                             settlement.ToString(),
 
+                        ["formerHouseholdMemberIds"] =
+                            SerializePersonIds(formerHouseholdMemberIds),
+
                         ["text"] =
                             $"{actorEventName} " +
                             $"was caught having an affair! " +
@@ -365,6 +383,29 @@ public sealed class RelationshipBreakupService
             });
     }
 
+
+    private IReadOnlyCollection<Guid> CaptureFormerHouseholdMemberIds(
+        IPerson first,
+        IPerson second)
+    {
+        var ids = new HashSet<Guid>();
+
+        foreach (var person in new[] { first, second })
+        {
+            foreach (var id in _economy.GetHouseholdMemberIds(person))
+                ids.Add(id);
+        }
+
+        ids.Add(first.Id);
+        ids.Add(second.Id);
+        return ids;
+    }
+
+    private static string SerializePersonIds(
+        IEnumerable<Guid> ids) =>
+        string.Join(
+            ";",
+            ids.Distinct().Select(id => id.ToString("N")));
 
     private void ApplyBreakupHealthShock(
         IPerson first,

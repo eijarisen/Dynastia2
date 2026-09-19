@@ -10,19 +10,28 @@ public sealed partial class StandardLoanService :
     private readonly IEconomyService _economy;
     private readonly LoanEraCatalog _loanEras;
     private readonly IGameRandom _random;
+    private readonly IHistoricalNameService _historicalNames;
+    private readonly IReadOnlyList<WeightedStringEntry> _externalSurnames;
+    private readonly IAppearanceService _appearance;
 
     public StandardLoanService(
         IGameState gameState,
         IFamilyService family,
         IEconomyService economy,
         LoanEraCatalog loanEras,
-        IGameRandom random)
+        IGameRandom random,
+        IHistoricalNameService historicalNames,
+        IReadOnlyList<WeightedStringEntry> externalSurnames,
+        IAppearanceService appearance)
     {
         _gameState = gameState;
         _family = family;
         _economy = economy;
         _loanEras = loanEras;
         _random = random;
+        _historicalNames = historicalNames;
+        _externalSurnames = externalSurnames;
+        _appearance = appearance;
     }
 
     public LoanTermsInfo CalculateTerms(
@@ -31,6 +40,80 @@ public sealed partial class StandardLoanService :
         LoanTermsCalculator.Calculate(
             principal,
             durationYears);
+
+    public IReadOnlyList<LoanOfferInfo> GetOffers(
+        IPerson householdRepresentative,
+        bool isGivingLoan,
+        decimal maximumPrincipal)
+    {
+        ArgumentNullException.ThrowIfNull(householdRepresentative);
+
+        var maximumThousands = Math.Min(
+            LoanTermsCalculator.MaximumPrincipal / LoanTermsCalculator.PrincipalStep,
+            (int)Math.Floor(maximumPrincipal / LoanTermsCalculator.PrincipalStep));
+
+        if (maximumThousands < 1)
+            return [];
+
+        int[] durations = [1, 3, 5, 10, 15, 20, 30, 40, 50];
+        var offers = new List<LoanOfferInfo>(3);
+        var usedTerms = new HashSet<string>(StringComparer.Ordinal);
+
+        for (var index = 0; index < 3; index++)
+        {
+            var seed = CreateOfferSeed(
+                householdRepresentative.Id,
+                _gameState.Year,
+                isGivingLoan,
+                index);
+
+            var random = new LoanOfferRandom(seed);
+            var principalThousands = random.NextInt(1, maximumThousands);
+            var durationIndex = (random.NextInt(0, durations.Length - 1) + index) % durations.Length;
+            var duration = durations[durationIndex];
+
+            var termsKey = $"{principalThousands}|{duration}";
+            var attempts = 0;
+            while (!usedTerms.Add(termsKey) && attempts < durations.Length)
+            {
+                durationIndex = (durationIndex + 1) % durations.Length;
+                duration = durations[durationIndex];
+                termsKey = $"{principalThousands}|{duration}";
+                attempts++;
+            }
+
+            var principal = principalThousands * LoanTermsCalculator.PrincipalStep;
+            var terms = CalculateTerms(principal, duration);
+            var sex = _gameState.Year < 1918
+                ? Sex.Male
+                : random.Chance(0.5)
+                    ? Sex.Male
+                    : Sex.Female;
+            var age = random.NextInt(28, 64);
+            var firstName = _historicalNames.GetRandomFirstName(
+                sex,
+                _gameState.Year - age,
+                random);
+            var surname = SelectWeighted(_externalSurnames, random);
+            var name = $"{firstName} {_family.FormatSurname(surname, sex)}";
+            var appearance = _appearance.GenerateCandidateAppearance(seed, sex);
+            var portrait = _appearance.GetPortrait(
+                appearance,
+                sex,
+                age,
+                seed);
+
+            offers.Add(new LoanOfferInfo(
+                seed.ToString("N"),
+                name,
+                sex,
+                age,
+                portrait,
+                terms));
+        }
+
+        return offers;
+    }
 
     public bool HasActiveSelfOriginatedBankLoan(
         IPerson borrower) =>
@@ -122,7 +205,8 @@ public sealed partial class StandardLoanService :
         IPerson borrower,
         decimal principal,
         int durationYears,
-        int startYear)
+        int startYear,
+        string? externalCreditorName = null)
     {
         var terms =
             CalculateTerms(
@@ -143,6 +227,9 @@ public sealed partial class StandardLoanService :
                 Status = LoanStatus.Active,
                 IsSelfOriginatedBankLoan = true,
                 IsExternalReceivable = false,
+                ExternalCreditorName = string.IsNullOrWhiteSpace(externalCreditorName)
+                    ? null
+                    : externalCreditorName,
                 ServicingHouseholdId = _economy.GetHouseholdId(borrower)
             };
 
@@ -218,6 +305,90 @@ public sealed partial class StandardLoanService :
         }
     }
 
+
+    private static Guid CreateOfferSeed(
+        Guid householdRepresentativeId,
+        int year,
+        bool isGivingLoan,
+        int offerIndex)
+    {
+        var bytes = householdRepresentativeId.ToByteArray();
+        var yearBytes = BitConverter.GetBytes(year);
+        for (var index = 0; index < yearBytes.Length; index++)
+            bytes[index] ^= yearBytes[index];
+
+        bytes[4] ^= isGivingLoan ? (byte)0xA7 : (byte)0x3D;
+        bytes[5] ^= unchecked((byte)(17 + offerIndex * 73));
+        bytes[6] ^= unchecked((byte)(29 + offerIndex * 131));
+        bytes[7] ^= unchecked((byte)(43 + offerIndex * 191));
+        return new Guid(bytes);
+    }
+
+    private static string SelectWeighted(
+        IReadOnlyList<WeightedStringEntry> entries,
+        IGameRandom random)
+    {
+        var totalWeight = entries.Sum(entry => (double)entry.Weight);
+        var roll = random.NextDouble() * totalWeight;
+
+        foreach (var entry in entries)
+        {
+            if (roll < entry.Weight)
+                return entry.Value;
+
+            roll -= entry.Weight;
+        }
+
+        return entries[^1].Value;
+    }
+
+    private sealed class LoanOfferRandom : IGameRandom
+    {
+        private ulong _state;
+
+        public LoanOfferRandom(Guid seed)
+        {
+            const ulong offsetBasis = 14695981039346656037UL;
+            const ulong prime = 1099511628211UL;
+            var state = offsetBasis;
+
+            foreach (var value in seed.ToByteArray())
+            {
+                state ^= value;
+                state *= prime;
+            }
+
+            _state = state == 0 ? offsetBasis : state;
+        }
+
+        public int NextInt(int minInclusive, int maxInclusive)
+        {
+            if (maxInclusive < minInclusive)
+                throw new ArgumentOutOfRangeException(nameof(maxInclusive));
+
+            var range = (ulong)((long)maxInclusive - minInclusive + 1L);
+            return minInclusive + (int)(NextUInt64() % range);
+        }
+
+        public double NextDouble() =>
+            (NextUInt64() >> 11) * (1.0 / 9007199254740992.0);
+
+        public bool Chance(double probability) =>
+            probability switch
+            {
+                <= 0 => false,
+                >= 1 => true,
+                _ => NextDouble() < probability
+            };
+
+        private ulong NextUInt64()
+        {
+            _state = unchecked(
+                _state * 6364136223846793005UL
+                + 1442695040888963407UL);
+            return _state;
+        }
+    }
 
     internal Guid NextContractId() =>
         _random.NextGuid();
@@ -364,8 +535,9 @@ public sealed partial class StandardLoanService :
         if (contract.CreditorType
             == LoanCreditorType.Bank)
         {
-            return GetExternalCreditorLabel(
-                _gameState.Year);
+            return string.IsNullOrWhiteSpace(contract.ExternalCreditorName)
+                ? GetExternalCreditorLabel(_gameState.Year)
+                : contract.ExternalCreditorName;
         }
 
         var owners =

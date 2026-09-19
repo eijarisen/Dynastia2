@@ -104,6 +104,10 @@ public sealed class GameMapDataSource
                 List<TownMapResident>>(
                     StringComparer.OrdinalIgnoreCase);
 
+        var activeHouseholdsByTown =
+            new Dictionary<string, int>(
+                StringComparer.OrdinalIgnoreCase);
+
         var playableHouseholdsByTown =
             new Dictionary<string, int>(
                 StringComparer.OrdinalIgnoreCase);
@@ -197,6 +201,11 @@ public sealed class GameMapDataSource
                     continue;
                 }
 
+                activeHouseholdsByTown[town.Id] =
+                    activeHouseholdsByTown
+                        .GetValueOrDefault(town.Id)
+                    + 1;
+
                 if (_succession.IsControllable(head))
                 {
                     playableHouseholdsByTown[town.Id] =
@@ -252,6 +261,9 @@ public sealed class GameMapDataSource
                         projected.X,
                         projected.Y,
                         orderedResidents,
+                        activeHouseholdsByTown
+                            .GetValueOrDefault(
+                                projected.Town.Id),
                         playableHouseholdsByTown
                             .GetValueOrDefault(
                                 projected.Town.Id),

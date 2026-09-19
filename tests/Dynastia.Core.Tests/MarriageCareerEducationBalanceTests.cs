@@ -91,6 +91,25 @@ public sealed class MarriageCareerEducationBalanceTests
             6);
     }
 
+    [Theory]
+    [InlineData(1, 1, 0.25)]
+    [InlineData(3, 3, 0.55)]
+    [InlineData(5, 5, 0.85)]
+    [InlineData(1, 5, 0.65)]
+    [InlineData(5, 1, 0.45)]
+    public void HelpInEducationUsesChildAndHelperIntellect(
+        int childIntellect,
+        int helperIntellect,
+        double expectedChance)
+    {
+        Assert.Equal(
+            expectedChance,
+            EducationProgressionRules.GetHelpInEducationSuccessChance(
+                childIntellect,
+                helperIntellect),
+            6);
+    }
+
     [Fact]
     public void HigherLevelPromotionBlendsCareerAbilityWithIntellect()
     {

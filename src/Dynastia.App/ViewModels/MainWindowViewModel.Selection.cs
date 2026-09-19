@@ -86,7 +86,8 @@ public sealed partial class MainWindowViewModel
             FindSelectedPerson();
 
         if (person is null
-            || _educationService is null)
+            || _educationService is null
+            || person.Age < 6)
         {
             SelectedEducation = null;
             return;

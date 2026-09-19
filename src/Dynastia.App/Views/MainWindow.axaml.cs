@@ -130,7 +130,21 @@ public partial class MainWindow : Window
                 StringComparison.OrdinalIgnoreCase))
         {
             if (!_actionSelectionDialogOpen)
-                await OpenFamilyInventoryAsync(viewModel);
+                await OpenFamilyInventoryAsync(
+                    viewModel,
+                    FamilyInventoryTab.Properties);
+
+            return;
+        }
+
+        if (e.ActionId.Equals(
+                "ui.manage_finances",
+                StringComparison.OrdinalIgnoreCase))
+        {
+            if (!_actionSelectionDialogOpen)
+                await OpenFamilyInventoryAsync(
+                    viewModel,
+                    FamilyInventoryTab.Money);
 
             return;
         }
@@ -313,11 +327,21 @@ public partial class MainWindow : Window
                         "loan.give",
                         StringComparison.OrdinalIgnoreCase);
 
+                var maximumPrincipal =
+                    viewModel.GetMaximumLoanPrincipal(e.ActionId);
+
+                var offers =
+                    viewModel.GetLoanOffers(
+                        isGivingLoan,
+                        maximumPrincipal);
+
+                if (offers.Count == 0)
+                    return;
+
                 var loanWindow =
                     new LoanSelectionWindow(
                         isGivingLoan,
-                        viewModel.GetLoanTerms,
-                        viewModel.GetMaximumLoanPrincipal(e.ActionId));
+                        offers);
 
                 var selection =
                     await loanWindow.ShowDialog<LoanSelectionResult?>(this);
@@ -442,6 +466,29 @@ public partial class MainWindow : Window
         {
             e.Handled = true;
             viewModel.HideYearSummaryCommand.Execute(null);
+            return;
+        }
+
+        if (viewModel.IsStatusMessageVisible
+            && (e.Key == Key.Enter
+                || e.Key == Key.Escape))
+        {
+            e.Handled = true;
+            viewModel.HideStatusMessageCommand.Execute(null);
+            return;
+        }
+
+        if (viewModel.IsGameStarted
+            && e.Key == Key.Tab
+            && !viewModel.IsMainMenuPromptVisible)
+        {
+            e.Handled = true;
+
+            if (viewModel.IsStatusMessageVisible)
+                viewModel.HideStatusMessageCommand.Execute(null);
+
+            viewModel.CyclePlayableHousehold(
+                (e.KeyModifiers & KeyModifiers.Shift) != 0);
             return;
         }
 
@@ -711,11 +758,14 @@ public partial class MainWindow : Window
         }
 
         e.Handled = true;
-        await OpenFamilyInventoryAsync(viewModel);
+        await OpenFamilyInventoryAsync(
+            viewModel,
+            FamilyInventoryTab.Money);
     }
 
     private async Task OpenFamilyInventoryAsync(
-        MainWindowViewModel viewModel)
+        MainWindowViewModel viewModel,
+        FamilyInventoryTab initialTab = FamilyInventoryTab.Money)
     {
         if (_familyInventoryDialogOpen
             || !viewModel.CanOpenFamilyInventory)
@@ -728,7 +778,9 @@ public partial class MainWindow : Window
 
         try
         {
-            var window = new FamilyInventoryWindow(viewModel);
+            var window = new FamilyInventoryWindow(
+                viewModel,
+                initialTab);
             await window.ShowDialog(this);
         }
         catch (Exception exception)

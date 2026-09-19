@@ -38,6 +38,11 @@ public sealed class ThoughtsPlugin :
                 context,
                 "Craft service");
 
+        var farming =
+            Require<IFarmingService>(
+                context,
+                "Farming service");
+
         var households =
             Require<IHouseholdService>(
                 context,
@@ -91,7 +96,8 @@ public sealed class ThoughtsPlugin :
             new HealthThoughtProvider());
 
         providers.Register(
-            new CareerThoughtProvider());
+            new CareerThoughtProvider(
+                farming));
 
         providers.Register(
             new CraftThoughtProvider(crafts));

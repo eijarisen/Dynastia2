@@ -189,11 +189,15 @@ internal sealed class RelationshipThoughtProvider :
             };
 
         var issue =
-            SelectIssue(
-                person,
-                satisfaction.CurrentIssues,
-                context.Year,
-                context.GameState.DynastySurname);
+            satisfaction.Label.Equals(
+                "Thriving",
+                StringComparison.OrdinalIgnoreCase)
+                ? string.Empty
+                : SelectIssue(
+                    person,
+                    satisfaction.CurrentIssues,
+                    context.Year,
+                    context.GameState.DynastySurname);
 
         yield return new ThoughtCandidate(
             "relationship.satisfaction",

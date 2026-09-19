@@ -10,6 +10,12 @@ public sealed partial class MainWindowViewModel
     private const decimal SelfImprovementCost =
         10000m;
 
+    private const decimal ReligiousStudyCost =
+        2000m;
+
+    private const string ReligiousStudyActionId =
+        "personality.religious_study";
+
     private static readonly SelfImprovementDefinition[]
         SelfImprovementDefinitions =
         [
@@ -42,7 +48,7 @@ public sealed partial class MainWindowViewModel
                     actor,
                     target)
                 .Where(action =>
-                    IsStatImprovementAction(action.Id))
+                    IsSelfImprovementAction(action.Id))
                 .ToDictionary(
                     action => action.Id,
                     StringComparer.OrdinalIgnoreCase);
@@ -55,7 +61,7 @@ public sealed partial class MainWindowViewModel
                     stat => stat.Value,
                     StringComparer.OrdinalIgnoreCase);
 
-        return SelfImprovementDefinitions
+        var options = SelfImprovementDefinitions
             .Where(definition =>
                 availableActions.ContainsKey(
                     definition.ActionId))
@@ -79,8 +85,27 @@ public sealed partial class MainWindowViewModel
                     "Available");
             })
             .Where(option =>
-                option.CurrentValue < 5)
+                option.CurrentValue is int value
+                && value < 5)
             .ToList();
+
+        if (availableActions.TryGetValue(
+                ReligiousStudyActionId,
+                out var religiousStudy))
+        {
+            options.Add(
+                new SelfImprovementOption(
+                    ReligiousStudyActionId,
+                    "Morals",
+                    religiousStudy.Label,
+                    null,
+                    ReligiousStudyCost,
+                    religiousStudy.Description,
+                    true,
+                    "Available"));
+        }
+
+        return options;
     }
 
     public string GetSelfImprovementTargetName()
@@ -106,7 +131,7 @@ public sealed partial class MainWindowViewModel
 
         if (actor is null
             || target is null
-            || !IsStatImprovementAction(actionId))
+            || !IsSelfImprovementAction(actionId))
         {
             return;
         }
@@ -141,6 +166,13 @@ public sealed partial class MainWindowViewModel
             "stats.improve_",
             StringComparison.OrdinalIgnoreCase);
 
+    private static bool IsSelfImprovementAction(
+        string actionId) =>
+        IsStatImprovementAction(actionId)
+        || actionId.Equals(
+            ReligiousStudyActionId,
+            StringComparison.OrdinalIgnoreCase);
+
     private static GameActionDefinition
         CreateSelfImprovementPresentationAction() =>
         new()
@@ -148,7 +180,7 @@ public sealed partial class MainWindowViewModel
             Id = SelfImprovementUiActionId,
             Label = "Self Improvement",
             Description =
-                "Choose one of the personal improvements currently available in this period. Each costs 10,000 zł and uses this household's annual action.",
+                "Choose personal training or Religious Study. Prices vary by option and each uses this household's annual action.",
             Mode = ActionExecutionMode.Queued,
             QueuePhase = YearPhase.QueuedActionsEarly,
             IsAvailable = _ => true,

@@ -368,7 +368,7 @@ public sealed partial class RelationshipsPlugin
                             actor);
 
                     return current is not null
-                        && current.Value < 100;
+                        && current.Value < 80;
                 },
 
             Execute =

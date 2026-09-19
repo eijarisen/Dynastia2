@@ -8,6 +8,9 @@ namespace Dynastia.App.ViewModels;
 
 public sealed partial class MainWindowViewModel
 {
+    private static readonly Guid GlobalNewsChronicleGroupId =
+        Guid.Parse("7f3bc660-359a-45dc-91d7-8e3e9af3427e");
+
     private void StartGame()
     {
         PersistenceStatusText =
@@ -261,7 +264,7 @@ public sealed partial class MainWindowViewModel
 
     private void PreviousYearSummary()
     {
-        if (_yearSummaryEventYear <= _gameState.StartYear + 1)
+        if (_yearSummaryEventYear <= _gameState.StartYear)
             return;
 
         ShowYearSummary(_yearSummaryEventYear - 1);
@@ -294,6 +297,15 @@ public sealed partial class MainWindowViewModel
         ResolveChronicleHousehold(
             GameEvent gameEvent)
     {
+        if (IsGlobalNewsEvent(gameEvent))
+        {
+            return (
+                GlobalNewsChronicleGroupId,
+                "Global News",
+                -1,
+                int.MaxValue);
+        }
+
         if (gameEvent.Data.TryGetValue(
                 "chronicleHouseholdId",
                 out var storedHouseholdIdText)
@@ -384,6 +396,23 @@ public sealed partial class MainWindowViewModel
             "Extended family",
             2,
             int.MaxValue);
+    }
+
+    private static bool IsGlobalNewsEvent(GameEvent gameEvent)
+    {
+        if (gameEvent.Type.StartsWith(
+                "historical.",
+                StringComparison.OrdinalIgnoreCase))
+        {
+            return true;
+        }
+
+        return gameEvent.Data.TryGetValue(
+                "globalNews",
+                out var globalNews)
+            && globalNews.Equals(
+                "true",
+                StringComparison.OrdinalIgnoreCase);
     }
 
     private void HideGameOver()
@@ -548,7 +577,7 @@ public sealed partial class MainWindowViewModel
     private void PreviousAlbumYear()
     {
         if (AlbumYear
-            > _gameState.StartYear + 1)
+            > _gameState.StartYear)
         {
             AlbumYear--;
         }

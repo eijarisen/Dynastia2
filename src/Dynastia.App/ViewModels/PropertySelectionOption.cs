@@ -1,3 +1,4 @@
+using Avalonia.Media;
 namespace Dynastia.App.ViewModels;
 
 public sealed record PropertySelectionOption(
@@ -7,13 +8,26 @@ public sealed record PropertySelectionOption(
     string DetailsText,
     string PriceText,
     string SearchText,
-    bool IsEnabled = true)
+    bool IsEnabled = true,
+    double? SuccessChance = null)
 {
     public double DisplayOpacity =>
         IsEnabled ? 1.0 : 0.42;
 
     public bool HasDetailsText =>
         !string.IsNullOrWhiteSpace(DetailsText);
+
+    public bool HasSuccessChance =>
+        SuccessChance.HasValue;
+
+    public string SuccessChanceText =>
+        SuccessChance is { } chance
+            ? $"Chance: {chance:P0}"
+            : string.Empty;
+
+    public IBrush SuccessChanceBrush =>
+        ChancePresentation.ForProbability(
+            SuccessChance ?? 0);
 }
 
 public sealed class ActionSelectionRequestedEventArgs : EventArgs

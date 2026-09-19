@@ -5,6 +5,8 @@ public static class MarriageBalanceRules
     public const double MiserableThreshold = 20;
     public const double UnhappyThreshold = 40;
     public const double AnnualStability = 4;
+    public const double UnemployedHusbandPenalty = 7;
+    public const double ImprisonmentPenalty = 10;
 
     public static double GetAnnualSatisfactionChange(
         double totalPenalty) =>

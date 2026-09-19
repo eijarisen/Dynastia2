@@ -56,6 +56,9 @@ public sealed class MortalityPlugin : IGamePlugin
                 calendar,
                 events);
 
+        context.AddService<IDeathTransitionService>(
+            deaths);
+
         systems.Register(
             new MortalityYearSystem(
                 stats,

@@ -138,6 +138,7 @@ public sealed partial class MainWindowViewModel
             new CareerViewModel(
                 career,
                 person.Tags.Has("state.alive"),
+                _justiceService?.IsImprisoned(person) == true,
                 _farmingService?.IsWorkingFarmWorker(person, person) == true,
                 realizedCraftIncome);
     }

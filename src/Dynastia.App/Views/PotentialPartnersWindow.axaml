@@ -196,7 +196,7 @@
                                                 FontFamily="Georgia"
                                                 FontSize="11.5"
                                                 FontWeight="Bold"
-                                                Foreground="#6A451A"
+                                                Foreground="{Binding SuccessChanceBrush}"
                                                 Text="{Binding SuccessChanceText}" />
                                         </StackPanel>
 

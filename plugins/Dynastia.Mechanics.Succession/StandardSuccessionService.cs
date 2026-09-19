@@ -11,6 +11,8 @@ public sealed class StandardSuccessionService : ISuccessionService
 
     private bool _isGameOver;
     private int? _maleLineEndedYear;
+    private bool _dynastyLeftPoland;
+    private int? _dynastyLeftPolandYear;
     private Guid? _activeControllerId;
 
     public StandardSuccessionService(
@@ -27,6 +29,8 @@ public sealed class StandardSuccessionService : ISuccessionService
 
     public bool IsGameOver => _isGameOver;
     public int? MaleLineEndedYear => _maleLineEndedYear;
+    public bool DynastyLeftPoland => _dynastyLeftPoland;
+    public int? DynastyLeftPolandYear => _dynastyLeftPolandYear;
     public Guid? ActiveControllerId => _activeControllerId;
 
     public IPerson? ActiveController =>
@@ -44,6 +48,7 @@ public sealed class StandardSuccessionService : ISuccessionService
         ArgumentNullException.ThrowIfNull(person);
 
         return person.Tags.Has("state.alive")
+            && !SimulationState.IsExternallyResident(person)
             && _family.GetSex(person) == Sex.Male
             && _family.IsMaleLineage(person)
             && person.Age >= 18
@@ -73,24 +78,38 @@ public sealed class StandardSuccessionService : ISuccessionService
     {
         var oldGameOver = _isGameOver;
         var oldEndedYear = _maleLineEndedYear;
+        var oldLeftPoland = _dynastyLeftPoland;
+        var oldLeftPolandYear = _dynastyLeftPolandYear;
         var oldControllerId = _activeControllerId;
 
         RecalculateControllableTags();
 
         if (!HasLivingMaleLineage)
         {
-            if (!_isGameOver)
+            if (!_isGameOver || _dynastyLeftPoland)
             {
                 _isGameOver = true;
                 _maleLineEndedYear = _gameState.Year;
             }
 
+            _dynastyLeftPoland = false;
+            _dynastyLeftPolandYear = null;
+            _activeControllerId = null;
+        }
+        else if (!HasLivingMaleLineageInPoland())
+        {
+            _isGameOver = true;
+            _maleLineEndedYear = null;
+            _dynastyLeftPoland = true;
+            _dynastyLeftPolandYear ??= _gameState.Year;
             _activeControllerId = null;
         }
         else
         {
             _isGameOver = false;
             _maleLineEndedYear = null;
+            _dynastyLeftPoland = false;
+            _dynastyLeftPolandYear = null;
 
             var current = ActiveController;
 
@@ -109,6 +128,8 @@ public sealed class StandardSuccessionService : ISuccessionService
 
         if (oldGameOver != _isGameOver
             || oldEndedYear != _maleLineEndedYear
+            || oldLeftPoland != _dynastyLeftPoland
+            || oldLeftPolandYear != _dynastyLeftPolandYear
             || oldControllerId != _activeControllerId)
         {
             StateChanged?.Invoke(this, EventArgs.Empty);
@@ -126,8 +147,19 @@ public sealed class StandardSuccessionService : ISuccessionService
         }
     }
 
+
+    private bool HasLivingMaleLineageInPoland() =>
+        _gameState.People.Any(person =>
+            IsLivingMaleLineage(person)
+            && !SimulationState.IsExternallyResident(person));
+
     private bool IsLivingMaleLineage(IPerson person)
     {
+        // External residence removes local controllability, but the person is
+        // still alive and still belongs to the male lineage.  Keeping those
+        // concepts separate is what lets Refresh distinguish extinction from
+        // the historical-events terminal state where the dynasty has left
+        // Poland.
         return person.Tags.Has("state.alive")
             && _family.GetSex(person) == Sex.Male
             && _family.IsMaleLineage(person);

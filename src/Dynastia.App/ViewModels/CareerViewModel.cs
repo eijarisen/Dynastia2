@@ -7,6 +7,7 @@ public sealed class CareerViewModel
     public CareerViewModel(
         CareerSnapshot snapshot,
         bool isAlive,
+        bool isImprisoned = false,
         bool isFarmWorker = false,
         decimal? displayedCraftIncome = null)
     {
@@ -80,14 +81,16 @@ public sealed class CareerViewModel
             || householdRole;
 
         SatisfactionLabel =
-            isAlive
-            && (!snapshot.IsRetired || snapshot.IsSelfEmployed)
-                ? snapshot.IsEmployed
-                    ? snapshot.JobSatisfactionText
-                    : nonWorkingAdult
-                        ? "N/A"
-                        : string.Empty
-                : string.Empty;
+            isAlive && isImprisoned
+                ? "N/A"
+                : isAlive
+                    && (!snapshot.IsRetired || snapshot.IsSelfEmployed)
+                        ? snapshot.IsEmployed
+                            ? snapshot.JobSatisfactionText
+                            : nonWorkingAdult
+                                ? "N/A"
+                                : string.Empty
+                        : string.Empty;
 
         SatisfactionText =
             string.IsNullOrWhiteSpace(

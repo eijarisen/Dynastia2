@@ -48,14 +48,20 @@ public sealed class GameStartYearTests
     }
 
     [Theory]
-    [InlineData(1700, "Early Modern")]
-    [InlineData(1799, "Early Modern")]
-    [InlineData(1800, "Early Industrial")]
-    [InlineData(1849, "Early Industrial")]
-    [InlineData(1850, "Industrial")]
-    [InlineData(1914, "Modernizing")]
-    [InlineData(1946, "Postwar")]
-    [InlineData(1990, "Contemporary")]
+    [InlineData(1700, "Polish–Lithuanian Commonwealth")]
+    [InlineData(1772, "Age of Partitions")]
+    [InlineData(1795, "Partitioned Lands")]
+    [InlineData(1807, "Duchy of Warsaw")]
+    [InlineData(1815, "Partition Era")]
+    [InlineData(1863, "Late Partition Era")]
+    [InlineData(1914, "First World War")]
+    [InlineData(1918, "Reborn Poland")]
+    [InlineData(1922, "Second Polish Republic")]
+    [InlineData(1939, "Second World War")]
+    [InlineData(1945, "Postwar Reconstruction")]
+    [InlineData(1956, "Polish People's Republic")]
+    [InlineData(1989, "Third Polish Republic")]
+    [InlineData(2026, "Third Polish Republic")]
     public void HistoricalEraName_FollowsGameplayEraBoundaries(
         int year,
         string expected)

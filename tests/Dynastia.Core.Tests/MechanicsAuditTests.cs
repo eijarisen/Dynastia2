@@ -118,5 +118,15 @@ public sealed class MechanicsAuditTests
         Assert.True(
             MarriageBalanceRules.GetAutomaticDivorceChance(15)
             > MarriageBalanceRules.GetAutomaticDivorceChance(35));
+
+        Assert.True(
+            MarriageBalanceRules.GetAnnualSatisfactionChange(
+                MarriageBalanceRules.UnemployedHusbandPenalty) < 0);
+
+        Assert.True(
+            MarriageBalanceRules.GetAnnualSatisfactionChange(
+                MarriageBalanceRules.ImprisonmentPenalty)
+            < MarriageBalanceRules.GetAnnualSatisfactionChange(
+                MarriageBalanceRules.UnemployedHusbandPenalty));
     }
 }

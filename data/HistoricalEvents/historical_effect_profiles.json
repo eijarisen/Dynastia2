@@ -1,0 +1,701 @@
+[
+  {
+    "id": "war_low",
+    "householdExposureChance": 0.2,
+    "wealthLossPercent": [
+      0.05,
+      0.15
+    ],
+    "stressGain": 4,
+    "jobLossChance": 0.03,
+    "houseRepairCostChance": 0.03,
+    "houseRepairCostPercentOfValue": [
+      0.03,
+      0.1
+    ],
+    "person": {
+      "injuryChance": 0.02,
+      "healthDamage": [
+        4,
+        10
+      ],
+      "deathChance": 0.002
+    },
+    "personRiskMultipliers": {
+      "male_18_54": 1.2
+    }
+  },
+  {
+    "id": "war_medium",
+    "householdExposureChance": 0.35,
+    "wealthLossPercent": [
+      0.1,
+      0.25
+    ],
+    "stressGain": 7,
+    "jobLossChance": 0.06,
+    "houseRepairCostChance": 0.06,
+    "houseRepairCostPercentOfValue": [
+      0.05,
+      0.15
+    ],
+    "person": {
+      "injuryChance": 0.04,
+      "healthDamage": [
+        6,
+        14
+      ],
+      "deathChance": 0.005
+    },
+    "personRiskMultipliers": {
+      "male_18_54": 1.25
+    }
+  },
+  {
+    "id": "war_high",
+    "householdExposureChance": 0.6,
+    "wealthLossPercent": [
+      0.15,
+      0.4
+    ],
+    "stressGain": 10,
+    "jobLossChance": 0.1,
+    "houseRepairCostChance": 0.15,
+    "houseRepairCostPercentOfValue": [
+      0.08,
+      0.25
+    ],
+    "internalRelocationChance": 0.08,
+    "person": {
+      "injuryChance": 0.08,
+      "healthDamage": [
+        8,
+        18
+      ],
+      "deathChance": 0.015
+    },
+    "personRiskMultipliers": {
+      "male_18_54": 1.25
+    }
+  },
+  {
+    "id": "war_extreme_1939",
+    "householdExposureChance": 0.7,
+    "wealthLossPercent": [
+      0.2,
+      0.5
+    ],
+    "stressGain": 12,
+    "jobLossChance": 0.15,
+    "houseRepairCostChance": 0.2,
+    "houseRepairCostPercentOfValue": [
+      0.1,
+      0.35
+    ],
+    "internalRelocationChance": 0.12,
+    "person": {
+      "injuryChance": 0.1,
+      "healthDamage": [
+        10,
+        22
+      ],
+      "deathChance": 0.02
+    },
+    "personRiskMultipliers": {
+      "male_18_54": 1.2
+    }
+  },
+  {
+    "id": "uprising_medium",
+    "householdExposureChance": 0.3,
+    "wealthLossPercent": [
+      0.05,
+      0.2
+    ],
+    "stressGain": 6,
+    "jobLossChance": 0.04,
+    "imprisonmentChance": 0.025,
+    "propertyConfiscationChance": 0.015,
+    "person": {
+      "injuryChance": 0.035,
+      "healthDamage": [
+        5,
+        13
+      ],
+      "deathChance": 0.004
+    },
+    "personRiskMultipliers": {
+      "male_18_54": 1.45
+    }
+  },
+  {
+    "id": "uprising_high",
+    "householdExposureChance": 0.4,
+    "wealthLossPercent": [
+      0.08,
+      0.25
+    ],
+    "stressGain": 9,
+    "jobLossChance": 0.06,
+    "imprisonmentChance": 0.05,
+    "propertyConfiscationChance": 0.03,
+    "person": {
+      "injuryChance": 0.06,
+      "healthDamage": [
+        7,
+        16
+      ],
+      "deathChance": 0.01
+    },
+    "personRiskMultipliers": {
+      "male_18_54": 1.5
+    }
+  },
+  {
+    "id": "political_transition_low",
+    "householdExposureChance": 0.18,
+    "wealthLossPercent": [
+      0.0,
+      0.08
+    ],
+    "stressGain": 2,
+    "jobLossChance": 0.025,
+    "person": {
+      "injuryChance": 0.0,
+      "deathChance": 0.0
+    }
+  },
+  {
+    "id": "political_transition_medium",
+    "householdExposureChance": 0.25,
+    "wealthLossPercent": [
+      0.02,
+      0.12
+    ],
+    "stressGain": 3,
+    "jobLossChance": 0.04,
+    "propertyConfiscationChance": 0.01,
+    "person": {
+      "injuryChance": 0.0,
+      "deathChance": 0.0
+    }
+  },
+  {
+    "id": "repression_medium",
+    "householdExposureChance": 0.1,
+    "wealthLossPercent": [
+      0.05,
+      0.2
+    ],
+    "stressGain": 8,
+    "jobLossChance": 0.06,
+    "imprisonmentChance": 0.1,
+    "propertyConfiscationChance": 0.08,
+    "externalDepartureChance": 0.08,
+    "person": {
+      "injuryChance": 0.01,
+      "healthDamage": [
+        4,
+        10
+      ],
+      "deathChance": 0.001
+    },
+    "personRiskMultipliers": {
+      "male_18_54": 1.35
+    }
+  },
+  {
+    "id": "civil_violence_medium",
+    "householdExposureChance": 0.28,
+    "wealthLossPercent": [
+      0.08,
+      0.3
+    ],
+    "stressGain": 9,
+    "jobLossChance": 0.05,
+    "propertyConfiscationChance": 0.03,
+    "person": {
+      "injuryChance": 0.05,
+      "healthDamage": [
+        6,
+        15
+      ],
+      "deathChance": 0.008
+    },
+    "householdExposureMultipliers": {
+      "owns_farmland_or_house": 1.25
+    }
+  },
+  {
+    "id": "protest_low",
+    "householdExposureChance": 0.04,
+    "wealthLossPercent": [
+      0.0,
+      0.03
+    ],
+    "stressGain": 3,
+    "jobLossChance": 0.01,
+    "imprisonmentChance": 0.015,
+    "person": {
+      "injuryChance": 0.008,
+      "healthDamage": [
+        3,
+        8
+      ],
+      "deathChance": 0.0003
+    },
+    "personRiskMultipliers": {
+      "adult": 1.4
+    }
+  },
+  {
+    "id": "protest_medium",
+    "householdExposureChance": 0.07,
+    "wealthLossPercent": [
+      0.0,
+      0.05
+    ],
+    "stressGain": 5,
+    "jobLossChance": 0.02,
+    "imprisonmentChance": 0.03,
+    "person": {
+      "injuryChance": 0.025,
+      "healthDamage": [
+        4,
+        11
+      ],
+      "deathChance": 0.0015
+    },
+    "personRiskMultipliers": {
+      "adult": 1.5
+    }
+  },
+  {
+    "id": "strike_disruption",
+    "householdExposureChance": 0.12,
+    "wealthLossPercent": [
+      0.0,
+      0.04
+    ],
+    "stressGain": 2,
+    "jobLossChance": 0.005,
+    "person": {
+      "injuryChance": 0.001,
+      "healthDamage": [
+        1,
+        3
+      ],
+      "deathChance": 0.0
+    },
+    "householdExposureMultipliers": {
+      "industrial_or_transport_worker": 2.0
+    }
+  },
+  {
+    "id": "plague_epidemic",
+    "householdExposureChance": 0.24,
+    "stressGain": 7,
+    "illness": {
+      "conditionId": "historical_plague",
+      "membersMin": 1,
+      "membersMax": 3,
+      "chancePerSelectedMember": 0.85,
+      "fallbackHealthDamage": [
+        15,
+        30
+      ],
+      "fallbackDeathChance": 0.06
+    },
+    "person": {
+      "deathChance": 0.0
+    }
+  },
+  {
+    "id": "influenza_epidemic",
+    "householdExposureChance": 0.3,
+    "stressGain": 4,
+    "illness": {
+      "conditionId": "influenza",
+      "membersMin": 1,
+      "membersMax": 3,
+      "chancePerSelectedMember": 0.9
+    },
+    "person": {
+      "deathChance": 0.0
+    }
+  },
+  {
+    "id": "economic_depression",
+    "householdExposureChance": 0.3,
+    "wealthLossPercent": [
+      0.05,
+      0.15
+    ],
+    "stressGain": 3,
+    "jobLossChance": 0.06,
+    "person": {
+      "deathChance": 0.0
+    },
+    "householdExposureMultipliers": {
+      "industrial_or_transport_worker": 1.6,
+      "unemployed": 1.25
+    }
+  },
+  {
+    "id": "flood_major",
+    "householdExposureChance": 0.12,
+    "wealthLossPercent": [
+      0.1,
+      0.35
+    ],
+    "stressGain": 7,
+    "houseRepairCostChance": 0.45,
+    "houseRepairCostPercentOfValue": [
+      0.1,
+      0.4
+    ],
+    "farmlandLossValuePercent": [
+      0.1,
+      0.35
+    ],
+    "internalRelocationChance": 0.05,
+    "person": {
+      "injuryChance": 0.02,
+      "healthDamage": [
+        4,
+        12
+      ],
+      "deathChance": 0.003
+    }
+  },
+  {
+    "id": "occupation_hardship",
+    "householdExposureChance": 0.3,
+    "wealthLossPercent": [
+      0.05,
+      0.15
+    ],
+    "stressGain": 4,
+    "jobLossChance": 0.03,
+    "person": {
+      "injuryChance": 0.005,
+      "healthDamage": [
+        2,
+        6
+      ],
+      "deathChance": 0.0005
+    }
+  },
+  {
+    "id": "soviet_deportation",
+    "householdExposureChance": 0.025,
+    "wealthLossPercent": [
+      0.7,
+      0.9
+    ],
+    "stressGain": 20,
+    "jobLossChance": 1.0,
+    "propertyConfiscationChance": 1.0,
+    "externalDepartureChance": 1.0,
+    "person": {
+      "injuryChance": 0.04,
+      "healthDamage": [
+        8,
+        20
+      ],
+      "deathChance": 0.03
+    },
+    "householdExposureMultipliers": {
+      "career_family:Military": 4.0,
+      "career_family:PublicAdministration": 2.5,
+      "career_family:Forestry": 2.5,
+      "career_family:Transport": 2.0,
+      "career_family:Education": 1.5,
+      "owns_farmland": 1.4,
+      "high_wealth": 1.4
+    }
+  },
+  {
+    "id": "ghettoization_persecution",
+    "householdExposureChance": 0.75,
+    "wealthLossPercent": [
+      0.5,
+      0.8
+    ],
+    "stressGain": 16,
+    "jobLossChance": 0.8,
+    "propertyConfiscationChance": 0.65,
+    "person": {
+      "injuryChance": 0.04,
+      "healthDamage": [
+        8,
+        18
+      ],
+      "deathChance": 0.02
+    }
+  },
+  {
+    "id": "holocaust_mass_murder",
+    "householdExposureChance": 1.0,
+    "wealthLossPercent": [
+      0.7,
+      0.95
+    ],
+    "stressGain": 25,
+    "jobLossChance": 1.0,
+    "propertyConfiscationChance": 0.95,
+    "person": {
+      "injuryChance": 0.1,
+      "healthDamage": [
+        15,
+        30
+      ],
+      "deathChance": 0.48
+    }
+  },
+  {
+    "id": "ethnic_violence_high",
+    "householdExposureChance": 0.2,
+    "wealthLossPercent": [
+      0.7,
+      0.95
+    ],
+    "stressGain": 22,
+    "jobLossChance": 0.75,
+    "propertyConfiscationChance": 0.8,
+    "internalRelocationChance": 0.75,
+    "person": {
+      "injuryChance": 0.18,
+      "healthDamage": [
+        12,
+        26
+      ],
+      "deathChance": 0.25
+    }
+  },
+  {
+    "id": "ethnic_violence_low",
+    "householdExposureChance": 0.045,
+    "wealthLossPercent": [
+      0.25,
+      0.6
+    ],
+    "stressGain": 12,
+    "jobLossChance": 0.15,
+    "propertyConfiscationChance": 0.35,
+    "internalRelocationChance": 0.2,
+    "person": {
+      "injuryChance": 0.08,
+      "healthDamage": [
+        8,
+        18
+      ],
+      "deathChance": 0.08
+    }
+  },
+  {
+    "id": "warsaw_1944",
+    "householdExposureChance": 1.0,
+    "wealthLossPercent": [
+      0.6,
+      0.9
+    ],
+    "stressGain": 25,
+    "jobLossChance": 0.95,
+    "propertyConfiscationChance": 0.7,
+    "internalRelocationChance": 0.9,
+    "person": {
+      "injuryChance": 0.2,
+      "healthDamage": [
+        12,
+        28
+      ],
+      "deathChance": 0.13
+    }
+  },
+  {
+    "id": "forced_resettlement_east_west",
+    "householdExposureChance": 0.7,
+    "wealthLossPercent": [
+      0.2,
+      0.45
+    ],
+    "stressGain": 15,
+    "jobLossChance": 0.85,
+    "propertyConfiscationChance": 1.0,
+    "internalRelocationChance": 1.0,
+    "person": {
+      "injuryChance": 0.005,
+      "healthDamage": [
+        2,
+        6
+      ],
+      "deathChance": 0.0005
+    }
+  },
+  {
+    "id": "external_expulsion",
+    "householdExposureChance": 0.6,
+    "wealthLossPercent": [
+      0.5,
+      0.8
+    ],
+    "stressGain": 17,
+    "jobLossChance": 1.0,
+    "propertyConfiscationChance": 1.0,
+    "externalDepartureChance": 1.0,
+    "person": {
+      "injuryChance": 0.01,
+      "healthDamage": [
+        3,
+        9
+      ],
+      "deathChance": 0.001
+    }
+  },
+  {
+    "id": "forced_resettlement_high",
+    "householdExposureChance": 0.88,
+    "wealthLossPercent": [
+      0.2,
+      0.4
+    ],
+    "stressGain": 18,
+    "jobLossChance": 0.8,
+    "propertyConfiscationChance": 1.0,
+    "internalRelocationChance": 1.0,
+    "person": {
+      "injuryChance": 0.005,
+      "healthDamage": [
+        2,
+        6
+      ],
+      "deathChance": 0.0005
+    }
+  },
+  {
+    "id": "forced_resettlement_total",
+    "householdExposureChance": 1.0,
+    "wealthLossPercent": [
+      0.05,
+      0.2
+    ],
+    "stressGain": 12,
+    "jobLossChance": 0.8,
+    "propertyConfiscationChance": 1.0,
+    "internalRelocationChance": 1.0,
+    "person": {
+      "injuryChance": 0.0,
+      "deathChance": 0.0
+    }
+  },
+  {
+    "id": "march_1968",
+    "householdExposureChance": 0.45,
+    "wealthLossPercent": [
+      0.1,
+      0.3
+    ],
+    "stressGain": 12,
+    "jobLossChance": 0.25,
+    "externalDepartureChance": 0.35,
+    "person": {
+      "injuryChance": 0.001,
+      "deathChance": 0.0
+    },
+    "householdExposureMultipliers": {
+      "career_family:Education": 1.35,
+      "career_family:PublicAdministration": 1.25
+    }
+  },
+  {
+    "id": "martial_law",
+    "householdExposureChance": 0.012,
+    "wealthLossPercent": [
+      0.0,
+      0.05
+    ],
+    "stressGain": 8,
+    "jobLossChance": 0.08,
+    "imprisonmentChance": 0.65,
+    "person": {
+      "injuryChance": 0.01,
+      "healthDamage": [
+        3,
+        9
+      ],
+      "deathChance": 0.0005
+    },
+    "householdExposureMultipliers": {
+      "industrial_or_transport_worker": 2.0,
+      "career_family:Education": 1.5,
+      "career_family:Media": 2.0,
+      "career_family:PublicAdministration": 1.25
+    }
+  },
+  {
+    "id": "market_transition",
+    "householdExposureChance": 0.22,
+    "wealthLossPercent": [
+      0.0,
+      0.1
+    ],
+    "stressGain": 3,
+    "jobLossChance": 0.08,
+    "person": {
+      "deathChance": 0.0
+    },
+    "householdExposureMultipliers": {
+      "career_family:HeavyIndustry": 1.8,
+      "career_family:Manufacturing": 1.6,
+      "career_family:Extraction": 1.8,
+      "career_family:Transport": 1.35,
+      "career_family:PublicAdministration": 1.25
+    }
+  },
+  {
+    "id": "eu_migration_opportunity",
+    "householdExposureChance": 0.035,
+    "stressGain": 0,
+    "externalDepartureChance": 0.65,
+    "person": {
+      "deathChance": 0.0
+    },
+    "householdExposureMultipliers": {
+      "unemployed": 1.8,
+      "age_18_29": 1.5
+    }
+  },
+  {
+    "id": "covid_epidemic",
+    "householdExposureChance": 0.28,
+    "stressGain": 5,
+    "jobLossChance": 0.025,
+    "illness": {
+      "conditionId": "historical_covid19",
+      "membersMin": 1,
+      "membersMax": 3,
+      "chancePerSelectedMember": 0.9,
+      "fallbackHealthDamage": [
+        6,
+        16
+      ],
+      "fallbackDeathChance": 0.003
+    },
+    "person": {
+      "deathChance": 0.0
+    },
+    "personRiskMultipliers": {
+      "age_70_plus": 6.0,
+      "age_55_69": 2.5,
+      "age_35_54": 1.3
+    }
+  },
+  {
+    "id": "candidate_modifier_only",
+    "householdExposureChance": 1.0,
+    "person": {
+      "deathChance": 0.0
+    }
+  }
+]

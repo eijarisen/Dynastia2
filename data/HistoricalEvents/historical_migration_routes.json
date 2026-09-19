@@ -1,0 +1,192 @@
+[
+  {
+    "id": "great_emigration_west",
+    "type": "external_branch",
+    "unit": "selected_adult_branch",
+    "destinationLabel": "France / Western Europe",
+    "cashRetention": [
+      0.75,
+      0.95
+    ],
+    "originRealEstatePolicy": "stays_with_remaining_household_or_confiscated_by_event",
+    "playerControlledPolicy": "no_automatic_voluntary_departure",
+    "notes": "Used for post-1831 political emigration when an eligible non-authoritative adult branch exists."
+  },
+  {
+    "id": "great_retreat_internal",
+    "type": "internal_household",
+    "unit": "household",
+    "targetRegionIds": [
+      "masovia",
+      "lodz",
+      "lublin",
+      "swietokrzyskie",
+      "lesser_poland",
+      "greater_poland"
+    ],
+    "destinationWeighting": "sqrt_population_times_inverse_distance",
+    "cashRetention": [
+      0.75,
+      0.95
+    ],
+    "loseOriginHouse": false,
+    "loseOriginFarmland": false,
+    "replacementHouseChance": 0.0,
+    "replacementFarmlandChance": 0.0
+  },
+  {
+    "id": "soviet_exile",
+    "type": "external_household",
+    "unit": "household",
+    "destinationLabel": "Soviet Union (exile)",
+    "cashRetention": [
+      0.1,
+      0.3
+    ],
+    "loseOriginHouse": true,
+    "loseOriginFarmland": true,
+    "playerControlledPolicy": "forced; transfer control to eligible in-Poland lineage household, otherwise end run as dynasty_left_poland"
+  },
+  {
+    "id": "warsaw_evacuation",
+    "type": "internal_household",
+    "unit": "household",
+    "targetRegionIds": [
+      "masovia",
+      "lodz",
+      "lublin",
+      "swietokrzyskie",
+      "lesser_poland"
+    ],
+    "excludePlaceIds": [
+      "p_a0efc8373a9b279b"
+    ],
+    "destinationWeighting": "sqrt_population_times_inverse_distance",
+    "cashRetention": [
+      0.6,
+      0.85
+    ],
+    "loseOriginHouse": "only_if_event_destroyed_or_confiscated",
+    "loseOriginFarmland": false,
+    "replacementHouseChance": 0.05,
+    "replacementFarmlandChance": 0.0
+  },
+  {
+    "id": "kresy_to_west",
+    "type": "internal_household",
+    "unit": "household",
+    "targetRegionIds": [
+      "lower_silesia",
+      "opole",
+      "lubusz",
+      "west_pomerania",
+      "warmia_masuria",
+      "pomerania"
+    ],
+    "regionWeights": {
+      "lower_silesia": 1.3,
+      "west_pomerania": 1.1,
+      "lubusz": 1.0,
+      "warmia_masuria": 0.9,
+      "opole": 0.8,
+      "pomerania": 0.7
+    },
+    "destinationWeighting": "sqrt_population_times_region_weight",
+    "cashRetention": [
+      0.55,
+      0.8
+    ],
+    "loseOriginHouse": true,
+    "loseOriginFarmland": true,
+    "replacementHouseChance": 0.4,
+    "replacementFarmlandChanceIfPreviouslyOwned": 0.25
+  },
+  {
+    "id": "german_expulsion",
+    "type": "external_household",
+    "unit": "household",
+    "destinationLabel": "Germany",
+    "cashRetention": [
+      0.2,
+      0.5
+    ],
+    "loseOriginHouse": true,
+    "loseOriginFarmland": true,
+    "playerControlledPolicy": "forced; transfer control to eligible in-Poland lineage household, otherwise end run as dynasty_left_poland"
+  },
+  {
+    "id": "operation_vistula_west",
+    "type": "internal_household",
+    "unit": "household",
+    "targetRegionIds": [
+      "lower_silesia",
+      "opole",
+      "lubusz",
+      "west_pomerania",
+      "warmia_masuria",
+      "pomerania"
+    ],
+    "regionWeights": {
+      "west_pomerania": 1.2,
+      "warmia_masuria": 1.2,
+      "lower_silesia": 1.0,
+      "lubusz": 1.0,
+      "opole": 0.8,
+      "pomerania": 0.8
+    },
+    "destinationWeighting": "sqrt_population_times_region_weight",
+    "cashRetention": [
+      0.65,
+      0.85
+    ],
+    "loseOriginHouse": true,
+    "loseOriginFarmland": true,
+    "replacementHouseChance": 0.35,
+    "replacementFarmlandChanceIfPreviouslyOwned": 0.25
+  },
+  {
+    "id": "exchange_1951_relocation",
+    "type": "internal_household",
+    "unit": "household",
+    "targetRegionIds": [
+      "subcarpathia",
+      "lublin",
+      "lesser_poland"
+    ],
+    "destinationWeighting": "sqrt_population_times_inverse_distance",
+    "cashRetention": [
+      0.8,
+      0.95
+    ],
+    "loseOriginHouse": true,
+    "loseOriginFarmland": true,
+    "replacementHouseChance": 0.65,
+    "replacementFarmlandChanceIfPreviouslyOwned": 0.5
+  },
+  {
+    "id": "march_1968_emigration",
+    "type": "external_household",
+    "unit": "household",
+    "destinationLabel": "Western Europe / Israel / North America",
+    "cashRetention": [
+      0.65,
+      0.9
+    ],
+    "loseOriginHouse": "liquidate_at_existing_sale_rules_before_departure",
+    "loseOriginFarmland": "liquidate_at_existing_sale_rules_before_departure",
+    "playerControlledPolicy": "forced_if_event_roll_hits; transfer control if possible, otherwise dynasty_left_poland"
+  },
+  {
+    "id": "eu_labor_migration",
+    "type": "external_branch",
+    "unit": "selected_adult_branch",
+    "destinationLabel": "United Kingdom / Ireland / Western Europe",
+    "cashRetention": [
+      1.0,
+      1.0
+    ],
+    "loseOriginHouse": false,
+    "loseOriginFarmland": false,
+    "playerControlledPolicy": "never automatically remove authoritative playable household; autonomous adult branch only"
+  }
+]

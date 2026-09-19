@@ -110,6 +110,9 @@ public sealed partial class MainWindowViewModel
         var canAffordCraft =
             _economyService?.CanAfford(actor, CraftEducationUiCost) == true;
 
+        var standardChance =
+            _educationService.GetPaidEducationSuccessChance(target);
+
         var options = new List<PropertySelectionOption>
         {
             new(
@@ -120,7 +123,8 @@ public sealed partial class MainWindowViewModel
                 $"{StandardEducationUiCost:N0} zł",
                 "standard education formal study",
                 _educationService.GetEducationLevel(target) < 5
-                    && canAffordStandard)
+                    && canAffordStandard,
+                standardChance)
         };
 
         if (_craftService is null)
@@ -138,7 +142,7 @@ public sealed partial class MainWindowViewModel
                 ? $"{emoji} {craft.CraftName} — {craft.CurrentMasteryName}"
                 : $"{emoji} Learn {craft.CraftName}";
             var secondary =
-                $"Requires: {statName} · Chance: {craft.SuccessChance:P0}";
+                $"Requires: {statName}";
 
             options.Add(new PropertySelectionOption(
                 $"craft:{craft.CraftId}",
@@ -147,7 +151,8 @@ public sealed partial class MainWindowViewModel
                 string.Empty,
                 $"{CraftEducationUiCost:N0} zł",
                 $"{craft.CraftName} craft education {craft.CurrentMasteryName} {craft.PrimaryStat}",
-                canAffordCraft));
+                canAffordCraft,
+                craft.SuccessChance));
         }
 
         return options;

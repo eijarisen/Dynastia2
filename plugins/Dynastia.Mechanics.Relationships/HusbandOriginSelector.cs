@@ -3,14 +3,16 @@ using Dynastia.Contracts;
 namespace Dynastia.Mechanics.Relationships;
 
 /// <summary>
-/// Chooses the home town a generated husband came from before marriage.
-/// The distribution broadens over time while the woman's own town remains
-/// the single most likely origin in every era.
+/// Chooses the origin town of a generated partner before marriage.
+/// Nearby places dominate, with a secondary pull toward nearby larger cities,
+/// then smaller same-region and national pools. The seeker's own town remains
+/// possible, but no longer dominates the candidate pool.
 /// </summary>
 public static class HusbandOriginSelector
 {
     private const double NearbyRadiusKm = 65.0;
-    private const double RegionalCityRadiusKm = 220.0;
+    private const double NearbyCityRadiusKm = 220.0;
+    private const int BigCityPopulation = 20000;
     private const double EarthRadiusKm = 6371.0088;
 
     public static HusbandOriginDistribution GetDistribution(
@@ -18,25 +20,29 @@ public static class HusbandOriginSelector
         year switch
         {
             < 1800 => new HusbandOriginDistribution(
-                0.75,
-                0.17,
-                0.06,
-                0.02),
-            < 1900 => new HusbandOriginDistribution(
-                0.70,
-                0.17,
+                0.35,
+                0.38,
+                0.15,
                 0.09,
+                0.03),
+            < 1900 => new HusbandOriginDistribution(
+                0.30,
+                0.38,
+                0.17,
+                0.11,
                 0.04),
             < 2000 => new HusbandOriginDistribution(
-                0.62,
-                0.19,
-                0.12,
-                0.07),
-            _ => new HusbandOriginDistribution(
-                0.55,
+                0.24,
+                0.38,
                 0.20,
-                0.15,
-                0.10)
+                0.12,
+                0.06),
+            _ => new HusbandOriginDistribution(
+                0.18,
+                0.38,
+                0.24,
+                0.12,
+                0.08)
         };
 
     public static TownInfo Choose(
@@ -78,15 +84,12 @@ public static class HusbandOriginSelector
         if (roll < distribution.NearbyTownChance)
         {
             var nearby =
-                towns
-                    .Where(town =>
-                        !SameTown(town, homeTown))
-                    .Select(town => new CandidateTown(
-                        town,
-                        DistanceKm(homeTown, town)))
-                    .Where(candidate =>
-                        candidate.DistanceKm <= NearbyRadiusKm)
-                    .ToArray();
+                GetDistanceCandidates(
+                    homeTown,
+                    towns,
+                    minimumDistanceExclusive: 0,
+                    maximumDistanceInclusive: NearbyRadiusKm,
+                    requireBigCity: false);
 
             if (nearby.Length > 0)
             {
@@ -104,50 +107,105 @@ public static class HusbandOriginSelector
         {
             roll -= distribution.NearbyTownChance;
 
-            if (roll < distribution.RegionalCityChance)
+            if (roll < distribution.NearbyCityChance)
             {
-                var regionalCities =
-                    towns
-                        .Where(town =>
-                            town.Population >= 20000
-                            && !SameTown(town, homeTown))
-                        .Select(town => new CandidateTown(
-                            town,
-                            DistanceKm(homeTown, town)))
-                        .Where(candidate =>
-                            candidate.DistanceKm > NearbyRadiusKm
-                            && candidate.DistanceKm <= RegionalCityRadiusKm)
-                        .ToArray();
+                var nearbyCities =
+                    GetDistanceCandidates(
+                        homeTown,
+                        towns,
+                        minimumDistanceExclusive: 0,
+                        maximumDistanceInclusive: NearbyCityRadiusKm,
+                        requireBigCity: true);
 
-                if (regionalCities.Length > 0)
+                if (nearbyCities.Length > 0)
                 {
                     return ChooseWeighted(
-                        regionalCities,
+                        nearbyCities,
                         candidate =>
                             Math.Pow(
                                 Math.Max(1, candidate.Town.Population),
-                                0.65)
-                            / (1.0 + candidate.DistanceKm / 140.0),
+                                0.70)
+                            / (1.0 + candidate.DistanceKm / 110.0),
                         random).Town;
                 }
             }
             else
             {
-                return ChooseNationalTown(
-                    homeTown,
-                    towns,
-                    random);
+                roll -= distribution.NearbyCityChance;
+
+                if (roll < distribution.SameRegionChance)
+                {
+                    var regional =
+                        towns
+                            .Where(town =>
+                                !SameTown(town, homeTown)
+                                && SameRegion(town, homeTown))
+                            .ToArray();
+
+                    if (regional.Length > 0)
+                    {
+                        return ChooseWeighted(
+                            regional,
+                            town =>
+                                Math.Sqrt(
+                                    Math.Max(1, town.Population)),
+                            random);
+                    }
+                }
+                else
+                {
+                    return ChooseNationalTown(
+                        homeTown,
+                        towns,
+                        random);
+                }
             }
         }
 
-        // A sparse area may have no town in the requested geographic bucket.
-        // Fall back to a national roll rather than silently converting the
-        // result to another same-town match.
+        // Sparse areas may not have a town in the requested bucket. Prefer a
+        // same-region fallback, then the full current destination pool, rather
+        // than silently turning a failed geographic roll into a same-town match.
+        var sameRegionFallback =
+            towns
+                .Where(town =>
+                    !SameTown(town, homeTown)
+                    && SameRegion(town, homeTown))
+                .ToArray();
+
+        if (sameRegionFallback.Length > 0)
+        {
+            return ChooseWeighted(
+                sameRegionFallback,
+                town =>
+                    Math.Sqrt(
+                        Math.Max(1, town.Population)),
+                random);
+        }
+
         return ChooseNationalTown(
             homeTown,
             towns,
             random);
     }
+
+    private static CandidateTown[] GetDistanceCandidates(
+        TownInfo homeTown,
+        IReadOnlyList<TownInfo> towns,
+        double minimumDistanceExclusive,
+        double maximumDistanceInclusive,
+        bool requireBigCity) =>
+        towns
+            .Where(town =>
+                !SameTown(town, homeTown)
+                && (!requireBigCity
+                    || town.Population >= BigCityPopulation))
+            .Select(town => new CandidateTown(
+                town,
+                DistanceKm(homeTown, town)))
+            .Where(candidate =>
+                candidate.DistanceKm > minimumDistanceExclusive
+                && candidate.DistanceKm <= maximumDistanceInclusive)
+            .ToArray();
 
     private static TownInfo ChooseNationalTown(
         TownInfo homeTown,
@@ -249,6 +307,14 @@ public static class HusbandOriginSelector
         double degrees) =>
         degrees * Math.PI / 180.0;
 
+    private static bool SameRegion(
+        TownInfo first,
+        TownInfo second) =>
+        !string.IsNullOrWhiteSpace(first.RegionId)
+        && first.RegionId.Equals(
+            second.RegionId,
+            StringComparison.OrdinalIgnoreCase);
+
     private static bool SameTown(
         TownInfo first,
         TownInfo second) =>
@@ -269,12 +335,14 @@ public static class HusbandOriginSelector
 public sealed record HusbandOriginDistribution(
     double SameTownChance,
     double NearbyTownChance,
-    double RegionalCityChance,
+    double NearbyCityChance,
+    double SameRegionChance,
     double NationalChance)
 {
     public double Total =>
         SameTownChance
         + NearbyTownChance
-        + RegionalCityChance
+        + NearbyCityChance
+        + SameRegionChance
         + NationalChance;
 }

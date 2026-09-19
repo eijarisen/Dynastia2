@@ -7,6 +7,7 @@ public sealed class PersonRowViewModel
     private readonly IPerson _person;
     private readonly IFamilyService? _familyService;
     private readonly INationalityService? _nationalityService;
+    private readonly HistoricalResidenceSnapshot? _externalResidence;
 
     public PersonRowViewModel(
         IPerson person,
@@ -17,11 +18,13 @@ public sealed class PersonRowViewModel
         ICareerService? careerService,
         IFarmingService? farmingService,
         IHouseholdService? householdService,
-        ILocationService? locationService)
+        ILocationService? locationService,
+        IHistoricalEventService? historicalEventService)
     {
         _person = person;
         _familyService = familyService;
         _nationalityService = nationalityService;
+        _externalResidence = historicalEventService?.GetExternalResidence(person);
 
         // Family reads also run small compatibility reconciliation for
         // legacy founding-parent metadata. Do this before binding any
@@ -103,6 +106,12 @@ public sealed class PersonRowViewModel
                 DeathplaceText =
                     $"Death place: " +
                     $"{deathTown.DisplayName}";
+            }
+            else if (_externalResidence is not null)
+            {
+                ResidenceText = _externalResidence.Forced
+                    ? $"Residence: Outside Poland — {_externalResidence.DestinationLabel} (forced departure {_externalResidence.DepartureYear})"
+                    : $"Residence: Abroad — {_externalResidence.DestinationLabel} (since {_externalResidence.DepartureYear})";
             }
             else
             {
@@ -212,6 +221,9 @@ public sealed class PersonRowViewModel
         {
             if (_person.Tags.Has("state.dead"))
                 return "Deceased";
+
+            if (_externalResidence is not null)
+                return _externalResidence.Forced ? "Living · Outside Poland" : "Living abroad";
 
             if (_person.Tags.Has("control.playable"))
                 return "Living · Playable";

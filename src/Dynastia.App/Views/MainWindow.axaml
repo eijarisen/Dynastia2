@@ -1722,10 +1722,14 @@
                     </Button>
 
                     <TextBlock
-                        Canvas.Left="1148"
-                        Canvas.Top="24"
-                        Width="186"
+                        Canvas.Left="1158"
+                        Canvas.Top="10"
+                        Width="158"
+                        Height="34"
                         TextAlignment="Center"
+                        TextWrapping="Wrap"
+                        MaxLines="2"
+                        LineHeight="15"
                         FontSize="14"
                         FontWeight="SemiBold"
                         Foreground="#392817"
@@ -1733,7 +1737,7 @@
 
                     <TextBlock
                         Canvas.Left="1166"
-                        Canvas.Top="39"
+                        Canvas.Top="45"
                         Width="150"
                         TextAlignment="Center"
                         FontFamily="avares://Dynastia.App/Assets/Fonts#Pirata One"
@@ -1944,7 +1948,7 @@
                                 FontFamily="Georgia"
                                 FontSize="14"
                                 Foreground="#5B4024"
-                                Text="Notable events grouped by household." />
+                                Text="Global news and notable family events." />
 
                             <Border
                                 Grid.Row="2"

@@ -40,6 +40,8 @@ public sealed class StandardNationalityService : INationalityService
     private readonly string _defaultNationalityId;
     private readonly int _minimumYear;
     private readonly int _maximumYear;
+    private readonly List<INationalityDistributionModifierProvider>
+        _distributionModifiers = [];
 
     private StandardNationalityService(
         IHistoricalNameService names,
@@ -314,7 +316,27 @@ public sealed class StandardNationalityService : INationalityService
                 pair.Value / total * 100.0;
         }
 
-        return normalized;
+        IReadOnlyDictionary<string, double> result =
+            normalized;
+
+        foreach (var modifier in _distributionModifiers)
+        {
+            result = modifier.Apply(
+                regionId,
+                effectiveYear,
+                result);
+        }
+
+        return result;
+    }
+
+    public void RegisterDistributionModifierProvider(
+        INationalityDistributionModifierProvider provider)
+    {
+        ArgumentNullException.ThrowIfNull(provider);
+
+        if (!_distributionModifiers.Contains(provider))
+            _distributionModifiers.Add(provider);
     }
 
     public string GenerateNationality(

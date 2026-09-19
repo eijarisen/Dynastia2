@@ -7,12 +7,19 @@ public static class HistoricalEraConfiguration
     {
         return year switch
         {
-            < 1800 => "Early Modern",
-            < 1850 => "Early Industrial",
-            < 1914 => "Industrial",
-            < 1946 => "Modernizing",
-            < 1990 => "Postwar",
-            _ => "Contemporary"
+            <= 1771 => "Polish–Lithuanian Commonwealth",
+            <= 1794 => "Age of Partitions",
+            <= 1806 => "Partitioned Lands",
+            <= 1814 => "Duchy of Warsaw",
+            <= 1862 => "Partition Era",
+            <= 1913 => "Late Partition Era",
+            <= 1917 => "First World War",
+            <= 1921 => "Reborn Poland",
+            <= 1938 => "Second Polish Republic",
+            <= 1944 => "Second World War",
+            <= 1955 => "Postwar Reconstruction",
+            <= 1988 => "Polish People's Republic",
+            _ => "Third Polish Republic"
         };
     }
 }

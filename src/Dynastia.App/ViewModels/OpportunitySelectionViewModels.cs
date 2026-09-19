@@ -1,3 +1,4 @@
+using Avalonia.Media;
 using Dynastia.Contracts;
 
 namespace Dynastia.App.ViewModels;
@@ -41,8 +42,14 @@ public sealed class JobOpportunityCardViewModel
             ? $" · Craft bonus +{Opportunity.CraftBonus:P0}"
             : string.Empty);
 
-    public string ChanceAndSalaryText =>
-        $"Chance {Opportunity.SuccessChance:P0} · " +
+    public string ChanceText =>
+        $"Chance {Opportunity.SuccessChance:P0}";
+
+    public IBrush ChanceBrush =>
+        ChancePresentation.ForProbability(
+            Opportunity.SuccessChance);
+
+    public string SalaryText =>
         $"Salary {Opportunity.AnnualSalary:N0} zł/year";
 }
 
@@ -129,6 +136,10 @@ public sealed class PotentialPartnerCardViewModel
 
     public string SuccessChanceText =>
         $"Chance of success: {Candidate.AcceptanceChance:P0}";
+
+    public IBrush SuccessChanceBrush =>
+        ChancePresentation.ForProbability(
+            Candidate.AcceptanceChance);
 
     public string ApproachText =>
         $"{ActionVerb} {Candidate.Name}";

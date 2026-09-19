@@ -12,6 +12,7 @@ public sealed class HistoricalTownCatalogBatch2Tests
     private const string Warszawa = "p_a0efc8373a9b279b";
     private const string Lwow = "p_936305d7bd070389";
     private const string Katowice = "p_a8c3eadb5c8dca2e";
+    private const string Krakow = "p_b2feaac170f8446f";
 
     [Fact]
     public void LocationServiceUsesCurrentHistoricalAvailabilityAndYearResolvedTownData()
@@ -102,6 +103,51 @@ public sealed class HistoricalTownCatalogBatch2Tests
         Assert.Equal(
             Lwow,
             head.Components.Get<LocationComponent>()!.HomeTownId);
+    }
+
+    [Fact]
+    public void HeterosexualMarriageMovesTheWifeToTheHusbandsHomeTown()
+    {
+        var state = new GameState { Year = 1900, StartYear = 1900 };
+        var catalog = LoadCatalog();
+        var events = new GameEventBus();
+        var family = new SexAwareFamilyService();
+        var service = new StandardLocationService(
+            state,
+            family,
+            catalog,
+            new ZeroRandom(),
+            events);
+
+        var woman = state.CreatePerson("Anna", "Kowalska", 22);
+        woman.BirthDate = new GameDate(1878, 1, 1);
+        woman.Components.Set(new LocationComponent
+        {
+            BirthplaceId = Krakow,
+            HomeTownId = Krakow
+        });
+        family.SetSex(woman, Sex.Female);
+
+        var man = state.CreatePerson("Jan", "Nowak", 25);
+        man.BirthDate = new GameDate(1875, 1, 1);
+        man.Components.Set(new LocationComponent
+        {
+            BirthplaceId = Warszawa,
+            HomeTownId = Warszawa
+        });
+        family.SetSex(man, Sex.Male);
+
+        events.Publish(new GameEvent
+        {
+            Type = "relationship.married",
+            Year = 1900,
+            SubjectId = woman.Id,
+            RelatedPersonIds = [man.Id]
+        });
+
+        Assert.Equal(Warszawa, service.GetLocation(man).HomeTown.Id);
+        Assert.Equal(Warszawa, service.GetLocation(woman).HomeTown.Id);
+        Assert.Equal(Krakow, service.GetLocation(woman).Birthplace.Id);
     }
 
     [Fact]
@@ -229,6 +275,30 @@ public sealed class HistoricalTownCatalogBatch2Tests
         public int NextInt(int minInclusive, int maxInclusive) => minInclusive;
         public double NextDouble() => 0.0;
         public bool Chance(double probability) => probability > 0;
+    }
+
+    private sealed class SexAwareFamilyService : IFamilyService
+    {
+        private readonly Dictionary<Guid, Sex> _sexes = [];
+
+        public void SetSex(IPerson person, Sex sex) => _sexes[person.Id] = sex;
+        public void InitializePerson(IPerson person, Sex sex, int? generation = null) => SetSex(person, sex);
+        public Sex GetSex(IPerson person) => _sexes.TryGetValue(person.Id, out var sex) ? sex : Sex.Male;
+        public int? GetGeneration(IPerson person) => 1;
+        public IPerson? GetFather(IPerson person) => null;
+        public IPerson? GetMother(IPerson person) => null;
+        public IPerson? GetSpouse(IPerson person) => null;
+        public IReadOnlyList<IPerson> GetChildren(IPerson person) => Array.Empty<IPerson>();
+        public void SetParents(IPerson child, IPerson? father, IPerson? mother) { }
+        public void SetSpouses(IPerson first, IPerson second, int startYear) { }
+        public void EndRelationship(IPerson first, IPerson second, int endYear, string endReason, bool clearFirst = true, bool clearSecond = true) { }
+        public IReadOnlyList<RelationshipHistoryInfo> GetRelationshipHistory(IPerson person) => Array.Empty<RelationshipHistoryInfo>();
+        public void SetGeneratedFamilyBackground(IPerson person, GeneratedFamilyBackgroundInfo background) { }
+        public GeneratedFamilyBackgroundInfo? GetGeneratedFamilyBackground(IPerson person) => null;
+        public string FormatSurname(string surname, Sex sex) => surname;
+        public string GetDisplayName(IPerson person) => $"{person.Name} {person.Surname}";
+        public bool IsBloodline(IPerson person) => true;
+        public bool IsMaleLineage(IPerson person) => true;
     }
 
     private sealed class TestFamilyService : IFamilyService

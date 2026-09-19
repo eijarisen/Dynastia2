@@ -9,6 +9,13 @@ public static class ChronicleEventOrdering
     {
         var type = gameEvent.Type;
 
+        if (type.StartsWith(
+                "historical.",
+                StringComparison.OrdinalIgnoreCase))
+        {
+            return -1;
+        }
+
         if (type.Equals(
                 "life.death",
                 StringComparison.OrdinalIgnoreCase)

@@ -2,8 +2,8 @@ namespace Dynastia.Mechanics.Farming;
 
 public static class FarmingRules
 {
-    public const decimal PurchasePrice = 20000m;
-    public const decimal SalePrice = 16000m;
+    public const decimal PurchasePrice = 10000m;
+    public const decimal SalePrice = 8000m;
     public const decimal WorkerBaseIncomeScale = 2m;
 
     public static int GetActiveWorkerCount(

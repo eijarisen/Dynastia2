@@ -1,0 +1,53 @@
+﻿Id,DisplayName,StartYear,EndYear,TriggerMode,ScopeId,TargetFilterId,EffectProfileId,MigrationRouteId,ExclusiveGroup,Priority,PlayerImpactPolicy,ChronicleAtStart,HouseholdNews,SourceGroupId,Notes
+great_northern_war,Great Northern War,1700,1721,annual,plc_1700,all_household,war_low,,armed_conflict,20,normal,1,1,great_northern_war,Broad Commonwealth war disruption; intentionally lower than town-specific sieges.
+great_northern_plague,Great Northern War Plague,1708,1712,annual,plc_1700,all_household,plague_epidemic,,epidemic,70,normal,1,1,great_northern_plague,Historical outbreak layer; use historical_plague condition if Health content provides it.
+war_polish_succession,War of the Polish Succession,1733,1735,annual,polish_succession_regions,all_household,war_low,,armed_conflict,25,normal,1,1,war_polish_succession,
+siege_gdansk_1734,Siege of Gdańsk,1734,1734,one_shot,gdansk_only,all_household,war_high,,armed_conflict,100,normal,1,1,war_polish_succession,
+bar_confederation,Bar Confederation,1768,1772,annual,bar_confederation_regions,all_household,uprising_medium,,armed_conflict,45,normal,1,1,bar_confederation,
+first_partition,First Partition,1772,1772,one_shot,first_partition_places,all_household,political_transition_low,,political_transition,50,normal,1,1,partitions,Scope derives automatically from Town polity changes in 1772.
+second_partition,Second Partition,1793,1793,one_shot,second_partition_places,all_household,political_transition_medium,,political_transition,60,normal,1,1,partitions,
+kosciuszko_uprising,Kościuszko Uprising,1794,1794,one_shot,kosciuszko_regions,all_household,uprising_high,,armed_conflict,70,normal,1,1,kosciuszko,
+third_partition,Third Partition,1795,1795,one_shot,third_partition_places,all_household,political_transition_medium,,political_transition,70,normal,1,1,partitions,
+napoleonic_wars_1806_1809,Napoleonic Campaigns in Polish Lands,1806,1809,annual,napoleonic_1806_1809_regions,all_household,war_medium,,armed_conflict,35,normal,1,1,napoleonic,
+russian_campaign_1812_1813,Russian Campaign and Retreat,1812,1813,annual,russian_campaign_1812_regions,all_household,war_high,,armed_conflict,60,normal,1,1,napoleonic,
+november_uprising,November Uprising,1830,1831,annual,november_uprising_regions,all_household,uprising_high,,armed_conflict,70,normal,1,1,november_uprising,
+post_november_repression,Post-Uprising Repression and Great Emigration,1832,1832,one_shot,november_uprising_regions,all_household,repression_medium,great_emigration_west,repression,60,normal,1,1,november_uprising,External departure is adult-branch only where possible; confiscation/imprisonment model broader reprisals.
+krakow_galician_1846,Kraków Uprising and Galician Violence,1846,1846,one_shot,krakow_galicia_1846_regions,all_household,civil_violence_medium,,armed_conflict,65,normal,1,1,galicia_1846,
+greater_poland_uprising_1848,Greater Poland Uprising,1848,1848,one_shot,greater_poland_regions,all_household,uprising_medium,,armed_conflict,55,normal,1,1,greater_poland_1848,
+january_uprising,January Uprising,1863,1864,annual,january_uprising_regions,all_household,uprising_medium,,armed_conflict,65,normal,1,1,january_uprising,
+post_january_repression,Post-January Uprising Repression,1865,1865,one_shot,january_uprising_regions,all_household,repression_medium,great_emigration_west,repression,60,normal,1,1,january_uprising,
+revolution_1905,Revolution of 1905 in Polish Lands,1905,1907,annual,revolution_1905_regions,all_household,protest_medium,,civil_unrest,45,normal,1,1,revolution_1905,
+first_world_war,First World War,1914,1918,annual,all_places,all_household,war_medium,,armed_conflict,30,normal,1,1,ww1,
+great_retreat_1915,Great Retreat and Evacuations,1915,1915,one_shot,great_retreat_regions,all_household,war_high,great_retreat_internal,armed_conflict,90,normal,1,1,great_retreat,
+spanish_influenza,Spanish Influenza Pandemic,1918,1920,annual,all_places,all_household,influenza_epidemic,,epidemic,80,normal,1,1,spanish_flu,
+greater_poland_uprising_1918,Greater Poland Uprising,1918,1919,annual,greater_poland_regions,all_household,uprising_medium,,armed_conflict,80,normal,1,1,greater_poland_1918,
+polish_ukrainian_war,Polish–Ukrainian War,1918,1919,annual,polish_ukrainian_war_regions,all_household,war_high,,armed_conflict,90,normal,1,1,polish_ukrainian_war,
+polish_soviet_war,Polish–Soviet War,1919,1921,annual,polish_soviet_war_regions,all_household,war_high,,armed_conflict,90,normal,1,1,polish_soviet_war,
+silesian_uprisings,Silesian Uprisings,1919,1921,annual,silesian_uprising_regions,all_household,uprising_medium,,armed_conflict,80,normal,1,1,silesian_uprisings,
+great_depression,Great Depression,1929,1935,annual,pl_1931,all_household,economic_depression,,economic_shock,40,normal,1,1,great_depression,
+southern_flood_1934,Great Flood of 1934,1934,1934,one_shot,southern_flood_1934_regions,all_household,flood_major,,natural_disaster,70,normal,1,1,flood_1934,
+invasion_1939,Invasion of Poland,1939,1939,one_shot,pl_1939,all_household,war_extreme_1939,,armed_conflict,110,normal,1,1,invasion_1939,
+occupation_hardship,Wartime Occupation,1940,1944,annual,pl_1939,all_household,occupation_hardship,,armed_conflict,10,normal,1,1,ww2_occupation,
+soviet_deportations,Soviet Mass Deportations,1940,1941,annual_until_impacted,eastern_1939_poland_regions,all_household,soviet_deportation,soviet_exile,repression,110,normal,1,1,soviet_deportations,
+ghettoization,Ghettoization and Anti-Jewish Persecution,1940,1941,annual_until_impacted,pl_1939,jewish_members,ghettoization_persecution,,persecution,120,normal,1,1,holocaust,
+holocaust_mass_murder,Holocaust: Mass Deportation and Murder,1942,1944,annual,pl_1939,jewish_members,holocaust_mass_murder,,persecution,200,normal,1,1,holocaust,"Severe cumulative mortality model. Percentages are gameplay abstractions, not census estimates."
+volhynia_anti_polish_violence,Mass Violence against Poles in Volhynia and Eastern Galicia,1943,1944,annual,volhynia_galicia_violence,polish_members,ethnic_violence_high,,ethnic_violence,170,normal,1,1,volhynia,
+retaliatory_violence_ukrainian,Polish Retaliatory Violence,1943,1944,annual,volhynia_galicia_violence,ukrainian_members,ethnic_violence_low,,ethnic_violence,60,normal,1,1,volhynia,Deliberately much lower exposure/severity than the anti-Polish campaign; not presented as equivalent.
+warsaw_uprising_1944,Warsaw Uprising,1944,1944,one_shot,warsaw_only,all_household,warsaw_1944,warsaw_evacuation,armed_conflict,250,normal,1,1,warsaw_uprising,
+kresy_postwar_resettlement,Postwar Resettlement from the Eastern Borderlands,1944,1946,annual_until_ineligible,lost_east_1945,polish_household,forced_resettlement_east_west,kresy_to_west,resettlement,150,normal,1,1,postwar_resettlement,Source places are derived from PL in 1944/1939 becoming non-Polish in 1945; destinations favor newly acquired western/northern regions.
+german_postwar_expulsion,German Flight and Expulsion from Postwar Poland,1945,1950,annual_until_ineligible,gained_west_1945,german_household,external_expulsion,german_expulsion,resettlement,160,normal,1,1,postwar_resettlement,
+operation_vistula,Operation Vistula,1947,1947,one_shot,operation_vistula_origin,ukrainian_household,forced_resettlement_high,operation_vistula_west,resettlement,190,normal,1,1,operation_vistula,
+territorial_exchange_1951,Polish–Soviet Territorial Exchange,1951,1951,one_shot,ceded_1951,all_household,forced_resettlement_total,exchange_1951_relocation,resettlement,200,normal,1,1,territorial_exchange_1951,
+poznan_june_1956,Poznań June,1956,1956,one_shot,poznan_only,all_household,protest_medium,,civil_unrest,70,normal,1,1,poznan_1956,
+march_1968,March 1968 Anti-Jewish Campaign,1968,1968,one_shot,current_poland,jewish_household,march_1968,march_1968_emigration,repression,100,normal,1,1,march_1968,
+coastal_protests_1970,December 1970 Coastal Protests,1970,1970,one_shot,coast_1970_towns,all_household,protest_medium,,civil_unrest,80,normal,1,1,december_1970,
+june_protests_1976,June 1976 Protests,1976,1976,one_shot,june_1976_towns,all_household,protest_low,,civil_unrest,60,normal,1,1,june_1976,
+solidarity_strikes_1980,Solidarity Strike Wave,1980,1980,one_shot,solidarity_1980_towns,all_household,strike_disruption,,civil_unrest,45,normal,1,1,solidarity_1980,
+martial_law,Martial Law,1981,1983,annual,current_poland,all_household,martial_law,,repression,90,normal,1,1,martial_law,
+market_transition,Market Transition,1989,1993,annual,current_poland,all_household,market_transition,,economic_shock,50,normal,1,1,market_transition,
+flood_1997,Central European Flood,1997,1997,one_shot,flood_1997_regions,all_household,flood_major,,natural_disaster,90,normal,1,1,flood_1997,
+eu_labor_migration,Post-EU Accession Labour Migration,2004,2011,annual,current_poland,working_age_household,eu_migration_opportunity,eu_labor_migration,migration_opportunity,30,autonomous_branches_only,1,1,eu_migration,Never automatically removes the authoritative playable household.
+flood_2010,Vistula and Oder Basin Floods,2010,2010,one_shot,flood_2010_regions,all_household,flood_major,,natural_disaster,90,normal,1,1,flood_2010,
+covid_19,COVID-19 Pandemic,2020,2021,annual,current_poland,all_household,covid_epidemic,,epidemic,100,normal,1,1,covid,
+ukraine_refugee_influx,Refugees from the Russian Invasion of Ukraine,2022,2026,modifier,current_poland,all_household,candidate_modifier_only,,demographic_modifier,100,no_direct_household_harm,1,0,ukraine_refugees,Modifies generated outsider nationality weights; does not harm Polish households.
+flood_2024,Southwestern Poland Flood,2024,2024,one_shot,flood_2024_scope,all_household,flood_major,,natural_disaster,100,normal,1,1,flood_2024,

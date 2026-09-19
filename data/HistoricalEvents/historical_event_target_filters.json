@@ -1,0 +1,78 @@
+[
+  {
+    "id": "all_household",
+    "householdEligibility": "always",
+    "personEffects": "all_members"
+  },
+  {
+    "id": "jewish_members",
+    "householdEligibility": "any_matching_member",
+    "nationalityIds": [
+      "jewish"
+    ],
+    "personEffects": "matching_members",
+    "householdEffects": "whole_household"
+  },
+  {
+    "id": "polish_members",
+    "householdEligibility": "any_matching_member",
+    "nationalityIds": [
+      "polish"
+    ],
+    "personEffects": "matching_members",
+    "householdEffects": "whole_household"
+  },
+  {
+    "id": "ukrainian_members",
+    "householdEligibility": "any_matching_member",
+    "nationalityIds": [
+      "ukrainian"
+    ],
+    "personEffects": "matching_members",
+    "householdEffects": "whole_household"
+  },
+  {
+    "id": "ukrainian_household",
+    "householdEligibility": "head_or_spouse_matches",
+    "nationalityIds": [
+      "ukrainian"
+    ],
+    "personEffects": "all_members",
+    "householdEffects": "whole_household"
+  },
+  {
+    "id": "german_household",
+    "householdEligibility": "head_or_spouse_matches",
+    "nationalityIds": [
+      "german"
+    ],
+    "personEffects": "all_members",
+    "householdEffects": "whole_household"
+  },
+  {
+    "id": "polish_household",
+    "householdEligibility": "head_or_spouse_matches",
+    "nationalityIds": [
+      "polish"
+    ],
+    "personEffects": "all_members",
+    "householdEffects": "whole_household"
+  },
+  {
+    "id": "jewish_household",
+    "householdEligibility": "head_or_spouse_matches",
+    "nationalityIds": [
+      "jewish"
+    ],
+    "personEffects": "matching_members",
+    "householdEffects": "whole_household"
+  },
+  {
+    "id": "working_age_household",
+    "householdEligibility": "has_member_age_range",
+    "minAge": 18,
+    "maxAge": 39,
+    "personEffects": "selected_eligible_adult",
+    "householdEffects": "none"
+  }
+]

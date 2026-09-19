@@ -110,6 +110,7 @@ public sealed partial class HouseholdsPlugin : IGamePlugin
                 gameState,
                 family,
                 economy,
+                locations,
                 career,
                 events);
 

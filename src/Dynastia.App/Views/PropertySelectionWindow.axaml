@@ -135,6 +135,13 @@
                                             Foreground="#6B5434"
                                             Text="{Binding SecondaryText}" />
                                         <TextBlock
+                                            IsVisible="{Binding HasSuccessChance}"
+                                            FontFamily="Georgia"
+                                            FontSize="12.5"
+                                            FontWeight="Bold"
+                                            Foreground="{Binding SuccessChanceBrush}"
+                                            Text="{Binding SuccessChanceText}" />
+                                        <TextBlock
                                             IsVisible="{Binding HasDetailsText}"
                                             Margin="0,4,0,0"
                                             FontFamily="Georgia"

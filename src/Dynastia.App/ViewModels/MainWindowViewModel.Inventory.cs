@@ -126,8 +126,8 @@ public sealed partial class MainWindowViewModel
             CanUseFamilyInventoryAction("household.sell_house"),
             CanUseFamilyInventoryAction("farming.buy_farmland"),
             CanUseFamilyInventoryAction("farming.sell_farmland"),
-            _farmingService?.PurchasePrice ?? 20000m,
-            _farmingService?.SalePrice ?? 16000m);
+            _farmingService?.PurchasePrice ?? 10000m,
+            _farmingService?.SalePrice ?? 8000m);
     }
 
     internal bool SetHouseInheritanceHeir(

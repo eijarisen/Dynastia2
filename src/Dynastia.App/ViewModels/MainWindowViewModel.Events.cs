@@ -153,6 +153,9 @@ public sealed partial class MainWindowViewModel
             nameof(GameOverText));
 
         OnPropertyChanged(
+            nameof(GameOverTitle));
+
+        OnPropertyChanged(
             nameof(ActiveHouseholdText));
 
         OnPropertyChanged(
@@ -186,6 +189,9 @@ public sealed partial class MainWindowViewModel
 
         OnPropertyChanged(
             nameof(GameOverText));
+
+        OnPropertyChanged(
+            nameof(GameOverTitle));
 
         OnPropertyChanged(
             nameof(ActiveHouseholdText));

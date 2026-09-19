@@ -168,21 +168,11 @@ public sealed class MarriageYearSystem : IYearSystem
         var availableTowns =
             _locations.GetTowns();
         var originTown =
-            spouseSex == Sex.Male
-                ? HusbandOriginSelector.Choose(
-                    homeTown,
-                    availableTowns,
-                    gameState.Year,
-                    _random)
-                : availableTowns.FirstOrDefault(town =>
-                    town.Id.Equals(
-                        homeTown.Id,
-                        StringComparison.OrdinalIgnoreCase))
-                  ?? HusbandOriginSelector.Choose(
-                      homeTown,
-                      availableTowns,
-                      gameState.Year,
-                      _random);
+            HusbandOriginSelector.Choose(
+                homeTown,
+                availableTowns,
+                gameState.Year,
+                _random);
 
         if (!RelationshipPersonalityRules.TryChoosePartnerAge(
                 person,

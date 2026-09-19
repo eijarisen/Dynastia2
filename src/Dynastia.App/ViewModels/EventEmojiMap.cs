@@ -55,7 +55,7 @@ public static class EventEmojiMap
                 ["houseTransfer"] = "🏡",
                 ["hireNanny"] = "🧑‍🍼",
                 ["fireNanny"] = "👋",
-                ["default"] = "🔹",
+                ["default"] = "📌",
 
                 // Modular Dynastia event IDs -> original visual meaning.
                 ["wellbeing.heal"] = "❤️‍🩹",
@@ -169,6 +169,24 @@ public static class EventEmojiMap
                 ["adoption.orphanage"] = "🏚️",
                 ["adoption.left_orphanage"] = "🧳",
 
+                ["career.changed_job"] = "🔄",
+                ["career.relocated"] = "🚚",
+                ["career.work_harder"] = "💪",
+                ["childhood.raised"] = "🫂",
+                ["craft.income"] = "💰",
+                ["craft.major_commission"] = "🏅",
+                ["farming.income"] = "🌾",
+                ["game.started"] = "🏰",
+                ["historical.milestone"] = "🗞️",
+                ["historical.household_impact"] = "🏛️",
+                ["historical.relocation"] = "🚚",
+                ["historical.external_departure"] = "🧳",
+                ["household.parent_house_gift"] = "🎁",
+                ["household.parent_house_refused"] = "🚫",
+                ["personality.morals_declined"] = "⚖️",
+                ["personality.morals_protected"] = "🛡️",
+                ["stats.paid_improvement"] = "📈",
+
                 ["rare.house_fire"] = "🔥",
                 ["rare.burglary"] = "🕵️",
                 ["rare.storm_flood_damage"] = "🌊", // legacy history
@@ -205,10 +223,32 @@ public static class EventEmojiMap
     public static string GetEmoji(
         string eventType)
     {
-        return EmojiMap.TryGetValue(
-            eventType,
-            out var emoji)
-                ? emoji
-                : EmojiMap["default"];
+        if (EmojiMap.TryGetValue(
+                eventType,
+                out var emoji))
+        {
+            return emoji;
+        }
+
+        if (eventType.StartsWith("historical.", StringComparison.OrdinalIgnoreCase)) return "🗞️";
+        if (eventType.StartsWith("career.", StringComparison.OrdinalIgnoreCase)) return "💼";
+        if (eventType.StartsWith("relationship.", StringComparison.OrdinalIgnoreCase)) return "💞";
+        if (eventType.StartsWith("household.", StringComparison.OrdinalIgnoreCase)) return "🏠";
+        if (eventType.StartsWith("family_", StringComparison.OrdinalIgnoreCase)
+            || eventType.StartsWith("family.", StringComparison.OrdinalIgnoreCase)) return "👪";
+        if (eventType.StartsWith("health.", StringComparison.OrdinalIgnoreCase)
+            || eventType.StartsWith("wellbeing.", StringComparison.OrdinalIgnoreCase)) return "❤️‍🩹";
+        if (eventType.StartsWith("education.", StringComparison.OrdinalIgnoreCase)) return "🎓";
+        if (eventType.StartsWith("justice.", StringComparison.OrdinalIgnoreCase)) return "⚖️";
+        if (eventType.StartsWith("craft.", StringComparison.OrdinalIgnoreCase)) return "🛠️";
+        if (eventType.StartsWith("farming.", StringComparison.OrdinalIgnoreCase)) return "🌾";
+        if (eventType.StartsWith("loan.", StringComparison.OrdinalIgnoreCase)) return "🏦";
+        if (eventType.StartsWith("inheritance.", StringComparison.OrdinalIgnoreCase)) return "💰";
+        if (eventType.StartsWith("personality.", StringComparison.OrdinalIgnoreCase)) return "🧭";
+        if (eventType.StartsWith("stats.", StringComparison.OrdinalIgnoreCase)) return "📈";
+        if (eventType.StartsWith("rare.", StringComparison.OrdinalIgnoreCase)) return "⚠️";
+        if (eventType.StartsWith("life.", StringComparison.OrdinalIgnoreCase)) return "📜";
+
+        return EmojiMap["default"];
     }
 }

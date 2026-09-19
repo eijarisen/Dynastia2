@@ -63,7 +63,19 @@ public static class ActionEmojiMap
 
                 // One of the two missing action-family emojis:
                 // use the same original money-request symbol as parents.
-                ["family_support.ask_child"] = "🙏"
+                ["family_support.ask_child"] = "🙏",
+                ["craft.stop_occupation"] = "🚶",
+                ["family_relations.ask_farmland"] = "🙏",
+                ["family_relations.ask_house"] = "🙏",
+                ["family_relations.ask_job_help"] = "🤝",
+                ["family_relations.ask_money"] = "🙏",
+                ["family_relations.give_farmland"] = "🎁",
+                ["family_relations.give_house"] = "🎁",
+                ["family_relations.give_job_help"] = "🤝",
+                ["family_relations.give_money"] = "🎁",
+                ["family_relations.improve"] = "❤️‍🩹",
+                ["loan.give"] = "🤝",
+                ["loan.take"] = "🏦"
             };
 
     public static string Format(
@@ -91,7 +103,23 @@ public static class ActionEmojiMap
             actionId,
             out var emoji))
         {
-            return $"🔹 {label}";
+            emoji = actionId.StartsWith("career.", StringComparison.OrdinalIgnoreCase)
+                ? "💼"
+                : actionId.StartsWith("relationship.", StringComparison.OrdinalIgnoreCase)
+                    ? "💞"
+                    : actionId.StartsWith("household.", StringComparison.OrdinalIgnoreCase)
+                        ? "🏠"
+                        : actionId.StartsWith("family_relations.", StringComparison.OrdinalIgnoreCase)
+                            ? "👪"
+                            : actionId.StartsWith("loan.", StringComparison.OrdinalIgnoreCase)
+                                ? "🏦"
+                                : actionId.StartsWith("craft.", StringComparison.OrdinalIgnoreCase)
+                                    ? "🛠️"
+                                    : actionId.StartsWith("farming.", StringComparison.OrdinalIgnoreCase)
+                                        ? "🌾"
+                                        : actionId.StartsWith("education.", StringComparison.OrdinalIgnoreCase)
+                                            ? "🎓"
+                                            : "⚙️";
         }
 
         return $"{emoji} {label}";

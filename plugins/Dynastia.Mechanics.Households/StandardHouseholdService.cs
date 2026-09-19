@@ -8,6 +8,7 @@ public sealed partial class StandardHouseholdService :
     private readonly IGameState _gameState;
     private readonly IFamilyService _family;
     private readonly IEconomyService _economy;
+    private readonly ILocationService _locations;
     private readonly ICareerService _career;
     private readonly IGameEventBus _events;
 
@@ -17,6 +18,7 @@ public sealed partial class StandardHouseholdService :
         IGameState gameState,
         IFamilyService family,
         IEconomyService economy,
+        ILocationService locations,
         ICareerService career,
         IGameEventBus events)
     {
@@ -28,6 +30,9 @@ public sealed partial class StandardHouseholdService :
 
         _economy =
             economy;
+
+        _locations =
+            locations;
 
         _career =
             career;
@@ -240,6 +245,9 @@ public sealed partial class StandardHouseholdService :
                             person))
                 .ToList())
         {
+            if (SimulationState.IsExternallyResident(head))
+                continue;
+
             if (_economy.IsEstateReady(
                 head))
             {

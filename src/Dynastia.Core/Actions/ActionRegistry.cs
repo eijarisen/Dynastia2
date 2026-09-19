@@ -354,16 +354,6 @@ public sealed class ActionRegistry : IActionRegistry
         {
             var outcome = ExecuteQueuedAction(queued);
             _lastQueuedOutcomes.Add(outcome);
-
-            if (outcome.Category is
-                QueuedActionResultCategory.Invalidated
-                or QueuedActionResultCategory.ActorMissing
-                or QueuedActionResultCategory.TargetMissing
-                or QueuedActionResultCategory.ActionMissing
-                or QueuedActionResultCategory.ActorBlocked)
-            {
-                PublishInvalidatedOutcome(outcome);
-            }
         }
 
         return _lastQueuedOutcomes.ToList();
@@ -464,38 +454,6 @@ public sealed class ActionRegistry : IActionRegistry
                     ? ActionReasonCodes.Executed
                     : ActionReasonCodes.MechanicFailure),
             result.Message);
-    }
-
-    private void PublishInvalidatedOutcome(QueuedActionOutcome outcome)
-    {
-        var actor = _gameState.People.FirstOrDefault(person => person.Id == outcome.ActorId);
-        var target = _gameState.People.FirstOrDefault(person => person.Id == outcome.TargetId);
-        var actorName = actor?.Name ?? "The acting family member";
-        var targetText = target is null || target.Id == outcome.ActorId
-            ? string.Empty
-            : $" for {target.Name}";
-
-        var text =
-            $"{actorName}'s queued action “{outcome.Label}”{targetText} " +
-            $"could not be completed: {outcome.Message ?? "circumstances changed"}";
-
-        _eventBus.Publish(
-            new GameEvent
-            {
-                Type = "action.invalidated",
-                Year = _gameState.Year,
-                SubjectId = actor?.Id,
-                RelatedPersonIds = target is null || target.Id == actor?.Id
-                    ? Array.Empty<Guid>()
-                    : new[] { target.Id },
-                Data = new Dictionary<string, string>
-                {
-                    ["actionId"] = outcome.ActionId,
-                    ["reasonCode"] = outcome.ReasonCode,
-                    ["resultCategory"] = outcome.Category.ToString(),
-                    ["text"] = text
-                }
-            });
     }
 
     private ActionEvaluationResult EvaluateDefinition(

@@ -228,7 +228,7 @@ public sealed class PartnerSearchRulesTests
     }
 
     [Fact]
-    public void HusbandOriginsBroadenAcrossModernCenturiesWhileSameTownStaysMostLikely()
+    public void PartnerOriginsPreferOtherNearbyPlacesAndBroadenAcrossModernCenturies()
     {
         var eighteenth =
             HusbandOriginSelector.GetDistribution(1750);
@@ -249,19 +249,23 @@ public sealed class PartnerSearchRulesTests
         {
             Assert.Equal(1.0, distribution.Total, 10);
             Assert.True(
-                distribution.SameTownChance
-                > distribution.NearbyTownChance);
+                distribution.NearbyTownChance
+                > distribution.NearbyCityChance);
             Assert.True(
-                distribution.SameTownChance
-                > distribution.RegionalCityChance);
+                distribution.NearbyCityChance
+                > distribution.SameRegionChance);
             Assert.True(
-                distribution.SameTownChance
+                distribution.SameRegionChance
                 > distribution.NationalChance);
+            Assert.True(
+                1.0 - distribution.SameTownChance
+                > distribution.SameTownChance);
         }
 
         Assert.True(nineteenth.NationalChance > eighteenth.NationalChance);
         Assert.True(twentieth.NationalChance > nineteenth.NationalChance);
         Assert.True(twentyFirst.NationalChance > twentieth.NationalChance);
+        Assert.True(twentyFirst.SameTownChance < eighteenth.SameTownChance);
     }
 
     private sealed class ZeroRandom : IGameRandom

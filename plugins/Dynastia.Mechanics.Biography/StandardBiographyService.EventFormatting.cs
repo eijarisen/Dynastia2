@@ -171,6 +171,23 @@ public sealed partial class StandardBiographyService
             "adoption.orphanage" => "🏚️ ",
             "adoption.left_orphanage" => "🧳 ",
 
+            "career.changed_job" => "🔄 ",
+            "career.relocated" => "🚚 ",
+            "career.work_harder" => "💪 ",
+            "childhood.raised" => "🫂 ",
+            "craft.income" => "💰 ",
+            "craft.major_commission" => "🏅 ",
+            "farming.income" => "🌾 ",
+            "historical.milestone" => "🗞️ ",
+            "historical.household_impact" => "🏛️ ",
+            "historical.relocation" => "🚚 ",
+            "historical.external_departure" => "🧳 ",
+            "household.parent_house_gift" => "🎁 ",
+            "household.parent_house_refused" => "🚫 ",
+            "personality.morals_declined" => "⚖️ ",
+            "personality.morals_protected" => "🛡️ ",
+            "stats.paid_improvement" => "📈 ",
+
             "rare.house_fire" => "🔥 ",
             "rare.burglary" => "🕵️ ",
             "rare.storm_flood_damage" => "🌊 ",
@@ -203,7 +220,19 @@ public sealed partial class StandardBiographyService
             "rare.craft_commission" => "🛠️ ",
             "rare.suicide" => "🕯️ ",
 
-            _ => "🔹 "
+            _ when type.StartsWith("historical.", StringComparison.OrdinalIgnoreCase) => "🗞️ ",
+            _ when type.StartsWith("career.", StringComparison.OrdinalIgnoreCase) => "💼 ",
+            _ when type.StartsWith("relationship.", StringComparison.OrdinalIgnoreCase) => "💞 ",
+            _ when type.StartsWith("household.", StringComparison.OrdinalIgnoreCase) => "🏠 ",
+            _ when type.StartsWith("health.", StringComparison.OrdinalIgnoreCase) => "❤️‍🩹 ",
+            _ when type.StartsWith("education.", StringComparison.OrdinalIgnoreCase) => "🎓 ",
+            _ when type.StartsWith("justice.", StringComparison.OrdinalIgnoreCase) => "⚖️ ",
+            _ when type.StartsWith("craft.", StringComparison.OrdinalIgnoreCase) => "🛠️ ",
+            _ when type.StartsWith("farming.", StringComparison.OrdinalIgnoreCase) => "🌾 ",
+            _ when type.StartsWith("loan.", StringComparison.OrdinalIgnoreCase) => "🏦 ",
+            _ when type.StartsWith("personality.", StringComparison.OrdinalIgnoreCase) => "🧭 ",
+            _ when type.StartsWith("stats.", StringComparison.OrdinalIgnoreCase) => "📈 ",
+            _ => "📌 "
         };
     }
 

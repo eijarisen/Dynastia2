@@ -8,9 +8,7 @@ public sealed class MarriageSatisfactionYearSystem : IYearSystem
     private const double LowFertilityPenalty = 1;
     private const double LowFemaleAppealPenalty = 0.5;
     private const double LowIntellectPenalty = 0.75;
-    private const double UnemployedHusbandPenalty = 4;
     private const double HouseholdStrainPenalty = 2;
-    private const double ImprisonmentPenalty = 8;
 
     private readonly StandardMarriageSatisfactionService _satisfaction;
     private readonly IFamilyService _family;
@@ -125,19 +123,26 @@ public sealed class MarriageSatisfactionYearSystem : IYearSystem
         }
 
         var husbandCareer = _career.GetCareer(husband);
-        if (!husbandCareer.IsRetired
+        var husbandImprisoned = husband.Tags.Has("state.imprisoned");
+        var wifeImprisoned = wife.Tags.Has("state.imprisoned");
+
+        // Imprisonment already subsumes the employment disruption it causes;
+        // do not double-charge the husband's unemployment in the same year.
+        if (!husbandImprisoned
+            && !husbandCareer.IsRetired
             && husband.Age >= 18
             && !husbandCareer.IsEmployed)
         {
-            total += UnemployedHusbandPenalty;
+            total += MarriageBalanceRules.UnemployedHusbandPenalty;
             issues.Add("husband unemployed");
         }
 
-        if (husband.Tags.Has("state.imprisoned")
-            || wife.Tags.Has("state.imprisoned"))
+        if (husbandImprisoned || wifeImprisoned)
         {
-            total += ImprisonmentPenalty;
-            issues.Add("imprisonment");
+            total += MarriageBalanceRules.ImprisonmentPenalty;
+            issues.Add(husbandImprisoned
+                ? "husband imprisoned"
+                : "wife imprisoned");
         }
 
         var householdHead =

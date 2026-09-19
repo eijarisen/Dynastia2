@@ -135,6 +135,26 @@ public sealed class StandardStressService : IStressService
         }
         foreach (var gameEvent in events)
         {
+            if (gameEvent.Type.Equals(
+                    "historical.household_impact",
+                    StringComparison.OrdinalIgnoreCase)
+                && (gameEvent.SubjectId == person.Id
+                    || gameEvent.RelatedPersonIds.Contains(person.Id))
+                && gameEvent.Data.TryGetValue("stressGain", out var historicalStressRaw)
+                && double.TryParse(
+                    historicalStressRaw,
+                    NumberStyles.Float,
+                    CultureInfo.InvariantCulture,
+                    out var historicalStress)
+                && historicalStress > 0)
+            {
+                var sourceId = gameEvent.Data.TryGetValue("eventId", out var historicalEventId)
+                    ? $"historical.{historicalEventId}"
+                    : "historical.event";
+                Add(sourceId, historicalStress);
+                continue;
+            }
+
             var subject = Find(gameEvent.SubjectId);
             if (subject is null)
                 continue;

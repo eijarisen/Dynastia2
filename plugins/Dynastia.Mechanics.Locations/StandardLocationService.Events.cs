@@ -150,25 +150,68 @@ public sealed partial class StandardLocationService
             GetLocation(
                 anchor);
 
-        var existing =
+        var spouseExisting =
             spouse.Components.Get<
                 LocationComponent>()
             ?? new LocationComponent();
 
         if (string.IsNullOrWhiteSpace(
-                existing.BirthplaceId))
+                spouseExisting.BirthplaceId))
         {
-            existing.BirthplaceId =
+            spouseExisting.BirthplaceId =
                 ChooseSpouseBirthplace(
                     anchorLocation.HomeTown)
                 .Id;
         }
 
-        existing.HomeTownId =
-            anchorLocation.HomeTown.Id;
+        if (string.IsNullOrWhiteSpace(
+                spouseExisting.HomeTownId))
+        {
+            spouseExisting.HomeTownId =
+                spouseExisting.BirthplaceId;
+        }
 
         spouse.Components.Set(
-            existing);
+            spouseExisting);
+
+        var anchorSex =
+            _family.GetSex(
+                anchor);
+
+        var spouseSex =
+            _family.GetSex(
+                spouse);
+
+        if (anchorSex != spouseSex
+            && (anchorSex == Sex.Male
+                || spouseSex == Sex.Male))
+        {
+            var husband =
+                anchorSex == Sex.Male
+                    ? anchor
+                    : spouse;
+
+            var wife =
+                anchorSex == Sex.Female
+                    ? anchor
+                    : spouse;
+
+            var husbandHome =
+                GetLocation(
+                    husband)
+                .HomeTown;
+
+            SetPersonHomeTown(
+                wife,
+                husbandHome);
+
+            return;
+        }
+
+        // Same-sex unions keep the event subject as the residential anchor.
+        SetPersonHomeTown(
+            spouse,
+            anchorLocation.HomeTown);
     }
 
     private void InitializeNewborn(

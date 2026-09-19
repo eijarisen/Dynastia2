@@ -250,6 +250,9 @@ public partial class App : Application
             var biographyService =
                 pluginContext.GetService<IBiographyService>();
 
+            var historicalEventService =
+                pluginContext.GetService<IHistoricalEventService>();
+
             var saveService =
                 new GameSaveService(
                     gameState,
@@ -352,6 +355,7 @@ public partial class App : Application
                             partnerSearchService,
                             justiceService,
                             biographyService,
+                            historicalEventService,
                             successionService,
                             eventBus,
                             actionRegistry,

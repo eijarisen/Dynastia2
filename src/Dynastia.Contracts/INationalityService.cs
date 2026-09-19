@@ -21,6 +21,9 @@ public interface INationalityService
         int year,
         IGameRandom random);
 
+    void RegisterDistributionModifierProvider(
+        INationalityDistributionModifierProvider provider);
+
     string FormatSurname(
         IPerson person,
         string surname,

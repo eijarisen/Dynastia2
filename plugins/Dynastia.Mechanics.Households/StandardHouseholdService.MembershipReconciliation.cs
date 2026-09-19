@@ -162,6 +162,15 @@ public sealed partial class StandardHouseholdService
                 continue;
             }
 
+            // Marriage residence follows the husband for heterosexual
+            // marriages. Capture his pre-reconciliation home before a
+            // household-head transfer can overwrite it with the wife's
+            // former household residence.
+            var husbandResidence =
+                _locations.GetLocation(
+                    husband)
+                .HomeTown;
+
             var womanHouseholdIdBefore =
                 _economy.GetHouseholdId(
                     woman);
@@ -193,6 +202,10 @@ public sealed partial class StandardHouseholdService
                     husband,
                     womanHouseholdIdBefore);
 
+                _economy.SetResidenceTown(
+                    husband,
+                    husbandResidence);
+
                 continue;
             }
 
@@ -221,6 +234,10 @@ public sealed partial class StandardHouseholdService
                     husband,
                     womanHouseholdIdBefore);
 
+                _economy.SetResidenceTown(
+                    husband,
+                    husbandResidence);
+
                 continue;
             }
 
@@ -242,6 +259,10 @@ public sealed partial class StandardHouseholdService
                 woman,
                 husband,
                 womanHouseholdIdBefore);
+
+            _economy.SetResidenceTown(
+                husband,
+                husbandResidence);
         }
     }
 

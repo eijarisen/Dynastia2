@@ -96,7 +96,7 @@ public sealed class ReliabilityBatchTests
     }
 
     [Fact]
-    public void InvalidatedQueuedActionProducesStructuredOutcomeAndNews()
+    public void InvalidatedQueuedActionProducesStructuredOutcomeWithoutChronicleNews()
     {
         var state = new MutableGameState();
         var actor = state.CreatePerson("Jan", "Test", 30);
@@ -133,9 +133,7 @@ public sealed class ReliabilityBatchTests
         Assert.Equal(ActionReasonCodes.NoLongerEligible, outcome.ReasonCode);
         Assert.Equal(target.Id, outcome.TargetId);
 
-        var news = Assert.Single(events.AllEvents);
-        Assert.Equal("action.invalidated", news.Type);
-        Assert.Equal("test.targeted", news.Data["actionId"]);
+        Assert.Empty(events.AllEvents);
     }
 
     [Fact]

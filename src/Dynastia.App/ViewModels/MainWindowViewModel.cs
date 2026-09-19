@@ -41,6 +41,7 @@ public sealed partial class MainWindowViewModel : ViewModelBase
     private readonly IPartnerSearchService? _partnerSearchService;
     private readonly IJusticeService? _justiceService;
     private readonly IBiographyService? _biographyService;
+    private readonly IHistoricalEventService? _historicalEventService;
     private readonly ISuccessionService _succession;
     private readonly IGameEventBus _eventBus;
     private readonly IActionRegistry _actionRegistry;
@@ -116,6 +117,7 @@ public sealed partial class MainWindowViewModel : ViewModelBase
         IPartnerSearchService? partnerSearchService,
         IJusticeService? justiceService,
         IBiographyService? biographyService,
+        IHistoricalEventService? historicalEventService,
         ISuccessionService succession,
         IGameEventBus eventBus,
         IActionRegistry actionRegistry,
@@ -162,6 +164,7 @@ public sealed partial class MainWindowViewModel : ViewModelBase
         _partnerSearchService = partnerSearchService;
         _justiceService = justiceService;
         _biographyService = biographyService;
+        _historicalEventService = historicalEventService;
         _succession = succession;
         _eventBus = eventBus;
         _actionRegistry = actionRegistry;
@@ -219,7 +222,7 @@ public sealed partial class MainWindowViewModel : ViewModelBase
             new RelayCommand(
                 PreviousYearSummary,
                 () => IsYearSummaryVisible
-                    && _yearSummaryEventYear > _gameState.StartYear + 1);
+                    && _yearSummaryEventYear > _gameState.StartYear);
 
         NextYearSummaryCommand =
             new RelayCommand(
@@ -245,7 +248,7 @@ public sealed partial class MainWindowViewModel : ViewModelBase
                 () =>
                     IsGameStarted
                     && AlbumYear >
-                        _gameState.StartYear + 1);
+                        _gameState.StartYear);
 
         NextAlbumYearCommand =
             new RelayCommand(
@@ -411,7 +414,9 @@ public sealed partial class MainWindowViewModel : ViewModelBase
     }
 
     public string GameOverTitle =>
-        "Dynasty collapsed";
+        _succession.DynastyLeftPoland
+            ? "Dynasty left Poland"
+            : "Dynasty collapsed";
 
     public bool IsMainMenuPromptVisible
     {
@@ -437,6 +442,18 @@ public sealed partial class MainWindowViewModel : ViewModelBase
     {
         get
         {
+            if (_succession.DynastyLeftPoland)
+            {
+                var departureYear =
+                    _succession.DynastyLeftPolandYear
+                    ?? _gameState.Year;
+
+                return
+                    $"The last playable household of the " +
+                    $"{_gameState.DynastySurname} dynasty left Poland " +
+                    $"in {departureYear}.";
+            }
+
             var year =
                 _succession.MaleLineEndedYear
                 ?? _gameState.Year;
@@ -531,9 +548,7 @@ public sealed partial class MainWindowViewModel : ViewModelBase
             : string.Empty;
 
     public int AlbumDisplayYear =>
-        AlbumYear <= _gameState.StartYear
-            ? _gameState.StartYear
-            : AlbumYear - 1;
+        AlbumYear;
 
     public bool IsYearSummaryVisible
     {
@@ -549,9 +564,7 @@ public sealed partial class MainWindowViewModel : ViewModelBase
     }
 
     public string YearSummaryTitle =>
-        $"Year {Math.Max(
-            _gameState.StartYear,
-            _yearSummaryEventYear - 1)}";
+        $"Year {_yearSummaryEventYear}";
 
     public string YearSummaryEmptyText =>
         YearSummaryHouseholds.Count == 0

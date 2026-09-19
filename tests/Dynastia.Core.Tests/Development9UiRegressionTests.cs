@@ -96,6 +96,56 @@ public sealed class Development9UiRegressionTests
         Assert.Contains("Margin=\"0,0,0,8\"", xaml);
     }
 
+    [Fact]
+    public void ImprisonedCareerAndStatusEmojiPresentationAreDistinct()
+    {
+        var root = RepositoryRoot();
+        var career = File.ReadAllText(Path.Combine(
+            root,
+            "src",
+            "Dynastia.App",
+            "ViewModels",
+            "CareerViewModel.cs"));
+        var eventEmoji = File.ReadAllText(Path.Combine(
+            root,
+            "src",
+            "Dynastia.App",
+            "ViewModels",
+            "EventEmojiMap.cs"));
+        var actionEmoji = File.ReadAllText(Path.Combine(
+            root,
+            "src",
+            "Dynastia.App",
+            "ViewModels",
+            "ActionEmojiMap.cs"));
+
+        Assert.Contains("isAlive && isImprisoned", career);
+        Assert.Contains("? \"N/A\"", career);
+        Assert.DoesNotContain("🔹", eventEmoji);
+        Assert.DoesNotContain("🔹", actionEmoji);
+        Assert.Contains("[\"historical.milestone\"] = \"🗞️\"", eventEmoji);
+        Assert.Contains("[\"career.changed_job\"] = \"🔄\"", eventEmoji);
+        Assert.Contains("[\"farming.income\"] = \"🌾\"", eventEmoji);
+    }
+
+    [Fact]
+    public void HistoricalEraWrapsAboveYearWithoutEnteringNextYearButton()
+    {
+        var root = RepositoryRoot();
+        var xaml = File.ReadAllText(Path.Combine(
+            root,
+            "src",
+            "Dynastia.App",
+            "Views",
+            "MainWindow.axaml"));
+
+        Assert.Contains("Text=\"{Binding HistoricalEraName}\"", xaml);
+        Assert.Contains("TextWrapping=\"Wrap\"", xaml);
+        Assert.Contains("MaxLines=\"2\"", xaml);
+        Assert.Contains("Canvas.Left=\"1158\"", xaml);
+        Assert.Contains("Width=\"158\"", xaml);
+    }
+
     private static string RepositoryRoot()
     {
         var current = new DirectoryInfo(AppContext.BaseDirectory);

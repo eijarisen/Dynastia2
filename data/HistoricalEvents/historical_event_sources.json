@@ -1,0 +1,264 @@
+{
+  "great_northern_war": {
+    "note": "Great Northern War chronology and destructive campaigning across the Polish–Lithuanian Commonwealth.",
+    "urls": [
+      "https://www.britannica.com/event/Great-Northern-War"
+    ]
+  },
+  "great_northern_plague": {
+    "note": "The plague associated with the Great Northern War peaked in Baltic/East-Central Europe around 1708–1712.",
+    "urls": [
+      "https://en.wikipedia.org/wiki/Great_Northern_War_plague_outbreak"
+    ]
+  },
+  "war_polish_succession": {
+    "note": "The War of the Polish Succession included the 1734 siege of Gdańsk.",
+    "urls": [
+      "https://www.britannica.com/event/War-of-the-Polish-Succession"
+    ]
+  },
+  "bar_confederation": {
+    "note": "Bar Confederation fighting and Russian intervention affected multiple Commonwealth regions.",
+    "urls": [
+      "https://www.britannica.com/event/Confederation-of-Bar"
+    ]
+  },
+  "partitions": {
+    "note": "The partitions occurred in 1772, 1793 and 1795; the game derives affected places from its Town polity timeline.",
+    "urls": [
+      "https://www.britannica.com/event/Partitions-of-Poland"
+    ]
+  },
+  "kosciuszko": {
+    "note": "1794 uprising against Russia and Prussia.",
+    "urls": [
+      "https://www.britannica.com/event/Kosciuszko-Insurrection"
+    ]
+  },
+  "napoleonic": {
+    "note": "Duchy of Warsaw/Napoleonic campaigns and 1812 Russian campaign.",
+    "urls": [
+      "https://www.britannica.com/place/Duchy-of-Warsaw"
+    ]
+  },
+  "november_uprising": {
+    "note": "After the 1830–31 uprising, participants faced imprisonment, confiscation, exile and emigration.",
+    "urls": [
+      "https://www.lodz.ap.gov.pl/co-robimy/wystawy/Do-broni-Skruszmy-kajdany-Powstanie-listopadowe-18301831/idn%3A464",
+      "https://zpe.gov.pl/a/nastepstwa-powstania-listopadowego/D7VZDT14B"
+    ]
+  },
+  "galicia_1846": {
+    "note": "Kraków uprising and Galician peasant violence.",
+    "urls": [
+      "https://www.britannica.com/event/Krakow-Uprising"
+    ]
+  },
+  "greater_poland_1848": {
+    "note": "Greater Poland uprising during the Revolutions of 1848.",
+    "urls": [
+      "https://en.wikipedia.org/wiki/Greater_Poland_uprising_(1848)"
+    ]
+  },
+  "january_uprising": {
+    "note": "The 1863–64 uprising and subsequent Russian repression included executions, exile and confiscation.",
+    "urls": [
+      "https://www.agad.gov.pl/inwentarze/ps244.xml"
+    ]
+  },
+  "revolution_1905": {
+    "note": "The 1905 revolution in Congress Poland included strikes and violent confrontations, especially in industrial centres.",
+    "urls": [
+      "https://en.wikipedia.org/wiki/Revolution_in_the_Kingdom_of_Poland_(1905%E2%80%931907)"
+    ]
+  },
+  "ww1": {
+    "note": "WWI fighting, requisitions and economic disruption across Polish lands.",
+    "urls": [
+      "https://www.britannica.com/place/Poland/World-War-I"
+    ]
+  },
+  "great_retreat": {
+    "note": "1915 Russian retreat involved large-scale civilian evacuation/refugee movement.",
+    "urls": [
+      "https://www.loc.gov/pictures/item/2014697651/"
+    ]
+  },
+  "spanish_flu": {
+    "note": "Poland experienced three major influenza waves in 1918–1920; published estimates place deaths in the hundreds of thousands.",
+    "urls": [
+      "https://pmc.ncbi.nlm.nih.gov/articles/PMC5649514/"
+    ]
+  },
+  "greater_poland_1918": {
+    "note": "Greater Poland uprising of 1918–19.",
+    "urls": [
+      "https://www.britannica.com/event/Greater-Poland-Uprising"
+    ]
+  },
+  "polish_ukrainian_war": {
+    "note": "1918–19 Polish-Ukrainian fighting centered on Eastern Galicia/Lwów.",
+    "urls": [
+      "https://ipn.gov.pl/"
+    ]
+  },
+  "polish_soviet_war": {
+    "note": "Polish–Soviet War, 1919–21.",
+    "urls": [
+      "https://eng.ipn.gov.pl/en/news/4377%2CThe-Polish-Soviet-War-of-1920.html"
+    ]
+  },
+  "silesian_uprisings": {
+    "note": "Three Silesian uprisings, 1919–21.",
+    "urls": [
+      "https://eng.ipn.gov.pl/en/brief-history-of-poland/collected-content/9172%2CCOLLECTED-CONTENT-The-Silesian-Uprisings-1919-1921.html"
+    ]
+  },
+  "great_depression": {
+    "note": "The Depression brought severe unemployment and industrial contraction in Poland.",
+    "urls": [
+      "https://www.britannica.com/place/Poland/The-Second-Republic"
+    ]
+  },
+  "flood_1934": {
+    "note": "The 1934 southern Poland flood caused major building and agricultural damage.",
+    "urls": [
+      "https://en.wikipedia.org/wiki/Polish_flood_of_1934"
+    ]
+  },
+  "invasion_1939": {
+    "note": "German and Soviet invasions in 1939 produced mass civilian displacement, destruction and casualties.",
+    "urls": [
+      "https://encyclopedia.ushmm.org/content/en/article/invasion-of-poland-fall-1939"
+    ]
+  },
+  "ww2_occupation": {
+    "note": "General German/Soviet occupation hardship; local persecution events are modeled separately at higher priority.",
+    "urls": [
+      "https://eng.ipn.gov.pl/en/digital-resources/articles/7781%2CWorld-War-II-historical-view.html"
+    ]
+  },
+  "soviet_deportations": {
+    "note": "Four mass Soviet deportation waves in 1940–41 affected hundreds of thousands of Polish citizens; targeted groups included military settlers, officials, forest and railway workers and their families.",
+    "urls": [
+      "https://ipn.gov.pl/pl/historia-z-ipn/137719%2CDeportacje.html"
+    ]
+  },
+  "holocaust": {
+    "note": "German authorities confined Jews in ghettos and, from 1942, deported and murdered the overwhelming majority in killing centers and mass shootings.",
+    "urls": [
+      "https://encyclopedia.ushmm.org/content/en/article/deportations-to-killing-centers",
+      "https://encyclopedia.ushmm.org/content/en/article/ghettos"
+    ]
+  },
+  "volhynia": {
+    "note": "1943–44 mass anti-Polish violence in Volhynia and Eastern Galicia caused mass killing and flight; retaliatory Polish violence against Ukrainians is represented at lower scale.",
+    "urls": [
+      "https://ipn.gov.pl/pl/aktualnosci/55837%2CLipiec-1943-roku-na-Wolyniu.html",
+      "https://eng.ipn.gov.pl/en/digital-resources/articles/7781%2CWorld-War-II-historical-view.html"
+    ]
+  },
+  "warsaw_uprising": {
+    "note": "The Warsaw Uprising ended with enormous civilian casualties, civilian deportation and destruction of most of the city.",
+    "urls": [
+      "https://encyclopedia.ushmm.org/content/en/article/the-warsaw-polish-uprising"
+    ]
+  },
+  "postwar_resettlement": {
+    "note": "Postwar borders drove mass population transfers: Poles from eastern territories to postwar Poland and Germans from territories transferred to Poland.",
+    "urls": [
+      "https://en.wikipedia.org/wiki/Recovered_Territories",
+      "https://en.wikipedia.org/wiki/Population_exchange_between_Poland_and_Soviet_Ukraine"
+    ]
+  },
+  "operation_vistula": {
+    "note": "In 1947 more than 140,000 Ukrainians were forcibly resettled from southeastern Poland to western/northern territories.",
+    "urls": [
+      "https://ipn.gov.pl/pl/wydawnictwo/ksiazki/12463%2CAkcja-Wisla-1947-1947.html"
+    ]
+  },
+  "territorial_exchange_1951": {
+    "note": "1951 Polish–Soviet territorial exchange required population removals from the exchanged areas.",
+    "urls": [
+      "https://en.wikipedia.org/wiki/1951_Polish%E2%80%93Soviet_territorial_exchange"
+    ]
+  },
+  "poznan_1956": {
+    "note": "Poznań June worker protests were violently suppressed, with deaths, injuries and arrests.",
+    "urls": [
+      "https://ipn.gov.pl/"
+    ]
+  },
+  "march_1968": {
+    "note": "The state anti-Jewish campaign caused purges and about 13,000 Jews to leave Poland.",
+    "urls": [
+      "https://polin.pl/en/march-68"
+    ]
+  },
+  "december_1970": {
+    "note": "Coastal worker protests in Gdańsk, Gdynia, Elbląg and Szczecin were violently suppressed; IPN gives 44 official deaths, more than 1,000 injuries and more than 2,000 arrests.",
+    "urls": [
+      "https://ipn.gov.pl/pl/archiwa/pion-archiwalny-ipn/gdansk/przykladowe-dokumenty/36295%2CSprawa-obiektowa-kryptonim-Jesien-70-dotyczaca-Grudnia-1970-r-na-terenie-wojewod.html"
+    ]
+  },
+  "june_1976": {
+    "note": "June 1976 worker protests centered on Radom, Ursus and Płock.",
+    "urls": [
+      "https://ipn.gov.pl/"
+    ]
+  },
+  "solidarity_1980": {
+    "note": "1980 strike wave led to the Gdańsk Agreements and Solidarity.",
+    "urls": [
+      "https://ipn.gov.pl/"
+    ]
+  },
+  "martial_law": {
+    "note": "During martial law, roughly ten thousand people were interned; industrial confrontations included lethal violence.",
+    "urls": [
+      "https://ipn.gov.pl/pl/wydawnictwo/ksiazki/12345%2CStan-wojenny-w-dokumentach-wladz-PRL-19801983.html"
+    ]
+  },
+  "market_transition": {
+    "note": "The 1989–93 transition involved rapid restructuring and rising unemployment; effect rates are gameplay abstractions.",
+    "urls": [
+      "https://www.imf.org/"
+    ]
+  },
+  "flood_1997": {
+    "note": "The 1997 flood killed 56 people in Poland; thousands lost homes or belongings and property damage was extensive.",
+    "urls": [
+      "https://www.wroclaw.pl/en/the-flood-of-1997-25-years-after-the-disaster-that-hit-wroclaw-and-surrounding-areas"
+    ]
+  },
+  "eu_migration": {
+    "note": "EU accession in May 2004 triggered one of Poland's largest postwar emigration waves, especially to the UK and Ireland.",
+    "urls": [
+      "https://www.migrationpolicy.org/journal/country-profile/eu-membership-highlights-polands-migration-challenges"
+    ]
+  },
+  "flood_2010": {
+    "note": "The 2010 floods affected southern/eastern Poland, required about 30,000 evacuations and caused very large property/agricultural losses.",
+    "urls": [
+      "https://www.wody.gov.pl/aktualnosci/1086-dziesiec-"
+    ]
+  },
+  "covid": {
+    "note": "The COVID-19 pandemic produced exceptionally high mortality in Poland in 2020–21, especially among older people.",
+    "urls": [
+      "https://stat.gov.pl/en/topics/population/mortality-and-deaths-by-causes-/mortality-and-deaths-by-causes-in-2020%2C1%2C1.html?pdf=1"
+    ]
+  },
+  "ukraine_refugees": {
+    "note": "Following Russia's full-scale invasion of Ukraine, more than two million arrivals from Ukraine entered Poland within the first three weeks; the game models this as a temporary generated-outsider modifier.",
+    "urls": [
+      "https://www.unhcr.org/pl/wiadomo%C5%9Bci/polska-przyjela-ponad-dwa-miliony-uchodzcow-z-ukrainy-komunikat-prasowy"
+    ]
+  },
+  "flood_2024": {
+    "note": "September 2024 flooding caused severe damage in Lower Silesia and Opole, including Kłodzko, Nysa and Głuchołazy.",
+    "urls": [
+      "https://publications.jrc.ec.europa.eu/repository/bitstream/JRC143951/JRC143951_01.pdf"
+    ]
+  }
+}

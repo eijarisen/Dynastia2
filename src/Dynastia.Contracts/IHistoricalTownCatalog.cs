@@ -5,6 +5,7 @@ public interface IHistoricalTownCatalog
     int MinYear { get; }
     int MaxYear { get; }
     int PermanentPlaceCount { get; }
+    IReadOnlyCollection<string> PermanentPlaceIds { get; }
 
     IReadOnlyDictionary<string, HistoricalTownRegionInfo> Regions { get; }
     IReadOnlyDictionary<string, HistoricalPolityInfo> Polities { get; }

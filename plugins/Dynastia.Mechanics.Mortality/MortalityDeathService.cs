@@ -2,7 +2,7 @@ using Dynastia.Contracts;
 
 namespace Dynastia.Mechanics.Mortality;
 
-public sealed class MortalityDeathService
+public sealed class MortalityDeathService : IDeathTransitionService
 {
     private const double GriefHealthPenalty = 15;
     private const double SecondWindChance = 0.25;

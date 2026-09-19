@@ -35,6 +35,7 @@ public sealed class EconomyYearSystem : IYearSystem
         foreach (var head in gameState.People
             .Where(person =>
                 person.Tags.Has("state.alive")
+                && !SimulationState.IsExternallyResident(person)
                 && _economy.HasHousehold(person))
             .ToList())
         {

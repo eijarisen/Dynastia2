@@ -58,6 +58,19 @@ public sealed partial class StandardHouseholdService
     private bool EvaluateFamilyNewsNow(
         GameEvent gameEvent)
     {
+        if (gameEvent.Type.Equals(
+                "historical.milestone",
+                StringComparison.OrdinalIgnoreCase)
+            && gameEvent.Data.TryGetValue(
+                "globalChronicle",
+                out var globalChronicle)
+            && globalChronicle.Equals(
+                "true",
+                StringComparison.OrdinalIgnoreCase))
+        {
+            return true;
+        }
+
         if (gameEvent.Data.TryGetValue(
                 "suppressChronicle",
                 out var suppress)
@@ -192,6 +205,18 @@ public sealed partial class StandardHouseholdService
                     "familyNews",
                     out var familyNews)
                 && familyNews.Equals(
+                    "true",
+                    StringComparison.OrdinalIgnoreCase);
+        }
+
+        if (type.StartsWith(
+                "historical.",
+                StringComparison.OrdinalIgnoreCase))
+        {
+            return gameEvent.Data.TryGetValue(
+                    "familyNews",
+                    out var historicalFamilyNews)
+                && historicalFamilyNews.Equals(
                     "true",
                     StringComparison.OrdinalIgnoreCase);
         }

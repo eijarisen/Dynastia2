@@ -45,6 +45,7 @@ public sealed class EducationPlugin : IGamePlugin
 
         var education = new StandardEducationService(
             family,
+            stats,
             eras);
 
         context.AddService<IEducationService>(education);
@@ -370,16 +371,8 @@ public sealed class EducationPlugin : IGamePlugin
 
                 economy.ChangeWealth(actor, -StandardEducationCost);
 
-                var intellect = stats.GetStats(target)
-                    .First(stat => stat.Id.Equals("intellect", StringComparison.OrdinalIgnoreCase))
-                    .Value;
-
                 var successChance =
-                    PersonalityInfluence.AdjustProbability(
-                        EducationProgressionRules.GetPaidEducationSuccessChance(intellect),
-                        target,
-                        melancholic: 0.10,
-                        choleric: -0.10);
+                    education.GetPaidEducationSuccessChance(target);
 
                 var success = random.NextDouble() < successChance;
                 if (success)

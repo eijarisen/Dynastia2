@@ -76,6 +76,9 @@ public sealed class HistoricalTownCatalog : IHistoricalTownCatalog
 
     public int PermanentPlaceCount => _places.Count;
 
+    public IReadOnlyCollection<string> PermanentPlaceIds =>
+        _places.Keys.ToArray();
+
     public IReadOnlyDictionary<string, HistoricalTownRegionInfo> Regions { get; }
 
     public IReadOnlyDictionary<string, HistoricalPolityInfo> Polities { get; }

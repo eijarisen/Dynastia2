@@ -28,7 +28,8 @@ public sealed partial class MainWindowViewModel
                     _careerService,
                     _farmingService,
                     _householdService,
-                    _locationService));
+                    _locationService,
+                    _historicalEventService));
         }
 
         SelectedPerson =

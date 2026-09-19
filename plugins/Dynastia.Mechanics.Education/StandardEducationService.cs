@@ -5,13 +5,16 @@ namespace Dynastia.Mechanics.Education;
 public sealed class StandardEducationService : IEducationService
 {
     private readonly IFamilyService _family;
+    private readonly IStatsService _stats;
     private readonly EducationEraCatalog _eras;
 
     public StandardEducationService(
         IFamilyService family,
+        IStatsService stats,
         EducationEraCatalog eras)
     {
         _family = family;
+        _stats = stats;
         _eras = eras;
     }
 
@@ -73,6 +76,24 @@ public sealed class StandardEducationService : IEducationService
         SetEducationLevel(
             person,
             GetEducationLevel(person) + amount);
+    }
+
+
+    public double GetPaidEducationSuccessChance(IPerson person)
+    {
+        ArgumentNullException.ThrowIfNull(person);
+
+        var intellect = _stats.GetStats(person)
+            .First(stat => stat.Id.Equals(
+                "intellect",
+                StringComparison.OrdinalIgnoreCase))
+            .Value;
+
+        return PersonalityInfluence.AdjustProbability(
+            EducationProgressionRules.GetPaidEducationSuccessChance(intellect),
+            person,
+            melancholic: 0.10,
+            choleric: -0.10);
     }
 
     public EducationGenerationRange GetGeneratedAdultRange(

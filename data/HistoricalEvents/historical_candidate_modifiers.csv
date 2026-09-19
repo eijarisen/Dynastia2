@@ -1,0 +1,11 @@
+﻿Id,EventId,StartYear,EndYear,ScopeId,NationalityId,WeightMultiplier,Priority
+ukraine_refugee_generic,ukraine_refugee_influx,2022,2026,current_poland,ukrainian,2.0,10
+ukraine_refugee_subcarpathia,ukraine_refugee_influx,2022,2026,ukraine_mod_subcarpathia,ukrainian,4.0,50
+ukraine_refugee_lublin,ukraine_refugee_influx,2022,2026,ukraine_mod_lublin,ukrainian,3.5,50
+ukraine_refugee_masovia,ukraine_refugee_influx,2022,2026,ukraine_mod_masovia,ukrainian,3.5,50
+ukraine_refugee_lesser_poland,ukraine_refugee_influx,2022,2026,ukraine_mod_lesser_poland,ukrainian,3.0,50
+ukraine_refugee_lower_silesia,ukraine_refugee_influx,2022,2026,ukraine_mod_lower_silesia,ukrainian,3.0,50
+ukraine_refugee_pomerania,ukraine_refugee_influx,2022,2026,ukraine_mod_pomerania,ukrainian,2.5,50
+ukraine_refugee_silesia,ukraine_refugee_influx,2022,2026,ukraine_mod_silesia,ukrainian,2.5,50
+ukraine_refugee_greater_poland,ukraine_refugee_influx,2022,2026,ukraine_mod_greater_poland,ukrainian,2.5,50
+ukraine_refugee_lodz,ukraine_refugee_influx,2022,2026,ukraine_mod_lodz,ukrainian,2.5,50

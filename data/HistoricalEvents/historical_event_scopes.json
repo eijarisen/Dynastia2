@@ -1,0 +1,488 @@
+[
+  {
+    "id": "all_places",
+    "type": "all_places"
+  },
+  {
+    "id": "current_poland",
+    "type": "current_event_polity",
+    "polityIds": [
+      "PL"
+    ]
+  },
+  {
+    "id": "pl_1939",
+    "type": "polity_snapshot",
+    "year": 1939,
+    "polityIds": [
+      "PL"
+    ]
+  },
+  {
+    "id": "pl_1931",
+    "type": "polity_snapshot",
+    "year": 1931,
+    "polityIds": [
+      "PL"
+    ]
+  },
+  {
+    "id": "plc_1700",
+    "type": "polity_snapshot",
+    "year": 1700,
+    "polityIds": [
+      "PLC"
+    ]
+  },
+  {
+    "id": "polish_succession_regions",
+    "type": "regions",
+    "regionMultipliers": {
+      "pomerania": 1.0,
+      "greater_poland": 0.65,
+      "masovia": 0.45,
+      "kujawy_pomerania": 0.45,
+      "lesser_poland": 0.35
+    }
+  },
+  {
+    "id": "gdansk_only",
+    "type": "places",
+    "placeMultipliers": {
+      "p_1175c98fc14211c2": 1.0
+    }
+  },
+  {
+    "id": "bar_confederation_regions",
+    "type": "regions",
+    "regionMultipliers": {
+      "lesser_poland": 1.0,
+      "subcarpathia": 1.0,
+      "eastern_galicia": 0.8,
+      "podolia": 0.7,
+      "lublin": 0.8,
+      "masovia": 0.65,
+      "podlasie": 0.65,
+      "vilnius": 0.5,
+      "lithuania": 0.5
+    }
+  },
+  {
+    "id": "first_partition_places",
+    "type": "polity_change",
+    "year": 1772,
+    "fromPolityIds": [
+      "PLC"
+    ],
+    "toPolish": false
+  },
+  {
+    "id": "second_partition_places",
+    "type": "polity_change",
+    "year": 1793,
+    "fromPolityIds": [
+      "PLC"
+    ],
+    "toPolish": false
+  },
+  {
+    "id": "third_partition_places",
+    "type": "polity_change",
+    "year": 1795,
+    "fromPolityIds": [
+      "PLC"
+    ],
+    "toPolish": false
+  },
+  {
+    "id": "kosciuszko_regions",
+    "type": "regions",
+    "regionMultipliers": {
+      "masovia": 1.0,
+      "greater_poland": 0.8,
+      "podlasie": 0.7,
+      "lublin": 0.6,
+      "vilnius": 0.8,
+      "lithuania": 0.7,
+      "grodno": 0.6,
+      "lesser_poland": 0.4
+    }
+  },
+  {
+    "id": "napoleonic_1806_1809_regions",
+    "type": "regions",
+    "regionMultipliers": {
+      "greater_poland": 1.0,
+      "kujawy_pomerania": 0.9,
+      "masovia": 0.9,
+      "lodz": 0.9,
+      "lublin": 0.7,
+      "swietokrzyskie": 0.7,
+      "podlasie": 0.6,
+      "lesser_poland": 0.5
+    }
+  },
+  {
+    "id": "russian_campaign_1812_regions",
+    "type": "regions",
+    "regionMultipliers": {
+      "masovia": 0.8,
+      "podlasie": 0.8,
+      "lublin": 0.7,
+      "vilnius": 1.0,
+      "lithuania": 1.0,
+      "grodno": 0.9,
+      "novogrudok": 0.9,
+      "eastern_belarus": 1.0,
+      "polesie": 0.9,
+      "volhynia": 0.8,
+      "podolia": 0.7,
+      "right_bank_ukraine": 0.7
+    }
+  },
+  {
+    "id": "november_uprising_regions",
+    "type": "regions",
+    "regionMultipliers": {
+      "masovia": 1.0,
+      "podlasie": 0.9,
+      "lublin": 0.8,
+      "lodz": 0.8,
+      "swietokrzyskie": 0.7,
+      "vilnius": 0.8,
+      "lithuania": 0.7,
+      "grodno": 0.6,
+      "novogrudok": 0.6,
+      "eastern_belarus": 0.45,
+      "polesie": 0.45
+    }
+  },
+  {
+    "id": "krakow_galicia_1846_regions",
+    "type": "regions",
+    "regionMultipliers": {
+      "lesser_poland": 1.0,
+      "subcarpathia": 0.85,
+      "eastern_galicia": 0.7,
+      "silesia": 0.45
+    }
+  },
+  {
+    "id": "greater_poland_regions",
+    "type": "regions",
+    "regionMultipliers": {
+      "greater_poland": 1.0,
+      "kujawy_pomerania": 0.45
+    }
+  },
+  {
+    "id": "january_uprising_regions",
+    "type": "regions",
+    "regionMultipliers": {
+      "masovia": 1.0,
+      "podlasie": 1.0,
+      "lublin": 0.95,
+      "lodz": 0.85,
+      "swietokrzyskie": 0.9,
+      "vilnius": 0.8,
+      "lithuania": 0.65,
+      "grodno": 0.7,
+      "novogrudok": 0.65,
+      "eastern_belarus": 0.5,
+      "polesie": 0.55
+    }
+  },
+  {
+    "id": "revolution_1905_regions",
+    "type": "regions",
+    "regionMultipliers": {
+      "lodz": 1.0,
+      "masovia": 0.85,
+      "silesia": 0.55,
+      "swietokrzyskie": 0.55,
+      "lublin": 0.4,
+      "podlasie": 0.35
+    }
+  },
+  {
+    "id": "great_retreat_regions",
+    "type": "regions",
+    "regionMultipliers": {
+      "podlasie": 1.0,
+      "lublin": 0.9,
+      "masovia": 0.7,
+      "vilnius": 1.0,
+      "grodno": 1.0,
+      "novogrudok": 1.0,
+      "polesie": 1.0,
+      "eastern_belarus": 1.0,
+      "lithuania": 0.8,
+      "volhynia": 0.9,
+      "eastern_galicia": 0.65
+    }
+  },
+  {
+    "id": "polish_ukrainian_war_regions",
+    "type": "regions",
+    "regionMultipliers": {
+      "eastern_galicia": 1.0,
+      "volhynia": 0.35
+    }
+  },
+  {
+    "id": "polish_soviet_war_regions",
+    "type": "regions",
+    "regionMultipliers": {
+      "eastern_belarus": 1.0,
+      "right_bank_ukraine": 1.0,
+      "podolia": 0.9,
+      "volhynia": 0.9,
+      "polesie": 0.9,
+      "novogrudok": 0.85,
+      "grodno": 0.8,
+      "vilnius": 0.8,
+      "podlasie": 0.8,
+      "lublin": 0.65,
+      "masovia": 0.7,
+      "eastern_galicia": 0.65
+    }
+  },
+  {
+    "id": "silesian_uprising_regions",
+    "type": "regions",
+    "regionMultipliers": {
+      "silesia": 1.0,
+      "opole": 0.8
+    }
+  },
+  {
+    "id": "southern_flood_1934_regions",
+    "type": "regions",
+    "regionMultipliers": {
+      "lesser_poland": 1.0,
+      "subcarpathia": 1.0,
+      "silesia": 0.6,
+      "swietokrzyskie": 0.55
+    }
+  },
+  {
+    "id": "eastern_1939_poland_regions",
+    "type": "intersection",
+    "scopeIds": [
+      "pl_1939",
+      "eastern_kresy_regions"
+    ]
+  },
+  {
+    "id": "eastern_kresy_regions",
+    "type": "regions",
+    "regionMultipliers": {
+      "vilnius": 1.0,
+      "grodno": 1.0,
+      "novogrudok": 1.0,
+      "polesie": 1.0,
+      "volhynia": 1.0,
+      "eastern_galicia": 1.0,
+      "lithuania": 0.65
+    }
+  },
+  {
+    "id": "volhynia_galicia_violence",
+    "type": "regions",
+    "regionMultipliers": {
+      "volhynia": 1.0,
+      "eastern_galicia": 0.55
+    }
+  },
+  {
+    "id": "warsaw_only",
+    "type": "places",
+    "placeMultipliers": {
+      "p_a0efc8373a9b279b": 1.0
+    }
+  },
+  {
+    "id": "lost_east_1945",
+    "type": "polity_change",
+    "year": 1945,
+    "fromPolityIds": [
+      "PL"
+    ],
+    "toPolish": false
+  },
+  {
+    "id": "gained_west_1945",
+    "type": "polity_change",
+    "year": 1945,
+    "fromPolish": false,
+    "toPolityIds": [
+      "PL"
+    ]
+  },
+  {
+    "id": "operation_vistula_origin",
+    "type": "regions",
+    "regionMultipliers": {
+      "subcarpathia": 1.0,
+      "lublin": 0.8
+    }
+  },
+  {
+    "id": "ceded_1951",
+    "type": "polity_change",
+    "year": 1951,
+    "fromPolityIds": [
+      "PL"
+    ],
+    "toPolish": false
+  },
+  {
+    "id": "poznan_only",
+    "type": "places",
+    "placeMultipliers": {
+      "p_faf2572ac2e7d16a": 1.0
+    }
+  },
+  {
+    "id": "coast_1970_towns",
+    "type": "places",
+    "placeMultipliers": {
+      "p_1175c98fc14211c2": 1.0,
+      "p_98e79f1876edd053": 1.0,
+      "p_239b2eb8f2d90edf": 1.0,
+      "p_787c3103d049e792": 0.7
+    }
+  },
+  {
+    "id": "june_1976_towns",
+    "type": "places",
+    "placeMultipliers": {
+      "p_f5028c8495ffa072": 1.0,
+      "p_7375c086c86cfe5b": 0.65,
+      "p_a0efc8373a9b279b": 0.55
+    }
+  },
+  {
+    "id": "solidarity_1980_towns",
+    "type": "places",
+    "placeMultipliers": {
+      "p_1175c98fc14211c2": 1.0,
+      "p_239b2eb8f2d90edf": 0.9,
+      "p_299a7bb4843a4ea2": 0.8,
+      "p_98e79f1876edd053": 0.65,
+      "p_a8c3eadb5c8dca2e": 0.55
+    }
+  },
+  {
+    "id": "flood_1997_regions",
+    "type": "regions",
+    "regionMultipliers": {
+      "lower_silesia": 1.0,
+      "opole": 1.0,
+      "silesia": 0.7
+    }
+  },
+  {
+    "id": "flood_2010_regions",
+    "type": "regions",
+    "regionMultipliers": {
+      "silesia": 1.0,
+      "lesser_poland": 1.0,
+      "subcarpathia": 1.0,
+      "swietokrzyskie": 0.75,
+      "lublin": 0.75,
+      "masovia": 0.45
+    }
+  },
+  {
+    "id": "flood_2024_regions",
+    "type": "regions",
+    "regionMultipliers": {
+      "lower_silesia": 1.0,
+      "opole": 1.0,
+      "silesia": 0.45
+    }
+  },
+  {
+    "id": "flood_2024_core_towns",
+    "type": "places",
+    "placeMultipliers": {
+      "p_74a3be258da7eaba": 1.0,
+      "p_744111f43edc7a0d": 1.0,
+      "p_dcced5028b260857": 1.0,
+      "p_133a0dacaf05301b": 0.35,
+      "p_39338ef213f804ee": 0.5
+    }
+  },
+  {
+    "id": "flood_2024_scope",
+    "type": "union",
+    "scopeIds": [
+      "flood_2024_regions",
+      "flood_2024_core_towns"
+    ]
+  },
+  {
+    "id": "ukraine_mod_subcarpathia",
+    "type": "regions",
+    "regionMultipliers": {
+      "subcarpathia": 1.0
+    }
+  },
+  {
+    "id": "ukraine_mod_lublin",
+    "type": "regions",
+    "regionMultipliers": {
+      "lublin": 1.0
+    }
+  },
+  {
+    "id": "ukraine_mod_masovia",
+    "type": "regions",
+    "regionMultipliers": {
+      "masovia": 1.0
+    }
+  },
+  {
+    "id": "ukraine_mod_lesser_poland",
+    "type": "regions",
+    "regionMultipliers": {
+      "lesser_poland": 1.0
+    }
+  },
+  {
+    "id": "ukraine_mod_lower_silesia",
+    "type": "regions",
+    "regionMultipliers": {
+      "lower_silesia": 1.0
+    }
+  },
+  {
+    "id": "ukraine_mod_pomerania",
+    "type": "regions",
+    "regionMultipliers": {
+      "pomerania": 1.0
+    }
+  },
+  {
+    "id": "ukraine_mod_silesia",
+    "type": "regions",
+    "regionMultipliers": {
+      "silesia": 1.0
+    }
+  },
+  {
+    "id": "ukraine_mod_greater_poland",
+    "type": "regions",
+    "regionMultipliers": {
+      "greater_poland": 1.0
+    }
+  },
+  {
+    "id": "ukraine_mod_lodz",
+    "type": "regions",
+    "regionMultipliers": {
+      "lodz": 1.0
+    }
+  }
+]

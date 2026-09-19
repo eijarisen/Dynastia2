@@ -6,29 +6,29 @@ namespace Dynastia.Core.Tests;
 public sealed class LoanAndDebtRulesTests
 {
     [Fact]
-    public void OneYearLoanUsesFivePercentTotalInterest()
+    public void OneYearLoanUsesTwentyPercentTotalInterest()
     {
         var terms =
             LoanTermsCalculator.Calculate(
                 1000m,
                 1);
 
-        Assert.Equal(0.05m, terms.TotalInterestRate);
-        Assert.Equal(1050m, terms.TotalRepayment);
-        Assert.Equal(1050m, terms.AnnualPayment);
+        Assert.Equal(0.20m, terms.TotalInterestRate);
+        Assert.Equal(1200m, terms.TotalRepayment);
+        Assert.Equal(1200m, terms.AnnualPayment);
     }
 
     [Fact]
-    public void FiftyYearLoanUsesFiftyPercentTotalInterest()
+    public void FiftyYearLoanUsesTwoHundredPercentTotalInterest()
     {
         var terms =
             LoanTermsCalculator.Calculate(
                 10000m,
                 50);
 
-        Assert.Equal(0.50m, terms.TotalInterestRate);
-        Assert.Equal(15000m, terms.TotalRepayment);
-        Assert.Equal(300m, terms.AnnualPayment);
+        Assert.Equal(2.00m, terms.TotalInterestRate);
+        Assert.Equal(30000m, terms.TotalRepayment);
+        Assert.Equal(600m, terms.AnnualPayment);
     }
 
     [Fact]
@@ -41,11 +41,11 @@ public sealed class LoanAndDebtRulesTests
 
         Assert.InRange(
             terms.TotalInterestRate,
-            0.1326m,
-            0.1327m);
+            0.5306m,
+            0.5307m);
 
-        Assert.Equal(11327m, terms.TotalRepayment);
-        Assert.Equal(1133m, terms.AnnualPayment);
+        Assert.Equal(15306m, terms.TotalRepayment);
+        Assert.Equal(1531m, terms.AnnualPayment);
     }
 
 

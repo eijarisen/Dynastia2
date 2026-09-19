@@ -139,21 +139,11 @@ internal sealed class StandardPartnerSearchService :
                 new DeterministicRelationshipRandom(key);
 
             var candidateTown =
-                partnerSex == Sex.Male
-                    ? HusbandOriginSelector.Choose(
-                        seekerTown,
-                        allTowns,
-                        _gameState.Year,
-                        candidateRandom)
-                    : allTowns.FirstOrDefault(town =>
-                        town.Id.Equals(
-                            seekerTown.Id,
-                            StringComparison.OrdinalIgnoreCase))
-                      ?? HusbandOriginSelector.Choose(
-                          seekerTown,
-                          allTowns,
-                          _gameState.Year,
-                          candidateRandom);
+                HusbandOriginSelector.Choose(
+                    seekerTown,
+                    allTowns,
+                    _gameState.Year,
+                    candidateRandom);
 
             if (!RelationshipPersonalityRules.TryChoosePartnerAge(
                     seeker,

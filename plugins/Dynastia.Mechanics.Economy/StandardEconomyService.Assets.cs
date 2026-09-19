@@ -234,8 +234,8 @@ public sealed partial class StandardEconomyService
                 Id =
                     _random.NextGuid(),
 
-                Town =
-                    assignedTown
+                TownId =
+                    assignedTown.Id
             };
 
         household.Houses.Add(
@@ -284,8 +284,8 @@ public sealed partial class StandardEconomyService
                 Id =
                     house.Id,
 
-                Town =
-                    house.Town,
+                TownId =
+                    house.Town.Id,
 
                 AssignedHeirId =
                     house.AssignedHeirId
@@ -534,8 +534,8 @@ public sealed partial class StandardEconomyService
                     Id =
                         house.Id,
 
-                    Town =
-                        house.Town,
+                    TownId =
+                        house.Town.Id,
 
                     AssignedHeirId =
                         house.AssignedHeirId

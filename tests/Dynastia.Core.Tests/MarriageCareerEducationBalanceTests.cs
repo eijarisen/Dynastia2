@@ -171,8 +171,48 @@ public sealed class MarriageCareerEducationBalanceTests
     public void UpperCareerLevelsApplyAdditionalPromotionDifficulty()
     {
         Assert.Equal(1.0, CareerBalanceRules.GetTargetLevelPromotionMultiplier(3), 10);
-        Assert.Equal(0.80, CareerBalanceRules.GetTargetLevelPromotionMultiplier(4), 10);
-        Assert.Equal(0.35, CareerBalanceRules.GetTargetLevelPromotionMultiplier(5), 10);
+        Assert.Equal(0.60, CareerBalanceRules.GetTargetLevelPromotionMultiplier(4), 10);
+        Assert.Equal(0.20, CareerBalanceRules.GetTargetLevelPromotionMultiplier(5), 10);
+    }
+
+    [Theory]
+    [InlineData(1, 1)]
+    [InlineData(2, 2)]
+    [InlineData(3, 3)]
+    [InlineData(4, 5)]
+    [InlineData(5, 10)]
+    public void CareerSalaryMultipliersRewardHighEndLevels(
+        int level,
+        int multiplier)
+    {
+        Assert.Equal(
+            (decimal)multiplier,
+            CareerBalanceRules.GetSalaryLevelMultiplier(level));
+
+        Assert.Equal(
+            500m * multiplier,
+            CareerBalanceRules.CalculateAnnualSalary(500m, level));
+    }
+
+    [Fact]
+    public void HighEndPromotionsDemandMatchingEducation()
+    {
+        Assert.Equal(
+            1.0,
+            CareerBalanceRules.GetEducationPromotionMultiplier(4, 4, 5),
+            10);
+        Assert.Equal(
+            0.0,
+            CareerBalanceRules.GetEducationPromotionMultiplier(3, 4, 5),
+            10);
+        Assert.Equal(
+            0.15,
+            CareerBalanceRules.GetEducationPromotionMultiplier(3, 4, 4),
+            10);
+        Assert.Equal(
+            0.02,
+            CareerBalanceRules.GetEducationPromotionMultiplier(2, 4, 4),
+            10);
     }
 
 }

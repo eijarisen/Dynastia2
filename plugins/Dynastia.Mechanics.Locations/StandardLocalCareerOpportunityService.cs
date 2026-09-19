@@ -22,6 +22,7 @@ public sealed class StandardLocalCareerOpportunityService :
 
     private readonly IGameState _gameState;
     private readonly ILocationService _locations;
+    private readonly IHistoricalTownCatalog _historicalTowns;
 
     private readonly IReadOnlyDictionary<
         string,
@@ -41,10 +42,12 @@ public sealed class StandardLocalCareerOpportunityService :
     public StandardLocalCareerOpportunityService(
         IGameState gameState,
         ILocationService locations,
+        IHistoricalTownCatalog historicalTowns,
         IGameDataService data)
     {
         _gameState = gameState;
         _locations = locations;
+        _historicalTowns = historicalTowns;
 
         _opportunityTags =
             ParseOpportunityTags(
@@ -619,28 +622,15 @@ public sealed class StandardLocalCareerOpportunityService :
 
     private void ValidateReferences()
     {
-        var towns =
-            _locations.GetTowns();
-
-        var knownTownIds =
-            towns.Select(town => town.Id)
-                .ToHashSet(
-                    StringComparer.OrdinalIgnoreCase);
-
-        var knownRegionIds =
-            towns.Select(town => town.RegionId)
-                .Where(id =>
-                    !string.IsNullOrWhiteSpace(id))
-                .ToHashSet(
-                    StringComparer.OrdinalIgnoreCase);
-
         foreach (var townId in _townOpportunities.Keys)
         {
-            if (!knownTownIds.Contains(townId))
+            if (_historicalTowns.GetTown(
+                    townId,
+                    _historicalTowns.MinYear) is null)
             {
                 throw CatalogValidation.Error(
                     TownOpportunitiesPath,
-                    "a TownId defined in Towns/towns.csv",
+                    "a permanent PlaceId defined in Towns/dynastia-towns.json",
                     item: townId,
                     field: "TownId",
                     value: townId);
@@ -649,11 +639,11 @@ public sealed class StandardLocalCareerOpportunityService :
 
         foreach (var regionId in _regions.Keys)
         {
-            if (!knownRegionIds.Contains(regionId))
+            if (!_historicalTowns.Regions.ContainsKey(regionId))
             {
                 throw CatalogValidation.Error(
                     RegionOpportunitiesPath,
-                    "a RegionId used by at least one town",
+                    "a RegionId defined in Towns/dynastia-towns.json",
                     item: regionId,
                     field: "RegionId",
                     value: regionId);

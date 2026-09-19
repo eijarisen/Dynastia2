@@ -166,6 +166,9 @@ public partial class App : Application
             var familyService =
                 pluginContext.GetService<IFamilyService>();
 
+            var nationalityService =
+                pluginContext.GetService<INationalityService>();
+
             var healthService =
                 pluginContext.GetService<IHealthService>();
 
@@ -324,6 +327,7 @@ public partial class App : Application
                             selectionService,
                             statsService,
                             familyService,
+                            nationalityService,
                             healthService,
                             stressService,
                             economyService,

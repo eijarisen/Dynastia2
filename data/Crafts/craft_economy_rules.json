@@ -1,5 +1,5 @@
 {
-  "educationCost": 3000,
+  "educationCost": 10000,
   "baseSalary": {
     "source": "Crafts/crafts.csv#BaseSalary",
     "minimum": 400,

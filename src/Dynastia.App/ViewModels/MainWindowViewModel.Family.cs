@@ -22,6 +22,7 @@ public sealed partial class MainWindowViewModel
                 new PersonRowViewModel(
                     person,
                     _familyService,
+                    _nationalityService,
                     _healthService,
                     _economyService,
                     _careerService,

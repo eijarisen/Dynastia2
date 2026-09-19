@@ -70,18 +70,18 @@ if (![string]::IsNullOrWhiteSpace($GraphicsZip)) {
         $fontEntry =
             $archive.Entries |
             Where-Object {
-                $_.Name -eq "UnifrakturCook-Bold.ttf"
+                $_.Name -eq "PirataOne-Regular.ttf"
             } |
             Select-Object -First 1
 
         if ($null -eq $fontEntry) {
-            throw "UnifrakturCook-Bold.ttf was not found in $GraphicsZip"
+            throw "PirataOne-Regular.ttf was not found in $GraphicsZip"
         }
 
         $fontTarget =
             Join-Path `
                 $FontsDirectory `
-                "UnifrakturCook-Bold.ttf"
+                "PirataOne-Regular.ttf"
 
         [System.IO.Compression.ZipFileExtensions]::ExtractToFile(
             $fontEntry,
@@ -99,7 +99,7 @@ if (![string]::IsNullOrWhiteSpace($GraphicsZip)) {
 else {
     Write-Warning (
         "No graphics.zip path supplied. The PNG assets are already included, " +
-        "but copy UnifrakturCook-Bold.ttf into " +
+        "but copy PirataOne-Regular.ttf into " +
         "src\Dynastia.App\Assets\Fonts before building."
     )
 }

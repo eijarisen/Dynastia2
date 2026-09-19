@@ -54,6 +54,8 @@ public sealed class ReproductionYearSystem : IYearSystem
     private readonly IHealthService _health;
     private readonly IAppearanceService _appearance;
     private readonly IMarriageSatisfactionService _marriageSatisfaction;
+    private readonly ILocationService _locations;
+    private readonly INationalityService _nationalities;
     private readonly IHistoricalNameService _historicalNames;
     private readonly IGameRandom _random;
     private readonly IGameCalendar _calendar;
@@ -72,6 +74,8 @@ public sealed class ReproductionYearSystem : IYearSystem
         IHealthService health,
         IAppearanceService appearance,
         IMarriageSatisfactionService marriageSatisfaction,
+        ILocationService locations,
+        INationalityService nationalities,
         IHistoricalNameService historicalNames,
         IGameRandom random,
         IGameCalendar calendar,
@@ -87,6 +91,8 @@ public sealed class ReproductionYearSystem : IYearSystem
         _health = health;
         _appearance = appearance;
         _marriageSatisfaction = marriageSatisfaction;
+        _locations = locations;
+        _nationalities = nationalities;
         _historicalNames = historicalNames;
         _random = random;
         _calendar = calendar;
@@ -362,10 +368,23 @@ public sealed class ReproductionYearSystem : IYearSystem
                 ? Sex.Female
                 : Sex.Male;
 
+        var birthTown =
+            _locations.GetLocation(mother).HomeTown;
+        var nationalityId =
+            ResolveChildNationality(
+                father,
+                mother,
+                birthTown,
+                gameState.Year);
+        var nameCultureId =
+            _nationalities.GetNameCultureId(
+                nationalityId);
+
         var childName =
             _historicalNames.GetRandomFirstName(
                 sex,
                 gameState.Year,
+                nameCultureId,
                 _random);
 
         var birthDate =
@@ -373,9 +392,10 @@ public sealed class ReproductionYearSystem : IYearSystem
                 gameState.Year);
 
         var childSurname =
-            _family.FormatSurname(
+            _historicalNames.FormatSurname(
                 father.Surname,
-                sex);
+                sex,
+                nameCultureId);
 
         var relationship =
             sex == Sex.Male
@@ -515,11 +535,24 @@ public sealed class ReproductionYearSystem : IYearSystem
                 ? Sex.Female
                 : Sex.Male;
 
+        var birthTown =
+            _locations.GetLocation(mother).HomeTown;
+        var nationalityId =
+            ResolveChildNationality(
+                father,
+                mother,
+                birthTown,
+                birthDate.Year);
+        var nameCultureId =
+            _nationalities.GetNameCultureId(
+                nationalityId);
+
         var childName =
             GenerateUniqueChildName(
                 father,
                 sex,
-                birthDate.Year);
+                birthDate.Year,
+                nameCultureId);
 
         var child =
             gameState.CreatePerson(
@@ -555,6 +588,10 @@ public sealed class ReproductionYearSystem : IYearSystem
             sex,
             generation:
                 parentGeneration + 1);
+
+        _nationalities.SetNationality(
+            child,
+            nationalityId);
 
         child.Tags.Add(
             "state.alive");
@@ -709,10 +746,33 @@ public sealed class ReproductionYearSystem : IYearSystem
         return condition;
     }
 
+    private string ResolveChildNationality(
+        IPerson? father,
+        IPerson? mother,
+        TownInfo birthTown,
+        int year)
+    {
+        var fatherNationalityId = father is null
+            ? null
+            : _nationalities.GetNationality(father);
+        var motherNationalityId = mother is null
+            ? null
+            : _nationalities.GetNationality(mother);
+
+        return ChildNationalityRules.Resolve(
+            fatherNationalityId,
+            motherNationalityId,
+            birthTown,
+            year,
+            _nationalities,
+            _random);
+    }
+
     private string GenerateUniqueChildName(
         IPerson father,
         Sex sex,
-        int birthYear)
+        int birthYear,
+        string nameCultureId)
     {
         var usedNames =
             _family
@@ -728,6 +788,7 @@ public sealed class ReproductionYearSystem : IYearSystem
             sex,
             birthYear,
             usedNames,
+            nameCultureId,
             _random);
     }
 

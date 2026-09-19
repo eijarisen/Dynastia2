@@ -81,7 +81,9 @@ public sealed partial class StandardCareerService
             }
 
             if (current.IsEmployed
-                && selected.Career.BaseSalary * level
+                && CareerBalanceRules.CalculateAnnualSalary(
+                        selected.Career.BaseSalary,
+                        level)
                     <= current.AnnualIncome)
             {
                 // An employed applicant is shown opportunities that could
@@ -181,7 +183,7 @@ public sealed partial class StandardCareerService
                 before);
         }
 
-        var offeredSalary = definition.BaseSalary * level;
+        var offeredSalary = CareerBalanceRules.CalculateAnnualSalary(definition.BaseSalary, level);
         if (before.IsEmployed
             && offeredSalary <= before.AnnualIncome)
         {
@@ -343,7 +345,9 @@ public sealed partial class StandardCareerService
             title,
             level,
             satisfaction,
-            chosen.BaseSalary * level);
+            CareerBalanceRules.CalculateAnnualSalary(
+                chosen.BaseSalary,
+                level));
     }
 
     private double GetGeneratedCandidateCareerFit(
@@ -460,7 +464,9 @@ public sealed partial class StandardCareerService
                 definition.GetTitle(level),
                 year),
             level,
-            definition.BaseSalary * level,
+            CareerBalanceRules.CalculateAnnualSalary(
+                definition.BaseSalary,
+                level),
             CareerAptitude.GetDisplayName(
                 definition,
                 person,

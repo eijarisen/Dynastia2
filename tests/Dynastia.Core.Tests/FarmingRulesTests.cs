@@ -7,8 +7,8 @@ public sealed class FarmingRulesTests
     [Fact]
     public void FarmlandPrices_MatchDesign()
     {
-        Assert.Equal(10000m, FarmingRules.PurchasePrice);
-        Assert.Equal(8000m, FarmingRules.SalePrice);
+        Assert.Equal(20000m, FarmingRules.PurchasePrice);
+        Assert.Equal(16000m, FarmingRules.SalePrice);
         Assert.Equal(2m, FarmingRules.WorkerBaseIncomeScale);
     }
 

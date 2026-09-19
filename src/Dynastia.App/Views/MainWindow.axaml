@@ -449,7 +449,7 @@
 
                             <TextBlock
                                 HorizontalAlignment="Center"
-                                FontFamily="avares://Dynastia.App/Assets/Fonts#UnifrakturCook"
+                                FontFamily="avares://Dynastia.App/Assets/Fonts#Pirata One"
                                 FontSize="37"
                                 Foreground="#1F160D"
                                 Text="Begin a Dynasty" />
@@ -481,7 +481,7 @@
                                     Grid.Column="1"
                                     VerticalAlignment="Center"
                                     Minimum="1700"
-                                    Maximum="1900"
+                                    Maximum="2000"
                                     TickFrequency="10"
                                     IsSnapToTickEnabled="True"
                                     Value="{Binding SelectedStartYear, Mode=TwoWay}" />
@@ -1312,6 +1312,7 @@
 
                             <ProgressBar
                                 Classes="healthBar"
+                                Margin="0,3,0,0"
                                 Height="10"
                                 Minimum="0"
                                 Maximum="100"
@@ -1350,9 +1351,10 @@
 
                                             <TextBlock FontSize="12" TextWrapping="Wrap" Text="{Binding SelectedPerson.AgeText}" />
                                             <TextBlock FontSize="12" TextWrapping="Wrap" Text="{Binding SelectedFamily.Sex, StringFormat='Sex: {0}'}" />
-                                            <TextBlock FontSize="12" TextWrapping="Wrap" Text="{Binding SelectedEducation.EducationText}" />
-                                            <TextBlock FontSize="12" TextWrapping="Wrap" Text="{Binding SelectedHobbiesText}" />
-                                            <TextBlock FontSize="12" TextWrapping="Wrap" Text="{Binding SelectedEducation.CraftsText}" />
+                                            <TextBlock FontSize="12" TextWrapping="Wrap" Text="{Binding SelectedPerson.NationalityText}" />
+                                            <TextBlock IsVisible="{Binding SelectedPerson.ShowLearningDetails}" FontSize="12" TextWrapping="Wrap" Text="{Binding SelectedEducation.EducationText}" />
+                                            <TextBlock IsVisible="{Binding SelectedPerson.ShowLearningDetails}" FontSize="12" TextWrapping="Wrap" Text="{Binding SelectedHobbiesText}" />
+                                            <TextBlock IsVisible="{Binding SelectedPerson.ShowLearningDetails}" FontSize="12" TextWrapping="Wrap" Text="{Binding SelectedEducation.CraftsText}" />
                                             <TextBlock FontSize="12" TextWrapping="Wrap" Text="{Binding SelectedCareer.OccupationText}" />
                                             <TextBlock
                                                 IsVisible="{Binding SelectedCareer.HasSatisfaction}"
@@ -1642,7 +1644,7 @@
                         Canvas.Left="218"
                         Canvas.Top="49"
                         Width="480"
-                        FontFamily="avares://Dynastia.App/Assets/Fonts#UnifrakturCook"
+                        FontFamily="avares://Dynastia.App/Assets/Fonts#Pirata One"
                         FontSize="46"
                         Foreground="#DDB64E"
                         Text="{Binding DynastyTitle}" />
@@ -1734,7 +1736,7 @@
                         Canvas.Top="39"
                         Width="150"
                         TextAlignment="Center"
-                        FontFamily="avares://Dynastia.App/Assets/Fonts#UnifrakturCook"
+                        FontFamily="avares://Dynastia.App/Assets/Fonts#Pirata One"
                         FontSize="53"
                         Foreground="#17110C"
                         Text="{Binding Year}" />
@@ -1773,7 +1775,7 @@
 
                             <TextBlock
                                 HorizontalAlignment="Center"
-                                FontFamily="avares://Dynastia.App/Assets/Fonts#UnifrakturCook"
+                                FontFamily="avares://Dynastia.App/Assets/Fonts#Pirata One"
                                 FontSize="36"
                                 Foreground="#301E0E"
                                 Text="Dynastia" />
@@ -1828,7 +1830,7 @@
 
                             <TextBlock
                                 HorizontalAlignment="Center"
-                                FontFamily="avares://Dynastia.App/Assets/Fonts#UnifrakturCook"
+                                FontFamily="avares://Dynastia.App/Assets/Fonts#Pirata One"
                                 FontSize="38"
                                 Foreground="#301E0E"
                                 Text="Main Menu" />
@@ -1915,7 +1917,7 @@
                                 <TextBlock
                                     Grid.Column="1"
                                     HorizontalAlignment="Center"
-                                    FontFamily="avares://Dynastia.App/Assets/Fonts#UnifrakturCook"
+                                    FontFamily="avares://Dynastia.App/Assets/Fonts#Pirata One"
                                     FontSize="42"
                                     Foreground="#2F1D0E"
                                     Text="{Binding YearSummaryTitle}" />
@@ -2055,7 +2057,7 @@
 
                             <TextBlock
                                 HorizontalAlignment="Center"
-                                FontFamily="avares://Dynastia.App/Assets/Fonts#UnifrakturCook"
+                                FontFamily="avares://Dynastia.App/Assets/Fonts#Pirata One"
                                 FontSize="40"
                                 Foreground="#301E0E"
                                 Text="{Binding GameOverTitle}" />

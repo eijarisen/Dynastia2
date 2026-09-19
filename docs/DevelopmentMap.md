@@ -80,6 +80,17 @@ Cross-household family relations live in `Dynastia.Mechanics.FamilyRelations`:
 
 Do not reintroduce Morals-based family-support acceptance in the legacy Family Support plugin.
 
+## Nationality and names
+
+Nationality identity and name cultures are owned by `Dynastia.Mechanics.Family`:
+
+- `StandardNationalityService.cs` — persisted nationality identity, historical RegionId distributions and deterministic generation.
+- `StandardHistoricalNameService.cs` — Polish historical first-name eras plus the shared 25-culture name/surname catalogues.
+- `data/Nationalities/` — nationality registry, generation rules and regional historical weights.
+- `data/Names/name_cultures.json` / `data/Names/Nationalities/` — culture registry and non-Polish weighted name pools.
+
+Nationality is identity/flavor state only. Do not add nationality-based acceptance, economy, health, crime, fertility or personality modifiers. Polish surname display morphology applies only to the Polish name culture.
+
 ## Wellbeing
 
 `WellbeingPlugin` is one plugin split by action domain:

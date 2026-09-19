@@ -157,7 +157,7 @@ public sealed class PartnerSearchRulesTests
             traits,
             5,
             5,
-            householdWealth: 20_000m,
+            householdWealth: 40_000m,
             housesOwned: 2);
 
         Assert.Equal(90, withoutResources, 10);
@@ -186,6 +186,45 @@ public sealed class PartnerSearchRulesTests
 
         Assert.Equal(5, landed - landless, 10);
         Assert.True(landed > landless);
+    }
+
+
+    [Fact]
+    public void HusbandOriginNeverReturnsHistoricalHomeOutsideCurrentDestinationPool()
+    {
+        var historicalHome = new TownInfo(
+            "Lwów",
+            "Lwów",
+            24.0316,
+            49.8429,
+            312000)
+        {
+            Id = "p_old",
+            IsDestinationAvailable = false
+        };
+        var currentTowns = new[]
+        {
+            new TownInfo("Rzeszów", "Rzeszów", 22.0047, 50.0412, 50000)
+            {
+                Id = "p_current_1",
+                IsDestinationAvailable = true
+            },
+            new TownInfo("Kraków", "Kraków", 19.9450, 50.0647, 300000)
+            {
+                Id = "p_current_2",
+                IsDestinationAvailable = true
+            }
+        };
+
+        var selected = HusbandOriginSelector.Choose(
+            historicalHome,
+            currentTowns,
+            1950,
+            new ZeroRandom());
+
+        Assert.DoesNotContain(currentTowns, town => town.Id == historicalHome.Id);
+        Assert.Contains(currentTowns, town => town.Id == selected.Id);
+        Assert.True(selected.IsDestinationAvailable);
     }
 
     [Fact]
@@ -223,5 +262,12 @@ public sealed class PartnerSearchRulesTests
         Assert.True(nineteenth.NationalChance > eighteenth.NationalChance);
         Assert.True(twentieth.NationalChance > nineteenth.NationalChance);
         Assert.True(twentyFirst.NationalChance > twentieth.NationalChance);
+    }
+
+    private sealed class ZeroRandom : IGameRandom
+    {
+        public int NextInt(int minInclusive, int maxInclusive) => minInclusive;
+        public double NextDouble() => 0.0;
+        public bool Chance(double probability) => probability > 0;
     }
 }

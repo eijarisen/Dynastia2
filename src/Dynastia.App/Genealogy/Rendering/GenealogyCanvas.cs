@@ -13,7 +13,7 @@ public sealed partial class GenealogyCanvas :
     IDisposable
 {
     private const double Parallax1Factor =
-        0.015;
+        0.0075;
 
     private const double Parallax2Factor =
         0.05;

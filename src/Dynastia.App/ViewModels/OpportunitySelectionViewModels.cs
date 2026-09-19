@@ -103,6 +103,9 @@ public sealed class PotentialPartnerCardViewModel
     public string PersonalityText =>
         Candidate.Personality.DisplayName;
 
+    public string OriginNationalityText =>
+        $"Origin: {Candidate.OriginTownDisplayName} · Nationality: {Candidate.DisplayNationality}";
+
     public string OccupationText =>
         Candidate.JobLevel <= 0
             ? "🔎 Unemployed"
@@ -117,13 +120,6 @@ public sealed class PotentialPartnerCardViewModel
             : "Crafts: " + string.Join(
                 ", ",
                 Candidate.Crafts.Select(craft => craft.Name));
-
-    public string HobbiesText =>
-        Candidate.Hobbies.Count == 0
-            ? "Hobbies: None"
-            : "Hobbies: " + string.Join(
-                ", ",
-                Candidate.Hobbies.Select(hobby => hobby.Name));
 
     public bool HasFinancialEstimate =>
         Candidate.Sex == Sex.Male;

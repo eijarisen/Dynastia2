@@ -151,8 +151,8 @@ public sealed partial class StandardEconomyService
         }
 
         var ownsLocalResidence = household.Houses.Any(house =>
-            house.Town is not null
-            && house.Town.Id.Equals(
+            !string.IsNullOrWhiteSpace(house.TownId)
+            && house.TownId.Equals(
                 homeTown.Id,
                 StringComparison.OrdinalIgnoreCase));
 

@@ -36,13 +36,13 @@ public static class PartnerSearchRules
 
         // For male partners, household resources are part of marriage-market
         // attractiveness alongside traits, education and career standing.
-        // One ordinary house price (20,000 zł) is enough to fill the cash
+        // One ordinary house price (40,000 zł) is enough to fill the cash
         // component; up to two owned houses and two farmland parcels contribute
         // their respective property components.
         var maleTraits = statTotal / 30.0 * 65.0;
         var career = Math.Clamp(careerLevel, 0, 5)
             / 5.0 * 15.0;
-        var cash = Math.Clamp((double)householdWealth / 20_000.0, 0, 1)
+        var cash = Math.Clamp((double)householdWealth / 40_000.0, 0, 1)
             * 5.0;
         var property = Math.Clamp(housesOwned, 0, 2)
             / 2.0 * 5.0;

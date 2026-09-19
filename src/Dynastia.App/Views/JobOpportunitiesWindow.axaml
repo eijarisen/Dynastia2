@@ -40,7 +40,7 @@
         <Grid Margin="82,66,82,54" RowDefinitions="Auto,Auto,Auto,*,Auto" RowSpacing="10">
             <TextBlock
                 HorizontalAlignment="Center"
-                FontFamily="avares://Dynastia.App/Assets/Fonts#UnifrakturCook"
+                FontFamily="avares://Dynastia.App/Assets/Fonts#Pirata One"
                 FontSize="40"
                 Foreground="#2F1D0E"
                 Text="{Binding Title}" />

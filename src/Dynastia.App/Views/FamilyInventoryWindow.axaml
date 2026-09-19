@@ -64,7 +64,7 @@
 
             <TextBlock
                 HorizontalAlignment="Center"
-                FontFamily="avares://Dynastia.App/Assets/Fonts#UnifrakturCook"
+                FontFamily="avares://Dynastia.App/Assets/Fonts#Pirata One"
                 FontSize="42"
                 Foreground="#2F1D0E"
                 Text="Family Inventory" />
@@ -100,6 +100,7 @@
                                 CornerRadius="4">
                                 <StackPanel Spacing="10">
                                     <TextBlock
+                                        Margin="0,0,0,8"
                                         HorizontalAlignment="Center"
                                         FontFamily="Georgia"
                                         FontSize="20"

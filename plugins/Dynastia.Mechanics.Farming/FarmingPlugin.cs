@@ -11,6 +11,8 @@ public sealed class FarmingPlugin : IGamePlugin
             ?? throw new InvalidOperationException("Game state is unavailable.");
         var economy = context.GetService<IEconomyService>()
             ?? throw new InvalidOperationException("Economy service is unavailable.");
+        var family = context.GetService<IFamilyService>()
+            ?? throw new InvalidOperationException("Family service is unavailable.");
         var career = context.GetService<ICareerService>()
             ?? throw new InvalidOperationException("Career service is unavailable.");
         var random = context.GetService<IGameRandom>()
@@ -38,6 +40,7 @@ public sealed class FarmingPlugin : IGamePlugin
         RegisterActions(
             actions,
             economy,
+            family,
             service,
             events);
 
@@ -47,6 +50,7 @@ public sealed class FarmingPlugin : IGamePlugin
     private static void RegisterActions(
         IActionRegistry actions,
         IEconomyService economy,
+        IFamilyService family,
         IFarmingService farming,
         IGameEventBus events)
     {
@@ -101,7 +105,7 @@ public sealed class FarmingPlugin : IGamePlugin
                                 ["town"] = town.Town,
                                 ["farmlandId"] = parcel.Id.ToString(),
                                 ["text"] =
-                                    $"The household purchased farmland near {town.Town}."
+                                    $"{family.GetDisplayName(context.Actor)} purchased farmland near {town.Town}."
                             }
                         });
 

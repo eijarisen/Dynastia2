@@ -70,12 +70,29 @@ public static class CareerBalanceRules
         return 0.12 + aptitudeValue * 0.04 + educationValue * 0.04;
     }
 
+    public static decimal GetSalaryLevelMultiplier(
+        int jobLevel) =>
+        Math.Clamp(jobLevel, 0, 5) switch
+        {
+            1 => 1m,
+            2 => 2m,
+            3 => 3m,
+            4 => 5m,
+            5 => 10m,
+            _ => 0m
+        };
+
+    public static decimal CalculateAnnualSalary(
+        decimal baseSalary,
+        int jobLevel) =>
+        baseSalary * GetSalaryLevelMultiplier(jobLevel);
+
     public static double GetTargetLevelPromotionMultiplier(
         int targetJobLevel) =>
         targetJobLevel switch
         {
-            4 => 0.80,
-            >= 5 => 0.35,
+            4 => 0.60,
+            >= 5 => 0.20,
             _ => 1.0
         };
 
@@ -90,5 +107,30 @@ public static class CareerBalanceRules
             1 => 0.35,
             _ => 0.10
         };
+    }
+
+    public static double GetEducationPromotionMultiplier(
+        int actualEducation,
+        int expectedEducation,
+        int targetJobLevel)
+    {
+        var gap = Math.Max(0, expectedEducation - actualEducation);
+
+        if (targetJobLevel >= 5)
+            return gap == 0 ? 1.0 : 0.0;
+
+        if (targetJobLevel == 4)
+        {
+            return gap switch
+            {
+                0 => 1.0,
+                1 => 0.15,
+                _ => 0.02
+            };
+        }
+
+        return GetEducationPromotionMultiplier(
+            actualEducation,
+            expectedEducation);
     }
 }

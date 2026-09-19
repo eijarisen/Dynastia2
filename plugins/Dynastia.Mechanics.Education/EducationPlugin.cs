@@ -4,7 +4,8 @@ namespace Dynastia.Mechanics.Education;
 
 public sealed class EducationPlugin : IGamePlugin
 {
-    private const decimal EducationCost = 3000m;
+    private const decimal StandardEducationCost = 5000m;
+    private const decimal CraftEducationCost = 10000m;
     private const int HelpLearningMinimumAge = 6;
     private const int HelpLearningAdultAge = 18;
 
@@ -257,7 +258,7 @@ public sealed class EducationPlugin : IGamePlugin
             Id = "education.get_education",
             Label = "Get Education",
             Description =
-                "Choose standard education or study a Craft. Every option costs 3,000 zł when the attempt is made.",
+                "Choose standard education for 5,000 zł or study a Craft for 10,000 zł. The cost is charged when the attempt is made.",
             Mode = ActionExecutionMode.Queued,
             QueuePhase = YearPhase.QueuedActionsEarly,
 
@@ -283,28 +284,36 @@ public sealed class EducationPlugin : IGamePlugin
                 if (!validTarget)
                     return false;
 
-                if (!economy.CanAfford(actor, EducationCost))
-                    return false;
-
                 var crafts = craftResolver();
                 if (actionContext.Parameters.TryGetValue("educationOption", out var selected))
                 {
                     if (selected.Equals("standard", StringComparison.OrdinalIgnoreCase))
-                        return education.GetEducationLevel(target) < 5;
+                    {
+                        return education.GetEducationLevel(target) < 5
+                            && economy.CanAfford(actor, StandardEducationCost);
+                    }
 
                     if (selected.StartsWith("craft:", StringComparison.OrdinalIgnoreCase)
                         && crafts is not null)
                     {
                         var craftId = selected["craft:".Length..];
-                        return crafts.GetEducationOptions(target)
-                            .Any(option => option.CraftId.Equals(craftId, StringComparison.OrdinalIgnoreCase));
+                        return economy.CanAfford(actor, CraftEducationCost)
+                            && crafts.GetEducationOptions(target)
+                                .Any(option => option.CraftId.Equals(craftId, StringComparison.OrdinalIgnoreCase));
                     }
 
                     return false;
                 }
 
-                return education.GetEducationLevel(target) < 5
-                    || crafts?.GetEducationOptions(target).Count > 0;
+                var canStudyStandard =
+                    education.GetEducationLevel(target) < 5
+                    && economy.CanAfford(actor, StandardEducationCost);
+
+                var canStudyCraft =
+                    economy.CanAfford(actor, CraftEducationCost)
+                    && crafts?.GetEducationOptions(target).Count > 0;
+
+                return canStudyStandard || canStudyCraft;
             },
 
             Execute = actionContext =>
@@ -316,11 +325,6 @@ public sealed class EducationPlugin : IGamePlugin
                     return new GameActionResult(
                         false,
                         "Children use Help in Education instead of paid education.");
-                }
-
-                if (!economy.CanAfford(actor, EducationCost))
-                {
-                    return new GameActionResult(false, "Education is no longer available.");
                 }
 
                 var selected = actionContext.Parameters.TryGetValue("educationOption", out var option)
@@ -338,7 +342,12 @@ public sealed class EducationPlugin : IGamePlugin
                         return new GameActionResult(false, "Craft education is no longer available.");
                     }
 
-                    economy.ChangeWealth(actor, -EducationCost);
+                    if (!economy.CanAfford(actor, CraftEducationCost))
+                    {
+                        return new GameActionResult(false, "Craft education is no longer affordable.");
+                    }
+
+                    economy.ChangeWealth(actor, -CraftEducationCost);
                     var result = crafts.StudyCraft(target, craftId);
                     return new GameActionResult(
                         result.Attempted,
@@ -354,7 +363,12 @@ public sealed class EducationPlugin : IGamePlugin
                     return new GameActionResult(false, "Standard education is no longer available.");
                 }
 
-                economy.ChangeWealth(actor, -EducationCost);
+                if (!economy.CanAfford(actor, StandardEducationCost))
+                {
+                    return new GameActionResult(false, "Standard education is no longer affordable.");
+                }
+
+                economy.ChangeWealth(actor, -StandardEducationCost);
 
                 var intellect = stats.GetStats(target)
                     .First(stat => stat.Id.Equals("intellect", StringComparison.OrdinalIgnoreCase))

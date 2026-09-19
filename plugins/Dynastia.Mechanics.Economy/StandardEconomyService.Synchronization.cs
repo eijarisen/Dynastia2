@@ -245,11 +245,18 @@ public sealed partial class StandardEconomyService
                         Id =
                             _random.NextGuid(),
 
-                        Town =
-                            town
+                        TownId =
+                            town.Id
                     });
             }
         }
+
+        var fallbackTownId =
+            _locations
+                .GetLocation(
+                    head)
+                .HomeTown
+                .Id;
 
         foreach (var house in
             household.Houses)
@@ -259,11 +266,11 @@ public sealed partial class StandardEconomyService
                     ? _random.NextGuid()
                     : house.Id;
 
-            house.Town ??=
-                _locations
-                    .GetLocation(
-                        head)
-                    .HomeTown;
+            if (string.IsNullOrWhiteSpace(house.TownId)
+                || _locations.FindTown(house.TownId) is null)
+            {
+                house.TownId = fallbackTownId;
+            }
 
             if (house.AssignedHeirId is Guid assignedHeirId)
             {
@@ -302,6 +309,13 @@ public sealed partial class StandardEconomyService
             }
         }
 
+        var fallbackTownId =
+            _locations
+                .GetLocation(
+                    person)
+                .HomeTown
+                .Id;
+
         foreach (var house in
             claim.PendingHouseProperties)
         {
@@ -310,11 +324,11 @@ public sealed partial class StandardEconomyService
                     ? _random.NextGuid()
                     : house.Id;
 
-            house.Town ??=
-                _locations
-                    .GetLocation(
-                        person)
-                    .HomeTown;
+            if (string.IsNullOrWhiteSpace(house.TownId)
+                || _locations.FindTown(house.TownId) is null)
+            {
+                house.TownId = fallbackTownId;
+            }
         }
 
         claim.PendingHouses =
@@ -340,8 +354,8 @@ public sealed partial class StandardEconomyService
             Id =
                 _random.NextGuid(),
 
-            Town =
-                town
+            TownId =
+                town.Id
         };
     }
 
@@ -357,10 +371,12 @@ public sealed partial class StandardEconomyService
         }
 
         var head = GetHead(household);
-        var homeTown = _locations.GetLocation(head).HomeTown;
+        var homeTownId = _locations.GetLocation(head).HomeTown.Id;
         var hasResidence = household.Houses.Any(house =>
-            house.Town is not null
-            && house.Town.Id.Equals(homeTown.Id, StringComparison.OrdinalIgnoreCase));
+            !string.IsNullOrWhiteSpace(house.TownId)
+            && house.TownId.Equals(
+                homeTownId,
+                StringComparison.OrdinalIgnoreCase));
 
         household.RentedHouses = household.Houses.Count - (hasResidence ? 1 : 0);
     }
@@ -371,12 +387,13 @@ public sealed partial class StandardEconomyService
         IPerson head,
         HouseholdEconomyComponent household)
     {
-        var town = house.Town
-            ?? throw new InvalidOperationException("House town is unavailable.");
-        var homeTown = _locations.GetLocation(head).HomeTown;
+        var town = ResolveHouseTown(house);
+        var homeTownId = _locations.GetLocation(head).HomeTown.Id;
         var firstLocalIndex = household.Houses.FindIndex(candidate =>
-            candidate.Town is not null
-            && candidate.Town.Id.Equals(homeTown.Id, StringComparison.OrdinalIgnoreCase));
+            !string.IsNullOrWhiteSpace(candidate.TownId)
+            && candidate.TownId.Equals(
+                homeTownId,
+                StringComparison.OrdinalIgnoreCase));
         var isResidence = index == firstLocalIndex;
 
         return new HousePropertyInfo(
@@ -387,14 +404,11 @@ public sealed partial class StandardEconomyService
             AssignedHeirId: house.AssignedHeirId);
     }
 
-    private static HousePropertyInfo ToInfo(
+    private HousePropertyInfo ToInfo(
         HousePropertyState house,
         int index)
     {
-        var town =
-            house.Town
-            ?? throw new InvalidOperationException(
-                "House town is unavailable.");
+        var town = ResolveHouseTown(house);
 
         return new HousePropertyInfo(
             house.Id,
@@ -405,6 +419,14 @@ public sealed partial class StandardEconomyService
                 index > 0,
             AssignedHeirId:
                 house.AssignedHeirId);
+    }
+
+    private TownInfo ResolveHouseTown(
+        HousePropertyState house)
+    {
+        return _locations.FindTown(house.TownId)
+            ?? throw new InvalidOperationException(
+                $"House town '{house.TownId}' is unavailable.");
     }
 
     private static PersonalEstateComponent?

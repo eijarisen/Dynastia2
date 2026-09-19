@@ -8,9 +8,6 @@ namespace Dynastia.Mechanics.Relationships;
 internal sealed class StandardPartnerSearchService :
     IPartnerSearchService
 {
-    private const string SurnamesPath =
-        "Names/polish_surnames.csv";
-
     private static readonly string[] MainStatIds =
     [
         "immunity",
@@ -32,7 +29,8 @@ internal sealed class StandardPartnerSearchService :
     private readonly IAppearanceService _appearance;
     private readonly Func<IHobbyService?> _hobbyResolver;
     private readonly ILocationService _locations;
-    private readonly IGameDataService _data;
+    private readonly INationalityService _nationalities;
+    private readonly IOutsiderIdentityService _outsiderIdentities;
     private readonly IHistoricalNameService _historicalNames;
     private readonly IGameCalendar _calendar;
     private readonly IGameRandom _random;
@@ -51,7 +49,8 @@ internal sealed class StandardPartnerSearchService :
         IAppearanceService appearance,
         Func<IHobbyService?> hobbyResolver,
         ILocationService locations,
-        IGameDataService data,
+        INationalityService nationalities,
+        IOutsiderIdentityService outsiderIdentities,
         IHistoricalNameService historicalNames,
         IGameCalendar calendar,
         IGameRandom random,
@@ -69,7 +68,8 @@ internal sealed class StandardPartnerSearchService :
         _appearance = appearance;
         _hobbyResolver = hobbyResolver;
         _locations = locations;
-        _data = data;
+        _nationalities = nationalities;
+        _outsiderIdentities = outsiderIdentities;
         _historicalNames = historicalNames;
         _calendar = calendar;
         _random = random;
@@ -138,6 +138,23 @@ internal sealed class StandardPartnerSearchService :
             var candidateRandom =
                 new DeterministicRelationshipRandom(key);
 
+            var candidateTown =
+                partnerSex == Sex.Male
+                    ? HusbandOriginSelector.Choose(
+                        seekerTown,
+                        allTowns,
+                        _gameState.Year,
+                        candidateRandom)
+                    : allTowns.FirstOrDefault(town =>
+                        town.Id.Equals(
+                            seekerTown.Id,
+                            StringComparison.OrdinalIgnoreCase))
+                      ?? HusbandOriginSelector.Choose(
+                          seekerTown,
+                          allTowns,
+                          _gameState.Year,
+                          candidateRandom);
+
             if (!RelationshipPersonalityRules.TryChoosePartnerAge(
                     seeker,
                     partnerSex,
@@ -159,22 +176,18 @@ internal sealed class StandardPartnerSearchService :
                 birthMonth,
                 birthDay);
 
-            var name = _historicalNames.GetRandomFirstName(
-                partnerSex,
-                birthYear,
-                candidateRandom);
-            var surname = RandomWeightedSurname(candidateRandom);
+            var identity =
+                GenerateCandidateIdentity(
+                    seeker,
+                    candidateTown,
+                    partnerSex,
+                    birthYear,
+                    candidateRandom);
+
+            var name = identity.FirstName;
+            var surname = identity.Surname;
             var personality = _personality
                 .GenerateCandidatePersonality(candidateId);
-
-            var candidateTown =
-                partnerSex == Sex.Male
-                    ? HusbandOriginSelector.Choose(
-                        seekerTown,
-                        allTowns,
-                        _gameState.Year,
-                        candidateRandom)
-                    : seekerTown;
 
             var stats = MainStatIds.ToDictionary(
                 id => id,
@@ -311,11 +324,68 @@ internal sealed class StandardPartnerSearchService :
                 _gameState.Year)
             {
                 Crafts = candidateCrafts,
-                EstimatedFarmland = estimatedFarmland
+                EstimatedFarmland = estimatedFarmland,
+                NationalityId = identity.NationalityId,
+                DisplayNationality = identity.DisplayNationality,
+                OriginTownDisplayName = candidateTown.DisplayName
             });
         }
 
         return result;
+    }
+
+    private GeneratedOutsiderIdentity GenerateCandidateIdentity(
+        IPerson seeker,
+        TownInfo originTown,
+        Sex sex,
+        int birthYear,
+        IGameRandom random)
+    {
+        var seekerNationalityId =
+            _nationalities.GetNationality(seeker);
+
+        if (!seekerNationalityId.Equals(
+                "polish",
+                StringComparison.OrdinalIgnoreCase))
+        {
+            return _outsiderIdentities.Generate(
+                originTown,
+                sex,
+                birthYear,
+                _gameState.Year,
+                random);
+        }
+
+        if (string.IsNullOrWhiteSpace(originTown.RegionId))
+        {
+            throw new InvalidOperationException(
+                $"Town '{originTown.Id}' has no RegionId for partner nationality generation.");
+        }
+
+        var nationalityId =
+            PartnerNationalityPreferenceRules.ChooseNationality(
+                _nationalities.ResolveDistribution(
+                    originTown.RegionId,
+                    _gameState.Year),
+                seekerNationalityId,
+                random);
+        var nameCultureId =
+            _nationalities.GetNameCultureId(
+                nationalityId);
+
+        return new GeneratedOutsiderIdentity(
+            nationalityId,
+            _nationalities.GetDisplayName(nationalityId),
+            nameCultureId,
+            _historicalNames.GetRandomFirstName(
+                sex,
+                birthYear,
+                nameCultureId,
+                random),
+            _historicalNames.GetRandomSurname(
+                sex,
+                nameCultureId,
+                random));
     }
 
     public double GetPartnerValue(IPerson person)
@@ -382,6 +452,9 @@ internal sealed class StandardPartnerSearchService :
             ["partner.acceptance"] = candidate.AcceptanceChance.ToString("R", CultureInfo.InvariantCulture),
             ["partner.searchYear"] = candidate.SearchYear.ToString(CultureInfo.InvariantCulture),
             ["partner.townId"] = candidate.TownId,
+            ["partner.nationalityId"] = candidate.NationalityId,
+            ["partner.displayNationality"] = candidate.DisplayNationality,
+            ["partner.originTownDisplayName"] = candidate.OriginTownDisplayName,
             ["partner.appearance.hairGeneA"] = candidate.Appearance.HairGeneA.ToString(),
             ["partner.appearance.hairGeneB"] = candidate.Appearance.HairGeneB.ToString(),
             ["partner.appearance.hairColor"] = candidate.Appearance.HairColor.ToString(),
@@ -645,6 +718,9 @@ internal sealed class StandardPartnerSearchService :
         person.BirthDate = candidate.BirthDate;
 
         _family.InitializePerson(person, candidate.Sex);
+        _nationalities.SetNationality(
+            person,
+            candidate.NationalityId);
         person.Tags.Add("state.alive");
         person.Tags.Add("age.adult");
         person.Tags.Add("relationship.single");
@@ -685,6 +761,8 @@ internal sealed class StandardPartnerSearchService :
         GeneratedFamilyBackgroundGenerator.Assign(
             person,
             candidate.Surname,
+            _nationalities.GetNameCultureId(
+                candidate.NationalityId),
             _family,
             _historicalNames,
             _random);
@@ -743,11 +821,21 @@ internal sealed class StandardPartnerSearchService :
         var value = RequiredDouble(parameters, "partner.value");
         var acceptance = RequiredDouble(parameters, "partner.acceptance");
         var searchYear = RequiredInt(parameters, "partner.searchYear");
-        var townId = parameters.TryGetValue(
-            "partner.townId",
-            out var storedTownId)
-                ? storedTownId
-                : string.Empty;
+        var townId = Required(parameters, "partner.townId");
+        var nationalityId = Required(parameters, "partner.nationalityId");
+        var displayNationality = parameters.TryGetValue(
+            "partner.displayNationality",
+            out var storedDisplayNationality)
+                && !string.IsNullOrWhiteSpace(storedDisplayNationality)
+                    ? storedDisplayNationality
+                    : _nationalities.GetDisplayName(nationalityId);
+        var originTownDisplayName = parameters.TryGetValue(
+            "partner.originTownDisplayName",
+            out var storedOriginTownDisplayName)
+                && !string.IsNullOrWhiteSpace(storedOriginTownDisplayName)
+                    ? storedOriginTownDisplayName
+                    : _locations.FindTown(townId)?.DisplayName
+                      ?? townId;
         var candidateId = Guid.ParseExact(key, "N");
         var appearance = TryReadAppearance(parameters, out var storedAppearance)
             ? storedAppearance
@@ -787,7 +875,10 @@ internal sealed class StandardPartnerSearchService :
             searchYear)
         {
             Crafts = crafts,
-            EstimatedFarmland = estimatedFarmland
+            EstimatedFarmland = estimatedFarmland,
+            NationalityId = nationalityId,
+            DisplayNationality = displayNationality,
+            OriginTownDisplayName = originTownDisplayName
         };
     }
 
@@ -911,23 +1002,6 @@ internal sealed class StandardPartnerSearchService :
                 out var parsed)
             ? Math.Max(0m, parsed)
             : 0m;
-    }
-
-    private string RandomWeightedSurname(
-        IGameRandom random)
-    {
-        var entries = _data.GetWeightedStringList(SurnamesPath);
-        var total = entries.Sum(entry => (double)entry.Weight);
-        var roll = random.NextDouble() * total;
-
-        foreach (var entry in entries)
-        {
-            if (roll < entry.Weight)
-                return entry.Value;
-            roll -= entry.Weight;
-        }
-
-        return entries[^1].Value;
     }
 
     private int GetStat(IPerson person, string statId) =>

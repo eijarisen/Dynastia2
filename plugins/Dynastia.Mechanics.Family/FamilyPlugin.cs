@@ -41,6 +41,11 @@ public sealed class FamilyPlugin : IGamePlugin
             StandardHistoricalNameService.Load(
                 data);
 
+        var nationalities =
+            StandardNationalityService.Load(
+                data,
+                historicalNames);
+
         var reconciliation = context.GetService<IStateReconciliationLifecycle>()
             ?? throw new InvalidOperationException(
                 "State reconciliation lifecycle is unavailable.");
@@ -49,7 +54,8 @@ public sealed class FamilyPlugin : IGamePlugin
             new StandardFamilyService(
                 gameState,
                 data,
-                historicalNames);
+                historicalNames,
+                nationalities);
 
         var newGameService =
             new StandardNewGameService(
@@ -65,6 +71,14 @@ public sealed class FamilyPlugin : IGamePlugin
 
         context.AddService<IHistoricalNameService>(
             historicalNames);
+
+        context.AddService<INationalityService>(
+            nationalities);
+
+        context.AddService<IOutsiderIdentityService>(
+            new StandardOutsiderIdentityService(
+                nationalities,
+                historicalNames));
 
         context.AddService<IFamilyService>(
             familyService);

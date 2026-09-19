@@ -35,16 +35,16 @@
     "actionId": "household.hire_nanny",
     "startYear": 1700,
     "endYear": 1849,
-    "label": "Hire a Nursemaid (250 zł/year)",
-    "description": "Hire a nursemaid to help care for the household's children. Cost and household-strain mechanics are unchanged.",
+    "label": "Hire a Nursemaid (750 zł/year)",
+    "description": "Hire a nursemaid to help care for the household's children. The annual nanny cost is charged during household finances.",
     "narrative": "hired a nursemaid to help care for the children"
   },
   {
     "actionId": "household.hire_nanny",
     "startYear": 1850,
     "endYear": null,
-    "label": "Hire a Nanny (250 zł/year)",
-    "description": "Hire a nanny to help care for the household's children. Cost and household-strain mechanics are unchanged.",
+    "label": "Hire a Nanny (750 zł/year)",
+    "description": "Hire a nanny to help care for the household's children. The annual nanny cost is charged during household finances.",
     "narrative": "hired a nanny to help care for the children"
   },
   {
@@ -211,7 +211,7 @@
     "actionId": "wellbeing.heal_relative",
     "startYear": 1700,
     "endYear": 1849,
-    "label": "Summon a Physician (2,000 zł)",
+    "label": "Summon a Physician (3,000 zł)",
     "description": "Pay for a physician, medicines and convalescence appropriate to the period. Restores 20 health.",
     "narrative": "paid for a physician and a period of convalescence"
   },
@@ -219,7 +219,7 @@
     "actionId": "wellbeing.heal_relative",
     "startYear": 1850,
     "endYear": 1945,
-    "label": "Medical Treatment (2,000 zł)",
+    "label": "Medical Treatment (3,000 zł)",
     "description": "Pay for professional medical treatment. Restores 25 health.",
     "narrative": "paid for medical treatment"
   },
@@ -227,8 +227,8 @@
     "actionId": "wellbeing.heal_relative",
     "startYear": 1946,
     "endYear": null,
-    "label": "Improve Health (2,000 zł)",
-    "description": "Pay 2,000 zł for modern medical treatment. Restores 30 health.",
+    "label": "Improve Health (3,000 zł)",
+    "description": "Pay 3,000 zł for modern medical treatment. Restores 30 health.",
     "narrative": "paid for medical treatment that substantially improved their health"
   },
   {

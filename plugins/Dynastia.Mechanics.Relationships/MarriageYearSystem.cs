@@ -4,16 +4,15 @@ namespace Dynastia.Mechanics.Relationships;
 
 public sealed class MarriageYearSystem : IYearSystem
 {
-    private const string SurnamesPath =
-        "Names/polish_surnames.csv";
-
     private static readonly double[] AppealMarriageChance =
         [0, 0.05, 0.07, 0.10, 0.12, 0.16];
 
     private readonly IFamilyService _family;
     private readonly IStatsService _stats;
     private readonly ICareerService _career;
-    private readonly IGameDataService _data;
+    private readonly ILocationService _locations;
+    private readonly INationalityService _nationalities;
+    private readonly IOutsiderIdentityService _outsiderIdentities;
     private readonly IHistoricalNameService _historicalNames;
     private readonly IGameRandom _random;
     private readonly IGameCalendar _calendar;
@@ -25,7 +24,9 @@ public sealed class MarriageYearSystem : IYearSystem
         IFamilyService family,
         IStatsService stats,
         ICareerService career,
-        IGameDataService data,
+        ILocationService locations,
+        INationalityService nationalities,
+        IOutsiderIdentityService outsiderIdentities,
         IHistoricalNameService historicalNames,
         IGameRandom random,
         IGameCalendar calendar,
@@ -36,7 +37,9 @@ public sealed class MarriageYearSystem : IYearSystem
         _family = family;
         _stats = stats;
         _career = career;
-        _data = data;
+        _locations = locations;
+        _nationalities = nationalities;
+        _outsiderIdentities = outsiderIdentities;
         _historicalNames = historicalNames;
         _random = random;
         _calendar = calendar;
@@ -160,12 +163,26 @@ public sealed class MarriageYearSystem : IYearSystem
                 ? Sex.Male
                 : Sex.Female;
 
-        var spouseNameSample =
-            _random.NextDouble();
-
-        var originalSurname =
-            RandomWeightedFrom(
-                SurnamesPath);
+        var homeTown =
+            _locations.GetLocation(person).HomeTown;
+        var availableTowns =
+            _locations.GetTowns();
+        var originTown =
+            spouseSex == Sex.Male
+                ? HusbandOriginSelector.Choose(
+                    homeTown,
+                    availableTowns,
+                    gameState.Year,
+                    _random)
+                : availableTowns.FirstOrDefault(town =>
+                    town.Id.Equals(
+                        homeTown.Id,
+                        StringComparison.OrdinalIgnoreCase))
+                  ?? HusbandOriginSelector.Choose(
+                      homeTown,
+                      availableTowns,
+                      gameState.Year,
+                      _random);
 
         if (!RelationshipPersonalityRules.TryChoosePartnerAge(
                 person,
@@ -179,16 +196,19 @@ public sealed class MarriageYearSystem : IYearSystem
         var spouseBirthYear =
             gameState.Year - spouseAge;
 
-        var spouseName =
-            _historicalNames.GetRandomFirstName(
+        var identity =
+            _outsiderIdentities.Generate(
+                originTown,
                 spouseSex,
                 spouseBirthYear,
-                new FixedSampleGameRandom(
-                    spouseNameSample));
+                gameState.Year,
+                _random);
+
+        var originalSurname = identity.Surname;
 
         var spouse =
             gameState.CreatePerson(
-                spouseName,
+                identity.FirstName,
                 originalSurname,
                 spouseAge);
 
@@ -200,6 +220,14 @@ public sealed class MarriageYearSystem : IYearSystem
         _family.InitializePerson(
             spouse,
             spouseSex);
+
+        _nationalities.SetNationality(
+            spouse,
+            identity.NationalityId);
+
+        _locations.SetPersonHomeTown(
+            spouse,
+            originTown);
 
         spouse.Tags.Add("state.alive");
         spouse.Tags.Add("age.adult");
@@ -232,6 +260,7 @@ public sealed class MarriageYearSystem : IYearSystem
         GeneratedFamilyBackgroundGenerator.Assign(
             spouse,
             originalSurname,
+            identity.NameCultureId,
             _family,
             _historicalNames,
             _random);
@@ -321,32 +350,6 @@ public sealed class MarriageYearSystem : IYearSystem
             Year: year,
             Month: month,
             Day: day);
-    }
-
-    private string RandomWeightedFrom(
-        string relativePath)
-    {
-        var entries =
-            _data.GetWeightedStringList(
-                relativePath);
-
-        var totalWeight =
-            entries.Sum(
-                entry => (double)entry.Weight);
-
-        var roll =
-            _random.NextDouble()
-            * totalWeight;
-
-        foreach (var entry in entries)
-        {
-            if (roll < entry.Weight)
-                return entry.Value;
-
-            roll -= entry.Weight;
-        }
-
-        return entries[^1].Value;
     }
 
     private int GetStat(

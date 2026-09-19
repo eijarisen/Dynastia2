@@ -2,11 +2,12 @@ using Dynastia.Contracts;
 
 namespace Dynastia.Mechanics.Relationships;
 
-internal static class GeneratedFamilyBackgroundGenerator
+public static class GeneratedFamilyBackgroundGenerator
 {
     public static void Assign(
         IPerson person,
         string familySurname,
+        string nameCultureId,
         IFamilyService family,
         IHistoricalNameService historicalNames,
         IGameRandom random)
@@ -25,14 +26,18 @@ internal static class GeneratedFamilyBackgroundGenerator
             - (20 + DeterministicOffset(person.Id, 11, 16));
 
         var fatherName =
-            $"{historicalNames.GetRandomFirstName(Sex.Male, fatherBirthYear, random)} " +
-            familySurname;
+            $"{historicalNames.GetRandomFirstName(Sex.Male, fatherBirthYear, nameCultureId, random)} " +
+            historicalNames.FormatSurname(
+                familySurname,
+                Sex.Male,
+                nameCultureId);
 
         var motherName =
-            $"{historicalNames.GetRandomFirstName(Sex.Female, motherBirthYear, random)} " +
-            family.FormatSurname(
+            $"{historicalNames.GetRandomFirstName(Sex.Female, motherBirthYear, nameCultureId, random)} " +
+            historicalNames.FormatSurname(
                 familySurname,
-                Sex.Female);
+                Sex.Female,
+                nameCultureId);
 
         var siblings =
             new List<string>();
@@ -59,13 +64,15 @@ internal static class GeneratedFamilyBackgroundGenerator
                 historicalNames.GetRandomFirstName(
                     sex,
                     siblingBirthYear,
+                    nameCultureId,
                     random);
 
             siblings.Add(
                 $"{name} " +
-                family.FormatSurname(
+                historicalNames.FormatSurname(
                     familySurname,
-                    sex));
+                    sex,
+                    nameCultureId));
         }
 
         family.SetGeneratedFamilyBackground(

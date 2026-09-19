@@ -51,6 +51,16 @@ public sealed class ReproductionPlugin : IGamePlugin
             ?? throw new InvalidOperationException(
                 "Historical name service is unavailable.");
 
+        var locations =
+            context.GetService<ILocationService>()
+            ?? throw new InvalidOperationException(
+                "Location service is unavailable.");
+
+        var nationalities =
+            context.GetService<INationalityService>()
+            ?? throw new InvalidOperationException(
+                "Nationality service is unavailable.");
+
         var gameState =
             context.GetService<IGameState>()
             ?? throw new InvalidOperationException(
@@ -117,6 +127,8 @@ public sealed class ReproductionPlugin : IGamePlugin
                 health,
                 appearance,
                 marriageSatisfaction,
+                locations,
+                nationalities,
                 historicalNames,
                 random,
                 calendar,

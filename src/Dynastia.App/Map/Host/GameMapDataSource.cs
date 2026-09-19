@@ -12,14 +12,7 @@ public sealed class GameMapDataSource
     private readonly IEconomyService? _economy;
     private readonly IHouseholdService? _households;
     private readonly ISuccessionService _succession;
-
-    private readonly IReadOnlyList<ProjectedTownRecord>
-        _projectedTowns;
-
-    private readonly double _minX;
-    private readonly double _maxX;
-    private readonly double _minY;
-    private readonly double _maxY;
+    private readonly PolandCs92Projection _projection = new();
 
     public GameMapDataSource(
         IGameState gameState,
@@ -35,65 +28,6 @@ public sealed class GameMapDataSource
         _economy = economy;
         _households = households;
         _succession = succession;
-
-        var projection =
-            new PolandCs92Projection();
-
-        var towns =
-            locations
-                .GetTowns()
-                .ToArray();
-
-        if (towns.Length == 0)
-        {
-            throw new InvalidDataException(
-                "The town catalogue is empty.");
-        }
-
-        var duplicateTownId =
-            towns
-                .Where(town =>
-                    !string.IsNullOrWhiteSpace(
-                        town.Id))
-                .GroupBy(
-                    town => town.Id,
-                    StringComparer.OrdinalIgnoreCase)
-                .FirstOrDefault(group =>
-                    group.Count() > 1);
-
-        if (duplicateTownId is not null)
-        {
-            throw new InvalidDataException(
-                $"Duplicate town id '{duplicateTownId.Key}' in the town catalogue.");
-        }
-
-        _projectedTowns =
-            towns
-                .Select(town =>
-                {
-                    var point =
-                        projection.Project(
-                            town.Longitude,
-                            town.Latitude);
-
-                    return new ProjectedTownRecord(
-                        town,
-                        point.X,
-                        point.Y);
-                })
-                .ToArray();
-
-        _minX =
-            _projectedTowns.Min(town => town.X);
-
-        _maxX =
-            _projectedTowns.Max(town => town.X);
-
-        _minY =
-            _projectedTowns.Min(town => town.Y);
-
-        _maxY =
-            _projectedTowns.Max(town => town.Y);
     }
 
     public TownMapSnapshot GetSnapshot()
@@ -230,8 +164,81 @@ public sealed class GameMapDataSource
             }
         }
 
+        var townsById =
+            new Dictionary<string, TownInfo>(
+                StringComparer.OrdinalIgnoreCase);
+
+        foreach (var town in _locations.GetTowns())
+        {
+            if (string.IsNullOrWhiteSpace(town.Id))
+                continue;
+
+            if (!townsById.TryAdd(town.Id, town))
+            {
+                throw new InvalidDataException(
+                    $"Duplicate town id '{town.Id}' in the current historical town catalogue.");
+            }
+        }
+
+        var overlayTownIds =
+            residentsByTown.Keys
+                .Concat(activeHouseholdsByTown.Keys)
+                .Concat(playableHouseholdsByTown.Keys)
+                .Concat(housesByTown.Keys)
+                .Append(currentTownId ?? string.Empty)
+                .Where(id =>
+                    !string.IsNullOrWhiteSpace(id))
+                .Distinct(
+                    StringComparer.OrdinalIgnoreCase);
+
+        foreach (var townId in overlayTownIds)
+        {
+            if (townsById.ContainsKey(townId))
+                continue;
+
+            var residentTown =
+                _locations.FindTown(townId);
+
+            if (residentTown is not null)
+            {
+                townsById[townId] =
+                    residentTown;
+            }
+        }
+
+        if (townsById.Count == 0)
+        {
+            throw new InvalidDataException(
+                "The historical town catalogue has no current map towns.");
+        }
+
+        var projectedTowns =
+            townsById.Values
+                .OrderBy(
+                    town => town.Town,
+                    StringComparer.CurrentCultureIgnoreCase)
+                .ThenBy(
+                    town => town.County,
+                    StringComparer.CurrentCultureIgnoreCase)
+                .ThenBy(
+                    town => town.Id,
+                    StringComparer.OrdinalIgnoreCase)
+                .Select(town =>
+                {
+                    var point =
+                        _projection.Project(
+                            town.Longitude,
+                            town.Latitude);
+
+                    return new ProjectedTownRecord(
+                        town,
+                        point.X,
+                        point.Y);
+                })
+                .ToArray();
+
         var items =
-            _projectedTowns
+            projectedTowns
                 .Select(projected =>
                 {
                     residentsByTown.TryGetValue(
@@ -279,10 +286,10 @@ public sealed class GameMapDataSource
 
         return new TownMapSnapshot(
             items,
-            _minX,
-            _maxX,
-            _minY,
-            _maxY,
+            projectedTowns.Min(town => town.X),
+            projectedTowns.Max(town => town.X),
+            projectedTowns.Min(town => town.Y),
+            projectedTowns.Max(town => town.Y),
             currentTownId);
     }
 

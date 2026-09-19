@@ -201,6 +201,13 @@ public partial class MainWindow : Window
                     return;
                 }
 
+                if (craftOptions.Count == 1)
+                {
+                    viewModel.QueueCraftProfessionAction(
+                        craftOptions[0].Id);
+                    return;
+                }
+
                 var craftWindow = new PropertySelectionWindow(
                     "Work in a Profession",
                     "Work",
@@ -431,6 +438,7 @@ public partial class MainWindow : Window
     {
         if (_persistenceDialogOpen
             || _genealogyDialogOpen
+            || _mapDialogOpen
             || _familyRelationsDialogOpen
             || _familyInventoryDialogOpen
             || _instructionsDialogOpen
@@ -460,6 +468,22 @@ public partial class MainWindow : Window
         }
 #endif
 
+        if (viewModel.IsMainMenuPromptVisible)
+        {
+            if (e.Key == Key.Escape)
+            {
+                e.Handled = true;
+                viewModel.HideMainMenuPromptCommand.Execute(null);
+            }
+            else if (e.Key == Key.Enter)
+            {
+                e.Handled = true;
+                viewModel.ReturnToMainMenuCommand.Execute(null);
+            }
+
+            return;
+        }
+
         if (viewModel.IsYearSummaryVisible
             && (e.Key == Key.Enter
                 || e.Key == Key.Escape))
@@ -479,8 +503,24 @@ public partial class MainWindow : Window
         }
 
         if (viewModel.IsGameStarted
-            && e.Key == Key.Tab
-            && !viewModel.IsMainMenuPromptVisible)
+            && e.Key == Key.Escape)
+        {
+            e.Handled = true;
+
+            if (viewModel.HasQueuedAction)
+            {
+                viewModel.CancelQueuedActionCommand.Execute(null);
+            }
+            else if (viewModel.ShowMainMenuPromptCommand.CanExecute(null))
+            {
+                viewModel.ShowMainMenuPromptCommand.Execute(null);
+            }
+
+            return;
+        }
+
+        if (viewModel.IsGameStarted
+            && e.Key == Key.Tab)
         {
             e.Handled = true;
 
@@ -490,6 +530,98 @@ public partial class MainWindow : Window
             viewModel.CyclePlayableHousehold(
                 (e.KeyModifiers & KeyModifiers.Shift) != 0);
             return;
+        }
+
+        if (viewModel.IsGameStarted
+            && (e.KeyModifiers
+                & (KeyModifiers.Control
+                    | KeyModifiers.Alt
+                    | KeyModifiers.Meta)) == 0)
+        {
+            switch (e.Key)
+            {
+                case Key.M:
+                    e.Handled = true;
+                    await OpenMapAsync();
+                    return;
+
+                case Key.T:
+                    e.Handled = true;
+                    await OpenGenealogyAsync();
+                    return;
+
+                case Key.R:
+                    if (!viewModel.HasFamilyRelations)
+                        return;
+
+                    e.Handled = true;
+                    await OpenRelationsAsync();
+                    return;
+
+                case Key.P:
+                    e.Handled = true;
+                    viewModel.TryExecuteAvailableActionShortcut(
+                        "ui.manage_properties");
+                    return;
+
+                case Key.F:
+                    e.Handled = true;
+                    viewModel.TryExecuteAvailableActionShortcut(
+                        "ui.manage_finances");
+                    return;
+
+                case Key.E:
+                    e.Handled = true;
+                    viewModel.TryExecuteAvailableActionShortcut(
+                        "education.get_education");
+                    return;
+
+                case Key.I:
+                    e.Handled = true;
+                    viewModel.TryExecuteAvailableActionShortcut(
+                        "ui.self_improvement");
+                    return;
+
+                case Key.S:
+                    e.Handled = true;
+                    viewModel.TryExecuteAvailableActionShortcut(
+                        "relationship.find_spouse");
+                    return;
+
+                case Key.C:
+                    if (!viewModel.ShowAlbumYearSummaryCommand.CanExecute(null))
+                        return;
+
+                    e.Handled = true;
+                    viewModel.ShowAlbumYearSummaryCommand.Execute(null);
+                    return;
+
+                case Key.J:
+                    e.Handled = true;
+                    viewModel.TryExecuteAvailableActionShortcut(
+                        "career.seek_employment",
+                        "career.find_another_job");
+                    return;
+
+                case Key.H:
+                    e.Handled = true;
+                    viewModel.TryExecuteAvailableActionShortcut(
+                        "wellbeing.heal_relative");
+                    return;
+
+                case Key.Q:
+                    e.Handled = true;
+                    viewModel.TryExecuteAvailableActionShortcut(
+                        "career.quit_job",
+                        "craft.stop_occupation");
+                    return;
+
+                case Key.Space:
+                    e.Handled = true;
+                    viewModel.TryExecuteAvailableActionShortcut(
+                        "turn.pass");
+                    return;
+            }
         }
 
         if (e.Key != Key.Enter)
@@ -510,8 +642,7 @@ public partial class MainWindow : Window
             return;
         }
 
-        if (viewModel.IsMainMenuPromptVisible
-            || viewModel.IsStatusMessageVisible
+        if (viewModel.IsStatusMessageVisible
             || !viewModel.NextYearCommand.CanExecute(null))
         {
             return;
@@ -800,6 +931,11 @@ public partial class MainWindow : Window
         object? sender,
         RoutedEventArgs e)
     {
+        await OpenRelationsAsync();
+    }
+
+    private async Task OpenRelationsAsync()
+    {
         if (_familyRelationsDialogOpen
             || DataContext is not MainWindowViewModel viewModel
             || !viewModel.HasFamilyRelations)
@@ -831,6 +967,11 @@ public partial class MainWindow : Window
     private async void OnMapClick(
         object? sender,
         RoutedEventArgs e)
+    {
+        await OpenMapAsync();
+    }
+
+    private async Task OpenMapAsync()
     {
         if (_mapDialogOpen)
             return;
@@ -884,6 +1025,14 @@ public partial class MainWindow : Window
         object? sender,
         RoutedEventArgs e)
     {
+        await OpenGenealogyAsync();
+    }
+
+    private async Task OpenGenealogyAsync()
+    {
+        if (_genealogyDialogOpen)
+            return;
+
         if (GenealogyDataSource is null
             || GenealogySelection is null)
         {

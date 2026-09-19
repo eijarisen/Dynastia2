@@ -6,7 +6,7 @@ public static class CraftRules
 {
     public const int MaximumCrafts = 2;
     public const double PassiveLearningChance = 0.05;
-    public const decimal EducationCost = 3000m;
+    public const decimal EducationCost = 10000m;
 
     private static readonly CraftMasteryRule[] MasteryRules =
     [
@@ -41,7 +41,7 @@ public static class CraftRules
     }
 
     public static double GetExperienceProgressGain(int primaryStat) =>
-        0.50 + 0.15 * Math.Clamp(primaryStat, 1, 5);
+        0.35 + 0.10 * Math.Clamp(primaryStat, 1, 5);
 
     public static double GetNewCraftStudyChance(int primaryStat) =>
         Math.Clamp(0.35 + 0.10 * Math.Clamp(primaryStat, 1, 5), 0.10, 0.95);

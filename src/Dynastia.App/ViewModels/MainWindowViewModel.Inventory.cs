@@ -126,8 +126,8 @@ public sealed partial class MainWindowViewModel
             CanUseFamilyInventoryAction("household.sell_house"),
             CanUseFamilyInventoryAction("farming.buy_farmland"),
             CanUseFamilyInventoryAction("farming.sell_farmland"),
-            _farmingService?.PurchasePrice ?? 10000m,
-            _farmingService?.SalePrice ?? 8000m);
+            _farmingService?.PurchasePrice ?? 20000m,
+            _farmingService?.SalePrice ?? 16000m);
     }
 
     internal bool SetHouseInheritanceHeir(
@@ -230,15 +230,48 @@ public sealed partial class MainWindowViewModel
                     StringComparison.OrdinalIgnoreCase));
     }
 
+    private IPerson? ResolveInventoryIncomePerson(
+        FinanceBreakdownItem line)
+    {
+        if (line.PersonId is Guid personId)
+        {
+            return _gameState.People.FirstOrDefault(
+                candidate => candidate.Id == personId);
+        }
+
+        // Older ledgers did not persist PersonId. Recover it when the old
+        // first-name label identifies exactly one adult in this household so
+        // existing saves can show occupation details immediately.
+        var actor = _succession.ActiveController;
+        if (actor is null || _economyService is null)
+            return null;
+
+        var householdId =
+            _economyService.GetHouseholdId(actor);
+        if (householdId is null)
+            return null;
+
+        var matches = _gameState.People
+            .Where(candidate =>
+                candidate.Age >= 18
+                && candidate.Name.Equals(
+                    line.Label,
+                    StringComparison.OrdinalIgnoreCase)
+                && _economyService.GetHouseholdId(candidate) == householdId)
+            .Take(2)
+            .ToList();
+
+        return matches.Count == 1
+            ? matches[0]
+            : null;
+    }
+
     private FinanceBreakdownItem FormatInventoryIncomeLine(
         FinanceBreakdownItem line)
     {
-        if (line.PersonId is not Guid personId)
-            return line;
-
         var person =
-            _gameState.People.FirstOrDefault(
-                candidate => candidate.Id == personId);
+            ResolveInventoryIncomePerson(
+                line);
 
         if (person is null)
             return line;
@@ -268,7 +301,11 @@ public sealed partial class MainWindowViewModel
                 ? career.JobTitle
                 : career.JobLevel > 0
                     ? $"{career.JobTitle} (Level {career.JobLevel})"
-                    : career.JobTitle;
+                    : career.IsRetired
+                      && career.PeakJobLevel > 0
+                      && !string.IsNullOrWhiteSpace(career.PeakJobTitle)
+                        ? $"Retired — {career.PeakJobTitle} (Level {career.PeakJobLevel})"
+                        : career.JobTitle;
 
         var amount = line.Amount;
         if (_craftService is not null && career.IsSelfEmployed)

@@ -6,10 +6,12 @@ public sealed class PersonRowViewModel
 {
     private readonly IPerson _person;
     private readonly IFamilyService? _familyService;
+    private readonly INationalityService? _nationalityService;
 
     public PersonRowViewModel(
         IPerson person,
         IFamilyService? familyService,
+        INationalityService? nationalityService,
         IHealthService? healthService,
         IEconomyService? economyService,
         ICareerService? careerService,
@@ -19,6 +21,7 @@ public sealed class PersonRowViewModel
     {
         _person = person;
         _familyService = familyService;
+        _nationalityService = nationalityService;
 
         // Family reads also run small compatibility reconciliation for
         // legacy founding-parent metadata. Do this before binding any
@@ -119,6 +122,26 @@ public sealed class PersonRowViewModel
 
     public string AgeText => $"Age: {_person.Age}";
 
+    public bool ShowLearningDetails =>
+        _person.Age >= 6;
+
+    public string NationalityText
+    {
+        get
+        {
+            if (_nationalityService is null)
+                return string.Empty;
+
+            var nationalityId =
+                _nationalityService.GetNationality(
+                    _person);
+
+            return $"Nationality: " +
+                _nationalityService.GetDisplayName(
+                    nationalityId);
+        }
+    }
+
     public string PersonalityText =>
         PersonalityInfluence.GetDisplayName(
             _person)
@@ -171,6 +194,7 @@ public sealed class PersonRowViewModel
                 _familyService is null
                     ? _person.MaidenName
                     : _familyService.FormatSurname(
+                        _person,
                         _person.MaidenName,
                         Sex.Female);
 

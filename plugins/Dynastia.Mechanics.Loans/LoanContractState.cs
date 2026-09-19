@@ -18,6 +18,8 @@ public sealed class LoanContractState
     public bool IsExternalReceivable { get; set; }
     public string? ExternalBorrowerName { get; set; }
     public string? ExternalCreditorName { get; set; }
+    public string? ExternalCounterpartyTownId { get; set; }
+    public string? ExternalCounterpartyNationalityId { get; set; }
     public Guid? ServicingHouseholdId { get; set; }
     public List<LoanCreditorShareState> CreditorShares { get; set; } = [];
 }

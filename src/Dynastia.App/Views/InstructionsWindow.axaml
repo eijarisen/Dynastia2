@@ -68,7 +68,7 @@
 
             <TextBlock
                 HorizontalAlignment="Center"
-                FontFamily="avares://Dynastia.App/Assets/Fonts#UnifrakturCook"
+                FontFamily="avares://Dynastia.App/Assets/Fonts#Pirata One"
                 FontSize="42"
                 Foreground="#2F1D0E"
                 Text="Instructions" />

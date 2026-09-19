@@ -11,7 +11,8 @@ public sealed partial class StandardLoanService :
     private readonly LoanEraCatalog _loanEras;
     private readonly IGameRandom _random;
     private readonly IHistoricalNameService _historicalNames;
-    private readonly IReadOnlyList<WeightedStringEntry> _externalSurnames;
+    private readonly ILocationService _locations;
+    private readonly IOutsiderIdentityService _outsiderIdentities;
     private readonly IAppearanceService _appearance;
 
     public StandardLoanService(
@@ -21,7 +22,8 @@ public sealed partial class StandardLoanService :
         LoanEraCatalog loanEras,
         IGameRandom random,
         IHistoricalNameService historicalNames,
-        IReadOnlyList<WeightedStringEntry> externalSurnames,
+        ILocationService locations,
+        IOutsiderIdentityService outsiderIdentities,
         IAppearanceService appearance)
     {
         _gameState = gameState;
@@ -30,7 +32,8 @@ public sealed partial class StandardLoanService :
         _loanEras = loanEras;
         _random = random;
         _historicalNames = historicalNames;
-        _externalSurnames = externalSurnames;
+        _locations = locations;
+        _outsiderIdentities = outsiderIdentities;
         _appearance = appearance;
     }
 
@@ -84,32 +87,25 @@ public sealed partial class StandardLoanService :
 
             var principal = principalThousands * LoanTermsCalculator.PrincipalStep;
             var terms = CalculateTerms(principal, duration);
-            var sex = _gameState.Year < 1918
-                ? Sex.Male
-                : random.Chance(0.5)
-                    ? Sex.Male
-                    : Sex.Female;
-            var age = random.NextInt(28, 64);
-            var firstName = _historicalNames.GetRandomFirstName(
-                sex,
-                _gameState.Year - age,
+            var counterparty = GenerateExternalCounterparty(
+                householdRepresentative,
+                _gameState.Year,
+                seed,
                 random);
-            var surname = SelectWeighted(_externalSurnames, random);
-            var name = $"{firstName} {_family.FormatSurname(surname, sex)}";
-            var appearance = _appearance.GenerateCandidateAppearance(seed, sex);
-            var portrait = _appearance.GetPortrait(
-                appearance,
-                sex,
-                age,
-                seed);
 
             offers.Add(new LoanOfferInfo(
                 seed.ToString("N"),
-                name,
-                sex,
-                age,
-                portrait,
-                terms));
+                counterparty.Name,
+                counterparty.Sex,
+                counterparty.Age,
+                counterparty.PortraitEmoji,
+                terms)
+            {
+                OriginTownId = counterparty.OriginTown.Id,
+                OriginTownDisplayName = counterparty.OriginTown.DisplayName,
+                NationalityId = counterparty.NationalityId,
+                DisplayNationality = counterparty.DisplayNationality
+            });
         }
 
         return offers;
@@ -306,6 +302,130 @@ public sealed partial class StandardLoanService :
     }
 
 
+    internal GeneratedLoanCounterparty GenerateExternalCounterparty(
+        IPerson householdRepresentative,
+        int year,
+        Guid seed)
+    {
+        return GenerateExternalCounterparty(
+            householdRepresentative,
+            year,
+            seed,
+            new LoanOfferRandom(seed));
+    }
+
+    private GeneratedLoanCounterparty GenerateExternalCounterparty(
+        IPerson householdRepresentative,
+        int year,
+        Guid seed,
+        IGameRandom random)
+    {
+        var homeTown =
+            _locations.GetLocation(
+                householdRepresentative)
+            .HomeTown;
+        var originTown =
+            ChooseExternalOrigin(
+                homeTown,
+                _locations.GetTowns(),
+                random);
+
+        var sex = year < 1918
+            ? Sex.Male
+            : random.Chance(0.5)
+                ? Sex.Male
+                : Sex.Female;
+        var age = random.NextInt(28, 64);
+        var identity =
+            _outsiderIdentities.Generate(
+                originTown,
+                sex,
+                year - age,
+                year,
+                random);
+        var displaySurname =
+            _historicalNames.FormatSurname(
+                identity.Surname,
+                sex,
+                identity.NameCultureId);
+        var name =
+            $"{identity.FirstName} {displaySurname}";
+        var appearance =
+            _appearance.GenerateCandidateAppearance(
+                seed,
+                sex);
+        var portrait =
+            _appearance.GetPortrait(
+                appearance,
+                sex,
+                age,
+                seed);
+
+        return new GeneratedLoanCounterparty(
+            name,
+            sex,
+            age,
+            portrait,
+            originTown,
+            identity.NationalityId,
+            identity.DisplayNationality);
+    }
+
+    private static TownInfo ChooseExternalOrigin(
+        TownInfo homeTown,
+        IReadOnlyList<TownInfo> towns,
+        IGameRandom random)
+    {
+        if (towns.Count == 0)
+        {
+            throw new InvalidOperationException(
+                "External loan generation requires at least one current destination town.");
+        }
+
+        var currentHome =
+            towns.FirstOrDefault(town =>
+                town.Id.Equals(
+                    homeTown.Id,
+                    StringComparison.OrdinalIgnoreCase));
+
+        if (currentHome is not null
+            && random.Chance(0.55))
+        {
+            return currentHome;
+        }
+
+        var candidates =
+            towns.Where(town =>
+                    currentHome is null
+                    || !town.Id.Equals(
+                        currentHome.Id,
+                        StringComparison.OrdinalIgnoreCase))
+                .ToArray();
+
+        if (candidates.Length == 0)
+            return currentHome ?? towns[0];
+
+        var weights = candidates
+            .Select(town =>
+                Math.Sqrt(
+                    Math.Max(1, town.Population)))
+            .ToArray();
+        var total = weights.Sum();
+        var roll = random.NextDouble() * total;
+
+        for (var index = 0;
+            index < candidates.Length;
+            index++)
+        {
+            if (roll < weights[index])
+                return candidates[index];
+
+            roll -= weights[index];
+        }
+
+        return candidates[^1];
+    }
+
     private static Guid CreateOfferSeed(
         Guid householdRepresentativeId,
         int year,
@@ -324,23 +444,14 @@ public sealed partial class StandardLoanService :
         return new Guid(bytes);
     }
 
-    private static string SelectWeighted(
-        IReadOnlyList<WeightedStringEntry> entries,
-        IGameRandom random)
-    {
-        var totalWeight = entries.Sum(entry => (double)entry.Weight);
-        var roll = random.NextDouble() * totalWeight;
-
-        foreach (var entry in entries)
-        {
-            if (roll < entry.Weight)
-                return entry.Value;
-
-            roll -= entry.Weight;
-        }
-
-        return entries[^1].Value;
-    }
+    internal sealed record GeneratedLoanCounterparty(
+        string Name,
+        Sex Sex,
+        int Age,
+        string PortraitEmoji,
+        TownInfo OriginTown,
+        string NationalityId,
+        string DisplayNationality);
 
     private sealed class LoanOfferRandom : IGameRandom
     {

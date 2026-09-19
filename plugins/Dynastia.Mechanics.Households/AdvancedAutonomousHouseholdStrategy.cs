@@ -635,7 +635,7 @@ internal sealed class AdvancedAutonomousHouseholdStrategy :
             return null;
 
         if ((snapshot.HasImmediateMedicalDanger || snapshot.HasSeriousMedicalDanger)
-            && (snapshot.Finance?.Wealth ?? 0) < 2000m)
+            && (snapshot.Finance?.Wealth ?? 0) < 3000m)
         {
             return WithScore(option, AutonomyCategory.Survival,
                 AutonomousPriorityBands.EmergencySurvival, 97);
@@ -666,7 +666,7 @@ internal sealed class AdvancedAutonomousHouseholdStrategy :
         var remoteCount = farm.TotalParcelCount - farm.LocalParcelCount;
 
         if ((snapshot.HasImmediateMedicalDanger || snapshot.HasSeriousMedicalDanger)
-            && wealth < 2000m)
+            && wealth < 3000m)
         {
             return WithScore(option, AutonomyCategory.Survival,
                 AutonomousPriorityBands.EmergencySurvival, 101);
@@ -696,7 +696,7 @@ internal sealed class AdvancedAutonomousHouseholdStrategy :
             return null;
 
         if ((snapshot.HasImmediateMedicalDanger || snapshot.HasSeriousMedicalDanger)
-            && (snapshot.Finance?.Wealth ?? 0) < 2000m)
+            && (snapshot.Finance?.Wealth ?? 0) < 3000m)
         {
             return WithScore(option, AutonomyCategory.Survival,
                 AutonomousPriorityBands.EmergencySurvival, 62);
@@ -838,7 +838,7 @@ internal sealed class AdvancedAutonomousHouseholdStrategy :
         var willingnessBonus = (option.RequestWillingness ?? 0) * 20;
 
         if ((snapshot.HasImmediateMedicalDanger || snapshot.HasSeriousMedicalDanger)
-            && (snapshot.Finance?.Wealth ?? 0) < 2000m)
+            && (snapshot.Finance?.Wealth ?? 0) < 3000m)
         {
             return WithScore(option, AutonomyCategory.Survival,
                 AutonomousPriorityBands.EmergencySurvival,
@@ -1831,7 +1831,7 @@ internal sealed class AdvancedAutonomousHouseholdStrategy :
 
         var wealth = snapshot.Finance?.Wealth ?? 0m;
         var shortfall = Math.Max(0m, snapshot.ExpectedExpenses - snapshot.ProjectedIncome - wealth);
-        var need = Math.Max(1000m, shortfall + ((snapshot.HasImmediateMedicalDanger || snapshot.HasSeriousMedicalDanger) ? 2000m : 0m));
+        var need = Math.Max(1000m, shortfall + ((snapshot.HasImmediateMedicalDanger || snapshot.HasSeriousMedicalDanger) ? 3000m : 0m));
         var principal = Math.Clamp(
             Math.Ceiling(need / 1000m) * 1000m,
             1000m,

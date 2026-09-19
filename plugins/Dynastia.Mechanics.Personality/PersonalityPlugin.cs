@@ -5,7 +5,7 @@ namespace Dynastia.Mechanics.Personality;
 public sealed class PersonalityPlugin :
     IGamePlugin
 {
-    private const decimal ReligiousStudyCost = 2000m;
+    private const decimal ReligiousStudyCost = 3000m;
 
     public void Initialize(
         IGamePluginContext context)
@@ -136,7 +136,7 @@ public sealed class PersonalityPlugin :
             {
                 Id = "personality.religious_study",
                 Label = "Religious Study",
-                Description = "Spend the year in deliberate religious or moral reflection for 2,000 zł. About a 50% chance to improve Morals; a Good person instead gains protection against the next downward Morals shift.",
+                Description = "Spend the year in deliberate religious or moral reflection for 3,000 zł. About a 50% chance to improve Morals; a Good person instead gains protection against the next downward Morals shift.",
                 Mode = ActionExecutionMode.Queued,
                 QueuePhase = YearPhase.MoralsReflection,
                 IsAvailable = actionContext =>

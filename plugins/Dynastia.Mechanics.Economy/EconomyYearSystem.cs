@@ -63,7 +63,8 @@ public sealed class EconomyYearSystem : IYearSystem
                 new LedgerLineState
                 {
                     Label = line.Label,
-                    Amount = line.Amount
+                    Amount = line.Amount,
+                    PersonId = line.PersonId
                 });
         }
 
@@ -74,7 +75,8 @@ public sealed class EconomyYearSystem : IYearSystem
                 new LedgerLineState
                 {
                     Label = line.Label,
-                    Amount = line.Amount
+                    Amount = line.Amount,
+                    PersonId = line.PersonId
                 });
         }
 

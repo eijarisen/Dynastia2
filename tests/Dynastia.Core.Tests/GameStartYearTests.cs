@@ -33,7 +33,10 @@ public sealed class GameStartYearTests
     [InlineData(1744, 1740)]
     [InlineData(1746, 1750)]
     [InlineData(1900, 1900)]
-    [InlineData(1910, 1900)]
+    [InlineData(1910, 1910)]
+    [InlineData(1996, 2000)]
+    [InlineData(2000, 2000)]
+    [InlineData(2010, 2000)]
     public void StartYearSelection_ClampsAndSnapsToDecades(
         int requested,
         int expected)

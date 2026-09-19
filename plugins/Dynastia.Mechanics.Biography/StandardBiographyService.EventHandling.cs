@@ -828,6 +828,7 @@ public sealed partial class StandardBiographyService
         {
             return $"{subject.Name} " +
                 _family.FormatSurname(
+                    subject,
                     subject.MaidenName!,
                     Sex.Female);
         }

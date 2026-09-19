@@ -12,6 +12,7 @@ public sealed partial class MainWindowViewModel : ViewModelBase
     private readonly ISelectionService _selectionService;
     private readonly IStatsService? _statsService;
     private readonly IFamilyService? _familyService;
+    private readonly INationalityService? _nationalityService;
     private readonly IHealthService? _healthService;
     private readonly IStressService? _stressService;
     private readonly IEconomyService? _economyService;
@@ -90,6 +91,7 @@ public sealed partial class MainWindowViewModel : ViewModelBase
         ISelectionService selectionService,
         IStatsService? statsService,
         IFamilyService? familyService,
+        INationalityService? nationalityService,
         IHealthService? healthService,
         IStressService? stressService,
         IEconomyService? economyService,
@@ -126,6 +128,7 @@ public sealed partial class MainWindowViewModel : ViewModelBase
         _selectionService = selectionService;
         _statsService = statsService;
         _familyService = familyService;
+        _nationalityService = nationalityService;
         _healthService = healthService;
         _stressService = stressService;
         _economyService = economyService;

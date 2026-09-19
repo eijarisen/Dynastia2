@@ -1,0 +1,20 @@
+{
+  "townBundle": {
+    "sourceFile": "Towns.zip / Dynastia_Towns_1.0 (1).json",
+    "sha256": "5a060c514d908c107b9f6269d84c98857dbde7424eda4fd4eb7209d3561031e8",
+    "manifestDataVersion": "1.0.0",
+    "manifestSchemaVersion": "1.0.0",
+    "note": "The supplied README labels the implementation edition 1.1 while the embedded bundle manifest reports dataVersion 1.0.0. Integration pins the exact bundle hash above and treats its contents as authoritative."
+  },
+  "namePackage": {
+    "sourceFile": "Dynastia_Nationality_Names_v4(1).zip",
+    "sha256": "068b1c60cdd604787855c5fd1431cda9de0b544008a2596c8be2a560fe341def",
+    "externalCultures": 24,
+    "note": "Polish name data remains the existing Dynastia data; the supplied package contributes 24 non-Polish cultures."
+  },
+  "nationalityModel": {
+    "sourcePackage": "Dynastia_Nationality_Rework_Expanded_Implementation.zip",
+    "nationalities": 25,
+    "regions": 27
+  }
+}

@@ -8,6 +8,12 @@ public sealed partial class MainWindowViewModel
     private const string CraftProfessionUiActionId =
         "ui.craft_profession";
 
+    private const decimal StandardEducationUiCost =
+        5000m;
+
+    private const decimal CraftEducationUiCost =
+        10000m;
+
     private static GameActionDefinition CreateCraftProfessionPresentationAction() =>
         new()
         {
@@ -94,9 +100,15 @@ public sealed partial class MainWindowViewModel
 
     public IReadOnlyList<PropertySelectionOption> GetEducationSelectionOptions()
     {
+        var actor = _succession.ActiveController;
         var target = FindSelectedPerson();
-        if (target is null || _educationService is null)
+        if (actor is null || target is null || _educationService is null)
             return Array.Empty<PropertySelectionOption>();
+
+        var canAffordStandard =
+            _economyService?.CanAfford(actor, StandardEducationUiCost) == true;
+        var canAffordCraft =
+            _economyService?.CanAfford(actor, CraftEducationUiCost) == true;
 
         var options = new List<PropertySelectionOption>
         {
@@ -105,9 +117,10 @@ public sealed partial class MainWindowViewModel
                 "🎓 Standard Education",
                 $"Current formal Education: Level {_educationService.GetEducationLevel(target)}",
                 string.Empty,
-                "3,000 zł",
+                $"{StandardEducationUiCost:N0} zł",
                 "standard education formal study",
-                _educationService.GetEducationLevel(target) < 5)
+                _educationService.GetEducationLevel(target) < 5
+                    && canAffordStandard)
         };
 
         if (_craftService is null)
@@ -132,8 +145,9 @@ public sealed partial class MainWindowViewModel
                 heading,
                 secondary,
                 string.Empty,
-                "3,000 zł",
-                $"{craft.CraftName} craft education {craft.CurrentMasteryName} {craft.PrimaryStat}"));
+                $"{CraftEducationUiCost:N0} zł",
+                $"{craft.CraftName} craft education {craft.CurrentMasteryName} {craft.PrimaryStat}",
+                canAffordCraft));
         }
 
         return options;

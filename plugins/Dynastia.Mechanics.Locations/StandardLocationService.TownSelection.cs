@@ -7,13 +7,24 @@ public sealed partial class StandardLocationService
     private TownInfo ChooseSpouseBirthplace(
         TownInfo householdTown)
     {
+        var towns =
+            GetCurrentTownsRequired();
+
+        var currentHome =
+            towns.FirstOrDefault(
+                candidate =>
+                    candidate.Id.Equals(
+                        householdTown.Id,
+                        StringComparison.OrdinalIgnoreCase));
+
         var roll =
             _random.NextDouble();
 
-        if (roll
-            < SpouseSameTownChance)
+        if (currentHome is not null
+            && roll
+                < SpouseSameTownChance)
         {
-            return householdTown;
+            return currentHome;
         }
 
         if (roll
@@ -21,7 +32,7 @@ public sealed partial class StandardLocationService
                 + SpouseNearbyChance)
         {
             var nearby =
-                _towns
+                towns
                     .Where(
                         candidate =>
                             !IsSameTown(
@@ -48,9 +59,10 @@ public sealed partial class StandardLocationService
         }
 
         // The remaining branch is intentionally small (8%) in normal
-        // circumstances, but also acts as a safe fallback when no nearby
-        // town exists.
-        return ChooseRandomTown();
+        // circumstances, but also acts as a safe fallback when the household
+        // town is no longer a selectable destination or no nearby town exists.
+        return ChooseRandomTown(
+            towns);
     }
 
     private TownInfo ChooseChildBirthplace(
@@ -59,11 +71,13 @@ public sealed partial class StandardLocationService
         if (_random.NextDouble()
             < ChildSameTownChance)
         {
+            // Existing households keep their permanent PlaceId even if that
+            // settlement later ceases to be a selectable destination.
             return householdTown;
         }
 
         var largerNearby =
-            _towns
+            GetCurrentTownsRequired()
                 .Where(
                     candidate =>
                         candidate.Population
@@ -120,6 +134,9 @@ public sealed partial class StandardLocationService
 
     private TownInfo ChooseStartingTown()
     {
+        var towns =
+            GetCurrentTownsRequired();
+
         var roll =
             _random.NextDouble();
 
@@ -133,7 +150,7 @@ public sealed partial class StandardLocationService
                         : SettlementClass.MajorCity;
 
         var candidates =
-            _towns
+            towns
                 .Where(
                     town =>
                         town.SettlementClass
@@ -143,7 +160,7 @@ public sealed partial class StandardLocationService
         if (candidates.Count == 0)
         {
             candidates =
-                _towns.ToList();
+                towns.ToList();
         }
 
         // Soft population weighting avoids both a uniform list roll
@@ -157,17 +174,28 @@ public sealed partial class StandardLocationService
                         town.Population)));
     }
 
-    private TownInfo ChooseRandomTown()
+    private TownInfo ChooseRandomTown() =>
+        ChooseRandomTown(
+            GetCurrentTownsRequired());
+
+    private TownInfo ChooseRandomTown(
+        IReadOnlyList<TownInfo> towns)
     {
-        return _towns[
+        return towns[
             _random.NextInt(
                 0,
-                _towns.Count - 1)];
+                towns.Count - 1)];
     }
 
     private TownInfo ChoosePopulationWeighted(
         IReadOnlyList<TownInfo> towns)
     {
+        if (towns.Count == 0)
+        {
+            throw new InvalidOperationException(
+                "Cannot choose a town from an empty historical destination list.");
+        }
+
         return ChooseWeighted(
             towns,
             town =>
@@ -180,6 +208,12 @@ public sealed partial class StandardLocationService
         IReadOnlyList<T> items,
         Func<T, double> weightSelector)
     {
+        if (items.Count == 0)
+        {
+            throw new InvalidOperationException(
+                "Cannot choose from an empty weighted list.");
+        }
+
         var weighted =
             items
                 .Select(
@@ -228,111 +262,4 @@ public sealed partial class StandardLocationService
 
         return weighted[^1].Item;
     }
-
-    private static IReadOnlyList<TownInfo>
-        ParseTowns(
-            string text)
-    {
-        var result =
-            new List<TownInfo>();
-
-        var lines =
-            text.Split(
-                ['\r', '\n'],
-                StringSplitOptions
-                    .RemoveEmptyEntries);
-
-        const string expectedHeader =
-            "TownId,Town,County,Longitude,Latitude,Population,RegionId";
-
-        if (lines.Length < 2
-            || !lines[0].TrimStart('\uFEFF').Equals(
-                expectedHeader,
-                StringComparison.Ordinal))
-        {
-            throw CatalogValidation.UnexpectedHeader(
-                TownsPath,
-                lines.Length == 0 ? null : lines[0].TrimStart('\uFEFF'),
-                expectedHeader);
-        }
-
-        var ids = new Dictionary<string, int>(
-            StringComparer.OrdinalIgnoreCase);
-
-        for (var index = 1;
-            index < lines.Length;
-            index++)
-        {
-            var fields =
-                lines[index]
-                    .Split(',');
-            var row = index + 1;
-
-            if (fields.Length != 7)
-            {
-                throw CatalogValidation.FieldCount(
-                    TownsPath,
-                    row,
-                    fields.Length,
-                    7);
-            }
-
-            var townId = fields[0].Trim();
-            var regionId = fields[6].Trim();
-
-            if (townId.Length == 0)
-            {
-                throw CatalogValidation.Error(
-                    TownsPath,
-                    "a non-empty town ID",
-                    row,
-                    field: "TownId",
-                    value: townId);
-            }
-
-            if (!ids.TryAdd(townId, row))
-            {
-                throw CatalogValidation.Error(
-                    TownsPath,
-                    $"a unique TownId; first defined at row {ids[townId]}",
-                    row,
-                    townId,
-                    "TownId",
-                    townId);
-            }
-
-            if (regionId.Length == 0)
-            {
-                throw CatalogValidation.Error(
-                    TownsPath,
-                    "a non-empty region ID",
-                    row,
-                    townId,
-                    "RegionId",
-                    regionId);
-            }
-
-            var longitude = CatalogValidation.ParseDouble(
-                TownsPath, row, "Longitude", fields[3]);
-            var latitude = CatalogValidation.ParseDouble(
-                TownsPath, row, "Latitude", fields[4]);
-            var population = CatalogValidation.ParseInt(
-                TownsPath, row, "Population", fields[5]);
-
-            result.Add(
-                new TownInfo(
-                    fields[1],
-                    fields[2],
-                    longitude,
-                    latitude,
-                    population)
-                {
-                    Id = townId,
-                    RegionId = regionId
-                });
-        }
-
-        return result;
-    }
-
 }

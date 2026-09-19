@@ -169,8 +169,9 @@ public sealed partial class StandardCareerService
             definition?.BaseSalary
             ?? DefaultBaseIncomePerLevel;
 
-        return baseSalary
-            * career.JobLevel;
+        return CareerBalanceRules.CalculateAnnualSalary(
+            baseSalary,
+            career.JobLevel);
     }
 
     private string ResolveJobTitle(

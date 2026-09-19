@@ -4,13 +4,6 @@ namespace Dynastia.Mechanics.Relationships;
 
 public sealed partial class RelationshipsPlugin : IGamePlugin
 {
-    private const string SurnamesPath =
-        "Names/polish_surnames.csv";
-
-    private static readonly double[]
-        ArrangedMarriageChanceByAppeal =
-            [0, 0.25, 0.35, 0.50, 0.60, 0.80];
-
     public void Initialize(
         IGamePluginContext context)
     {
@@ -89,6 +82,16 @@ public sealed partial class RelationshipsPlugin : IGamePlugin
             ?? throw new InvalidOperationException(
                 "Historical name service is unavailable.");
 
+        var nationalities =
+            context.GetService<INationalityService>()
+            ?? throw new InvalidOperationException(
+                "Nationality service is unavailable.");
+
+        var outsiderIdentities =
+            context.GetService<IOutsiderIdentityService>()
+            ?? throw new InvalidOperationException(
+                "Outsider identity service is unavailable.");
+
         var random =
             context.GetService<IGameRandom>()
             ?? throw new InvalidOperationException(
@@ -135,7 +138,8 @@ public sealed partial class RelationshipsPlugin : IGamePlugin
                 appearance,
                 () => context.GetService<IHobbyService>(),
                 locations,
-                data,
+                nationalities,
+                outsiderIdentities,
                 historicalNames,
                 calendar,
                 random,
@@ -213,17 +217,6 @@ public sealed partial class RelationshipsPlugin : IGamePlugin
                         family,
                         households,
                         partnerSearch,
-                        locations,
-                        stats,
-                        health,
-                        education,
-                        career,
-                        data,
-                        historicalNames,
-                        random,
-                        calendar,
-                        events,
-                        relationshipEras,
                         RequireHistoricalVariant(
                             historical,
                             "relationship.marry_off_daughter",
@@ -271,7 +264,9 @@ public sealed partial class RelationshipsPlugin : IGamePlugin
                 family,
                 stats,
                 career,
-                data,
+                locations,
+                nationalities,
+                outsiderIdentities,
                 historicalNames,
                 random,
                 calendar,
@@ -293,7 +288,8 @@ public sealed partial class RelationshipsPlugin : IGamePlugin
                 education,
                 career,
                 locations,
-                data,
+                nationalities,
+                outsiderIdentities,
                 historicalNames,
                 random,
                 calendar,
@@ -397,17 +393,6 @@ public sealed partial class RelationshipsPlugin : IGamePlugin
             IFamilyService family,
             IHouseholdService households,
             IPartnerSearchService partnerSearch,
-            ILocationService locations,
-            IStatsService stats,
-            IHealthService health,
-            IEducationService education,
-            ICareerService career,
-            IGameDataService data,
-            IHistoricalNameService historicalNames,
-            IGameRandom random,
-            IGameCalendar calendar,
-            IGameEventBus events,
-            IRelationshipEraService relationshipEras,
             HistoricalActionVariant variant)
     {
         return new GameActionDefinition
@@ -459,93 +444,17 @@ public sealed partial class RelationshipsPlugin : IGamePlugin
                             "The selected relative is no longer eligible for an arranged marriage.");
                     }
 
-                    if (actionContext.Parameters.ContainsKey(
-                        "partner.candidateKey"))
+                    if (!actionContext.Parameters.ContainsKey(
+                            "partner.candidateKey"))
                     {
-                        return partnerSearch.ResolveArrangedMarriage(
-                            actionContext,
-                            variant);
-                    }
-
-                    var appeal =
-                        stats.GetStats(
-                            daughter)
-                        .First(
-                            stat =>
-                                stat.Id.Equals(
-                                    "appeal",
-                                    StringComparison.OrdinalIgnoreCase))
-                        .Value;
-
-                    var chance =
-                        relationshipEras
-                            .GetRule(
-                                actionContext.GameState.Year)
-                            .ApplyArrangedMarriageChance(
-                                ArrangedMarriageChanceByAppeal[
-                                    Math.Clamp(
-                                        appeal,
-                                        1,
-                                        5)]);
-
-                    if (random.NextDouble()
-                        >= chance)
-                    {
-                        events.Publish(
-                            new GameEvent
-                            {
-                                Type =
-                                    "relationship.marry_off_failed",
-
-                                Year =
-                                    actionContext.GameState.Year,
-
-                                SubjectId =
-                                    father.Id,
-
-                                RelatedPersonIds =
-                                    [daughter.Id],
-
-                                Data =
-                                    new Dictionary<string, string>
-                                    {
-                                        ["appeal"] =
-                                            appeal.ToString(),
-
-                                        ["chance"] =
-                                            chance.ToString(
-                                                "0.00"),
-
-                                        ["text"] =
-                                            $"{family.GetDisplayName(father)} helped their relative look for a spouse, " +
-                                            $"but no suitable match was found for {family.GetDisplayName(daughter)}."
-                                    }
-                            });
-
                         return new GameActionResult(
-                            true);
+                            false,
+                            "No arranged-marriage candidate was selected.");
                     }
 
-                    CreateArrangedHusband(
-                        actionContext.GameState,
-                        father,
-                        daughter,
-                        family,
-                        locations,
-                        stats,
-                        health,
-                        education,
-                        career,
-                        data,
-                        historicalNames,
-                        random,
-                        calendar,
-                        events,
-                        chance,
+                    return partnerSearch.ResolveArrangedMarriage(
+                        actionContext,
                         variant);
-
-                    return new GameActionResult(
-                        true);
                 }
         };
     }

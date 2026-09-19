@@ -29,6 +29,7 @@
     <ProjectReference Include="..\..\plugins\Dynastia.Mechanics.Farming\Dynastia.Mechanics.Farming.csproj" />
     <ProjectReference Include="..\..\plugins\Dynastia.Mechanics.FamilyRelations\Dynastia.Mechanics.FamilyRelations.csproj" />
     <ProjectReference Include="..\..\plugins\Dynastia.Mechanics.Loans\Dynastia.Mechanics.Loans.csproj" />
+    <ProjectReference Include="..\..\plugins\Dynastia.Mechanics.Locations\Dynastia.Mechanics.Locations.csproj" />
     <ProjectReference Include="..\..\plugins\Dynastia.Mechanics.Health\Dynastia.Mechanics.Health.csproj" />
     <ProjectReference Include="..\..\plugins\Dynastia.Mechanics.Households\Dynastia.Mechanics.Households.csproj" />
     <ProjectReference Include="..\..\plugins\Dynastia.Mechanics.Hobbies\Dynastia.Mechanics.Hobbies.csproj" />

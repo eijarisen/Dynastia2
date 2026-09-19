@@ -5,7 +5,9 @@ namespace Dynastia.App.ViewModels;
 public sealed record LoanSelectionResult(
     decimal Principal,
     int DurationYears,
-    string CounterpartyName);
+    string CounterpartyName,
+    string CounterpartyTownId,
+    string CounterpartyNationalityId);
 
 public sealed class LoanOfferCardViewModel
 {
@@ -27,6 +29,9 @@ public sealed class LoanOfferCardViewModel
 
     public string RoleText =>
         IsGivingLoan ? "Borrower" : "Lender";
+
+    public string OriginNationalityText =>
+        $"Origin: {Offer.OriginTownDisplayName} · Nationality: {Offer.DisplayNationality}";
 
     public string AmountText =>
         $"Amount: {Offer.Terms.Principal:N0} zł";
@@ -55,5 +60,7 @@ public sealed class LoanOfferCardViewModel
         new(
             Offer.Terms.Principal,
             Offer.Terms.DurationYears,
-            Offer.CounterpartyName);
+            Offer.CounterpartyName,
+            Offer.OriginTownId,
+            Offer.NationalityId);
 }

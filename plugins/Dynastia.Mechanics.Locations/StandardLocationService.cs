@@ -1,4 +1,3 @@
-using System.Globalization;
 using Dynastia.Contracts;
 
 namespace Dynastia.Mechanics.Locations;
@@ -7,9 +6,6 @@ public sealed partial class StandardLocationService :
     ILocationService,
     IExistingLocationService
 {
-    private const string TownsPath =
-        "Towns/towns.csv";
-
     private const double SpouseSameTownChance =
         0.62;
 
@@ -39,22 +35,14 @@ public sealed partial class StandardLocationService :
 
     private readonly IGameState _gameState;
     private readonly IFamilyService _family;
+    private readonly IHistoricalTownCatalog _catalog;
     private readonly IGameRandom _random;
     private readonly IGameEventBus _events;
-
-    private readonly IReadOnlyList<TownInfo>
-        _towns;
-
-    private readonly IReadOnlyDictionary<string, TownInfo>
-        _townsById;
-
-    private readonly IReadOnlyDictionary<string, TownInfo>
-        _townsByLegacyKey;
 
     public StandardLocationService(
         IGameState gameState,
         IFamilyService family,
-        IGameDataService data,
+        IHistoricalTownCatalog catalog,
         IGameRandom random,
         IGameEventBus events)
     {
@@ -63,6 +51,9 @@ public sealed partial class StandardLocationService :
 
         _family =
             family;
+
+        _catalog =
+            catalog;
 
         _random =
             random;
@@ -84,31 +75,11 @@ public sealed partial class StandardLocationService :
                 "Spouse location probabilities must total 1.");
         }
 
-        _towns =
-            ParseTowns(
-                data.ReadText(
-                    TownsPath));
-
-        if (_towns.Count == 0)
+        if (GetTowns().Count == 0)
         {
-            throw CatalogValidation.Error(
-                TownsPath,
-                "at least one town",
-                field: "Rows",
-                value: 0);
+            throw new InvalidOperationException(
+                $"Historical town catalogue has no destinations for {_gameState.Year}.");
         }
-
-        _townsById =
-            _towns.ToDictionary(
-                town => town.Id,
-                StringComparer.OrdinalIgnoreCase);
-
-        _townsByLegacyKey =
-            _towns.ToDictionary(
-                town => LegacyTownKey(
-                    town.Town,
-                    town.County),
-                StringComparer.OrdinalIgnoreCase);
 
         _events.EventPublished +=
             OnEventPublished;
@@ -124,8 +95,9 @@ public sealed partial class StandardLocationService :
             person.Components.Get<
                 LocationComponent>();
 
-        if (component?.Birthplace is null
-            || component.HomeTown is null)
+        if (component is null
+            || string.IsNullOrWhiteSpace(component.BirthplaceId)
+            || string.IsNullOrWhiteSpace(component.HomeTownId))
         {
             throw new InvalidOperationException(
                 $"Location state is missing for " +
@@ -133,13 +105,36 @@ public sealed partial class StandardLocationService :
                 "Run state reconciliation before reading locations.");
         }
 
+        var birthplace =
+            ResolveTown(
+                component.BirthplaceId,
+                GetBirthYear(person),
+                "birthplace");
+
+        var homeTown =
+            ResolveTown(
+                component.HomeTownId,
+                _gameState.Year,
+                "home town");
+
+        TownInfo? deathTown = null;
+
+        if (!string.IsNullOrWhiteSpace(
+                component.DeathTownId))
+        {
+            deathTown =
+                ResolveTown(
+                    component.DeathTownId,
+                    person.DeathDate?.Year
+                        ?? _gameState.Year,
+                    "death town");
+        }
+
         return new LocationSnapshot(
-            component.Birthplace,
-            component.HomeTown,
-            component.DeathTown);
+            birthplace,
+            homeTown,
+            deathTown);
     }
-
-
 
     public LocationSnapshot? GetExistingLocation(
         IPerson person)
@@ -149,30 +144,55 @@ public sealed partial class StandardLocationService :
         var component =
             person.Components.Get<LocationComponent>();
 
-        if (component?.Birthplace is null
-            || component.HomeTown is null)
+        if (component is null
+            || string.IsNullOrWhiteSpace(component.BirthplaceId)
+            || string.IsNullOrWhiteSpace(component.HomeTownId))
         {
             return null;
         }
 
+        var birthplace =
+            FindTownAtYear(
+                component.BirthplaceId,
+                GetBirthYear(person));
+
+        var homeTown =
+            FindTownAtYear(
+                component.HomeTownId,
+                _gameState.Year);
+
+        if (birthplace is null
+            || homeTown is null)
+        {
+            return null;
+        }
+
+        var deathTown =
+            string.IsNullOrWhiteSpace(component.DeathTownId)
+                ? null
+                : FindTownAtYear(
+                    component.DeathTownId,
+                    person.DeathDate?.Year
+                        ?? _gameState.Year);
+
         return new LocationSnapshot(
-            component.Birthplace,
-            component.HomeTown,
-            component.DeathTown);
+            birthplace,
+            homeTown,
+            deathTown);
     }
 
-
     public IReadOnlyList<TownInfo> GetTowns() =>
-        _towns;
+        _catalog.GetAvailableTowns(
+            _gameState.Year);
 
     public TownInfo? FindTown(string townId)
     {
         if (string.IsNullOrWhiteSpace(townId))
             return null;
 
-        return _townsById.TryGetValue(townId, out var town)
-            ? town
-            : null;
+        return FindTownAtYear(
+            townId,
+            _gameState.Year);
     }
 
     public TownInfo ChoosePropertyTown(
@@ -183,14 +203,25 @@ public sealed partial class StandardLocationService :
                 householdHead)
             .HomeTown;
 
-        if (_random.NextDouble()
-            < AdditionalHouseSameTownChance)
+        var towns =
+            GetCurrentTownsRequired();
+
+        var currentHome =
+            towns.FirstOrDefault(
+                candidate =>
+                    candidate.Id.Equals(
+                        homeTown.Id,
+                        StringComparison.OrdinalIgnoreCase));
+
+        if (currentHome is not null
+            && _random.NextDouble()
+                < AdditionalHouseSameTownChance)
         {
-            return homeTown;
+            return currentHome;
         }
 
         var nearby =
-            _towns
+            towns
                 .Where(
                     candidate =>
                         !IsSameTown(
@@ -209,10 +240,14 @@ public sealed partial class StandardLocationService :
                         <= NearbyHouseRadiusKm)
                 .ToList();
 
-        return nearby.Count == 0
-            ? homeTown
-            : ChooseNearbyWeighted(
+        if (nearby.Count > 0)
+        {
+            return ChooseNearbyWeighted(
                 nearby);
+        }
+
+        return currentHome
+            ?? ChooseRandomTown(towns);
     }
 
     public void SetHouseholdHomeTown(
@@ -226,5 +261,48 @@ public sealed partial class StandardLocationService :
         SetPersonHomeTown(
             householdHead,
             town);
+    }
+
+    private TownInfo ResolveTown(
+        string placeId,
+        int year,
+        string role)
+    {
+        return FindTownAtYear(placeId, year)
+            ?? throw new InvalidOperationException(
+                $"Location {role} '{placeId}' is not a valid permanent PlaceId.");
+    }
+
+    private TownInfo? FindTownAtYear(
+        string placeId,
+        int year)
+    {
+        if (string.IsNullOrWhiteSpace(placeId))
+            return null;
+
+        return _catalog.GetTown(
+            placeId,
+            Math.Max(
+                _catalog.MinYear,
+                year));
+    }
+
+    private int GetBirthYear(
+        IPerson person) =>
+        person.BirthDate?.Year
+        ?? (_gameState.Year - person.Age);
+
+    private IReadOnlyList<TownInfo>
+        GetCurrentTownsRequired()
+    {
+        var towns = GetTowns();
+
+        if (towns.Count == 0)
+        {
+            throw new InvalidOperationException(
+                $"Historical town catalogue has no destinations for {_gameState.Year}.");
+        }
+
+        return towns;
     }
 }

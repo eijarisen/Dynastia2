@@ -5,9 +5,9 @@ namespace Dynastia.Mechanics.Locations;
 [PersistedComponentId("locations.person")]
 public sealed class LocationComponent
 {
-    public TownInfo? Birthplace { get; set; }
+    public string? BirthplaceId { get; set; }
 
-    public TownInfo? HomeTown { get; set; }
+    public string? HomeTownId { get; set; }
 
-    public TownInfo? DeathTown { get; set; }
+    public string? DeathTownId { get; set; }
 }

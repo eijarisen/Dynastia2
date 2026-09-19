@@ -6,9 +6,6 @@ namespace Dynastia.Mechanics.Loans;
 public sealed class LoansPlugin :
     IGamePlugin
 {
-    private const string SurnamesPath =
-        "Names/polish_surnames.csv";
-
     public void Initialize(
         IGamePluginContext context)
     {
@@ -35,9 +32,13 @@ public sealed class LoansPlugin :
         var data =
             Require<IGameDataService>(context, "Game data service");
 
-        var externalBorrowerSurnames =
-            data.GetWeightedStringList(
-                SurnamesPath);
+        var locations =
+            Require<ILocationService>(context, "Location service");
+
+        var outsiderIdentities =
+            Require<IOutsiderIdentityService>(
+                context,
+                "Outsider identity service");
 
         var historical =
             Require<IHistoricalActionVariantService>(
@@ -73,7 +74,8 @@ public sealed class LoansPlugin :
                 loanEras,
                 random,
                 historicalNames,
-                externalBorrowerSurnames,
+                locations,
+                outsiderIdentities,
                 appearance);
 
         context.AddService<ILoanService>(
@@ -86,8 +88,6 @@ public sealed class LoansPlugin :
             actions,
             loans,
             family,
-            historicalNames,
-            externalBorrowerSurnames,
             economy,
             events,
             gameState,
@@ -121,8 +121,6 @@ public sealed class LoansPlugin :
         IActionRegistry actions,
         StandardLoanService loans,
         IFamilyService family,
-        IHistoricalNameService historicalNames,
-        IReadOnlyList<WeightedStringEntry> externalBorrowerSurnames,
         IEconomyService economy,
         IGameEventBus events,
         IGameState gameState,
@@ -169,16 +167,25 @@ public sealed class LoansPlugin :
                         return new GameActionResult(false);
                     }
 
-                    actionContext.Parameters.TryGetValue(
-                        "counterpartyName",
-                        out var creditorName);
+                    var contract =
+                        loans.CreateBankLoan(
+                            actor,
+                            terms.Principal,
+                            terms.DurationYears,
+                            actionContext.GameState.Year);
 
-                    loans.CreateBankLoan(
-                        actor,
-                        terms.Principal,
-                        terms.DurationYears,
-                        actionContext.GameState.Year,
-                        creditorName);
+                    var creditor =
+                        ResolveCounterparty(
+                            actionContext.Parameters,
+                            loans,
+                            actor,
+                            actionContext.GameState.Year,
+                            contract.ContractId);
+
+                    var creditorName = creditor.Name;
+                    contract.ExternalCreditorName = creditorName;
+                    contract.ExternalCounterpartyTownId = creditor.TownId;
+                    contract.ExternalCounterpartyNationalityId = creditor.NationalityId;
 
                     economy.ChangeWealth(
                         actor,
@@ -298,21 +305,19 @@ public sealed class LoansPlugin :
                             terms.DurationYears,
                             actionContext.GameState.Year);
 
-                    var borrowerName =
-                        actionContext.Parameters.TryGetValue(
-                            "counterpartyName",
-                            out var selectedBorrowerName)
-                        && !string.IsNullOrWhiteSpace(selectedBorrowerName)
-                            ? selectedBorrowerName
-                            : GenerateExternalBorrowerName(
-                                contract.ContractId,
-                                actionContext.GameState.Year,
-                                family,
-                                historicalNames,
-                                externalBorrowerSurnames);
+                    var borrower =
+                        ResolveCounterparty(
+                            actionContext.Parameters,
+                            loans,
+                            lender,
+                            actionContext.GameState.Year,
+                            contract.ContractId);
+                    var borrowerName = borrower.Name;
 
                     contract.ExternalBorrowerName =
                         borrowerName;
+                    contract.ExternalCounterpartyTownId = borrower.TownId;
+                    contract.ExternalCounterpartyNationalityId = borrower.NationalityId;
 
                     var wording =
                         RequireHistoricalVariant(
@@ -442,61 +447,47 @@ public sealed class LoansPlugin :
         }
     }
 
-    private static string GenerateExternalBorrowerName(
-        Guid contractId,
+    private static ExternalCounterpartySelection ResolveCounterparty(
+        IReadOnlyDictionary<string, string> parameters,
+        StandardLoanService loans,
+        IPerson householdRepresentative,
         int year,
-        IFamilyService family,
-        IHistoricalNameService historicalNames,
-        IReadOnlyList<WeightedStringEntry> surnames)
+        Guid seed)
     {
-        var random =
-            new LoanFlavorRandom(
-                contractId);
-
-        var sex =
-            year < 1918
-                ? Sex.Male
-                : random.Chance(0.5)
-                    ? Sex.Male
-                    : Sex.Female;
-
-        var firstName =
-            historicalNames.GetRandomFirstName(
-                sex,
-                year - 30,
-                random);
-
-        var surname =
-            SelectWeighted(
-                surnames,
-                random);
-
-        return
-            $"{firstName} {family.FormatSurname(surname, sex)}";
-    }
-
-    private static string SelectWeighted(
-        IReadOnlyList<WeightedStringEntry> entries,
-        IGameRandom random)
-    {
-        var totalWeight =
-            entries.Sum(
-                entry => (double)entry.Weight);
-
-        var roll =
-            random.NextDouble()
-            * totalWeight;
-
-        foreach (var entry in entries)
+        if (parameters.TryGetValue(
+                "counterpartyName",
+                out var selectedName)
+            && !string.IsNullOrWhiteSpace(selectedName))
         {
-            if (roll < entry.Weight)
-                return entry.Value;
+            parameters.TryGetValue(
+                "counterpartyTownId",
+                out var selectedTownId);
+            parameters.TryGetValue(
+                "counterpartyNationalityId",
+                out var selectedNationalityId);
 
-            roll -= entry.Weight;
+            return new ExternalCounterpartySelection(
+                selectedName,
+                selectedTownId ?? string.Empty,
+                selectedNationalityId ?? string.Empty);
         }
 
-        return entries[^1].Value;
+        var generated =
+            loans.GenerateExternalCounterparty(
+                householdRepresentative,
+                year,
+                seed);
+
+        return new ExternalCounterpartySelection(
+            generated.Name,
+            generated.OriginTown.Id,
+            generated.NationalityId);
     }
+
+    private sealed record ExternalCounterpartySelection(
+        string Name,
+        string TownId,
+        string NationalityId);
 
     private static string FormatExternalLoanNarrative(
         string narrative,
@@ -516,81 +507,6 @@ public sealed class LoansPlugin :
         }
 
         return $"{narrative} ({borrowerName})";
-    }
-
-    private sealed class LoanFlavorRandom :
-        IGameRandom
-    {
-        private ulong _state;
-
-        public LoanFlavorRandom(
-            Guid seed)
-        {
-            const ulong offsetBasis =
-                14695981039346656037UL;
-
-            const ulong prime =
-                1099511628211UL;
-
-            var state =
-                offsetBasis;
-
-            foreach (var value in seed.ToByteArray())
-            {
-                state ^= value;
-                state *= prime;
-            }
-
-            _state =
-                state == 0
-                    ? offsetBasis
-                    : state;
-        }
-
-        public int NextInt(
-            int minInclusive,
-            int maxInclusive)
-        {
-            if (maxInclusive < minInclusive)
-            {
-                throw new ArgumentOutOfRangeException(
-                    nameof(maxInclusive));
-            }
-
-            var range =
-                (ulong)((long)maxInclusive - minInclusive + 1L);
-
-            return minInclusive
-                + (int)(NextUInt64() % range);
-        }
-
-        public double NextDouble()
-        {
-            return (NextUInt64() >> 11)
-                * (1.0 / 9007199254740992.0);
-        }
-
-        public bool Chance(
-            double probability)
-        {
-            return probability switch
-            {
-                <= 0 => false,
-                >= 1 => true,
-                _ => NextDouble() < probability
-            };
-        }
-
-        private ulong NextUInt64()
-        {
-            _state =
-                unchecked(
-                    _state
-                    * 6364136223846793005UL
-                    + 1442695040888963407UL);
-
-            return _state;
-        }
     }
 
     private static T Require<T>(

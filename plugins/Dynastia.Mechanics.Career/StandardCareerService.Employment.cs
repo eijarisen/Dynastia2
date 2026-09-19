@@ -14,7 +14,9 @@ public sealed partial class StandardCareerService
         var oldDefinition = ResolveDefinition(person, current);
         var oldSalary = GetActiveSalary(person, current);
         var opportunity = CreateEmploymentOpportunity(person, _stats);
-        var offeredSalary = opportunity.Career.BaseSalary * current.JobLevel;
+        var offeredSalary = CareerBalanceRules.CalculateAnnualSalary(
+            opportunity.Career.BaseSalary,
+            current.JobLevel);
 
         if (oldDefinition is not null
             && opportunity.Career.Id.Equals(oldDefinition.Id, StringComparison.OrdinalIgnoreCase))

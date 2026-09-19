@@ -1,0 +1,26 @@
+﻿Id,DisplayName,NameCultureId,GenerationEnabled,Notes
+polish,Polish,polish,1,Default dynasty nationality and dominant nationality in most current Polish regions.
+german,German,german,1,Ethnic/cultural German identity; separate from Austrian.
+russian,Russian,russian,1,Russian cultural-national identity.
+belarusian,Belarusian,belarusian,1,Standard ID/spelling is Belarusian.
+ukrainian,Ukrainian,ukrainian,1,Also temporarily absorbs Rusyn/Lemko populations until a separate Rusyn culture is added.
+lithuanian,Lithuanian,lithuanian,1,Lithuanian cultural-national identity.
+latvian,Latvian,latvian,1,Most relevant to Inflanty/Latgale and Baltic contact.
+czech,Czech,czech,1,Includes Czech settler/minority flavor where represented.
+slovak,Slovak,slovak,1,Especially relevant near the Carpathian border.
+jewish,Jewish,jewish,1,Game cultural-national identity for Ashkenazi/Jewish naming and flavor; not legal citizenship.
+hungarian,Hungarian,hungarian,1,Especially relevant to the Carpathian/Galician frontier.
+romanian,Romanian,romanian,1,Also covers Moldavian/Romanian naming for this first model.
+austrian,Austrian,austrian,1,Used mainly for Habsburg-era Austrian urban/administrative flavor; distinct from ethnic German in data.
+swedish,Swedish,swedish,1,Baltic/Pomeranian/Livonian and foreigner flavor.
+english,English,english,1,Rare foreigner/merchant/professional flavor.
+french,French,french,1,Rare foreigner/elite/professional flavor.
+italian,Italian,italian,1,Rare merchant/artisan/professional flavor.
+armenian,Armenian,armenian,1,Historic merchant/urban communities especially in Lwów/Eastern Galicia and Kamianets/Podolia; later dispersed.
+tatar,Tatar,tatar,1,"Lipka/Polish-Lithuanian Tatar identity, especially around Vilnius, Trakai, Grodno, Podlasie and the former Grand Duchy."
+greek,Greek,greek,1,"Historic merchant/craft diaspora in Lwów, Zamość and southeastern trade routes; later mostly small urban foreigner flavor."
+dutch,Dutch,dutch,1,Dutch/Frisian settler ancestry used for early Olęder communities; later Olęder identity was often German/Polish and therefore Dutch weights decline.
+georgian,Georgian,georgian,1,Very small before the 20th century; visible interwar émigré/military presence and later urban foreigner flavor.
+estonian,Estonian,estonian,1,"Small Baltic presence, primarily around Inflanty/Baltic contact and later urban migration."
+serbian,Serbian,serbian,1,Small early-modern southeastern/Balkan merchant presence and later urban foreigner population.
+bulgarian,Bulgarian,bulgarian,1,"Small Balkan merchant/migrant presence, later mostly modern urban foreigner flavor."

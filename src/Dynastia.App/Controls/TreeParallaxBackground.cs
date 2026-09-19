@@ -43,7 +43,7 @@ public sealed class TreeParallaxBackground : Control
         base.Render(context);
         context.FillRectangle(new SolidColorBrush(Color.FromRgb(2, 8, 9)), Bounds);
         DrawFixed(context, _background);
-        DrawParallax(context, _parallax1, 0.015);
+        DrawParallax(context, _parallax1, 0.0075);
         DrawParallax(context, _parallax2, 0.05);
         DrawParallax(context, _parallax3, 0.10);
     }

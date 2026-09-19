@@ -6,9 +6,9 @@ public sealed partial class StandardEconomyService :
     IEconomyService,
     IEconomyBalanceService
 {
-    private const decimal BaseHousePrice = 20000m;
+    private const decimal BaseHousePrice = 40000m;
 
-    public decimal OrdinaryLivingCostUnit => 250m;
+    public decimal OrdinaryLivingCostUnit => 500m;
     public decimal NannyAnnualCost => EconomyAnnualRules.NannyExpense;
 
     private readonly IGameState _gameState;
@@ -156,14 +156,16 @@ public sealed partial class StandardEconomyService :
                     line =>
                         new FinanceBreakdownItem(
                             line.Label,
-                            line.Amount))
+                            line.Amount,
+                            line.PersonId))
                 .ToList(),
             household.LastExpenseBreakdown
                 .Select(
                     line =>
                         new FinanceBreakdownItem(
                             line.Label,
-                            line.Amount))
+                            line.Amount,
+                            line.PersonId))
                 .ToList(),
             houses);
     }

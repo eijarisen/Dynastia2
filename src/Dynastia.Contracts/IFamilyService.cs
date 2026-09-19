@@ -48,6 +48,14 @@ public interface IFamilyService
         string surname,
         Sex sex);
 
+    string FormatSurname(
+        IPerson person,
+        string surname,
+        Sex sex) =>
+        FormatSurname(
+            surname,
+            sex);
+
     string GetDisplayName(
         IPerson person);
 

@@ -50,7 +50,14 @@ public static class HusbandOriginSelector
         ArgumentNullException.ThrowIfNull(random);
 
         if (towns.Count == 0)
-            return homeTown;
+        {
+            throw new InvalidOperationException(
+                "Generated partner origin requires at least one current destination town.");
+        }
+
+        var currentHomeTown =
+            towns.FirstOrDefault(town =>
+                SameTown(town, homeTown));
 
         var distribution =
             GetDistribution(year);
@@ -58,7 +65,13 @@ public static class HusbandOriginSelector
             random.NextDouble();
 
         if (roll < distribution.SameTownChance)
-            return homeTown;
+        {
+            return currentHomeTown
+                ?? ChooseNationalTown(
+                    homeTown,
+                    towns,
+                    random);
+        }
 
         roll -= distribution.SameTownChance;
 
@@ -148,7 +161,11 @@ public static class HusbandOriginSelector
                 .ToArray();
 
         if (candidates.Length == 0)
-            return homeTown;
+        {
+            return towns.FirstOrDefault(town =>
+                       SameTown(town, homeTown))
+                   ?? towns[0];
+        }
 
         return ChooseWeighted(
             candidates,

@@ -20,10 +20,14 @@ public sealed class NewGameRestartLifecycleTests
         var calendar = new GameCalendar();
         var reconciliation = new StateReconciliationLifecycle();
         var historicalNames = StandardHistoricalNameService.Load(data);
+        var nationalities = StandardNationalityService.Load(
+            data,
+            historicalNames);
         var family = new StandardFamilyService(
             gameState,
             data,
-            historicalNames);
+            historicalNames,
+            nationalities);
         var appearance = new StandardAppearanceService(family);
 
         reconciliation.Register(
@@ -75,6 +79,12 @@ public sealed class NewGameRestartLifecycleTests
             gameState.People,
             person => Assert.True(
                 person.Components.Has<AppearanceComponent>()));
+
+        Assert.All(
+            gameState.People,
+            person => Assert.Equal(
+                "polish",
+                nationalities.GetNationality(person)));
 
         var onlyEvent = Assert.Single(events.AllEvents);
         Assert.Equal("game.started", onlyEvent.Type);

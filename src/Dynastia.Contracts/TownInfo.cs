@@ -13,6 +13,17 @@ public sealed record TownInfo(
     public string RegionId { get; init; } =
         string.Empty;
 
+    public string PolityId { get; init; } =
+        string.Empty;
+
+    public string PolityName { get; init; } =
+        string.Empty;
+
+    public string UrbanStatus { get; init; } =
+        "rural_or_unrecorded";
+
+    public bool IsDestinationAvailable { get; init; }
+
     public SettlementClass SettlementClass =>
         Population switch
         {

@@ -33,11 +33,18 @@ public sealed class LocationsPlugin :
             ?? throw new InvalidOperationException(
                 "Game event bus is unavailable.");
 
+        var historicalTowns =
+            HistoricalTownCatalog.Load(
+                data);
+
+        context.AddService<IHistoricalTownCatalog>(
+            historicalTowns);
+
         var locations =
             new StandardLocationService(
                 gameState,
                 family,
-                data,
+                historicalTowns,
                 random,
                 events);
 
@@ -58,12 +65,14 @@ public sealed class LocationsPlugin :
             new StandardLocalCareerOpportunityService(
                 gameState,
                 locations,
+                historicalTowns,
                 data);
 
         context.AddService<ILocalCareerOpportunityService>(
             localCareers);
 
         context.Log(
-            "Location, birthplace and local career opportunity mechanics registered.");
+            $"Historical town catalog loaded: {historicalTowns.GetAvailableTowns(gameState.Year).Count} destinations for {gameState.Year}; " +
+            "location, birthplace and local career opportunity mechanics registered.");
     }
 }

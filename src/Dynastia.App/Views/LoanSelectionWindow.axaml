@@ -46,7 +46,7 @@
             <TextBlock
                 x:Name="TitleText"
                 HorizontalAlignment="Center"
-                FontFamily="avares://Dynastia.App/Assets/Fonts#UnifrakturCook"
+                FontFamily="avares://Dynastia.App/Assets/Fonts#Pirata One"
                 FontSize="42"
                 Foreground="#2F1D0E"
                 Text="Loan Offers" />
@@ -107,6 +107,13 @@
                                         FontWeight="SemiBold"
                                         Foreground="#6A451A"
                                         Text="{Binding RoleText}" />
+                                    <TextBlock
+                                        FontFamily="Georgia"
+                                        FontSize="11.2"
+                                        FontWeight="SemiBold"
+                                        Foreground="#5A3A18"
+                                        TextTrimming="CharacterEllipsis"
+                                        Text="{Binding OriginNationalityText}" />
                                     <Grid
                                         Margin="0,3,0,0"
                                         ColumnDefinitions="*,*"

@@ -11,6 +11,12 @@ public sealed class CraftRulesTests
         Assert.Equal(2, CraftRules.MaximumCrafts);
     }
 
+    [Fact]
+    public void CraftEducationCost_IsTenThousand()
+    {
+        Assert.Equal(10000m, CraftRules.EducationCost);
+    }
+
     [Theory]
     [InlineData(1, 0.45)]
     [InlineData(2, 0.50)]
@@ -110,9 +116,9 @@ public sealed class CraftRulesTests
     }
 
     [Theory]
-    [InlineData(1, 0.65)]
-    [InlineData(3, 0.95)]
-    [InlineData(5, 1.25)]
+    [InlineData(1, 0.45)]
+    [InlineData(3, 0.65)]
+    [InlineData(5, 0.85)]
     public void RelevantWorkProgress_DependsOnPrimaryStat(int stat, double expected)
     {
         Assert.Equal(expected, CraftRules.GetExperienceProgressGain(stat), 10);

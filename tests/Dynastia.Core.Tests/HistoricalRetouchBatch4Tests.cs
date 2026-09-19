@@ -63,7 +63,9 @@ public sealed class HistoricalRetouchBatch4Tests
         var data = CreateData(gap);
 
         Assert.Throws<InvalidDataException>(() =>
-            StandardHistoricalNameService.Load(data));
+            StandardHistoricalNameService.Load(
+                data,
+                loadNationalityCultures: false));
     }
 
     [Fact]
@@ -73,12 +75,15 @@ public sealed class HistoricalRetouchBatch4Tests
         data.RemoveWeighted("Names/f1800.csv");
 
         Assert.Throws<FileNotFoundException>(() =>
-            StandardHistoricalNameService.Load(data));
+            StandardHistoricalNameService.Load(
+                data,
+                loadNationalityCultures: false));
     }
 
     private static StandardHistoricalNameService CreateService() =>
         StandardHistoricalNameService.Load(
-            CreateData(EraData));
+            CreateData(EraData),
+            loadNationalityCultures: false);
 
     private static InlineDataService CreateData(
         string eraText)

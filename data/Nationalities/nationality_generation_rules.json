@@ -1,0 +1,51 @@
+{
+  "schemaVersion": "1.0.0",
+  "supportedYears": {
+    "min": 1700,
+    "max": 2027
+  },
+  "defaultNationalityId": "polish",
+  "identityMeaning": "ethnic/cultural nationality used for names and flavor; not legal citizenship",
+  "mechanicalEffectsEnabled": false,
+  "regionalPool": {
+    "source": "regional_nationality_weights.csv",
+    "selectionUnit": "candidate_origin_town_region",
+    "weightsMeaning": "town-resident candidate-generation percentages, not literal whole-region population percentages",
+    "interpolation": "linear_by_nationality_between_nearest_region_snapshots",
+    "missingNationalityAtSnapshot": "zero",
+    "beforeFirstSnapshot": "hold_first",
+    "afterLastSnapshot": "hold_last",
+    "normalizeBeforeRoll": true,
+    "randomSource": "IGameRandom"
+  },
+  "personGeneration": {
+    "founderAndInitialDynasty": "polish",
+    "externalSpouseCandidate": "roll_from_candidate_origin_town_region_and_year_then_halve_foreign_share_for_polish_seeker",
+    "arrangedMarriageCandidate": "roll_from_candidate_origin_town_region_and_year_then_halve_foreign_share_for_polish_seeker",
+    "generatedRemarriagePartner": "roll_from_candidate_origin_town_region_and_year",
+    "loanPartner": "roll_from_partner_origin_town_region_and_year",
+    "generatedTextFamilyOfCandidate": "use_candidate_nationality_for_names",
+    "nationalityDoesNotChangeOnRelocation": true,
+    "nationalityDoesNotChangeOnPoliticalBorderChange": true,
+    "nationalityDoesNotChangeOnMarriage": true
+  },
+  "children": {
+    "sameParentNationality": "inherit_father_nationality",
+    "differentParentNationalities": "inherit_father_nationality",
+    "oneKnownParent": "inherit_known_parent",
+    "noKnownParents": "roll_from_birth_town_region_and_year",
+    "firstNameCulture": "child_nationality",
+    "surname": "existing_family_surname_rules"
+  },
+  "saveMigration": {
+    "missingNationalityId": "polish",
+    "unknownNationalityId": "load_error_unless_alias_exists"
+  },
+  "nameIntegration": {
+    "catalog": "nationalities.csv",
+    "key": "NameCultureId",
+    "missingEnabledNameCulture": "startup_validation_error",
+    "noSilentFallbackToPolishNames": true,
+    "surnameGenderRules": "owned_by_name_culture_data_or_name_service_not_global_polish_logic"
+  }
+}

@@ -307,6 +307,7 @@ public sealed partial class StandardHouseholdService :
                     _family.GetGeneration(
                         anchor),
                     _family.FormatSurname(
+                        head,
                         head.Surname,
                         _family.GetSex(
                             head)),
@@ -382,6 +383,7 @@ public sealed partial class StandardHouseholdService :
             _family.GetGeneration(
                 anchor),
             _family.FormatSurname(
+                head,
                 head.Surname,
                 _family.GetSex(
                     head)),

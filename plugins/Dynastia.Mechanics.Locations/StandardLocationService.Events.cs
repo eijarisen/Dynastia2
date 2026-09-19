@@ -19,14 +19,14 @@ public sealed partial class StandardLocationService
         }
 
         if (gameEvent.Type.Equals(
-                "relationship.married",
-                StringComparison.OrdinalIgnoreCase)
+            "relationship.married",
+            StringComparison.OrdinalIgnoreCase)
             || gameEvent.Type.Equals(
-                "relationship.partnered",
-                StringComparison.OrdinalIgnoreCase)
+            "relationship.partnered",
+            StringComparison.OrdinalIgnoreCase)
             || gameEvent.Type.Equals(
-                "relationship.remarried",
-                StringComparison.OrdinalIgnoreCase))
+            "relationship.remarried",
+            StringComparison.OrdinalIgnoreCase))
         {
             InitializeGeneratedSpouse(
                 gameEvent);
@@ -35,8 +35,8 @@ public sealed partial class StandardLocationService
         }
 
         if (gameEvent.Type.Equals(
-                "life.birth",
-                StringComparison.OrdinalIgnoreCase))
+            "life.birth",
+            StringComparison.OrdinalIgnoreCase))
         {
             InitializeNewborn(
                 gameEvent);
@@ -45,8 +45,8 @@ public sealed partial class StandardLocationService
         }
 
         if (gameEvent.Type.Equals(
-                "life.death",
-                StringComparison.OrdinalIgnoreCase))
+            "life.death",
+            StringComparison.OrdinalIgnoreCase))
         {
             RecordDeathTown(
                 gameEvent);
@@ -152,23 +152,23 @@ public sealed partial class StandardLocationService
 
         var existing =
             spouse.Components.Get<
-                LocationComponent>();
+                LocationComponent>()
+            ?? new LocationComponent();
 
-        if (existing?.Birthplace is null)
+        if (string.IsNullOrWhiteSpace(
+                existing.BirthplaceId))
         {
-            existing ??=
-                new LocationComponent();
-
-            existing.Birthplace =
+            existing.BirthplaceId =
                 ChooseSpouseBirthplace(
-                    anchorLocation.HomeTown);
-
-            spouse.Components.Set(
-                existing);
+                    anchorLocation.HomeTown)
+                .Id;
         }
 
-        existing.HomeTown =
-            anchorLocation.HomeTown;
+        existing.HomeTownId =
+            anchorLocation.HomeTown.Id;
+
+        spouse.Components.Set(
+            existing);
     }
 
     private void InitializeNewborn(
@@ -211,7 +211,7 @@ public sealed partial class StandardLocationService
         {
             householdTown =
                 ChoosePopulationWeighted(
-                    _towns);
+                    GetCurrentTownsRequired());
         }
 
         var birthplace =
@@ -238,7 +238,9 @@ public sealed partial class StandardLocationService
             person.Components.Get<
                 LocationComponent>();
 
-        if (location?.HomeTown is null)
+        if (location is null
+            || string.IsNullOrWhiteSpace(
+                location.HomeTownId))
         {
             EnsureFallbackLocation(
                 person);
@@ -248,11 +250,15 @@ public sealed partial class StandardLocationService
                     LocationComponent>();
         }
 
-        if (location?.HomeTown is null)
+        if (location is null
+            || string.IsNullOrWhiteSpace(
+                location.HomeTownId))
+        {
             return;
+        }
 
-        location.DeathTown =
-            location.HomeTown;
+        location.DeathTownId =
+            location.HomeTownId;
 
         person.Components.Set(
             location);
@@ -278,24 +284,41 @@ public sealed partial class StandardLocationService
             var component =
                 person.Components.Get<LocationComponent>();
 
-            if (component is not null
-                && CanonicalizeComponent(component))
-            {
-                person.Components.Set(component);
-            }
+            var birthplaceValid =
+                component is not null
+                && !string.IsNullOrWhiteSpace(
+                    component.BirthplaceId)
+                && FindTownAtYear(
+                    component.BirthplaceId,
+                    GetBirthYear(person)) is not null;
 
-            if (component?.Birthplace is null
-                || component.HomeTown is null)
+            var homeTownValid =
+                component is not null
+                && !string.IsNullOrWhiteSpace(
+                    component.HomeTownId)
+                && FindTownAtYear(
+                    component.HomeTownId,
+                    _gameState.Year) is not null;
+
+            if (!birthplaceValid
+                || !homeTownValid)
             {
                 EnsureFallbackLocation(person, resolving);
                 component = person.Components.Get<LocationComponent>();
             }
 
-            if (component?.HomeTown is not null
-                && person.Tags.Has("state.dead")
-                && component.DeathTown is null)
+            if (component is null)
+                return;
+
+            if (person.Tags.Has("state.dead")
+                && string.IsNullOrWhiteSpace(
+                    component.DeathTownId)
+                && !string.IsNullOrWhiteSpace(
+                    component.HomeTownId))
             {
-                component.DeathTown = component.HomeTown;
+                component.DeathTownId =
+                    component.HomeTownId;
+
                 person.Components.Set(component);
             }
         }
@@ -317,8 +340,17 @@ public sealed partial class StandardLocationService
             person.Components.Get<
                 LocationComponent>();
 
-        if (existing?.Birthplace is not null
-            && existing.HomeTown is not null)
+        if (existing is not null
+            && !string.IsNullOrWhiteSpace(
+                existing.BirthplaceId)
+            && !string.IsNullOrWhiteSpace(
+                existing.HomeTownId)
+            && FindTownAtYear(
+                existing.BirthplaceId,
+                GetBirthYear(person)) is not null
+            && FindTownAtYear(
+                existing.HomeTownId,
+                _gameState.Year) is not null)
         {
             return;
         }
@@ -335,13 +367,18 @@ public sealed partial class StandardLocationService
             var parentComponent =
                 father.Components.Get<LocationComponent>();
 
-            if (parentComponent?.HomeTown is not null)
+            if (parentComponent is not null
+                && !string.IsNullOrWhiteSpace(
+                    parentComponent.HomeTownId)
+                && FindTown(
+                    parentComponent.HomeTownId)
+                    is TownInfo parentHomeTown)
             {
                 SetLocation(
                     person,
                     ChooseChildBirthplace(
-                        parentComponent.HomeTown),
-                    parentComponent.HomeTown);
+                        parentHomeTown),
+                    parentHomeTown);
 
                 return;
             }
@@ -361,25 +398,29 @@ public sealed partial class StandardLocationService
             spouse?.Components.Get<
                 LocationComponent>();
 
-        if (spouseComponent?.HomeTown is not null)
+        if (spouseComponent is not null
+            && !string.IsNullOrWhiteSpace(
+                spouseComponent.HomeTownId)
+            && FindTown(
+                spouseComponent.HomeTownId)
+                is TownInfo spouseHomeTown)
         {
             SetLocation(
                 person,
                 ChooseSpouseBirthplace(
-                    spouseComponent.HomeTown),
-                spouseComponent.HomeTown);
+                    spouseHomeTown),
+                spouseHomeTown);
 
             return;
         }
 
         var town =
             ChoosePopulationWeighted(
-                _towns);
+                GetCurrentTownsRequired());
 
         SetLocation(
             person,
             town,
             town);
     }
-
 }

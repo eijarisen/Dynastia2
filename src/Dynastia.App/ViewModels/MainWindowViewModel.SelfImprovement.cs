@@ -8,10 +8,10 @@ public sealed partial class MainWindowViewModel
         "ui.self_improvement";
 
     private const decimal SelfImprovementCost =
-        10000m;
+        20000m;
 
     private const decimal ReligiousStudyCost =
-        2000m;
+        3000m;
 
     private const string ReligiousStudyActionId =
         "personality.religious_study";

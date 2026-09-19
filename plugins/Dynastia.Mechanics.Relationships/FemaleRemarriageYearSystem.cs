@@ -14,16 +14,14 @@ public sealed class FemaleRemarriageYearSystem :
     private const int RemarriageMaxAge =
         50;
 
-    private const string SurnamesPath =
-        "Names/polish_surnames.csv";
-
     private readonly IFamilyService _family;
     private readonly IStatsService _stats;
     private readonly IHealthService _health;
     private readonly IEducationService _education;
     private readonly ICareerService _career;
     private readonly ILocationService _locations;
-    private readonly IGameDataService _data;
+    private readonly INationalityService _nationalities;
+    private readonly IOutsiderIdentityService _outsiderIdentities;
     private readonly IHistoricalNameService _historicalNames;
     private readonly IGameRandom _random;
     private readonly IGameCalendar _calendar;
@@ -36,7 +34,8 @@ public sealed class FemaleRemarriageYearSystem :
         IEducationService education,
         ICareerService career,
         ILocationService locations,
-        IGameDataService data,
+        INationalityService nationalities,
+        IOutsiderIdentityService outsiderIdentities,
         IHistoricalNameService historicalNames,
         IGameRandom random,
         IGameCalendar calendar,
@@ -48,7 +47,8 @@ public sealed class FemaleRemarriageYearSystem :
         _education = education;
         _career = career;
         _locations = locations;
-        _data = data;
+        _nationalities = nationalities;
+        _outsiderIdentities = outsiderIdentities;
         _historicalNames = historicalNames;
         _random = random;
         _calendar = calendar;
@@ -146,12 +146,14 @@ public sealed class FemaleRemarriageYearSystem :
         IGameState gameState,
         IPerson woman)
     {
-        var husbandNameSample =
-            _random.NextDouble();
-
-        var husbandSurname =
-            RandomWeightedFrom(
-                SurnamesPath);
+        var wifeTown =
+            _locations.GetLocation(woman).HomeTown;
+        var husbandOrigin =
+            HusbandOriginSelector.Choose(
+                wifeTown,
+                _locations.GetTowns(),
+                gameState.Year,
+                _random);
 
         if (!RelationshipPersonalityRules.TryChoosePartnerAge(
                 woman,
@@ -165,14 +167,18 @@ public sealed class FemaleRemarriageYearSystem :
         var husbandBirthYear =
             gameState.Year - husbandAge;
 
+        var identity =
+            _outsiderIdentities.Generate(
+                husbandOrigin,
+                Sex.Male,
+                husbandBirthYear,
+                gameState.Year,
+                _random);
+
         var husband =
             gameState.CreatePerson(
-                _historicalNames.GetRandomFirstName(
-                    Sex.Male,
-                    husbandBirthYear,
-                    new FixedSampleGameRandom(
-                        husbandNameSample)),
-                husbandSurname,
+                identity.FirstName,
+                identity.Surname,
                 husbandAge);
 
         husband.BirthDate =
@@ -184,6 +190,10 @@ public sealed class FemaleRemarriageYearSystem :
             husband,
             Sex.Male,
             generation: null);
+
+        _nationalities.SetNationality(
+            husband,
+            identity.NationalityId);
 
         husband.Tags.Add(
             "state.alive");
@@ -204,15 +214,6 @@ public sealed class FemaleRemarriageYearSystem :
         husband.Tags.Add(
             "sexuality.heterosexual");
 
-        var wifeTown =
-            _locations.GetLocation(woman).HomeTown;
-        var husbandOrigin =
-            HusbandOriginSelector.Choose(
-                wifeTown,
-                _locations.GetTowns(),
-                gameState.Year,
-                _random);
-
         // Pre-seed the husband's origin. When the marriage event is
         // published, the Locations plugin moves his HomeTown to the wife's
         // household while preserving this town as his birthplace.
@@ -223,6 +224,7 @@ public sealed class FemaleRemarriageYearSystem :
         GeneratedFamilyBackgroundGenerator.Assign(
             husband,
             husband.Surname,
+            identity.NameCultureId,
             _family,
             _historicalNames,
             _random);
@@ -308,34 +310,6 @@ public sealed class FemaleRemarriageYearSystem :
             husband,
             _career,
             _random);
-    }
-
-    private string RandomWeightedFrom(
-        string relativePath)
-    {
-        var entries =
-            _data.GetWeightedStringList(
-                relativePath);
-
-        var totalWeight =
-            entries.Sum(
-                entry =>
-                    (double)entry.Weight);
-
-        var roll =
-            _random.NextDouble()
-            * totalWeight;
-
-        foreach (var entry in
-            entries)
-        {
-            if (roll < entry.Weight)
-                return entry.Value;
-
-            roll -= entry.Weight;
-        }
-
-        return entries[^1].Value;
     }
 
     private GameDate RandomDateInYear(

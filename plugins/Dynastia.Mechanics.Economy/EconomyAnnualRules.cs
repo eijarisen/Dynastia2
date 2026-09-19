@@ -2,7 +2,7 @@ namespace Dynastia.Mechanics.Economy;
 
 internal static class EconomyAnnualRules
 {
-    public const decimal NannyExpense = 250m;
+    public const decimal NannyExpense = 750m;
     public const decimal EfficientHouseholdMultiplier = 0.95m;
 
     public static decimal CalculateLivingCosts(

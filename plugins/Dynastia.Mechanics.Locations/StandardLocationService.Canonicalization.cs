@@ -4,110 +4,26 @@ namespace Dynastia.Mechanics.Locations;
 
 public sealed partial class StandardLocationService
 {
-    private bool CanonicalizeComponent(
-        LocationComponent component)
-    {
-        var changed = false;
-
-        if (component.Birthplace is not null)
-        {
-            var canonical =
-                CanonicalizeTown(
-                    component.Birthplace);
-
-            if (!ReferenceEquals(
-                    canonical,
-                    component.Birthplace))
-            {
-                component.Birthplace =
-                    canonical;
-
-                changed = true;
-            }
-        }
-
-        if (component.HomeTown is not null)
-        {
-            var canonical =
-                CanonicalizeTown(
-                    component.HomeTown);
-
-            if (!ReferenceEquals(
-                    canonical,
-                    component.HomeTown))
-            {
-                component.HomeTown =
-                    canonical;
-
-                changed = true;
-            }
-        }
-
-        if (component.DeathTown is not null)
-        {
-            var canonical =
-                CanonicalizeTown(
-                    component.DeathTown);
-
-            if (!ReferenceEquals(
-                    canonical,
-                    component.DeathTown))
-            {
-                component.DeathTown =
-                    canonical;
-
-                changed = true;
-            }
-        }
-
-        return changed;
-    }
-
-    private TownInfo CanonicalizeTown(
-        TownInfo town)
-    {
-        if (!string.IsNullOrWhiteSpace(
-                town.Id)
-            && _townsById.TryGetValue(
-                town.Id,
-                out var byId))
-        {
-            return byId;
-        }
-
-        var key =
-            LegacyTownKey(
-                town.Town,
-                town.County);
-
-        return _townsByLegacyKey.TryGetValue(
-            key,
-            out var legacyMatch)
-                ? legacyMatch
-                : town;
-    }
-
-    private static string LegacyTownKey(
-        string town,
-        string county)
-    {
-        return $"{town.Trim()}|{county.Trim()}";
-    }
-
     public void SetPersonHomeTown(
         IPerson person,
         TownInfo homeTown)
     {
+        ArgumentNullException.ThrowIfNull(person);
+        ArgumentNullException.ThrowIfNull(homeTown);
+
+        var placeId =
+            RequirePlaceId(homeTown);
+
         var component =
             person.Components.Get<
                 LocationComponent>()
             ?? new LocationComponent();
 
-        component.Birthplace ??=
-            homeTown;
+        component.BirthplaceId ??=
+            placeId;
 
-        component.HomeTown =
-            homeTown;
+        component.HomeTownId =
+            placeId;
 
         person.Components.Set(
             component);
@@ -123,14 +39,29 @@ public sealed partial class StandardLocationService
                 LocationComponent>()
             ?? new LocationComponent();
 
-        component.Birthplace =
-            birthplace;
+        component.BirthplaceId =
+            RequirePlaceId(
+                birthplace);
 
-        component.HomeTown =
-            homeTown;
+        component.HomeTownId =
+            RequirePlaceId(
+                homeTown);
 
         person.Components.Set(
             component);
+    }
+
+    private string RequirePlaceId(
+        TownInfo town)
+    {
+        if (string.IsNullOrWhiteSpace(town.Id)
+            || FindTown(town.Id) is null)
+        {
+            throw new InvalidOperationException(
+                $"Town '{town.DisplayName}' does not have a valid permanent PlaceId.");
+        }
+
+        return town.Id;
     }
 
     private IPerson? FindPerson(
@@ -169,6 +100,14 @@ public sealed partial class StandardLocationService
         TownInfo first,
         TownInfo second)
     {
+        if (!string.IsNullOrWhiteSpace(first.Id)
+            && !string.IsNullOrWhiteSpace(second.Id))
+        {
+            return first.Id.Equals(
+                second.Id,
+                StringComparison.OrdinalIgnoreCase);
+        }
+
         return Math.Abs(
                    first.Longitude
                    - second.Longitude)

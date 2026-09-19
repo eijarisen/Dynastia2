@@ -1,7 +1,7 @@
 {
   "educationWindow": {
     "standardEducationFirst": true,
-    "priceForEveryOption": 3000,
+    "priceForEveryOption": 10000,
     "unknownCraftsVisibleOnlyWhenChosenSlotEmpty": true,
     "knownCraftsVisibleForImprovement": true,
     "masterCraftsDisabled": true,

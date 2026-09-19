@@ -10,6 +10,37 @@ namespace Dynastia.App.ViewModels;
 public sealed partial class MainWindowViewModel
 {
     public event EventHandler<ActionSelectionRequestedEventArgs>? ActionSelectionRequested;
+    public bool TryExecuteAvailableActionShortcut(
+        params string[] actionIds)
+    {
+        if (!IsGameStarted
+            || IsMainMenuPromptVisible
+            || actionIds.Length == 0)
+        {
+            return false;
+        }
+
+        foreach (var actionId in actionIds)
+        {
+            var action =
+                _allAvailableActions
+                    .Concat(PassActions)
+                    .FirstOrDefault(
+                        candidate =>
+                            candidate.Id.Equals(
+                                actionId,
+                                StringComparison.OrdinalIgnoreCase));
+
+            if (action is null)
+                continue;
+
+            action.ExecuteCommand.Execute(null);
+            return true;
+        }
+
+        return false;
+    }
+
     private void RefreshActions()
     {
         AvailableActions.Clear();
@@ -749,7 +780,13 @@ public sealed partial class MainWindowViewModel
                         System.Globalization.CultureInfo.InvariantCulture),
 
                 ["counterpartyName"] =
-                    selection.CounterpartyName
+                    selection.CounterpartyName,
+
+                ["counterpartyTownId"] =
+                    selection.CounterpartyTownId,
+
+                ["counterpartyNationalityId"] =
+                    selection.CounterpartyNationalityId
             };
 
         var result =
@@ -791,14 +828,18 @@ public sealed partial class MainWindowViewModel
                 queuedTarget)
             : null;
 
+        var queuedLabel =
+            ResolveQueuedActionLabel(
+                queued,
+                contextualLabel);
         var text =
-            $"Queued: {ActionEmojiMap.Format(queued.ActionId, contextualLabel ?? queued.Label)}";
+            $"Queued: {ActionEmojiMap.Format(queued.ActionId, queuedLabel)}";
 
         var detail =
             BuildQueuedActionDetail(queued);
 
         if (!string.IsNullOrWhiteSpace(detail))
-            text += $" -- {detail}";
+            text += $" – {detail}";
 
         if (SuppressQueuedActionPersonName(queued.ActionId))
             return text;
@@ -820,7 +861,38 @@ public sealed partial class MainWindowViewModel
                 ? $"{person.Name} {person.Surname}"
                 : _familyService.GetDisplayName(person);
 
-        return $"{text} — {personName}";
+        return $"{text} – {personName}";
+    }
+
+    private static string ResolveQueuedActionLabel(
+        QueuedActionInfo queued,
+        string? contextualLabel)
+    {
+        if (!string.IsNullOrWhiteSpace(contextualLabel))
+            return contextualLabel;
+
+        if (queued.ActionId.Equals(
+                "farming.buy_farmland",
+                StringComparison.OrdinalIgnoreCase))
+        {
+            return "Buy Farmland";
+        }
+
+        if (queued.ActionId.Equals(
+                "farming.sell_farmland",
+                StringComparison.OrdinalIgnoreCase))
+        {
+            return "Sell Farmland";
+        }
+
+        if (queued.ActionId.Equals(
+                "craft.stop_occupation",
+                StringComparison.OrdinalIgnoreCase))
+        {
+            return "Quit Profession";
+        }
+
+        return queued.Label;
     }
 
     private string BuildQueuedActionDetail(
@@ -875,7 +947,7 @@ public sealed partial class MainWindowViewModel
                 StringComparison.OrdinalIgnoreCase))
         {
             return _farmingService is null
-                ? "10,000 zł"
+                ? "20,000 zł"
                 : $"{_farmingService.PurchasePrice.ToString("N0", CultureInfo.InvariantCulture)} zł";
         }
 
@@ -884,7 +956,7 @@ public sealed partial class MainWindowViewModel
                 StringComparison.OrdinalIgnoreCase))
         {
             return _farmingService is null
-                ? "8,000 zł"
+                ? "16,000 zł"
                 : $"{_farmingService.SalePrice.ToString("N0", CultureInfo.InvariantCulture)} zł";
         }
 

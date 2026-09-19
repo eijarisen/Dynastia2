@@ -51,13 +51,18 @@ public sealed class SharedMechanics4DEconomyConsolidationTests
 
         var forecast = economy.GetAnnualForecast(head);
 
+        Assert.Equal(500m, economy.OrdinaryLivingCostUnit);
+        Assert.Equal(750m, economy.NannyAnnualCost);
         Assert.NotNull(forecast);
+        var residenceRent = economy.GetResidenceRent(town);
+        var livingCosts = economy.GetLivingCostPerPerson(town) * 2m;
+
         Assert.Equal(2500m, forecast!.ProjectedIncome);
-        Assert.Equal(1326m, forecast.ProjectedExpenses);
+        Assert.Equal(livingCosts + residenceRent + 400m, forecast.ProjectedExpenses);
         Assert.Equal(2200m, economy.GetProjectedAnnualIncome(head));
         Assert.Contains(forecast.IncomeBreakdown, line => line.Label == "loan projection" && line.Amount == 300m);
-        Assert.Contains(forecast.ExpenseBreakdown, line => line.Label == "living costs" && line.Amount == 476m);
-        Assert.Contains(forecast.ExpenseBreakdown, line => line.Label == "rented home" && line.Amount == 450m);
+        Assert.Contains(forecast.ExpenseBreakdown, line => line.Label == "living costs" && line.Amount == livingCosts);
+        Assert.Contains(forecast.ExpenseBreakdown, line => line.Label == "rented home" && line.Amount == residenceRent);
         Assert.Contains(forecast.ExpenseBreakdown, line => line.Label == "loan projection" && line.Amount == 400m);
 
         var yearSystem = new EconomyYearSystem(
@@ -70,13 +75,13 @@ public sealed class SharedMechanics4DEconomyConsolidationTests
         var realized = economy.GetHousehold(head);
         Assert.NotNull(realized);
         Assert.Equal(2600m, realized!.LastIncome);
-        Assert.Equal(926m, realized.LastExpenses);
-        Assert.Equal(6674m, realized.Wealth);
+        Assert.Equal(livingCosts + residenceRent, realized.LastExpenses);
+        Assert.Equal(5000m + 2600m - (livingCosts + residenceRent), realized.Wealth);
         Assert.Contains(realized.LastIncomeBreakdown, line => line.Label == "Jan" && line.Amount == 1100m);
         Assert.Contains(realized.LastIncomeBreakdown, line => line.Label == "Anna" && line.Amount == 600m);
         Assert.Contains(realized.LastIncomeBreakdown, line => line.Label == "farming/crafts" && line.Amount == 900m);
-        Assert.Contains(realized.LastExpenseBreakdown, line => line.Label == "living costs" && line.Amount == 476m);
-        Assert.Contains(realized.LastExpenseBreakdown, line => line.Label == "rented home" && line.Amount == 450m);
+        Assert.Contains(realized.LastExpenseBreakdown, line => line.Label == "living costs" && line.Amount == livingCosts);
+        Assert.Contains(realized.LastExpenseBreakdown, line => line.Label == "rented home" && line.Amount == residenceRent);
     }
 
     [Fact]
@@ -111,16 +116,19 @@ public sealed class SharedMechanics4DEconomyConsolidationTests
             LegacyMembershipSeeded = true
         };
         component.MemberIds.Add(head.Id);
-        component.Houses.Add(new HousePropertyState { Id = Guid.NewGuid(), Town = homeTown });
-        component.Houses.Add(new HousePropertyState { Id = Guid.NewGuid(), Town = rentalTown });
+        component.Houses.Add(new HousePropertyState { Id = Guid.NewGuid(), TownId = homeTown.Id });
+        component.Houses.Add(new HousePropertyState { Id = Guid.NewGuid(), TownId = rentalTown.Id });
         head.Components.Set(component);
 
         var forecast = economy.GetAnnualForecast(head);
 
         Assert.NotNull(forecast);
         Assert.Equal(economy.GetRentalIncome(rentalTown), forecast!.ProjectedIncome);
-        Assert.Equal(238m, forecast.ProjectedExpenses);
-        Assert.Contains(forecast.IncomeBreakdown, line => line.Label == "houses" && line.Amount == 450m);
+        Assert.Equal(economy.GetLivingCostPerPerson(homeTown), forecast.ProjectedExpenses);
+        Assert.Contains(
+            forecast.IncomeBreakdown,
+            line => line.Label == "houses"
+                && line.Amount == economy.GetRentalIncome(rentalTown));
         Assert.DoesNotContain(forecast.ExpenseBreakdown, line => line.Label == "rented home");
     }
 

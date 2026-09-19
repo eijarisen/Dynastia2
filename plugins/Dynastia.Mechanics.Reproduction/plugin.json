@@ -11,6 +11,7 @@
     "dynastia.stats",
     "dynastia.health",
     "dynastia.relationships",
-    "dynastia.historical"
+    "dynastia.historical",
+    "dynastia.locations"
   ]
 }

@@ -2,13 +2,13 @@
   "progressModel": "combined",
   "description": "Mastery is derived from one cumulative progress score. Relevant work experience and successful Craft education both add to the same score. Higher tiers also require minimum real relevant experience, so Master cannot be purchased through education alone.",
   "experience": {
-    "progressPerCompletedRelevantYearFormula": "0.50 + 0.15 * primaryStat",
+    "progressPerCompletedRelevantYearFormula": "0.35 + 0.10 * primaryStat",
     "byStat": {
-      "1": 0.65,
-      "2": 0.8,
-      "3": 0.95,
-      "4": 1.1,
-      "5": 1.25
+      "1": 0.45,
+      "2": 0.55,
+      "3": 0.65,
+      "4": 0.75,
+      "5": 0.85
     },
     "counts": [
       "one year of self-employment using this Craft",
@@ -22,7 +22,7 @@
     }
   },
   "education": {
-    "cost": 3000,
+    "cost": 10000,
     "successfulImprovementProgress": 3.0,
     "successChanceFormula": "clamp(0.55 + 0.08 * primaryStat - 0.10 * currentMasteryLevel, 0.10, 0.85)",
     "learningNewCraft": {

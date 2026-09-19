@@ -189,7 +189,7 @@ public sealed class CraftsPlugin : IGamePlugin
         actions.Register(new GameActionDefinition
         {
             Id = "craft.stop_occupation",
-            Label = "Stop Working in a Profession",
+            Label = "Quit Profession",
             Description =
                 "End Craft self-employment. The Craft and all Mastery progress are preserved.",
             Mode = ActionExecutionMode.Queued,

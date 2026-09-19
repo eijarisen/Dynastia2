@@ -1,4 +1,5 @@
 using Avalonia.Controls;
+using Avalonia.Input;
 using Avalonia.Interactivity;
 using Dynastia.App.ViewModels;
 
@@ -22,6 +23,13 @@ public partial class PropertySelectionWindow : Window
         bool compact = false)
     {
         InitializeComponent();
+
+        AddHandler(
+            InputElement.KeyDownEvent,
+            OnWindowKeyDown,
+            RoutingStrategies.Tunnel,
+            handledEventsToo: true);
+
         _allOptions = options;
         Title = title;
         TitleText.Text = title;
@@ -70,6 +78,28 @@ public partial class PropertySelectionWindow : Window
     private void OnSearchTextChanged(object? sender, TextChangedEventArgs e)
     {
         RefreshFilter();
+    }
+
+    private void OnWindowKeyDown(
+        object? sender,
+        KeyEventArgs e)
+    {
+        if (e.Key == Key.Escape)
+        {
+            e.Handled = true;
+            Close(null);
+            return;
+        }
+
+        if (e.Key != Key.Enter
+            || OptionsList.SelectedItem is not PropertySelectionOption selected
+            || !selected.IsEnabled)
+        {
+            return;
+        }
+
+        e.Handled = true;
+        Close(selected.Id);
     }
 
     private void RefreshFilter()

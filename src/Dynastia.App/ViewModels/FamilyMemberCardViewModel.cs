@@ -32,6 +32,7 @@ public sealed class FamilyMemberCardViewModel
             family is null
                 ? person.Surname
                 : family.FormatSurname(
+                    person,
                     person.Surname,
                     family.GetSex(person));
 

@@ -46,7 +46,7 @@
         <Grid Margin="70,50,70,42" RowDefinitions="Auto,Auto,*,Auto" RowSpacing="8">
             <TextBlock
                 HorizontalAlignment="Center"
-                FontFamily="avares://Dynastia.App/Assets/Fonts#UnifrakturCook"
+                FontFamily="avares://Dynastia.App/Assets/Fonts#Pirata One"
                 FontSize="40"
                 Foreground="#2F1D0E"
                 Text="Potential Partners" />
@@ -66,7 +66,7 @@
                 <ItemsControl.ItemTemplate>
                     <DataTemplate x:DataType="vm:PotentialPartnerCardViewModel">
                         <Border
-                            Height="174"
+                            Height="170"
                             Margin="4,4"
                             Padding="12,9"
                             Background="#35FFF4D9"
@@ -164,6 +164,13 @@
                                             Spacing="2">
                                             <TextBlock
                                                 FontFamily="Georgia"
+                                                FontSize="11.2"
+                                                FontWeight="SemiBold"
+                                                Foreground="#5A3A18"
+                                                TextTrimming="CharacterEllipsis"
+                                                Text="{Binding OriginNationalityText}" />
+                                            <TextBlock
+                                                FontFamily="Georgia"
                                                 FontSize="11.5"
                                                 Foreground="#3F2B19"
                                                 TextWrapping="Wrap"
@@ -178,12 +185,6 @@
                                                 FontSize="11.5"
                                                 Foreground="#3F2B19"
                                                 Text="{Binding CraftsText}" />
-                                            <TextBlock
-                                                FontFamily="Georgia"
-                                                FontSize="11.5"
-                                                Foreground="#46321C"
-                                                TextTrimming="CharacterEllipsis"
-                                                Text="{Binding HobbiesText}" />
                                             <TextBlock
                                                 IsVisible="{Binding HasFinancialEstimate}"
                                                 FontFamily="Georgia"

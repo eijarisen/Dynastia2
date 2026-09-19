@@ -10,6 +10,7 @@ public sealed class StandardFamilyService : IFamilyService
     private readonly IGameState _gameState;
     private readonly IGameDataService _data;
     private readonly IHistoricalNameService _historicalNames;
+    private readonly StandardNationalityService _nationalities;
 
     private IPerson? _reconciledFounderReference;
     private bool _reconcilingFounderParents;
@@ -17,11 +18,13 @@ public sealed class StandardFamilyService : IFamilyService
     public StandardFamilyService(
         IGameState gameState,
         IGameDataService data,
-        IHistoricalNameService historicalNames)
+        IHistoricalNameService historicalNames,
+        StandardNationalityService nationalities)
     {
         _gameState = gameState;
         _data = data;
         _historicalNames = historicalNames;
+        _nationalities = nationalities;
     }
 
     public void InitializePerson(
@@ -29,6 +32,8 @@ public sealed class StandardFamilyService : IFamilyService
         Sex sex,
         int? generation = null)
     {
+        _nationalities.InitializeDefault(person);
+
         if (person.Components.Has<FamilyComponent>())
             return;
 
@@ -219,31 +224,29 @@ public sealed class StandardFamilyService : IFamilyService
         string surname,
         Sex sex)
     {
-        if (sex != Sex.Female)
-            return surname;
+        return _historicalNames.FormatSurname(
+            surname,
+            sex,
+            "polish");
+    }
 
-        if (surname.EndsWith(
-            "ski",
-            StringComparison.OrdinalIgnoreCase))
-        {
-            return surname[..^3] + "ska";
-        }
-
-        if (surname.EndsWith(
-            "cki",
-            StringComparison.OrdinalIgnoreCase))
-        {
-            return surname[..^3] + "cka";
-        }
-
-        return surname;
+    public string FormatSurname(
+        IPerson person,
+        string surname,
+        Sex sex)
+    {
+        return _nationalities.FormatSurname(
+            person,
+            surname,
+            sex);
     }
 
     public string GetDisplayName(
         IPerson person)
     {
         return $"{person.Name} " +
-            FormatSurname(
+            _nationalities.FormatSurname(
+                person,
                 person.Surname,
                 GetSex(person));
     }
@@ -465,15 +468,23 @@ public sealed class StandardFamilyService : IFamilyService
             personBirthYear
             - (20 + DeterministicByte(person.Id, 9) % 16);
 
+        var nationalityId =
+            _nationalities.GetNationality(person);
+
+        var nameCultureId =
+            _nationalities.GetNameCultureId(
+                nationalityId);
+
         var fatherName =
-            $"{SelectDeterministicFirstName(Sex.Male, fatherBirthYear, person.Id, 11)} " +
+            $"{SelectDeterministicFirstName(Sex.Male, fatherBirthYear, nameCultureId, person.Id, 11)} " +
             familySurname;
 
         var motherName =
-            $"{SelectDeterministicFirstName(Sex.Female, motherBirthYear, person.Id, 23)} " +
-            FormatSurname(
+            $"{SelectDeterministicFirstName(Sex.Female, motherBirthYear, nameCultureId, person.Id, 23)} " +
+            _historicalNames.FormatSurname(
                 familySurname,
-                Sex.Female);
+                Sex.Female,
+                nameCultureId);
 
         var siblingCount =
             DeterministicByte(
@@ -511,14 +522,16 @@ public sealed class StandardFamilyService : IFamilyService
                 SelectDeterministicFirstName(
                     sex,
                     siblingBirthYear,
+                    nameCultureId,
                     person.Id,
                     53 + index);
 
             siblings.Add(
                 $"{name} " +
-                FormatSurname(
+                _historicalNames.FormatSurname(
                     familySurname,
-                    sex));
+                    sex,
+                    nameCultureId));
         }
 
         return new GeneratedFamilyBackgroundInfo(
@@ -530,6 +543,7 @@ public sealed class StandardFamilyService : IFamilyService
     private string SelectDeterministicFirstName(
         Sex sex,
         int birthYear,
+        string nameCultureId,
         Guid id,
         int salt)
     {
@@ -541,6 +555,7 @@ public sealed class StandardFamilyService : IFamilyService
         return _historicalNames.GetRandomFirstName(
             sex,
             birthYear,
+            nameCultureId,
             new FixedSampleGameRandom(sample));
     }
 

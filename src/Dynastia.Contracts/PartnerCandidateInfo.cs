@@ -30,14 +30,25 @@ public sealed record PartnerCandidateInfo(
 
     public int EstimatedFarmland { get; init; }
 
+    public string NationalityId { get; init; } = "polish";
+
+    public string DisplayNationality { get; init; } = "Polish";
+
+    public string OriginTownDisplayName { get; init; } = string.Empty;
+
     public string DisplayName => $"{Name} {DisplaySurname}";
 
     public string DisplaySurname
     {
         get
         {
-            if (Sex != Dynastia.Contracts.Sex.Female)
+            if (Sex != Dynastia.Contracts.Sex.Female
+                || !NationalityId.Equals(
+                    "polish",
+                    StringComparison.OrdinalIgnoreCase))
+            {
                 return Surname;
+            }
 
             if (Surname.EndsWith("ski", StringComparison.OrdinalIgnoreCase))
                 return Surname[..^3] + "ska";

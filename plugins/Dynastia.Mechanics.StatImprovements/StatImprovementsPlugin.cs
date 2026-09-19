@@ -8,12 +8,12 @@ public sealed class StatImprovementsPlugin :
     private static readonly PaidStatImprovementDefinition[]
         Definitions =
         [
-            new("stats.improve_strength", "strength", "Strength", 10000m),
-            new("stats.improve_intellect", "intellect", "Intellect", 10000m),
-            new("stats.improve_immunity", "immunity", "Immunity", 10000m),
-            new("stats.improve_appeal", "appeal", "Appeal", 10000m),
-            new("stats.improve_longevity", "longevity", "Longevity", 10000m),
-            new("stats.improve_fertility", "fertility", "Fertility", 10000m)
+            new("stats.improve_strength", "strength", "Strength", 20000m),
+            new("stats.improve_intellect", "intellect", "Intellect", 20000m),
+            new("stats.improve_immunity", "immunity", "Immunity", 20000m),
+            new("stats.improve_appeal", "appeal", "Appeal", 20000m),
+            new("stats.improve_longevity", "longevity", "Longevity", 20000m),
+            new("stats.improve_fertility", "fertility", "Fertility", 20000m)
         ];
 
     public void Initialize(

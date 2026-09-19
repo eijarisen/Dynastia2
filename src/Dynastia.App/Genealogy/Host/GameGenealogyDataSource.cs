@@ -266,6 +266,7 @@ public sealed class GameGenealogyDataSource :
 
         var surname =
             _family.FormatSurname(
+                person,
                 person.Surname,
                 _family.GetSex(
                     person));

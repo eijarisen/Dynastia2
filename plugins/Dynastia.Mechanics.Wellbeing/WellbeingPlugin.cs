@@ -13,9 +13,24 @@ public sealed partial class WellbeingPlugin : IGamePlugin
     private const double DrinkHealthPenalty =
         10;
 
-    private const double AlcoholismChanceFromDrinking =
-        0.10;
+    private const double AlcoholismChanceFromDrinkingCalm =
+        0.25;
 
+    private const double AlcoholismChanceFromDrinkingReactive =
+        0.33;
+
+
+
+    private static double GetAlcoholismChanceFromDrinking(
+        IPerson person)
+    {
+        ArgumentNullException.ThrowIfNull(person);
+
+        return person.Tags.Has("personality.choleric")
+            || person.Tags.Has("personality.melancholic")
+                ? AlcoholismChanceFromDrinkingReactive
+                : AlcoholismChanceFromDrinkingCalm;
+    }
 
     public void Initialize(
         IGamePluginContext context)
@@ -135,6 +150,7 @@ public sealed partial class WellbeingPlugin : IGamePlugin
             stats,
             random,
             events,
+            gameState,
             historical,
             locations,
             facilityQuality);

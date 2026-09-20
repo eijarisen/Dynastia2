@@ -48,7 +48,10 @@ public sealed class HealthYearSystem : IYearSystem
             var longevity = GetStat(person, "longevity");
             var immunity = GetStat(person, "immunity");
 
-            var change = longevity * 0.5 + _modifiers.GetAnnualHealthChange(person) + _health.ApplyAnnualConditionEffects(person);
+            var change = longevity * 0.5
+                + HouseholdLifestyleRules.GetHealthRegenerationModifier(person)
+                + _modifiers.GetAnnualHealthChange(person)
+                + _health.ApplyAnnualConditionEffects(person);
             _health.ChangeHealth(person, change);
             TryNaturalRecovery(gameState, person, immunity);
             TryMildCondition(gameState, person, immunity);

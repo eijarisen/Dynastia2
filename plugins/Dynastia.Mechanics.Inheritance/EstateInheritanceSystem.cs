@@ -7,11 +7,13 @@ public sealed class EstateInheritanceSystem :
 {
     private readonly IFamilyService _family;
     private readonly IEconomyService _economy;
+    private readonly IHeirloomService _heirlooms;
     private readonly IGameEventBus _events;
 
     public EstateInheritanceSystem(
         IFamilyService family,
         IEconomyService economy,
+        IHeirloomService heirlooms,
         IGameEventBus events)
     {
         _family =
@@ -19,6 +21,9 @@ public sealed class EstateInheritanceSystem :
 
         _economy =
             economy;
+
+        _heirlooms =
+            heirlooms;
 
         _events =
             events;
@@ -120,6 +125,12 @@ public sealed class EstateInheritanceSystem :
                     head)
                 .ToList();
 
+        var heirlooms =
+            _heirlooms
+                .TakeAll(
+                    head)
+                .ToList();
+
         var wealth =
             finance.Wealth;
 
@@ -165,6 +176,9 @@ public sealed class EstateInheritanceSystem :
                             ["farmland"] =
                                 farmland.Count.ToString(),
 
+                            ["heirlooms"] =
+                                heirlooms.Count.ToString(),
+
                             ["text"] =
                                 $"The remaining estate of " +
                                 $"{(anchor is null ? _family.GetDisplayName(head) : _family.GetDisplayName(anchor))} " +
@@ -194,6 +208,14 @@ public sealed class EstateInheritanceSystem :
             farmland,
             estateHouseholdId);
 
+        DistributeHeirlooms(
+            gameState,
+            anchor
+            ?? head,
+            heirs,
+            heirlooms,
+            estateHouseholdId);
+
         DistributeCash(
             gameState,
             anchor
@@ -207,7 +229,8 @@ public sealed class EstateInheritanceSystem :
             anchor ?? head,
             heirs,
             houses,
-            farmland);
+            farmland,
+            heirlooms);
 
         _economy.SetWealth(
             head,
@@ -245,6 +268,9 @@ public sealed class EstateInheritanceSystem :
                         ["farmland"] =
                             farmland.Count.ToString(),
 
+                        ["heirlooms"] =
+                            heirlooms.Count.ToString(),
+
                         ["heirs"] =
                             heirs.Count.ToString(),
 
@@ -275,6 +301,12 @@ public sealed class EstateInheritanceSystem :
         var farmland =
             _economy
                 .TakeAllFarmland(
+                    oldHead)
+                .ToList();
+
+        var heirlooms =
+            _heirlooms
+                .TakeAll(
                     oldHead)
                 .ToList();
 
@@ -314,6 +346,16 @@ public sealed class EstateInheritanceSystem :
                     anchor,
                     parcel);
             }
+
+            foreach (var heirloom in heirlooms)
+            {
+                _heirlooms.AddExisting(
+                    anchor,
+                    heirloom,
+                    gameState.Year,
+                    anchor.Id,
+                    "household_transfer");
+            }
         }
         else
         {
@@ -337,6 +379,15 @@ public sealed class EstateInheritanceSystem :
                 _economy.AddPendingFarmland(
                     anchor,
                     parcel);
+            }
+
+            foreach (var heirloom in heirlooms)
+            {
+                _heirlooms.AddPending(
+                    anchor,
+                    heirloom,
+                    gameState.Year,
+                    "household_transfer_pending");
             }
         }
 
@@ -370,6 +421,9 @@ public sealed class EstateInheritanceSystem :
 
                         ["farmland"] =
                             farmland.Count.ToString(),
+
+                        ["heirlooms"] =
+                            heirlooms.Count.ToString(),
 
                         ["text"] =
                             $"The remaining assets of " +
@@ -576,6 +630,69 @@ public sealed class EstateInheritanceSystem :
         }
     }
 
+    private void DistributeHeirlooms(
+        IGameState gameState,
+        IPerson source,
+        IReadOnlyList<IPerson> heirs,
+        IReadOnlyList<HeirloomAssetInfo> heirlooms,
+        Guid? estateHouseholdId)
+    {
+        if (heirlooms.Count == 0 || heirs.Count == 0)
+            return;
+
+        var heirsById = heirs.ToDictionary(heir => heir.Id);
+        var recipients = HouseInheritanceAssignmentRules.ResolveRecipients(
+            heirs.Select(heir => heir.Id).ToList(),
+            heirlooms.Select(item => item.AssignedHeirId).ToList());
+
+        for (var index = 0; index < heirlooms.Count; index++)
+        {
+            var heir = heirsById[recipients[index]];
+            var item = heirlooms[index] with { AssignedHeirId = null };
+            var established = HasEstablishedHouseholdOutsideEstate(
+                heir,
+                estateHouseholdId);
+
+            if (established)
+            {
+                _heirlooms.AddExisting(
+                    heir,
+                    item,
+                    gameState.Year,
+                    heir.Id,
+                    "inherited");
+            }
+            else
+            {
+                _heirlooms.AddPending(
+                    heir,
+                    item,
+                    gameState.Year,
+                    "inherited_pending");
+            }
+
+            _events.Publish(
+                new GameEvent
+                {
+                    Type = established
+                        ? "heirloom.inherited"
+                        : "heirloom.pending",
+                    Year = gameState.Year,
+                    SubjectId = heir.Id,
+                    RelatedPersonIds = [source.Id],
+                    Data = new Dictionary<string, string>
+                    {
+                        ["heirloomId"] = item.Id.ToString(),
+                        ["item"] = item.DisplayName,
+                        ["familyNews"] = "true",
+                        ["text"] = established
+                            ? $"{_family.GetDisplayName(heir)} inherited {item.DisplayName} from the family estate."
+                            : $"{item.DisplayName} was set aside for {_family.GetDisplayName(heir)} until the inheritance can be received."
+                    }
+                });
+        }
+    }
+
     private void DistributeCash(
         IGameState gameState,
         IPerson source,
@@ -668,7 +785,8 @@ public sealed class EstateInheritanceSystem :
         IPerson source,
         IReadOnlyList<IPerson> heirs,
         IReadOnlyList<HousePropertyInfo> houses,
-        IReadOnlyList<FarmlandAssetInfo> farmland)
+        IReadOnlyList<FarmlandAssetInfo> farmland,
+        IReadOnlyList<HeirloomAssetInfo> heirlooms)
     {
         if (heirs.Count < 2)
             return;
@@ -682,6 +800,9 @@ public sealed class EstateInheritanceSystem :
                 asset.AssignedHeirId is Guid id
                 && livingHeirIds.Contains(id))
             || farmland.Any(asset =>
+                asset.AssignedHeirId is Guid id
+                && livingHeirIds.Contains(id))
+            || heirlooms.Any(asset =>
                 asset.AssignedHeirId is Guid id
                 && livingHeirIds.Contains(id));
 
@@ -700,6 +821,13 @@ public sealed class EstateInheritanceSystem :
         foreach (var recipient in HouseInheritanceAssignmentRules.ResolveRecipients(
                      heirIds,
                      farmland.Select(asset => asset.AssignedHeirId).ToList()))
+        {
+            received[recipient]++;
+        }
+
+        foreach (var recipient in HouseInheritanceAssignmentRules.ResolveRecipients(
+                     heirIds,
+                     heirlooms.Select(asset => asset.AssignedHeirId).ToList()))
         {
             received[recipient]++;
         }

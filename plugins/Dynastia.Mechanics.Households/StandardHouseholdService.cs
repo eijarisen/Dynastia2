@@ -8,6 +8,7 @@ public sealed partial class StandardHouseholdService :
     private readonly IGameState _gameState;
     private readonly IFamilyService _family;
     private readonly IEconomyService _economy;
+    private readonly IHouseholdCapacityService _capacity;
     private readonly ILocationService _locations;
     private readonly ICareerService _career;
     private readonly IGameEventBus _events;
@@ -18,6 +19,7 @@ public sealed partial class StandardHouseholdService :
         IGameState gameState,
         IFamilyService family,
         IEconomyService economy,
+        IHouseholdCapacityService capacity,
         ILocationService locations,
         ICareerService career,
         IGameEventBus events)
@@ -30,6 +32,9 @@ public sealed partial class StandardHouseholdService :
 
         _economy =
             economy;
+
+        _capacity =
+            capacity;
 
         _locations =
             locations;
@@ -101,10 +106,11 @@ public sealed partial class StandardHouseholdService :
                         "role.nanny"));
 
         var overcrowdingThreshold =
-            HouseholdCrowdingRules.OvercrowdingThreshold;
+            _capacity.GetResidenceCapacity(actualHead).ResidentCapacity;
         var overcrowded =
             HouseholdCrowdingRules.IsOvercrowded(
-                residentCount);
+                residentCount,
+                overcrowdingThreshold);
 
 
         var spouse =
@@ -186,7 +192,9 @@ public sealed partial class StandardHouseholdService :
         if (overcrowded)
         {
             var excessResidents =
-                HouseholdCrowdingRules.GetResidentsAboveCapacity(residentCount);
+                HouseholdCrowdingRules.GetResidentsAboveCapacity(
+                    residentCount,
+                    overcrowdingThreshold);
 
             warnings.Add(
                 $"The household is overcrowded by {excessResidents} resident{(excessResidents == 1 ? "" : "s")}; each additional resident gradually increases Stress and Health loss.");

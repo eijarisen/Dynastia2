@@ -293,10 +293,16 @@ public sealed partial class MainWindowViewModel
             "household.sell_house",
             StringComparison.OrdinalIgnoreCase)
         || actionId.Equals(
+            "household.extend_house",
+            StringComparison.OrdinalIgnoreCase)
+        || actionId.Equals(
             "farming.buy_farmland",
             StringComparison.OrdinalIgnoreCase)
         || actionId.Equals(
             "farming.sell_farmland",
+            StringComparison.OrdinalIgnoreCase)
+        || actionId.Equals(
+            "heirloom.sell",
             StringComparison.OrdinalIgnoreCase);
 
 
@@ -307,6 +313,9 @@ public sealed partial class MainWindowViewModel
             StringComparison.OrdinalIgnoreCase)
         || actionId.Equals(
             "loan.give",
+            StringComparison.OrdinalIgnoreCase)
+        || actionId.StartsWith(
+            "economy.lifestyle.",
             StringComparison.OrdinalIgnoreCase);
 
     private void RebuildActionFilters()
@@ -568,7 +577,8 @@ public sealed partial class MainWindowViewModel
                 {
                     var opportunities = _localCareerOpportunityService?.GetOpportunitySnapshot(house.Town);
                     var localPrice = _economyService.GetHousePrice(house.Town);
-                    var sale = _economyService.GetHouseSaleValue(house.Town);
+                    var propertyValue = _economyService.GetHouseValue(house);
+                    var sale = _economyService.GetHouseSaleValue(house);
                     var rentalIncome = _economyService.GetRentalIncome(house.Town);
                     var status = house.IsResidence ? "Residence" : "Rented property";
                     var region = opportunities?.RegionName ?? house.Town.RegionId;
@@ -576,7 +586,7 @@ public sealed partial class MainWindowViewModel
                         house.Id.ToString(),
                         house.Town.Town,
                         $"{house.Town.County} • {region}",
-                        $"{status} • {house.Town.SettlementClassDisplayName}\nLocal house price: {localPrice:N0} zł\nRental income: {rentalIncome:N0} zł/year",
+                        $"{status} • {house.Town.SettlementClassDisplayName}\nProperty value: {propertyValue:N0} zł • Local base price: {localPrice:N0} zł\nRental income: {rentalIncome:N0} zł/year",
                         $"Sale: {sale:N0} zł",
                         $"{house.Town.Town} {house.Town.County} {region} {status}");
                 })
@@ -635,7 +645,9 @@ public sealed partial class MainWindowViewModel
 
         var key = actionId.Equals("household.buy_house", StringComparison.OrdinalIgnoreCase)
             ? "townId"
-            : "propertyId";
+            : actionId.Equals("heirloom.sell", StringComparison.OrdinalIgnoreCase)
+                ? "heirloomId"
+                : "propertyId";
 
         var parameters =
             new Dictionary<string, string>(
@@ -655,9 +667,12 @@ public sealed partial class MainWindowViewModel
                 _economyService.GetHousePrice(buyTown)
                     .ToString(CultureInfo.InvariantCulture);
         }
-        else if (actionId.Equals(
-                     "household.sell_house",
-                     StringComparison.OrdinalIgnoreCase)
+        else if ((actionId.Equals(
+                      "household.sell_house",
+                      StringComparison.OrdinalIgnoreCase)
+                  || actionId.Equals(
+                      "household.extend_house",
+                      StringComparison.OrdinalIgnoreCase))
                  && _economyService is not null
                  && Guid.TryParse(selectedId, out var propertyId))
         {
@@ -669,8 +684,27 @@ public sealed partial class MainWindowViewModel
             {
                 parameters["summaryTown"] = house.Town.Town;
                 parameters["summaryPrice"] =
-                    _economyService.GetHouseSaleValue(house.Town)
-                        .ToString(CultureInfo.InvariantCulture);
+                    (actionId.Equals(
+                        "household.extend_house",
+                        StringComparison.OrdinalIgnoreCase)
+                        ? house.ExtensionCost
+                        : _economyService.GetHouseSaleValue(house))
+                    .ToString(CultureInfo.InvariantCulture);
+            }
+        }
+        else if (actionId.Equals(
+                     "heirloom.sell",
+                     StringComparison.OrdinalIgnoreCase)
+                 && _heirloomService is not null
+                 && Guid.TryParse(selectedId, out var heirloomId))
+        {
+            var heirloom = _heirloomService.GetHeirlooms(actor)
+                .FirstOrDefault(item => item.Id == heirloomId);
+            if (heirloom is not null)
+            {
+                parameters["summaryHeirloom"] = heirloom.DisplayName;
+                parameters["summaryPrice"] = _heirloomService.GetSaleValue(heirloom)
+                    .ToString(CultureInfo.InvariantCulture);
             }
         }
         else if (moveOut
@@ -909,6 +943,13 @@ public sealed partial class MainWindowViewModel
         }
 
         if (queued.ActionId.Equals(
+                "heirloom.sell",
+                StringComparison.OrdinalIgnoreCase))
+        {
+            return "Sell Heirloom";
+        }
+
+        if (queued.ActionId.Equals(
                 "craft.stop_occupation",
                 StringComparison.OrdinalIgnoreCase))
         {
@@ -984,10 +1025,25 @@ public sealed partial class MainWindowViewModel
         }
 
         if (queued.ActionId.Equals(
+                "heirloom.sell",
+                StringComparison.OrdinalIgnoreCase))
+        {
+            var name = parameters.TryGetValue("summaryHeirloom", out var storedName)
+                ? storedName
+                : "Selected heirloom";
+            return TryReadDecimalParameter(parameters, "summaryPrice", out var saleValue)
+                ? $"{name} — {saleValue.ToString("N0", CultureInfo.InvariantCulture)} zł"
+                : name;
+        }
+
+        if (queued.ActionId.Equals(
                 "household.buy_house",
                 StringComparison.OrdinalIgnoreCase)
             || queued.ActionId.Equals(
                 "household.sell_house",
+                StringComparison.OrdinalIgnoreCase)
+            || queued.ActionId.Equals(
+                "household.extend_house",
                 StringComparison.OrdinalIgnoreCase))
         {
             var townName =
@@ -1034,7 +1090,11 @@ public sealed partial class MainWindowViewModel
                 if (house is not null)
                 {
                     townName ??= house.Town.Town;
-                    price ??= _economyService.GetHouseSaleValue(house.Town);
+                    price ??= queued.ActionId.Equals(
+                            "household.extend_house",
+                            StringComparison.OrdinalIgnoreCase)
+                        ? house.ExtensionCost
+                        : _economyService.GetHouseSaleValue(house);
                 }
             }
 
@@ -1112,6 +1172,9 @@ public sealed partial class MainWindowViewModel
                    StringComparison.OrdinalIgnoreCase)
                || actionId.Equals(
                    "farming.sell_farmland",
+                   StringComparison.OrdinalIgnoreCase)
+               || actionId.Equals(
+                   "heirloom.sell",
                    StringComparison.OrdinalIgnoreCase);
     }
 

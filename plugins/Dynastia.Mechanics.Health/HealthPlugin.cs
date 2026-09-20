@@ -24,6 +24,8 @@ public sealed class HealthPlugin : IGamePlugin
         health.ConfigureHistoricalCatalog(
             HistoricalHealthCatalog.Load(data, health.ConditionIds));
         context.AddService<IHealthService>(health);
+        context.AddService<IWorkCapacityService>(
+            new StandardWorkCapacityService(health));
 
         var healthContext = contextWeights.LoadCatalog(
             "Health/health_condition_context_weights.csv",

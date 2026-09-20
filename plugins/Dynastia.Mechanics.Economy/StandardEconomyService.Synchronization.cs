@@ -26,6 +26,7 @@ public sealed partial class StandardEconomyService
                 MigrateHousehold(person, household);
                 SynchronizeHouses(GetHead(household), household);
                 NormalizeFarmland(household);
+                SynchronizeLifestyleTags(household);
             }
 
             var claim =
@@ -141,6 +142,20 @@ public sealed partial class StandardEconomyService
         foreach (var line in household.LastExpenseBreakdown)
             line.Amount = RoundCurrency(line.Amount);
 
+        for (var index = 0; index < household.BudgetHistory.Count; index++)
+        {
+            var point = household.BudgetHistory[index];
+            household.BudgetHistory[index] = point with
+            {
+                Wealth = RoundCurrency(point.Wealth),
+                Income = RoundCurrency(point.Income),
+                Expenses = RoundCurrency(point.Expenses)
+            };
+        }
+
+        if (household.BudgetHistory.Count == 0)
+            RecordBudgetHistory(household, _gameState.Year);
+
         if (household.HouseholdId
             == Guid.Empty)
         {
@@ -246,7 +261,10 @@ public sealed partial class StandardEconomyService
                             _random.NextGuid(),
 
                         TownId =
-                            town.Id
+                            town.Id,
+
+                        PurchasePrice =
+                            GetHousePrice(town)
                     });
             }
         }
@@ -271,6 +289,12 @@ public sealed partial class StandardEconomyService
             {
                 house.TownId = fallbackTownId;
             }
+
+            var houseTown = ResolveHouseTown(house);
+            if (house.PurchasePrice <= 0m)
+                house.PurchasePrice = GetHousePrice(houseTown);
+
+            house.CapacityExtensions = Math.Max(0, house.CapacityExtensions);
 
             if (house.AssignedHeirId is Guid assignedHeirId)
             {
@@ -329,6 +353,12 @@ public sealed partial class StandardEconomyService
             {
                 house.TownId = fallbackTownId;
             }
+
+            var pendingTown = ResolveHouseTown(house);
+            if (house.PurchasePrice <= 0m)
+                house.PurchasePrice = GetHousePrice(pendingTown);
+
+            house.CapacityExtensions = Math.Max(0, house.CapacityExtensions);
         }
 
         claim.PendingHouses =
@@ -355,7 +385,10 @@ public sealed partial class StandardEconomyService
                 _random.NextGuid(),
 
             TownId =
-                town.Id
+                town.Id,
+
+            PurchasePrice =
+                GetHousePrice(town)
         };
     }
 
@@ -401,7 +434,9 @@ public sealed partial class StandardEconomyService
             town,
             IsResidence: isResidence,
             IsRented: !isResidence,
-            AssignedHeirId: house.AssignedHeirId);
+            AssignedHeirId: house.AssignedHeirId,
+            PurchasePrice: house.PurchasePrice,
+            CapacityExtensions: house.CapacityExtensions);
     }
 
     private HousePropertyInfo ToInfo(
@@ -418,7 +453,11 @@ public sealed partial class StandardEconomyService
             IsRented:
                 index > 0,
             AssignedHeirId:
-                house.AssignedHeirId);
+                house.AssignedHeirId,
+            PurchasePrice:
+                house.PurchasePrice,
+            CapacityExtensions:
+                house.CapacityExtensions);
     }
 
     private TownInfo ResolveHouseTown(

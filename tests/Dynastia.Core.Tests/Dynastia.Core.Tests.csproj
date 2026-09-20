@@ -35,6 +35,7 @@
     <ProjectReference Include="..\..\plugins\Dynastia.Mechanics.Hobbies\Dynastia.Mechanics.Hobbies.csproj" />
     <ProjectReference Include="..\..\plugins\Dynastia.Mechanics.Inheritance\Dynastia.Mechanics.Inheritance.csproj" />
     <ProjectReference Include="..\..\plugins\Dynastia.Mechanics.Historical\Dynastia.Mechanics.Historical.csproj" />
+    <ProjectReference Include="..\..\plugins\Dynastia.Mechanics.Heirlooms\Dynastia.Mechanics.Heirlooms.csproj" />
     <ProjectReference Include="..\..\plugins\Dynastia.Mechanics.Justice\Dynastia.Mechanics.Justice.csproj" />
     <ProjectReference Include="..\..\plugins\Dynastia.Mechanics.Mortality\Dynastia.Mechanics.Mortality.csproj" />
     <ProjectReference Include="..\..\plugins\Dynastia.Mechanics.Reproduction\Dynastia.Mechanics.Reproduction.csproj" />

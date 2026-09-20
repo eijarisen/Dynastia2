@@ -50,13 +50,7 @@ public sealed record PartnerCandidateInfo(
                 return Surname;
             }
 
-            if (Surname.EndsWith("ski", StringComparison.OrdinalIgnoreCase))
-                return Surname[..^3] + "ska";
-
-            if (Surname.EndsWith("cki", StringComparison.OrdinalIgnoreCase))
-                return Surname[..^3] + "cka";
-
-            return Surname;
+            return PolishSurnameRules.Feminize(Surname);
         }
     }
 }

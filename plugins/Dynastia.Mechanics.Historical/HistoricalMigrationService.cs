@@ -263,7 +263,7 @@ internal sealed class HistoricalMigrationService
             return;
 
         var houses = _economy.TakeAllHouses(head);
-        var proceeds = houses.Sum(house => _economy.GetHouseSaleValue(house.Town));
+        var proceeds = houses.Sum(house => _economy.GetHouseSaleValue(house));
         if (proceeds > 0)
             _economy.ChangeWealth(head, proceeds);
     }

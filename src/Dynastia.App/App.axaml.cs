@@ -187,6 +187,9 @@ public partial class App : Application
             var loanService =
                 pluginContext.GetService<ILoanService>();
 
+            var heirloomService =
+                pluginContext.GetService<IHeirloomService>();
+
             var householdService =
                 pluginContext.GetService<IHouseholdService>();
 
@@ -343,6 +346,7 @@ public partial class App : Application
                             farmingService,
                             craftService,
                             loanService,
+                            heirloomService,
                             householdService,
                             autonomousHouseholdDecisionService,
                             adoptionService,

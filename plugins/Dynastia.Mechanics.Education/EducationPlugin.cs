@@ -402,8 +402,11 @@ public sealed class EducationPlugin : IGamePlugin
 
                 economy.ChangeWealth(actor, -StandardEducationCost);
 
-                var successChance =
-                    education.GetPaidEducationSuccessChance(target);
+                var successChance = Math.Clamp(
+                    education.GetPaidEducationSuccessChance(target)
+                    * HouseholdLifestyleRules.GetEducationChanceMultiplier(target),
+                    0,
+                    1);
 
                 var success = random.NextDouble() < successChance;
                 if (success)
@@ -593,6 +596,12 @@ public sealed class EducationPlugin : IGamePlugin
                             child,
                             melancholic: 0.10,
                             choleric: -0.10);
+
+                    successChance = Math.Clamp(
+                        successChance
+                        * HouseholdLifestyleRules.GetEducationChanceMultiplier(child),
+                        0,
+                        1);
 
                     var success =
                         random.NextDouble()

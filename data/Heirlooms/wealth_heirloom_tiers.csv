@@ -1,0 +1,4 @@
+﻿TierId,MinimumHouseholdWealth,GenerationChanceOnFirstCrossing,TemplateIds
+wealth_100k,100000,0.35,wealth_silver_service;wealth_formal_portrait
+wealth_500k,500000,0.6,wealth_gold_jewellery;wealth_grand_clock;wealth_fine_painting
+wealth_2m,2000000,1.0,wealth_luxury_watch;wealth_antique_vase;wealth_art_piece

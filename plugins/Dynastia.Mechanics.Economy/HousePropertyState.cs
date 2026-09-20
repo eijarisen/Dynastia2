@@ -7,4 +7,8 @@ public sealed class HousePropertyState
     public string TownId { get; set; } = string.Empty;
 
     public Guid? AssignedHeirId { get; set; }
+
+    public decimal PurchasePrice { get; set; }
+
+    public int CapacityExtensions { get; set; }
 }

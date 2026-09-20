@@ -6,18 +6,19 @@ internal sealed class FamilyRelationYearSystem : IYearSystem
 {
     private readonly StandardFamilyRelationService _relations;
     private readonly IGameState _gameState;
+    private readonly IEconomyService _economy;
+    private readonly ILocationService _locations;
 
     public FamilyRelationYearSystem(
         StandardFamilyRelationService relations,
         IGameState gameState,
-        IFamilyService family,
         IEconomyService economy,
-        IHouseholdService households,
-        IPersonalityService? personality,
-        IGameRandom random)
+        ILocationService locations)
     {
         _relations = relations;
         _gameState = gameState;
+        _economy = economy;
+        _locations = locations;
     }
 
     public string Id => "family_relations.annual";
@@ -40,12 +41,39 @@ internal sealed class FamilyRelationYearSystem : IYearSystem
                 continue;
             }
 
-            // Familiarity is permanent once acquired. Sympathy slowly relaxes
-            // toward Neutral; kinship tolerance makes strong family bonds fade
-            // more slowly on the positive side.
-            _relations.DriftSympathyTowardNeutral(first, second);
+            var firstHousehold = _economy.GetHouseholdId(first);
+            var secondHousehold = _economy.GetHouseholdId(second);
+            var sameHousehold = firstHousehold is not null
+                && firstHousehold == secondHousehold;
+
+            var firstTown = _locations.GetLocation(first).HomeTown;
+            var secondTown = _locations.GetLocation(second).HomeTown;
+            var distance = firstTown.Id.Equals(
+                    secondTown.Id,
+                    StringComparison.OrdinalIgnoreCase)
+                ? 0.0
+                : FamilyRelationDistanceRules.DistanceKm(
+                    firstTown.Latitude,
+                    firstTown.Longitude,
+                    secondTown.Latitude,
+                    secondTown.Longitude);
+
+            var drift = FamilyRelationDistanceRules.GetAnnualDrift(
+                distance,
+                sameHousehold);
+
+            // Distance erodes familiarity only gradually, while Sympathy
+            // always relaxes toward Neutral rather than toward hostility.
+            // Active family interactions add Familiarity/Sympathy and can
+            // therefore counter this passive drift.
+            _relations.DriftTowardNeutralForDistance(
+                first,
+                second,
+                drift.FamiliarityLoss,
+                drift.SympathyDrift);
         }
     }
 
-    private IPerson? Find(Guid id) => _gameState.People.FirstOrDefault(p => p.Id == id);
+    private IPerson? Find(Guid id) =>
+        _gameState.People.FirstOrDefault(person => person.Id == id);
 }

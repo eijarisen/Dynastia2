@@ -1,0 +1,122 @@
+﻿TemplateId,Category,NamePattern,Emoji,BaseValue,Significance,StartYear,EndYear,AcquisitionNewsKey,Notes
+academic_scholar_manuscript,Academic,{Person}'s Scholar's Manuscript,📜,1800,Notable,1700,1849,academic,
+academic_bound_dissertation,Academic,{Person}'s Bound Dissertation,📕,2200,Notable,1800,,academic,
+academic_university_diploma,Academic,{Person}'s University Diploma,🎓,1800,Notable,1800,,academic,
+academic_annotated_reference,Academic,{Person}'s Annotated Reference Book,📚,2500,Notable,1700,,academic,
+academic_academic_medal,Academic,{Person}'s Academic Medal,🏅,3200,Exceptional,1850,,academic,
+academic_research_notebook,Academic,{Person}'s Research Notebook,📔,1800,Notable,1850,,academic,
+career_gold_watch,Career,{Person}'s Gold Presentation Watch,⌚,4500,Exceptional,1700,,career,
+career_professional_seal,Career,{Person}'s Engraved Professional Seal,🔏,3500,Exceptional,1700,,career,
+career_medical_case,Career,{Person}'s Physician's Instrument Case,🩺,4500,Exceptional,1700,,career,
+career_legal_seal,Career,{Person}'s Judge's Seal,⚖️,5000,Exceptional,1700,,career,
+career_officer_sabre,Career,{Person}'s Officer's Ceremonial Sabre,⚔️,6000,Exceptional,1700,,career,
+career_railway_watch,Career,{Person}'s Railway Service Watch,🚂,4200,Exceptional,1700,,career,
+career_captain_sextant,Career,{Person}'s Captain's Sextant,🧭,6000,Exceptional,1700,,career,
+career_civic_medal,Career,{Person}'s Civic Service Medal,🏅,4000,Exceptional,1700,,career,
+career_press_award,Career,{Person}'s Press Award Plaque,📰,3500,Exceptional,1700,,career,
+career_engineering_set,Career,{Person}'s Engineer's Drawing Set,📐,4500,Exceptional,1700,,career,
+career_science_medal,Career,{Person}'s Scientific Achievement Medal,🔬,5000,Exceptional,1700,,career,
+career_stage_award,Career,{Person}'s Stage Award,🎭,4000,Exceptional,1700,,career,
+career_presentation_tools,Career,{Person}'s Presentation Tool Set,🛠️,3800,Exceptional,1700,,career,
+career_technology_award,Career,{Person}'s Technology Award,💻,5000,Exceptional,1700,,career,
+career_service_medal,Career,{Person}'s Service Medal,🛡️,4000,Exceptional,1700,,career,
+career_finance_case,Career,{Person}'s Executive Document Case,💼,4500,Exceptional,1700,,career,
+career_postal_watch,Career,{Person}'s Postal Service Watch,✉️,3500,Exceptional,1700,,career,
+career_religious_book,Career,{Person}'s Presentation Prayer Book,🙏,2800,Exceptional,1700,,career,
+career_chef_silverware,Career,{Person}'s Chef's Presentation Silverware,🍽️,3500,Exceptional,1700,,career,
+career_property_deed_case,Career,{Person}'s Engraved Deed Case,🏠,4500,Exceptional,1700,,career,
+craft_master_hammer,Craft,{Person}'s Masterwork Engraved Hammer,🔨,5000,Exceptional,1700,,craft,
+craft_carved_chest,Craft,{Person}'s Masterwork Carved Chest,🪵,6500,Exceptional,1700,,craft,
+craft_stone_plaque,Craft,{Person}'s Masterwork Carved Stone Plaque,🪨,5500,Exceptional,1700,,craft,
+craft_ceramic_set,Craft,{Person}'s Masterwork Ceramic Set,🏺,5000,Exceptional,1700,,craft,
+craft_cut_glass_vessel,Craft,{Person}'s Masterwork Cut-Glass Vessel,🧪,6000,Exceptional,1700,,craft,
+craft_formal_coat,Craft,{Person}'s Masterwork Formal Coat,🧥,5000,Exceptional,1700,,craft,
+craft_tapestry,Craft,{Person}'s Masterwork Woven Tapestry,🧶,6500,Exceptional,1700,,craft,
+craft_leather_case,Craft,{Person}'s Masterwork Tooled Leather Case,👞,4500,Exceptional,1700,,craft,
+craft_pocket_watch,Craft,{Person}'s Masterwork Pocket Watch,⌚,12000,Exceptional,1700,,craft,
+craft_fine_volume,Craft,{Person}'s Masterwork Fine-Bound Volume,📚,6000,Exceptional,1700,,craft,
+craft_recipe_book,Craft,{Person}'s Master Baker's Recipe Book,🥧,3000,Exceptional,1700,,craft,
+craft_preserves_book,Craft,{Person}'s Master Preserver's Recipe Book,🫙,3000,Exceptional,1700,,craft,
+craft_grooming_set,Craft,{Person}'s Master's Silver Grooming Set,✂️,4500,Exceptional,1700,,craft,
+craft_model_ship,Craft,{Person}'s Master Shipwright's Model Ship,⛵,8000,Exceptional,1700,,craft,
+craft_photo_album,Craft,{Person}'s Master Photographer's Album,📷,6500,Exceptional,1700,,craft,
+craft_pipe_wrench,Craft,{Person}'s Master Plumber's Engraved Wrench,🔧,4000,Exceptional,1700,,craft,
+craft_precision_gauge,Craft,{Person}'s Master Machinist's Precision Gauge,⚙️,5500,Exceptional,1700,,craft,
+craft_tool_chest,Craft,{Person}'s Master Mechanic's Tool Chest,🧰,6500,Exceptional,1700,,craft,
+craft_electrical_meter,Craft,{Person}'s Master Electrician's Instrument Set,⚡,5500,Exceptional,1700,,craft,
+craft_auto_toolkit,Craft,{Person}'s Master Mechanic's Automotive Toolkit,🚗,6500,Exceptional,1700,,craft,
+craft_ironwork,Craft,{Person}'s Masterwork Ornamental Ironwork,🔥,6000,Exceptional,1700,,craft,
+craft_radio,Craft,{Person}'s Masterwork Hand-Built Radio,📻,7000,Exceptional,1700,,craft,
+craft_aircraft_instrument,Craft,{Person}'s Master Aircraft Instrument,✈️,8500,Exceptional,1700,,craft,
+craft_design_prototype,Craft,{Person}'s Master Fabricator's Design Prototype,🧪,5000,Exceptional,1700,,craft,
+craft_custom_computer,Craft,{Person}'s Masterwork Custom Computer,💻,9000,Exceptional,1700,,craft,
+historical_commonwealth_document,Historical,Old Commonwealth Document,📜,1000,Personal,1700,,historical,Generated only when the household was directly affected; wording must remain neutral.
+historical_hidden_correspondence,Historical,Hidden Political Correspondence,✉️,900,Personal,1700,,historical,Generated only when the household was directly affected; wording must remain neutral.
+historical_insurgent_keepsake,Historical,Insurgent Keepsake,🎗️,1000,Personal,1700,,historical,Generated only when the household was directly affected; wording must remain neutral.
+historical_war_prayer_book,Historical,War-Damaged Prayer Book,📖,800,Personal,1700,,historical,Generated only when the household was directly affected; wording must remain neutral.
+historical_field_postcards,Historical,Bundle of Field Postcards,✉️,600,Personal,1700,,historical,Generated only when the household was directly affected; wording must remain neutral.
+historical_evacuation_papers,Historical,Evacuation Papers,📄,400,Personal,1700,,historical,Generated only when the household was directly affected; wording must remain neutral.
+historical_deportation_papers,Historical,Deportation Papers,📄,400,Personal,1700,,historical,Generated only when the household was directly affected; wording must remain neutral.
+historical_recovered_photo,Historical,Recovered Family Photograph,📷,500,Personal,1700,,historical,Generated only when the household was directly affected; wording must remain neutral.
+historical_uprising_armband,Historical,Uprising Armband,🎗️,1000,Personal,1700,,historical,Generated only when the household was directly affected; wording must remain neutral.
+historical_burned_photo,Historical,Fire-Damaged Family Photograph,📷,300,Personal,1700,,historical,Generated only when the household was directly affected; wording must remain neutral.
+historical_lost_home_deed,Historical,Deed to the Lost Family Home,📜,1200,Personal,1700,,historical,Generated only when the household was directly affected; wording must remain neutral.
+historical_resettlement_document,Historical,Resettlement Document,📜,500,Personal,1700,,historical,Generated only when the household was directly affected; wording must remain neutral.
+historical_old_home_key,Historical,Key to the Former Family Home,🗝️,400,Personal,1700,,historical,Generated only when the household was directly affected; wording must remain neutral.
+historical_internment_letter,Historical,Internment Letter,✉️,500,Personal,1700,,historical,Generated only when the household was directly affected; wording must remain neutral.
+historical_underground_publication,Historical,Underground Publication,📰,800,Personal,1700,,historical,Generated only when the household was directly affected; wording must remain neutral.
+historical_solidarity_badge,Historical,Solidarity Badge,📛,900,Personal,1700,,historical,Generated only when the household was directly affected; wording must remain neutral.
+historical_protest_leaflet,Historical,Protest Leaflet,📄,500,Personal,1700,,historical,Generated only when the household was directly affected; wording must remain neutral.
+historical_pandemic_diary,Historical,Pandemic Diary,📔,700,Personal,1700,,historical,Generated only when the household was directly affected; wording must remain neutral.
+rare_old_painting,RareEvent,Old Painting,🖼️,7000,Exceptional,1700,,rare_event,
+rare_coin_collection,RareEvent,Old Coin Collection,🪙,4500,Notable,1700,,rare_event,
+rare_antique_jewellery,RareEvent,Antique Jewellery,💎,9000,Exceptional,1700,,rare_event,
+rare_award_trophy,RareEvent,Award Trophy,🏆,3500,Notable,1700,,rare_event,
+rare_professional_plaque,RareEvent,Professional Recognition Plaque,🏅,2800,Notable,1700,,rare_event,
+rare_patron_gift,RareEvent,Patron's Presentation Gift,🎁,4000,Notable,1700,,rare_event,
+rare_client_gift,RareEvent,Commissioner's Presentation Gift,🎁,4500,Notable,1700,,rare_event,
+rare_relative_locket,RareEvent,Distant Relative's Locket,💍,3000,Notable,1700,,rare_event,
+rare_lottery_ticket,RareEvent,Winning Lottery Ticket Keepsake,🎟️,1000,Personal,1700,,rare_event,
+rare_silverware,RareEvent,Antique Silverware,🍽️,6000,Notable,1700,,rare_event,
+family_bible,Family,Family Bible,📖,1200,Notable,1700,,large_family,
+family_chronicle,Family,Family Chronicle,📚,1500,Notable,1700,,large_family,
+family_portrait,Family,Large Family Portrait,🖼️,2500,Notable,1700,,large_family,
+family_jewellery,Family,Family Jewellery,💍,2200,Notable,1700,,large_family,
+family_pocket_watch,Family,Family Pocket Watch,⌚,2200,Notable,1700,,large_family,
+family_recipe_book,Family,Family Recipe Book,📕,900,Notable,1700,,large_family,
+crime_stolen_painting,Crime,Stolen Painting,🖼️,12000,Exceptional,1700,,crime,Marked as stolen. No fencing/provenance penalty in v1.
+crime_antique_chalice,Crime,Stolen Antique Chalice,🏺,9000,Exceptional,1700,,crime,Marked as stolen. No fencing/provenance penalty in v1.
+crime_jewelled_box,Crime,Stolen Jewelled Box,💎,10000,Exceptional,1700,,crime,Marked as stolen. No fencing/provenance penalty in v1.
+crime_silver_icon,Crime,Stolen Silver Icon,🖼️,8000,Exceptional,1700,,crime,Marked as stolen. No fencing/provenance penalty in v1.
+crime_signet_ring,Crime,Stolen Signet Ring,💍,7000,Exceptional,1700,,crime,Marked as stolen. No fencing/provenance penalty in v1.
+crime_antique_watch,Crime,Stolen Antique Watch,⌚,8000,Exceptional,1700,,crime,Marked as stolen. No fencing/provenance penalty in v1.
+crime_silver_service,Crime,Stolen Silver Service,🍽️,10000,Exceptional,1700,,crime,Marked as stolen. No fencing/provenance penalty in v1.
+crime_smuggled_artifact,Crime,Smuggled Antique Artifact,🏺,9000,Exceptional,1700,,crime,Marked as stolen. No fencing/provenance penalty in v1.
+hobby_rare_book,Hobby,Rare Book,📚,3500,Personal,1700,,hobby,
+hobby_instrument,Hobby,Fine Musical Instrument,🎻,6000,Personal,1700,,hobby,
+hobby_painting,Hobby,Original Painting,🎨,4000,Personal,1700,,hobby,
+hobby_manuscript,Hobby,Personal Manuscript,✒️,2200,Personal,1700,,hobby,
+hobby_chess_set,Hobby,Fine Chess Set,♟️,2500,Personal,1700,,hobby,
+hobby_hunting_trophy,Hobby,Hunting Trophy,🦌,1800,Personal,1700,,hobby,
+hobby_field_journal,Hobby,Illustrated Field Journal,🔍,2000,Personal,1700,,hobby,
+hobby_curiosity_case,Hobby,Curiosity Cabinet Piece,🗃️,3000,Personal,1700,,hobby,
+hobby_photo_album,Hobby,Historic Family Album,📷,3000,Personal,1700,,hobby,
+hobby_stamp_album,Hobby,Rare Stamp Album,✉️,4000,Personal,1700,,hobby,
+hobby_record_collection,Hobby,Rare Record Collection,🎶,4500,Personal,1700,,hobby,
+hobby_radio,Hobby,Hand-Built Amateur Radio,📡,3500,Personal,1700,,hobby,
+hobby_family_tree,Hobby,Handwritten Family Genealogy,🌳,1800,Personal,1700,,hobby,
+hobby_travel_journal,Hobby,Travel Journal,🧳,1800,Personal,1700,,hobby,
+hobby_bird_journal,Hobby,Birdwatcher's Illustrated Journal,🐦,1800,Personal,1700,,hobby,
+hobby_devotional_book,Hobby,Devotional Book,🙏,1200,Personal,1700,,hobby,
+wealth_silver_service,Wealth,Family Silver Service,🍽️,6000,Exceptional,1700,,wealth,
+wealth_formal_portrait,Wealth,Commissioned Family Portrait,🖼️,8000,Exceptional,1700,,wealth,
+wealth_gold_jewellery,Wealth,Gold Family Jewellery,💎,12000,Exceptional,1700,,wealth,
+wealth_grand_clock,Wealth,Grand Household Clock,🕰️,10000,Exceptional,1700,,wealth,
+wealth_fine_painting,Wealth,Fine Painting,🖼️,15000,Exceptional,1700,,wealth,
+wealth_antique_vase,Wealth,Antique Decorative Vase,🏺,12000,Exceptional,1700,,wealth,
+wealth_luxury_watch,Wealth,Luxury Gold Watch,⌚,15000,Exceptional,1700,,wealth,
+wealth_art_piece,Wealth,Major Art Collection Piece,🏛️,30000,Exceptional,1700,,wealth,
+longevity_cane,Longevity,Centenarian's Walking Cane,🦯,1200,Notable,1700,,longevity,
+longevity_watch,Longevity,Centenarian's Pocket Watch,⌚,2200,Notable,1700,,longevity,
+longevity_diary,Longevity,Centenarian's Personal Diary,📔,1800,Notable,1700,,longevity,
+longevity_spectacles,Longevity,Centenarian's Spectacles,👓,1200,Notable,1700,,longevity,

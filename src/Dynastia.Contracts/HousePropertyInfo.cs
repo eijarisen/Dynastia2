@@ -5,10 +5,24 @@ public sealed record HousePropertyInfo(
     TownInfo Town,
     bool IsResidence,
     bool IsRented,
-    Guid? AssignedHeirId = null)
+    Guid? AssignedHeirId = null,
+    decimal PurchasePrice = 0m,
+    int CapacityExtensions = 0)
 {
     public string Status =>
         IsResidence
             ? "Living In"
             : "Rented";
+
+    public decimal ExtensionCost =>
+        Math.Round(
+            Math.Max(0m, PurchasePrice) * 0.25m,
+            0,
+            MidpointRounding.AwayFromZero);
+
+    public int ResidentCapacity =>
+        8 + Math.Max(0, CapacityExtensions) * 2;
+
+    public decimal ImprovementValue =>
+        ExtensionCost * Math.Max(0, CapacityExtensions);
 }

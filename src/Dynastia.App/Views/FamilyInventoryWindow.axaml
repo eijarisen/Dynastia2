@@ -98,139 +98,229 @@
                                 BorderBrush="#A17A43"
                                 BorderThickness="1"
                                 CornerRadius="4">
-                                <StackPanel Spacing="10">
-                                    <TextBlock
-                                        Margin="0,0,0,8"
-                                        HorizontalAlignment="Center"
-                                        FontFamily="Georgia"
-                                        FontSize="20"
-                                        FontWeight="Bold"
-                                        Foreground="#352110"
-                                        Text="{Binding BudgetText}" />
-
-                                    <Grid ColumnDefinitions="*,*" ColumnSpacing="20">
-                                        <StackPanel Spacing="5">
-                                            <TextBlock
-                                                FontFamily="Georgia"
-                                                FontSize="15"
-                                                FontWeight="Bold"
-                                                Foreground="#5A3A18"
-                                                Text="{Binding IncomeTotalText}" />
-                                            <ItemsControl ItemsSource="{Binding Incomes}">
-                                                <ItemsControl.ItemTemplate>
-                                                    <DataTemplate x:DataType="vm:InventoryFinanceLineViewModel">
-                                                        <Grid Margin="0,1" ColumnDefinitions="*,Auto" ColumnSpacing="12">
-                                                            <TextBlock
-                                                                FontFamily="Georgia"
-                                                                FontSize="12"
-                                                                Foreground="#46321C"
-                                                                TextWrapping="Wrap"
-                                                                Text="{Binding Label}" />
-                                                            <TextBlock
-                                                                Grid.Column="1"
-                                                                FontFamily="Georgia"
-                                                                FontSize="12"
-                                                                FontWeight="Bold"
-                                                                Foreground="#46321C"
-                                                                Text="{Binding AmountText}" />
-                                                        </Grid>
-                                                    </DataTemplate>
-                                                </ItemsControl.ItemTemplate>
-                                            </ItemsControl>
-                                        </StackPanel>
-
-                                        <StackPanel Grid.Column="1" Spacing="5">
-                                            <TextBlock
-                                                FontFamily="Georgia"
-                                                FontSize="15"
-                                                FontWeight="Bold"
-                                                Foreground="#5A3A18"
-                                                Text="{Binding ExpenseTotalText}" />
-                                            <ItemsControl ItemsSource="{Binding Expenses}">
-                                                <ItemsControl.ItemTemplate>
-                                                    <DataTemplate x:DataType="vm:InventoryFinanceLineViewModel">
-                                                        <Grid Margin="0,1" ColumnDefinitions="*,Auto" ColumnSpacing="12">
-                                                            <TextBlock
-                                                                FontFamily="Georgia"
-                                                                FontSize="12"
-                                                                Foreground="#46321C"
-                                                                TextWrapping="Wrap"
-                                                                Text="{Binding Label}" />
-                                                            <TextBlock
-                                                                Grid.Column="1"
-                                                                FontFamily="Georgia"
-                                                                FontSize="12"
-                                                                FontWeight="Bold"
-                                                                Foreground="#46321C"
-                                                                Text="{Binding AmountText}" />
-                                                        </Grid>
-                                                    </DataTemplate>
-                                                </ItemsControl.ItemTemplate>
-                                            </ItemsControl>
-                                        </StackPanel>
-                                    </Grid>
-                                </StackPanel>
-                            </Border>
-
-                            <Border
-                                Margin="4"
-                                Padding="16,13"
-                                Background="#35FFF4D9"
-                                BorderBrush="#A17A43"
-                                BorderThickness="1"
-                                CornerRadius="4">
-                                <StackPanel Spacing="9">
-                                    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
+                                <Grid ColumnDefinitions="5*,6*" ColumnSpacing="20">
+                                    <StackPanel Spacing="7">
                                         <TextBlock
-                                            VerticalAlignment="Center"
                                             FontFamily="Georgia"
                                             FontSize="20"
                                             FontWeight="Bold"
                                             Foreground="#352110"
-                                            Text="Loans" />
-                                        <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8">
-                                            <Button
-                                                Classes="inventoryAction"
-                                                IsEnabled="{Binding CanTakeLoan}"
-                                                Content="Take a Loan"
-                                                Click="OnTakeLoanClick" />
-                                            <Button
-                                                Classes="inventoryAction"
-                                                IsEnabled="{Binding CanGiveLoan}"
-                                                Content="Give a Loan"
-                                                Click="OnGiveLoanClick" />
-                                        </StackPanel>
-                                    </Grid>
+                                            Text="{Binding BudgetText}" />
 
-                                    <TextBlock
-                                        FontFamily="Georgia"
-                                        FontSize="12"
-                                        FontStyle="Italic"
-                                        Foreground="#6B5131"
-                                        Text="{Binding LoanEmptyText}" />
+                                        <TextBlock
+                                            FontFamily="Georgia"
+                                            FontSize="15"
+                                            FontWeight="Bold"
+                                            Foreground="#5A3A18"
+                                            Text="{Binding IncomeTotalText}" />
+                                        <ItemsControl ItemsSource="{Binding Incomes}">
+                                            <ItemsControl.ItemTemplate>
+                                                <DataTemplate x:DataType="vm:InventoryFinanceLineViewModel">
+                                                    <Grid Margin="0,1" ColumnDefinitions="*,Auto" ColumnSpacing="12">
+                                                        <TextBlock
+                                                            FontFamily="Georgia"
+                                                            FontSize="12"
+                                                            Foreground="#46321C"
+                                                            TextWrapping="Wrap"
+                                                            Text="{Binding Label}" />
+                                                        <TextBlock
+                                                            Grid.Column="1"
+                                                            FontFamily="Georgia"
+                                                            FontSize="12"
+                                                            FontWeight="Bold"
+                                                            Foreground="#46321C"
+                                                            Text="{Binding AmountText}" />
+                                                    </Grid>
+                                                </DataTemplate>
+                                            </ItemsControl.ItemTemplate>
+                                        </ItemsControl>
 
-                                    <ItemsControl ItemsSource="{Binding Loans}">
-                                        <ItemsControl.ItemTemplate>
-                                            <DataTemplate x:DataType="vm:InventoryLoanLineViewModel">
-                                                <Grid Margin="0,3" ColumnDefinitions="230,*" ColumnSpacing="12">
-                                                    <TextBlock
-                                                        FontFamily="Georgia"
-                                                        FontSize="12.5"
-                                                        FontWeight="Bold"
-                                                        Foreground="#46321C"
-                                                        Text="{Binding Title}" />
-                                                    <TextBlock
-                                                        Grid.Column="1"
-                                                        FontFamily="Georgia"
-                                                        FontSize="12"
-                                                        Foreground="#46321C"
-                                                        Text="{Binding DetailsText}" />
-                                                </Grid>
-                                            </DataTemplate>
-                                        </ItemsControl.ItemTemplate>
-                                    </ItemsControl>
-                                </StackPanel>
+                                        <TextBlock
+                                            Margin="0,4,0,0"
+                                            FontFamily="Georgia"
+                                            FontSize="15"
+                                            FontWeight="Bold"
+                                            Foreground="#5A3A18"
+                                            Text="{Binding ExpenseTotalText}" />
+                                        <ItemsControl ItemsSource="{Binding Expenses}">
+                                            <ItemsControl.ItemTemplate>
+                                                <DataTemplate x:DataType="vm:InventoryFinanceLineViewModel">
+                                                    <Grid Margin="0,1" ColumnDefinitions="*,Auto" ColumnSpacing="12">
+                                                        <TextBlock
+                                                            FontFamily="Georgia"
+                                                            FontSize="12"
+                                                            Foreground="#46321C"
+                                                            TextWrapping="Wrap"
+                                                            Text="{Binding Label}" />
+                                                        <TextBlock
+                                                            Grid.Column="1"
+                                                            FontFamily="Georgia"
+                                                            FontSize="12"
+                                                            FontWeight="Bold"
+                                                            Foreground="#46321C"
+                                                            Text="{Binding AmountText}" />
+                                                    </Grid>
+                                                </DataTemplate>
+                                            </ItemsControl.ItemTemplate>
+                                        </ItemsControl>
+                                    </StackPanel>
+
+                                    <StackPanel Grid.Column="1" Spacing="2">
+                                        <ui:HouseholdBudgetGraph
+                                            Height="142"
+                                            History="{Binding BudgetHistory}" />
+                                        <TextBlock
+                                            HorizontalAlignment="Right"
+                                            FontFamily="Georgia"
+                                            FontSize="10"
+                                            Foreground="#6B5131"
+                                            Text="{Binding BudgetHistoryRangeText}" />
+                                    </StackPanel>
+                                </Grid>
                             </Border>
+
+                            <Grid Margin="4" ColumnDefinitions="*,*" ColumnSpacing="12">
+                                <Border
+                                    Padding="14,12"
+                                    Background="#35FFF4D9"
+                                    BorderBrush="#A17A43"
+                                    BorderThickness="1"
+                                    CornerRadius="4">
+                                    <StackPanel Spacing="9">
+                                        <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
+                                            <TextBlock
+                                                VerticalAlignment="Center"
+                                                FontFamily="Georgia"
+                                                FontSize="20"
+                                                FontWeight="Bold"
+                                                Foreground="#352110"
+                                                Text="💰 Loans" />
+                                            <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="5">
+                                                <Button
+                                                    Classes="inventoryAction"
+                                                    MinWidth="105"
+                                                    IsEnabled="{Binding CanTakeLoan}"
+                                                    Content="Take Loan"
+                                                    Click="OnTakeLoanClick" />
+                                                <Button
+                                                    Classes="inventoryAction"
+                                                    MinWidth="105"
+                                                    IsEnabled="{Binding CanGiveLoan}"
+                                                    Content="Give Loan"
+                                                    Click="OnGiveLoanClick" />
+                                            </StackPanel>
+                                        </Grid>
+
+                                        <TextBlock
+                                            FontFamily="Georgia"
+                                            FontSize="12"
+                                            FontStyle="Italic"
+                                            Foreground="#6B5131"
+                                            Text="{Binding LoanEmptyText}" />
+
+                                        <ItemsControl ItemsSource="{Binding Loans}">
+                                            <ItemsControl.ItemTemplate>
+                                                <DataTemplate x:DataType="vm:InventoryLoanLineViewModel">
+                                                    <StackPanel Margin="0,3" Spacing="1">
+                                                        <TextBlock
+                                                            FontFamily="Georgia"
+                                                            FontSize="12.5"
+                                                            FontWeight="Bold"
+                                                            Foreground="#46321C"
+                                                            Text="{Binding Title}" />
+                                                        <TextBlock
+                                                            FontFamily="Georgia"
+                                                            FontSize="11"
+                                                            Foreground="#46321C"
+                                                            TextWrapping="Wrap"
+                                                            Text="{Binding DetailsText}" />
+                                                    </StackPanel>
+                                                </DataTemplate>
+                                            </ItemsControl.ItemTemplate>
+                                        </ItemsControl>
+                                    </StackPanel>
+                                </Border>
+
+                                <Border
+                                    Grid.Column="1"
+                                    Padding="14,12"
+                                    Background="#35FFF4D9"
+                                    BorderBrush="#A17A43"
+                                    BorderThickness="1"
+                                    CornerRadius="4">
+                                    <StackPanel Spacing="9">
+                                        <TextBlock
+                                            FontFamily="Georgia"
+                                            FontSize="20"
+                                            FontWeight="Bold"
+                                            Foreground="#352110"
+                                            Text="🎩 Lifestyle Spending" />
+
+                                        <TextBlock
+                                            FontFamily="Georgia"
+                                            FontSize="15"
+                                            FontWeight="Bold"
+                                            Foreground="#5A3A18"
+                                            Text="{Binding LifestyleText, StringFormat='Current: {0}'}" />
+
+                                        <TextBlock
+                                            MinHeight="48"
+                                            FontFamily="Georgia"
+                                            FontSize="11"
+                                            Foreground="#6B5131"
+                                            TextWrapping="Wrap"
+                                            Text="{Binding LifestyleDescription}" />
+
+                                        <Grid ColumnDefinitions="*,*,*" ColumnSpacing="4">
+                                            <Button
+                                                Grid.Column="0"
+                                                Classes="inventoryAction"
+                                                MinWidth="0"
+                                                IsEnabled="{Binding CanUseLavishLifestyle}"
+                                                Tag="economy.lifestyle.lavish"
+                                                Content="Lavish"
+                                                Click="OnLifestyleClick">
+                                                <ToolTip.Tip>
+                                                    <TextBlock
+                                                        MaxWidth="290"
+                                                        TextWrapping="Wrap"
+                                                        Text="+25% living costs. Slightly improves child happiness, marriage and job satisfaction, health recovery, education and spouse prospects, while reducing Stress." />
+                                                </ToolTip.Tip>
+                                            </Button>
+                                            <Button
+                                                Grid.Column="1"
+                                                Classes="inventoryAction"
+                                                MinWidth="0"
+                                                IsEnabled="{Binding CanUseBalancedLifestyle}"
+                                                Tag="economy.lifestyle.balanced"
+                                                Content="Balanced"
+                                                Click="OnLifestyleClick">
+                                                <ToolTip.Tip>
+                                                    <TextBlock
+                                                        MaxWidth="290"
+                                                        TextWrapping="Wrap"
+                                                        Text="Standard living costs with no Lifestyle bonuses or penalties." />
+                                                </ToolTip.Tip>
+                                            </Button>
+                                            <Button
+                                                Grid.Column="2"
+                                                Classes="inventoryAction"
+                                                MinWidth="0"
+                                                IsEnabled="{Binding CanUseThriftyLifestyle}"
+                                                Tag="economy.lifestyle.thrifty"
+                                                Content="Thrifty"
+                                                Click="OnLifestyleClick">
+                                                <ToolTip.Tip>
+                                                    <TextBlock
+                                                        MaxWidth="290"
+                                                        TextWrapping="Wrap"
+                                                        Text="-20% living costs. Slightly lowers child happiness, marriage and job satisfaction, health recovery, education and spouse prospects, while increasing Stress." />
+                                                </ToolTip.Tip>
+                                            </Button>
+                                        </Grid>
+                                    </StackPanel>
+                                </Border>
+                            </Grid>
                         </StackPanel>
                     </ScrollViewer>
                 </TabItem>
@@ -300,6 +390,12 @@
                                                         Orientation="Horizontal"
                                                         VerticalAlignment="Center"
                                                         Spacing="8">
+                                                        <Button
+                                                            Classes="inventoryAction"
+                                                            IsEnabled="{Binding CanExtend}"
+                                                            Tag="{Binding PropertyId}"
+                                                            Content="{Binding ExtendActionText}"
+                                                            Click="OnExtendHouseClick" />
                                                         <TextBlock
                                                             VerticalAlignment="Center"
                                                             FontFamily="Georgia"
@@ -416,6 +512,108 @@
                                                                 </DataTemplate>
                                                             </ComboBox.ItemTemplate>
                                                         </ComboBox>
+                                                    </StackPanel>
+                                                </Grid>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                </StackPanel>
+                            </Border>
+
+                            <Border
+                                Margin="4"
+                                Padding="16,13"
+                                Background="#35FFF4D9"
+                                BorderBrush="#A17A43"
+                                BorderThickness="1"
+                                CornerRadius="4">
+                                <StackPanel Spacing="9">
+                                    <TextBlock
+                                        FontFamily="Georgia"
+                                        FontSize="20"
+                                        FontWeight="Bold"
+                                        Foreground="#352110"
+                                        Text="Heirlooms" />
+
+                                    <TextBlock
+                                        FontFamily="Georgia"
+                                        FontSize="12"
+                                        FontStyle="Italic"
+                                        Foreground="#6B5131"
+                                        Text="{Binding HeirloomEmptyText}" />
+
+                                    <ItemsControl ItemsSource="{Binding Heirlooms}">
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate x:DataType="vm:InventoryHeirloomViewModel">
+                                                <Grid Margin="0,5" ColumnDefinitions="48,*,Auto" ColumnSpacing="12" ToolTip.Tip="{Binding OriginText}">
+                                                    <Border
+                                                        Width="42"
+                                                        Height="42"
+                                                        VerticalAlignment="Center"
+                                                        Background="#55F4E4BC"
+                                                        BorderBrush="#9C7440"
+                                                        BorderThickness="1"
+                                                        CornerRadius="3">
+                                                        <TextBlock
+                                                            HorizontalAlignment="Center"
+                                                            VerticalAlignment="Center"
+                                                            FontSize="23"
+                                                            Text="{Binding Emoji}" />
+                                                    </Border>
+
+                                                    <StackPanel Grid.Column="1" Spacing="2" VerticalAlignment="Center">
+                                                        <TextBlock
+                                                            FontFamily="Georgia"
+                                                            FontSize="13.5"
+                                                            FontWeight="Bold"
+                                                            Foreground="#46321C"
+                                                            TextWrapping="Wrap"
+                                                            Text="{Binding DisplayName}" />
+                                                        <TextBlock
+                                                            FontFamily="Georgia"
+                                                            FontSize="11.5"
+                                                            Foreground="#6B5131"
+                                                            Text="{Binding DetailsText}" />
+                                                        <TextBlock
+                                                            FontFamily="Georgia"
+                                                            FontSize="11"
+                                                            Foreground="#7A5C37"
+                                                            TextTrimming="CharacterEllipsis"
+                                                            Text="{Binding OriginText}" />
+                                                    </StackPanel>
+
+                                                    <StackPanel
+                                                        Grid.Column="2"
+                                                        Orientation="Horizontal"
+                                                        VerticalAlignment="Center"
+                                                        Spacing="8">
+                                                        <TextBlock
+                                                            VerticalAlignment="Center"
+                                                            FontFamily="Georgia"
+                                                            FontSize="12"
+                                                            FontWeight="Bold"
+                                                            Foreground="#46321C"
+                                                            Text="Inherits:" />
+                                                        <ComboBox
+                                                            Classes="houseHeir"
+                                                            ItemsSource="{Binding HeirOptions}"
+                                                            SelectedItem="{Binding SelectedHeir, Mode=TwoWay}">
+                                                            <ComboBox.ItemTemplate>
+                                                                <DataTemplate x:DataType="vm:HouseHeirOptionViewModel">
+                                                                    <TextBlock
+                                                                        FontFamily="Georgia"
+                                                                        FontSize="12"
+                                                                        Foreground="#352110"
+                                                                        Text="{Binding Label}" />
+                                                                </DataTemplate>
+                                                            </ComboBox.ItemTemplate>
+                                                        </ComboBox>
+                                                        <Button
+                                                            Classes="inventoryAction"
+                                                            IsEnabled="{Binding CanSell}"
+                                                            Tag="{Binding HeirloomId}"
+                                                            Content="Sell"
+                                                            Click="OnSellHeirloomClick" />
                                                     </StackPanel>
                                                 </Grid>
                                             </DataTemplate>

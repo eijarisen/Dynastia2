@@ -16,6 +16,8 @@ public sealed class FamilyInventoryWindowViewModel :
 
     private string _householdName = string.Empty;
     private string _budgetText = string.Empty;
+    private IReadOnlyList<HouseholdBudgetHistoryPoint> _budgetHistory = Array.Empty<HouseholdBudgetHistoryPoint>();
+    private string _budgetHistoryRangeText = string.Empty;
     private string _incomeTotalText = string.Empty;
     private string _expenseTotalText = string.Empty;
     private string _loanEmptyText = string.Empty;
@@ -23,15 +25,23 @@ public sealed class FamilyInventoryWindowViewModel :
     private string _farmlandTitle = "Farmland";
     private string _farmlandSummaryText = string.Empty;
     private string _farmlandEmptyText = string.Empty;
+    private string _heirloomEmptyText = string.Empty;
     private string _buyFarmlandActionText = "Buy Farmland";
     private string _sellFarmlandActionText = "Sell Farmland";
     private int _selectedTabIndex;
     private bool _canTakeLoan;
     private bool _canGiveLoan;
+    private string _lifestyleText = "Balanced";
+    private string _lifestyleDescription = "Current living costs and household wellbeing are balanced.";
+    private bool _canUseLavishLifestyle;
+    private bool _canUseBalancedLifestyle;
+    private bool _canUseThriftyLifestyle;
     private bool _canBuyHouse;
+    private bool _canExtendHouse;
     private bool _canSellHouse;
     private bool _canBuyFarmland;
     private bool _canSellFarmland;
+    private bool _canSellHeirloom;
 
     public FamilyInventoryWindowViewModel(
         MainWindowViewModel main,
@@ -72,6 +82,9 @@ public sealed class FamilyInventoryWindowViewModel :
     public ObservableCollection<InventoryFarmlandViewModel>
         Farmland { get; } = [];
 
+    public ObservableCollection<InventoryHeirloomViewModel>
+        Heirlooms { get; } = [];
+
     public string HouseholdName
     {
         get => _householdName;
@@ -94,6 +107,32 @@ public sealed class FamilyInventoryWindowViewModel :
                 return;
 
             _budgetText = value;
+            OnPropertyChanged();
+        }
+    }
+
+    public IReadOnlyList<HouseholdBudgetHistoryPoint> BudgetHistory
+    {
+        get => _budgetHistory;
+        private set
+        {
+            if (ReferenceEquals(_budgetHistory, value))
+                return;
+
+            _budgetHistory = value;
+            OnPropertyChanged();
+        }
+    }
+
+    public string BudgetHistoryRangeText
+    {
+        get => _budgetHistoryRangeText;
+        private set
+        {
+            if (_budgetHistoryRangeText == value)
+                return;
+
+            _budgetHistoryRangeText = value;
             OnPropertyChanged();
         }
     }
@@ -186,6 +225,18 @@ public sealed class FamilyInventoryWindowViewModel :
         }
     }
 
+    public string HeirloomEmptyText
+    {
+        get => _heirloomEmptyText;
+        private set
+        {
+            if (_heirloomEmptyText == value)
+                return;
+            _heirloomEmptyText = value;
+            OnPropertyChanged();
+        }
+    }
+
     public string BuyFarmlandActionText
     {
         get => _buyFarmlandActionText;
@@ -236,6 +287,66 @@ public sealed class FamilyInventoryWindowViewModel :
         }
     }
 
+    public string LifestyleText
+    {
+        get => _lifestyleText;
+        private set
+        {
+            if (_lifestyleText == value)
+                return;
+            _lifestyleText = value;
+            OnPropertyChanged();
+        }
+    }
+
+    public string LifestyleDescription
+    {
+        get => _lifestyleDescription;
+        private set
+        {
+            if (_lifestyleDescription == value)
+                return;
+            _lifestyleDescription = value;
+            OnPropertyChanged();
+        }
+    }
+
+    public bool CanUseLavishLifestyle
+    {
+        get => _canUseLavishLifestyle;
+        private set
+        {
+            if (_canUseLavishLifestyle == value)
+                return;
+            _canUseLavishLifestyle = value;
+            OnPropertyChanged();
+        }
+    }
+
+    public bool CanUseBalancedLifestyle
+    {
+        get => _canUseBalancedLifestyle;
+        private set
+        {
+            if (_canUseBalancedLifestyle == value)
+                return;
+            _canUseBalancedLifestyle = value;
+            OnPropertyChanged();
+        }
+    }
+
+    public bool CanUseThriftyLifestyle
+    {
+        get => _canUseThriftyLifestyle;
+        private set
+        {
+            if (_canUseThriftyLifestyle == value)
+                return;
+            _canUseThriftyLifestyle = value;
+            OnPropertyChanged();
+        }
+    }
+
     public bool CanBuyHouse
     {
         get => _canBuyHouse;
@@ -245,6 +356,19 @@ public sealed class FamilyInventoryWindowViewModel :
                 return;
 
             _canBuyHouse = value;
+            OnPropertyChanged();
+        }
+    }
+
+    public bool CanExtendHouse
+    {
+        get => _canExtendHouse;
+        private set
+        {
+            if (_canExtendHouse == value)
+                return;
+
+            _canExtendHouse = value;
             OnPropertyChanged();
         }
     }
@@ -286,6 +410,18 @@ public sealed class FamilyInventoryWindowViewModel :
         }
     }
 
+    public bool CanSellHeirloom
+    {
+        get => _canSellHeirloom;
+        private set
+        {
+            if (_canSellHeirloom == value)
+                return;
+            _canSellHeirloom = value;
+            OnPropertyChanged();
+        }
+    }
+
     public void Refresh()
     {
         var data =
@@ -296,11 +432,14 @@ public sealed class FamilyInventoryWindowViewModel :
         Loans.Clear();
         Houses.Clear();
         Farmland.Clear();
+        Heirlooms.Clear();
 
         if (data is null)
         {
             HouseholdName = "No active household";
             BudgetText = "Budget: —";
+            BudgetHistory = Array.Empty<HouseholdBudgetHistoryPoint>();
+            BudgetHistoryRangeText = string.Empty;
             IncomeTotalText = "Income: —";
             ExpenseTotalText = "Expenses: —";
             LoanEmptyText = "No loans.";
@@ -308,19 +447,33 @@ public sealed class FamilyInventoryWindowViewModel :
             FarmlandTitle = "Farmland";
             FarmlandSummaryText = string.Empty;
             FarmlandEmptyText = "No owned farmland.";
+            HeirloomEmptyText = "No family heirlooms.";
             BuyFarmlandActionText = "Buy Farmland";
             SellFarmlandActionText = "Sell Farmland";
             CanTakeLoan = false;
             CanGiveLoan = false;
+            LifestyleText = "Balanced";
+            LifestyleDescription = "Current living costs and household wellbeing are balanced.";
+            CanUseLavishLifestyle = false;
+            CanUseBalancedLifestyle = false;
+            CanUseThriftyLifestyle = false;
             CanBuyHouse = false;
             CanSellHouse = false;
             CanBuyFarmland = false;
             CanSellFarmland = false;
+            CanSellHeirloom = false;
             return;
         }
 
         HouseholdName = data.HouseholdName;
         BudgetText = $"Total Budget: {data.Budget:N0} zł";
+        BudgetHistory = data.BudgetHistory;
+        BudgetHistoryRangeText = data.BudgetHistory.Count switch
+        {
+            0 => string.Empty,
+            1 => data.BudgetHistory[0].Year.ToString(),
+            _ => $"{data.BudgetHistory[0].Year}–{data.BudgetHistory[^1].Year}"
+        };
         IncomeTotalText = $"Income: {data.IncomeTotal:N0} zł";
         ExpenseTotalText = $"Expenses: {data.ExpenseTotal:N0} zł";
 
@@ -385,6 +538,10 @@ public sealed class FamilyInventoryWindowViewModel :
             Houses.Add(
                 new InventoryHouseViewModel(
                     house,
+                    _main.GetHouseValue(house),
+                    data.CanExtendHouse
+                        && house.ExtensionCost > 0m
+                        && data.Budget >= house.ExtensionCost,
                     heirOptions,
                     _main.SetHouseInheritanceHeir));
         }
@@ -412,6 +569,23 @@ public sealed class FamilyInventoryWindowViewModel :
             }
         }
 
+        foreach (var heirloom in data.Heirlooms
+                     .OrderBy(item => item.AcquiredYear)
+                     .ThenBy(item => item.DisplayName, StringComparer.CurrentCultureIgnoreCase)
+                     .ThenBy(item => item.Id))
+        {
+            Heirlooms.Add(
+                new InventoryHeirloomViewModel(
+                    heirloom,
+                    heirOptions,
+                    _main.SetHeirloomInheritanceHeir,
+                    data.CanSellHeirloom));
+        }
+
+        HeirloomEmptyText = Heirlooms.Count == 0
+            ? "No family heirlooms."
+            : string.Empty;
+
         LoanEmptyText =
             Loans.Count == 0
                 ? "No active loans or debts."
@@ -437,12 +611,34 @@ public sealed class FamilyInventoryWindowViewModel :
             FarmlandEmptyText = "Farming mechanics are unavailable.";
         }
 
+        LifestyleText = data.Lifestyle switch
+        {
+            HouseholdLifestyleStance.Lavish => "Lavish",
+            HouseholdLifestyleStance.Thrifty => "Thrifty",
+            _ => "Balanced"
+        };
+
+        LifestyleDescription = data.Lifestyle switch
+        {
+            HouseholdLifestyleStance.Lavish =>
+                "+25% living costs. Subtle gains to family happiness, marriage, work morale, recovery, education and spouse prospects; slightly less Stress.",
+            HouseholdLifestyleStance.Thrifty =>
+                "-20% living costs. Subtle penalties to family happiness, marriage, work morale, recovery, education and spouse prospects; slightly more Stress.",
+            _ =>
+                "Baseline living costs and household wellbeing."
+        };
+
         CanTakeLoan = data.CanTakeLoan;
         CanGiveLoan = data.CanGiveLoan;
+        CanUseLavishLifestyle = data.CanUseLavishLifestyle;
+        CanUseBalancedLifestyle = data.CanUseBalancedLifestyle;
+        CanUseThriftyLifestyle = data.CanUseThriftyLifestyle;
         CanBuyHouse = data.CanBuyHouse;
+        CanExtendHouse = data.CanExtendHouse;
         CanSellHouse = data.CanSellHouse;
         CanBuyFarmland = data.CanBuyFarmland;
         CanSellFarmland = data.CanSellFarmland;
+        CanSellHeirloom = data.CanSellHeirloom;
         BuyFarmlandActionText = "Buy Farmland";
         SellFarmlandActionText = "Sell Farmland";
     }
@@ -480,6 +676,58 @@ public sealed class InventoryLoanLineViewModel
 
     public string Title { get; }
     public string DetailsText { get; }
+}
+
+public sealed class InventoryHeirloomViewModel :
+    ViewModelBase
+{
+    private readonly Func<Guid, Guid?, bool> _assign;
+    private HouseHeirOptionViewModel _selectedHeir;
+
+    public InventoryHeirloomViewModel(
+        HeirloomAssetInfo heirloom,
+        IReadOnlyList<HouseHeirOptionViewModel> heirOptions,
+        Func<Guid, Guid?, bool> assign,
+        bool canSell)
+    {
+        HeirloomId = heirloom.Id;
+        Emoji = heirloom.Emoji;
+        DisplayName = heirloom.DisplayName;
+        DetailsText = $"{heirloom.AcquiredYear} · Value {heirloom.AppraisedValue:N0} zł · sells for {Math.Round(heirloom.AppraisedValue * 0.8m, 0, MidpointRounding.AwayFromZero):N0} zł";
+        OriginText = string.IsNullOrWhiteSpace(heirloom.OriginDescription)
+            ? "Family heirloom"
+            : heirloom.OriginDescription;
+        HeirOptions = heirOptions;
+        _assign = assign;
+        CanSell = canSell;
+        _selectedHeir = heirOptions.FirstOrDefault(option =>
+                option.PersonId == heirloom.AssignedHeirId)
+            ?? heirOptions[0];
+    }
+
+    public Guid HeirloomId { get; }
+    public string Emoji { get; }
+    public string DisplayName { get; }
+    public string DetailsText { get; }
+    public string OriginText { get; }
+    public bool CanSell { get; }
+    public IReadOnlyList<HouseHeirOptionViewModel> HeirOptions { get; }
+
+    public HouseHeirOptionViewModel SelectedHeir
+    {
+        get => _selectedHeir;
+        set
+        {
+            if (value is null || ReferenceEquals(_selectedHeir, value))
+                return;
+
+            var previous = _selectedHeir;
+            _selectedHeir = value;
+            if (!_assign(HeirloomId, value.PersonId))
+                _selectedHeir = previous;
+            OnPropertyChanged();
+        }
+    }
 }
 
 public sealed class InventoryFarmlandViewModel :
@@ -558,14 +806,23 @@ public sealed class InventoryHouseViewModel :
 
     public InventoryHouseViewModel(
         HousePropertyInfo house,
+        decimal currentValue,
+        bool canExtend,
         IReadOnlyList<HouseHeirOptionViewModel> heirOptions,
         Func<Guid, Guid?, bool> assign)
     {
         PropertyId = house.Id;
         TownText = house.Town.DisplayName;
-        StatusText = house.IsResidence
+        CanExtend = canExtend;
+        ExtendActionText = $"Extend ({house.ExtensionCost:N0} zł)";
+        var status = house.IsResidence
             ? "Residence"
             : "Rented property";
+        var extensionText = house.CapacityExtensions == 0
+            ? string.Empty
+            : $" · {house.CapacityExtensions} extension{(house.CapacityExtensions == 1 ? string.Empty : "s")}";
+        StatusText =
+            $"{status}{extensionText} · Capacity {house.ResidentCapacity} · Value {currentValue:N0} zł";
         HeirOptions = heirOptions;
         _assign = assign;
 
@@ -578,6 +835,8 @@ public sealed class InventoryHouseViewModel :
     public Guid PropertyId { get; }
     public string TownText { get; }
     public string StatusText { get; }
+    public bool CanExtend { get; }
+    public string ExtendActionText { get; }
     public IReadOnlyList<HouseHeirOptionViewModel> HeirOptions { get; }
 
     public HouseHeirOptionViewModel SelectedHeir

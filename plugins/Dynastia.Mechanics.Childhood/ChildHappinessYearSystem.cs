@@ -54,6 +54,16 @@ public sealed class ChildHappinessYearSystem : IYearSystem
                 _happiness.ChangeHappiness(child, -1);
             }
 
+            var lifestyle = HouseholdLifestyleRules.GetStance(child);
+            var lifestyleChance = HouseholdLifestyleRules.GetMoraleShiftChance(child);
+            if (lifestyleChance > 0
+                && _random.NextDouble() < lifestyleChance)
+            {
+                _happiness.ChangeHappiness(
+                    child,
+                    lifestyle == HouseholdLifestyleStance.Lavish ? 1 : -1);
+            }
+
             var temperamentCurrent = _happiness.GetHappiness(child)?.Value ?? 3;
 
             if ((child.Tags.Has("personality.melancholic")

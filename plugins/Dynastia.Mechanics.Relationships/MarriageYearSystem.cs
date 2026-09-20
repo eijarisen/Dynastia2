@@ -112,6 +112,10 @@ public sealed class MarriageYearSystem : IYearSystem
                 marriageChance *= 5;
             }
 
+            marriageChance *=
+                HouseholdLifestyleRules.GetPartnerChanceMultiplier(person);
+            marriageChance = Math.Clamp(marriageChance, 0, 1);
+
             person.Tags.Remove(
                 "modifier.find_spouse");
 

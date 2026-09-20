@@ -147,6 +147,14 @@ internal static class ActionPresentationPolicy
             return categories;
         }
 
+        if (actionId.Equals(
+            "family.adopt_polish_surname",
+            StringComparison.OrdinalIgnoreCase))
+        {
+            categories.Add(ActionCategory.Family);
+            return categories;
+        }
+
         if (actionId.StartsWith(
             "family_support.",
             StringComparison.OrdinalIgnoreCase))
@@ -270,7 +278,8 @@ internal static class ActionPresentationPolicy
             "household.buy_house",
             "household.sell_house",
             "farming.buy_farmland",
-            "farming.sell_farmland");
+            "farming.sell_farmland",
+            "heirloom.sell");
 
         GroupTogether(
             actions,

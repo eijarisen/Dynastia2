@@ -10,6 +10,7 @@ public sealed partial class HouseholdsPlugin
         IFamilyService family,
         IHouseholdService households,
         IEconomyService economy,
+        IHouseholdCapacityService householdCapacity,
         ILocationService locations,
         ICareerService career,
         IGameRandom random,
@@ -77,10 +78,106 @@ public sealed partial class HouseholdsPlugin
         actions.Register(
             new GameActionDefinition
             {
+                Id = "household.extend_house",
+                Label = "Extend House",
+                Description =
+                    "Choose an owned house to extend. Each extension costs 25% of that house's original purchase price, permanently adds room for 2 residents, and increases the property's value.",
+                Mode = ActionExecutionMode.Queued,
+                QueuePhase = YearPhase.QueuedActionsEarly,
+                IsAvailable = context =>
+                {
+                    if (!CanActOnSelf(context))
+                        return false;
+
+                    return economy.GetHouses(context.Actor)
+                        .Any(house =>
+                            house.ExtensionCost > 0m
+                            && economy.CanAfford(
+                                context.Actor,
+                                house.ExtensionCost));
+                },
+                Execute = context =>
+                {
+                    var owned = economy.GetHouses(context.Actor);
+                    context.Parameters.TryGetValue(
+                        "propertyId",
+                        out var propertyIdRaw);
+
+                    HousePropertyInfo? selected = null;
+                    if (Guid.TryParse(propertyIdRaw, out var propertyId))
+                    {
+                        selected = owned.FirstOrDefault(
+                            house => house.Id == propertyId);
+                    }
+                    else
+                    {
+                        // Compatibility for saves queued before extensions
+                        // could target any owned property.
+                        selected = owned.FirstOrDefault(house => house.IsResidence);
+                    }
+
+                    if (selected is null || selected.ExtensionCost <= 0m)
+                    {
+                        return new GameActionResult(
+                            false,
+                            "The selected house is no longer owned.",
+                            ActionReasonCodes.AssetNoLongerOwned);
+                    }
+
+                    if (!economy.CanAfford(context.Actor, selected.ExtensionCost))
+                    {
+                        return new GameActionResult(
+                            false,
+                            "The household can no longer afford the extension.",
+                            ActionReasonCodes.InsufficientFunds);
+                    }
+
+                    if (!householdCapacity.ExtendHouse(
+                            context.Actor,
+                            selected.Id))
+                    {
+                        return new GameActionResult(
+                            false,
+                            "The selected house is no longer owned.",
+                            ActionReasonCodes.AssetNoLongerOwned);
+                    }
+
+                    economy.ChangeWealth(
+                        context.Actor,
+                        -selected.ExtensionCost);
+
+                    var updated = economy.GetHouses(context.Actor)
+                        .First(house => house.Id == selected.Id);
+                    var value = economy.GetHouseValue(updated);
+
+                    events.Publish(new GameEvent
+                    {
+                        Type = "household.house_extended",
+                        Year = context.GameState.Year,
+                        SubjectId = context.Actor.Id,
+                        Data = new Dictionary<string, string>
+                        {
+                            ["amount"] = selected.ExtensionCost.ToString(),
+                            ["propertyId"] = selected.Id.ToString(),
+                            ["town"] = selected.Town.Town,
+                            ["residentCapacity"] = updated.ResidentCapacity.ToString(),
+                            ["propertyValue"] = value.ToString(),
+                            ["text"] =
+                                $"{family.GetDisplayName(context.Actor)} extended the house in {selected.Town.Town} for {selected.ExtensionCost:N0} zł, increasing its capacity to {updated.ResidentCapacity} and its value to {value:N0} zł."
+                        }
+                    });
+
+                    return new GameActionResult(true);
+                }
+            });
+
+        actions.Register(
+            new GameActionDefinition
+            {
                 Id = "household.sell_house",
                 Label = "Sell a House",
                 Description =
-                    "Choose one owned property and sell it for 80% of that town's current local house price. Selling the residence never causes relocation; the household simply rents in the same town if no local house remains.",
+                    "Choose one owned property and sell it for 80% of its current value, including extensions. Selling the residence never causes relocation; the household simply rents in the same town if no local house remains.",
                 Mode = ActionExecutionMode.Queued,
                 QueuePhase = YearPhase.QueuedActionsEarly,
                 EvaluateAvailability = context =>
@@ -118,7 +215,7 @@ public sealed partial class HouseholdsPlugin
                     if (sold is null)
                         return new GameActionResult(false);
 
-                    var saleValue = economy.GetHouseSaleValue(sold.Town);
+                    var saleValue = economy.GetHouseSaleValue(sold);
                     economy.ChangeWealth(context.Actor, saleValue);
 
                     events.Publish(new GameEvent

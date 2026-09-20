@@ -136,7 +136,8 @@ public sealed partial class WellbeingPlugin
                 Description =
                     "Use alcohol to blunt current stress. Reduces Stress by 2 " +
                     "for this year, immediately costs 10 Health, and carries " +
-                    "a 10% base chance of developing Alcoholism.",
+                    "about a 25% chance of developing Alcoholism for Sanguine/Phlegmatic " +
+                    "characters or 33% for Choleric/Melancholic characters.",
 
                 Mode =
                     ActionExecutionMode.Queued,
@@ -197,15 +198,7 @@ public sealed partial class WellbeingPlugin
                             });
 
                         var alcoholismChance =
-                            PersonalityInfluence.AdjustProbability(
-                                AlcoholismChanceFromDrinking,
-                                actor,
-                                melancholic: 0.20,
-                                phlegmatic: -0.15,
-                                sanguine: -0.10,
-                                choleric: 0.20,
-                                good: -0.10,
-                                evil: 0.10);
+                            GetAlcoholismChanceFromDrinking(actor);
 
                         if (random.NextDouble()
                             < alcoholismChance

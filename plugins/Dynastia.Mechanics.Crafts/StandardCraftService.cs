@@ -17,6 +17,7 @@ internal sealed class StandardCraftService : ICraftService, IIncomeProvider
     private readonly ILocalCareerOpportunityService _localOpportunities;
     private readonly ITownProsperityService _prosperity;
     private readonly ILocalEconomicStrengthService _economicStrength;
+    private readonly IWorkCapacityService _workCapacity;
     private readonly IGameRandom _random;
     private readonly IGameEventBus _events;
     private readonly CraftCatalog _catalog;
@@ -32,6 +33,7 @@ internal sealed class StandardCraftService : ICraftService, IIncomeProvider
         ILocalCareerOpportunityService localOpportunities,
         ITownProsperityService prosperity,
         ILocalEconomicStrengthService economicStrength,
+        IWorkCapacityService workCapacity,
         IGameRandom random,
         IGameEventBus events,
         IContextWeightService contextWeights,
@@ -46,6 +48,7 @@ internal sealed class StandardCraftService : ICraftService, IIncomeProvider
         _localOpportunities = localOpportunities;
         _prosperity = prosperity;
         _economicStrength = economicStrength;
+        _workCapacity = workCapacity;
         _random = random;
         _events = events;
         _catalog = catalog;
@@ -135,7 +138,9 @@ internal sealed class StandardCraftService : ICraftService, IIncomeProvider
             ApplyTownIncomeMultiplier(
                 person,
                 craft,
-                GetExpectedAnnualIncome(craft, level)),
+                _workCapacity
+                    .GetWorkCapacity(person)
+                    .Apply(GetExpectedAnnualIncome(craft, level))),
             next?.RequiredMasteryProgress,
             next?.MinimumRelevantExperienceYears);
     }
@@ -582,6 +587,10 @@ internal sealed class StandardCraftService : ICraftService, IIncomeProvider
                 MidpointRounding.AwayFromZero);
         }
 
+        income = _workCapacity
+            .GetWorkCapacity(person)
+            .Apply(income);
+
         return ApplyTownIncomeMultiplier(
             person,
             active,
@@ -619,6 +628,10 @@ internal sealed class StandardCraftService : ICraftService, IIncomeProvider
                 MidpointRounding.AwayFromZero);
         }
 
+        income = _workCapacity
+            .GetWorkCapacity(person)
+            .Apply(income);
+
         income = ApplyTownIncomeMultiplier(person, active, income);
 
         component.LastAnnualIncome = income;
@@ -648,10 +661,12 @@ internal sealed class StandardCraftService : ICraftService, IIncomeProvider
             var commissionValue = ApplyTownIncomeMultiplier(
                 person,
                 active,
-                CraftRules.CalculateAnnualIncome(
-                    baseSalary,
-                    progress.MasteryLevel,
-                    94));
+                _workCapacity
+                    .GetWorkCapacity(person)
+                    .Apply(CraftRules.CalculateAnnualIncome(
+                        baseSalary,
+                        progress.MasteryLevel,
+                        94)));
 
             _events.Publish(new GameEvent
             {
@@ -678,7 +693,8 @@ internal sealed class StandardCraftService : ICraftService, IIncomeProvider
     internal void RecordWorkYear(IPerson person)
     {
         if (!person.Tags.Has("state.alive")
-            || person.Tags.Has("state.imprisoned"))
+            || person.Tags.Has("state.imprisoned")
+            || !_workCapacity.GetWorkCapacity(person).CanWork)
         {
             return;
         }

@@ -87,17 +87,26 @@ internal sealed class StandardTownLifeService : ITownLifeService
                     "school" => institution.Tier <= 0
                         ? "Education: unavailable"
                         : $"Education: up to Level {institution.Tier}",
-                    "bank" => !bankQuality.IsAvailable
-                        ? "Loans: unavailable"
-                        : $"Loans: 3 offers · principal {bankQuality.PrincipalMultiplierMin:P0}–{bankQuality.PrincipalMultiplierMax:P0} · " +
-                          $"interest {bankQuality.InterestMultiplierMin:P0}–{bankQuality.InterestMultiplierMax:P0} · " +
-                          $"term {bankQuality.DurationMultiplierMin:P0}–{bankQuality.DurationMultiplierMax:P0}",
-                    "medical" when !medicalQuality.IsAvailable && _gameState.Year <= 1849 =>
-                        "Healthcare: visiting physician · 3,000 zł",
-                    "medical" when !medicalQuality.IsAvailable =>
-                        "Healthcare: unavailable",
-                    "medical" =>
-                        $"Healthcare: +{medicalQuality.TreatmentSuccessAdd:P0} success · {medicalQuality.TreatmentCostMultiplier:P0} cost",
+                    "bank" => bankQuality.Tier switch
+                    {
+                        <= 0 => "Loans: unavailable",
+                        1 => "Loan offers: unfavorable",
+                        2 => "Loan offers: modest",
+                        3 => "Loan offers: standard",
+                        4 => "Loan offers: favorable",
+                        _ => "Loan offers: very favorable"
+                    },
+                    "medical" => medicalQuality.Tier switch
+                    {
+                        <= 0 when _gameState.Year <= 1849 =>
+                            "Healthcare: visiting physician only",
+                        <= 0 => "Healthcare: unavailable",
+                        1 => "Healthcare: basic",
+                        2 => "Healthcare: limited",
+                        3 => "Healthcare: standard",
+                        4 => "Healthcare: good",
+                        _ => "Healthcare: excellent"
+                    },
                     _ => string.Empty
                 };
 

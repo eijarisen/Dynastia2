@@ -15,6 +15,7 @@ public sealed class CraftsPlugin : IGamePlugin
         var localOpportunities = Require<ILocalCareerOpportunityService>(context, "Local opportunity service");
         var prosperity = Require<ITownProsperityService>(context, "Town prosperity service");
         var economicStrength = Require<ILocalEconomicStrengthService>(context, "Local economic-strength service");
+        var workCapacity = Require<IWorkCapacityService>(context, "Work-capacity service");
         var contextWeights = Require<IContextWeightService>(context, "Context-weight service");
         var data = Require<IGameDataService>(context, "Game data service");
         var random = Require<IGameRandom>(context, "Game random service");
@@ -37,6 +38,7 @@ public sealed class CraftsPlugin : IGamePlugin
             localOpportunities,
             prosperity,
             economicStrength,
+            workCapacity,
             random,
             events,
             contextWeights,

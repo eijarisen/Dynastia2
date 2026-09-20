@@ -4,7 +4,8 @@ namespace Dynastia.Mechanics.Economy;
 
 public sealed partial class StandardEconomyService :
     IEconomyService,
-    IEconomyBalanceService
+    IEconomyBalanceService,
+    IHouseholdCapacityService
 {
     private const decimal BaseHousePrice = 40000m;
 
@@ -167,7 +168,13 @@ public sealed partial class StandardEconomyService :
                             line.Amount,
                             line.PersonId))
                 .ToList(),
-            houses);
+            houses)
+        {
+            History = household.BudgetHistory
+                .OrderBy(point => point.Year)
+                .ToList(),
+            Lifestyle = household.Lifestyle
+        };
     }
 
     public void RecordRealizedExpense(
@@ -325,6 +332,8 @@ public sealed partial class StandardEconomyService :
             target.MemberIds.Add(
                 member.Id);
         }
+
+        SynchronizeLifestyleTags(target);
     }
 
     public void RemoveHouseholdMember(
@@ -342,6 +351,9 @@ public sealed partial class StandardEconomyService :
             .MemberIds
             .Remove(
                 member.Id);
+
+        member.Tags.Remove(HouseholdLifestyleRules.LavishTag);
+        member.Tags.Remove(HouseholdLifestyleRules.ThriftyTag);
     }
 
     public void TransferHouseholdHead(

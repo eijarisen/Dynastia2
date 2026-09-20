@@ -42,6 +42,11 @@ public sealed class HouseholdEconomyComponent
 
     public decimal LastExpenses { get; set; }
 
+    public HouseholdLifestyleStance Lifestyle { get; set; } =
+        HouseholdLifestyleStance.Balanced;
+
+    public List<HouseholdBudgetHistoryPoint> BudgetHistory { get; } = [];
+
     public List<LedgerLineState> LastIncomeBreakdown { get; } = [];
 
     public List<LedgerLineState> LastExpenseBreakdown { get; } = [];

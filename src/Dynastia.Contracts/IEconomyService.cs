@@ -124,6 +124,32 @@ public interface IEconomyService
 
     decimal GetHouseSaleValue(TownInfo town);
 
+    decimal GetHouseValue(HousePropertyInfo house)
+    {
+        ArgumentNullException.ThrowIfNull(house);
+        var purchasePrice = house.PurchasePrice > 0m
+            ? house.PurchasePrice
+            : GetHousePrice(house.Town);
+        var improvementValue =
+            Math.Round(
+                purchasePrice * 0.25m * Math.Max(0, house.CapacityExtensions),
+                0,
+                MidpointRounding.AwayFromZero);
+        return Math.Round(
+            GetHousePrice(house.Town) + improvementValue,
+            0,
+            MidpointRounding.AwayFromZero);
+    }
+
+    decimal GetHouseSaleValue(HousePropertyInfo house)
+    {
+        ArgumentNullException.ThrowIfNull(house);
+        return Math.Round(
+            GetHouseValue(house) * 0.80m,
+            0,
+            MidpointRounding.AwayFromZero);
+    }
+
     decimal GetLivingCostPerPerson(TownInfo town);
 
     decimal GetResidenceRent(TownInfo town);

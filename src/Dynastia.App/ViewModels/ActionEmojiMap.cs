@@ -37,6 +37,7 @@ public static class ActionEmojiMap
                 ["childhood.raise_child"] = "🫂",
 
                 ["ui.town_affairs"] = "🏛️",
+                ["family.adopt_polish_surname"] = "🇵🇱",
                 ["ui.self_improvement"] = "🛠️",
                 ["ui.manage_properties"] = "🏘️",
                 ["ui.manage_finances"] = "🏦",
@@ -51,6 +52,7 @@ public static class ActionEmojiMap
                 ["household.sell_house"] = "💵",
                 ["farming.buy_farmland"] = "🌾",
                 ["farming.sell_farmland"] = "🌾",
+                ["heirloom.sell"] = "💵",
                 ["household.give_house_to_son"] = "🎁",
                 ["household.ask_parents_house"] = "🙏",
                 ["household.ask_father_house"] = "🙏",

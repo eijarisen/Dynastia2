@@ -16,7 +16,7 @@ public sealed partial class MainWindowViewModel
             Id = ManagePropertiesUiActionId,
             Label = "Manage Properties",
             Description =
-                "Open Family Inventory to manage houses and farmland.",
+                "Open Family Inventory to buy, extend, sell, and assign houses alongside farmland and heirlooms.",
             Mode = ActionExecutionMode.Immediate,
             IsAvailable = _ => true,
             Execute = _ => new GameActionResult(false)
@@ -57,6 +57,10 @@ public sealed partial class MainWindowViewModel
 
         var farming =
             _farmingService?.GetSnapshot(actor);
+
+        var heirlooms =
+            _heirloomService?.GetHeirlooms(actor)
+            ?? Array.Empty<HeirloomAssetInfo>();
 
         var incomeLines =
             finance.LastIncomeBreakdown
@@ -111,6 +115,7 @@ public sealed partial class MainWindowViewModel
         return new FamilyInventoryData(
             householdName,
             finance.Wealth,
+            finance.History,
             incomeTotal,
             lastExpenses,
             incomeLines,
@@ -119,16 +124,27 @@ public sealed partial class MainWindowViewModel
             loansGiven,
             _economyService.GetHouses(actor),
             farming,
+            heirlooms,
             children,
+            finance.Lifestyle,
             CanUseFamilyInventoryAction("loan.take"),
             CanUseFamilyInventoryAction("loan.give"),
+            CanUseFamilyInventoryAction("economy.lifestyle.lavish"),
+            CanUseFamilyInventoryAction("economy.lifestyle.balanced"),
+            CanUseFamilyInventoryAction("economy.lifestyle.thrifty"),
             CanUseFamilyInventoryAction("household.buy_house"),
+            CanUseFamilyInventoryAction("household.extend_house"),
             CanUseFamilyInventoryAction("household.sell_house"),
             CanUseFamilyInventoryAction("farming.buy_farmland"),
             CanUseFamilyInventoryAction("farming.sell_farmland"),
+            CanUseFamilyInventoryAction("heirloom.sell"),
             _farmingService?.PurchasePrice ?? 10000m,
             _farmingService?.SalePrice ?? 8000m);
     }
+
+    internal decimal GetHouseValue(HousePropertyInfo house) =>
+        _economyService?.GetHouseValue(house)
+        ?? house.PurchasePrice + house.ImprovementValue;
 
     internal bool SetHouseInheritanceHeir(
         Guid propertyId,
@@ -185,6 +201,26 @@ public sealed partial class MainWindowViewModel
         RefreshEconomy();
         OnPropertyChanged(
             nameof(HouseholdHousesDetailsText));
+        return true;
+    }
+
+    internal bool SetHeirloomInheritanceHeir(
+        Guid heirloomId,
+        Guid? heirId)
+    {
+        var actor = _succession.ActiveController;
+        if (actor is null || _heirloomService is null)
+            return false;
+
+        var changed = _heirloomService.SetInheritanceHeir(
+            actor,
+            heirloomId,
+            heirId);
+
+        if (!changed)
+            return false;
+
+        RefreshEconomy();
         return true;
     }
 
@@ -326,6 +362,7 @@ public sealed partial class MainWindowViewModel
 internal sealed record FamilyInventoryData(
     string HouseholdName,
     decimal Budget,
+    IReadOnlyList<HouseholdBudgetHistoryPoint> BudgetHistory,
     decimal IncomeTotal,
     decimal ExpenseTotal,
     IReadOnlyList<FinanceBreakdownItem> IncomeLines,
@@ -334,13 +371,20 @@ internal sealed record FamilyInventoryData(
     IReadOnlyList<LoanContractInfo> LoansGiven,
     IReadOnlyList<HousePropertyInfo> Houses,
     FarmingHouseholdSnapshot? Farming,
+    IReadOnlyList<HeirloomAssetInfo> Heirlooms,
     IReadOnlyList<FamilyInventoryChildData> Children,
+    HouseholdLifestyleStance Lifestyle,
     bool CanTakeLoan,
     bool CanGiveLoan,
+    bool CanUseLavishLifestyle,
+    bool CanUseBalancedLifestyle,
+    bool CanUseThriftyLifestyle,
     bool CanBuyHouse,
+    bool CanExtendHouse,
     bool CanSellHouse,
     bool CanBuyFarmland,
     bool CanSellFarmland,
+    bool CanSellHeirloom,
     decimal FarmlandPurchasePrice,
     decimal FarmlandSalePrice);
 

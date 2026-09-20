@@ -134,19 +134,39 @@ public sealed partial class MainWindowViewModel
         if (_craftService is null)
             return options;
 
+        var regionalTags =
+            _localCareerOpportunityService?
+                .GetOpportunitySnapshot(target)
+                .RegionOpportunityTags
+                .ToHashSet(StringComparer.OrdinalIgnoreCase)
+            ?? new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
         foreach (var craft in _craftService.GetEducationOptions(target))
         {
             var statName = CultureInfo.InvariantCulture.TextInfo.ToTitleCase(craft.PrimaryStat);
-            var emoji = _craftService.Catalog
+            var craftDefinition = _craftService.Catalog
                 .FirstOrDefault(info => info.Id.Equals(
                     craft.CraftId,
-                    StringComparison.OrdinalIgnoreCase))?.Emoji
+                    StringComparison.OrdinalIgnoreCase));
+            var emoji = craftDefinition?.Emoji
                 ?? "🛠️";
             var heading = craft.IsKnownCraft
                 ? $"{emoji} {craft.CraftName} — {craft.CurrentMasteryName}"
                 : $"{emoji} Learn {craft.CraftName}";
+            var supportTags = craftDefinition is null
+                ? Array.Empty<string>()
+                : craftDefinition.RequiredOpportunityTags.Count > 0
+                    ? craftDefinition.RequiredOpportunityTags
+                    : craftDefinition.PreferredOpportunityTags;
+            var hasRegionalSupport =
+                supportTags.Any(regionalTags.Contains);
+            var supportText = supportTags.Count == 0
+                ? "No specific regional industry"
+                : hasRegionalSupport
+                    ? "Regional support: Yes"
+                    : "Regional support: No";
             var secondary =
-                $"Requires: {statName}";
+                $"Requires: {statName} · {supportText}";
 
             options.Add(new PropertySelectionOption(
                 $"craft:{craft.CraftId}",

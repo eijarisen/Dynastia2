@@ -75,7 +75,9 @@ public sealed class MarriageSatisfactionYearSystem : IYearSystem
             // unless the couple actively reconciles or their circumstances improve.
             var change =
                 MarriageBalanceRules.GetAnnualSatisfactionChange(
-                    penalty);
+                    penalty)
+                + HouseholdLifestyleRules.GetMarriageSatisfactionModifier(
+                    husband);
 
             _satisfaction.ApplyAnnualEvaluation(
                 husband,

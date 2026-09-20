@@ -1,0 +1,16 @@
+{
+  "id": "dynastia.heirlooms",
+  "name": "Standard Heirlooms",
+  "version": "0.3.0",
+  "apiVersion": 1,
+  "assembly": "Dynastia.Mechanics.Heirlooms.dll",
+  "entryType": "Dynastia.Mechanics.Heirlooms.HeirloomsPlugin",
+  "dependencies": [
+    "dynastia.family",
+    "dynastia.economy",
+    "dynastia.education",
+    "dynastia.career",
+    "dynastia.crafts",
+    "dynastia.hobbies"
+  ]
+}

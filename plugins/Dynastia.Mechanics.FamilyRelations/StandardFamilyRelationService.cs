@@ -83,7 +83,8 @@ public sealed class StandardFamilyRelationService : IFamilyRelationService
     }
 
     // Compatibility entry point used by pre-existing mechanics. A generic
-    // relation change now means a Sympathy change; Familiarity never decays.
+    // relation change means a Sympathy change. Familiarity changes through
+    // explicit interaction and the separate long-distance drift system.
     public FamilyRelationshipSnapshot ModifyRelation(
         IPerson first,
         IPerson second,
@@ -221,25 +222,47 @@ public sealed class StandardFamilyRelationService : IFamilyRelationService
             .Select(ToSnapshot)
             .ToList();
 
-    internal void DriftSympathyTowardNeutral(IPerson first, IPerson second, double amount = 0.50)
+    internal void DriftTowardNeutralForDistance(
+        IPerson first,
+        IPerson second,
+        double familiarityLoss,
+        double sympathyAmount)
     {
         var data = Find(first, second);
         if (data is null)
             return;
-        NormalizeData(data);
-        if (Math.Abs(data.Sympathy - 50) < 0.01)
-            return;
 
-        if (data.Sympathy > 50)
+        NormalizeData(data);
+
+        if (familiarityLoss > 0)
         {
-            var multiplier = FamilyRelationScoreRules.GetDeteriorationMultiplier((FamilyRelationshipType)data.Type);
-            data.Sympathy = Math.Max(50, data.Sympathy - amount * multiplier);
+            data.Familiarity = Math.Max(
+                FamilyRelationDistanceRules.MinimumFamiliarity,
+                data.Familiarity - familiarityLoss);
         }
-        else
+
+        if (Math.Abs(data.Sympathy - 50) >= 0.01
+            && sympathyAmount > 0)
         {
-            data.Sympathy = Math.Min(50, data.Sympathy + amount);
+            if (data.Sympathy > 50)
+            {
+                var multiplier = FamilyRelationScoreRules.GetDeteriorationMultiplier(
+                    (FamilyRelationshipType)data.Type);
+                data.Sympathy = Math.Max(
+                    50,
+                    data.Sympathy - sympathyAmount * multiplier);
+            }
+            else
+            {
+                data.Sympathy = Math.Min(
+                    50,
+                    data.Sympathy + sympathyAmount);
+            }
         }
-        data.Score = FamilyRelationScoreRules.GetCompositeScore(data.Familiarity, data.Sympathy);
+
+        data.Score = FamilyRelationScoreRules.GetCompositeScore(
+            data.Familiarity,
+            data.Sympathy);
         var owner = ResolveCanonical(first, second).Owner;
         owner.Components.Set(GetComponent(owner));
     }

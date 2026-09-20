@@ -44,6 +44,9 @@ public sealed partial class CareerPlugin : IGamePlugin
         var health = context.GetService<IHealthService>()
             ?? throw new InvalidOperationException("Health service is unavailable.");
 
+        var workCapacity = context.GetService<IWorkCapacityService>()
+            ?? throw new InvalidOperationException("Work-capacity service is unavailable.");
+
         var incomeRegistry = context.GetService<IIncomeProviderRegistry>()
             ?? throw new InvalidOperationException("Income provider registry is unavailable.");
 
@@ -107,6 +110,7 @@ public sealed partial class CareerPlugin : IGamePlugin
                 careerContext,
                 prosperity,
                 economicStrength,
+                workCapacity,
                 institutions,
                 institutionRequirements,
                 () => context.GetService<ICraftService>());
@@ -171,6 +175,11 @@ public sealed partial class CareerPlugin : IGamePlugin
         systems.Register(
             new CareerExperienceYearSystem(
                 career));
+
+        systems.Register(
+            new CareerLifestyleYearSystem(
+                career,
+                random));
 
         systems.Register(
             new CareerLifetimeEarningsYearSystem(

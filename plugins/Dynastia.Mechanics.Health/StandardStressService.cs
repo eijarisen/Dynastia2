@@ -86,6 +86,10 @@ public sealed class StandardStressService : IStressService
 
         contributions.AddRange(_modifiers.GetStressContributions(person, _state.Year));
 
+        var lifestyleStress = HouseholdLifestyleRules.GetStressAdjustment(person);
+        if (lifestyleStress > 0)
+            contributions.Add(new StressContribution("household.lifestyle.thrifty", lifestyleStress));
+
         var normalized = contributions
             .Where(contribution => contribution.Value > 0)
             .GroupBy(contribution => contribution.SourceId, StringComparer.OrdinalIgnoreCase)
@@ -112,9 +116,15 @@ public sealed class StandardStressService : IStressService
                 return 0.0;
             });
 
+        var lifestyleRelief = lifestyleStress < 0
+            ? -lifestyleStress
+            : 0.0;
+
         return new StressSnapshot(
             Math.Clamp(
-                normalized.Sum(contribution => contribution.Value) - drinkRelief,
+                normalized.Sum(contribution => contribution.Value)
+                - drinkRelief
+                - lifestyleRelief,
                 0,
                 MaximumStress),
             normalized);

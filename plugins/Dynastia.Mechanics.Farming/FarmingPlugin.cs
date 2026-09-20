@@ -27,6 +27,8 @@ public sealed class FarmingPlugin : IGamePlugin
             ?? throw new InvalidOperationException("Town prosperity service is unavailable.");
         var economicStrength = context.GetService<ILocalEconomicStrengthService>()
             ?? throw new InvalidOperationException("Local economic-strength service is unavailable.");
+        var workCapacity = context.GetService<IWorkCapacityService>()
+            ?? throw new InvalidOperationException("Work-capacity service is unavailable.");
         var data = context.GetService<IGameDataService>()
             ?? throw new InvalidOperationException("Game data service is unavailable.");
 
@@ -36,6 +38,7 @@ public sealed class FarmingPlugin : IGamePlugin
             career,
             prosperity,
             economicStrength,
+            workCapacity,
             random,
             events,
             FarmingEraSchedule.Load(data));

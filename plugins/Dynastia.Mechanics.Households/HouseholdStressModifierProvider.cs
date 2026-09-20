@@ -37,7 +37,8 @@ internal sealed class HouseholdStressModifierProvider : IStressModifierProvider
         if (status?.IsOvercrowded == true)
         {
             var penalty = HouseholdCrowdingRules.GetAnnualStressPenalty(
-                status.ResidentCount);
+                status.ResidentCount,
+                status.OvercrowdingThreshold);
 
             if (penalty > 0)
             {

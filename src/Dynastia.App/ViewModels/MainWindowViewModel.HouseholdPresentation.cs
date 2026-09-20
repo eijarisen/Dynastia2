@@ -19,6 +19,24 @@ public sealed partial class MainWindowViewModel
     }
 
 
+
+    public IReadOnlyList<HouseholdBudgetHistoryPoint> HouseholdBudgetHistory =>
+        GetDisplayedHouseholdFinance()?.History
+        ?? Array.Empty<HouseholdBudgetHistoryPoint>();
+
+    public string HouseholdBudgetHistoryRangeText
+    {
+        get
+        {
+            var history = HouseholdBudgetHistory;
+            if (history.Count == 0)
+                return string.Empty;
+            return history.Count == 1
+                ? history[0].Year.ToString()
+                : $"{history[0].Year}–{history[^1].Year}";
+        }
+    }
+
     public string HouseholdLastYearText
     {
         get

@@ -282,6 +282,12 @@ public sealed partial class MainWindowViewModel
             nameof(HouseholdBudgetText));
 
         OnPropertyChanged(
+            nameof(HouseholdBudgetHistory));
+
+        OnPropertyChanged(
+            nameof(HouseholdBudgetHistoryRangeText));
+
+        OnPropertyChanged(
             nameof(HouseholdHousesText));
 
         OnPropertyChanged(

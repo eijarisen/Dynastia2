@@ -157,7 +157,7 @@ public sealed partial class MainWindowViewModel
                 house.Town.Town,
                 house.Town.County,
                 $"{house.Town.SettlementClassDisplayName} — rented investment",
-                $"Value {_economyService.GetHouseSaleValue(house.Town):N0} zł",
+                $"Value {_economyService.GetHouseValue(house):N0} zł",
                 $"{house.Town.Town} {house.Town.County} {house.Town.RegionId}"))
             .ToList();
     }

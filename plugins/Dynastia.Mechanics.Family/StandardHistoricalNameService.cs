@@ -251,21 +251,7 @@ public sealed class StandardHistoricalNameService : IHistoricalNameService
             return surname;
         }
 
-        if (surname.EndsWith(
-            "ski",
-            StringComparison.OrdinalIgnoreCase))
-        {
-            return surname[..^3] + "ska";
-        }
-
-        if (surname.EndsWith(
-            "cki",
-            StringComparison.OrdinalIgnoreCase))
-        {
-            return surname[..^3] + "cka";
-        }
-
-        return surname;
+        return PolishSurnameRules.Feminize(surname);
     }
 
     public bool HasNameCulture(

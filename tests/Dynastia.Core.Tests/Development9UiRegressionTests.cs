@@ -93,7 +93,9 @@ public sealed class Development9UiRegressionTests
         Assert.Contains("Guid? PersonId", ledger);
         Assert.Contains("PersonId = line.PersonId", financeSystem);
         Assert.Contains("line.PersonId", economy);
-        Assert.Contains("Margin=\"0,0,0,8\"", xaml);
+        Assert.Contains("<ui:HouseholdBudgetGraph", xaml);
+        Assert.Contains("History=\"{Binding BudgetHistory}\"", xaml);
+        Assert.Contains("Text=\"{Binding BudgetText}\"", xaml);
     }
 
     [Fact]

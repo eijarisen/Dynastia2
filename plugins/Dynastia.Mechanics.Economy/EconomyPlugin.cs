@@ -2,7 +2,7 @@ using Dynastia.Contracts;
 
 namespace Dynastia.Mechanics.Economy;
 
-public sealed class EconomyPlugin : IGamePlugin
+public sealed partial class EconomyPlugin : IGamePlugin
 {
     private const decimal FounderStartingWealth =
         1000m;
@@ -45,6 +45,11 @@ public sealed class EconomyPlugin : IGamePlugin
             ?? throw new InvalidOperationException(
                 "Year system registry is unavailable.");
 
+        var actions =
+            context.GetService<IActionRegistry>()
+            ?? throw new InvalidOperationException(
+                "Action registry is unavailable.");
+
         var incomeRegistry =
             new IncomeProviderRegistry();
 
@@ -80,6 +85,9 @@ public sealed class EconomyPlugin : IGamePlugin
         context.AddService<IEconomyBalanceService>(
             economy);
 
+        context.AddService<IHouseholdCapacityService>(
+            economy);
+
         var reconciliation = context.GetService<IStateReconciliationLifecycle>()
             ?? throw new InvalidOperationException(
                 "State reconciliation lifecycle is unavailable.");
@@ -103,6 +111,12 @@ public sealed class EconomyPlugin : IGamePlugin
                 economy,
                 family,
                 events));
+
+        RegisterLifestyleActions(
+            actions,
+            economy,
+            family,
+            events);
 
         events.EventPublished +=
             (_, gameEvent) =>

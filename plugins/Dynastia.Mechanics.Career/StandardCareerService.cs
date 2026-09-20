@@ -24,6 +24,7 @@ public sealed partial class StandardCareerService :
     private readonly IContextWeightCatalog _careerContext;
     private readonly ITownProsperityService _prosperity;
     private readonly ILocalEconomicStrengthService _economicStrength;
+    private readonly IWorkCapacityService _workCapacity;
     private readonly ITownInstitutionService _institutions;
     private readonly CareerInstitutionRequirementCatalog _institutionRequirements;
     private readonly Func<ICraftService?> _craftResolver;
@@ -42,6 +43,7 @@ public sealed partial class StandardCareerService :
         IContextWeightCatalog careerContext,
         ITownProsperityService prosperity,
         ILocalEconomicStrengthService economicStrength,
+        IWorkCapacityService workCapacity,
         ITownInstitutionService institutions,
         CareerInstitutionRequirementCatalog institutionRequirements,
         Func<ICraftService?> craftResolver)
@@ -66,6 +68,7 @@ public sealed partial class StandardCareerService :
             careerContext;
         _prosperity = prosperity;
         _economicStrength = economicStrength;
+        _workCapacity = workCapacity;
         _institutions = institutions;
         _institutionRequirements = institutionRequirements;
         _craftResolver =

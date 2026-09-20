@@ -1,0 +1,4 @@
+﻿StartYear,EndYear,TemplateIds
+1700,1799,academic_scholar_manuscript;academic_annotated_reference
+1800,1849,academic_bound_dissertation;academic_university_diploma;academic_annotated_reference
+1850,,academic_bound_dissertation;academic_university_diploma;academic_academic_medal;academic_research_notebook

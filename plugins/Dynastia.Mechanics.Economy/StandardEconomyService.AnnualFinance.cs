@@ -142,6 +142,11 @@ public sealed partial class StandardEconomyService
             GetLivingCostPerPerson(homeTown),
             HasExceptionalIntellect(owner));
 
+        livingCosts = RoundCurrency(
+            livingCosts
+            * HouseholdLifestyleRules.GetLivingCostMultiplier(
+                household.Lifestyle));
+
         if (livingCosts > 0m)
         {
             lines.Add(

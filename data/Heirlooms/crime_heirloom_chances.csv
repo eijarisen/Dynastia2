@@ -1,0 +1,6 @@
+﻿CrimeId,ChanceOnSuccessfulUncaughtCrime,TemplateIds
+burglary,0.03,crime_stolen_painting;crime_antique_chalice;crime_jewelled_box;crime_signet_ring;crime_antique_watch;crime_silver_service
+robbery,0.02,crime_jewelled_box;crime_signet_ring;crime_antique_watch
+smuggling,0.015,crime_smuggled_artifact;crime_antique_chalice;crime_silver_icon
+transport_theft,0.01,crime_antique_watch;crime_jewelled_box
+extortion,0.005,crime_signet_ring

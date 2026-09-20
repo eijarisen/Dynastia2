@@ -17,6 +17,11 @@ public sealed class InheritancePlugin : IGamePlugin
             ?? throw new InvalidOperationException(
                 "Economy service is unavailable.");
 
+        var heirlooms =
+            context.GetService<IHeirloomService>()
+            ?? throw new InvalidOperationException(
+                "Heirloom service is unavailable.");
+
         var events =
             context.GetService<IGameEventBus>()
             ?? throw new InvalidOperationException(
@@ -31,12 +36,14 @@ public sealed class InheritancePlugin : IGamePlugin
             new AdulthoodInheritanceSystem(
                 family,
                 economy,
+                heirlooms,
                 events));
 
         systems.Register(
             new EstateInheritanceSystem(
                 family,
                 economy,
+                heirlooms,
                 events));
 
         context.Log(

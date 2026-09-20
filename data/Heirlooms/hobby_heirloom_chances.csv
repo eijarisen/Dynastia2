@@ -1,0 +1,17 @@
+﻿HobbyId,MinimumAge,AnnualChance,TemplateIds
+reading,30,0.0025,hobby_rare_book
+playing_music,30,0.0025,hobby_instrument
+drawing_and_painting,30,0.0030,hobby_painting
+poetry_and_writing,30,0.0025,hobby_manuscript
+chess,30,0.0015,hobby_chess_set
+hunting,30,0.0015,hobby_hunting_trophy
+natural_history,30,0.0025,hobby_field_journal
+collecting_curiosities,30,0.0030,hobby_curiosity_case
+photography,30,0.0030,hobby_photo_album
+stamp_collecting,30,0.0025,hobby_stamp_album
+record_collecting,30,0.0025,hobby_record_collection
+amateur_radio,30,0.0020,hobby_radio
+family_history,30,0.0040,hobby_family_tree
+travel_and_sightseeing,30,0.0020,hobby_travel_journal
+birdwatching,30,0.0020,hobby_bird_journal
+religious_devotion,30,0.0020,hobby_devotional_book

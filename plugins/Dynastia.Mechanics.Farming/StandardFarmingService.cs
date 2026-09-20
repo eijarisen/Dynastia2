@@ -14,6 +14,7 @@ internal sealed class StandardFarmingService :
     private readonly ICareerService _career;
     private readonly ITownProsperityService _prosperity;
     private readonly ILocalEconomicStrengthService _economicStrength;
+    private readonly IWorkCapacityService _workCapacity;
     private readonly IGameRandom _random;
     private readonly IGameEventBus _events;
     private readonly FarmingEraSchedule _eraSchedule;
@@ -24,6 +25,7 @@ internal sealed class StandardFarmingService :
         ICareerService career,
         ITownProsperityService prosperity,
         ILocalEconomicStrengthService economicStrength,
+        IWorkCapacityService workCapacity,
         IGameRandom random,
         IGameEventBus events,
         FarmingEraSchedule eraSchedule)
@@ -33,6 +35,7 @@ internal sealed class StandardFarmingService :
         _career = career;
         _prosperity = prosperity;
         _economicStrength = economicStrength;
+        _workCapacity = workCapacity;
         _random = random;
         _events = events;
         _eraSchedule = eraSchedule;
@@ -103,6 +106,7 @@ internal sealed class StandardFarmingService :
         if (!person.Tags.Has("state.alive")
             || person.Age < 10
             || person.Tags.Has("state.imprisoned")
+            || !_workCapacity.GetWorkCapacity(person).CanWork
             || person.Tags.Has("role.nanny")
             || person.Tags.Has("role.family_nanny"))
         {
@@ -182,9 +186,13 @@ internal sealed class StandardFarmingService :
 
         foreach (var worker in workers)
         {
-            baseIncome += ApplyRecoverReduction(
+            var output = ApplyRecoverReduction(
                 worker,
                 workerBaseIncome);
+
+            baseIncome += _workCapacity
+                .GetWorkCapacity(worker)
+                .Apply(output);
         }
 
         return ApplyTownIncomeMultiplier(
@@ -212,9 +220,13 @@ internal sealed class StandardFarmingService :
             var output = workerBaseIncome
                 * (decimal)(_random.NextDouble() * 2.0);
 
-            total += ApplyRecoverReduction(
+            output = ApplyRecoverReduction(
                 worker,
                 output);
+
+            total += _workCapacity
+                .GetWorkCapacity(worker)
+                .Apply(output);
         }
 
         total = ApplyTownIncomeMultiplier(

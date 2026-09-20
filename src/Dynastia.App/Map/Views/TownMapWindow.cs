@@ -47,7 +47,8 @@ public sealed class TownMapWindow :
         _panel =
             new TownMapPanel(
                 data,
-                selection);
+                selection,
+                townLife);
 
         _panel.TownActivated +=
             OnTownActivated;

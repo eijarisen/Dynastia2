@@ -12,6 +12,7 @@ public sealed partial class WellbeingPlugin
         IStatsService stats,
         IGameRandom random,
         IGameEventBus events,
+        IGameState gameState,
         IHistoricalActionVariantService historical,
         ILocationService locations,
         ITownFacilityQualityService facilityQuality)
@@ -22,220 +23,194 @@ public sealed partial class WellbeingPlugin
             ?? throw new InvalidDataException(
                 "Missing historical action data for 'wellbeing.therapy'.");
 
-        actions.Register(
-            new GameActionDefinition
+        actions.RegisterDynamicProvider(
+            (_, target) =>
             {
-                Id =
-                    "wellbeing.therapy",
+                var variant =
+                    historical.GetVariant(
+                        "wellbeing.therapy",
+                        gameState.Year)
+                    ?? canonical;
 
-                Label =
-                    canonical.Label,
+                var medical = GetMedicalQuality(
+                    target,
+                    gameState.Year,
+                    locations,
+                    facilityQuality);
 
-                Description =
-                    canonical.Description,
+                var treatmentCost =
+                    MedicalTreatmentRules.AdjustCost(
+                        TherapyCost,
+                        medical.TreatmentCostMultiplier);
 
-                Mode =
-                    ActionExecutionMode.Queued,
-
-                QueuePhase =
-                    YearPhase.QueuedActionsEarly,
-
-                IsAvailable =
-                    actionContext =>
+                return
+                [
+                    new GameActionDefinition
                     {
-                        var historicallyAvailable =
-                            historical.GetVariant(
-                                "wellbeing.therapy",
-                                actionContext.GameState.Year)
-                            is not null;
+                        Id = "wellbeing.therapy",
+                        Label = variant.Label,
+                        Description = variant.Description,
+                        DisplayCost = treatmentCost,
+                        Mode = ActionExecutionMode.Queued,
+                        QueuePhase = YearPhase.QueuedActionsEarly,
 
-                        if (!historicallyAvailable
-                            && !ActionCompatibilityParameters.IsRestoredQueuedAction(
-                                actionContext.Parameters))
+                        IsAvailable = actionContext =>
                         {
-                            return false;
-                        }
+                            var historicallyAvailable =
+                                historical.GetVariant(
+                                    "wellbeing.therapy",
+                                    actionContext.GameState.Year)
+                                is not null;
 
-                        if (!CanActorAct(actionContext)
-                            || !actionContext.Target.Tags.Has(
-                                "state.alive"))
+                            if (!historicallyAvailable
+                                && !ActionCompatibilityParameters.IsRestoredQueuedAction(
+                                    actionContext.Parameters))
+                            {
+                                return false;
+                            }
+
+                            if (!CanActorAct(actionContext)
+                                || !actionContext.Target.Tags.Has("state.alive")
+                                || !HasTherapyCondition(health, actionContext.Target))
+                            {
+                                return false;
+                            }
+
+                            var currentMedical = GetMedicalQuality(
+                                actionContext.Target,
+                                actionContext.GameState.Year,
+                                locations,
+                                facilityQuality);
+                            if (!currentMedical.IsAvailable)
+                                return false;
+
+                            var currentCost =
+                                MedicalTreatmentRules.AdjustCost(
+                                    TherapyCost,
+                                    currentMedical.TreatmentCostMultiplier);
+
+                            return economy.CanAfford(
+                                actionContext.Actor,
+                                currentCost);
+                        },
+
+                        Execute = actionContext =>
                         {
-                            return false;
-                        }
+                            var actor = actionContext.Actor;
+                            var treatmentTarget = actionContext.Target;
 
-                        if (!HasTherapyCondition(
-                            health,
-                            actionContext.Target))
-                        {
-                            return false;
-                        }
+                            var historicallyAvailable =
+                                historical.GetVariant(
+                                    "wellbeing.therapy",
+                                    actionContext.GameState.Year)
+                                is not null;
 
-                        var medical = GetMedicalQuality(
-                            actionContext.Target,
-                            actionContext.GameState.Year,
-                            locations,
-                            facilityQuality);
-                        if (!medical.IsAvailable)
-                            return false;
+                            if (!historicallyAvailable
+                                && !ActionCompatibilityParameters.IsRestoredQueuedAction(
+                                    actionContext.Parameters))
+                            {
+                                return new GameActionResult(false);
+                            }
 
-                        return economy.CanAfford(
-                            actionContext.Actor,
-                            MedicalTreatmentRules.AdjustCost(TherapyCost, medical.TreatmentCostMultiplier));
-                    },
+                            var currentMedical = GetMedicalQuality(
+                                treatmentTarget,
+                                actionContext.GameState.Year,
+                                locations,
+                                facilityQuality);
+                            var currentCost =
+                                MedicalTreatmentRules.AdjustCost(
+                                    TherapyCost,
+                                    currentMedical.TreatmentCostMultiplier);
 
-                Execute =
-                    actionContext =>
-                    {
-                        var actor =
-                            actionContext.Actor;
+                            if (!currentMedical.IsAvailable
+                                || !economy.CanAfford(actor, currentCost)
+                                || !treatmentTarget.Tags.Has("state.alive")
+                                || !HasTherapyCondition(health, treatmentTarget))
+                            {
+                                return new GameActionResult(false);
+                            }
 
-                        var target =
-                            actionContext.Target;
+                            economy.ChangeWealth(actor, -currentCost);
 
-                        var historicallyAvailable =
-                            historical.GetVariant(
-                                "wellbeing.therapy",
-                                actionContext.GameState.Year)
-                            is not null;
-
-                        if (!historicallyAvailable
-                            && !ActionCompatibilityParameters.IsRestoredQueuedAction(
-                                actionContext.Parameters))
-                        {
-                            return new GameActionResult(false);
-                        }
-
-                        var medical = GetMedicalQuality(
-                            target,
-                            actionContext.GameState.Year,
-                            locations,
-                            facilityQuality);
-                        var treatmentCost =
-                            MedicalTreatmentRules.AdjustCost(TherapyCost, medical.TreatmentCostMultiplier);
-
-                        if (!medical.IsAvailable
-                            || !economy.CanAfford(
-                                actor,
-                                treatmentCost)
-                            || !target.Tags.Has(
-                                "state.alive")
-                            || !HasTherapyCondition(
-                                health,
-                                target))
-                        {
-                            return new GameActionResult(
-                                false);
-                        }
-
-                        economy.ChangeWealth(
-                            actor,
-                            -treatmentCost);
-
-                        var intellect =
-                            stats.GetStats(target)
-                                .First(
-                                    stat =>
+                            var intellect =
+                                stats.GetStats(treatmentTarget)
+                                    .First(stat =>
                                         stat.Id.Equals(
                                             "intellect",
                                             StringComparison.OrdinalIgnoreCase))
-                                .Value;
+                                    .Value;
 
-                        var successChance =
-                            MedicalTreatmentRules.AdjustSuccessChance(
-                                TherapyRules.GetSuccessChance(
-                                    intellect),
-                                medical.TreatmentSuccessAdd);
+                            var successChance =
+                                MedicalTreatmentRules.AdjustSuccessChance(
+                                    TherapyRules.GetSuccessChance(intellect),
+                                    currentMedical.TreatmentSuccessAdd);
 
-                        var success =
-                            random.NextDouble()
-                            < successChance;
+                            var success = random.NextDouble() < successChance;
+                            var currentVariant =
+                                historical.GetVariant(
+                                    "wellbeing.therapy",
+                                    actionContext.GameState.Year)
+                                ?? canonical;
 
-                        var variant =
-                            historical.GetVariant(
-                                "wellbeing.therapy",
-                                actionContext.GameState.Year)
-                            ?? canonical;
-
-                        if (success)
-                        {
-                            health.RemoveCondition(
-                                target,
-                                "alcoholism");
-
-                            health.RemoveCondition(
-                                target,
-                                "depression");
-
-                            health.RemoveCondition(
-                                target,
-                                "anxiety");
-
-                            health.RemoveCondition(
-                                target,
-                                "drug_dependence");
-
-                            health.RemoveCondition(
-                                target,
-                                "burnout");
-
-                            events.Publish(
-                                new GameEvent
+                            if (success)
+                            {
+                                foreach (var conditionId in new[]
                                 {
-                                    Type =
-                                        "wellbeing.therapy_success",
+                                    "alcoholism",
+                                    "depression",
+                                    "anxiety",
+                                    "drug_dependence",
+                                    "burnout"
+                                })
+                                {
+                                    health.RemoveCondition(
+                                        treatmentTarget,
+                                        conditionId);
+                                }
 
-                                    Year =
-                                        actionContext.GameState.Year,
-
-                                    SubjectId =
-                                        target.Id,
-
-                                    RelatedPersonIds =
-                                        actor.Id == target.Id
-                                            ? []
-                                            : [actor.Id],
-
-                                    Data =
-                                        new Dictionary<string, string>
+                                events.Publish(
+                                    new GameEvent
+                                    {
+                                        Type = "wellbeing.therapy_success",
+                                        Year = actionContext.GameState.Year,
+                                        SubjectId = treatmentTarget.Id,
+                                        RelatedPersonIds =
+                                            actor.Id == treatmentTarget.Id
+                                                ? []
+                                                : [actor.Id],
+                                        Data = new Dictionary<string, string>
                                         {
                                             ["text"] =
-                                                $"{family.GetDisplayName(target)} " +
-                                                $"{variant.Narrative}; the treatment was successful."
+                                                $"{family.GetDisplayName(treatmentTarget)} " +
+                                                $"{currentVariant.Narrative}; the treatment was successful."
                                         }
-                                });
-                        }
-                        else
-                        {
-                            events.Publish(
-                                new GameEvent
-                                {
-                                    Type =
-                                        "wellbeing.therapy_failure",
-
-                                    Year =
-                                        actionContext.GameState.Year,
-
-                                    SubjectId =
-                                        target.Id,
-
-                                    RelatedPersonIds =
-                                        actor.Id == target.Id
-                                            ? []
-                                            : [actor.Id],
-
-                                    Data =
-                                        new Dictionary<string, string>
+                                    });
+                            }
+                            else
+                            {
+                                events.Publish(
+                                    new GameEvent
+                                    {
+                                        Type = "wellbeing.therapy_failure",
+                                        Year = actionContext.GameState.Year,
+                                        SubjectId = treatmentTarget.Id,
+                                        RelatedPersonIds =
+                                            actor.Id == treatmentTarget.Id
+                                                ? []
+                                                : [actor.Id],
+                                        Data = new Dictionary<string, string>
                                         {
                                             ["text"] =
-                                                $"{family.GetDisplayName(target)} " +
-                                                $"{variant.Narrative}, but the treatment was unproductive."
+                                                $"{family.GetDisplayName(treatmentTarget)} " +
+                                                $"{currentVariant.Narrative}, but the treatment was unproductive."
                                         }
-                                });
-                        }
+                                    });
+                            }
 
-                        return new GameActionResult(
-                            true);
+                            return new GameActionResult(true);
+                        }
                     }
+                ];
             });
     }
 

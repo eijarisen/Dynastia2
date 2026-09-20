@@ -85,6 +85,11 @@ public sealed class PassiveEducationYearSystem : IYearSystem
                     chance,
                     era);
 
+            chance = Math.Clamp(
+                chance * HouseholdLifestyleRules.GetEducationChanceMultiplier(person),
+                0,
+                1);
+
             if (_random.NextDouble() < chance)
                 _education.IncreaseEducation(person);
         }

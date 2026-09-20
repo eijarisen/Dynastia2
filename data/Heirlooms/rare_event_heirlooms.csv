@@ -1,0 +1,9 @@
+﻿RareEventId,Chance,TemplateIds
+rare.house_discovery,0.6,rare_old_painting;rare_coin_collection;rare_antique_jewellery;rare_silverware
+rare.found_property,0.35,rare_coin_collection;rare_antique_jewellery;rare_silverware
+rare.distant_inheritance,0.25,rare_relative_locket;rare_old_painting
+rare.professional_recognition,0.3,rare_professional_plaque
+rare.patronage,0.25,rare_patron_gift
+rare.prize_award,0.5,rare_award_trophy
+rare.craft_commission,0.2,rare_client_gift
+rare.lottery_win,0.1,rare_lottery_ticket

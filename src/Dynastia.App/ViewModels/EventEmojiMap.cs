@@ -66,6 +66,8 @@ public static class EventEmojiMap
                 ["education.help_learning_failure"] = "📖",
                 ["wellbeing.therapy_success"] = "😊",
                 ["wellbeing.therapy_failure"] = "😒",
+                ["family.assimilated_polish"] = "🇵🇱",
+                ["family.polish_surname_adopted"] = "🇵🇱",
                 ["wellbeing.drink"] = "🍺",
                 ["life.adult"] = "🧑",
 
@@ -83,6 +85,11 @@ public static class EventEmojiMap
                 ["inheritance.estate_left_dynasty"] = "💨",
                 ["household.assets_followed_anchor"] = "🏠",
                 ["inheritance.promised_houses_received"] = "🏡",
+
+                ["heirloom.created"] = "🏺",
+                ["heirloom.inherited"] = "🎁",
+                ["heirloom.pending"] = "⏳",
+                ["heirloom.sold"] = "💵",
 
                 ["career.retirement"] = "🕊️",
                 ["justice.released"] = "✅",

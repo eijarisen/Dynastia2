@@ -274,10 +274,14 @@ internal sealed class StandardPartnerSearchService :
                 estimatedWealth,
                 estimatedHouses,
                 estimatedFarmland);
-            var acceptanceChance = PartnerSearchRules.CalculateAcceptanceChance(
-                seekerValue,
-                partnerValue,
-                partnerSex);
+            var acceptanceChance = Math.Clamp(
+                PartnerSearchRules.CalculateAcceptanceChance(
+                    seekerValue,
+                    partnerValue,
+                    partnerSex)
+                * HouseholdLifestyleRules.GetPartnerChanceMultiplier(seeker),
+                0.05,
+                0.95);
             var appearance = _appearance.GenerateCandidateAppearance(
                 candidateId,
                 partnerSex);

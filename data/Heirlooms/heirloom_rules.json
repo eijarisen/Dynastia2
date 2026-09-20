@@ -1,0 +1,51 @@
+{
+  "schemaVersion": "1.0",
+  "sale": {
+    "actionId": "heirloom.sell",
+    "queuePhase": "QueuedActionsEarly",
+    "saleValueMultiplier": 0.8,
+    "oneSelectedItemPerAction": true,
+    "immediateSale": false
+  },
+  "inheritance": {
+    "designatedHeirAllowed": true,
+    "eligibleHeirs": "same estate heir set used by Houses/Farmland",
+    "unassignedDistribution": "same round-robin recipient logic as Houses/Farmland",
+    "designationClearedAfterTransfer": true,
+    "minorRecipient": "pending until independent/adult household acquisition using inheritance conventions"
+  },
+  "creation": {
+    "valueVarianceMultiplierMin": 0.9,
+    "valueVarianceMultiplierMax": 1.1,
+    "randomSource": "IGameRandom",
+    "noAppreciationWithAge": true,
+    "noPassiveIncome": true,
+    "noStatBuffs": true
+  },
+  "achievementTriggers": {
+    "education5": "guaranteed_once_per_person",
+    "career5": "guaranteed_once_per_person",
+    "craftMaster5": "guaranteed_once_per_person_per_craft"
+  },
+  "familyPropertiesUi": {
+    "sections": [
+      "Houses",
+      "Farmland",
+      "Heirlooms"
+    ],
+    "heirloomFields": [
+      "Emoji",
+      "Name",
+      "Origin",
+      "AcquiredYear",
+      "Value",
+      "AssignedHeir"
+    ]
+  },
+  "news": {
+    "creation": "heirloom.created",
+    "inheritance": "heirloom.inherited",
+    "pendingInheritance": "heirloom.pending",
+    "sale": "heirloom.sold"
+  }
+}

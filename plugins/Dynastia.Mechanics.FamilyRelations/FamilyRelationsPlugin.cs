@@ -45,7 +45,25 @@ public sealed class FamilyRelationsPlugin : IGamePlugin
 
         _ = new FamilyRelationEventBridge(
             gameState, family, economy, households, relations, childHappiness, events);
-        systems.Register(new FamilyRelationYearSystem(relations, gameState, family, economy, households, personality, random));
+
+        var weddingTracker = new WeddingHouseholdFormationTracker(
+            gameState,
+            family,
+            economy,
+            events);
+
+        systems.Register(new FamilyRelationYearSystem(
+            relations,
+            gameState,
+            economy,
+            locations));
+        systems.Register(new WeddingSupportYearSystem(
+            gameState,
+            family,
+            economy,
+            relations,
+            weddingTracker,
+            events));
 
         FamilyRelationActions.Register(
             actions, gameState, family, relations, households, economy, locations, career, marriage, personality, random, events);

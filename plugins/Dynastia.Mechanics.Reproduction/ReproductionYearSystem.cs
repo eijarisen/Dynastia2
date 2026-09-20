@@ -377,8 +377,10 @@ public sealed class ReproductionYearSystem : IYearSystem
                 birthTown,
                 gameState.Year);
         var nameCultureId =
-            _nationalities.GetNameCultureId(
-                nationalityId);
+            UsesPolishNaming(father, mother)
+                ? "polish"
+                : _nationalities.GetNameCultureId(
+                    nationalityId);
 
         var childName =
             _historicalNames.GetRandomFirstName(
@@ -544,8 +546,10 @@ public sealed class ReproductionYearSystem : IYearSystem
                 birthTown,
                 birthDate.Year);
         var nameCultureId =
-            _nationalities.GetNameCultureId(
-                nationalityId);
+            UsesPolishNaming(father, mother)
+                ? "polish"
+                : _nationalities.GetNameCultureId(
+                    nationalityId);
 
         var childName =
             GenerateUniqueChildName(
@@ -601,6 +605,12 @@ public sealed class ReproductionYearSystem : IYearSystem
 
         child.Tags.Add(
             "sexuality.heterosexual");
+
+        if (UsesPolishNaming(father, mother))
+        {
+            child.Tags.Add(
+                "family.polish_naming");
+        }
 
         if (_family.IsBloodline(father)
             || _family.IsBloodline(mother))
@@ -745,6 +755,12 @@ public sealed class ReproductionYearSystem : IYearSystem
 
         return condition;
     }
+
+    private static bool UsesPolishNaming(
+        IPerson father,
+        IPerson mother) =>
+        father.Tags.Has("family.polish_naming")
+        || mother.Tags.Has("family.polish_naming");
 
     private string ResolveChildNationality(
         IPerson? father,

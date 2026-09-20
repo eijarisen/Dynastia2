@@ -12,6 +12,8 @@ public sealed class GameActionDefinition
     public YearPhase QueuePhase { get; init; } =
         YearPhase.LifeEvents;
 
+    public decimal? DisplayCost { get; init; }
+
     // Used only by universal fallback actions such as Pass.
     // Normal gameplay actions remain subject to imprisonment/other guards.
     public bool BypassGuards { get; init; }

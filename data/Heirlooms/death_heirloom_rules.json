@@ -1,0 +1,25 @@
+{
+  "largeFamily": {
+    "minimumLivingChildren": 6,
+    "guaranteed": true,
+    "templateIds": [
+      "family_bible",
+      "family_chronicle",
+      "family_portrait",
+      "family_jewellery",
+      "family_pocket_watch",
+      "family_recipe_book"
+    ]
+  },
+  "longevity": {
+    "minimumAgeAtDeath": 100,
+    "guaranteed": true,
+    "templateIds": [
+      "longevity_cane",
+      "longevity_watch",
+      "longevity_diary",
+      "longevity_spectacles"
+    ]
+  },
+  "mayGenerateBothOnSameDeath": true
+}

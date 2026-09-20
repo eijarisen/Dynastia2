@@ -7,11 +7,13 @@ public sealed class AdulthoodInheritanceSystem :
 {
     private readonly IFamilyService _family;
     private readonly IEconomyService _economy;
+    private readonly IHeirloomService _heirlooms;
     private readonly IGameEventBus _events;
 
     public AdulthoodInheritanceSystem(
         IFamilyService family,
         IEconomyService economy,
+        IHeirloomService heirlooms,
         IGameEventBus events)
     {
         _family =
@@ -19,6 +21,9 @@ public sealed class AdulthoodInheritanceSystem :
 
         _economy =
             economy;
+
+        _heirlooms =
+            heirlooms;
 
         _events =
             events;
@@ -86,6 +91,10 @@ public sealed class AdulthoodInheritanceSystem :
                 person);
 
             TransferPendingFarmland(
+                gameState,
+                person);
+
+            TransferPendingHeirlooms(
                 gameState,
                 person);
         }
@@ -225,6 +234,40 @@ public sealed class AdulthoodInheritanceSystem :
                         $"{(farmland.Count == 1 ? "" : "s")} after establishing a household."
                 }
             });
+    }
+
+    private void TransferPendingHeirlooms(
+        IGameState gameState,
+        IPerson person)
+    {
+        var heirlooms = _heirlooms.TakePending(person);
+        if (heirlooms.Count == 0)
+            return;
+
+        foreach (var item in heirlooms)
+        {
+            _heirlooms.AddExisting(
+                person,
+                item with { AssignedHeirId = null },
+                gameState.Year,
+                person.Id,
+                "inherited");
+
+            _events.Publish(
+                new GameEvent
+                {
+                    Type = "heirloom.inherited",
+                    Year = gameState.Year,
+                    SubjectId = person.Id,
+                    Data = new Dictionary<string, string>
+                    {
+                        ["heirloomId"] = item.Id.ToString(),
+                        ["item"] = item.DisplayName,
+                        ["familyNews"] = "true",
+                        ["text"] = $"{_family.GetDisplayName(person)} received inherited family heirloom {item.DisplayName} after establishing a household."
+                    }
+                });
+        }
     }
 
 }

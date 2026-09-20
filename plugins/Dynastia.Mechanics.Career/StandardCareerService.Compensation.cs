@@ -67,8 +67,15 @@ public sealed partial class StandardCareerService
             definition?.RequiredOpportunityTags ?? Array.Empty<string>());
         var multiplier = _prosperity.GetIncomeMultiplier(town, strength);
 
-        return Math.Round(
+        var localIncome = Math.Round(
             baseIncome * multiplier,
+            0,
+            MidpointRounding.AwayFromZero);
+
+        return Math.Round(
+            _workCapacity
+                .GetWorkCapacity(person)
+                .Apply(localIncome),
             0,
             MidpointRounding.AwayFromZero);
     }

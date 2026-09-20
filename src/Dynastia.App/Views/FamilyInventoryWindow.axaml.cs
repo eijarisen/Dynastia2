@@ -101,6 +101,22 @@ public partial class FamilyInventoryWindow : Window
             "Select Property",
             "Sell");
 
+    private void OnExtendHouseClick(
+        object? sender,
+        RoutedEventArgs e)
+    {
+        if (sender is not Button button
+            || button.Tag is not Guid propertyId)
+        {
+            return;
+        }
+
+        _main.QueueActionWithSelection(
+            "household.extend_house",
+            propertyId.ToString());
+        _viewModel.Refresh();
+    }
+
     private async Task OpenPropertyWindow(
         string actionId,
         string title,
@@ -129,6 +145,45 @@ public partial class FamilyInventoryWindow : Window
             actionId,
             selectedId);
 
+        _viewModel.Refresh();
+    }
+
+    private void OnLifestyleClick(
+        object? sender,
+        RoutedEventArgs e)
+    {
+        if (sender is not Button button
+            || button.Tag is not string actionId
+            || string.IsNullOrWhiteSpace(actionId))
+        {
+            return;
+        }
+
+        var result =
+            _main.QueueFamilyInventoryAction(actionId);
+
+        if (!result.Success)
+        {
+            _viewModel.Refresh();
+            return;
+        }
+
+        Close();
+    }
+
+    private void OnSellHeirloomClick(
+        object? sender,
+        RoutedEventArgs e)
+    {
+        if (sender is not Button button
+            || button.Tag is not Guid heirloomId)
+        {
+            return;
+        }
+
+        _main.QueueActionWithSelection(
+            "heirloom.sell",
+            heirloomId.ToString());
         _viewModel.Refresh();
     }
 

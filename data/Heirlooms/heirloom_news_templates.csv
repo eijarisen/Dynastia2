@@ -1,0 +1,14 @@
+﻿NewsKey,Emoji,TextTemplate
+academic,🎓,{Person} completed the highest level of education. {Item} was preserved as a family heirloom.
+career,🏅,{Person} reached the highest level of {Career}. The family kept {Item} to remember the achievement.
+craft,🛠️,{Person} became a Master of {Craft}. {Item} was added to the family's heirlooms.
+historical,📜,The household preserved {Item} from {Event}.
+rare_event,💎,"An unusual turn of fortune left the family with {Item}, now kept as an heirloom."
+large_family,👨‍👩‍👧‍👦,"After {Person} died, the family preserved {Item} in memory of a parent who left behind {LivingChildren} living children."
+crime,🕵️,{Person} returned from {Crime} with {Item}. The stolen object was quietly kept by the household.
+hobby,🎨,"Years of {Hobby} left {Person} with {Item}, which became a family heirloom."
+wealth,💰,"After the household fortune passed {WealthThreshold} zł, the family acquired {Item} as a lasting sign of its prosperity."
+longevity,🕯️,"After {Person} died at the age of {Age}, the family kept {Item} as a remembrance of a life spanning more than a century."
+inheritance,🎁,{Heir} inherited {Item} from the family estate.
+pending,⏳,{Item} was set aside for {Heir} until the inheritance can be received.
+sale,💵,The household sold {Item} for {SaleValue} zł.

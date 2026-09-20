@@ -7,6 +7,7 @@ using Avalonia.Input;
 using Avalonia.Layout;
 using Avalonia.Media;
 using Dynastia.App.Map.Host;
+using Dynastia.Contracts;
 using Dynastia.StandardUI.Genealogy.Contracts;
 using Dynastia.StandardUI.Map.Models;
 using Dynastia.StandardUI.Map.Rendering;
@@ -37,6 +38,7 @@ public sealed class TownMapPanel :
 
     private readonly GameMapDataSource _data;
     private readonly IGlobalSelectionService _selection;
+    private readonly ITownLifeService? _townLife;
     private readonly TownMapControl _canvas =
         new();
 
@@ -46,16 +48,20 @@ public sealed class TownMapPanel :
     private readonly TextBlock _townSubtitle;
     private readonly TextBlock _townSummary;
     private readonly StackPanel _residentList;
+    private readonly StackPanel _overlapOptions;
+    private readonly Border _overlapPicker;
 
     private TownMapSnapshot _snapshot;
     private string? _selectedTownId;
 
     public TownMapPanel(
         GameMapDataSource data,
-        IGlobalSelectionService selection)
+        IGlobalSelectionService selection,
+        ITownLifeService? townLife = null)
     {
         _data = data;
         _selection = selection;
+        _townLife = townLife;
         _snapshot = data.GetSnapshot();
 
         _canvas.HorizontalAlignment =
@@ -73,6 +79,9 @@ public sealed class TownMapPanel :
         _canvas.TownActivated +=
             OnTownActivated;
 
+        _canvas.TownSelectionRequested +=
+            OnTownSelectionRequested;
+
         _searchBox =
             new TextBox
             {
@@ -82,8 +91,8 @@ public sealed class TownMapPanel :
                 FontSize = 12,
                 Background =
                     new SolidColorBrush(
-                        Color.FromArgb(0xE8, 9, 31, 27)),
-                Foreground = ToolText,
+                        Color.FromRgb(244, 230, 195)),
+                Foreground = Brushes.Black,
                 BorderBrush = ToolBorder,
                 BorderThickness = new Thickness(1),
                 Padding = new Thickness(8, 4),
@@ -105,7 +114,7 @@ public sealed class TownMapPanel :
 
         reset.Click +=
             (_, _) =>
-                _canvas.ResetView();
+                ResetView();
 
         var current =
             CreateToolButton("Current Household");
@@ -201,6 +210,48 @@ public sealed class TownMapPanel :
                 Margin = new Thickness(0, 10, 0, 0)
             };
 
+        _overlapOptions =
+            new StackPanel
+            {
+                Spacing = 2
+            };
+
+        _overlapPicker =
+            new Border
+            {
+                Width = 230,
+                HorizontalAlignment = HorizontalAlignment.Left,
+                VerticalAlignment = VerticalAlignment.Top,
+                IsVisible = false,
+                Background = ToolBackground,
+                BorderBrush = ToolBorder,
+                BorderThickness = new Thickness(1.2),
+                CornerRadius = new CornerRadius(5),
+                Padding = new Thickness(8),
+                Child =
+                    new StackPanel
+                    {
+                        Spacing = 5,
+                        Children =
+                        {
+                            new TextBlock
+                            {
+                                Text = "Select location",
+                                Foreground = Gold,
+                                FontSize = 12.5,
+                                FontWeight = FontWeight.Bold
+                            },
+                            new ScrollViewer
+                            {
+                                MaxHeight = 260,
+                                HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled,
+                                VerticalScrollBarVisibility = ScrollBarVisibility.Auto,
+                                Content = _overlapOptions
+                            }
+                        }
+                    }
+            };
+
         var legend =
             new TextBlock
             {
@@ -256,9 +307,11 @@ public sealed class TownMapPanel :
             };
 
         Grid.SetColumn(_canvas, 0);
+        Grid.SetColumn(_overlapPicker, 0);
         Grid.SetColumn(details, 1);
 
         mapArea.Children.Add(_canvas);
+        mapArea.Children.Add(_overlapPicker);
         mapArea.Children.Add(details);
 
         var root =
@@ -289,8 +342,11 @@ public sealed class TownMapPanel :
     public event Action<string>?
         TownActivated;
 
-    public void ResetView() =>
+    public void ResetView()
+    {
+        _overlapPicker.IsVisible = false;
         _canvas.ResetView();
+    }
 
     public void Refresh()
     {
@@ -314,15 +370,90 @@ public sealed class TownMapPanel :
         _canvas.TownActivated -=
             OnTownActivated;
 
+        _canvas.TownSelectionRequested -=
+            OnTownSelectionRequested;
+
         _searchBox.KeyDown -=
             OnSearchBoxKeyDown;
 
         _canvas.Dispose();
     }
 
+    private void OnTownSelectionRequested(
+        IReadOnlyList<string> townIds,
+        Point pointer,
+        bool activateAfterSelection)
+    {
+        _overlapOptions.Children.Clear();
+
+        foreach (var townId in townIds)
+        {
+            var town = _snapshot.Towns.FirstOrDefault(item =>
+                string.Equals(
+                    item.TownId,
+                    townId,
+                    StringComparison.OrdinalIgnoreCase));
+
+            if (town is null)
+                continue;
+
+            var button =
+                new Button
+                {
+                    HorizontalAlignment = HorizontalAlignment.Stretch,
+                    HorizontalContentAlignment = HorizontalAlignment.Left,
+                    Background = Brushes.Transparent,
+                    BorderBrush = new SolidColorBrush(Color.FromArgb(80, 143, 105, 37)),
+                    BorderThickness = new Thickness(0, 0, 0, 1),
+                    Padding = new Thickness(5, 4),
+                    Content =
+                        new TextBlock
+                        {
+                            Text = town.DisplayName,
+                            Foreground = ToolText,
+                            FontSize = 11.5,
+                            TextWrapping = TextWrapping.Wrap
+                        }
+                };
+
+            var selectedTownId = town.TownId;
+            button.Click +=
+                (_, _) =>
+                {
+                    _overlapPicker.IsVisible = false;
+                    _canvas.SelectTown(selectedTownId);
+
+                    if (activateAfterSelection)
+                    {
+                        OnTownActivated(selectedTownId);
+                    }
+                };
+
+            _overlapOptions.Children.Add(button);
+        }
+
+        if (_overlapOptions.Children.Count == 0)
+            return;
+
+        var pickerHeight = Math.Min(
+            290,
+            42 + _overlapOptions.Children.Count * 31);
+        var maxLeft = Math.Max(4, _canvas.Bounds.Width - 238);
+        var maxTop = Math.Max(4, _canvas.Bounds.Height - pickerHeight - 4);
+
+        _overlapPicker.Margin =
+            new Thickness(
+                Math.Clamp(pointer.X + 12, 4, maxLeft),
+                Math.Clamp(pointer.Y + 12, 4, maxTop),
+                0,
+                0);
+        _overlapPicker.IsVisible = true;
+    }
+
     private void OnTownSelected(
         string townId)
     {
+        _overlapPicker.IsVisible = false;
         _selectedTownId =
             townId;
 
@@ -355,24 +486,49 @@ public sealed class TownMapPanel :
             town.Name;
 
         _townSubtitle.Text =
-            string.Equals(
-                town.Name,
-                town.County,
-                StringComparison.OrdinalIgnoreCase)
-                    ? string.Empty
-                    : town.County;
+            string.Empty;
 
-        var currentText =
-            town.IsCurrentHouseholdTown
-                ? "Yes"
-                : "No";
+        if (_townLife is not null)
+        {
+            try
+            {
+                var affairs =
+                    _townLife.GetTownLife(townId);
 
-        _townSummary.Text =
-            $"Current household: {currentText}\n"
-            + $"Dynasty members: {town.DynastyResidents.Count}\n"
-            + $"Active households: {town.ActiveHouseholds}\n"
-            + $"Playable households: {town.PlayableHouseholds}\n"
-            + $"Owned houses: {town.OwnedHouses}";
+                var institutions =
+                    affairs.Institutions.Institutions
+                        .Where(institution => institution.Tier > 0)
+                        .Select(institution =>
+                            $"  {institution.DisplayName}: Level {institution.Tier}")
+                        .ToArray();
+
+                var institutionText =
+                    institutions.Length == 0
+                        ? "  None"
+                        : string.Join("\n", institutions);
+
+                _townSummary.Text =
+                    $"Region: {affairs.RegionName}\n"
+                    + $"Settlement Type: {affairs.Town.SettlementClassDisplayName}\n"
+                    + $"Population: {affairs.PopulationText}\n"
+                    + $"Local Economy: {affairs.Prosperity.Index} — {affairs.Prosperity.Label} {affairs.Prosperity.TrendText}\n"
+                    + $"Strong Fields: {affairs.LocalOpportunityText}\n"
+                    + $"Regional Support: {affairs.RegionalOpportunityText}\n"
+                    + $"Shocks: {affairs.Prosperity.ActiveShocksText}\n"
+                    + "Institutions:\n"
+                    + institutionText;
+            }
+            catch
+            {
+                _townSummary.Text =
+                    $"Population: {town.Population:N0}";
+            }
+        }
+        else
+        {
+            _townSummary.Text =
+                $"Population: {town.Population:N0}";
+        }
 
         _residentList.Children.Clear();
 
@@ -434,6 +590,7 @@ public sealed class TownMapPanel :
 
     private void CenterCurrentHousehold()
     {
+        _overlapPicker.IsVisible = false;
         Refresh();
 
         if (_snapshot.CurrentHouseholdTownId
@@ -454,6 +611,8 @@ public sealed class TownMapPanel :
 
     private void SearchTown()
     {
+        _overlapPicker.IsVisible = false;
+
         var query =
             _searchBox.Text?.Trim();
 

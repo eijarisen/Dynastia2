@@ -145,6 +145,9 @@ public sealed partial class StandardHouseholdService
 
         if (type.Equals(
                 "personality.religious_study",
+                StringComparison.OrdinalIgnoreCase)
+            || type.Equals(
+                "family_relations.wedding_gift",
                 StringComparison.OrdinalIgnoreCase))
         {
             return true;
@@ -216,6 +219,18 @@ public sealed partial class StandardHouseholdService
                     "familyNews",
                     out var historicalFamilyNews)
                 && historicalFamilyNews.Equals(
+                    "true",
+                    StringComparison.OrdinalIgnoreCase);
+        }
+
+        if (type.StartsWith(
+                "heirloom.",
+                StringComparison.OrdinalIgnoreCase))
+        {
+            return gameEvent.Data.TryGetValue(
+                    "familyNews",
+                    out var heirloomFamilyNews)
+                && heirloomFamilyNews.Equals(
                     "true",
                     StringComparison.OrdinalIgnoreCase);
         }

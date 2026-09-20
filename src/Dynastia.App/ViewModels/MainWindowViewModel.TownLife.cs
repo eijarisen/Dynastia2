@@ -11,7 +11,8 @@ public sealed partial class MainWindowViewModel
     {
         get
         {
-            var representative = GetDisplayedHouseholdHead();
+            var representative = FindSelectedPerson()
+                ?? GetDisplayedHouseholdHead();
             if (representative is null || _locationService is null)
                 return "Town Affairs";
 
@@ -36,17 +37,28 @@ public sealed partial class MainWindowViewModel
             Id = TownAffairsUiActionId,
             Label = TownLifeNavigationLabel,
             Description =
-                "Inspect the active household's town, prosperity, institutions and local career possibilities.",
+                "Inspect the selected controllable heir's town, prosperity, institutions and local career possibilities.",
             Mode = ActionExecutionMode.Immediate,
             IsAvailable = _ => true,
             Execute = _ => new GameActionResult(false)
         };
 
-    internal bool CanOpenTownAffairs =>
-        _locationService is not null
-        && GetTownLifeRepresentative() is not null;
+    internal bool CanOpenTownAffairs
+    {
+        get
+        {
+            if (_locationService is null)
+                return false;
+
+            var target = FindSelectedPerson();
+
+            return target is not null
+                && _succession.IsControllable(target);
+        }
+    }
 
     internal IPerson? GetTownLifeRepresentative() =>
-        GetDisplayedHouseholdHead()
-        ?? FindSelectedPerson();
+        CanOpenTownAffairs
+            ? FindSelectedPerson()
+            : null;
 }

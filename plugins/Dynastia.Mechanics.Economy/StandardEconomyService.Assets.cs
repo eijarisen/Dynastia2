@@ -235,7 +235,10 @@ public sealed partial class StandardEconomyService
                     _random.NextGuid(),
 
                 TownId =
-                    assignedTown.Id
+                    assignedTown.Id,
+
+                PurchasePrice =
+                    GetHousePrice(assignedTown)
             };
 
         household.Houses.Add(
@@ -288,7 +291,15 @@ public sealed partial class StandardEconomyService
                     house.Town.Id,
 
                 AssignedHeirId =
-                    house.AssignedHeirId
+                    house.AssignedHeirId,
+
+                PurchasePrice =
+                    house.PurchasePrice > 0m
+                        ? house.PurchasePrice
+                        : GetHousePrice(house.Town),
+
+                CapacityExtensions =
+                    Math.Max(0, house.CapacityExtensions)
             });
 
         SynchronizeDerivedHouseCounts(
@@ -372,6 +383,24 @@ public sealed partial class StandardEconomyService
     public decimal GetHouseSaleValue(TownInfo town) =>
         RoundCurrency(
             GetHousePrice(town) * 0.80m);
+
+    public decimal GetHouseValue(HousePropertyInfo house)
+    {
+        ArgumentNullException.ThrowIfNull(house);
+        var purchasePrice = house.PurchasePrice > 0m
+            ? house.PurchasePrice
+            : GetHousePrice(house.Town);
+        var improvementValue =
+            purchasePrice
+            * HouseExtensionRules.ExtensionPriceFraction
+            * Math.Max(0, house.CapacityExtensions);
+        return RoundCurrency(
+            GetHousePrice(house.Town) + improvementValue);
+    }
+
+    public decimal GetHouseSaleValue(HousePropertyInfo house) =>
+        RoundCurrency(
+            GetHouseValue(house) * 0.80m);
 
     public decimal GetLivingCostPerPerson(TownInfo town) =>
         RoundCurrency(
@@ -538,7 +567,15 @@ public sealed partial class StandardEconomyService
                         house.Town.Id,
 
                     AssignedHeirId =
-                        house.AssignedHeirId
+                        house.AssignedHeirId,
+
+                    PurchasePrice =
+                        house.PurchasePrice > 0m
+                            ? house.PurchasePrice
+                            : GetHousePrice(house.Town),
+
+                    CapacityExtensions =
+                        Math.Max(0, house.CapacityExtensions)
                 });
         }
 

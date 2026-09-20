@@ -10,6 +10,7 @@
     "dynastia.economy",
     "dynastia.career",
     "dynastia.crafts",
-    "dynastia.townlife"
+    "dynastia.townlife",
+    "dynastia.health"
   ]
 }

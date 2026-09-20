@@ -88,6 +88,10 @@ public sealed class EconomyYearSystem : IYearSystem
             calculation.Income,
             calculation.Expenses);
 
+        _economy.RecordBudgetHistory(
+            household,
+            gameState.Year);
+
         if (calculation.CarefulManagementIncome > 0m)
         {
             _events.Publish(

@@ -30,6 +30,11 @@ public sealed partial class HouseholdsPlugin : IGamePlugin
             ?? throw new InvalidOperationException(
                 "Economy balance service is unavailable.");
 
+        var householdCapacity =
+            context.GetService<IHouseholdCapacityService>()
+            ?? throw new InvalidOperationException(
+                "Household capacity service is unavailable.");
+
         var locations =
             context.GetService<ILocationService>()
             ?? throw new InvalidOperationException(
@@ -95,6 +100,11 @@ public sealed partial class HouseholdsPlugin : IGamePlugin
             ?? throw new InvalidOperationException(
                 "Historical name service is unavailable.");
 
+        var nationalities =
+            context.GetService<INationalityService>()
+            ?? throw new InvalidOperationException(
+                "Nationality service is unavailable.");
+
         var random =
             context.GetService<IGameRandom>()
             ?? throw new InvalidOperationException(
@@ -110,6 +120,7 @@ public sealed partial class HouseholdsPlugin : IGamePlugin
                 gameState,
                 family,
                 economy,
+                householdCapacity,
                 locations,
                 career,
                 events);
@@ -193,6 +204,23 @@ public sealed partial class HouseholdsPlugin : IGamePlugin
                 after:
                     ["households.post_inheritance_reconcile"]));
 
+        systems.Register(
+            new AssimilationYearSystem(
+                economy,
+                family,
+                nationalities,
+                random,
+                events));
+
+        RegisterAssimilationActions(
+            actions,
+            gameState,
+            family,
+            nationalities,
+            historicalNames,
+            random,
+            events);
+
         var autonomousStrategy =
             new AdvancedAutonomousHouseholdStrategy(
                 context,
@@ -256,6 +284,7 @@ public sealed partial class HouseholdsPlugin : IGamePlugin
             family,
             households,
             economy,
+            householdCapacity,
             locations,
             career,
             random,

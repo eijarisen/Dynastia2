@@ -130,7 +130,8 @@ public sealed class TownLifeBatch4Tests
 
         Assert.Contains("currentMedical.IsAvailable", wellbeing);
         Assert.Contains("MedicalTreatmentRules.AdjustCost", wellbeing);
-        Assert.Contains("medical.TreatmentSuccessAdd", wellbeing);
+        Assert.Contains("MedicalTreatmentRules.AdjustSuccessChance", wellbeing);
+        Assert.Contains("currentMedical.TreatmentSuccessAdd", wellbeing);
         Assert.DoesNotContain("ITownFacilityQualityService", healthYear);
         Assert.DoesNotContain("ITownFacilityQualityService", incidence);
     }
@@ -162,10 +163,8 @@ public sealed class TownLifeBatch4Tests
             new BankOfferQualityInfo(4, "Commercial Bank", 1.05m, 1.30m, 0.85m, 0.98m, 1.10m, 1.30m),
             new MedicalQualityInfo(4, "General Hospital", 0.15, 0.90m));
 
-        Assert.Contains("3 loan proposals", snapshot.FinanceCapacityText);
-        Assert.Contains("General Hospital", snapshot.HealthcareCapacityText);
-        Assert.Contains("treatment success", snapshot.HealthcareCapacityText);
-        Assert.Contains("treatment cost", snapshot.HealthcareCapacityText);
+        Assert.Equal("Loan offers: favorable", snapshot.FinanceCapacityText);
+        Assert.Equal("Healthcare: good", snapshot.HealthcareCapacityText);
     }
 
     [Fact]
@@ -185,7 +184,7 @@ public sealed class TownLifeBatch4Tests
     }
 
     [Fact]
-    public void AlcoholDependenceFromDrinkingIsLessLikelyAndLessDamaging()
+    public void AlcoholDependenceFromDrinkingUsesTemperamentSpecificRiskAndReducedHealthDamage()
     {
         var root = RepositoryRoot();
         var wellbeing = File.ReadAllText(Path.Combine(
@@ -204,8 +203,13 @@ public sealed class TownLifeBatch4Tests
             "Common",
             "health_conditions.json"));
 
-        Assert.Contains("AlcoholismChanceFromDrinking =\n        0.10", wellbeing);
-        Assert.Contains("10% base chance", recovery);
+        Assert.Contains("AlcoholismChanceFromDrinkingCalm =\n        0.25", wellbeing);
+        Assert.Contains("AlcoholismChanceFromDrinkingReactive =\n        0.33", wellbeing);
+        Assert.Contains("personality.choleric", wellbeing);
+        Assert.Contains("personality.melancholic", wellbeing);
+        Assert.Contains("GetAlcoholismChanceFromDrinking(actor)", recovery);
+        Assert.Contains("25% chance", recovery);
+        Assert.Contains("33% for Choleric/Melancholic", recovery);
 
         using var document = System.Text.Json.JsonDocument.Parse(health);
         var alcoholism = document.RootElement.EnumerateArray()

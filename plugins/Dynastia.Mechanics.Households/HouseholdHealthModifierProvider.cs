@@ -74,7 +74,8 @@ public sealed class HouseholdHealthModifierProvider :
                 if (status.IsOvercrowded)
                 {
                     change -= HouseholdCrowdingRules.GetAnnualHealthPenalty(
-                        status.ResidentCount);
+                        status.ResidentCount,
+                        status.OvercrowdingThreshold);
                 }
 
                 if (status.IsBroke)

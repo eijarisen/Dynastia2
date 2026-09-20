@@ -143,6 +143,9 @@ public sealed class TownMapControl :
     public event Action<string>?
         TownActivated;
 
+    public event Action<IReadOnlyList<string>, Point, bool>?
+        TownSelectionRequested;
+
     public void SetSnapshot(
         TownMapSnapshot snapshot)
     {
@@ -827,19 +830,23 @@ public sealed class TownMapControl :
     }
 
     private string? HitTestTown(
+        Point screen) =>
+        HitTestTowns(screen).FirstOrDefault();
+
+    private IReadOnlyList<string> HitTestTowns(
         Point screen)
     {
         var snapshot =
             _snapshot;
 
         if (snapshot is null)
-            return null;
+            return Array.Empty<string>();
 
-        string? bestTownId =
-            null;
-
-        var bestDistanceSquared =
+        const double maximumDistanceSquared =
             10.0 * 10.0;
+
+        var hits =
+            new List<(string TownId, double DistanceSquared)>();
 
         foreach (var item in snapshot.Towns)
         {
@@ -866,19 +873,21 @@ public sealed class TownMapControl :
                 dx * dx + dy * dy;
 
             if (distanceSquared
-                > bestDistanceSquared)
+                > maximumDistanceSquared)
             {
                 continue;
             }
 
-            bestDistanceSquared =
-                distanceSquared;
-
-            bestTownId =
-                item.TownId;
+            hits.Add((
+                item.TownId,
+                distanceSquared));
         }
 
-        return bestTownId;
+        return hits
+            .OrderBy(hit => hit.DistanceSquared)
+            .ThenBy(hit => hit.TownId, StringComparer.OrdinalIgnoreCase)
+            .Select(hit => hit.TownId)
+            .ToArray();
     }
 
     private void OnPointerWheelChanged(
@@ -945,9 +954,23 @@ public sealed class TownMapControl :
         _lastPointer =
             point.Position;
 
-        var hit =
-            HitTestTown(
+        var hits =
+            HitTestTowns(
                 point.Position);
+
+        if (hits.Count > 1)
+        {
+            TownSelectionRequested?.Invoke(
+                hits,
+                point.Position,
+                e.ClickCount >= 2);
+
+            e.Handled = true;
+            return;
+        }
+
+        var hit =
+            hits.FirstOrDefault();
 
         if (hit is not null)
         {

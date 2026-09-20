@@ -155,7 +155,11 @@ public sealed record TownInstitutionAffairsInfo(
     string Emoji,
     string Summary,
     string ServiceText,
-    string CareerText);
+    string CareerText)
+{
+    public bool HasServiceText =>
+        !string.IsNullOrWhiteSpace(ServiceText);
+}
 
 public sealed record TownLifeSnapshot(
     TownInfo Town,
@@ -215,20 +219,27 @@ public sealed record TownLifeSnapshot(
             : $"Maximum ordinary Education: {School.Tier}";
 
     public string FinanceCapacityText =>
-        !BankQuality.IsAvailable
-            ? "No local banking institution — new loans unavailable"
-            : $"{BankQuality.DisplayName} — 3 loan proposals; " +
-              $"principal {BankQuality.PrincipalMultiplierMin:P0}–{BankQuality.PrincipalMultiplierMax:P0}, " +
-              $"interest {BankQuality.InterestMultiplierMin:P0}–{BankQuality.InterestMultiplierMax:P0}, " +
-              $"duration {BankQuality.DurationMultiplierMin:P0}–{BankQuality.DurationMultiplierMax:P0} of baseline";
+        BankQuality.Tier switch
+        {
+            <= 0 => "Loans unavailable",
+            1 => "Loan offers: unfavorable",
+            2 => "Loan offers: modest",
+            3 => "Loan offers: standard",
+            4 => "Loan offers: favorable",
+            _ => "Loan offers: very favorable"
+        };
 
     public string HealthcareCapacityText =>
-        !MedicalQuality.IsAvailable && Institutions.Year <= 1849
-            ? "No local medical facility — a visiting physician can still be summoned"
-            : !MedicalQuality.IsAvailable
-                ? "No local medical treatment facility — treatment unavailable"
-                : $"{MedicalQuality.DisplayName} — +{MedicalQuality.TreatmentSuccessAdd:P0} treatment success, " +
-                  $"{MedicalQuality.TreatmentCostMultiplier:P0} treatment cost";
+        MedicalQuality.Tier switch
+        {
+            <= 0 when Institutions.Year <= 1849 => "Healthcare: visiting physician only",
+            <= 0 => "Healthcare unavailable",
+            1 => "Healthcare: basic",
+            2 => "Healthcare: limited",
+            3 => "Healthcare: standard",
+            4 => "Healthcare: good",
+            _ => "Healthcare: excellent"
+        };
 
     private static string FormatTags(IReadOnlyList<string> tags)
     {

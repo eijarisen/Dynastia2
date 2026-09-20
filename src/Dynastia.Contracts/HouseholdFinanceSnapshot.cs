@@ -15,4 +15,10 @@ public sealed record HouseholdFinanceSnapshot(
 {
     public decimal LastNet =>
         LastIncome - LastExpenses;
+
+    public IReadOnlyList<HouseholdBudgetHistoryPoint> History { get; init; } =
+        Array.Empty<HouseholdBudgetHistoryPoint>();
+
+    public HouseholdLifestyleStance Lifestyle { get; init; } =
+        HouseholdLifestyleStance.Balanced;
 }

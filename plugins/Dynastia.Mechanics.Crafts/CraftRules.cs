@@ -6,7 +6,7 @@ public static class CraftRules
 {
     public const int MaximumCrafts = 2;
     public const double PassiveLearningChance = 0.05;
-    public const decimal EducationCost = 10000m;
+    public const decimal EducationCost = 5000m;
 
     private static readonly CraftMasteryRule[] MasteryRules =
     [

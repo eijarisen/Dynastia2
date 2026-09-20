@@ -5,7 +5,7 @@ namespace Dynastia.Mechanics.Education;
 public sealed class EducationPlugin : IGamePlugin
 {
     private const decimal StandardEducationCost = 5000m;
-    private const decimal CraftEducationCost = 10000m;
+    private const decimal CraftEducationCost = 5000m;
     private const int HelpLearningMinimumAge = 6;
     private const int HelpLearningAdultAge = 18;
 
@@ -29,6 +29,12 @@ public sealed class EducationPlugin : IGamePlugin
         var economy = context.GetService<IEconomyService>()
             ?? throw new InvalidOperationException("Economy service is unavailable.");
 
+        var locations = context.GetService<ILocationService>()
+            ?? throw new InvalidOperationException("Location service is unavailable.");
+
+        var institutions = context.GetService<ITownInstitutionService>()
+            ?? throw new InvalidOperationException("Town institution service is unavailable.");
+
         var random = context.GetService<IGameRandom>()
             ?? throw new InvalidOperationException("Game random service is unavailable.");
 
@@ -42,11 +48,15 @@ public sealed class EducationPlugin : IGamePlugin
             ?? throw new InvalidOperationException("Action registry is unavailable.");
 
         var eras = EducationEraCatalog.Load(data);
+        var localityRules = EducationLocalityRules.Load(data);
 
         var education = new StandardEducationService(
             family,
             stats,
-            eras);
+            eras,
+            locations,
+            institutions,
+            localityRules);
 
         context.AddService<IEducationService>(education);
 
@@ -77,7 +87,8 @@ public sealed class EducationPlugin : IGamePlugin
             education,
             random,
             events,
-            eras);
+            eras,
+            locations);
 
         actions.Register(
             CreateEducationAction(
@@ -115,7 +126,8 @@ public sealed class EducationPlugin : IGamePlugin
         IEducationService education,
         IGameRandom random,
         IGameEventBus events,
-        EducationEraCatalog eras)
+        EducationEraCatalog eras,
+        ILocationService locations)
     {
         events.EventPublished +=
             (_, gameEvent) =>
@@ -195,13 +207,16 @@ public sealed class EducationPlugin : IGamePlugin
 
                     if (spouse is not null)
                     {
-                        var era = eras.GetRule(gameEvent.Year);
+                        var town = locations.GetLocation(spouse).HomeTown;
+                        var range = education.GetGeneratedAdultRange(
+                            gameEvent.Year,
+                            town);
 
                         education.SetEducationLevel(
                             spouse,
                             random.NextInt(
-                                era.GeneratedAdultMinLevel,
-                                era.GeneratedAdultMaxLevel));
+                                range.MinimumLevel,
+                                range.MaximumLevel));
                     }
 
                     return;
@@ -218,13 +233,16 @@ public sealed class EducationPlugin : IGamePlugin
 
                     if (nanny is not null)
                     {
-                        var era = eras.GetRule(gameEvent.Year);
+                        var town = locations.GetLocation(nanny).HomeTown;
+                        var range = education.GetGeneratedAdultRange(
+                            gameEvent.Year,
+                            town);
 
                         education.SetEducationLevel(
                             nanny,
                             random.NextInt(
-                                era.GeneratedAdultMinLevel,
-                                era.GeneratedAdultMaxLevel));
+                                range.MinimumLevel,
+                                range.MaximumLevel));
                     }
 
                     return;
@@ -259,7 +277,7 @@ public sealed class EducationPlugin : IGamePlugin
             Id = "education.get_education",
             Label = "Get Education",
             Description =
-                "Choose standard education for 5,000 zł or study a Craft for 10,000 zł. The cost is charged when the attempt is made.",
+                "Choose standard education or study a Craft for 5,000 zł. The cost is charged when the attempt is made.",
             Mode = ActionExecutionMode.Queued,
             QueuePhase = YearPhase.QueuedActionsEarly,
 
@@ -290,7 +308,10 @@ public sealed class EducationPlugin : IGamePlugin
                 {
                     if (selected.Equals("standard", StringComparison.OrdinalIgnoreCase))
                     {
-                        return education.GetEducationLevel(target) < 5
+                        var selectedLocalCeiling = education.GetLocalEducationCeiling(
+                            target,
+                            actionContext.GameState.Year);
+                        return education.GetEducationLevel(target) < selectedLocalCeiling
                             && economy.CanAfford(actor, StandardEducationCost);
                     }
 
@@ -306,8 +327,11 @@ public sealed class EducationPlugin : IGamePlugin
                     return false;
                 }
 
+                var localCeiling = education.GetLocalEducationCeiling(
+                    target,
+                    actionContext.GameState.Year);
                 var canStudyStandard =
-                    education.GetEducationLevel(target) < 5
+                    education.GetEducationLevel(target) < localCeiling
                     && economy.CanAfford(actor, StandardEducationCost);
 
                 var canStudyCraft =
@@ -325,7 +349,7 @@ public sealed class EducationPlugin : IGamePlugin
                 {
                     return new GameActionResult(
                         false,
-                        "Children use Help in Education instead of paid education.");
+                        "Children use Help in Learning instead of paid education.");
                 }
 
                 var selected = actionContext.Parameters.TryGetValue("educationOption", out var option)
@@ -358,10 +382,17 @@ public sealed class EducationPlugin : IGamePlugin
                             : ActionReasonCodes.NoLongerEligible);
                 }
 
+                var localCeiling = education.GetLocalEducationCeiling(
+                    target,
+                    actionContext.GameState.Year);
                 if (!selected.Equals("standard", StringComparison.OrdinalIgnoreCase)
-                    || education.GetEducationLevel(target) >= 5)
+                    || education.GetEducationLevel(target) >= localCeiling)
                 {
-                    return new GameActionResult(false, "Standard education is no longer available.");
+                    return new GameActionResult(
+                        false,
+                        localCeiling <= 0
+                            ? "No ordinary local schooling is available."
+                            : $"The local School can only support Education up to level {localCeiling}.");
                 }
 
                 if (!economy.CanAfford(actor, StandardEducationCost))
@@ -429,14 +460,14 @@ public sealed class EducationPlugin : IGamePlugin
                 "education.help_learning",
 
             Label =
-                "Help in Education",
+                "Help in Learning",
 
             Description =
-                "Spend the year helping the selected young relative in this household study. " +
+                "Spend the year helping your selected child study. " +
                 "Available from age 6 through 17 and costs no money. Natural childhood Education " +
-                "broadly follows the child's Intellect; household help can raise a child " +
-                "one level beyond that natural ceiling. Success depends on both the child's " +
-                "Intellect and the helper's Intellect.",
+                "broadly follows the child's Intellect; parental help can raise a child " +
+                "beyond the local School ceiling when the parent is sufficiently educated. " +
+                "The child can never advance beyond the parent's own Education, and success depends on both Intellect scores.",
 
             Mode =
                 ActionExecutionMode.Queued,
@@ -477,19 +508,19 @@ public sealed class EducationPlugin : IGamePlugin
                         eras.GetRule(
                             actionContext.GameState.Year);
 
-                    if (education.GetEducationLevel(child)
-                        >= EducationProgressionRules.GetHelpedChildhoodCeiling(
+                    var helperEducation = education.GetEducationLevel(helper);
+                    var helpedCeiling =
+                        EducationProgressionRules.GetHelpedChildhoodCeiling(
                             childIntellect,
-                            era.HelpedMaxLevel))
-                    {
-                        return false;
-                    }
+                            era.HelpedMaxLevel,
+                            helperEducation);
 
-                    return HouseholdKinshipRules.IsSupportedResidentRelative(
-                        helper,
-                        child,
-                        family,
-                        economy);
+                    if (education.GetEducationLevel(child) >= helpedCeiling)
+                        return false;
+
+                    return IsParentOf(helper, child, family)
+                        && economy.GetHouseholdId(helper) is Guid helperHouseholdId
+                        && economy.GetHouseholdId(child) == helperHouseholdId;
                 },
 
             Execute =
@@ -507,11 +538,9 @@ public sealed class EducationPlugin : IGamePlugin
                             "state.alive")
                         || child.Age < HelpLearningMinimumAge
                         || child.Age >= HelpLearningAdultAge
-                        || !HouseholdKinshipRules.IsSupportedResidentRelative(
-                            helper,
-                            child,
-                            family,
-                            economy))
+                        || !IsParentOf(helper, child, family)
+                        || economy.GetHouseholdId(helper) is not Guid helperHouseholdId
+                        || economy.GetHouseholdId(child) != helperHouseholdId)
                     {
                         return new GameActionResult(
                             false,
@@ -530,14 +559,18 @@ public sealed class EducationPlugin : IGamePlugin
                         eras.GetRule(
                             actionContext.GameState.Year);
 
-                    if (education.GetEducationLevel(child)
-                        >= EducationProgressionRules.GetHelpedChildhoodCeiling(
+                    var helperEducation = education.GetEducationLevel(helper);
+                    var helpedCeiling =
+                        EducationProgressionRules.GetHelpedChildhoodCeiling(
                             childIntellect,
-                            era.HelpedMaxLevel))
+                            era.HelpedMaxLevel,
+                            helperEducation);
+
+                    if (education.GetEducationLevel(child) >= helpedCeiling)
                     {
                         return new GameActionResult(
                             false,
-                            "The child has reached the Education level that household help can currently support.");
+                            "The child has reached the Education level that this parent can personally teach.");
                     }
 
                     var helperIntellect =
@@ -647,6 +680,13 @@ public sealed class EducationPlugin : IGamePlugin
                 }
         };
     }
+
+    private static bool IsParentOf(
+        IPerson parent,
+        IPerson child,
+        IFamilyService family) =>
+        family.GetFather(child)?.Id == parent.Id
+        || family.GetMother(child)?.Id == parent.Id;
 
     private static IPerson? FindFirstRelatedPerson(
         IGameState gameState,

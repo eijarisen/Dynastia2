@@ -122,9 +122,6 @@ internal sealed class StandardPartnerSearchService :
         var seekerValue = GetPartnerValue(seeker);
         var seekerTown = _locations.GetLocation(seeker).HomeTown;
         var allTowns = _locations.GetTowns();
-        var educationRange = _education.GetGeneratedAdultRange(
-            _gameState.Year);
-
         for (var slot = 0; slot < count; slot++)
         {
             var candidateId = CreateCandidateId(
@@ -201,6 +198,9 @@ internal sealed class StandardPartnerSearchService :
                 }
             }
 
+            var educationRange = _education.GetGeneratedAdultRange(
+                _gameState.Year,
+                candidateTown);
             var education =
                 PartnerCandidateProfileRules.ResolveEducationLevel(
                     educationRange.MinimumLevel,

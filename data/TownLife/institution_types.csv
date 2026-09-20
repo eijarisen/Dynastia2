@@ -1,0 +1,9 @@
+﻿InstitutionId,DisplayName,MaxTier,Purpose
+school,School,5,Education ceiling and local study access.
+bank,Bank,5,Whether loans are available and the quality of three proposals.
+medical,Medical Facility,5,"Medical-treatment availability, quality and price."
+court,Court,3,Required for legal/court careers.
+administration,Administration,3,Required for government/public-administration careers.
+post_office,Post Office,3,Required for postal careers.
+railway_station,Railway Station,3,Required for railway careers.
+port,Port,3,Required for shipping/port careers and derived from existing port/shipping opportunities.

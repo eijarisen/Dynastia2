@@ -7,15 +7,24 @@ public sealed class StandardEducationService : IEducationService
     private readonly IFamilyService _family;
     private readonly IStatsService _stats;
     private readonly EducationEraCatalog _eras;
+    private readonly ILocationService _locations;
+    private readonly ITownInstitutionService _institutions;
+    private readonly EducationLocalityRules _localityRules;
 
     public StandardEducationService(
         IFamilyService family,
         IStatsService stats,
-        EducationEraCatalog eras)
+        EducationEraCatalog eras,
+        ILocationService locations,
+        ITownInstitutionService institutions,
+        EducationLocalityRules localityRules)
     {
         _family = family;
         _stats = stats;
         _eras = eras;
+        _locations = locations;
+        _institutions = institutions;
+        _localityRules = localityRules;
     }
 
     public void EnsureEducation(IPerson person)
@@ -96,6 +105,31 @@ public sealed class StandardEducationService : IEducationService
             choleric: -0.10);
     }
 
+    public int GetLocalEducationCeiling(
+        IPerson person,
+        int year)
+    {
+        ArgumentNullException.ThrowIfNull(person);
+
+        return GetLocalEducationCeiling(
+            _locations.GetLocation(person).HomeTown,
+            year);
+    }
+
+    public int GetLocalEducationCeiling(
+        TownInfo town,
+        int year)
+    {
+        ArgumentNullException.ThrowIfNull(town);
+
+        var schoolTier = _institutions
+            .Resolve(town, year)
+            .GetTier("school");
+
+        return _localityRules.GetMaximumLocalEducation(
+            schoolTier);
+    }
+
     public EducationGenerationRange GetGeneratedAdultRange(
         int year)
     {
@@ -104,6 +138,22 @@ public sealed class StandardEducationService : IEducationService
         return new EducationGenerationRange(
             rule.GeneratedAdultMinLevel,
             rule.GeneratedAdultMaxLevel);
+    }
+
+    public EducationGenerationRange GetGeneratedAdultRange(
+        int year,
+        TownInfo town)
+    {
+        ArgumentNullException.ThrowIfNull(town);
+
+        var rule = _eras.GetRule(year);
+        var schoolTier = _institutions
+            .Resolve(town, year)
+            .GetTier("school");
+
+        return _localityRules.GetGeneratedAdultRange(
+            rule,
+            schoolTier);
     }
 
     private static EducationComponent GetRequired(IPerson person)

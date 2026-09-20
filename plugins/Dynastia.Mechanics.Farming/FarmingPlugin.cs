@@ -23,6 +23,10 @@ public sealed class FarmingPlugin : IGamePlugin
             ?? throw new InvalidOperationException("Action registry is unavailable.");
         var householdIncome = context.GetService<IHouseholdIncomeProviderRegistry>()
             ?? throw new InvalidOperationException("Household income registry is unavailable.");
+        var prosperity = context.GetService<ITownProsperityService>()
+            ?? throw new InvalidOperationException("Town prosperity service is unavailable.");
+        var economicStrength = context.GetService<ILocalEconomicStrengthService>()
+            ?? throw new InvalidOperationException("Local economic-strength service is unavailable.");
         var data = context.GetService<IGameDataService>()
             ?? throw new InvalidOperationException("Game data service is unavailable.");
 
@@ -30,6 +34,8 @@ public sealed class FarmingPlugin : IGamePlugin
             gameState,
             economy,
             career,
+            prosperity,
+            economicStrength,
             random,
             events,
             FarmingEraSchedule.Load(data));

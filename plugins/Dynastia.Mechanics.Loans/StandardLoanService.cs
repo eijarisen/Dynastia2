@@ -14,6 +14,7 @@ public sealed partial class StandardLoanService :
     private readonly ILocationService _locations;
     private readonly IOutsiderIdentityService _outsiderIdentities;
     private readonly IAppearanceService _appearance;
+    private readonly ITownFacilityQualityService _facilityQuality;
 
     public StandardLoanService(
         IGameState gameState,
@@ -24,7 +25,8 @@ public sealed partial class StandardLoanService :
         IHistoricalNameService historicalNames,
         ILocationService locations,
         IOutsiderIdentityService outsiderIdentities,
-        IAppearanceService appearance)
+        IAppearanceService appearance,
+        ITownFacilityQualityService facilityQuality)
     {
         _gameState = gameState;
         _family = family;
@@ -35,14 +37,17 @@ public sealed partial class StandardLoanService :
         _locations = locations;
         _outsiderIdentities = outsiderIdentities;
         _appearance = appearance;
+        _facilityQuality = facilityQuality;
     }
 
     public LoanTermsInfo CalculateTerms(
         decimal principal,
-        int durationYears) =>
+        int durationYears,
+        decimal interestMultiplier = 1m) =>
         LoanTermsCalculator.Calculate(
             principal,
-            durationYears);
+            durationYears,
+            interestMultiplier);
 
     public IReadOnlyList<LoanOfferInfo> GetOffers(
         IPerson householdRepresentative,
@@ -57,6 +62,15 @@ public sealed partial class StandardLoanService :
 
         if (maximumThousands < 1)
             return [];
+
+        BankOfferQualityInfo? bankQuality = null;
+        if (!isGivingLoan)
+        {
+            var town = _locations.GetLocation(householdRepresentative).HomeTown;
+            bankQuality = _facilityQuality.GetBankQuality(town, _gameState.Year);
+            if (!bankQuality.IsAvailable)
+                return [];
+        }
 
         int[] durations = [1, 3, 5, 10, 15, 20, 30, 40, 50];
         var offers = new List<LoanOfferInfo>(3);
@@ -85,8 +99,35 @@ public sealed partial class StandardLoanService :
                 attempts++;
             }
 
-            var principal = principalThousands * LoanTermsCalculator.PrincipalStep;
-            var terms = CalculateTerms(principal, duration);
+            var baselinePrincipal =
+                principalThousands * LoanTermsCalculator.PrincipalStep;
+            decimal principal = baselinePrincipal;
+            var offerDuration = duration;
+            var interestMultiplier = 1m;
+
+            if (bankQuality is not null)
+            {
+                var qualityRandom =
+                    new LoanOfferRandom(CreateQualitySeed(seed));
+                principal = ApplyPrincipalQuality(
+                    baselinePrincipal,
+                    maximumPrincipal,
+                    bankQuality,
+                    qualityRandom);
+                offerDuration = ApplyDurationQuality(
+                    duration,
+                    bankQuality,
+                    qualityRandom);
+                interestMultiplier = NextMultiplier(
+                    qualityRandom,
+                    bankQuality.InterestMultiplierMin,
+                    bankQuality.InterestMultiplierMax);
+            }
+
+            var terms = CalculateTerms(
+                principal,
+                offerDuration,
+                interestMultiplier);
             var counterparty = GenerateExternalCounterparty(
                 householdRepresentative,
                 _gameState.Year,
@@ -202,12 +243,14 @@ public sealed partial class StandardLoanService :
         decimal principal,
         int durationYears,
         int startYear,
+        decimal interestMultiplier = 1m,
         string? externalCreditorName = null)
     {
         var terms =
             CalculateTerms(
                 principal,
-                durationYears);
+                durationYears,
+                interestMultiplier);
 
         var contract =
             new LoanContractState
@@ -424,6 +467,67 @@ public sealed partial class StandardLoanService :
         }
 
         return candidates[^1];
+    }
+
+    private static decimal ApplyPrincipalQuality(
+        decimal baselinePrincipal,
+        decimal maximumPrincipal,
+        BankOfferQualityInfo quality,
+        IGameRandom random)
+    {
+        var multiplier = NextMultiplier(
+            random,
+            quality.PrincipalMultiplierMin,
+            quality.PrincipalMultiplierMax);
+        var adjusted = Math.Round(
+            baselinePrincipal * multiplier / LoanTermsCalculator.PrincipalStep,
+            0,
+            MidpointRounding.AwayFromZero)
+            * LoanTermsCalculator.PrincipalStep;
+        var maximum = Math.Min(
+            LoanTermsCalculator.MaximumPrincipal,
+            Math.Floor(maximumPrincipal / LoanTermsCalculator.PrincipalStep)
+                * LoanTermsCalculator.PrincipalStep);
+        return Math.Clamp(
+            adjusted,
+            LoanTermsCalculator.MinimumPrincipal,
+            maximum);
+    }
+
+    private static int ApplyDurationQuality(
+        int baselineDuration,
+        BankOfferQualityInfo quality,
+        IGameRandom random)
+    {
+        var multiplier = NextMultiplier(
+            random,
+            quality.DurationMultiplierMin,
+            quality.DurationMultiplierMax);
+        var adjusted = (int)Math.Round(
+            baselineDuration * multiplier,
+            0,
+            MidpointRounding.AwayFromZero);
+        return Math.Clamp(
+            adjusted,
+            LoanTermsCalculator.MinimumDurationYears,
+            LoanTermsCalculator.MaximumDurationYears);
+    }
+
+    private static decimal NextMultiplier(
+        IGameRandom random,
+        decimal minimum,
+        decimal maximum) =>
+        minimum
+        + ((maximum - minimum) * (decimal)random.NextDouble());
+
+    private static Guid CreateQualitySeed(Guid offerSeed)
+    {
+        var bytes = offerSeed.ToByteArray();
+        bytes[8] ^= 0xB4;
+        bytes[9] ^= 0x71;
+        bytes[10] ^= 0x2D;
+        bytes[11] ^= 0x93;
+        return new Guid(bytes);
     }
 
     private static Guid CreateOfferSeed(

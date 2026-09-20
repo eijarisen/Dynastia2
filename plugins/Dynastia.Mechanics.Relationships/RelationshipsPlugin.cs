@@ -278,7 +278,8 @@ public sealed partial class RelationshipsPlugin : IGamePlugin
             new AffairYearSystem(
                 family,
                 random,
-                breakups));
+                marriageSatisfaction,
+                events));
 
         systems.Register(
             new FemaleRemarriageYearSystem(
@@ -302,7 +303,10 @@ public sealed partial class RelationshipsPlugin : IGamePlugin
                 stats,
                 health,
                 career,
-                households));
+                households,
+                economy,
+                personality,
+                () => context.GetService<IFamilyRelationService>()));
 
         systems.Register(
             new MarriageDivorceYearSystem(

@@ -70,6 +70,9 @@ public sealed class TownMapPanel :
         _canvas.TownSelected +=
             OnTownSelected;
 
+        _canvas.TownActivated +=
+            OnTownActivated;
+
         _searchBox =
             new TextBox
             {
@@ -124,7 +127,7 @@ public sealed class TownMapPanel :
             new TextBlock
             {
                 Text =
-                    "Mouse wheel: zoom · Drag map: pan · Hover: town · Click: select",
+                    "Mouse wheel: zoom · Drag map: pan · Hover: town · Click: select · Double-click: Town Affairs",
                 Foreground = ToolText,
                 Opacity = 0.72,
                 FontSize = 11.5,
@@ -283,6 +286,9 @@ public sealed class TownMapPanel :
         }
     }
 
+    public event Action<string>?
+        TownActivated;
+
     public void ResetView() =>
         _canvas.ResetView();
 
@@ -305,6 +311,9 @@ public sealed class TownMapPanel :
         _canvas.TownSelected -=
             OnTownSelected;
 
+        _canvas.TownActivated -=
+            OnTownActivated;
+
         _searchBox.KeyDown -=
             OnSearchBoxKeyDown;
 
@@ -318,6 +327,14 @@ public sealed class TownMapPanel :
             townId;
 
         UpdateDetails(townId);
+    }
+
+    private void OnTownActivated(
+        string townId)
+    {
+        _selectedTownId = townId;
+        UpdateDetails(townId);
+        TownActivated?.Invoke(townId);
     }
 
     private void UpdateDetails(

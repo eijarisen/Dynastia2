@@ -13,6 +13,8 @@ public sealed class CraftsPlugin : IGamePlugin
         var stats = Require<IStatsService>(context, "Stats service");
         var personality = Require<IPersonalityService>(context, "Personality service");
         var localOpportunities = Require<ILocalCareerOpportunityService>(context, "Local opportunity service");
+        var prosperity = Require<ITownProsperityService>(context, "Town prosperity service");
+        var economicStrength = Require<ILocalEconomicStrengthService>(context, "Local economic-strength service");
         var contextWeights = Require<IContextWeightService>(context, "Context-weight service");
         var data = Require<IGameDataService>(context, "Game data service");
         var random = Require<IGameRandom>(context, "Game random service");
@@ -33,6 +35,8 @@ public sealed class CraftsPlugin : IGamePlugin
             stats,
             personality,
             localOpportunities,
+            prosperity,
+            economicStrength,
             random,
             events,
             contextWeights,

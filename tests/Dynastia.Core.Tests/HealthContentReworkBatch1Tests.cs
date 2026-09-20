@@ -87,11 +87,11 @@ public sealed class HealthContentReworkBatch1Tests
         service.ConfigureHistoricalCatalog(
             HistoricalHealthCatalog.Load(data, conditions.Select(condition => condition.Id)));
 
-        Assert.Equal(52, conditions.Count);
+        Assert.Equal(53, conditions.Count);
         Assert.Equal(0.126, HealthIncidenceRules.ScaleMildConditionChance(0.28), 6);
         Assert.Equal(0.0035, HealthIncidenceRules.ScaleSeriousConditionChance(0.01), 6);
 
-        foreach (var id in new[] { "depression", "anxiety", "alcoholism", "drug_dependence" })
+        foreach (var id in new[] { "depression", "anxiety", "burnout", "alcoholism", "drug_dependence" })
         {
             var definition = Assert.Single(conditions, condition => condition.Id == id);
             Assert.Equal("Mental", definition.Category);
@@ -140,11 +140,16 @@ public sealed class HealthContentReworkBatch1Tests
         var conditions = LoadHealthDefinitions(data);
         var outcomes = StressOutcomeCatalog.Load(data, conditions);
 
-        Assert.Equal(4, outcomes.Definitions.Count);
+        Assert.Equal(5, outcomes.Definitions.Count);
         var drugs = outcomes.Definitions.Single(outcome => outcome.ConditionId == "drug_dependence");
         Assert.Equal(18, drugs.MinimumAge);
         Assert.Equal(5, drugs.MinimumStress);
         Assert.Equal(1800, drugs.StartYear);
+
+        var burnout = outcomes.Definitions.Single(outcome => outcome.ConditionId == "burnout");
+        Assert.Equal(18, burnout.MinimumAge);
+        Assert.Equal(2.5, burnout.MinimumStress, 6);
+        Assert.Equal(1700, burnout.StartYear);
 
         Assert.All(outcomes.Definitions, outcome =>
             Assert.Equal(0d, conditions.Single(condition => condition.Id == outcome.ConditionId).Weight));
@@ -223,9 +228,31 @@ public sealed class HealthContentReworkBatch1Tests
     }
 
     [Fact]
-    public void DrugDependenceIsTreatableByTherapy()
+    public void AddictionAndBurnoutAreTreatableByTherapy()
     {
         Assert.True(TherapyRules.IsTreatableCondition("drug_dependence"));
+        Assert.True(TherapyRules.IsTreatableCondition("burnout"));
+    }
+
+    [Fact]
+    public void CareerStressStronglyWeightsBurnoutOutcome()
+    {
+        var ordinary = new StressSnapshot(5,
+        [
+            new StressContribution("economy.wealth_zero", 5)
+        ]);
+        var overworked = new StressSnapshot(5,
+        [
+            new StressContribution("career.low_satisfaction", 2.5),
+            new StressContribution("career.overwork", 2.5)
+        ]);
+
+        Assert.Equal(1.0,
+            MentalHealthStressRules.GetOutcomeWeightMultiplier("burnout", ordinary), 6);
+        Assert.True(
+            MentalHealthStressRules.GetOutcomeWeightMultiplier("burnout", overworked) > 3.0);
+        Assert.Equal(1.0,
+            MentalHealthStressRules.GetOutcomeWeightMultiplier("depression", overworked), 6);
     }
 
     private static Person PersonWithTag(string tag)

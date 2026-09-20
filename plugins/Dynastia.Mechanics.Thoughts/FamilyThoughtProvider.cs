@@ -395,9 +395,6 @@ internal sealed class FamilyThoughtProvider :
                 StringComparison.OrdinalIgnoreCase)
             || type.Equals(
                 "relationship.prison_divorce",
-                StringComparison.OrdinalIgnoreCase)
-            || type.Equals(
-                "relationship.affair",
                 StringComparison.OrdinalIgnoreCase);
     }
 }

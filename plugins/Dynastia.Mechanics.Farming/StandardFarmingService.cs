@@ -12,6 +12,8 @@ internal sealed class StandardFarmingService :
     private readonly IGameState _gameState;
     private readonly IEconomyService _economy;
     private readonly ICareerService _career;
+    private readonly ITownProsperityService _prosperity;
+    private readonly ILocalEconomicStrengthService _economicStrength;
     private readonly IGameRandom _random;
     private readonly IGameEventBus _events;
     private readonly FarmingEraSchedule _eraSchedule;
@@ -20,6 +22,8 @@ internal sealed class StandardFarmingService :
         IGameState gameState,
         IEconomyService economy,
         ICareerService career,
+        ITownProsperityService prosperity,
+        ILocalEconomicStrengthService economicStrength,
         IGameRandom random,
         IGameEventBus events,
         FarmingEraSchedule eraSchedule)
@@ -27,6 +31,8 @@ internal sealed class StandardFarmingService :
         _gameState = gameState;
         _economy = economy;
         _career = career;
+        _prosperity = prosperity;
+        _economicStrength = economicStrength;
         _random = random;
         _events = events;
         _eraSchedule = eraSchedule;
@@ -142,11 +148,9 @@ internal sealed class StandardFarmingService :
     public decimal GetExpectedAnnualIncome(
         IPerson householdRepresentative)
     {
-        var activeWorkers =
-            GetActiveWorkerCount(
-                householdRepresentative);
-
-        return GetExpectedAnnualIncome(activeWorkers);
+        return GetExpectedAnnualIncomeForWorkers(
+            householdRepresentative,
+            GetWorkingFarmWorkers(householdRepresentative));
     }
 
     public decimal GetExpectedAnnualIncomeAfterAddingLocalParcel(
@@ -158,35 +162,44 @@ internal sealed class StandardFarmingService :
 
         var workers =
             GetAvailableWorkers(
-                householdRepresentative)
-            .Count;
+                householdRepresentative);
 
-        return GetExpectedAnnualIncome(
-            FarmingRules.GetActiveWorkerCount(
-                localParcels + 1,
-                workers));
+        var activeWorkers = FarmingRules.GetActiveWorkerCount(
+            localParcels + 1,
+            workers.Count);
+
+        return GetExpectedAnnualIncomeForWorkers(
+            householdRepresentative,
+            workers.Take(activeWorkers));
     }
 
-    private decimal GetExpectedAnnualIncome(
-        int activeWorkers)
+    private decimal GetExpectedAnnualIncomeForWorkers(
+        IPerson householdRepresentative,
+        IEnumerable<IPerson> workers)
     {
-        if (activeWorkers <= 0)
-            return 0m;
+        var workerBaseIncome = GetWorkerBaseIncome();
+        decimal baseIncome = 0m;
 
-        return Math.Round(
-            GetWorkerBaseIncome() * activeWorkers,
-            0,
-            MidpointRounding.AwayFromZero);
+        foreach (var worker in workers)
+        {
+            baseIncome += ApplyRecoverReduction(
+                worker,
+                workerBaseIncome);
+        }
+
+        return ApplyTownIncomeMultiplier(
+            householdRepresentative,
+            baseIncome);
     }
 
     decimal IHouseholdIncomeProvider.GetAnnualIncome(
         IPerson householdRepresentative)
     {
-        var activeWorkers =
-            GetActiveWorkerCount(
+        var workers =
+            GetWorkingFarmWorkers(
                 householdRepresentative);
 
-        if (activeWorkers <= 0)
+        if (workers.Count <= 0)
             return 0m;
 
         var workerBaseIncome =
@@ -194,11 +207,19 @@ internal sealed class StandardFarmingService :
 
         decimal total = 0m;
 
-        for (var worker = 0; worker < activeWorkers; worker++)
+        foreach (var worker in workers)
         {
-            total += workerBaseIncome
+            var output = workerBaseIncome
                 * (decimal)(_random.NextDouble() * 2.0);
+
+            total += ApplyRecoverReduction(
+                worker,
+                output);
         }
+
+        total = ApplyTownIncomeMultiplier(
+            householdRepresentative,
+            total);
 
         var rounded =
             Math.Round(
@@ -218,9 +239,6 @@ internal sealed class StandardFarmingService :
                     : rounded <= expected * 0.55m
                         ? "poor"
                         : "ordinary";
-
-        var workers = GetWorkingFarmWorkers(
-            householdRepresentative);
 
         _events.Publish(
             new GameEvent
@@ -245,6 +263,51 @@ internal sealed class StandardFarmingService :
         IPerson householdRepresentative) =>
         GetExpectedAnnualIncome(
             householdRepresentative);
+
+    private static decimal ApplyRecoverReduction(
+        IPerson worker,
+        decimal income)
+    {
+        var reduction = ReadPercent(
+            worker,
+            "modifier.salary.recover.");
+
+        return reduction <= 0m
+            ? income
+            : income * (1m - reduction / 100m);
+    }
+
+    private static decimal ReadPercent(
+        IPerson person,
+        string prefix)
+    {
+        foreach (var tag in person.Tags.All)
+        {
+            if (!tag.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
+                continue;
+
+            if (decimal.TryParse(tag[prefix.Length..], out var percent))
+                return Math.Clamp(percent, 0m, 50m);
+        }
+
+        return 0m;
+    }
+
+    private decimal ApplyTownIncomeMultiplier(
+        IPerson householdRepresentative,
+        decimal income)
+    {
+        if (income <= 0m)
+            return 0m;
+
+        var town = _economy.GetResidenceTown(householdRepresentative);
+        var strength = _economicStrength.ResolveFarming(town);
+        var multiplier = _prosperity.GetIncomeMultiplier(town, strength);
+        return Math.Round(
+            income * multiplier,
+            0,
+            MidpointRounding.AwayFromZero);
+    }
 
     private IReadOnlyList<IPerson> GetAvailableWorkers(
         IPerson householdRepresentative)

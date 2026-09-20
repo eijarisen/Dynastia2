@@ -21,11 +21,30 @@ internal sealed class HouseholdStressModifierProvider : IStressModifierProvider
 
         var status = _households.GetStatus(head);
         if (status?.IsLargeFamilyStrained == true)
-            yield return new StressContribution("household.large_family_strain", 1);
+        {
+            var excessChildren = Math.Max(
+                0,
+                status.UnderageChildren - status.EffectiveChildCapacity);
+
+            if (excessChildren > 0)
+            {
+                yield return new StressContribution(
+                    "household.large_family_strain",
+                    excessChildren);
+            }
+        }
 
         if (status?.IsOvercrowded == true)
-            yield return new StressContribution(
-                "household.overcrowded",
-                HouseholdCrowdingRules.AnnualStressPenalty);
+        {
+            var penalty = HouseholdCrowdingRules.GetAnnualStressPenalty(
+                status.ResidentCount);
+
+            if (penalty > 0)
+            {
+                yield return new StressContribution(
+                    "household.overcrowded",
+                    penalty);
+            }
+        }
     }
 }

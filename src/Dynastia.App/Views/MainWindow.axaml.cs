@@ -26,6 +26,7 @@ public partial class MainWindow : Window
     private bool _persistenceDialogOpen;
     private bool _genealogyDialogOpen;
     private bool _mapDialogOpen;
+    private bool _townLifeDialogOpen;
     private bool _familyRelationsDialogOpen;
     private bool _familyInventoryDialogOpen;
     private bool _instructionsDialogOpen;
@@ -45,6 +46,12 @@ public partial class MainWindow : Window
     }
 
     public GameMapDataSource? MapDataSource
+    {
+        get;
+        set;
+    }
+
+    public ITownLifeService? TownLifeService
     {
         get;
         set;
@@ -124,6 +131,14 @@ public partial class MainWindow : Window
     {
         if (DataContext is not MainWindowViewModel viewModel)
             return;
+
+        if (e.ActionId.Equals(
+                "ui.town_affairs",
+                StringComparison.OrdinalIgnoreCase))
+        {
+            await OpenTownLifeAsync();
+            return;
+        }
 
         if (e.ActionId.Equals(
                 "ui.manage_properties",
@@ -439,6 +454,7 @@ public partial class MainWindow : Window
         if (_persistenceDialogOpen
             || _genealogyDialogOpen
             || _mapDialogOpen
+            || _townLifeDialogOpen
             || _familyRelationsDialogOpen
             || _familyInventoryDialogOpen
             || _instructionsDialogOpen
@@ -964,6 +980,55 @@ public partial class MainWindow : Window
         }
     }
 
+    private async Task OpenTownLifeAsync()
+    {
+        if (_townLifeDialogOpen
+            || DataContext is not MainWindowViewModel viewModel)
+        {
+            return;
+        }
+
+        if (TownLifeService is null)
+        {
+            viewModel.ReportPersistenceStatus(
+                "Town / City Affairs is unavailable because its service did not initialize.");
+            return;
+        }
+
+        var representative =
+            viewModel.GetTownLifeRepresentative();
+
+        if (representative is null)
+        {
+            viewModel.ReportPersistenceStatus(
+                "Town / City Affairs is unavailable because no active household is selected.");
+            return;
+        }
+
+        _townLifeDialogOpen = true;
+        SetPaperDialogBackdrop(true);
+
+        try
+        {
+            var snapshot =
+                TownLifeService.GetCurrentTownLife(
+                    representative);
+            var window = new TownLifeWindow(snapshot);
+            await window.ShowDialog(this);
+        }
+        catch (Exception exception)
+        {
+            Console.Error.WriteLine(exception);
+            viewModel.ReportPersistenceStatus(
+                $"Town / City Affairs failed: {exception.Message}");
+        }
+        finally
+        {
+            SetPaperDialogBackdrop(false);
+            _townLifeDialogOpen = false;
+        }
+    }
+
     private async void OnMapClick(
         object? sender,
         RoutedEventArgs e)
@@ -997,7 +1062,8 @@ public partial class MainWindow : Window
             var window =
                 new TownMapWindow(
                     MapDataSource,
-                    GenealogySelection);
+                    GenealogySelection,
+                    TownLifeService);
 
             await window.ShowDialog(
                 this);

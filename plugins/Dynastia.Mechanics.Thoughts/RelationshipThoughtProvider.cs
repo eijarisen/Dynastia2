@@ -75,8 +75,8 @@ internal sealed class RelationshipThoughtProvider :
 
                 yield return new ThoughtCandidate(
                     "relationship.affair",
-                    "relationship.divorce",
-                    "relationship.divorce",
+                    "relationship.satisfaction",
+                    "relationship.satisfaction",
                     96,
                     "💔",
                     "event",
@@ -115,9 +115,6 @@ internal sealed class RelationshipThoughtProvider :
                             StringComparison.OrdinalIgnoreCase)
                         || gameEvent.Type.Equals(
                             "relationship.prison_divorce",
-                            StringComparison.OrdinalIgnoreCase)
-                        || gameEvent.Type.Equals(
-                            "relationship.affair",
                             StringComparison.OrdinalIgnoreCase)
                     )
                     && ThoughtProviderUtilities

@@ -22,7 +22,7 @@
     }
   },
   "education": {
-    "cost": 10000,
+    "cost": 5000,
     "successfulImprovementProgress": 3.0,
     "successChanceFormula": "clamp(0.55 + 0.08 * primaryStat - 0.10 * currentMasteryLevel, 0.10, 0.85)",
     "learningNewCraft": {

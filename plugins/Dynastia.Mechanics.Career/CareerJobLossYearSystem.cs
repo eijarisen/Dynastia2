@@ -85,11 +85,26 @@ public sealed class CareerJobLossYearSystem :
                 person);
 
         if (career.IsRetired
-            || career.JobLevel <= 0
-            || career.JobLevel >= 5)
+            || career.JobLevel <= 0)
         {
             return;
         }
+
+        var institutionFailure =
+            _career.GetCurrentInstitutionFailure(person);
+        if (institutionFailure is not null)
+        {
+            PublishInstitutionClosure(
+                gameState,
+                person,
+                career,
+                institutionFailure);
+            _career.SetJobLevel(person, 0);
+            return;
+        }
+
+        if (career.JobLevel >= 5)
+            return;
 
         var obsolescence =
             _career.GetObsolescencePressure(
@@ -165,6 +180,40 @@ public sealed class CareerJobLossYearSystem :
         _career.SetJobLevel(
             person,
             0);
+    }
+
+    private void PublishInstitutionClosure(
+        IGameState gameState,
+        IPerson person,
+        CareerSnapshot career,
+        CareerInstitutionFailure failure)
+    {
+        var institutionName = failure.Institution.DisplayName;
+        var text =
+            $"The local {institutionName.ToLowerInvariant()} could no longer support " +
+            $"{career.CareerName ?? "this profession"}, and {_family.GetDisplayName(person)} " +
+            $"lost their position as {career.JobTitle}.";
+
+        _events.Publish(
+            new GameEvent
+            {
+                Type = "career.fired",
+                Year = gameState.Year,
+                SubjectId = person.Id,
+                Data = new Dictionary<string, string>
+                {
+                    ["careerId"] = career.CareerId ?? string.Empty,
+                    ["careerName"] = career.CareerName ?? string.Empty,
+                    ["jobTitle"] = career.JobTitle,
+                    ["reason"] = "local_institution_closed",
+                    ["institutionId"] = failure.Requirement.InstitutionId,
+                    ["institutionName"] = institutionName,
+                    ["requiredInstitutionTier"] = failure.Requirement.MinimumTier.ToString(),
+                    ["currentInstitutionTier"] = failure.Institution.Tier.ToString(),
+                    ["townId"] = failure.Town.Id,
+                    ["text"] = text
+                }
+            });
     }
 
     private static void ClearTransientModifiers(

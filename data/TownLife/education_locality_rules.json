@@ -1,0 +1,30 @@
+{
+  "schoolTierToMaximumLocalEducation": {
+    "0": 0,
+    "1": 1,
+    "2": 2,
+    "3": 3,
+    "4": 4,
+    "5": 5
+  },
+  "passiveChildhood": {
+    "ceilingFormula": "min(existingEraPassiveMaxLevel, localSchoolTier, existingIntellectCeiling)",
+    "noSchool": "no_passive_education_progress"
+  },
+  "paidStandardEducation": {
+    "ceilingFormula": "min(existingEraMaximumIfAny, localSchoolTier, 5)",
+    "cannotAttemptAtOrAboveCeiling": true,
+    "existingSuccessFormulaUnchanged": true
+  },
+  "generatedLocalAdults": {
+    "maximumFormula": "min(existingEraGeneratedAdultMaxLevel, localSchoolTier)",
+    "minimum": "min(existingEraGeneratedAdultMinLevel, calculatedMaximum)",
+    "founderAndStartingAdults": "do_not_retroactively_cap; they may have been educated elsewhere before game start"
+  },
+  "helpInLearning": {
+    "bypassesLocalSchoolCeiling": true,
+    "maximumFormula": "min(parentEducationLevel, existingEraHelpedMaxLevel, existingChildIntellectHelpedCeiling, 5)",
+    "successChance": "keep existing Help in Learning chance; parent Education and Intellect requirements remain authoritative",
+    "reason": "A sufficiently educated parent can personally teach a child beyond what the local school provides."
+  }
+}

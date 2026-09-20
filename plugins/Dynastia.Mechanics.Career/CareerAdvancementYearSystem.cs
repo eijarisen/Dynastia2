@@ -90,9 +90,16 @@ public sealed class CareerAdvancementYearSystem :
                 person,
                 gameState.Year)
             || career.JobLevel <= 0
-            || person.Age <= PromotionMinAge
             || career.JobLevel >= 5)
         {
+            return;
+        }
+
+        if (person.Age <= PromotionMinAge)
+        {
+            ApplyFailedWorkHarderSatisfactionPenalty(
+                person,
+                gameState.Year);
             return;
         }
 
@@ -144,20 +151,34 @@ public sealed class CareerAdvancementYearSystem :
                     education);
         }
 
+        var targetJobLevel =
+            career.JobLevel + 1;
+
+        // Level 5 is a standout lifetime achievement rather than a normal
+        // continuation of the promotion ladder. Education 5 is mandatory.
+        if (targetJobLevel >= 5
+            && education < 5)
+        {
+            ApplyFailedWorkHarderSatisfactionPenalty(
+                person,
+                gameState.Year);
+            return;
+        }
+
         var expectedEducation =
             _career.GetExpectedEducation(
                 definition,
-                career.JobLevel + 1);
+                targetJobLevel);
 
         promotionChance *=
             CareerBalanceRules.GetEducationPromotionMultiplier(
                 education,
                 expectedEducation,
-                career.JobLevel + 1);
+                targetJobLevel);
 
         promotionChance *=
             CareerBalanceRules.GetTargetLevelPromotionMultiplier(
-                career.JobLevel + 1);
+                targetJobLevel);
 
         promotionChance *=
             obsolescence
@@ -181,12 +202,22 @@ public sealed class CareerAdvancementYearSystem :
         if (_random.NextDouble()
             >= promotionChance)
         {
+            ApplyFailedWorkHarderSatisfactionPenalty(
+                person,
+                gameState.Year);
             return;
         }
 
         _career.SetJobLevel(
             person,
-            career.JobLevel + 1);
+            targetJobLevel);
+
+        // A promotion is a meaningful morale boost. +2 through the existing
+        // temperament-aware adjustment guarantees at least some improvement
+        // for anyone below the maximum satisfaction state.
+        _career.ChangeJobSatisfaction(
+            person,
+            2);
 
         var promoted =
             _career.GetCareer(
@@ -227,12 +258,53 @@ public sealed class CareerAdvancementYearSystem :
                                 .ToString(
                                     "0.000"),
 
+                        ["achievement"] =
+                            promoted.JobLevel >= 5
+                                ? "career_level_5"
+                                : string.Empty,
+
                         ["text"] =
-                            $"{_family.GetDisplayName(person)} " +
-                            $"was promoted to " +
-                            $"{promoted.JobTitle}."
+                            promoted.JobLevel >= 5
+                                ? $"{_family.GetDisplayName(person)} reached the pinnacle of their career as {promoted.JobTitle}, a standout lifetime achievement."
+                                : $"{_family.GetDisplayName(person)} was promoted to {promoted.JobTitle}."
                     }
             });
+    }
+
+    private void ApplyFailedWorkHarderSatisfactionPenalty(
+        IPerson person,
+        int year)
+    {
+        if (!person.Tags.Has("modifier.work_harder"))
+            return;
+
+        var streak = 0;
+        for (var offset = 0; offset < 5; offset++)
+        {
+            var usedThisYear = _events.GetEventsForYear(year - offset)
+                .Any(gameEvent =>
+                    gameEvent.SubjectId == person.Id
+                    && gameEvent.Type.Equals(
+                        "career.work_harder",
+                        StringComparison.OrdinalIgnoreCase));
+
+            if (!usedThisYear)
+                break;
+
+            streak++;
+        }
+
+        var lossChance =
+            CareerPressureRules.GetFailedRepeatedOverworkSatisfactionLossChance(
+                streak);
+
+        if (lossChance > 0
+            && _random.NextDouble() < lossChance)
+        {
+            _career.ChangeJobSatisfaction(
+                person,
+                -1);
+        }
     }
 
     private bool IsAtOrPastRetirementAge(

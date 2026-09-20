@@ -12,6 +12,7 @@
     "dynastia.health",
     "dynastia.economy",
     "dynastia.education",
-    "dynastia.personality"
+    "dynastia.personality",
+    "dynastia.townlife"
   ]
 }

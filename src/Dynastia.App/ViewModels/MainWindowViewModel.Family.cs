@@ -322,6 +322,9 @@ public sealed partial class MainWindowViewModel
             nameof(ActiveHouseholdText));
 
         OnPropertyChanged(
+            nameof(TownLifeNavigationLabel));
+
+        OnPropertyChanged(
             nameof(ActionsEmptyText));
     }
 

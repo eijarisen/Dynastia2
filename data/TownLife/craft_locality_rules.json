@@ -1,0 +1,21 @@
+{
+  "availabilitySource": "existing Craft definition + ILocalCareerOpportunityService opportunity snapshot",
+  "learningUnknownCraft": {
+    "requiresEraAvailability": true,
+    "requiresMinimumLearningAge": true,
+    "requiresMinimumSettlementClass": true,
+    "requiresRequiredOpportunityTags": true,
+    "preferredOpportunityTagsAffectAvailability": false
+  },
+  "improvingKnownCraftThroughEducation": {
+    "requiresLocalCraftAvailability": true
+  },
+  "teachCraft": {
+    "requiresLocalCraftAvailability": true
+  },
+  "selfEmployment": {
+    "knownCraftRemainsUsableAfterRelocation": true,
+    "localAvailabilityRequiredToPractice": false,
+    "prosperityStrength": "derive from RequiredOpportunityTags first, then PreferredOpportunityTags; if tags exist but none match => weak; no tags => normal"
+  }
+}

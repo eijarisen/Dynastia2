@@ -24,8 +24,7 @@ public sealed class GameGenealogyDataSource :
                 "relationship.remarried",
                 "relationship.divorce",
                 "relationship.prison_divorce",
-                "relationship.low_satisfaction_divorce",
-                "relationship.affair"
+                "relationship.low_satisfaction_divorce"
             };
 
     private readonly IGameState _gameState;

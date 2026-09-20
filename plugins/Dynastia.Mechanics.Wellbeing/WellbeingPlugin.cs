@@ -14,7 +14,7 @@ public sealed partial class WellbeingPlugin : IGamePlugin
         10;
 
     private const double AlcoholismChanceFromDrinking =
-        0.20;
+        0.10;
 
 
     public void Initialize(
@@ -69,6 +69,16 @@ public sealed partial class WellbeingPlugin : IGamePlugin
             context.GetService<IHistoricalActionVariantService>()
             ?? throw new InvalidOperationException(
                 "Historical action variant service is unavailable.");
+
+        var locations =
+            context.GetService<ILocationService>()
+            ?? throw new InvalidOperationException(
+                "Location service is unavailable.");
+
+        var facilityQuality =
+            context.GetService<ITownFacilityQualityService>()
+            ?? throw new InvalidOperationException(
+                "Town facility quality service is unavailable.");
 
         var events =
             context.GetService<IGameEventBus>()
@@ -125,7 +135,9 @@ public sealed partial class WellbeingPlugin : IGamePlugin
             stats,
             random,
             events,
-            historical);
+            historical,
+            locations,
+            facilityQuality);
 
         RegisterHeal(
             actions,
@@ -135,7 +147,9 @@ public sealed partial class WellbeingPlugin : IGamePlugin
             events,
             gameState,
             historical,
-            healthcareEras);
+            healthcareEras,
+            locations,
+            facilityQuality);
 
         systems.Register(
             new WellbeingCleanupYearSystem());

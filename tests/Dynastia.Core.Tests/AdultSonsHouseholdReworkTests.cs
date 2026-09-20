@@ -21,11 +21,15 @@ public sealed class AdultSonsHouseholdReworkTests
     }
 
     [Fact]
-    public void OvercrowdingUsesDesignedAnnualPenalties()
+    public void OvercrowdingUsesGradualPerResidentPenalties()
     {
         Assert.Equal(8, HouseholdCrowdingRules.OvercrowdingThreshold);
-        Assert.Equal(3, HouseholdCrowdingRules.AnnualHealthPenalty);
-        Assert.Equal(2, HouseholdCrowdingRules.AnnualStressPenalty);
+        Assert.Equal(0.75, HouseholdCrowdingRules.HealthPenaltyPerExcessResident, 10);
+        Assert.Equal(1.0, HouseholdCrowdingRules.StressPenaltyPerExcessResident, 10);
+        Assert.Equal(0.75, HouseholdCrowdingRules.GetAnnualHealthPenalty(9), 10);
+        Assert.Equal(3.0, HouseholdCrowdingRules.GetAnnualHealthPenalty(12), 10);
+        Assert.Equal(1.0, HouseholdCrowdingRules.GetAnnualStressPenalty(9), 10);
+        Assert.Equal(4.0, HouseholdCrowdingRules.GetAnnualStressPenalty(12), 10);
     }
 
     [Theory]

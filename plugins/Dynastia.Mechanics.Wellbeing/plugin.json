@@ -1,7 +1,7 @@
 {
   "id": "dynastia.wellbeing",
   "name": "Standard Wellbeing",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "apiVersion": 1,
   "assembly": "Dynastia.Mechanics.Wellbeing.dll",
   "entryType": "Dynastia.Mechanics.Wellbeing.WellbeingPlugin",
@@ -11,6 +11,8 @@
     "dynastia.health",
     "dynastia.economy",
     "dynastia.career",
-    "dynastia.historical"
+    "dynastia.historical",
+    "dynastia.locations",
+    "dynastia.townlife"
   ]
 }

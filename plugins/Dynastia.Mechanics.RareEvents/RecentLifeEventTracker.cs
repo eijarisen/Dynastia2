@@ -281,9 +281,6 @@ internal sealed class RecentLifeEventTracker
                 StringComparison.OrdinalIgnoreCase)
             || type.Equals(
                 "relationship.low_satisfaction_divorce",
-                StringComparison.OrdinalIgnoreCase)
-            || type.Equals(
-                "relationship.affair",
                 StringComparison.OrdinalIgnoreCase);
     }
 

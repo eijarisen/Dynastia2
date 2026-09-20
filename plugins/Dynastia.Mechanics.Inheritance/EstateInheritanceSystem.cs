@@ -202,6 +202,13 @@ public sealed class EstateInheritanceSystem :
             wealth,
             estateHouseholdId);
 
+        PublishInheritanceDisadvantage(
+            gameState,
+            anchor ?? head,
+            heirs,
+            houses,
+            farmland);
+
         _economy.SetWealth(
             head,
             0);
@@ -655,6 +662,100 @@ public sealed class EstateInheritanceSystem :
         }
     }
 
+
+    private void PublishInheritanceDisadvantage(
+        IGameState gameState,
+        IPerson source,
+        IReadOnlyList<IPerson> heirs,
+        IReadOnlyList<HousePropertyInfo> houses,
+        IReadOnlyList<FarmlandAssetInfo> farmland)
+    {
+        if (heirs.Count < 2)
+            return;
+
+        var heirIds = heirs
+            .Select(heir => heir.Id)
+            .ToList();
+        var livingHeirIds = heirIds.ToHashSet();
+
+        var hasExplicitDesignation = houses.Any(asset =>
+                asset.AssignedHeirId is Guid id
+                && livingHeirIds.Contains(id))
+            || farmland.Any(asset =>
+                asset.AssignedHeirId is Guid id
+                && livingHeirIds.Contains(id));
+
+        if (!hasExplicitDesignation)
+            return;
+
+        var received = heirs.ToDictionary(heir => heir.Id, _ => 0);
+
+        foreach (var recipient in HouseInheritanceAssignmentRules.ResolveRecipients(
+                     heirIds,
+                     houses.Select(asset => asset.AssignedHeirId).ToList()))
+        {
+            received[recipient]++;
+        }
+
+        foreach (var recipient in HouseInheritanceAssignmentRules.ResolveRecipients(
+                     heirIds,
+                     farmland.Select(asset => asset.AssignedHeirId).ToList()))
+        {
+            received[recipient]++;
+        }
+
+        var maximum = received.Values.DefaultIfEmpty(0).Max();
+        if (maximum <= 0)
+            return;
+
+        var favored = received
+            .Where(pair => pair.Value == maximum)
+            .Select(pair => pair.Key)
+            .ToList();
+
+        foreach (var heir in heirs)
+        {
+            var count = received[heir.Id];
+            string? severity = null;
+
+            if (count == 0)
+            {
+                severity = "skipped";
+            }
+            else if (count * 2 < maximum)
+            {
+                severity = "heavy";
+            }
+
+            if (severity is null)
+                continue;
+
+            var favoredIds = favored
+                .Where(id => id != heir.Id)
+                .ToList();
+
+            _events.Publish(
+                new GameEvent
+                {
+                    Type = "inheritance.disadvantaged",
+                    Year = gameState.Year,
+                    SubjectId = heir.Id,
+                    RelatedPersonIds = [source.Id, .. favoredIds],
+                    Data = new Dictionary<string, string>
+                    {
+                        ["sourceId"] = source.Id.ToString(),
+                        ["severity"] = severity,
+                        ["receivedAssets"] = count.ToString(),
+                        ["favoredAssets"] = maximum.ToString(),
+                        ["favoredHeirIds"] = string.Join(";", favoredIds),
+                        ["suppressChronicle"] = "true",
+                        ["text"] = severity == "skipped"
+                            ? $"{_family.GetDisplayName(heir)} was passed over for designated property in {_family.GetDisplayName(source)}'s estate."
+                            : $"{_family.GetDisplayName(heir)} received substantially less designated property than favored heirs in {_family.GetDisplayName(source)}'s estate."
+                    }
+                });
+        }
+    }
 
     private EstateHeirResolution ResolveEstateHeirs(
         IGameState gameState,

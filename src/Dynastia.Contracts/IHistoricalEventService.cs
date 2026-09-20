@@ -8,6 +8,14 @@ public interface IHistoricalEventService
 
     HistoricalResidenceSnapshot? GetExternalResidence(
         IPerson person);
+
+    IReadOnlyCollection<string> GetAffectedPlaceIds(
+        string eventId,
+        int year) =>
+        Array.Empty<string>();
+
+    int? GetEventStartYear(string eventId) =>
+        null;
 }
 
 public sealed record HistoricalResidenceSnapshot(

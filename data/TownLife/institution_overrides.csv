@@ -1,0 +1,12 @@
+﻿PlaceId,ReferenceTown,InstitutionId,Mode,Tier,StartYear,EndYear,Reason
+p_b2feaac170f8446f,Kraków,school,MinimumTier,5,1700,,Jagiellonian University / long-standing university centre.
+p_f8d111f122eae1b8,Wilno,school,MinimumTier,5,1700,1831,Historic university centre; reopened later in the interwar period.
+p_f8d111f122eae1b8,Wilno,school,MinimumTier,5,1919,1939,University-level education restored in the interwar period.
+p_936305d7bd070389,Lwów,school,MinimumTier,5,1784,1939,University-level education centre.
+p_a0efc8373a9b279b,Warszawa,school,MinimumTier,5,1816,,University-level education centre.
+p_133a0dacaf05301b,Wrocław,school,MinimumTier,5,1811,,University-level education centre.
+p_faf2572ac2e7d16a,Poznań,school,MinimumTier,5,1919,,University-level education centre.
+p_7fcc155579827e50,Lublin,school,MinimumTier,5,1918,,University-level education centre.
+p_dc714feb413b2237,Łódź,school,MinimumTier,5,1945,,Postwar university centre.
+p_6e67c46536bec14d,Toruń,school,MinimumTier,5,1945,,Postwar university centre.
+p_1175c98fc14211c2,Gdańsk,school,MinimumTier,5,1970,,Modern university centre.

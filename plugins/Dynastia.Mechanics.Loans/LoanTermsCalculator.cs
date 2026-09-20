@@ -12,7 +12,8 @@ public static class LoanTermsCalculator
 
     public static LoanTermsInfo Calculate(
         decimal principal,
-        int durationYears)
+        int durationYears,
+        decimal interestMultiplier = 1m)
     {
         if (principal < MinimumPrincipal
             || principal > MaximumPrincipal
@@ -31,13 +32,24 @@ public static class LoanTermsCalculator
                 "Loan duration must be 1-50 years.");
         }
 
+        if (interestMultiplier <= 0)
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(interestMultiplier),
+                "Loan interest multiplier must be positive.");
+        }
+
         var progress =
             (durationYears - 1m)
             / (MaximumDurationYears - MinimumDurationYears);
 
-        var totalInterestRate =
+        var baseTotalInterestRate =
             0.20m
             + (1.80m * progress);
+
+        var totalInterestRate =
+            baseTotalInterestRate
+            * interestMultiplier;
 
         // Loan money is expressed in whole zł. Scheduled payments and the
         // final rounding remainder must therefore never introduce grosze.
@@ -56,7 +68,8 @@ public static class LoanTermsCalculator
             durationYears,
             totalInterestRate,
             totalRepayment,
-            annualPayment);
+            annualPayment,
+            interestMultiplier);
     }
 
     internal static decimal RoundCurrency(

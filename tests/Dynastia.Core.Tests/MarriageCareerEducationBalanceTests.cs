@@ -28,10 +28,11 @@ public sealed class MarriageCareerEducationBalanceTests
                 hasWorkingSpouse: false);
 
         Assert.True(
-            MarriageBalanceRules.GetAnnualSatisfactionChange(employedPenalty) > 0);
+            MarriageBalanceRules.GetAnnualSatisfactionChange(employedPenalty) < 0);
 
         Assert.True(
-            MarriageBalanceRules.GetAnnualSatisfactionChange(unemployedPenalty) < 0);
+            MarriageBalanceRules.GetAnnualSatisfactionChange(unemployedPenalty)
+            < MarriageBalanceRules.GetAnnualSatisfactionChange(employedPenalty));
     }
 
     [Fact]
@@ -172,7 +173,7 @@ public sealed class MarriageCareerEducationBalanceTests
     {
         Assert.Equal(1.0, CareerBalanceRules.GetTargetLevelPromotionMultiplier(3), 10);
         Assert.Equal(0.60, CareerBalanceRules.GetTargetLevelPromotionMultiplier(4), 10);
-        Assert.Equal(0.20, CareerBalanceRules.GetTargetLevelPromotionMultiplier(5), 10);
+        Assert.Equal(0.04, CareerBalanceRules.GetTargetLevelPromotionMultiplier(5), 10);
     }
 
     [Theory]
@@ -199,11 +200,11 @@ public sealed class MarriageCareerEducationBalanceTests
     {
         Assert.Equal(
             1.0,
-            CareerBalanceRules.GetEducationPromotionMultiplier(4, 4, 5),
+            CareerBalanceRules.GetEducationPromotionMultiplier(5, 4, 5),
             10);
         Assert.Equal(
             0.0,
-            CareerBalanceRules.GetEducationPromotionMultiplier(3, 4, 5),
+            CareerBalanceRules.GetEducationPromotionMultiplier(4, 4, 5),
             10);
         Assert.Equal(
             0.15,
@@ -213,6 +214,91 @@ public sealed class MarriageCareerEducationBalanceTests
             0.02,
             CareerBalanceRules.GetEducationPromotionMultiplier(2, 4, 4),
             10);
+    }
+
+    [Fact]
+    public void StableMarriagePassivelyRecoversOnlyAboutOnePointPerYear()
+    {
+        Assert.Equal(1.0, MarriageBalanceRules.AnnualStability, 10);
+        Assert.Equal(1.0, MarriageBalanceRules.GetAnnualSatisfactionChange(0), 10);
+    }
+
+    [Fact]
+    public void LowAttractionAndPersonalityMismatchCreateCumulativeMarriagePressure()
+    {
+        var attraction = MarriageBalanceRules.GetLowAttractionPenalty(2, 2);
+        var incompatibility = MarriageBalanceRules.GetPersonalityIncompatibilityPenalty(
+            new PersonalitySnapshot("Choleric", "Good"),
+            new PersonalitySnapshot("Melancholic", "Evil"));
+
+        Assert.Equal(3.0, attraction, 10);
+        Assert.Equal(4.0, incompatibility, 10);
+        Assert.True(MarriageBalanceRules.GetAnnualSatisfactionChange(attraction + incompatibility) < 0);
+    }
+
+    [Fact]
+    public void RepeatedWorkHarderHasARealMarriageCost()
+    {
+        Assert.Equal(4.0, MarriageBalanceRules.WorkHarderPenalty, 10);
+        Assert.True(MarriageBalanceRules.WorkHarderPenalty > MarriageBalanceRules.AnnualStability);
+    }
+
+    [Fact]
+    public void PoorFamilyRelationsStackButAreCapped()
+    {
+        Assert.Equal(1.5, MarriageBalanceRules.GetPoorFamilyRelationsPenalty([10, 25, 75]), 10);
+        Assert.Equal(3.0, MarriageBalanceRules.GetPoorFamilyRelationsPenalty([5, 5, 5, 5]), 10);
+    }
+
+    [Fact]
+    public void SeriousIllnessCreatesOngoingMarriagePressure()
+    {
+        var terminal = new HealthSnapshot(72, 100,
+        [
+            new HealthConditionInfo("cancer", "Cancer", "terminal", -10, 5)
+        ]);
+
+        Assert.Equal(4.5, MarriageBalanceRules.GetSeriousIllnessPenalty(terminal), 10);
+    }
+
+    [Fact]
+    public void AffairIsASevereAccumulatingMarriageShockRatherThanTheOnlyDivorcePath()
+    {
+        Assert.Equal(25.0, MarriageBalanceRules.AffairPenalty, 10);
+        Assert.True(MarriageBalanceRules.AffairPenalty > MarriageBalanceRules.WorkHarderPenalty);
+    }
+
+    [Fact]
+    public void PensionScalesWithLifetimeCareerEarningsInsteadOfFinalSalaryPercentage()
+    {
+        Assert.Equal(0m, CareerBalanceRules.CalculateAnnualPension(40000m, false));
+        Assert.Equal(200m, CareerBalanceRules.CalculateAnnualPension(20000m, true));
+        Assert.Equal(400m, CareerBalanceRules.CalculateAnnualPension(40000m, true));
+        Assert.Equal(750m, CareerBalanceRules.CalculateAnnualPension(75000m, true));
+    }
+
+    [Fact]
+    public void RepeatedUnsuccessfulOverworkCanLowerJobSatisfaction()
+    {
+        Assert.Equal(0.0,
+            CareerPressureRules.GetFailedRepeatedOverworkSatisfactionLossChance(1), 10);
+        Assert.Equal(0.35,
+            CareerPressureRules.GetFailedRepeatedOverworkSatisfactionLossChance(2), 10);
+        Assert.True(
+            CareerPressureRules.GetFailedRepeatedOverworkSatisfactionLossChance(5)
+            > CareerPressureRules.GetFailedRepeatedOverworkSatisfactionLossChance(2));
+    }
+
+    [Fact]
+    public void LowSatisfactionAndRepeatedOverworkStackCareerStress()
+    {
+        Assert.Equal(2.5, CareerPressureRules.GetLowSatisfactionStress(1), 10);
+        Assert.Equal(1.0, CareerPressureRules.GetLowSatisfactionStress(2), 10);
+        Assert.Equal(0.0, CareerPressureRules.GetLowSatisfactionStress(3), 10);
+
+        Assert.Equal(0.5, CareerPressureRules.GetRepeatedOverworkStress(1), 10);
+        Assert.Equal(1.5, CareerPressureRules.GetRepeatedOverworkStress(2), 10);
+        Assert.Equal(2.5, CareerPressureRules.GetRepeatedOverworkStress(3), 10);
     }
 
 }

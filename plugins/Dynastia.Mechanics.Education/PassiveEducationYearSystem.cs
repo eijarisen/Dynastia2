@@ -56,10 +56,14 @@ public sealed class PassiveEducationYearSystem : IYearSystem
                         StringComparison.OrdinalIgnoreCase))
                 .Value;
 
+            var localCeiling = _education.GetLocalEducationCeiling(
+                person,
+                gameState.Year);
             var passiveCeiling =
-                EducationProgressionRules.GetPassiveChildhoodCeiling(
+                EducationProgressionRules.GetLocalPassiveChildhoodCeiling(
                     intellect,
-                    era.PassiveMaxLevel);
+                    era.PassiveMaxLevel,
+                    localCeiling);
 
             if (current >= passiveCeiling)
                 continue;

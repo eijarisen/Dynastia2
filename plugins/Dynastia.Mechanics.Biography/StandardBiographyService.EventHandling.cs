@@ -358,7 +358,7 @@ public sealed partial class StandardBiographyService
                     $"💔 Marriage to {subjectName} ended in divorce during imprisonment.",
 
                 "relationship.affair" =>
-                    $"💔 Divorced {subjectName} after an affair.",
+                    $"🤫 Marriage to {subjectName} was badly strained by an affair.",
 
                 _ =>
                     string.Empty
@@ -678,7 +678,7 @@ public sealed partial class StandardBiographyService
                 "was divorced while imprisoned",
 
             "relationship.affair" =>
-                "was caught having an affair and divorced",
+                "was caught having an affair that badly strained the marriage",
 
             "justice.crime" =>
                 GetCrimeRelativeEventVerb(
@@ -769,7 +769,7 @@ public sealed partial class StandardBiographyService
                 $"ended the marriage to {primaryName} during imprisonment",
 
             "relationship.affair" =>
-                $"divorced {primaryName} after an affair",
+                $"badly strained the marriage to {primaryName} through an affair",
 
             _ =>
                 string.Empty

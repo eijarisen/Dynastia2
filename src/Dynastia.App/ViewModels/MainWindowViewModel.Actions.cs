@@ -86,6 +86,22 @@ public sealed partial class MainWindowViewModel
             }
             else
             {
+                if (CanOpenTownAffairs)
+                {
+                    var townAffairs =
+                        CreateTownAffairsPresentationAction();
+
+                    _allAvailableActions.Add(
+                        new AvailableActionViewModel(
+                            townAffairs,
+                            new HashSet<ActionCategory>
+                            {
+                                ActionCategory.Personal
+                            },
+                            () => ExecuteAction(
+                                TownAffairsUiActionId)));
+                }
+
                 var selfImprovementAdded =
                     false;
                 var craftProfessionAdded =
@@ -419,6 +435,9 @@ public sealed partial class MainWindowViewModel
         }
 
         if (actionId.Equals(
+                TownAffairsUiActionId,
+                StringComparison.OrdinalIgnoreCase)
+            || actionId.Equals(
                 ManagePropertiesUiActionId,
                 StringComparison.OrdinalIgnoreCase)
             || actionId.Equals(
@@ -777,6 +796,10 @@ public sealed partial class MainWindowViewModel
 
                 ["durationYears"] =
                     selection.DurationYears.ToString(
+                        System.Globalization.CultureInfo.InvariantCulture),
+
+                ["interestMultiplier"] =
+                    selection.InterestMultiplier.ToString(
                         System.Globalization.CultureInfo.InvariantCulture),
 
                 ["counterpartyName"] =

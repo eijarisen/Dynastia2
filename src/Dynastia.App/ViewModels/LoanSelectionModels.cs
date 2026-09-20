@@ -7,7 +7,8 @@ public sealed record LoanSelectionResult(
     int DurationYears,
     string CounterpartyName,
     string CounterpartyTownId,
-    string CounterpartyNationalityId);
+    string CounterpartyNationalityId,
+    decimal InterestMultiplier = 1m);
 
 public sealed class LoanOfferCardViewModel
 {
@@ -62,5 +63,6 @@ public sealed class LoanOfferCardViewModel
             Offer.Terms.DurationYears,
             Offer.CounterpartyName,
             Offer.OriginTownId,
-            Offer.NationalityId);
+            Offer.NationalityId,
+            Offer.Terms.InterestMultiplier);
 }

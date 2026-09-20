@@ -318,13 +318,27 @@
     "startYear": 1700
   },
   {
+    "id": "burnout",
+    "name": "Burnout",
+    "type": "curable",
+    "category": "Mental",
+    "course": "Acute",
+    "minimumAge": 18,
+    "healthImpact": -5,
+    "weight": 0,
+    "newsworthy": false,
+    "durationMin": 2,
+    "durationMax": 4,
+    "startYear": 1700
+  },
+  {
     "id": "alcoholism",
     "name": "Alcoholism",
     "type": "permanent",
     "category": "Mental",
     "course": "Chronic",
     "minimumAge": 18,
-    "healthImpact": -10,
+    "healthImpact": -5,
     "weight": 0,
     "newsworthy": false,
     "startYear": 1700

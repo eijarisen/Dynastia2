@@ -7,6 +7,8 @@ using Avalonia.Layout;
 using Avalonia.Media;
 using Dynastia.App.Controls;
 using Dynastia.App.Map.Host;
+using Dynastia.App.Views;
+using Dynastia.Contracts;
 using Dynastia.StandardUI.Genealogy.Contracts;
 
 public sealed class TownMapWindow :
@@ -21,11 +23,15 @@ public sealed class TownMapWindow :
             Color.FromRgb(222, 183, 78));
 
     private readonly TownMapPanel _panel;
+    private readonly ITownLifeService? _townLife;
+    private bool _townLifeDialogOpen;
 
     public TownMapWindow(
         GameMapDataSource data,
-        IGlobalSelectionService selection)
+        IGlobalSelectionService selection,
+        ITownLifeService? townLife = null)
     {
+        _townLife = townLife;
         Title = "Dynastia Map";
         Width = 1200;
         Height = 820;
@@ -42,6 +48,9 @@ public sealed class TownMapWindow :
             new TownMapPanel(
                 data,
                 selection);
+
+        _panel.TownActivated +=
+            OnTownActivated;
 
         var title =
             new TextBlock
@@ -119,8 +128,39 @@ public sealed class TownMapWindow :
     protected override void OnClosed(
         EventArgs e)
     {
+        _panel.TownActivated -=
+            OnTownActivated;
+
         _panel.Dispose();
         base.OnClosed(e);
+    }
+
+
+    private async void OnTownActivated(
+        string townId)
+    {
+        if (_townLife is null
+            || _townLifeDialogOpen)
+        {
+            return;
+        }
+
+        _townLifeDialogOpen = true;
+
+        try
+        {
+            var snapshot = _townLife.GetTownLife(townId);
+            var window = new TownLifeWindow(snapshot);
+            await window.ShowDialog(this);
+        }
+        catch (Exception exception)
+        {
+            Console.Error.WriteLine(exception);
+        }
+        finally
+        {
+            _townLifeDialogOpen = false;
+        }
     }
 
     private void OnKeyDown(

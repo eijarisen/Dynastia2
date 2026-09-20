@@ -18,6 +18,8 @@ public sealed class FamilyRelationsPlugin : IGamePlugin
         var events = context.GetService<IGameEventBus>() ?? throw new InvalidOperationException("Game event bus is unavailable.");
         var actions = context.GetService<IActionRegistry>() ?? throw new InvalidOperationException("Action registry is unavailable.");
         var systems = context.GetService<IYearSystemRegistry>() ?? throw new InvalidOperationException("Year system registry is unavailable.");
+        var childHappiness = context.GetService<IChildHappinessService>()
+            ?? throw new InvalidOperationException("Child happiness service is unavailable.");
 
         var relations = new StandardFamilyRelationService(
             gameState, family, economy, households, personality, marriage, random);
@@ -41,7 +43,8 @@ public sealed class FamilyRelationsPlugin : IGamePlugin
             _ => relations.ReconcileAll(),
             order: 80);
 
-        _ = new FamilyRelationEventBridge(gameState, family, economy, households, relations, events);
+        _ = new FamilyRelationEventBridge(
+            gameState, family, economy, households, relations, childHappiness, events);
         systems.Register(new FamilyRelationYearSystem(relations, gameState, family, economy, households, personality, random));
 
         FamilyRelationActions.Register(

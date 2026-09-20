@@ -22,6 +22,10 @@ public sealed partial class StandardCareerService :
     private readonly IEducationService _education;
     private readonly CareerEducationProfileCatalog _educationProfiles;
     private readonly IContextWeightCatalog _careerContext;
+    private readonly ITownProsperityService _prosperity;
+    private readonly ILocalEconomicStrengthService _economicStrength;
+    private readonly ITownInstitutionService _institutions;
+    private readonly CareerInstitutionRequirementCatalog _institutionRequirements;
     private readonly Func<ICraftService?> _craftResolver;
 
     internal StandardCareerService(
@@ -36,6 +40,10 @@ public sealed partial class StandardCareerService :
         IEducationService education,
         CareerEducationProfileCatalog educationProfiles,
         IContextWeightCatalog careerContext,
+        ITownProsperityService prosperity,
+        ILocalEconomicStrengthService economicStrength,
+        ITownInstitutionService institutions,
+        CareerInstitutionRequirementCatalog institutionRequirements,
         Func<ICraftService?> craftResolver)
     {
         _gameState = gameState;
@@ -56,6 +64,10 @@ public sealed partial class StandardCareerService :
             educationProfiles;
         _careerContext =
             careerContext;
+        _prosperity = prosperity;
+        _economicStrength = economicStrength;
+        _institutions = institutions;
+        _institutionRequirements = institutionRequirements;
         _craftResolver =
             craftResolver;
     }
@@ -66,12 +78,17 @@ public sealed partial class StandardCareerService :
         if (person.Components.Has<
             CareerComponent>())
         {
+            var existing =
+                person.Components.Get<CareerComponent>()
+                ?? throw new InvalidOperationException(
+                    "Career component is unavailable.");
+
             EnsureValidAssignment(
                 person,
-                person.Components.Get<
-                    CareerComponent>()
-                ?? throw new InvalidOperationException(
-                    "Career component is unavailable."));
+                existing);
+            EnsureLifetimeEarningsInitialized(
+                person,
+                existing);
 
             return;
         }
@@ -115,6 +132,10 @@ public sealed partial class StandardCareerService :
             UpdatePeakCareer(
                 component);
         }
+
+        EnsureLifetimeEarningsInitialized(
+            person,
+            component);
 
         person.Components.Set(
             component);
@@ -273,6 +294,9 @@ public sealed partial class StandardCareerService :
             };
 
         UpdatePeakCareer(
+            component);
+        EnsureLifetimeEarningsInitialized(
+            person,
             component);
 
         person.Components.Set(

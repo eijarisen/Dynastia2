@@ -79,7 +79,7 @@ public sealed partial class CareerPlugin
                 Id = "career.work_harder",
                 Label = "Work Harder",
                 Description =
-                    "Push harder at work. Greatly improves this year's promotion chance and usually brings 10-50% extra salary home, although there is a small chance the extra effort is unpaid. Costs 5 health and may slightly reduce children's Happiness.",
+                    "Push harder at work. Greatly improves this year's promotion chance and usually brings 10-50% extra salary home, although there is a small chance the extra effort is unpaid. Costs 5 Health, reduces Marriage Satisfaction and each underage child's Happiness. Repeated unsuccessful overwork can also reduce Job Satisfaction and raise burnout risk.",
                 Mode = ActionExecutionMode.Queued,
                 QueuePhase = YearPhase.QueuedActionsEarly,
 

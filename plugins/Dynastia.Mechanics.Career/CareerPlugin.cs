@@ -29,6 +29,15 @@ public sealed partial class CareerPlugin : IGamePlugin
             ?? throw new InvalidOperationException(
                 "Local career opportunity service is unavailable.");
 
+        var prosperity = context.GetService<ITownProsperityService>()
+            ?? throw new InvalidOperationException("Town prosperity service is unavailable.");
+
+        var economicStrength = context.GetService<ILocalEconomicStrengthService>()
+            ?? throw new InvalidOperationException("Local economic-strength service is unavailable.");
+
+        var institutions = context.GetService<ITownInstitutionService>()
+            ?? throw new InvalidOperationException("Town institution service is unavailable.");
+
         var education = context.GetService<IEducationService>()
             ?? throw new InvalidOperationException("Education service is unavailable.");
 
@@ -78,6 +87,11 @@ public sealed partial class CareerPlugin : IGamePlugin
                 data,
                 catalog.CareerIds);
 
+        var institutionRequirements =
+            CareerInstitutionRequirementCatalog.Load(
+                data,
+                catalog.CareerIds);
+
         var career =
             new StandardCareerService(
                 gameState,
@@ -91,6 +105,10 @@ public sealed partial class CareerPlugin : IGamePlugin
                 education,
                 educationProfiles,
                 careerContext,
+                prosperity,
+                economicStrength,
+                institutions,
+                institutionRequirements,
                 () => context.GetService<ICraftService>());
 
         context.AddService<ICareerService>(career);
@@ -130,7 +148,7 @@ public sealed partial class CareerPlugin : IGamePlugin
             new CareerHealthModifierProvider(career));
 
         stressModifiers.Register(
-            new CareerStressModifierProvider(career));
+            new CareerStressModifierProvider(career, events));
 
         RegisterActions(
             actions,
@@ -152,6 +170,10 @@ public sealed partial class CareerPlugin : IGamePlugin
 
         systems.Register(
             new CareerExperienceYearSystem(
+                career));
+
+        systems.Register(
+            new CareerLifetimeEarningsYearSystem(
                 career));
 
         systems.Register(
@@ -178,7 +200,7 @@ public sealed partial class CareerPlugin : IGamePlugin
                 family,
                 events));
 
-        context.Log("Career mechanics registered.");
+        context.Log($"Career mechanics registered with {institutionRequirements.Count} institution-gated careers.");
     }
 
 }

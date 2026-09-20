@@ -91,6 +91,13 @@ internal static partial class FamilyRelationActions
 
     private static IPerson? ResolveTargetHead(IPerson target, IHouseholdService households) => households.ResolveHouseholdHead(target);
 
+    private static decimal GetProjectedAnnualExpenses(
+        IPerson householdRepresentative,
+        IEconomyService economy) =>
+        economy.GetAnnualForecast(householdRepresentative)?.ProjectedExpenses
+        ?? economy.GetHousehold(householdRepresentative)?.LastExpenses
+        ?? 0m;
+
 
     private static void ApplySpillover(
         IPerson actor,

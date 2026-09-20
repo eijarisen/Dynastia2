@@ -84,9 +84,6 @@ internal sealed class DivorcedParentsTracker
                 "relationship.low_satisfaction_divorce",
                 StringComparison.OrdinalIgnoreCase)
             || type.Equals(
-                "relationship.affair",
-                StringComparison.OrdinalIgnoreCase)
-            || type.Equals(
                 "relationship.prison_divorce",
                 StringComparison.OrdinalIgnoreCase);
     }

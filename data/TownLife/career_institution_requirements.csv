@@ -1,0 +1,15 @@
+﻿CareerId,InstitutionId,MinimumTier
+railways,railway_station,1
+shipping_and_ports,port,1
+banking,bank,2
+insurance,bank,2
+legal_services,court,2
+healthcare_services,medical,1
+pharmacy,medical,1
+education,school,1
+investment_and_financial_services,bank,4
+public_administration,administration,1
+law_enforcement,administration,1
+postal_service,post_office,1
+shipbuilding,port,1
+scientific_research,school,4

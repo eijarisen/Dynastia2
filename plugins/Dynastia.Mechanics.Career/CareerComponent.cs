@@ -17,6 +17,12 @@ public sealed class CareerComponent
 
     public decimal LastIncome { get; set; }
 
+    public decimal LifetimeCareerEarnings { get; set; }
+
+    public int LastLifetimeEarningsYear { get; set; }
+
+    public bool LifetimeEarningsInitialized { get; set; }
+
     public bool IsRetired { get; set; }
 
     public Dictionary<string, int> ExperienceYearsByCareer { get; set; } =

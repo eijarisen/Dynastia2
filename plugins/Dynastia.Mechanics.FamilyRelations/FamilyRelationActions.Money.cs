@@ -14,7 +14,7 @@ internal static partial class FamilyRelationActions
     {
         Id = "family_relations.ask_money",
         Label = "Request Money",
-        Description = "Request financial help from this relative's household. The action is offered when their household is at least as wealthy as yours; acceptance depends on Familiarity and Sympathy.",
+        Description = "Request financial help from this relative's household. Acceptance depends on Familiarity, Sympathy, relative wealth and whether the other household can keep a safe cash reserve after helping.",
         Mode = ActionExecutionMode.Queued,
         QueuePhase = YearPhase.FamilyRelationActions,
         IsAvailable = c => IsRelationsContext(c)
@@ -35,18 +35,32 @@ internal static partial class FamilyRelationActions
             }
 
             var targetFinance = economy.GetHousehold(targetHead);
+            var actorFinance = economy.GetHousehold(c.Actor);
             var amount = ResolveMoneyAmount(c);
 
             if (!IsValidMoneyAmount(amount)
                 || targetFinance is null
+                || actorFinance is null
                 || !economy.CanAfford(targetHead, amount))
             {
                 return new(false, "That household can no longer afford the selected amount.");
             }
 
+            var abilityFactor = FamilySupportAbilityRules.GetMoneyRequestAbilityFactor(
+                targetFinance.Wealth,
+                actorFinance.Wealth,
+                GetProjectedAnnualExpenses(targetHead, economy),
+                amount,
+                economy.GetHouses(targetHead).Count,
+                economy.GetFarmland(targetHead).Count);
+
             var accepted =
-                random.NextDouble()
-                < relations.EvaluateRequestWillingness(c.Actor, c.Target);
+                abilityFactor > 0
+                && random.NextDouble()
+                    < relations.EvaluateRequestWillingness(
+                        c.Actor,
+                        c.Target,
+                        abilityFactor);
 
             if (!accepted)
             {

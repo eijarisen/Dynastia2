@@ -38,6 +38,22 @@ public static class EducationProgressionRules
                 5,
                 Math.Clamp(intellect, 1, 5) + 1),
             Math.Clamp(eraMaximum, 0, 5));
+
+    public static int GetHelpedChildhoodCeiling(
+        int intellect,
+        int eraMaximum,
+        int helperEducation) =>
+        Math.Min(
+            GetHelpedChildhoodCeiling(intellect, eraMaximum),
+            Math.Clamp(helperEducation, 0, 5));
+
+    public static int GetLocalPassiveChildhoodCeiling(
+        int intellect,
+        int eraMaximum,
+        int localSchoolCeiling) =>
+        Math.Min(
+            GetPassiveChildhoodCeiling(intellect, eraMaximum),
+            Math.Clamp(localSchoolCeiling, 0, 5));
     public static double ApplyPassiveChanceMultiplier(
         double chance,
         EducationEraRule era) =>

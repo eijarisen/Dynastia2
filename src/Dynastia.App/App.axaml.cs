@@ -203,6 +203,9 @@ public partial class App : Application
             var localCareerOpportunityService =
                 pluginContext.GetService<ILocalCareerOpportunityService>();
 
+            var townLifeService =
+                pluginContext.GetService<ITownLifeService>();
+
             var marriageSatisfactionService =
                 pluginContext.GetService<
                     IMarriageSatisfactionService>();
@@ -318,6 +321,9 @@ public partial class App : Application
 
                     MapDataSource =
                         mapDataSource,
+
+                    TownLifeService =
+                        townLifeService,
 
                     MusicService =
                         musicService,

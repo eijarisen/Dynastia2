@@ -1,0 +1,31 @@
+﻿InstitutionId,Tier,StartYear,EndYear,DisplayName
+school,1,1700,,Basic School
+school,2,1700,,Local School
+school,3,1700,,Secondary School
+school,4,1700,,Academy / College
+school,5,1700,,University
+bank,1,1700,,Local Credit
+bank,2,1700,,Local Bank
+bank,3,1700,,Established Bank
+bank,4,1700,,Commercial Bank
+bank,5,1700,,Financial Centre
+medical,1,1700,,Physician & Apothecary
+medical,2,1700,,Clinic
+medical,3,1700,,Hospital
+medical,4,1700,,General Hospital
+medical,5,1700,,Major Hospital
+court,1,1700,,Local Court
+court,2,1700,,Regional Court
+court,3,1700,,Major Court
+administration,1,1700,,Local Administration
+administration,2,1700,,Regional Administration
+administration,3,1700,,Major Administrative Centre
+post_office,1,1700,,Postal Office
+post_office,2,1700,,Postal Centre
+post_office,3,1700,,Major Postal Centre
+railway_station,1,1700,,Railway Stop / Station
+railway_station,2,1700,,Railway Junction
+railway_station,3,1700,,Major Railway Hub
+port,1,1700,,Local Port
+port,2,1700,,Commercial Port
+port,3,1700,,Major Port

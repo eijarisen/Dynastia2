@@ -1,0 +1,123 @@
+using Dynastia.Contracts;
+
+namespace Dynastia.Mechanics.TownLife;
+
+internal sealed class StandardTownLifeService : ITownLifeService
+{
+    private readonly IGameState _gameState;
+    private readonly ILocationService _locations;
+    private readonly ILocalCareerOpportunityService _opportunities;
+    private readonly ITownInstitutionService _institutions;
+    private readonly ITownProsperityService _prosperity;
+    private readonly ITownFacilityQualityService _facilityQuality;
+    private readonly TownInstitutionCareerCatalog? _careerInstitutions;
+
+    public StandardTownLifeService(
+        IGameState gameState,
+        ILocationService locations,
+        ILocalCareerOpportunityService opportunities,
+        ITownInstitutionService institutions,
+        ITownProsperityService prosperity,
+        ITownFacilityQualityService facilityQuality,
+        TownInstitutionCareerCatalog? careerInstitutions = null)
+    {
+        _gameState = gameState;
+        _locations = locations;
+        _opportunities = opportunities;
+        _institutions = institutions;
+        _prosperity = prosperity;
+        _facilityQuality = facilityQuality;
+        _careerInstitutions = careerInstitutions;
+    }
+
+    public TownLifeSnapshot GetCurrentTownLife(
+        IPerson householdRepresentative)
+    {
+        ArgumentNullException.ThrowIfNull(householdRepresentative);
+
+        return BuildSnapshot(
+            _locations.GetLocation(householdRepresentative).HomeTown);
+    }
+
+    public TownLifeSnapshot GetTownLife(
+        string townId)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(townId);
+
+        var town = _locations.FindTown(townId)
+            ?? throw new InvalidOperationException(
+                $"Town '{townId}' is not available in {_gameState.Year}.");
+
+        return BuildSnapshot(town);
+    }
+
+    private TownLifeSnapshot BuildSnapshot(
+        TownInfo town)
+    {
+        var opportunitySnapshot = _opportunities.GetOpportunitySnapshot(town);
+        var institutionSnapshot = _institutions.Resolve(town, _gameState.Year);
+        var prosperitySnapshot = _prosperity.Get(town);
+        var bankQuality = _facilityQuality.GetBankQuality(town, _gameState.Year);
+        var medicalQuality = _facilityQuality.GetMedicalQuality(town, _gameState.Year);
+
+        return new TownLifeSnapshot(
+            town,
+            opportunitySnapshot.RegionName,
+            opportunitySnapshot,
+            institutionSnapshot,
+            prosperitySnapshot,
+            bankQuality,
+            medicalQuality,
+            BuildInstitutionCards(
+                institutionSnapshot,
+                bankQuality,
+                medicalQuality));
+    }
+
+    private IReadOnlyList<TownInstitutionAffairsInfo> BuildInstitutionCards(
+        TownInstitutionSnapshot institutions,
+        BankOfferQualityInfo bankQuality,
+        MedicalQualityInfo medicalQuality)
+    {
+        return institutions.Institutions
+            .Select(institution =>
+            {
+                var serviceText = institution.InstitutionId.ToLowerInvariant() switch
+                {
+                    "school" => institution.Tier <= 0
+                        ? "Education: unavailable"
+                        : $"Education: up to Level {institution.Tier}",
+                    "bank" => !bankQuality.IsAvailable
+                        ? "Loans: unavailable"
+                        : $"Loans: 3 offers · principal {bankQuality.PrincipalMultiplierMin:P0}–{bankQuality.PrincipalMultiplierMax:P0} · " +
+                          $"interest {bankQuality.InterestMultiplierMin:P0}–{bankQuality.InterestMultiplierMax:P0} · " +
+                          $"term {bankQuality.DurationMultiplierMin:P0}–{bankQuality.DurationMultiplierMax:P0}",
+                    "medical" when !medicalQuality.IsAvailable && _gameState.Year <= 1849 =>
+                        "Healthcare: visiting physician · 3,000 zł",
+                    "medical" when !medicalQuality.IsAvailable =>
+                        "Healthcare: unavailable",
+                    "medical" =>
+                        $"Healthcare: +{medicalQuality.TreatmentSuccessAdd:P0} success · {medicalQuality.TreatmentCostMultiplier:P0} cost",
+                    _ => string.Empty
+                };
+
+                var careers = _careerInstitutions?.GetEnabledCareers(
+                    institution.InstitutionId,
+                    institution.Tier,
+                    _gameState.Year)
+                    ?? Array.Empty<string>();
+
+                return new TownInstitutionAffairsInfo(
+                    institution.InstitutionId,
+                    institution.DisplayName,
+                    institution.Emoji,
+                    institution.Summary,
+                    serviceText,
+                    careers.Count == 0
+                        ? "Careers: —"
+                        : $"Careers: {string.Join(", ", careers)}");
+            })
+            .ToArray();
+    }
+
+}

@@ -114,8 +114,22 @@ public sealed class ChildhoodPlugin : IGamePlugin
         IChildHappinessService happiness,
         IGameRandom random)
     {
-        if (e.Type.Equals("career.work_harder", StringComparison.OrdinalIgnoreCase)
-            || e.Type.Equals("wellbeing.recover", StringComparison.OrdinalIgnoreCase)
+        if (e.Type.Equals("career.work_harder", StringComparison.OrdinalIgnoreCase))
+        {
+            var parent = Find(gameState, e.SubjectId);
+            if (parent is null)
+                return;
+
+            foreach (var child in family.GetChildren(parent)
+                .Where(child => child.Age < 18 && child.Tags.Has("state.alive")))
+            {
+                happiness.ChangeHappiness(child, -1);
+            }
+
+            return;
+        }
+
+        if (e.Type.Equals("wellbeing.recover", StringComparison.OrdinalIgnoreCase)
             || e.Type.Equals("career.ask_recover_success", StringComparison.OrdinalIgnoreCase))
         {
             var isRequestedRecover = e.Type.Equals(
@@ -131,36 +145,19 @@ public sealed class ChildhoodPlugin : IGamePlugin
             if (parent is null)
                 return;
 
-            var isRecover = e.Type.Equals(
-                "wellbeing.recover",
-                StringComparison.OrdinalIgnoreCase)
-                || isRequestedRecover;
-
             foreach (var child in family.GetChildren(parent)
                 .Where(child => child.Age < 18 && child.Tags.Has("state.alive")))
             {
-                var chance = isRecover
-                    ? PersonalityInfluence.AdjustProbability(
-                        0.25,
-                        child,
-                        melancholic: 0.10,
-                        phlegmatic: -0.10,
-                        sanguine: 0.20,
-                        choleric: 0.10)
-                    : PersonalityInfluence.AdjustProbability(
-                        0.25,
-                        child,
-                        melancholic: 0.20,
-                        phlegmatic: -0.20,
-                        sanguine: -0.05,
-                        choleric: 0.20);
+                var chance = PersonalityInfluence.AdjustProbability(
+                    0.25,
+                    child,
+                    melancholic: 0.10,
+                    phlegmatic: -0.10,
+                    sanguine: 0.20,
+                    choleric: 0.10);
 
                 if (random.NextDouble() < chance)
-                {
-                    happiness.ChangeHappiness(
-                        child,
-                        isRecover ? 1 : -1);
-                }
+                    happiness.ChangeHappiness(child, 1);
             }
 
             return;

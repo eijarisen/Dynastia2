@@ -16,6 +16,15 @@ public sealed class StandardChildHappinessService : IChildHappinessService
         return new ChildHappinessSnapshot(value, Label(value));
     }
 
+
+    public int? GetFinalChildhoodHappiness(IPerson person)
+    {
+        var component = person.Components.Get<ChildHappinessComponent>();
+        return component is null
+            ? null
+            : Math.Clamp(component.Value, 1, 5);
+    }
+
     public void EnsureHappiness(IPerson person)
     {
         if (person.Age >= 18)

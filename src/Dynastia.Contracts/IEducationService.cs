@@ -8,5 +8,9 @@ public interface IEducationService
     void IncreaseEducation(IPerson person, int amount = 1);
     double GetPaidEducationSuccessChance(IPerson person);
 
+    int GetLocalEducationCeiling(IPerson person, int year);
+    int GetLocalEducationCeiling(TownInfo town, int year);
+
     EducationGenerationRange GetGeneratedAdultRange(int year);
+    EducationGenerationRange GetGeneratedAdultRange(int year, TownInfo town);
 }

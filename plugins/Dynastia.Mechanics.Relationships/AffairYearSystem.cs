@@ -10,16 +10,19 @@ public sealed class AffairYearSystem :
 
     private readonly IFamilyService _family;
     private readonly IGameRandom _random;
-    private readonly RelationshipBreakupService _breakups;
+    private readonly IMarriageSatisfactionService _satisfaction;
+    private readonly IGameEventBus _events;
 
     public AffairYearSystem(
         IFamilyService family,
         IGameRandom random,
-        RelationshipBreakupService breakups)
+        IMarriageSatisfactionService satisfaction,
+        IGameEventBus events)
     {
         _family = family;
         _random = random;
-        _breakups = breakups;
+        _satisfaction = satisfaction;
+        _events = events;
     }
 
     public string Id =>
@@ -92,10 +95,31 @@ public sealed class AffairYearSystem :
                 continue;
             }
 
-            _breakups.AffairDivorce(
-                gameState,
+            // Affairs are a major marriage shock, but they now feed the same
+            // cumulative Satisfaction system as other marital pressures rather
+            // than forcing a guaranteed immediate divorce. Repeated affairs or
+            // an already-damaged marriage can still lead to divorce in the
+            // normal low-satisfaction evaluation later in this turn.
+            _satisfaction.ChangeSatisfactionExact(
                 person,
-                spouse);
+                -MarriageBalanceRules.AffairPenalty);
+
+            _events.Publish(
+                new GameEvent
+                {
+                    Type = "relationship.affair",
+                    Year = gameState.Year,
+                    SubjectId = person.Id,
+                    RelatedPersonIds = [spouse.Id],
+                    Data = new Dictionary<string, string>
+                    {
+                        ["satisfactionLoss"] =
+                            MarriageBalanceRules.AffairPenalty.ToString("0.##"),
+                        ["text"] =
+                            $"{_family.GetDisplayName(person)} was caught having an affair. " +
+                            $"The betrayal badly strained the marriage to {_family.GetDisplayName(spouse)}."
+                    }
+                });
         }
     }
 }

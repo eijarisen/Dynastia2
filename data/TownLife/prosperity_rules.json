@@ -1,0 +1,103 @@
+{
+  "schemaVersion": "1.0",
+  "baseIndex": 100,
+  "minimumIndex": 75,
+  "maximumIndex": 125,
+  "lazyInitialization": {
+    "enabled": true,
+    "initialDeviationMin": -4,
+    "initialDeviationMax": 4,
+    "source": "stable_hash_of_world_seed_place_id_and_first_relevant_year",
+    "consumeGlobalRng": false,
+    "trackedTownPolicy": "initialize on first gameplay relevance; once tracked, update annually even if temporarily unoccupied"
+  },
+  "annualDrift": {
+    "weightedSteps": [
+      {
+        "delta": -2,
+        "weight": 0.1
+      },
+      {
+        "delta": -1,
+        "weight": 0.2
+      },
+      {
+        "delta": 0,
+        "weight": 0.4
+      },
+      {
+        "delta": 1,
+        "weight": 0.2
+      },
+      {
+        "delta": 2,
+        "weight": 0.1
+      }
+    ],
+    "meanReversion": {
+      "target": 100,
+      "maxAdditionalStep": 1,
+      "probabilityFormula": "min(abs(baseIndex-100)/20.0, 0.75)",
+      "direction": "toward_100"
+    },
+    "maximumOrdinaryAbsoluteChangePerYear": 3,
+    "randomSource": "IGameRandom"
+  },
+  "historicalShocks": {
+    "temporary": true,
+    "stack": true,
+    "recovery": "linear_decay_to_zero_over_recovery_years",
+    "effectiveIndexFormula": "clamp(baseIndex + sum(activeShockAmounts), 75, 125)"
+  },
+  "income": {
+    "deviationScalePerPoint": 0.006,
+    "hardMultiplierMin": 0.75,
+    "hardMultiplierMax": 1.25,
+    "strengthSensitivity": {
+      "strong": {
+        "downturn": 0.55,
+        "boom": 1.15
+      },
+      "supported": {
+        "downturn": 0.75,
+        "boom": 1.05
+      },
+      "normal": {
+        "downturn": 1.0,
+        "boom": 1.0
+      },
+      "weak": {
+        "downturn": 1.3,
+        "boom": 0.7
+      }
+    },
+    "formula": "1 + ((effectiveProsperity-100)*0.006*sensitivityForDirection)"
+  },
+  "labels": [
+    {
+      "min": 75,
+      "max": 84,
+      "label": "Depressed"
+    },
+    {
+      "min": 85,
+      "max": 94,
+      "label": "Struggling"
+    },
+    {
+      "min": 95,
+      "max": 105,
+      "label": "Stable"
+    },
+    {
+      "min": 106,
+      "max": 115,
+      "label": "Prosperous"
+    },
+    {
+      "min": 116,
+      "max": 125,
+      "label": "Booming"
+    }
+  ]
+}

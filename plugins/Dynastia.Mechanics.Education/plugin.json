@@ -9,6 +9,8 @@
     "dynastia.family",
     "dynastia.stats",
     "dynastia.health",
-    "dynastia.economy"
+    "dynastia.economy",
+    "dynastia.locations",
+    "dynastia.townlife"
   ]
 }

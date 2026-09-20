@@ -35,6 +35,11 @@ public sealed class LoansPlugin :
         var locations =
             Require<ILocationService>(context, "Location service");
 
+        var facilityQuality =
+            Require<ITownFacilityQualityService>(
+                context,
+                "Town facility quality service");
+
         var outsiderIdentities =
             Require<IOutsiderIdentityService>(
                 context,
@@ -76,7 +81,8 @@ public sealed class LoansPlugin :
                 historicalNames,
                 locations,
                 outsiderIdentities,
-                appearance);
+                appearance,
+                facilityQuality);
 
         context.AddService<ILoanService>(
             loans);
@@ -92,7 +98,9 @@ public sealed class LoansPlugin :
             events,
             gameState,
             historical,
-            loanEras);
+            loanEras,
+            locations,
+            facilityQuality);
 
         systems.Register(
             new LoanPaymentYearSystem(
@@ -125,7 +133,9 @@ public sealed class LoansPlugin :
         IGameEventBus events,
         IGameState gameState,
         IHistoricalActionVariantService historical,
-        LoanEraCatalog loanEras)
+        LoanEraCatalog loanEras,
+        ILocationService locations,
+        ITownFacilityQualityService facilityQuality)
     {
         actions.RegisterDynamicProvider(
             (_, _) =>
@@ -147,6 +157,11 @@ public sealed class LoansPlugin :
                         actionContext.Target,
                         actionContext.ActorHasControl,
                         family)
+                    && HasLocalBank(
+                        actionContext.Actor,
+                        actionContext.GameState.Year,
+                        locations,
+                        facilityQuality)
                     && !loans.HasActiveSelfOriginatedBankLoan(
                         actionContext.Actor),
                 Execute = actionContext =>
@@ -158,6 +173,11 @@ public sealed class LoansPlugin :
                             actionContext.Target,
                             actionContext.ActorHasControl,
                             family)
+                        || !HasLocalBank(
+                            actor,
+                            actionContext.GameState.Year,
+                            locations,
+                            facilityQuality)
                         || loans.HasActiveSelfOriginatedBankLoan(actor)
                         || !TryReadTerms(
                             actionContext.Parameters,
@@ -172,7 +192,8 @@ public sealed class LoansPlugin :
                             actor,
                             terms.Principal,
                             terms.DurationYears,
-                            actionContext.GameState.Year);
+                            actionContext.GameState.Year,
+                            terms.InterestMultiplier);
 
                     var creditor =
                         ResolveCounterparty(
@@ -403,6 +424,16 @@ public sealed class LoansPlugin :
             && family.IsMaleLineage(actor);
     }
 
+    private static bool HasLocalBank(
+        IPerson person,
+        int year,
+        ILocationService locations,
+        ITownFacilityQualityService facilityQuality)
+    {
+        var town = locations.GetLocation(person).HomeTown;
+        return facilityQuality.GetBankQuality(town, year).IsAvailable;
+    }
+
     private static bool TryReadTerms(
         IReadOnlyDictionary<string, string> parameters,
         ILoanService loans,
@@ -432,12 +463,27 @@ public sealed class LoansPlugin :
             return false;
         }
 
+        var interestMultiplier = 1m;
+        if (parameters.TryGetValue(
+                "interestMultiplier",
+                out var interestMultiplierText)
+            && (!decimal.TryParse(
+                    interestMultiplierText,
+                    NumberStyles.Number,
+                    CultureInfo.InvariantCulture,
+                    out interestMultiplier)
+                || interestMultiplier <= 0))
+        {
+            return false;
+        }
+
         try
         {
             terms =
                 loans.CalculateTerms(
                     principal,
-                    duration);
+                    duration,
+                    interestMultiplier);
 
             return true;
         }

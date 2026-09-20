@@ -12,7 +12,9 @@ public sealed partial class WellbeingPlugin
         IStatsService stats,
         IGameRandom random,
         IGameEventBus events,
-        IHistoricalActionVariantService historical)
+        IHistoricalActionVariantService historical,
+        ILocationService locations,
+        ITownFacilityQualityService facilityQuality)
     {
         var canonical =
             historical.GetCanonicalVariant(
@@ -68,9 +70,17 @@ public sealed partial class WellbeingPlugin
                             return false;
                         }
 
+                        var medical = GetMedicalQuality(
+                            actionContext.Target,
+                            actionContext.GameState.Year,
+                            locations,
+                            facilityQuality);
+                        if (!medical.IsAvailable)
+                            return false;
+
                         return economy.CanAfford(
                             actionContext.Actor,
-                            TherapyCost);
+                            MedicalTreatmentRules.AdjustCost(TherapyCost, medical.TreatmentCostMultiplier));
                     },
 
                 Execute =
@@ -95,9 +105,18 @@ public sealed partial class WellbeingPlugin
                             return new GameActionResult(false);
                         }
 
-                        if (!economy.CanAfford(
+                        var medical = GetMedicalQuality(
+                            target,
+                            actionContext.GameState.Year,
+                            locations,
+                            facilityQuality);
+                        var treatmentCost =
+                            MedicalTreatmentRules.AdjustCost(TherapyCost, medical.TreatmentCostMultiplier);
+
+                        if (!medical.IsAvailable
+                            || !economy.CanAfford(
                                 actor,
-                                TherapyCost)
+                                treatmentCost)
                             || !target.Tags.Has(
                                 "state.alive")
                             || !HasTherapyCondition(
@@ -110,7 +129,7 @@ public sealed partial class WellbeingPlugin
 
                         economy.ChangeWealth(
                             actor,
-                            -TherapyCost);
+                            -treatmentCost);
 
                         var intellect =
                             stats.GetStats(target)
@@ -122,8 +141,10 @@ public sealed partial class WellbeingPlugin
                                 .Value;
 
                         var successChance =
-                            TherapyRules.GetSuccessChance(
-                                intellect);
+                            MedicalTreatmentRules.AdjustSuccessChance(
+                                TherapyRules.GetSuccessChance(
+                                    intellect),
+                                medical.TreatmentSuccessAdd);
 
                         var success =
                             random.NextDouble()
@@ -152,6 +173,10 @@ public sealed partial class WellbeingPlugin
                             health.RemoveCondition(
                                 target,
                                 "drug_dependence");
+
+                            health.RemoveCondition(
+                                target,
+                                "burnout");
 
                             events.Publish(
                                 new GameEvent
@@ -222,10 +247,12 @@ public sealed partial class WellbeingPlugin
         IGameEventBus events,
         IGameState gameState,
         IHistoricalActionVariantService historical,
-        HealthcareEraCatalog healthcareEras)
+        HealthcareEraCatalog healthcareEras,
+        ILocationService locations,
+        ITownFacilityQualityService facilityQuality)
     {
         actions.RegisterDynamicProvider(
-            (_, _) =>
+            (_, target) =>
             {
                 var variant =
                     historical.GetVariant(
@@ -233,6 +260,19 @@ public sealed partial class WellbeingPlugin
                         gameState.Year)
                     ?? throw new InvalidDataException(
                         $"Missing historical action data for 'wellbeing.heal_relative' in {gameState.Year}.");
+                var medical = GetMedicalQuality(
+                    target,
+                    gameState.Year,
+                    locations,
+                    facilityQuality);
+                var visitingPhysician =
+                    IsVisitingPhysicianVariant(variant);
+                var localTreatmentCost =
+                    visitingPhysician
+                        ? HealCost
+                        : MedicalTreatmentRules.AdjustCost(
+                            HealCost,
+                            medical.TreatmentCostMultiplier);
 
                 return
                 [
@@ -242,10 +282,14 @@ public sealed partial class WellbeingPlugin
                             "wellbeing.heal_relative",
 
                         Label =
-                            variant.Label,
+                            FormatTreatmentCostLabel(
+                                variant.Label,
+                                localTreatmentCost),
 
                         Description =
-                            variant.Description,
+                            FormatTreatmentCostDescription(
+                                variant.Description,
+                                localTreatmentCost),
 
                         Mode =
                             ActionExecutionMode.Queued,
@@ -278,9 +322,30 @@ public sealed partial class WellbeingPlugin
                                     return false;
                                 }
 
-                                return economy.CanAfford(
-                                    actor,
-                                    HealCost);
+                                var currentVariant =
+                                    historical.GetVariant(
+                                        "wellbeing.heal_relative",
+                                        actionContext.GameState.Year)
+                                    ?? variant;
+                                var currentMedical = GetMedicalQuality(
+                                    target,
+                                    actionContext.GameState.Year,
+                                    locations,
+                                    facilityQuality);
+                                var currentVisitingPhysician =
+                                    IsVisitingPhysicianVariant(currentVariant);
+                                var currentTreatmentCost =
+                                    currentVisitingPhysician
+                                        ? HealCost
+                                        : MedicalTreatmentRules.AdjustCost(
+                                            HealCost,
+                                            currentMedical.TreatmentCostMultiplier);
+
+                                return (currentVisitingPhysician
+                                        || currentMedical.IsAvailable)
+                                    && economy.CanAfford(
+                                        actor,
+                                        currentTreatmentCost);
                             },
 
                         Execute =
@@ -295,9 +360,30 @@ public sealed partial class WellbeingPlugin
                                 var targetHealth =
                                     health.GetHealth(target);
 
-                                if (!economy.CanAfford(
+                                var currentVariant =
+                                    historical.GetVariant(
+                                        "wellbeing.heal_relative",
+                                        actionContext.GameState.Year)
+                                    ?? variant;
+                                var currentMedical = GetMedicalQuality(
+                                    target,
+                                    actionContext.GameState.Year,
+                                    locations,
+                                    facilityQuality);
+                                var currentVisitingPhysician =
+                                    IsVisitingPhysicianVariant(currentVariant);
+                                var treatmentCost =
+                                    currentVisitingPhysician
+                                        ? HealCost
+                                        : MedicalTreatmentRules.AdjustCost(
+                                            HealCost,
+                                            currentMedical.TreatmentCostMultiplier);
+
+                                if ((!currentVisitingPhysician
+                                        && !currentMedical.IsAvailable)
+                                    || !economy.CanAfford(
                                         actor,
-                                        HealCost)
+                                        treatmentCost)
                                     || !target.Tags.Has(
                                         "state.alive")
                                     || targetHealth.Current
@@ -309,7 +395,7 @@ public sealed partial class WellbeingPlugin
 
                                 economy.ChangeWealth(
                                     actor,
-                                    -HealCost);
+                                    -treatmentCost);
 
                                 var healAmount =
                                     healthcareEras.GetHealAmount(
@@ -318,12 +404,6 @@ public sealed partial class WellbeingPlugin
                                 health.ChangeHealth(
                                     target,
                                     healAmount);
-
-                                var currentVariant =
-                                    historical.GetVariant(
-                                        "wellbeing.heal_relative",
-                                        actionContext.GameState.Year)
-                                    ?? variant;
 
                                 var targetPhrase =
                                     actor.Id == target.Id
@@ -365,6 +445,41 @@ public sealed partial class WellbeingPlugin
                 ];
             });
     }
+
+    private static bool IsVisitingPhysicianVariant(
+        HistoricalActionVariant variant) =>
+        variant.Label.Contains(
+            "Summon a Physician",
+            StringComparison.OrdinalIgnoreCase);
+
+    private static MedicalQualityInfo GetMedicalQuality(
+        IPerson target,
+        int year,
+        ILocationService locations,
+        ITownFacilityQualityService facilityQuality)
+    {
+        var town = locations.GetLocation(target).HomeTown;
+        return facilityQuality.GetMedicalQuality(town, year);
+    }
+
+    private static string FormatTreatmentCostLabel(
+        string label,
+        decimal cost)
+    {
+        var open = label.LastIndexOf(" (", StringComparison.Ordinal);
+        if (open >= 0 && label.EndsWith(" zł)", StringComparison.Ordinal))
+            label = label[..open];
+
+        return $"{label} ({cost:N0} zł)";
+    }
+
+    private static string FormatTreatmentCostDescription(
+        string description,
+        decimal cost) =>
+        description.Replace(
+            "3,000 zł",
+            $"{cost:N0} zł",
+            StringComparison.Ordinal);
 
     private static bool HasTherapyCondition(
         IHealthService health,

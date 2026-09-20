@@ -1832,20 +1832,22 @@ internal sealed class AdvancedAutonomousHouseholdStrategy :
         var wealth = snapshot.Finance?.Wealth ?? 0m;
         var shortfall = Math.Max(0m, snapshot.ExpectedExpenses - snapshot.ProjectedIncome - wealth);
         var need = Math.Max(1000m, shortfall + ((snapshot.HasImmediateMedicalDanger || snapshot.HasSeriousMedicalDanger) ? 3000m : 0m));
-        var principal = Math.Clamp(
+        var requiredPrincipal = Math.Clamp(
             Math.Ceiling(need / 1000m) * 1000m,
             1000m,
             10000m);
+        var affordablePayment = Math.Max(250m, snapshot.ProjectedIncome * 0.25m);
 
-        foreach (var duration in new[] { 5, 10, 15, 20, 30, 50 })
-        {
-            var terms = loans.CalculateTerms(principal, duration);
-            var affordablePayment = Math.Max(250m, snapshot.ProjectedIncome * 0.25m);
-            if (terms.AnnualPayment <= affordablePayment)
-                return LoanParameters(principal, duration);
-        }
+        var offer = loans.GetOffers(snapshot.Head, isGivingLoan: false, 10000m)
+            .Where(candidate => candidate.Terms.Principal >= requiredPrincipal)
+            .Where(candidate => candidate.Terms.AnnualPayment <= affordablePayment)
+            .OrderBy(candidate => candidate.Terms.TotalInterestRate)
+            .ThenByDescending(candidate => candidate.Terms.Principal)
+            .FirstOrDefault();
 
-        return null;
+        return offer is null
+            ? null
+            : LoanParameters(offer);
     }
 
     private static IReadOnlyDictionary<string, string> LoanParameters(
@@ -1855,6 +1857,18 @@ internal sealed class AdvancedAutonomousHouseholdStrategy :
         {
             ["principal"] = principal.ToString(CultureInfo.InvariantCulture),
             ["durationYears"] = duration.ToString(CultureInfo.InvariantCulture)
+        };
+
+    private static IReadOnlyDictionary<string, string> LoanParameters(
+        LoanOfferInfo offer) =>
+        new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+        {
+            ["principal"] = offer.Terms.Principal.ToString(CultureInfo.InvariantCulture),
+            ["durationYears"] = offer.Terms.DurationYears.ToString(CultureInfo.InvariantCulture),
+            ["interestMultiplier"] = offer.Terms.InterestMultiplier.ToString(CultureInfo.InvariantCulture),
+            ["counterpartyName"] = offer.CounterpartyName,
+            ["counterpartyTownId"] = offer.OriginTownId,
+            ["counterpartyNationalityId"] = offer.NationalityId
         };
 
     private decimal ChooseFamilyMoneyAmount(

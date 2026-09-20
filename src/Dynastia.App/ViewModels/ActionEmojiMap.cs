@@ -36,6 +36,7 @@ public static class ActionEmojiMap
                 ["education.help_learning"] = "📚",
                 ["childhood.raise_child"] = "🫂",
 
+                ["ui.town_affairs"] = "🏛️",
                 ["ui.self_improvement"] = "🛠️",
                 ["ui.manage_properties"] = "🏘️",
                 ["ui.manage_finances"] = "🏦",

@@ -45,16 +45,32 @@ public sealed partial class StandardCareerService
 
         if (career.IsRetired)
         {
-            return career.LastIncome
-                * _retirementRules
-                    .GetRule(
-                        _gameState.Year)
-                    .PensionRate;
+            EnsureLifetimeEarningsInitialized(person, career);
+            var rule = _retirementRules.GetRule(_gameState.Year);
+            return CareerBalanceRules.CalculateAnnualPension(
+                career.LifetimeCareerEarnings,
+                pensionSystemAvailable: rule.PensionRate > 0m);
         }
 
-        return GetActiveSalary(
+        var baseIncome = GetActiveSalary(
             person,
             career);
+
+        if (baseIncome <= 0m)
+            return 0m;
+
+        var definition = ResolveDefinition(person, career);
+        var town = _localOpportunities.GetOpportunitySnapshot(person).Town;
+        var strength = _economicStrength.ResolveCareer(
+            town,
+            definition?.CareerFamily,
+            definition?.RequiredOpportunityTags ?? Array.Empty<string>());
+        var multiplier = _prosperity.GetIncomeMultiplier(town, strength);
+
+        return Math.Round(
+            baseIncome * multiplier,
+            0,
+            MidpointRounding.AwayFromZero);
     }
 
     internal EmploymentOpportunity

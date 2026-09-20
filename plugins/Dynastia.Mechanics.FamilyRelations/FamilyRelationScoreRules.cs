@@ -33,8 +33,11 @@ public static class FamilyRelationScoreRules
     {
         familiarity = Math.Clamp(familiarity, 0, 100);
         sympathy = Math.Clamp(sympathy, 0, 100);
-        if (familiarity < 25 && sympathy < 25)
+        if (abilityFactor <= 0
+            || (familiarity < 25 && sympathy < 25))
+        {
             return 0.0;
+        }
 
         var social = ((familiarity * 0.30) + (sympathy * 0.70)) / 100.0;
         var probability = 0.05 + (0.90 * social);

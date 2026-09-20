@@ -424,9 +424,9 @@ internal sealed partial class ThoughtPhraseRenderer
 
             "affair.actor" =>
                 [
-                    "My affair destroyed the marriage.",
-                    "I made a mess of the marriage.",
-                    "I keep thinking about what my affair cost us."
+                    "My affair put the marriage in danger.",
+                    "I made a mess of our marriage.",
+                    "I keep thinking about what my affair has cost us."
                 ],
 
             "marriage.repaired" =>

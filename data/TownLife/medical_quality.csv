@@ -1,0 +1,6 @@
+﻿Tier,DisplayName,TreatmentSuccessAdd,TreatmentCostMultiplier
+1,Physician & Apothecary,0.0,1.25
+2,Clinic,0.05,1.15
+3,Hospital,0.1,1.0
+4,General Hospital,0.15,0.9
+5,Major Hospital,0.2,0.8

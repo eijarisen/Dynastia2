@@ -1,7 +1,7 @@
 {
   "id": "dynastia.loans",
   "name": "Loans and Debt",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "apiVersion": 1,
   "assembly": "Dynastia.Mechanics.Loans.dll",
   "entryType": "Dynastia.Mechanics.Loans.LoansPlugin",
@@ -14,6 +14,7 @@
     "dynastia.thoughts",
     "dynastia.historical",
     "dynastia.appearance",
-    "dynastia.locations"
+    "dynastia.locations",
+    "dynastia.townlife"
   ]
 }

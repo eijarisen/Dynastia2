@@ -4,7 +4,8 @@ public interface ILoanService
 {
     LoanTermsInfo CalculateTerms(
         decimal principal,
-        int durationYears);
+        int durationYears,
+        decimal interestMultiplier = 1m);
 
     IReadOnlyList<LoanOfferInfo> GetOffers(
         IPerson householdRepresentative,

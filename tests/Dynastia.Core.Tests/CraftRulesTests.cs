@@ -12,9 +12,9 @@ public sealed class CraftRulesTests
     }
 
     [Fact]
-    public void CraftEducationCost_IsTenThousand()
+    public void CraftEducationCost_IsFiveThousand()
     {
-        Assert.Equal(10000m, CraftRules.EducationCost);
+        Assert.Equal(5000m, CraftRules.EducationCost);
     }
 
     [Theory]

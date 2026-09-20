@@ -8,12 +8,14 @@ internal sealed class HistoricalEventService :
 {
     private readonly HistoricalEventCatalog _catalog;
     private readonly HistoricalEventScopeResolver _scopes;
+    private readonly IHistoricalTownCatalog _towns;
 
     public HistoricalEventService(
         HistoricalEventCatalog catalog,
         IHistoricalTownCatalog towns)
     {
         _catalog = catalog;
+        _towns = towns;
         _scopes = new HistoricalEventScopeResolver(catalog, towns);
     }
 
@@ -25,6 +27,38 @@ internal sealed class HistoricalEventService :
             item.Id.Equals(eventId, StringComparison.OrdinalIgnoreCase)
             && HistoricalEventContentConfiguration.IsEnabled(item)
             && item.IsActive(year));
+
+
+    public IReadOnlyCollection<string> GetAffectedPlaceIds(
+        string eventId,
+        int year)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(eventId);
+        var historicalEvent = _catalog.Events.FirstOrDefault(item =>
+            item.Id.Equals(eventId, StringComparison.OrdinalIgnoreCase)
+            && HistoricalEventContentConfiguration.IsEnabled(item)
+            && item.IsActive(year));
+        if (historicalEvent is null)
+            return Array.Empty<string>();
+
+        // Resolve against the towns that actually exist as gameplay locations
+        // in the event year. Broad scopes such as all_places must not seed
+        // prosperity state for future/non-urban permanent place IDs.
+        return _towns.GetAvailableTowns(year)
+            .Where(town => _scopes.GetMultiplier(historicalEvent.ScopeId, town.Id, year) > 0)
+            .Select(town => town.Id)
+            .ToArray();
+    }
+
+    public int? GetEventStartYear(string eventId)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(eventId);
+        return _catalog.Events
+            .FirstOrDefault(item =>
+                item.Id.Equals(eventId, StringComparison.OrdinalIgnoreCase)
+                && HistoricalEventContentConfiguration.IsEnabled(item))
+            ?.StartYear;
+    }
 
     public HistoricalResidenceSnapshot? GetExternalResidence(IPerson person)
     {

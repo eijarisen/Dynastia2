@@ -17,25 +17,39 @@ internal static partial class FamilyRelationActions
     {
         Id = "family_relations.ask_house",
         Label = "Request a House",
-        Description = "Request one spare property from this relative's household. The action is available when they own at least two houses; acceptance depends on Familiarity and Sympathy.",
+        Description = "Request property from this relative's household. Acceptance depends on Familiarity, Sympathy and the donor's wealth/assets; a household will not surrender its only essential home.",
         Mode = ActionExecutionMode.Queued,
         QueuePhase = YearPhase.FamilyRelationActions,
         IsAvailable = c => IsRelationsContext(c)
             && IsValidRelation(c, relations)
             && ResolveTargetHead(c.Target, households) is { } targetHead
             && !targetHead.Tags.Has("control.playable")
-            && economy.GetHouses(targetHead).Count >= 2,
+            && economy.GetHouses(targetHead).Count > 0,
         Execute = c =>
         {
             var targetHead = ResolveTargetHead(c.Target, households);
             if (targetHead is null
-                || targetHead.Tags.Has("control.playable")
-                || economy.GetHouses(targetHead).Count < 2)
+                || targetHead.Tags.Has("control.playable"))
             {
                 return new(false);
             }
 
-            if (random.NextDouble() >= relations.EvaluateRequestWillingness(c.Actor, c.Target))
+            var targetFinance = economy.GetHousehold(targetHead);
+            var actorFinance = economy.GetHousehold(c.Actor);
+            var abilityFactor = targetFinance is null || actorFinance is null
+                ? 0
+                : FamilySupportAbilityRules.GetHouseRequestAbilityFactor(
+                    targetFinance.Wealth,
+                    actorFinance.Wealth,
+                    GetProjectedAnnualExpenses(targetHead, economy),
+                    economy.GetHouses(targetHead).Count,
+                    economy.GetFarmland(targetHead).Count);
+
+            if (abilityFactor <= 0
+                || random.NextDouble() >= relations.EvaluateRequestWillingness(
+                    c.Actor,
+                    c.Target,
+                    abilityFactor))
             {
                 relations.RecordInteraction(c.Actor, c.Target, 2, -8);
                 Publish(events, c, "family_relations.house_refused", family,
@@ -189,7 +203,7 @@ internal static partial class FamilyRelationActions
     {
         Id = "family_relations.ask_farmland",
         Label = "Ask for Farmland",
-        Description = "Request one farmland parcel from this relative's household. Acceptance depends on Familiarity, Sympathy and how much land the household can spare.",
+        Description = "Request farmland from this relative's household. Acceptance depends on Familiarity, Sympathy, relative wealth and how much land the household can truly spare; its final essential parcel is protected.",
         Mode = ActionExecutionMode.Queued,
         QueuePhase = YearPhase.FamilyRelationActions,
         IsAvailable = c => IsRelationsContext(c)
@@ -207,14 +221,19 @@ internal static partial class FamilyRelationActions
             if (farmland.Count == 0)
                 return new(false);
 
-            var abilityFactor = farmland.Count switch
-            {
-                1 => 0.45,
-                2 => 0.75,
-                _ => 1.0
-            };
+            var targetFinance = economy.GetHousehold(targetHead);
+            var actorFinance = economy.GetHousehold(c.Actor);
+            var abilityFactor = targetFinance is null || actorFinance is null
+                ? 0
+                : FamilySupportAbilityRules.GetFarmlandRequestAbilityFactor(
+                    targetFinance.Wealth,
+                    actorFinance.Wealth,
+                    GetProjectedAnnualExpenses(targetHead, economy),
+                    farmland.Count,
+                    economy.GetHouses(targetHead).Count);
 
-            if (random.NextDouble() >= relations.EvaluateRequestWillingness(
+            if (abilityFactor <= 0
+                || random.NextDouble() >= relations.EvaluateRequestWillingness(
                     c.Actor,
                     c.Target,
                     abilityFactor))

@@ -5,4 +5,5 @@ public sealed record LoanTermsInfo(
     int DurationYears,
     decimal TotalInterestRate,
     decimal TotalRepayment,
-    decimal AnnualPayment);
+    decimal AnnualPayment,
+    decimal InterestMultiplier = 1m);

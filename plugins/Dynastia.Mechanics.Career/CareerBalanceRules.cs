@@ -4,6 +4,8 @@ namespace Dynastia.Mechanics.Career;
 
 public static class CareerBalanceRules
 {
+    public const decimal PensionLifetimeEarningsDivisor = 100m;
+
     public static double GetCompositeAptitude(
         int primaryStat,
         int? secondaryStat = null)
@@ -92,7 +94,10 @@ public static class CareerBalanceRules
         targetJobLevel switch
         {
             4 => 0.60,
-            >= 5 => 0.20,
+            // Level 5 is the career pinnacle. Even a perfect candidate should
+            // need many years (and usually deliberate Work Harder attempts)
+            // before this promotion lands.
+            >= 5 => 0.04,
             _ => 1.0
         };
 
@@ -117,7 +122,14 @@ public static class CareerBalanceRules
         var gap = Math.Max(0, expectedEducation - actualEducation);
 
         if (targetJobLevel >= 5)
-            return gap == 0 ? 1.0 : 0.0;
+        {
+            // Career Level 5 is intentionally exceptional and always requires
+            // the maximum formal Education level, regardless of the career's
+            // ordinary education profile.
+            return actualEducation >= 5
+                ? 1.0
+                : 0.0;
+        }
 
         if (targetJobLevel == 4)
         {
@@ -132,5 +144,18 @@ public static class CareerBalanceRules
         return GetEducationPromotionMultiplier(
             actualEducation,
             expectedEducation);
+    }
+
+    public static decimal CalculateAnnualPension(
+        decimal lifetimeCareerEarnings,
+        bool pensionSystemAvailable)
+    {
+        if (!pensionSystemAvailable || lifetimeCareerEarnings <= 0m)
+            return 0m;
+
+        return Math.Round(
+            lifetimeCareerEarnings / PensionLifetimeEarningsDivisor,
+            0,
+            MidpointRounding.AwayFromZero);
     }
 }

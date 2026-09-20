@@ -12,7 +12,7 @@ public sealed partial class MainWindowViewModel
         5000m;
 
     private const decimal CraftEducationUiCost =
-        10000m;
+        5000m;
 
     private static GameActionDefinition CreateCraftProfessionPresentationAction() =>
         new()
@@ -112,17 +112,21 @@ public sealed partial class MainWindowViewModel
 
         var standardChance =
             _educationService.GetPaidEducationSuccessChance(target);
+        var localEducationCeiling =
+            _educationService.GetLocalEducationCeiling(target, _gameState.Year);
 
         var options = new List<PropertySelectionOption>
         {
             new(
                 "standard",
                 "🎓 Standard Education",
-                $"Current formal Education: Level {_educationService.GetEducationLevel(target)}",
-                string.Empty,
+                $"Current formal Education: Level {_educationService.GetEducationLevel(target)} · Local School cap: Level {localEducationCeiling}",
+                localEducationCeiling <= 0
+                    ? "No ordinary local schooling is available."
+                    : $"Ordinary local study can advance Education only through Level {localEducationCeiling}.",
                 $"{StandardEducationUiCost:N0} zł",
                 "standard education formal study",
-                _educationService.GetEducationLevel(target) < 5
+                _educationService.GetEducationLevel(target) < localEducationCeiling
                     && canAffordStandard,
                 standardChance)
         };

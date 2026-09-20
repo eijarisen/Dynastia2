@@ -145,15 +145,13 @@ public sealed partial class StandardHouseholdService :
 
         var strained =
             underageChildren
-                > effectiveCapacity
-            && !hasNannyReference;
+                > effectiveCapacity;
 
         var atCapacity =
             actualHead.Tags.Has(
                 "state.alive")
             && underageChildren
-                == effectiveCapacity
-            && !hasNannyReference;
+                == effectiveCapacity;
 
         var broke =
             finance.Wealth <= 0;
@@ -167,8 +165,11 @@ public sealed partial class StandardHouseholdService :
 
         if (strained)
         {
+            var excessChildren =
+                underageChildren - effectiveCapacity;
+
             warnings.Add(
-                "The large family size is putting a strain on everyone.");
+                $"The household has {excessChildren} child{(excessChildren == 1 ? "" : "ren")} above its supported family capacity, gradually increasing Health loss and Stress.");
         }
         else if (atCapacity)
         {
@@ -184,9 +185,11 @@ public sealed partial class StandardHouseholdService :
 
         if (overcrowded)
         {
+            var excessResidents =
+                HouseholdCrowdingRules.GetResidentsAboveCapacity(residentCount);
+
             warnings.Add(
-                "The household is overcrowded. More than eight people are sharing the home, " +
-                "increasing stress and harming everyone's health.");
+                $"The household is overcrowded by {excessResidents} resident{(excessResidents == 1 ? "" : "s")}; each additional resident gradually increases Stress and Health loss.");
         }
 
         return new HouseholdStatusSnapshot(

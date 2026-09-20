@@ -320,6 +320,7 @@ public sealed partial class StandardCareerService
                             person,
                             definition.LocationRequirement);
                         return evaluation.IsEligible
+                            && MeetsInstitutionRequirement(person, definition)
                             ? evaluation.WeightMultiplier
                                 * GetSelectionContextMultiplier(definition, person)
                                 * GetAutomaticCareerFitMultiplier(
@@ -376,6 +377,7 @@ public sealed partial class StandardCareerService
                         definition.LocationRequirement);
 
                 return evaluation.IsEligible
+                    && MeetsInstitutionRequirement(person, definition)
                     ? evaluation.WeightMultiplier
                         * GetSelectionContextMultiplier(definition, person)
                         * GetAutomaticCareerFitMultiplier(
@@ -394,7 +396,8 @@ public sealed partial class StandardCareerService
             .Evaluate(
                 person,
                 definition.LocationRequirement)
-            .IsEligible;
+            .IsEligible
+            && MeetsInstitutionRequirement(person, definition);
     }
 
     private static string

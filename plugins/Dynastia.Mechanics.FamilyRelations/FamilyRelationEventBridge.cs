@@ -9,6 +9,7 @@ internal sealed class FamilyRelationEventBridge
     private readonly IEconomyService _economy;
     private readonly IHouseholdService _households;
     private readonly StandardFamilyRelationService _relations;
+    private readonly IChildHappinessService _childHappiness;
 
     public FamilyRelationEventBridge(
         IGameState gameState,
@@ -16,6 +17,7 @@ internal sealed class FamilyRelationEventBridge
         IEconomyService economy,
         IHouseholdService households,
         StandardFamilyRelationService relations,
+        IChildHappinessService childHappiness,
         IGameEventBus events)
     {
         _gameState = gameState;
@@ -23,6 +25,7 @@ internal sealed class FamilyRelationEventBridge
         _economy = economy;
         _households = households;
         _relations = relations;
+        _childHappiness = childHappiness;
         events.EventPublished += OnEvent;
     }
 
@@ -56,6 +59,22 @@ internal sealed class FamilyRelationEventBridge
             return;
         }
 
+        if (e.Type.Equals("relationship.affair", StringComparison.OrdinalIgnoreCase))
+        {
+            var offender = FindOptional(e.SubjectId);
+            var spouse = e.RelatedPersonIds.Select(Find).FirstOrDefault(p => p is not null);
+            if (offender is not null)
+            {
+                ApplyHouseholdFamilyFallout(
+                    offender,
+                    24,
+                    GetCurrentHouseholdMemberIds(offender),
+                    spouse is null ? [] : [spouse.Id]);
+            }
+
+            return;
+        }
+
         if (IsDivorce(e.Type))
         {
             var first = FindOptional(e.SubjectId);
@@ -63,43 +82,31 @@ internal sealed class FamilyRelationEventBridge
             if (first is null || second is null)
                 return;
 
-            var isAffair = e.Type.Equals("relationship.affair", StringComparison.OrdinalIgnoreCase);
-
             // Even a previously Thriving marriage must not remain Warm after
-            // an actual divorce. Affairs damage the former spouses more.
+            // an actual divorce. Affairs are handled separately above because
+            // they can now damage a marriage without automatically ending it.
             _relations.ConvertDivorceToExSpouse(
                 first,
                 second,
-                isAffair ? 70 : 55);
+                55);
 
             ApplyParentalDivorceDamage(
                 first,
                 second,
-                isAffair);
+                isAffair: false);
 
             var formerHouseholdIds = GetFormerHouseholdMemberIds(e);
-            if (isAffair)
-            {
-                ApplyHouseholdFamilyFallout(
-                    first,
-                    30,
-                    formerHouseholdIds,
-                    [second.Id]);
-            }
-            else
-            {
-                ApplyHouseholdFamilyFallout(
-                    first,
-                    18,
-                    formerHouseholdIds,
-                    [second.Id]);
+            ApplyHouseholdFamilyFallout(
+                first,
+                18,
+                formerHouseholdIds,
+                [second.Id]);
 
-                ApplyHouseholdFamilyFallout(
-                    second,
-                    12,
-                    formerHouseholdIds,
-                    [first.Id]);
-            }
+            ApplyHouseholdFamilyFallout(
+                second,
+                12,
+                formerHouseholdIds,
+                [first.Id]);
 
             return;
         }
@@ -119,9 +126,154 @@ internal sealed class FamilyRelationEventBridge
             return;
         }
 
+        if (e.Type.Equals("household.member_moved_out", StringComparison.OrdinalIgnoreCase))
+        {
+            ApplyChildhoodHappinessHandoff(e);
+            return;
+        }
+
+        if (e.Type.Equals("inheritance.disadvantaged", StringComparison.OrdinalIgnoreCase))
+        {
+            ApplyInheritanceDisadvantage(e);
+            return;
+        }
+
         if (e.Type.Equals("life.death", StringComparison.OrdinalIgnoreCase)
             && e.SubjectId is Guid deceasedId)
             ApplySharedBereavement(deceasedId);
+    }
+
+    private void ApplyChildhoodHappinessHandoff(
+        GameEvent gameEvent)
+    {
+        if (!gameEvent.Data.TryGetValue("targetId", out var targetValue)
+            || !Guid.TryParse(targetValue, out var targetId))
+        {
+            return;
+        }
+
+        var adultChild = Find(targetId);
+        if (adultChild is null
+            || adultChild.Age < 18
+            || adultChild.Tags.Has("family_relations.childhood_handoff_applied"))
+        {
+            return;
+        }
+
+        var happiness = _childHappiness.GetFinalChildhoodHappiness(adultChild);
+        if (happiness is null)
+            return;
+
+        var parentDelta = (happiness.Value - 3) * 6.0;
+        var siblingDelta = (happiness.Value - 3) * 4.0;
+
+        foreach (var parent in new[]
+                 {
+                     _family.GetFather(adultChild),
+                     _family.GetMother(adultChild)
+                 }
+                 .Where(person => person is not null)
+                 .Cast<IPerson>())
+        {
+            if (_relations.GetRelation(adultChild, parent) is not null
+                && parentDelta != 0)
+            {
+                _relations.ModifyRelation(
+                    adultChild,
+                    parent,
+                    parentDelta,
+                    majorInteraction: false);
+            }
+        }
+
+        if (siblingDelta != 0)
+        {
+            foreach (var sibling in GetSiblings(adultChild))
+            {
+                if (_relations.GetRelation(adultChild, sibling) is null)
+                    continue;
+
+                _relations.ModifyRelation(
+                    adultChild,
+                    sibling,
+                    siblingDelta,
+                    majorInteraction: false);
+            }
+        }
+
+        adultChild.Tags.Add("family_relations.childhood_handoff_applied");
+    }
+
+    private void ApplyInheritanceDisadvantage(
+        GameEvent gameEvent)
+    {
+        var disadvantaged = FindOptional(gameEvent.SubjectId);
+        if (disadvantaged is null)
+            return;
+
+        IPerson? source = null;
+        if (gameEvent.Data.TryGetValue("sourceId", out var sourceValue)
+            && Guid.TryParse(sourceValue, out var sourceId))
+        {
+            source = Find(sourceId);
+        }
+
+        var severity = gameEvent.Data.GetValueOrDefault("severity") ?? "heavy";
+        var sourceDamage = severity.Equals("skipped", StringComparison.OrdinalIgnoreCase)
+            ? 10.0
+            : 6.0;
+        var siblingDamage = severity.Equals("skipped", StringComparison.OrdinalIgnoreCase)
+            ? 8.0
+            : 4.0;
+
+        if (source is not null
+            && _relations.GetRelation(disadvantaged, source) is not null)
+        {
+            _relations.ModifyRelation(
+                disadvantaged,
+                source,
+                -sourceDamage,
+                majorInteraction: true);
+        }
+
+        if (!gameEvent.Data.TryGetValue("favoredHeirIds", out var favoredRaw))
+            return;
+
+        foreach (var id in favoredRaw
+                     .Split(';', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+                     .Select(value => Guid.TryParse(value, out var parsed) ? parsed : Guid.Empty)
+                     .Where(id => id != Guid.Empty && id != disadvantaged.Id))
+        {
+            var favored = Find(id);
+            if (favored is null
+                || _relations.GetRelation(disadvantaged, favored) is null)
+            {
+                continue;
+            }
+
+            _relations.ModifyRelation(
+                disadvantaged,
+                favored,
+                -siblingDamage,
+                majorInteraction: true);
+        }
+    }
+
+    private IReadOnlyList<IPerson> GetSiblings(
+        IPerson person)
+    {
+        var fatherId = _family.GetFather(person)?.Id;
+        var motherId = _family.GetMother(person)?.Id;
+
+        return _gameState.People
+            .Where(candidate => candidate.Id != person.Id)
+            .Where(candidate =>
+                (fatherId is Guid father
+                    && _family.GetFather(candidate)?.Id == father)
+                || (motherId is Guid mother
+                    && _family.GetMother(candidate)?.Id == mother))
+            .DistinctBy(candidate => candidate.Id)
+            .ToList();
     }
 
     private void ApplyHouseholdFamilyFallout(
@@ -258,8 +410,7 @@ internal sealed class FamilyRelationEventBridge
     private static bool IsDivorce(string type) =>
         type.Equals("relationship.divorce", StringComparison.OrdinalIgnoreCase)
         || type.Equals("relationship.low_satisfaction_divorce", StringComparison.OrdinalIgnoreCase)
-        || type.Equals("relationship.prison_divorce", StringComparison.OrdinalIgnoreCase)
-        || type.Equals("relationship.affair", StringComparison.OrdinalIgnoreCase);
+        || type.Equals("relationship.prison_divorce", StringComparison.OrdinalIgnoreCase);
 
     private IPerson? FindOptional(Guid? id) => id is Guid value ? Find(value) : null;
 

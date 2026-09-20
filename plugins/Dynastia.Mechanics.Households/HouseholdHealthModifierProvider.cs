@@ -5,7 +5,8 @@ namespace Dynastia.Mechanics.Households;
 public sealed class HouseholdHealthModifierProvider :
     IAnnualHealthModifierProvider
 {
-    private const double LargeFamilyPenalty = 4;
+    private const double LargeFamilyHealthPenaltyPerExcessChild = 1.5;
+    private const double LargeFamilySpouseMultiplier = 1.5;
 
     private const double BrokeBase = 5;
     private const double BrokeModifier = 10;
@@ -51,20 +52,29 @@ public sealed class HouseholdHealthModifierProvider :
             {
                 if (status.IsLargeFamilyStrained)
                 {
+                    var excessChildren = Math.Max(
+                        0,
+                        status.UnderageChildren - status.EffectiveChildCapacity);
+
                     var spouse =
                         _family.GetSpouse(head);
 
                     var penalty =
-                        person.Id == spouse?.Id
-                            ? LargeFamilyPenalty * 2
-                            : LargeFamilyPenalty;
+                        excessChildren
+                        * LargeFamilyHealthPenaltyPerExcessChild;
+
+                    if (person.Id == spouse?.Id)
+                    {
+                        penalty *= LargeFamilySpouseMultiplier;
+                    }
 
                     change -= penalty;
                 }
 
                 if (status.IsOvercrowded)
                 {
-                    change -= HouseholdCrowdingRules.AnnualHealthPenalty;
+                    change -= HouseholdCrowdingRules.GetAnnualHealthPenalty(
+                        status.ResidentCount);
                 }
 
                 if (status.IsBroke)

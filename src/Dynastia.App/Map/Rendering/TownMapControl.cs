@@ -140,6 +140,9 @@ public sealed class TownMapControl :
     public event Action<string>?
         TownSelected;
 
+    public event Action<string>?
+        TownActivated;
+
     public void SetSnapshot(
         TownMapSnapshot snapshot)
     {
@@ -949,6 +952,12 @@ public sealed class TownMapControl :
         if (hit is not null)
         {
             SelectTown(hit);
+
+            if (e.ClickCount >= 2)
+            {
+                TownActivated?.Invoke(hit);
+            }
+
             e.Handled = true;
             return;
         }

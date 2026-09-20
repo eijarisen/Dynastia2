@@ -34,6 +34,40 @@ public static class MentalHealthStressRules
         : person.Tags.Has("personality.phlegmatic") ? 0.55
         : 1.0;
 
+
+    public static double GetOutcomeWeightMultiplier(
+        string conditionId,
+        StressSnapshot stress)
+    {
+        if (!conditionId.Equals(
+                "burnout",
+                StringComparison.OrdinalIgnoreCase))
+        {
+            return 1.0;
+        }
+
+        var lowSatisfaction = stress.Contributions
+            .Where(item => item.SourceId.Equals(
+                "career.low_satisfaction",
+                StringComparison.OrdinalIgnoreCase))
+            .Sum(item => item.Value);
+
+        var overwork = stress.Contributions
+            .Where(item => item.SourceId.Equals(
+                "career.overwork",
+                StringComparison.OrdinalIgnoreCase))
+            .Sum(item => item.Value);
+
+        // Burnout remains possible under broad life stress, but career strain
+        // makes it substantially more likely, especially after repeated
+        // Work Harder use. This is an outcome-weight modifier rather than an
+        // extra incidence roll, so it remains inside the shared Stress system.
+        return Math.Clamp(
+            1.0 + lowSatisfaction * 0.20 + overwork * 0.90,
+            1.0,
+            4.5);
+    }
+
     // Retained for compatibility with existing diagnostics/tests. Automatic
     // outcome choice now comes from health_stress_outcomes.csv + context weights.
     public static double GetAlcoholismWeight(IPerson person, int stress)

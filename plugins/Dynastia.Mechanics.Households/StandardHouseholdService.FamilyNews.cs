@@ -185,9 +185,8 @@ public sealed partial class StandardHouseholdService
                 "relationship.affair",
                 StringComparison.OrdinalIgnoreCase))
         {
-            // The affair event is itself the divorce event in the current
-            // relationship mechanic, so it belongs to the permitted
-            // marriage/divorce family-news category.
+            // Affairs are family news even when the marriage survives; actual
+            // divorce is now handled by the separate divorce event types.
             return true;
         }
 
@@ -306,9 +305,6 @@ public sealed partial class StandardHouseholdService
                 StringComparison.OrdinalIgnoreCase)
             || gameEvent.Type.Equals(
                 "relationship.prison_divorce",
-                StringComparison.OrdinalIgnoreCase)
-            || gameEvent.Type.Equals(
-                "relationship.affair",
                 StringComparison.OrdinalIgnoreCase);
 
         if (isBreakup)

@@ -22,7 +22,7 @@ public sealed partial class WellbeingPlugin
                     "Recover",
 
                 Description =
-                    "Take the year easier. Improves job satisfaction and adds +15 to this year's health calculation, but reduces salary by 10-50% for the year. May slightly improve children's Happiness.",
+                    "Take the year easier. Strongly improves Job Satisfaction and adds +15 to this year's health calculation, but reduces this year's work income/output by 10-50% from regular Jobs, Craft self-employment, and Farming labor. May slightly improve children's Happiness.",
 
                 Mode =
                     ActionExecutionMode.Queued,
@@ -61,7 +61,7 @@ public sealed partial class WellbeingPlugin
 
                         career.ChangeJobSatisfaction(
                             actor,
-                            1);
+                            2);
 
                         actor.Tags.Add(
                             "modifier.recover");
@@ -136,7 +136,7 @@ public sealed partial class WellbeingPlugin
                 Description =
                     "Use alcohol to blunt current stress. Reduces Stress by 2 " +
                     "for this year, immediately costs 10 Health, and carries " +
-                    "a 20% base chance of developing Alcoholism.",
+                    "a 10% base chance of developing Alcoholism.",
 
                 Mode =
                     ActionExecutionMode.Queued,

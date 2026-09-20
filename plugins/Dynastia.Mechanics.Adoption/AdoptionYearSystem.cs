@@ -46,9 +46,9 @@ public sealed class AdoptionYearSystem :
         CleanupHostedDependents(
             gameState);
 
-        // Adults leave mother/adoptive/orphanage placement before
-        // processing younger orphans, so a newly adult male-lineage
-        // heir can become a host candidate in the same year.
+        // Process adulthood placement before younger orphans. Family-resident
+        // adults stay put; orphanage residents age out first so they can
+        // become host candidates in the same year.
         foreach (var person in
             gameState.People
                 .Where(
@@ -100,18 +100,12 @@ public sealed class AdoptionYearSystem :
         var previousKind =
             component.Kind;
 
-        // Normal unmarried daughters retain their biological/mother
-        // residence. Every adult male bloodline member becomes
-        // independent; male-lineage decides player control, not whether
-        // he is allowed to establish a household.
-        if (previousKind
-                is AdoptionPlacementKind.BiologicalHousehold
-                or AdoptionPlacementKind.Mother
-            && !(
-                _family.GetSex(person)
-                    == Sex.Male
-                && _family.IsBloodline(
-                    person)))
+        // Reaching adulthood no longer creates a household for children who
+        // already live with family. Sons and daughters remain resident until
+        // an explicit move-out/relationship mechanic or household succession
+        // changes their status. Orphanage residents are the exception because
+        // they have no family household to remain in.
+        if (previousKind != AdoptionPlacementKind.Orphanage)
         {
             return;
         }

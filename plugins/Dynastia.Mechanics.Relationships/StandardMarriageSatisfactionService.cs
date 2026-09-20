@@ -267,6 +267,43 @@ public sealed class StandardMarriageSatisfactionService :
             return;
         }
 
+        if (gameEvent.Type.Equals(
+                "career.work_harder",
+                StringComparison.OrdinalIgnoreCase))
+        {
+            var worker = FindPerson(gameEvent.SubjectId);
+            if (worker is not null)
+            {
+                ChangeSatisfactionExact(
+                    worker,
+                    -MarriageBalanceRules.WorkHarderPenalty);
+            }
+
+            return;
+        }
+
+        if (gameEvent.Type.Equals(
+                "justice.crime",
+                StringComparison.OrdinalIgnoreCase)
+            || gameEvent.Type.Equals(
+                "justice.crime_uncaught",
+                StringComparison.OrdinalIgnoreCase))
+        {
+            var offender = FindPerson(gameEvent.SubjectId);
+            if (offender is not null)
+            {
+                ChangeSatisfactionExact(
+                    offender,
+                    gameEvent.Type.Equals(
+                        "justice.crime",
+                        StringComparison.OrdinalIgnoreCase)
+                        ? -MarriageBalanceRules.CrimePenalty
+                        : -MarriageBalanceRules.UncaughtCrimePenalty);
+            }
+
+            return;
+        }
+
         if (!gameEvent.Type.Equals(
             "life.birth",
             StringComparison.OrdinalIgnoreCase)

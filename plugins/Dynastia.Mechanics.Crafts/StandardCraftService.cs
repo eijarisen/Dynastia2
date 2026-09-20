@@ -15,6 +15,8 @@ internal sealed class StandardCraftService : ICraftService, IIncomeProvider
     private readonly IStatsService _stats;
     private readonly IPersonalityService _personality;
     private readonly ILocalCareerOpportunityService _localOpportunities;
+    private readonly ITownProsperityService _prosperity;
+    private readonly ILocalEconomicStrengthService _economicStrength;
     private readonly IGameRandom _random;
     private readonly IGameEventBus _events;
     private readonly CraftCatalog _catalog;
@@ -28,6 +30,8 @@ internal sealed class StandardCraftService : ICraftService, IIncomeProvider
         IStatsService stats,
         IPersonalityService personality,
         ILocalCareerOpportunityService localOpportunities,
+        ITownProsperityService prosperity,
+        ILocalEconomicStrengthService economicStrength,
         IGameRandom random,
         IGameEventBus events,
         IContextWeightService contextWeights,
@@ -40,6 +44,8 @@ internal sealed class StandardCraftService : ICraftService, IIncomeProvider
         _stats = stats;
         _personality = personality;
         _localOpportunities = localOpportunities;
+        _prosperity = prosperity;
+        _economicStrength = economicStrength;
         _random = random;
         _events = events;
         _catalog = catalog;
@@ -126,7 +132,10 @@ internal sealed class StandardCraftService : ICraftService, IIncomeProvider
             relevantYears,
             state.SelfEmploymentYears,
             state.CreditedPreLearningCareerYears,
-            GetExpectedAnnualIncome(craft, level),
+            ApplyTownIncomeMultiplier(
+                person,
+                craft,
+                GetExpectedAnnualIncome(craft, level)),
             next?.RequiredMasteryProgress,
             next?.MinimumRelevantExperienceYears);
     }
@@ -560,9 +569,23 @@ internal sealed class StandardCraftService : ICraftService, IIncomeProvider
             return 0m;
 
         var progress = GetProgress(person, active.Id);
-        return progress is null
-            ? 0m
-            : GetExpectedAnnualIncome(active, progress.MasteryLevel);
+        if (progress is null)
+            return 0m;
+
+        var income = GetExpectedAnnualIncome(active, progress.MasteryLevel);
+        var recoverReduction = ReadPercent(person, "modifier.salary.recover.");
+        if (recoverReduction > 0m)
+        {
+            income = Math.Round(
+                income * (1m - recoverReduction / 100m),
+                0,
+                MidpointRounding.AwayFromZero);
+        }
+
+        return ApplyTownIncomeMultiplier(
+            person,
+            active,
+            income);
     }
 
     public decimal GetAnnualIncome(IPerson person)
@@ -596,6 +619,8 @@ internal sealed class StandardCraftService : ICraftService, IIncomeProvider
                 MidpointRounding.AwayFromZero);
         }
 
+        income = ApplyTownIncomeMultiplier(person, active, income);
+
         component.LastAnnualIncome = income;
         component.LastIncomeYear = _gameState.Year;
 
@@ -620,10 +645,13 @@ internal sealed class StandardCraftService : ICraftService, IIncomeProvider
         if (randomRoll == 94
             && progress.MasteryLevel >= 5)
         {
-            var commissionValue = CraftRules.CalculateAnnualIncome(
-                baseSalary,
-                progress.MasteryLevel,
-                94);
+            var commissionValue = ApplyTownIncomeMultiplier(
+                person,
+                active,
+                CraftRules.CalculateAnnualIncome(
+                    baseSalary,
+                    progress.MasteryLevel,
+                    94));
 
             _events.Publish(new GameEvent
             {
@@ -696,6 +724,23 @@ internal sealed class StandardCraftService : ICraftService, IIncomeProvider
         CraftRules.GetExpectedAnnualIncome(
             craft.BaseSalary,
             masteryLevel);
+
+    private decimal ApplyTownIncomeMultiplier(
+        IPerson person,
+        CraftInfo craft,
+        decimal income)
+    {
+        if (income <= 0m)
+            return 0m;
+
+        var town = _localOpportunities.GetOpportunitySnapshot(person).Town;
+        var strength = _economicStrength.ResolveCraft(town, craft);
+        var multiplier = _prosperity.GetIncomeMultiplier(town, strength);
+        return Math.Round(
+            income * multiplier,
+            0,
+            MidpointRounding.AwayFromZero);
+    }
 
     private bool CanLearnChosenCraft(IPerson person, CraftInfo craft)
     {

@@ -40,6 +40,7 @@ public sealed partial class StandardCareerService
                     definition.LocationRequirement);
 
                 var weight = evaluation.IsEligible
+                    && MeetsInstitutionRequirement(person, definition)
                     ? definition.GetEntryWeight(sex, year)
                         * evaluation.WeightMultiplier
                         * GetSelectionContextMultiplier(definition, person)
@@ -154,7 +155,8 @@ public sealed partial class StandardCareerService
             person,
             definition.LocationRequirement);
 
-        if (!local.IsEligible)
+        if (!local.IsEligible
+            || !MeetsInstitutionRequirement(person, definition))
         {
             return new JobApplicationResult(
                 false,
@@ -252,6 +254,7 @@ public sealed partial class StandardCareerService
             new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
 
         UpdatePeakCareer(component);
+        EnsureLifetimeEarningsInitialized(person, component);
         person.Components.Set(component);
     }
 
@@ -301,6 +304,10 @@ public sealed partial class StandardCareerService
                 return new WeightedCareerCandidate(
                     definition,
                     evaluation.IsEligible
+                        && MeetsInstitutionRequirement(
+                            context.Town,
+                            definition,
+                            context.Year)
                         ? definition.GetEntryWeight(context.Sex, context.Year)
                             * evaluation.WeightMultiplier
                             * GetSelectionContextMultiplier(definition, context)

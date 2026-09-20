@@ -57,6 +57,9 @@ internal sealed class MentalHealthYearSystem : IYearSystem
                     Outcome = outcome,
                     Weight = outcome.BaseWeight
                              * _contextWeights.GetMultiplier(outcome.ConditionId, context)
+                             * MentalHealthStressRules.GetOutcomeWeightMultiplier(
+                                 outcome.ConditionId,
+                                 snapshot)
                 })
                 .Where(candidate => candidate.Weight > 0)
                 .ToList();

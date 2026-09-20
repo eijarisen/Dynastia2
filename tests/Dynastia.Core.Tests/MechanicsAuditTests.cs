@@ -104,8 +104,10 @@ public sealed class MechanicsAuditTests
     [Fact]
     public void MarriageSatisfactionStillHasMeaningfulPressureAndDivorceEffects()
     {
-        Assert.True(
-            MarriageBalanceRules.GetAnnualSatisfactionChange(0) > 0);
+        Assert.Equal(
+            1.0,
+            MarriageBalanceRules.GetAnnualSatisfactionChange(0),
+            6);
 
         Assert.True(
             MarriageBalanceRules.GetAnnualSatisfactionChange(8) < 0);

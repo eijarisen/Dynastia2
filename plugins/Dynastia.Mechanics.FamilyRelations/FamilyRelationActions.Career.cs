@@ -16,13 +16,14 @@ internal static partial class FamilyRelationActions
     {
         Id = "family_relations.ask_job_help",
         Label = "Use Family Connections",
-        Description = "Ask this relative's household to use its strongest current career connection. Acceptance depends on Familiarity and Sympathy. Placements are normally two levels below that connection, with a small chance of one level better.",
+        Description = "Ask this relative's household to use its strongest current career connection. Requires a Warm or Close relationship. Placements are always capped two Career levels below the strongest helper.",
         Mode = ActionExecutionMode.Queued,
         QueuePhase = YearPhase.FamilyRelationActions,
         IsAvailable = c => IsRelationsContext(c)
             && IsValidRelation(c, relations)
             && ResolveTargetHead(c.Target, households) is { } targetHead
             && !targetHead.Tags.Has("control.playable")
+            && HasStrongCareerConnectionRelation(c.Actor, c.Target, relations)
             && GetHighestCareerLevel(targetHead, economy, career, gameState) is var connectionLevel
             && FamilyCareerConnectionRules.CanProvideHelp(connectionLevel)
             && GetCareerHelpCandidates(c.Actor, connectionLevel, economy, career, gameState).Count > 0,
@@ -30,7 +31,8 @@ internal static partial class FamilyRelationActions
         {
             var targetHead = ResolveTargetHead(c.Target, households);
             if (targetHead is null
-                || targetHead.Tags.Has("control.playable"))
+                || targetHead.Tags.Has("control.playable")
+                || !HasStrongCareerConnectionRelation(c.Actor, c.Target, relations))
             {
                 return new(false);
             }
@@ -72,8 +74,7 @@ internal static partial class FamilyRelationActions
                 ApplyCareerHelp(
                     candidates,
                     connectionLevel,
-                    career,
-                    random);
+                    career);
 
             relations.RecordInteraction(c.Actor, c.Target, 5, 5);
             Publish(
@@ -101,19 +102,21 @@ internal static partial class FamilyRelationActions
     {
         Id = "family_relations.give_job_help",
         Label = "Help with Careers",
-        Description = "Offer the active household's strongest current career connection. Placements are normally two levels below that connection, with a small chance of one level better. Very hostile relatives may refuse the help.",
+        Description = "Offer the active household's strongest current career connection. The relation must be Warm or Close enough to cooperate, and placements are always capped two Career levels below the strongest helper.",
         Mode = ActionExecutionMode.Queued,
         QueuePhase = YearPhase.FamilyRelationActions,
         IsAvailable = c => IsRelationsContext(c)
             && IsValidRelation(c, relations)
             && ResolveTargetHead(c.Target, households) is { } targetHead
+            && HasStrongCareerConnectionRelation(c.Actor, c.Target, relations)
             && GetHighestCareerLevel(c.Actor, economy, career, gameState) is var connectionLevel
             && FamilyCareerConnectionRules.CanProvideHelp(connectionLevel)
             && GetCareerHelpCandidates(targetHead, connectionLevel, economy, career, gameState).Count > 0,
         Execute = c =>
         {
             var targetHead = ResolveTargetHead(c.Target, households);
-            if (targetHead is null)
+            if (targetHead is null
+                || !HasStrongCareerConnectionRelation(c.Actor, c.Target, relations))
                 return new(false);
 
             var connectionLevel =
@@ -153,8 +156,7 @@ internal static partial class FamilyRelationActions
                 ApplyCareerHelp(
                     candidates,
                     connectionLevel,
-                    career,
-                    random);
+                    career);
 
             relations.RecordInteraction(c.Actor, c.Target, 5, 6);
             Publish(
@@ -191,7 +193,7 @@ internal static partial class FamilyRelationActions
                 return !snapshot.IsRetired
                     && !snapshot.IsSelfEmployed
                     && snapshot.JobLevel
-                        < FamilyCareerConnectionRules.GetStandardPlacementLevel(
+                        < FamilyCareerConnectionRules.GetPlacementLevel(
                             connectionLevel);
             })
             .OrderByDescending(p => p.Id == householdRepresentative.Id)
@@ -224,15 +226,10 @@ internal static partial class FamilyRelationActions
     private static IReadOnlyList<IPerson> ApplyCareerHelp(
         IReadOnlyList<IPerson> candidates,
         int connectionLevel,
-        ICareerService career,
-        IGameRandom random)
+        ICareerService career)
     {
-        var standardLevel =
-            FamilyCareerConnectionRules.GetStandardPlacementLevel(
-                connectionLevel);
-
-        var exceptionalLevel =
-            FamilyCareerConnectionRules.GetExceptionalPlacementLevel(
+        var targetLevel =
+            FamilyCareerConnectionRules.GetPlacementLevel(
                 connectionLevel);
 
         var helped = new List<IPerson>();
@@ -240,12 +237,6 @@ internal static partial class FamilyRelationActions
         foreach (var person in candidates)
         {
             var current = career.GetCareer(person);
-            var targetLevel =
-                random.NextDouble()
-                    < FamilyCareerConnectionRules.ExceptionalPlacementChance
-                    ? exceptionalLevel
-                    : standardLevel;
-
             if (targetLevel <= current.JobLevel)
                 continue;
 
@@ -254,6 +245,18 @@ internal static partial class FamilyRelationActions
         }
 
         return helped;
+    }
+
+    private static bool HasStrongCareerConnectionRelation(
+        IPerson actor,
+        IPerson target,
+        IFamilyRelationService relations)
+    {
+        var relation = relations.GetRelation(actor, target);
+        return relation is not null
+            && FamilySupportAbilityRules.HasStrongCareerConnectionRelation(
+                relation.Familiarity,
+                relation.Sympathy);
     }
 
     private static string FormatCareerHelpSuccess(

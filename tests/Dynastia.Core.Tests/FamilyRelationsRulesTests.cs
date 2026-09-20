@@ -70,34 +70,84 @@ public sealed class FamilyRelationsRulesTests
     }
 
     [Theory]
-    [InlineData(1, 0, 0)]
-    [InlineData(2, 1, 2)]
-    [InlineData(3, 1, 2)]
-    [InlineData(4, 2, 3)]
-    [InlineData(5, 3, 4)]
-    public void CareerConnectionsPlaceBelowTheStrongestCurrentJob(
+    [InlineData(1, 0)]
+    [InlineData(2, 0)]
+    [InlineData(3, 1)]
+    [InlineData(4, 2)]
+    [InlineData(5, 3)]
+    public void CareerConnectionsAreAlwaysTwoLevelsBelowTheStrongestCurrentJob(
         int strongestJobLevel,
-        int expectedStandard,
-        int expectedExceptional)
+        int expectedPlacement)
     {
         Assert.Equal(
-            expectedStandard,
+            expectedPlacement,
+            FamilyCareerConnectionRules.GetPlacementLevel(strongestJobLevel));
+        Assert.Equal(
+            expectedPlacement,
             FamilyCareerConnectionRules.GetStandardPlacementLevel(strongestJobLevel));
         Assert.Equal(
-            expectedExceptional,
+            expectedPlacement,
             FamilyCareerConnectionRules.GetExceptionalPlacementLevel(strongestJobLevel));
     }
 
     [Fact]
-    public void CareerConnectionsCannotBootstrapAboveTheirSponsor()
+    public void CareerConnectionsCannotBootstrapPastTheFixedTwoLevelCeiling()
     {
         Assert.False(FamilyCareerConnectionRules.CanProvideHelp(1));
-        Assert.True(FamilyCareerConnectionRules.CanProvideHelp(2));
+        Assert.False(FamilyCareerConnectionRules.CanProvideHelp(2));
+        Assert.True(FamilyCareerConnectionRules.CanProvideHelp(3));
 
         Assert.True(FamilyCareerConnectionRules.CanImprove(0, 3));
-        Assert.True(FamilyCareerConnectionRules.CanImprove(1, 3));
-        Assert.False(FamilyCareerConnectionRules.CanImprove(2, 3));
-        Assert.False(FamilyCareerConnectionRules.CanImprove(3, 3));
+        Assert.False(FamilyCareerConnectionRules.CanImprove(1, 3));
+
+        Assert.True(FamilyCareerConnectionRules.CanImprove(2, 5));
+        Assert.False(FamilyCareerConnectionRules.CanImprove(3, 5));
+        Assert.Equal(3, FamilyCareerConnectionRules.GetPlacementLevel(5));
+    }
+
+    [Fact]
+    public void CareerConnectionsRequireWarmOrCloseRelations()
+    {
+        Assert.True(FamilySupportAbilityRules.HasStrongCareerConnectionRelation(10, 60));
+        Assert.True(FamilySupportAbilityRules.HasStrongCareerConnectionRelation(75, 10));
+        Assert.False(FamilySupportAbilityRules.HasStrongCareerConnectionRelation(74, 59));
+    }
+
+    [Fact]
+    public void FamilyRequestsProtectEssentialAssetsAndRewardRealSurplus()
+    {
+        Assert.Equal(0.0, FamilySupportAbilityRules.GetMoneyRequestAbilityFactor(
+            donorWealth: 2200m,
+            requesterWealth: 0m,
+            projectedAnnualExpenses: 2000m,
+            requestedAmount: 500m,
+            houseCount: 1,
+            farmlandCount: 1));
+
+        var modestCash = FamilySupportAbilityRules.GetMoneyRequestAbilityFactor(
+            donorWealth: 3000m,
+            requesterWealth: 1000m,
+            projectedAnnualExpenses: 2000m,
+            requestedAmount: 500m,
+            houseCount: 1,
+            farmlandCount: 1);
+        var wealthyCash = FamilySupportAbilityRules.GetMoneyRequestAbilityFactor(
+            donorWealth: 50000m,
+            requesterWealth: 1000m,
+            projectedAnnualExpenses: 2000m,
+            requestedAmount: 500m,
+            houseCount: 3,
+            farmlandCount: 3);
+
+        Assert.True(wealthyCash > modestCash);
+        Assert.Equal(0.0, FamilySupportAbilityRules.GetHouseRequestAbilityFactor(
+            10000m, 0m, 2000m, houseCount: 1, farmlandCount: 3));
+        Assert.True(FamilySupportAbilityRules.GetHouseRequestAbilityFactor(
+            50000m, 0m, 2000m, houseCount: 3, farmlandCount: 3) > 0);
+        Assert.Equal(0.0, FamilySupportAbilityRules.GetFarmlandRequestAbilityFactor(
+            10000m, 0m, 2000m, farmlandCount: 1, houseCount: 3));
+        Assert.True(FamilySupportAbilityRules.GetFarmlandRequestAbilityFactor(
+            50000m, 0m, 2000m, farmlandCount: 3, houseCount: 3) > 0);
     }
 
     [Fact]

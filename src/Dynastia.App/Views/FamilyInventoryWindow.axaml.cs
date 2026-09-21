@@ -2,6 +2,7 @@ using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Dynastia.App.ViewModels;
+using Dynastia.Contracts;
 
 namespace Dynastia.App.Views;
 
@@ -9,6 +10,8 @@ public partial class FamilyInventoryWindow : Window
 {
     private readonly MainWindowViewModel _main;
     private readonly FamilyInventoryWindowViewModel _viewModel;
+    private readonly ITownLifeService? _townLifeService;
+    private readonly TownAffairsRequest? _bankRequest;
 
     public FamilyInventoryWindow()
         : this(null!)
@@ -17,16 +20,40 @@ public partial class FamilyInventoryWindow : Window
 
     public FamilyInventoryWindow(
         MainWindowViewModel main,
-        FamilyInventoryTab initialTab = FamilyInventoryTab.Money)
+        FamilyInventoryTab initialTab = FamilyInventoryTab.Money,
+        ITownLifeService? townLifeService = null)
     {
         InitializeComponent();
 
         _main = main;
+        _townLifeService = townLifeService;
+        _bankRequest = main is null
+            ? null
+            : main.CreateActiveHouseholdTownAffairsRequest(
+                TownAffairsTab.Bank);
+
+        var canVisitBank = false;
+        if (_bankRequest is not null && townLifeService is not null)
+        {
+            try
+            {
+                canVisitBank = townLifeService
+                    .GetTownLife(_bankRequest.TownId)
+                    .Bank
+                    .IsAvailable;
+            }
+            catch (InvalidOperationException)
+            {
+                canVisitBank = false;
+            }
+        }
+
         _viewModel = main is null
             ? null!
             : new FamilyInventoryWindowViewModel(
                 main,
-                initialTab);
+                initialTab,
+                canVisitBank);
 
         if (main is not null)
             DataContext = _viewModel;
@@ -38,65 +65,57 @@ public partial class FamilyInventoryWindow : Window
             handledEventsToo: true);
     }
 
-    private async void OnTakeLoanClick(
+    private async void OnVisitBankClick(
         object? sender,
-        RoutedEventArgs e) =>
-        await OpenLoanWindow(
-            "loan.take",
-            isGivingLoan: false);
-
-    private async void OnGiveLoanClick(
-        object? sender,
-        RoutedEventArgs e) =>
-        await OpenLoanWindow(
-            "loan.give",
-            isGivingLoan: true);
-
-    private async Task OpenLoanWindow(
-        string actionId,
-        bool isGivingLoan)
+        RoutedEventArgs e)
     {
-        var maximumPrincipal =
-            _main.GetMaximumLoanPrincipal(actionId);
-
-        var offers =
-            _main.GetLoanOffers(
-                isGivingLoan,
-                maximumPrincipal);
-
-        if (offers.Count == 0)
+        if (!_viewModel.CanVisitBank
+            || _townLifeService is null
+            || _bankRequest is null)
+        {
             return;
+        }
 
-        var window =
-            new LoanSelectionWindow(
-                isGivingLoan,
-                offers);
-
-        var selection =
-            await window.ShowDialog<LoanSelectionResult?>(this);
-
-        if (selection is null)
-            return;
-
-        _main.QueueLoanAction(
-            actionId,
-            selection);
-
+        var snapshot = _townLifeService.GetTownLife(_bankRequest.TownId);
+        var model = _main.CreateTownAffairsViewModel(
+            snapshot,
+            _bankRequest);
+        var window = new TownLifeWindow(model);
+        await window.ShowDialog(this);
         _viewModel.Refresh();
     }
 
     private async void OnBuyHouseClick(
         object? sender,
-        RoutedEventArgs e) =>
-        await OpenPropertyWindow(
-            "household.buy_house",
+        RoutedEventArgs e)
+    {
+        var options = _main.GetPropertySelectionOptions(
+            "household.buy_house");
+        if (options.Count == 0 || _townLifeService is null || Owner is not Window dialogOwner)
+            return;
+
+        Close();
+
+        var selector = new PropertySelectionWindow(
             "Select Town",
-            "Buy");
+            "View Housing",
+            options,
+            compact: true);
+        var townId = await selector.ShowDialog<string?>(dialogOwner);
+        if (string.IsNullOrWhiteSpace(townId))
+            return;
+
+        var request = _main.CreateHousingTownAffairsRequest(townId);
+        var snapshot = _townLifeService.GetTownLife(request.TownId);
+        var model = _main.CreateTownAffairsViewModel(snapshot, request);
+        var window = new TownLifeWindow(model);
+        await window.ShowDialog(dialogOwner);
+    }
 
     private async void OnSellHouseClick(
         object? sender,
         RoutedEventArgs e) =>
-        await OpenPropertyWindow(
+        await OpenPropertyWindowAndClose(
             "household.sell_house",
             "Select Property",
             "Sell");
@@ -117,7 +136,7 @@ public partial class FamilyInventoryWindow : Window
         _viewModel.Refresh();
     }
 
-    private async Task OpenPropertyWindow(
+    private async Task OpenPropertyWindowAndClose(
         string actionId,
         string title,
         string confirmText)
@@ -126,8 +145,10 @@ public partial class FamilyInventoryWindow : Window
             _main.GetPropertySelectionOptions(
                 actionId);
 
-        if (options.Count == 0)
+        if (options.Count == 0 || Owner is not Window dialogOwner)
             return;
+
+        Close();
 
         var window =
             new PropertySelectionWindow(
@@ -136,7 +157,7 @@ public partial class FamilyInventoryWindow : Window
                 options);
 
         var selectedId =
-            await window.ShowDialog<string?>(this);
+            await window.ShowDialog<string?>(dialogOwner);
 
         if (string.IsNullOrWhiteSpace(selectedId))
             return;
@@ -144,8 +165,6 @@ public partial class FamilyInventoryWindow : Window
         _main.QueueActionWithSelection(
             actionId,
             selectedId);
-
-        _viewModel.Refresh();
     }
 
     private void OnLifestyleClick(
@@ -184,24 +203,42 @@ public partial class FamilyInventoryWindow : Window
         _main.QueueActionWithSelection(
             "heirloom.sell",
             heirloomId.ToString());
-        _viewModel.Refresh();
+        Close();
     }
 
     private void OnBuyFarmlandClick(
         object? sender,
         RoutedEventArgs e)
     {
-        _main.QueueFamilyInventoryAction(
+        var result = _main.QueueFamilyInventoryAction(
             "farming.buy_farmland");
-        _viewModel.Refresh();
+        if (result.Success)
+            Close();
+        else
+            _viewModel.Refresh();
     }
 
-    private void OnSellFarmlandClick(
+    private async void OnSellFarmlandClick(
+        object? sender,
+        RoutedEventArgs e) =>
+        await OpenPropertyWindowAndClose(
+            "farming.sell_farmland",
+            "Select Farmland",
+            "Sell");
+
+    private void OnAddLivestockClick(
         object? sender,
         RoutedEventArgs e)
     {
-        _main.QueueFamilyInventoryAction(
-            "farming.sell_farmland");
+        if (sender is not Button button
+            || button.Tag is not Guid farmlandId)
+        {
+            return;
+        }
+
+        _main.QueueActionWithSelection(
+            "farming.add_livestock",
+            farmlandId.ToString());
         _viewModel.Refresh();
     }
 

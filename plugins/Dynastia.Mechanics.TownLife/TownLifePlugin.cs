@@ -16,16 +16,16 @@ public sealed class TownLifePlugin : IGamePlugin
             ?? throw new InvalidOperationException("Historical town catalog is unavailable.");
         var opportunities = context.GetService<ILocalCareerOpportunityService>()
             ?? throw new InvalidOperationException("Local opportunity service is unavailable.");
+        var localServiceTowns = context.GetService<ILocalServiceTownResolver>()
+            ?? throw new InvalidOperationException("Local service town resolver is unavailable.");
         var systems = context.GetService<IYearSystemRegistry>()
             ?? throw new InvalidOperationException("Year-system registry is unavailable.");
-        var random = context.GetService<IGameRandom>()
-            ?? throw new InvalidOperationException("Game random service is unavailable.");
-
         var institutionCatalog = TownInstitutionCatalog.Load(data, historicalTowns);
         var institutionCareers = TownInstitutionCareerCatalog.Load(data);
         var institutions = new StandardTownInstitutionService(
             institutionCatalog,
-            opportunities);
+            opportunities,
+            localServiceTowns);
         var facilityQuality = new StandardTownFacilityQualityService(
             institutions,
             TownFacilityQualityCatalog.Load(data));
@@ -53,7 +53,6 @@ public sealed class TownLifePlugin : IGamePlugin
 
         var prosperityYearSystem = new TownProsperityYearSystem(
             context,
-            random,
             prosperity,
             economicCatalog.HistoricalEffects);
 

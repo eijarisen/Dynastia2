@@ -40,6 +40,14 @@ public sealed class LocationsPlugin :
         context.AddService<IHistoricalTownCatalog>(
             historicalTowns);
 
+        var localServiceTowns =
+            new StandardLocalServiceTownResolver(
+                historicalTowns,
+                gameState);
+
+        context.AddService<ILocalServiceTownResolver>(
+            localServiceTowns);
+
         var locations =
             new StandardLocationService(
                 gameState,
@@ -66,7 +74,8 @@ public sealed class LocationsPlugin :
                 gameState,
                 locations,
                 historicalTowns,
-                data);
+                data,
+                localServiceTowns);
 
         context.AddService<ILocalCareerOpportunityService>(
             localCareers);

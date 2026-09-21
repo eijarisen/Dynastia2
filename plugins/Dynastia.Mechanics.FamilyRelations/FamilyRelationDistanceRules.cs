@@ -9,16 +9,17 @@ public static class FamilyRelationDistanceRules
         bool sameHousehold)
     {
         if (sameHousehold)
-            return (0.0, 0.25);
+            return (0.0, 0.0);
 
         distanceKm = Math.Max(0, distanceKm);
 
         return distanceKm switch
         {
-            <= 25 => (0.0, 0.35),
-            <= 100 => (0.15, 0.50),
-            <= 300 => (0.35, 0.75),
-            _ => (0.60, 1.00)
+            <= 1 => (0.0, 0.0),
+            <= 25 => (0.10, 0.15),
+            <= 100 => (0.20, 0.35),
+            <= 300 => (0.40, 0.60),
+            _ => (0.65, 0.85)
         };
     }
 

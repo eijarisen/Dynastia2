@@ -32,6 +32,11 @@ public sealed partial class RelationshipsPlugin : IGamePlugin
             ?? throw new InvalidOperationException(
                 "Economy service is unavailable.");
 
+        var farming =
+            context.GetService<IFarmingService>()
+            ?? throw new InvalidOperationException(
+                "Farming service is unavailable.");
+
         var education =
             context.GetService<IEducationService>()
             ?? throw new InvalidOperationException(
@@ -134,6 +139,7 @@ public sealed partial class RelationshipsPlugin : IGamePlugin
                 career,
                 crafts,
                 economy,
+                farming,
                 personality,
                 appearance,
                 () => context.GetService<IHobbyService>(),
@@ -305,6 +311,7 @@ public sealed partial class RelationshipsPlugin : IGamePlugin
                 career,
                 households,
                 economy,
+                farming,
                 personality,
                 () => context.GetService<IFamilyRelationService>()));
 

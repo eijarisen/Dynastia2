@@ -75,10 +75,16 @@ public sealed class FamilyPlugin : IGamePlugin
         context.AddService<INationalityService>(
             nationalities);
 
+        var foreignBirthplaces =
+            ForeignBirthplaceCatalog.Load(
+                data,
+                nationalities);
+
         context.AddService<IOutsiderIdentityService>(
             new StandardOutsiderIdentityService(
                 nationalities,
-                historicalNames));
+                historicalNames,
+                foreignBirthplaces));
 
         context.AddService<IFamilyService>(
             familyService);

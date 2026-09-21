@@ -1,15 +1,16 @@
 <Window
     xmlns="https://github.com/avaloniaui"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    xmlns:contracts="using:Dynastia.Contracts"
     xmlns:controls="using:Dynastia.App.Controls"
     xmlns:primitives="using:Avalonia.Controls.Primitives"
+    xmlns:vm="using:Dynastia.App.ViewModels"
+    xmlns:contracts="using:Dynastia.Contracts"
     x:Class="Dynastia.App.Views.TownLifeWindow"
-    x:DataType="contracts:TownLifeSnapshot"
-    Width="960"
-    Height="760"
-    MinWidth="960"
-    MinHeight="760"
+    x:DataType="vm:TownAffairsViewModel"
+    Width="1000"
+    Height="800"
+    MinWidth="1000"
+    MinHeight="800"
     CanResize="False"
     ShowInTaskbar="False"
     WindowDecorations="None"
@@ -45,164 +46,307 @@
             <Setter Property="BorderThickness" Value="1" />
             <Setter Property="CornerRadius" Value="4" />
         </Style>
-        <Style Selector="Button.closeButton">
-            <Setter Property="MinWidth" Value="110" />
-            <Setter Property="Padding" Value="16,7" />
+        <Style Selector="Button.paperAction">
+            <Setter Property="MinWidth" Value="105" />
+            <Setter Property="Padding" Value="12,6" />
             <Setter Property="Background" Value="#E6D2AA" />
             <Setter Property="Foreground" Value="#3A2413" />
             <Setter Property="BorderBrush" Value="#93662F" />
-            <Setter Property="BorderThickness" Value="1.3" />
+            <Setter Property="BorderThickness" Value="1.2" />
             <Setter Property="FontFamily" Value="Georgia" />
-            <Setter Property="FontSize" Value="12.5" />
+            <Setter Property="FontSize" Value="12" />
             <Setter Property="FontWeight" Value="Bold" />
+        </Style>
+        <Style Selector="Button.memberTab">
+            <Setter Property="MinWidth" Value="86" />
+            <Setter Property="Padding" Value="10,5" />
+            <Setter Property="Background" Value="#EAD9B6" />
+            <Setter Property="Foreground" Value="#3A2413" />
+            <Setter Property="BorderBrush" Value="#93662F" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="FontFamily" Value="Georgia" />
+            <Setter Property="FontSize" Value="11.5" />
+            <Setter Property="FontWeight" Value="Bold" />
+        </Style>
+        <Style Selector="Button.memberTab:disabled">
+            <Setter Property="Background" Value="#C9A96C" />
+            <Setter Property="Opacity" Value="1" />
         </Style>
     </Window.Styles>
 
     <Grid>
         <Image Source="/Assets/UI/instructions_paper.png" Stretch="Fill" />
 
-        <Grid Margin="70,54,70,42" RowDefinitions="Auto,Auto,*,Auto" RowSpacing="9">
-            <TextBlock
-                HorizontalAlignment="Center"
-                FontFamily="avares://Dynastia.App/Assets/Fonts#Pirata One"
-                FontSize="38"
-                Foreground="#2F1D0E"
-                Text="{Binding NavigationLabel}" />
+        <Grid Margin="66,48,66,38" RowDefinitions="Auto,Auto,*,Auto" RowSpacing="8">
+            <StackPanel HorizontalAlignment="Center" Spacing="0">
+                <TextBlock
+                    HorizontalAlignment="Center"
+                    FontFamily="avares://Dynastia.App/Assets/Fonts#Pirata One"
+                    FontSize="34"
+                    Foreground="#2F1D0E"
+                    Text="{Binding Snapshot.NavigationLabel}" />
+            </StackPanel>
 
             <Grid Grid.Row="1" ColumnDefinitions="5*,6*" ColumnSpacing="10">
                 <Border Classes="section">
-                    <StackPanel Spacing="8">
+                    <StackPanel Spacing="12">
                         <TextBlock
-                            FontSize="24"
+                            FontSize="22"
                             FontWeight="Bold"
                             Foreground="#5A3A18"
-                            Text="{Binding Town.Town}" />
-                        <Grid ColumnDefinitions="104,*" RowDefinitions="Auto,Auto,Auto,Auto" RowSpacing="6">
-                            <TextBlock Classes="label" FontSize="13" Text="Polity" />
-                            <TextBlock Grid.Column="1" Classes="value" FontSize="13" Text="{Binding Town.PolityName}" />
-                            <TextBlock Grid.Row="1" Classes="label" FontSize="13" Text="Region" />
-                            <TextBlock Grid.Row="1" Grid.Column="1" Classes="value" FontSize="13" Text="{Binding RegionName}" />
-                            <TextBlock Grid.Row="2" Classes="label" FontSize="13" Text="Settlement" />
-                            <TextBlock Grid.Row="2" Grid.Column="1" Classes="value" FontSize="13" Text="{Binding Town.SettlementClassDisplayName}" />
-                            <TextBlock Grid.Row="3" Classes="label" FontSize="13" Text="Population" />
-                            <TextBlock Grid.Row="3" Grid.Column="1" Classes="value" FontSize="13" Text="{Binding PopulationText}" />
+                            Text="{Binding Snapshot.Town.Town}" />
+                        <Grid ColumnDefinitions="104,*" RowDefinitions="Auto,Auto,Auto,Auto" RowSpacing="4">
+                            <TextBlock Classes="label" FontSize="14.5" Text="Polity" />
+                            <TextBlock Grid.Column="1" Classes="value" FontSize="14.5" Text="{Binding Snapshot.Town.PolityName}" />
+                            <TextBlock Grid.Row="1" Classes="label" FontSize="14.5" Text="Region" />
+                            <TextBlock Grid.Row="1" Grid.Column="1" Classes="value" FontSize="14.5" Text="{Binding Snapshot.RegionName}" />
+                            <TextBlock Grid.Row="2" Classes="label" FontSize="14.5" Text="Settlement" />
+                            <TextBlock Grid.Row="2" Grid.Column="1" Classes="value" FontSize="14.5" Text="{Binding Snapshot.Town.SettlementClassDisplayName}" />
+                            <TextBlock Grid.Row="3" Classes="label" FontSize="14.5" Text="Population" />
+                            <TextBlock Grid.Row="3" Grid.Column="1" Classes="value" FontSize="14.5" Text="{Binding Snapshot.PopulationText}" />
                         </Grid>
                     </StackPanel>
                 </Border>
 
                 <Border Grid.Column="1" Classes="section">
-                    <StackPanel Spacing="4">
+                    <StackPanel Spacing="3">
                         <StackPanel Orientation="Horizontal" Spacing="8">
                             <TextBlock Classes="sectionHeader" Text="Local Economy" />
-                            <TextBlock FontSize="19" FontWeight="Bold" Foreground="#7A561E" Text="{Binding Prosperity.Index}" />
-                            <TextBlock VerticalAlignment="Center" FontSize="12.5" FontWeight="Bold" Text="{Binding Prosperity.Label}" />
-                            <TextBlock VerticalAlignment="Center" FontSize="12" Text="{Binding Prosperity.TrendText}" />
+                            <TextBlock FontSize="19" FontWeight="Bold" Foreground="{Binding ProsperityBrush}" Text="{Binding Snapshot.Prosperity.Index}" />
+                            <TextBlock VerticalAlignment="Center" FontSize="12.5" FontWeight="Bold" Foreground="{Binding ProsperityBrush}" Text="{Binding Snapshot.Prosperity.Label}" />
+                            <TextBlock VerticalAlignment="Center" FontSize="12" Foreground="{Binding ProsperityBrush}" Text="{Binding Snapshot.Prosperity.TrendText}" />
                         </StackPanel>
-
-                        <controls:TownProsperityGraph
-                            Height="82"
-                            History="{Binding Prosperity.HistoryPoints}" />
-
-                        <Grid ColumnDefinitions="112,*" RowDefinitions="Auto,Auto,Auto,Auto" RowSpacing="2">
-                            <TextBlock Classes="label" Text="Trend years" />
-                            <TextBlock Grid.Column="1" Classes="value" Text="{Binding Prosperity.HistoryRangeText}" />
-                            <TextBlock Grid.Row="1" Classes="label" Text="Strong fields" />
-                            <TextBlock Grid.Row="1" Grid.Column="1" Classes="value" Text="{Binding LocalOpportunityText}" />
-                            <TextBlock Grid.Row="2" Classes="label" Text="Regional support" />
-                            <TextBlock Grid.Row="2" Grid.Column="1" Classes="value" Text="{Binding RegionalOpportunityText}" />
-                            <TextBlock Grid.Row="3" Classes="label" Text="Shocks" />
-                            <TextBlock Grid.Row="3" Grid.Column="1" Classes="value" Text="{Binding Prosperity.ActiveShocksText}" />
+                        <controls:TownProsperityGraph Height="68" History="{Binding Snapshot.Prosperity.HistoryPoints}" />
+                        <Grid ColumnDefinitions="112,*" RowDefinitions="Auto,Auto,Auto" RowSpacing="2">
+                            <TextBlock Classes="label" Text="Strong fields" />
+                            <TextBlock Grid.Column="1" Classes="value" Text="{Binding Snapshot.LocalOpportunityText}" />
+                            <TextBlock Grid.Row="1" Classes="label" Text="Regional support" />
+                            <TextBlock Grid.Row="1" Grid.Column="1" Classes="value" Text="{Binding Snapshot.RegionalOpportunityText}" />
+                            <TextBlock Grid.Row="2" Classes="label" Text="Current Shocks" />
+                            <TextBlock Grid.Row="2" Grid.Column="1" Classes="value" Text="{Binding Snapshot.Prosperity.ActiveShocksText}" />
                         </Grid>
                     </StackPanel>
                 </Border>
             </Grid>
 
-            <Border Grid.Row="2" Classes="section">
-                <Grid RowDefinitions="Auto,*" RowSpacing="6">
-                    <TextBlock Classes="sectionHeader" Text="Institutions" />
+            <TabControl
+                Grid.Row="2"
+                SelectedIndex="{Binding SelectedTabIndex, Mode=TwoWay}">
+                <TabItem Header="Institutions">
+                    <ScrollViewer VerticalScrollBarVisibility="Auto">
+                        <ItemsControl ItemsSource="{Binding Snapshot.InstitutionCards}">
+                            <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <primitives:UniformGrid Columns="4" Rows="2" />
+                                </ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate x:DataType="contracts:TownInstitutionAffairsInfo">
+                                    <Border Margin="4" Padding="7" Background="#25FFF4D9" BorderBrush="#7E623D" BorderThickness="1" CornerRadius="4" Cursor="Hand" PointerPressed="OnInstitutionPointerPressed">
+                                        <StackPanel Spacing="5">
+                                            <Grid ColumnDefinitions="42,*" ColumnSpacing="10">
+                                                <Border Width="38" Height="38" HorizontalAlignment="Left" VerticalAlignment="Top" Background="#54000000" BorderBrush="#8A6435" BorderThickness="1.5" CornerRadius="4">
+                                                    <TextBlock HorizontalAlignment="Center" VerticalAlignment="Center" TextAlignment="Center" FontSize="25" Text="{Binding Emoji}" />
+                                                </Border>
+                                                <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="1">
+                                                    <TextBlock HorizontalAlignment="Left" TextAlignment="Left" FontSize="13" FontWeight="Bold" TextWrapping="Wrap" Text="{Binding DisplayName}" />
+                                                    <TextBlock HorizontalAlignment="Left" TextAlignment="Left" FontSize="10.5" Foreground="#654621" TextWrapping="Wrap" Text="{Binding Summary}" />
+                                                </StackPanel>
+                                            </Grid>
+                                            <TextBlock IsVisible="{Binding HasServiceText}" Classes="value" FontSize="10.5" TextAlignment="Left" TextWrapping="Wrap" Text="{Binding ServiceText}" />
+                                            <TextBlock Classes="value" FontSize="10.5" TextAlignment="Left" TextWrapping="Wrap" Text="{Binding CareerText}" />
+                                        </StackPanel>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </ScrollViewer>
+                </TabItem>
 
-                    <ItemsControl Grid.Row="1" ItemsSource="{Binding InstitutionCards}">
-                        <ItemsControl.ItemsPanel>
-                            <ItemsPanelTemplate>
-                                <primitives:UniformGrid Columns="4" Rows="2" />
-                            </ItemsPanelTemplate>
-                        </ItemsControl.ItemsPanel>
-                        <ItemsControl.ItemTemplate>
-                            <DataTemplate x:DataType="contracts:TownInstitutionAffairsInfo">
-                                <Border
-                                    Margin="4"
-                                    Padding="7"
-                                    Background="#25FFF4D9"
-                                    BorderBrush="#7E623D"
-                                    BorderThickness="1"
-                                    CornerRadius="4">
-                                    <StackPanel Spacing="5">
-                                        <Grid ColumnDefinitions="42,*" ColumnSpacing="10">
-                                            <Border
-                                                Width="38"
-                                                Height="38"
-                                                HorizontalAlignment="Left"
-                                                VerticalAlignment="Top"
-                                                Background="#54000000"
-                                                BorderBrush="#8A6435"
-                                                BorderThickness="1.5"
-                                                CornerRadius="4">
-                                                <TextBlock
-                                                    HorizontalAlignment="Center"
-                                                    VerticalAlignment="Center"
-                                                    TextAlignment="Center"
-                                                    FontSize="22"
-                                                    Text="{Binding Emoji}" />
-                                            </Border>
+                <TabItem Header="Housing">
+                    <ScrollViewer VerticalScrollBarVisibility="Auto">
+                        <StackPanel Margin="6" Spacing="8">
+                            <TextBlock Classes="sectionHeader" Text="For Sale" />
+                            <TextBlock IsVisible="{Binding ShowNoHouseOffers}" Margin="0,18,0,0" HorizontalAlignment="Center" TextAlignment="Center" FontStyle="Italic" TextWrapping="Wrap" Text="{Binding NoHouseOffersText}" />
+                            <ItemsControl ItemsSource="{Binding HouseOffers}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate x:DataType="vm:TownAffairsHouseOfferViewModel">
+                                        <Border Margin="2" Padding="10,7" Background="#25FFF4D9" BorderBrush="#A17A43" BorderThickness="1" CornerRadius="4">
+                                            <Grid ColumnDefinitions="44,*,Auto,Auto" ColumnSpacing="10">
+                                                <TextBlock HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="25" Text="🏠" />
+                                                <TextBlock Grid.Column="1" VerticalAlignment="Center" FontSize="14" FontWeight="Bold" Text="{Binding CapacityText}" />
+                                                <TextBlock Grid.Column="2" VerticalAlignment="Center" FontSize="16" FontWeight="Bold" Foreground="#5A3A18" Text="{Binding AskingPriceText}" />
+                                                <Button Grid.Column="3" Classes="paperAction" VerticalAlignment="Center" Content="Buy" IsEnabled="{Binding IsAffordable}" Click="OnBuyHouseOfferClick" />
+                                            </Grid>
+                                        </Border>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </StackPanel>
+                    </ScrollViewer>
+                </TabItem>
 
-                                            <StackPanel
-                                                Grid.Column="1"
-                                                VerticalAlignment="Center"
-                                                Spacing="1">
-                                                <TextBlock
-                                                    HorizontalAlignment="Left"
-                                                    TextAlignment="Left"
-                                                    FontSize="13"
-                                                    FontWeight="Bold"
-                                                    TextWrapping="Wrap"
-                                                    Text="{Binding DisplayName}" />
-                                                <TextBlock
-                                                    HorizontalAlignment="Left"
-                                                    TextAlignment="Left"
-                                                    FontSize="10.5"
-                                                    Foreground="#654621"
-                                                    TextWrapping="Wrap"
-                                                    Text="{Binding Summary}" />
-                                            </StackPanel>
-                                        </Grid>
+                <TabItem Header="Jobs" IsVisible="{Binding ShowJobsTab}">
+                    <ScrollViewer VerticalScrollBarVisibility="Auto">
+                        <StackPanel Margin="6" Spacing="6">
+                            <ItemsControl IsVisible="{Binding ShowJobHouseholdMemberTabs}" ItemsSource="{Binding JobHouseholdMembers}">
+                                <ItemsControl.ItemsPanel>
+                                    <ItemsPanelTemplate>
+                                        <StackPanel Orientation="Horizontal" Spacing="4" />
+                                    </ItemsPanelTemplate>
+                                </ItemsControl.ItemsPanel>
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate x:DataType="vm:TownAffairsMemberTabViewModel">
+                                        <Button Classes="memberTab" Content="{Binding DisplayName}" IsEnabled="{Binding CanSelect}" Click="OnMemberTabClick" />
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                            <TextBlock IsVisible="{Binding ShowJobsEmpty}" Margin="0,18,0,0" HorizontalAlignment="Center" TextAlignment="Center" TextWrapping="Wrap" Text="{Binding JobsEmptyText}" />
+                            <ItemsControl ItemsSource="{Binding JobModel.Opportunities}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate x:DataType="vm:JobOpportunityCardViewModel">
+                                        <Border Margin="2" Padding="10,6" Background="#25FFF4D9" BorderBrush="#A17A43" BorderThickness="1" CornerRadius="4">
+                                            <Grid ColumnDefinitions="54,*,Auto" ColumnSpacing="10">
+                                                <TextBlock HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="28" Text="{Binding CareerEmoji}" />
+                                                <StackPanel Grid.Column="1" Spacing="1">
+                                                    <TextBlock FontWeight="Bold" FontSize="14" TextWrapping="Wrap" Text="{Binding Heading}" />
+                                                    <TextBlock FontSize="11.5" TextWrapping="Wrap" Text="{Binding RequirementsText}" />
+                                                    <TextBlock FontSize="11.5" TextWrapping="Wrap" Text="{Binding ApplicantComparisonText}" />
+                                                    <StackPanel Orientation="Horizontal" Spacing="10">
+                                                        <TextBlock FontSize="12.5" FontWeight="Bold" Foreground="#5A3A18" Text="{Binding SalaryText}" />
+                                                        <TextBlock FontSize="11.5" FontWeight="Bold" Text="{Binding ChanceText}" Foreground="{Binding ChanceBrush}" />
+                                                    </StackPanel>
+                                                </StackPanel>
+                                                <Button Grid.Column="2" Classes="paperAction" VerticalAlignment="Center" HorizontalAlignment="Right" Content="Apply" Click="OnApplyJobClick" />
+                                            </Grid>
+                                        </Border>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </StackPanel>
+                    </ScrollViewer>
+                </TabItem>
 
-                                        <TextBlock
-                                            IsVisible="{Binding HasServiceText}"
-                                            Classes="value"
-                                            FontSize="10.5"
-                                            TextAlignment="Left"
-                                            TextWrapping="Wrap"
-                                            Text="{Binding ServiceText}" />
-                                        <TextBlock
-                                            Classes="value"
-                                            FontSize="10.5"
-                                            TextAlignment="Left"
-                                            TextWrapping="Wrap"
-                                            Text="{Binding CareerText}" />
+                <TabItem Header="Health" IsVisible="{Binding ShowHealthTab}">
+                    <ScrollViewer VerticalScrollBarVisibility="Auto">
+                        <StackPanel Margin="6" Spacing="8">
+                            <ItemsControl IsVisible="{Binding ShowHouseholdMemberTabs}" ItemsSource="{Binding HouseholdMembers}">
+                                <ItemsControl.ItemsPanel>
+                                    <ItemsPanelTemplate>
+                                        <StackPanel Orientation="Horizontal" Spacing="4" />
+                                    </ItemsPanelTemplate>
+                                </ItemsControl.ItemsPanel>
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate x:DataType="vm:TownAffairsMemberTabViewModel">
+                                        <Button Classes="memberTab" Content="{Binding DisplayName}" IsEnabled="{Binding CanSelect}" Click="OnMemberTabClick" />
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                            <TextBlock IsVisible="{Binding ShowHealthEmpty}" Margin="0,18,0,0" HorizontalAlignment="Center" TextAlignment="Center" FontStyle="Italic" TextWrapping="Wrap" Text="{Binding HealthEmptyText}" />
+                            <ItemsControl ItemsSource="{Binding HealthActions}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate x:DataType="vm:TownAffairsHealthActionViewModel">
+                                        <Border Margin="2" Padding="10,7" Background="#25FFF4D9" BorderBrush="#A17A43" BorderThickness="1" CornerRadius="4" Opacity="{Binding DisplayOpacity}" ToolTip.Tip="{Binding UnavailableReason}">
+                                            <Grid ColumnDefinitions="54,*,Auto" ColumnSpacing="10">
+                                                <TextBlock HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="28" Text="{Binding Emoji}" />
+                                                <StackPanel Grid.Column="1" Spacing="2">
+                                                    <TextBlock FontSize="14" FontWeight="Bold" Text="{Binding Label}" />
+                                                    <TextBlock FontSize="11.5" TextWrapping="Wrap" Text="{Binding Description}" />
+                                                    <TextBlock IsVisible="{Binding HasCost}" FontSize="11.5" FontWeight="Bold" Text="{Binding CostText}" />
+                                                </StackPanel>
+                                                <Button Grid.Column="2" Classes="paperAction" VerticalAlignment="Center" IsEnabled="{Binding IsAvailable}" Content="Queue" Click="OnHealthActionClick" />
+                                            </Grid>
+                                        </Border>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </StackPanel>
+                    </ScrollViewer>
+                </TabItem>
+
+                <TabItem Header="Education" IsVisible="{Binding ShowEducationTab}">
+                    <ScrollViewer VerticalScrollBarVisibility="Auto">
+                        <StackPanel Margin="6" Spacing="6">
+                            <ItemsControl IsVisible="{Binding ShowHouseholdMemberTabs}" ItemsSource="{Binding HouseholdMembers}">
+                                <ItemsControl.ItemsPanel>
+                                    <ItemsPanelTemplate>
+                                        <StackPanel Orientation="Horizontal" Spacing="4" />
+                                    </ItemsPanelTemplate>
+                                </ItemsControl.ItemsPanel>
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate x:DataType="vm:TownAffairsMemberTabViewModel">
+                                        <Button Classes="memberTab" Content="{Binding DisplayName}" IsEnabled="{Binding CanSelect}" Click="OnMemberTabClick" />
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                            <TextBlock FontStyle="Italic" TextWrapping="Wrap" Text="{Binding EducationContextText}" />
+                            <TextBlock IsVisible="{Binding ShowEducationEmpty}" TextWrapping="Wrap" Text="{Binding EducationEmptyText}" />
+                            <ItemsControl ItemsSource="{Binding EducationOptions}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate x:DataType="vm:PropertySelectionOption">
+                                        <Border Margin="2" Padding="10,7" Background="#25FFF4D9" BorderBrush="#A17A43" BorderThickness="1" CornerRadius="4" Opacity="{Binding DisplayOpacity}">
+                                            <Grid ColumnDefinitions="54,*,Auto" ColumnSpacing="10">
+                                                <TextBlock HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="28" Text="{Binding LeadingEmoji}" />
+                                                <StackPanel Grid.Column="1" Spacing="2">
+                                                    <TextBlock FontSize="14" FontWeight="Bold" TextWrapping="Wrap" Text="{Binding PrimaryText}" />
+                                                    <TextBlock FontSize="11.5" TextWrapping="Wrap" Text="{Binding SecondaryText}" />
+                                                    <TextBlock IsVisible="{Binding HasDetailsText}" FontSize="11.5" TextWrapping="Wrap" Text="{Binding DetailsText}" />
+                                                    <StackPanel Orientation="Horizontal" Spacing="8">
+                                                        <TextBlock FontSize="11.5" FontWeight="Bold" Text="{Binding PriceText}" />
+                                                        <TextBlock IsVisible="{Binding HasSuccessChance}" FontSize="11.5" FontWeight="Bold" Foreground="{Binding SuccessChanceBrush}" Text="{Binding SuccessChanceText}" />
+                                                    </StackPanel>
+                                                </StackPanel>
+                                                <Button Grid.Column="2" Classes="paperAction" VerticalAlignment="Center" Content="Study" IsEnabled="{Binding IsEnabled}" Click="OnEducationClick" />
+                                            </Grid>
+                                        </Border>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </StackPanel>
+                    </ScrollViewer>
+                </TabItem>
+
+                <TabItem Header="Bank" IsVisible="{Binding ShowBankTab}">
+                    <ScrollViewer VerticalScrollBarVisibility="Auto">
+                        <StackPanel Margin="6" Spacing="10">
+                            <TextBlock Classes="sectionHeader" Text="{Binding Snapshot.Bank.DisplayName}" />
+                            <TextBlock FontSize="12.5" TextWrapping="Wrap" Text="{Binding BankStatusText}" />
+
+                            <Border Padding="12,9" Background="#25FFF4D9" BorderBrush="#A17A43" BorderThickness="1" CornerRadius="4">
+                                <Grid ColumnDefinitions="54,*,Auto" ColumnSpacing="12">
+                                    <TextBlock HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="28" Text="🏦" />
+                                    <StackPanel Grid.Column="1" Spacing="2">
+                                        <TextBlock FontSize="14" FontWeight="Bold" Text="Take a Loan" />
+                                        <TextBlock FontSize="11.5" TextWrapping="Wrap" Text="Review the bank's current borrowing offers for this household." />
                                     </StackPanel>
-                                </Border>
-                            </DataTemplate>
-                        </ItemsControl.ItemTemplate>
-                    </ItemsControl>
-                </Grid>
-            </Border>
+                                    <Button Grid.Column="2" Classes="paperAction" VerticalAlignment="Center" IsEnabled="{Binding CanTakeLoan}" Content="View Offers" Click="OnTakeLoanClick" />
+                                </Grid>
+                            </Border>
 
-            <Button
+                            <Border Padding="12,9" Background="#25FFF4D9" BorderBrush="#A17A43" BorderThickness="1" CornerRadius="4">
+                                <Grid ColumnDefinitions="54,*,Auto" ColumnSpacing="12">
+                                    <TextBlock HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="28" Text="🤝" />
+                                    <StackPanel Grid.Column="1" Spacing="2">
+                                        <TextBlock FontSize="14" FontWeight="Bold" Text="Give a Loan" />
+                                        <TextBlock FontSize="11.5" TextWrapping="Wrap" Text="Review lending opportunities arranged through the local bank." />
+                                    </StackPanel>
+                                    <Button Grid.Column="2" Classes="paperAction" VerticalAlignment="Center" IsEnabled="{Binding CanGiveLoan}" Content="View Offers" Click="OnGiveLoanClick" />
+                                </Grid>
+                            </Border>
+                        </StackPanel>
+                    </ScrollViewer>
+                </TabItem>
+            </TabControl>
+
+            <controls:ImageStateButton
                 Grid.Row="3"
+                Width="170"
+                Height="60"
                 HorizontalAlignment="Center"
-                Classes="closeButton"
-                Click="OnCloseClick"
-                Content="Close" />
+                IdleSource="avares://Dynastia.App/Assets/UI/b_close_idle.png"
+                HoverSource="avares://Dynastia.App/Assets/UI/b_close_hover.png"
+                FallbackText="Close"
+                Click="OnCloseClick" />
         </Grid>
     </Grid>
 </Window>

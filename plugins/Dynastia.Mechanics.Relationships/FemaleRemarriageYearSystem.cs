@@ -221,6 +221,11 @@ public sealed class FemaleRemarriageYearSystem :
             husband,
             husbandOrigin);
 
+        _locations.SetForeignBirthplace(
+            husband,
+            identity.ForeignBirthplaceCity,
+            identity.ForeignBirthplaceCountry);
+
         GeneratedFamilyBackgroundGenerator.Assign(
             husband,
             husband.Surname,

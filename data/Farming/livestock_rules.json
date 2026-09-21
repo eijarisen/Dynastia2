@@ -1,0 +1,37 @@
+{
+  "schemaVersion": "1.0",
+  "oneLivestockUpgradePerFarmlandParcel": true,
+  "purchasePrice": 2500,
+  "saleValue": 2000,
+  "selection": "weighted_random_from_year_and_region_pool",
+  "mechanicalEquality": "All livestock types have identical mechanics; type is flavor only.",
+  "income": {
+    "maximumBoostAtFullLocalCoverage": 0.1,
+    "coverageFormula": "local livestock parcels / local farmland parcels",
+    "incomeMultiplierFormula": "1 + 0.10 * coverage"
+  },
+  "volatility": {
+    "maximumCompressionAtFullLocalCoverage": 0.2,
+    "rawWorkerMultiplierRange": [
+      0.0,
+      2.0
+    ],
+    "formula": "1 + (rawMultiplier - 1) * (1 - 0.20 * coverage)",
+    "examplesAtFullCoverage": {
+      "0.0": 0.2,
+      "0.5": 0.6,
+      "1.0": 1.0,
+      "1.5": 1.4,
+      "2.0": 1.8
+    }
+  },
+  "manualFarmlandSale": {
+    "farmlandSaleValue": 8000,
+    "extraLivestockSaleValue": 2000
+  },
+  "voluntaryRelocation": {
+    "sellFarmlandInOriginTown": true,
+    "sellLivestockWithParcel": true,
+    "historicalForcedMigrationOverridesThisRule": true
+  }
+}

@@ -41,9 +41,6 @@ public sealed partial class CareerPlugin : IGamePlugin
         var education = context.GetService<IEducationService>()
             ?? throw new InvalidOperationException("Education service is unavailable.");
 
-        var health = context.GetService<IHealthService>()
-            ?? throw new InvalidOperationException("Health service is unavailable.");
-
         var workCapacity = context.GetService<IWorkCapacityService>()
             ?? throw new InvalidOperationException("Work-capacity service is unavailable.");
 
@@ -166,11 +163,12 @@ public sealed partial class CareerPlugin : IGamePlugin
             actions,
             career,
             stats,
-            health,
             random,
             family,
             economy,
-            events);
+            events,
+            () => context.GetService<ICraftService>(),
+            () => context.GetService<IFarmingService>());
 
         systems.Register(
             new CareerExperienceYearSystem(

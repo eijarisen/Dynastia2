@@ -23,6 +23,7 @@ public sealed class StandardLocalCareerOpportunityService :
     private readonly IGameState _gameState;
     private readonly ILocationService _locations;
     private readonly IHistoricalTownCatalog _historicalTowns;
+    private readonly ILocalServiceTownResolver? _localServiceTowns;
 
     private readonly IReadOnlyDictionary<
         string,
@@ -43,11 +44,13 @@ public sealed class StandardLocalCareerOpportunityService :
         IGameState gameState,
         ILocationService locations,
         IHistoricalTownCatalog historicalTowns,
-        IGameDataService data)
+        IGameDataService data,
+        ILocalServiceTownResolver? localServiceTowns = null)
     {
         _gameState = gameState;
         _locations = locations;
         _historicalTowns = historicalTowns;
+        _localServiceTowns = localServiceTowns;
 
         _opportunityTags =
             ParseOpportunityTags(
@@ -141,6 +144,10 @@ public sealed class StandardLocalCareerOpportunityService :
     {
         ArgumentNullException.ThrowIfNull(town);
 
+        var marketTown =
+            _localServiceTowns?.Resolve(town)
+            ?? town;
+
         var effectiveYear =
             Math.Min(
                 _gameState.Year,
@@ -148,13 +155,13 @@ public sealed class StandardLocalCareerOpportunityService :
 
         var region =
             ResolveRegion(
-                town.RegionId,
+                marketTown.RegionId,
                 effectiveYear);
 
         var townTags =
-            !string.IsNullOrWhiteSpace(town.Id)
+            !string.IsNullOrWhiteSpace(marketTown.Id)
             && _townOpportunities.TryGetValue(
-                town.Id,
+                marketTown.Id,
                 out var configuredTownTags)
                 ? GetActiveTags(
                     configuredTownTags,
@@ -167,7 +174,7 @@ public sealed class StandardLocalCareerOpportunityService :
                 townTags);
 
         return new LocationOpportunitySnapshot(
-            town,
+            marketTown,
             region.Name,
             region.OpportunityTags,
             townTags,

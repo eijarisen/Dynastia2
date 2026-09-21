@@ -178,6 +178,12 @@ public partial class App : Application
             var economyService =
                 pluginContext.GetService<IEconomyService>();
 
+            var houseMarketService =
+                pluginContext.GetService<IHouseMarketService>();
+
+            var townProsperityService =
+                pluginContext.GetService<ITownProsperityService>();
+
             var farmingService =
                 pluginContext.GetService<IFarmingService>();
 
@@ -343,6 +349,8 @@ public partial class App : Application
                             healthService,
                             stressService,
                             economyService,
+                            houseMarketService,
+                            townProsperityService,
                             farmingService,
                             craftService,
                             loanService,

@@ -1,0 +1,12 @@
+﻿ActionId,InitialTab,SubjectRule,TownMode,Notes
+ui.town_affairs,institutions,selected_adult_household_member,resident,Opens Town Affairs normally.
+household.buy_house,housing,active_household,town_picker_then_remote_housing,Select Town first; no offers in picker.
+career.seek_employment,jobs,active_controller,resident,Keep exact action semantics; queue from Jobs tab.
+career.find_another_job,jobs,active_controller,resident,Keep exact action semantics; queue from Jobs tab.
+career.help_seek_employment,jobs,selected_adult_household_member,resident,Controller helps selected resident adult.
+career.help_find_better_job,jobs,selected_adult_household_member,resident,Controller helps selected resident adult.
+education.get_education,education,selected_adult_household_member,resident,Standard Education and Craft study stay unchanged.
+loan.take,bank,active_household,resident,Open the local Bank tab and preserve the existing loan action.
+loan.give,bank,active_household,resident,Open the local Bank tab and preserve the existing lending action.
+wellbeing.heal_relative,health,selected_household_member,resident,Patient may be a child; Town Affairs itself remains directly openable only for adults.
+wellbeing.therapy,health,selected_adult_household_member,resident,Therapy remains local-facility dependent.

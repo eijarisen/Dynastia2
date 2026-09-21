@@ -104,6 +104,13 @@ public interface IEconomyService
         IPerson person,
         TownInfo? town = null);
 
+    HousePropertyInfo AddHouse(
+        IPerson person,
+        TownInfo town,
+        decimal purchasePrice,
+        int baseResidentCapacity) =>
+        AddHouse(person, town);
+
     void AddExistingHouse(
         IPerson person,
         HousePropertyInfo house);
@@ -156,6 +163,15 @@ public interface IEconomyService
 
     decimal GetRentalIncome(TownInfo town);
 
+    decimal GetRentalIncome(HousePropertyInfo house)
+    {
+        ArgumentNullException.ThrowIfNull(house);
+        return Math.Round(
+            GetHouseValue(house) / 40m,
+            0,
+            MidpointRounding.AwayFromZero);
+    }
+
     IReadOnlyList<HousePropertyInfo> TakeAllHouses(
         IPerson person);
 
@@ -180,6 +196,12 @@ public interface IEconomyService
         IPerson person,
         Guid farmlandId,
         Guid? heirId);
+
+    bool SetFarmlandFlavor(
+        IPerson person,
+        Guid farmlandId,
+        string farmTypeId,
+        string? livestockTypeId) => false;
 
     IReadOnlyList<FarmlandAssetInfo> TakeAllFarmland(
         IPerson person);

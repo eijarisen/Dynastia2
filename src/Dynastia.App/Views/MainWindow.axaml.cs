@@ -132,11 +132,12 @@ public partial class MainWindow : Window
         if (DataContext is not MainWindowViewModel viewModel)
             return;
 
-        if (e.ActionId.Equals(
-                "ui.town_affairs",
-                StringComparison.OrdinalIgnoreCase))
+        var townAffairsRequest =
+            viewModel.CreateTownAffairsRequest(e.ActionId);
+
+        if (townAffairsRequest is not null)
         {
-            await OpenTownLifeAsync();
+            await OpenTownAffairsAsync(townAffairsRequest);
             return;
         }
 
@@ -233,71 +234,7 @@ public partial class MainWindow : Window
                 return;
             }
 
-            if (e.ActionId.Equals(
-                    "education.get_education",
-                    StringComparison.OrdinalIgnoreCase))
-            {
-                var educationOptions = viewModel.GetEducationSelectionOptions();
-                if (!educationOptions.Any(option => option.IsEnabled))
-                {
-                    viewModel.ReportPersistenceStatus(
-                        "No education option is currently available.");
-                    return;
-                }
 
-                var educationWindow = new PropertySelectionWindow(
-                    "Get Education",
-                    "Study",
-                    educationOptions,
-                    viewModel.GetEducationSelectionContextText(),
-                    showSearch: false,
-                    compact: true);
-                var selectedOptionId = await educationWindow.ShowDialog<string?>(this);
-                if (!string.IsNullOrWhiteSpace(selectedOptionId))
-                    viewModel.QueueEducationAction(selectedOptionId);
-                return;
-            }
-
-            if (e.ActionId.Equals(
-                    "career.seek_employment",
-                    StringComparison.OrdinalIgnoreCase)
-                || e.ActionId.Equals(
-                    "career.find_another_job",
-                    StringComparison.OrdinalIgnoreCase)
-                || e.ActionId.Equals(
-                    "career.help_seek_employment",
-                    StringComparison.OrdinalIgnoreCase)
-                || e.ActionId.Equals(
-                    "career.help_find_better_job",
-                    StringComparison.OrdinalIgnoreCase))
-            {
-                var model =
-                    viewModel.GetJobOpportunityDialog(
-                        e.ActionId);
-
-                if (model is null
-                    || model.Opportunities.Count == 0)
-                {
-                    viewModel.ReportPersistenceStatus(
-                        "No suitable vacancies are currently available.");
-                    return;
-                }
-
-                var jobOpportunitiesWindow =
-                    new JobOpportunitiesWindow(model);
-
-                var selection =
-                    await jobOpportunitiesWindow.ShowDialog<JobOpportunityInfo?>(this);
-
-                if (selection is not null)
-                {
-                    viewModel.QueueJobApplication(
-                        e.ActionId,
-                        selection);
-                }
-
-                return;
-            }
 
             if (e.ActionId.Equals(
                     "relationship.find_spouse",
@@ -398,17 +335,26 @@ public partial class MainWindow : Window
 
             var window = new PropertySelectionWindow(
                 isBuy ? "Select Town" : "Select Property",
-                isBuy ? "Buy" : isMoveOut ? "Provide House" : "Sell",
-                options);
+                isBuy ? "View Housing" : isMoveOut ? "Provide House" : "Sell",
+                options,
+                compact: isBuy);
 
             var selectedId =
                 await window.ShowDialog<string?>(this);
 
             if (!string.IsNullOrWhiteSpace(selectedId))
             {
-                viewModel.QueueActionWithSelection(
-                    e.ActionId,
-                    selectedId);
+                if (isBuy)
+                {
+                    await OpenTownAffairsAsync(
+                        viewModel.CreateHousingTownAffairsRequest(selectedId));
+                }
+                else
+                {
+                    viewModel.QueueActionWithSelection(
+                        e.ActionId,
+                        selectedId);
+                }
             }
         }
         catch (Exception exception)
@@ -927,7 +873,8 @@ public partial class MainWindow : Window
         {
             var window = new FamilyInventoryWindow(
                 viewModel,
-                initialTab);
+                initialTab,
+                TownLifeService);
             await window.ShowDialog(this);
         }
         catch (Exception exception)
@@ -980,7 +927,8 @@ public partial class MainWindow : Window
         }
     }
 
-    private async Task OpenTownLifeAsync()
+    private async Task OpenTownAffairsAsync(
+        TownAffairsRequest request)
     {
         if (_townLifeDialogOpen
             || DataContext is not MainWindowViewModel viewModel)
@@ -995,25 +943,16 @@ public partial class MainWindow : Window
             return;
         }
 
-        var representative =
-            viewModel.GetTownLifeRepresentative();
-
-        if (representative is null)
-        {
-            viewModel.ReportPersistenceStatus(
-                "Town / City Affairs is unavailable because no active household is selected.");
-            return;
-        }
-
         _townLifeDialogOpen = true;
         SetPaperDialogBackdrop(true);
 
         try
         {
             var snapshot =
-                TownLifeService.GetCurrentTownLife(
-                    representative);
-            var window = new TownLifeWindow(snapshot);
+                TownLifeService.GetTownLife(request.TownId);
+            var model =
+                viewModel.CreateTownAffairsViewModel(snapshot, request);
+            var window = new TownLifeWindow(model);
             await window.ShowDialog(this);
         }
         catch (Exception exception)
@@ -1041,15 +980,13 @@ public partial class MainWindow : Window
         if (_mapDialogOpen)
             return;
 
+        var viewModel = DataContext as MainWindowViewModel;
         if (MapDataSource is null
-            || GenealogySelection is null)
+            || GenealogySelection is null
+            || viewModel is null)
         {
-            if (DataContext
-                is MainWindowViewModel viewModel)
-            {
-                viewModel.ReportPersistenceStatus(
-                    "Map is unavailable because the Location service did not initialize.");
-            }
+            viewModel?.ReportPersistenceStatus(
+                "Map is unavailable because the Location service did not initialize.");
 
             return;
         }
@@ -1063,6 +1000,7 @@ public partial class MainWindow : Window
                 new TownMapWindow(
                     MapDataSource,
                     GenealogySelection,
+                    viewModel,
                     TownLifeService);
 
             await window.ShowDialog(
@@ -1073,12 +1011,8 @@ public partial class MainWindow : Window
             Console.Error.WriteLine(
                 exception);
 
-            if (DataContext
-                is MainWindowViewModel viewModel)
-            {
-                viewModel.ReportPersistenceStatus(
-                    $"Map failed: {exception.Message}");
-            }
+            viewModel.ReportPersistenceStatus(
+                $"Map failed: {exception.Message}");
         }
         finally
         {

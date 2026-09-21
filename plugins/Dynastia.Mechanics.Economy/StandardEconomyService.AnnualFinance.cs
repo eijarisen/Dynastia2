@@ -82,7 +82,7 @@ public sealed partial class StandardEconomyService
 
         var rentalIncome = GetHouses(owner)
             .Where(house => house.IsRented)
-            .Sum(house => GetRentalIncome(house.Town));
+            .Sum(GetRentalIncome);
 
         if (rentalIncome > 0m)
         {

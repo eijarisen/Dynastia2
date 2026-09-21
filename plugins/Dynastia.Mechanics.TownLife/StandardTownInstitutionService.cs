@@ -6,13 +6,16 @@ internal sealed class StandardTownInstitutionService : ITownInstitutionService
 {
     private readonly TownInstitutionCatalog _catalog;
     private readonly ILocalCareerOpportunityService _opportunities;
+    private readonly ILocalServiceTownResolver? _localServiceTowns;
 
     public StandardTownInstitutionService(
         TownInstitutionCatalog catalog,
-        ILocalCareerOpportunityService opportunities)
+        ILocalCareerOpportunityService opportunities,
+        ILocalServiceTownResolver? localServiceTowns = null)
     {
         _catalog = catalog;
         _opportunities = opportunities;
+        _localServiceTowns = localServiceTowns;
     }
 
     public TownInstitutionSnapshot Resolve(
@@ -21,8 +24,12 @@ internal sealed class StandardTownInstitutionService : ITownInstitutionService
     {
         ArgumentNullException.ThrowIfNull(town);
 
+        var serviceTown =
+            _localServiceTowns?.Resolve(town.Id, year)
+            ?? town;
+
         var opportunitySnapshot =
-            _opportunities.GetOpportunitySnapshot(town);
+            _opportunities.GetOpportunitySnapshot(serviceTown);
 
         var activeTags = opportunitySnapshot.TownOpportunityTags
             .Concat(opportunitySnapshot.RegionOpportunityTags)
@@ -37,7 +44,7 @@ internal sealed class StandardTownInstitutionService : ITownInstitutionService
         foreach (var rule in _catalog.InferenceRules)
         {
             if (!IsActive(year, rule.StartYear, rule.EndYear)
-                || town.Population < rule.MinPopulation
+                || serviceTown.Population < rule.MinPopulation
                 || !HasRequiredOpportunity(rule.RequiredAnyOpportunityTags, activeTags))
             {
                 continue;
@@ -49,7 +56,7 @@ internal sealed class StandardTownInstitutionService : ITownInstitutionService
 
         foreach (var rule in _catalog.Overrides)
         {
-            if (!town.Id.Equals(rule.PlaceId, StringComparison.OrdinalIgnoreCase)
+            if (!serviceTown.Id.Equals(rule.PlaceId, StringComparison.OrdinalIgnoreCase)
                 || !IsActive(year, rule.StartYear, rule.EndYear))
             {
                 continue;
@@ -60,6 +67,9 @@ internal sealed class StandardTownInstitutionService : ITownInstitutionService
                     ? rule.Tier
                     : Math.Max(tiers[rule.InstitutionId], rule.Tier);
         }
+
+        if (tiers.ContainsKey("administration"))
+            tiers["administration"] = Math.Max(1, tiers["administration"]);
 
         var institutions = _catalog.InstitutionTypes
             .Select(type =>

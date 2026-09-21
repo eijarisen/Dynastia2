@@ -45,8 +45,8 @@
         </Style>
 
         <Style Selector="ListBox.compact Border.selectionOption">
-            <Setter Property="Margin" Value="2" />
-            <Setter Property="Padding" Value="10,5" />
+            <Setter Property="Margin" Value="1" />
+            <Setter Property="Padding" Value="8,3" />
         </Style>
 
         <Style Selector="ListBox.compact TextBlock.optionPrimary">
@@ -119,8 +119,19 @@
                                 Background="#28FFF8E8"
                                 BorderBrush="#A78959"
                                 BorderThickness="0,0,0,1">
-                                <Grid ColumnDefinitions="*,Auto" ColumnSpacing="18">
-                                    <StackPanel Spacing="3">
+                                <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="12">
+                                    <Border
+                                        IsVisible="{Binding HasLeadingEmoji}"
+                                        Width="44"
+                                        Height="44"
+                                        VerticalAlignment="Top"
+                                        Background="#35FFF4D9"
+                                        BorderBrush="#93662F"
+                                        BorderThickness="1"
+                                        CornerRadius="4">
+                                        <TextBlock HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="25" Text="{Binding LeadingEmoji}" />
+                                    </Border>
+                                    <StackPanel Grid.Column="1" Spacing="3">
                                         <TextBlock
                                             Classes="optionPrimary"
                                             FontFamily="Georgia"
@@ -152,7 +163,7 @@
                                             Text="{Binding DetailsText}" />
                                     </StackPanel>
                                     <TextBlock
-                                        Grid.Column="1"
+                                        Grid.Column="2"
                                         VerticalAlignment="Center"
                                         FontFamily="Georgia"
                                         FontSize="15"

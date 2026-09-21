@@ -35,6 +35,16 @@ public sealed partial class HouseholdsPlugin : IGamePlugin
             ?? throw new InvalidOperationException(
                 "Household capacity service is unavailable.");
 
+        var houseMarket =
+            context.GetService<IHouseMarketService>()
+            ?? throw new InvalidOperationException(
+                "House market service is unavailable.");
+
+        var farming =
+            context.GetService<IFarmingService>()
+            ?? throw new InvalidOperationException(
+                "Farming service is unavailable.");
+
         var locations =
             context.GetService<ILocationService>()
             ?? throw new InvalidOperationException(
@@ -123,6 +133,7 @@ public sealed partial class HouseholdsPlugin : IGamePlugin
                 householdCapacity,
                 locations,
                 career,
+                farming,
                 events);
 
         context.AddService<IHouseholdService>(
@@ -285,8 +296,10 @@ public sealed partial class HouseholdsPlugin : IGamePlugin
             households,
             economy,
             householdCapacity,
+            houseMarket,
             locations,
             career,
+            farming,
             random,
             events);
 

@@ -44,6 +44,7 @@ public sealed class InheritancePlugin : IGamePlugin
                 family,
                 economy,
                 heirlooms,
+                () => context.GetService<IFarmingService>(),
                 events));
 
         context.Log(

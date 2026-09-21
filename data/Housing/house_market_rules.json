@@ -1,0 +1,90 @@
+{
+  "schemaVersion": "1.0",
+  "standardCapacity": 6,
+  "offerCapacities": [
+    2,
+    4,
+    6,
+    8
+  ],
+  "capacityPriceMultipliers": {
+    "2": 0.7,
+    "4": 0.85,
+    "6": 1.0,
+    "8": 1.15
+  },
+  "capacityWeightsBySettlement": {
+    "SmallTown": {
+      "2": 35,
+      "4": 35,
+      "6": 25,
+      "8": 5
+    },
+    "Town": {
+      "2": 20,
+      "4": 30,
+      "6": 35,
+      "8": 15
+    },
+    "City": {
+      "2": 10,
+      "4": 25,
+      "6": 40,
+      "8": 25
+    },
+    "MajorCity": {
+      "2": 5,
+      "4": 15,
+      "6": 40,
+      "8": 40
+    }
+  },
+  "offerCountRangeBySettlement": {
+    "SmallTown": [
+      0,
+      2
+    ],
+    "Town": [
+      0,
+      3
+    ],
+    "City": [
+      1,
+      4
+    ],
+    "MajorCity": [
+      2,
+      5
+    ]
+  },
+  "offerRandomPriceMultiplier": [
+    0.8,
+    1.2
+  ],
+  "prosperityPrice": {
+    "formula": "clamp(1 + (ProsperityIndex - 100) * 0.004, 0.90, 1.10)",
+    "minimum": 0.9,
+    "maximum": 1.1
+  },
+  "offerPriceFormula": "round(CurrentTownBaseHousePrice * CapacityMultiplier * ProsperityPriceMultiplier * OfferRandomMultiplier)",
+  "appraisedMarketValueFormula": "round(CurrentTownBaseHousePrice * CapacityMultiplier * ProsperityPriceMultiplier + extension_improvements)",
+  "offerGeneration": {
+    "deterministic": true,
+    "key": "world_seed + place_id + offer_year + slot + salt",
+    "usesGlobalGameRandom": false,
+    "stableForWholeYear": true,
+    "queuedPurchaseHonorsOfferYear": true
+  },
+  "extension": {
+    "capacityPerExtension": 2,
+    "existingCostRule": "25% of the house's original purchase price per extension",
+    "note": "This rework changes initial/base capacity and purchase-offer pricing. It does not alter the already agreed queued Extend House cost."
+  },
+  "rental": {
+    "annualIncomeFormula": "round(CurrentAppraisedHouseValue / 40)",
+    "reason": "Different-capacity houses must not yield identical rent."
+  },
+  "sale": {
+    "saleValueMultiplier": 0.8
+  }
+}

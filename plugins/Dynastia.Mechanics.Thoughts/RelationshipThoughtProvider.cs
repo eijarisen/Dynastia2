@@ -5,6 +5,14 @@ namespace Dynastia.Mechanics.Thoughts;
 internal sealed class RelationshipThoughtProvider :
     IThoughtProvider
 {
+    private readonly IFarmingService _farming;
+
+    public RelationshipThoughtProvider(
+        IFarmingService farming)
+    {
+        _farming = farming;
+    }
+
     public string Id =>
         "thoughts.relationships";
 
@@ -185,6 +193,11 @@ internal sealed class RelationshipThoughtProvider :
                 _ => "🥰"
             };
 
+        var currentIssues =
+            satisfaction.CurrentIssues
+                .Where(issue => IsIssueStillCurrent(issue, person, context))
+                .ToList();
+
         var issue =
             satisfaction.Label.Equals(
                 "Thriving",
@@ -192,7 +205,7 @@ internal sealed class RelationshipThoughtProvider :
                 ? string.Empty
                 : SelectIssue(
                     person,
-                    satisfaction.CurrentIssues,
+                    currentIssues,
                     context.Year,
                     context.GameState.DynastySurname);
 
@@ -215,6 +228,53 @@ internal sealed class RelationshipThoughtProvider :
                     satisfaction.Label
                 )));
     }
+
+
+    private bool IsIssueStillCurrent(
+        string issue,
+        IPerson person,
+        ThoughtContext context)
+    {
+        if (!issue.Contains(
+                "unemployed",
+                StringComparison.OrdinalIgnoreCase))
+        {
+            return true;
+        }
+
+        var spouse = context.Family.GetSpouse(person);
+        if (spouse is null)
+            return true;
+
+        var husband = context.Family.GetSex(person) == Sex.Male
+            ? person
+            : spouse;
+        var wife = husband.Id == person.Id
+            ? spouse
+            : person;
+
+        if (issue.Contains(
+                "husband",
+                StringComparison.OrdinalIgnoreCase))
+        {
+            return !IsEconomicallyEmployed(husband, context);
+        }
+
+        if (issue.Contains(
+                "wife",
+                StringComparison.OrdinalIgnoreCase))
+        {
+            return !IsEconomicallyEmployed(wife, context);
+        }
+
+        return true;
+    }
+
+    private bool IsEconomicallyEmployed(
+        IPerson person,
+        ThoughtContext context) =>
+        context.Career.GetCareer(person).IsEmployed
+        || _farming.IsWorkingFarmWorker(person, person);
 
     private static string SelectIssue(
         IPerson person,

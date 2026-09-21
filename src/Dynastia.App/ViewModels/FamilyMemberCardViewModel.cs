@@ -8,6 +8,7 @@ public sealed class FamilyMemberCardViewModel
         IPerson person,
         IFamilyService? family,
         IHealthService? health,
+        IStressService? stress,
         IEducationService? education,
         ICareerService? career,
         IFarmingService? farming,
@@ -90,6 +91,8 @@ public sealed class FamilyMemberCardViewModel
 
         var healthTooltip =
             "Unknown";
+        var conditionTooltip =
+            string.Empty;
 
         if (health is not null)
         {
@@ -111,6 +114,11 @@ public sealed class FamilyMemberCardViewModel
 
                 healthTooltip =
                     HealthText;
+                conditionTooltip = snapshot.Conditions.Count == 0
+                    ? string.Empty
+                    : string.Join(
+                        ", ",
+                        snapshot.Conditions.Select(condition => condition.Name));
             }
             else
             {
@@ -130,6 +138,7 @@ public sealed class FamilyMemberCardViewModel
 
         ShowChildEducation =
             IsLiving
+            && person.Age >= 6
             && person.Age < 18
             && education is not null;
 
@@ -299,7 +308,18 @@ public sealed class FamilyMemberCardViewModel
                 TooltipThoughtText);
 
         HealthTooltipText =
-            $"Health: {healthTooltip}";
+            string.IsNullOrWhiteSpace(conditionTooltip)
+                ? $"Health: {healthTooltip}"
+                : $"Health: {healthTooltip} • {conditionTooltip}";
+
+        var stressSnapshot =
+            IsLiving
+                ? stress?.GetStress(person)
+                : null;
+        StressTooltipText = stressSnapshot is null
+            ? string.Empty
+            : $"Stress: {stressSnapshot.Total:0.#}/10";
+        ShowStress = stressSnapshot is not null;
 
         var childHappinessSnapshot =
             IsLiving && person.Age < 18
@@ -333,22 +353,24 @@ public sealed class FamilyMemberCardViewModel
             IsLiving
             && person.Age >= 18;
 
+        var deceasedInfoLines = new List<string>();
+        if (person.Age >= 6)
+            deceasedInfoLines.Add($"Education: {educationTooltip}");
+        deceasedInfoLines.Add($"Parents: {parentsTooltip}");
+        deceasedInfoLines.Add($"Spouse: {spouseTooltip}");
+        deceasedInfoLines.Add(
+            $"Children: " +
+            (childNames.Count == 0
+                ? "None"
+                : string.Join(", ", childNames)));
+        deceasedInfoLines.Add($"Last occupation: {lastOccupationTooltip}");
+
         InfoTooltipText =
             IsLiving
                 ? string.Empty
                 : string.Join(
                     Environment.NewLine,
-                    new[]
-                    {
-                        $"Education: {educationTooltip}",
-                        $"Parents: {parentsTooltip}",
-                        $"Spouse: {spouseTooltip}",
-                        $"Children: " +
-                        (childNames.Count == 0
-                            ? "None"
-                            : string.Join(", ", childNames)),
-                        $"Last occupation: {lastOccupationTooltip}"
-                    });
+                    deceasedInfoLines);
 
         SelectCommand =
             new RelayCommand(
@@ -395,6 +417,11 @@ public sealed class FamilyMemberCardViewModel
 
     public string HealthTooltipText { get; } =
         string.Empty;
+
+    public string StressTooltipText { get; } =
+        string.Empty;
+
+    public bool ShowStress { get; }
 
     public int ChildEducationLevel { get; }
 

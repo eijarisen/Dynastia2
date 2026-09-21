@@ -112,11 +112,14 @@ internal sealed class HistoricalMigrationService
             && farmlandReplacementChance > 0
             && _random.Chance(farmlandReplacementChance))
         {
-            _economy.AddFarmland(
+            var replacementFarmland = _economy.AddFarmland(
                 head,
                 destination,
                 _state.Year,
                 $"historical_event:{historicalEvent.Id}");
+            _farming?.EnsureFarmlandFlavor(
+                head,
+                replacementFarmland.Id);
         }
 
         _events.Publish(new GameEvent

@@ -90,7 +90,8 @@ public sealed class ThoughtsPlugin :
             new FamilyThoughtProvider());
 
         providers.Register(
-            new RelationshipThoughtProvider());
+            new RelationshipThoughtProvider(
+                farming));
 
         providers.Register(
             new HealthThoughtProvider());

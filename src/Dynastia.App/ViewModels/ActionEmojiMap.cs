@@ -81,15 +81,13 @@ public static class ActionEmojiMap
                 ["loan.take"] = "🏦"
             };
 
-    public static string Format(
-        string actionId,
-        string label)
+    public static string GetEmoji(string actionId)
     {
         if (actionId.StartsWith(
             "household.move.",
             StringComparison.OrdinalIgnoreCase))
         {
-            return $"🚚 {label}";
+            return "🚚";
         }
 
         if (actionId.StartsWith(
@@ -99,32 +97,33 @@ public static class ActionEmojiMap
                 "craft.teach.",
                 StringComparison.OrdinalIgnoreCase))
         {
-            return $"🛠️ {label}";
+            return "🛠️";
         }
 
-        if (!Emojis.TryGetValue(
-            actionId,
-            out var emoji))
-        {
-            emoji = actionId.StartsWith("career.", StringComparison.OrdinalIgnoreCase)
-                ? "💼"
-                : actionId.StartsWith("relationship.", StringComparison.OrdinalIgnoreCase)
-                    ? "💞"
-                    : actionId.StartsWith("household.", StringComparison.OrdinalIgnoreCase)
-                        ? "🏠"
-                        : actionId.StartsWith("family_relations.", StringComparison.OrdinalIgnoreCase)
-                            ? "👪"
-                            : actionId.StartsWith("loan.", StringComparison.OrdinalIgnoreCase)
-                                ? "🏦"
-                                : actionId.StartsWith("craft.", StringComparison.OrdinalIgnoreCase)
-                                    ? "🛠️"
-                                    : actionId.StartsWith("farming.", StringComparison.OrdinalIgnoreCase)
-                                        ? "🌾"
-                                        : actionId.StartsWith("education.", StringComparison.OrdinalIgnoreCase)
-                                            ? "🎓"
-                                            : "⚙️";
-        }
+        if (Emojis.TryGetValue(actionId, out var emoji))
+            return emoji;
 
-        return $"{emoji} {label}";
+        return actionId.StartsWith("career.", StringComparison.OrdinalIgnoreCase)
+            ? "💼"
+            : actionId.StartsWith("relationship.", StringComparison.OrdinalIgnoreCase)
+                ? "💞"
+                : actionId.StartsWith("household.", StringComparison.OrdinalIgnoreCase)
+                    ? "🏠"
+                    : actionId.StartsWith("family_relations.", StringComparison.OrdinalIgnoreCase)
+                        ? "👪"
+                        : actionId.StartsWith("loan.", StringComparison.OrdinalIgnoreCase)
+                            ? "🏦"
+                            : actionId.StartsWith("craft.", StringComparison.OrdinalIgnoreCase)
+                                ? "🛠️"
+                                : actionId.StartsWith("farming.", StringComparison.OrdinalIgnoreCase)
+                                    ? "🌾"
+                                    : actionId.StartsWith("education.", StringComparison.OrdinalIgnoreCase)
+                                        ? "🎓"
+                                        : "⚙️";
     }
+
+    public static string Format(
+        string actionId,
+        string label) =>
+        $"{GetEmoji(actionId)} {label}";
 }

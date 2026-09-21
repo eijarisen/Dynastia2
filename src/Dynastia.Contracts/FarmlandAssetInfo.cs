@@ -5,4 +5,10 @@ public sealed record FarmlandAssetInfo(
     TownInfo Town,
     int AcquiredYear,
     string AcquisitionSource,
-    Guid? AssignedHeirId = null);
+    Guid? AssignedHeirId = null,
+    string FarmTypeId = "",
+    string FarmTypeDisplayName = "",
+    string FarmTypeEmoji = "",
+    string? LivestockTypeId = null,
+    string? LivestockDisplayName = null,
+    string? LivestockEmoji = null);

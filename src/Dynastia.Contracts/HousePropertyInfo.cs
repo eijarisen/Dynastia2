@@ -7,7 +7,8 @@ public sealed record HousePropertyInfo(
     bool IsRented,
     Guid? AssignedHeirId = null,
     decimal PurchasePrice = 0m,
-    int CapacityExtensions = 0)
+    int CapacityExtensions = 0,
+    int BaseResidentCapacity = 6)
 {
     public string Status =>
         IsResidence
@@ -21,7 +22,8 @@ public sealed record HousePropertyInfo(
             MidpointRounding.AwayFromZero);
 
     public int ResidentCapacity =>
-        8 + Math.Max(0, CapacityExtensions) * 2;
+        Math.Max(2, BaseResidentCapacity)
+        + Math.Max(0, CapacityExtensions) * 2;
 
     public decimal ImprovementValue =>
         ExtensionCost * Math.Max(0, CapacityExtensions);

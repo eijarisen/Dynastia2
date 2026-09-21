@@ -146,9 +146,12 @@ public sealed class TownLifeBatch1Tests
         Assert.Contains("TownProsperityGraph", townWindow);
         Assert.Contains("Local Economy", townWindow);
         Assert.Contains("InstitutionCards", townWindow);
-        Assert.DoesNotContain("Text=\"Education\"", townWindow);
-        Assert.DoesNotContain("Text=\"Finance\"", townWindow);
-        Assert.DoesNotContain("Text=\"Healthcare\"", townWindow);
+        Assert.Contains("Header=\"Institutions\"", townWindow);
+        Assert.Contains("Header=\"Housing\"", townWindow);
+        Assert.Contains("Header=\"Jobs\"", townWindow);
+        Assert.Contains("Header=\"Education\"", townWindow);
+        Assert.Contains("Header=\"Health\"", townWindow);
+        Assert.DoesNotContain("Header=\"Instructions\"", townWindow);
         Assert.DoesNotContain("IActionRegistry", plugin);
         Assert.Contains("TownProsperityYearSystem", plugin);
     }

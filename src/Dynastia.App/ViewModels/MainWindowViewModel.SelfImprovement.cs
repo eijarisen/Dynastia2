@@ -16,9 +16,6 @@ public sealed partial class MainWindowViewModel
     private const string ReligiousStudyActionId =
         "personality.religious_study";
 
-    private const string TherapyActionId =
-        "wellbeing.therapy";
-
     private static readonly SelfImprovementDefinition[]
         SelfImprovementDefinitions =
         [
@@ -92,22 +89,6 @@ public sealed partial class MainWindowViewModel
                 && value < 5)
             .ToList();
 
-
-        if (availableActions.TryGetValue(
-                TherapyActionId,
-                out var therapy))
-        {
-            options.Add(
-                new SelfImprovementOption(
-                    TherapyActionId,
-                    "Psychotherapy",
-                    therapy.Label,
-                    null,
-                    therapy.DisplayCost ?? 1500m,
-                    therapy.Description,
-                    true,
-                    "Available"));
-        }
 
         if (availableActions.TryGetValue(
                 ReligiousStudyActionId,
@@ -191,9 +172,6 @@ public sealed partial class MainWindowViewModel
         IsStatImprovementAction(actionId)
         || actionId.Equals(
             ReligiousStudyActionId,
-            StringComparison.OrdinalIgnoreCase)
-        || actionId.Equals(
-            TherapyActionId,
             StringComparison.OrdinalIgnoreCase);
 
     private static GameActionDefinition
@@ -203,7 +181,7 @@ public sealed partial class MainWindowViewModel
             Id = SelfImprovementUiActionId,
             Label = "Self Improvement",
             Description =
-                "Choose personal training, Religious Study or Psychotherapy. Prices vary by option and each uses this household's annual action.",
+                "Choose personal training or Religious Study. Prices vary by option and each uses this household's annual action.",
             Mode = ActionExecutionMode.Queued,
             QueuePhase = YearPhase.QueuedActionsEarly,
             IsAvailable = _ => true,

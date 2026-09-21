@@ -85,6 +85,38 @@ public sealed partial class StandardLocationService :
             OnEventPublished;
     }
 
+
+    public string GetBirthplaceDisplayName(
+        IPerson person)
+    {
+        ArgumentNullException.ThrowIfNull(person);
+        var component = person.Components.Get<LocationComponent>();
+        if (component is not null
+            && !string.IsNullOrWhiteSpace(component.ForeignBirthplaceCity)
+            && !string.IsNullOrWhiteSpace(component.ForeignBirthplaceCountry))
+        {
+            return $"{component.ForeignBirthplaceCity}, {component.ForeignBirthplaceCountry}";
+        }
+
+        return GetLocation(person).Birthplace.DisplayName;
+    }
+
+    public void SetForeignBirthplace(
+        IPerson person,
+        string? city,
+        string? country)
+    {
+        ArgumentNullException.ThrowIfNull(person);
+        var component = person.Components.Get<LocationComponent>()
+            ?? new LocationComponent();
+
+        component.ForeignBirthplaceCity =
+            string.IsNullOrWhiteSpace(city) ? null : city.Trim();
+        component.ForeignBirthplaceCountry =
+            string.IsNullOrWhiteSpace(country) ? null : country.Trim();
+        person.Components.Set(component);
+    }
+
     public LocationSnapshot GetLocation(
         IPerson person)
     {
@@ -273,7 +305,7 @@ public sealed partial class StandardLocationService :
                 $"Location {role} '{placeId}' is not a valid permanent PlaceId.");
     }
 
-    private TownInfo? FindTownAtYear(
+    public TownInfo? FindTownAtYear(
         string placeId,
         int year)
     {

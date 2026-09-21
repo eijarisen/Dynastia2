@@ -4,7 +4,11 @@ public static class FarmingRules
 {
     public const decimal PurchasePrice = 10000m;
     public const decimal SalePrice = 8000m;
+    public const decimal LivestockPurchasePrice = 2500m;
+    public const decimal LivestockSalePrice = 2000m;
     public const decimal WorkerBaseIncomeScale = 2m;
+    public const decimal MaximumLivestockIncomeBoost = 0.10m;
+    public const decimal MaximumLivestockVolatilityCompression = 0.20m;
 
     public static int GetActiveWorkerCount(
         int localParcelCount,
@@ -14,6 +18,32 @@ public static class FarmingRules
             return 0;
 
         return Math.Min(localParcelCount * 2, eligibleWorkers);
+    }
+
+    public static decimal GetLivestockCoverage(
+        int localParcelCount,
+        int localLivestockCount)
+    {
+        if (localParcelCount <= 0 || localLivestockCount <= 0)
+            return 0m;
+
+        return Math.Clamp(
+            (decimal)localLivestockCount / localParcelCount,
+            0m,
+            1m);
+    }
+
+    public static decimal GetLivestockIncomeMultiplier(decimal coverage) =>
+        1m + MaximumLivestockIncomeBoost * Math.Clamp(coverage, 0m, 1m);
+
+    public static decimal AdjustVolatilityMultiplier(
+        decimal rawMultiplier,
+        decimal coverage)
+    {
+        var normalizedCoverage = Math.Clamp(coverage, 0m, 1m);
+        return 1m
+            + (rawMultiplier - 1m)
+            * (1m - MaximumLivestockVolatilityCompression * normalizedCoverage);
     }
 
     public static decimal InterpolateEraMultiplier(

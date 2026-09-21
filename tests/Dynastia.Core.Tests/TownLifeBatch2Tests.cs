@@ -117,60 +117,106 @@ public sealed class TownLifeBatch2Tests
     }
 
     [Fact]
-    public void ForecastReadsProsperityWithoutConsumingRandomAndAnnualDriftDoesConsumeRandom()
+    public void UntrackedProsperityReadsArePureAndDoNotPersistHistory()
     {
         var (_, service, town) = CreateProsperityService("forecast-town");
-        var random = new CountingRandom();
 
         _ = service.GetIncomeMultiplier(town, LocalEconomicStrength.Normal);
-        _ = service.Get(town);
-        Assert.Equal(0, random.CallCount);
+        TownProsperitySnapshot? snapshot = null;
+        for (var index = 0; index < 100; index++)
+            snapshot = service.Get(town);
 
-        service.AdvanceTrackedTowns(random);
-        Assert.Equal(0, random.CallCount); // no year has advanced yet
+        Assert.Empty(service.GetTrackedStates());
+        Assert.NotNull(snapshot);
+        Assert.Empty(snapshot!.HistoryPoints);
+    }
+
+    [Theory]
+    [InlineData(0.05, -2)]
+    [InlineData(0.15, -1)]
+    [InlineData(0.50, 0)]
+    [InlineData(0.75, 1)]
+    [InlineData(0.95, 2)]
+    public void ProsperityDriftKeepsApprovedWeightedDistribution(double roll, int expected)
+    {
+        var rules = TownProsperityRules.Load(DataService());
+        Assert.Equal(expected, rules.DrawOrdinaryDrift(roll));
     }
 
     [Fact]
     public void OrdinaryDriftAndMeanReversionStayWithinThreePointsPerYear()
     {
         var (state, service, town) = CreateProsperityService("bounded-drift-town");
-        _ = service.Get(town);
+        service.Track(town);
         var tracked = Assert.Single(service.GetTrackedStates());
         tracked.BaseIndex = 90;
+        var before = tracked.BaseIndex;
 
         state.Year += 1;
-        service.AdvanceTrackedTowns(new FixedDriftRandom(0.95, chanceResult: true));
+        service.AdvanceTrackedTowns();
 
-        // 0.95 selects +2; successful mean reversion adds at most +1.
-        Assert.Equal(93, tracked.BaseIndex);
-        Assert.Equal(3, tracked.LastTrend);
+        Assert.InRange(Math.Abs(tracked.BaseIndex - before), 0, 3);
+        Assert.InRange(Math.Abs(tracked.LastTrend), 0, 3);
     }
 
     [Fact]
-    public void NextYearDriftConsumesRandomOnlyForTrackedTowns()
+    public void InspectingUnrelatedTownsDoesNotChangeTrackedTownSetOrAnnualAdvance()
     {
         var (state, service, town) = CreateProsperityService("drift-town");
-        var random = new CountingRandom();
-        _ = service.Get(town);
+        service.Track(town);
+        var tracked = Assert.Single(service.GetTrackedStates());
+
+        for (var index = 0; index < 20; index++)
+            _ = service.Get(Town($"unrelated-{index}"));
+
+        Assert.Single(service.GetTrackedStates());
+        Assert.Same(tracked, service.GetTrackedStates()[0]);
 
         state.Year += 1;
-        service.AdvanceTrackedTowns(random);
+        service.AdvanceTrackedTowns();
 
-        Assert.True(random.CallCount >= 1);
         Assert.Single(service.GetTrackedStates());
+        Assert.Equal(state.Year, tracked.LastAdvancedYear);
     }
 
 
     [Fact]
-    public void ProsperitySnapshotKeepsOneHistoryPointPerAdvancedYear()
+    public void TownInspectionOrderDoesNotChangeProsperityOrSharedRandomOutcome()
+    {
+        var anchorId = Guid.Parse("11111111-2222-3333-4444-555555555555");
+        var randomA = new SequenceRandom();
+        var randomB = new SequenceRandom();
+        var (stateA, serviceA, townA) = CreateProsperityService("active-town", anchorId, randomA);
+        var (stateB, serviceB, townB) = CreateProsperityService("active-town", anchorId, randomB);
+        serviceA.Track(townA);
+        serviceB.Track(townB);
+
+        _ = serviceA.Get(Town("inspection-a"));
+        _ = serviceA.Get(Town("inspection-b"));
+        _ = serviceB.Get(Town("inspection-b"));
+        _ = serviceB.Get(Town("inspection-a"));
+
+        stateA.Year += 1;
+        stateB.Year += 1;
+        serviceA.AdvanceTrackedTowns();
+        serviceB.AdvanceTrackedTowns();
+
+        Assert.Equal(serviceA.Get(townA).Index, serviceB.Get(townB).Index);
+        Assert.Equal(randomA.NextDouble(), randomB.NextDouble());
+        Assert.Equal(randomA.CallCount, randomB.CallCount);
+    }
+
+    [Fact]
+    public void TrackedProsperityKeepsOneHistoryPointPerAdvancedYear()
     {
         var (state, service, town) = CreateProsperityService("history-town");
+        service.Track(town);
         var first = service.Get(town);
         Assert.Single(first.HistoryPoints);
         Assert.Equal(state.Year, first.HistoryPoints[0].Year);
 
         state.Year += 1;
-        service.AdvanceTrackedTowns(new CountingRandom());
+        service.AdvanceTrackedTowns();
         var second = service.Get(town);
 
         Assert.Equal(2, second.HistoryPoints.Count);
@@ -221,7 +267,6 @@ public sealed class TownLifeBatch2Tests
                 [town.Id]));
         var system = new TownProsperityYearSystem(
             context,
-            new CountingRandom(),
             service,
             [new HistoricalProsperityEffect("great_depression", -12, 6)]);
 
@@ -234,7 +279,7 @@ public sealed class TownLifeBatch2Tests
     }
 
     [Fact]
-    public void HistoricalEventBridgeRestoresRemainingShockWhenGameStartsMidRecovery()
+    public void HistoricalEventBridgeKeepsFullShockThroughEventEndAndRecoversAfterward()
     {
         var (state, service, town) = CreateProsperityService("mid-recovery-town");
         state.Year = 1932;
@@ -248,17 +293,52 @@ public sealed class TownLifeBatch2Tests
                 [town.Id]));
         var system = new TownProsperityYearSystem(
             context,
-            new CountingRandom(),
             service,
             [new HistoricalProsperityEffect("great_depression", -12, 6)]);
 
         system.ReconcileHistoricalEffects(state);
-
-        // Three of six recovery years have elapsed: -12 -> -6.
         Assert.Equal(
-            Math.Clamp(baseline - 6, 75, 125),
+            Math.Clamp(baseline - 12, 75, 125),
+            service.Get(town).Index);
+
+        state.Year = 1935;
+        system.ReconcileHistoricalEffects(state);
+        Assert.Equal(
+            Math.Clamp(baseline - 12, 75, 125),
+            service.Get(town).Index);
+
+        state.Year = 1936;
+        system.ReconcileHistoricalEffects(state);
+        Assert.Equal(
+            Math.Clamp(baseline - 10, 75, 125),
             service.Get(town).Index);
         Assert.Contains("great_depression", service.Get(town).ActiveShocks);
+    }
+
+    [Fact]
+    public void OneYearHistoricalEventStartsRecoveryTheFollowingYear()
+    {
+        var (state, service, town) = CreateProsperityService("one-year-event-town");
+        state.Year = 1981;
+        var baseline = service.Get(town).Index;
+        var context = new StubPluginContext();
+        context.AddService<IHistoricalEventService>(
+            new StubHistoricalEventService(
+                "one_year_event",
+                1981,
+                1981,
+                [town.Id]));
+        var system = new TownProsperityYearSystem(
+            context,
+            service,
+            [new HistoricalProsperityEffect("one_year_event", -12, 6)]);
+
+        system.ReconcileHistoricalEffects(state);
+        Assert.Equal(Math.Clamp(baseline - 12, 75, 125), service.Get(town).Index);
+
+        state.Year = 1982;
+        system.ReconcileHistoricalEffects(state);
+        Assert.Equal(Math.Clamp(baseline - 10, 75, 125), service.Get(town).Index);
     }
 
     [Fact]
@@ -312,15 +392,18 @@ public sealed class TownLifeBatch2Tests
     }
 
     private static (GameState State, StandardTownProsperityService Service, TownInfo Town)
-        CreateProsperityService(string townId)
+        CreateProsperityService(
+            string townId,
+            Guid? anchorId = null,
+            IGameRandom? random = null)
     {
-        var state = new GameState
+        var state = new GameState(random)
         {
             DynastySurname = "Nowak",
             StartYear = 1900,
             Year = 1900
         };
-        state.CreatePerson("Jan", "Nowak", 30);
+        state.CreatePerson("Jan", "Nowak", 30, anchorId);
         var service = new StandardTownProsperityService(
             state,
             TownProsperityRules.Load(DataService()));
@@ -353,7 +436,7 @@ public sealed class TownLifeBatch2Tests
         throw new DirectoryNotFoundException("Could not locate repository root.");
     }
 
-    private sealed class CountingRandom : IGameRandom
+    private sealed class SequenceRandom : IGameRandom
     {
         public int CallCount { get; private set; }
 
@@ -366,30 +449,14 @@ public sealed class TownLifeBatch2Tests
         public double NextDouble()
         {
             CallCount++;
-            return 0.5;
+            return 0.3141592653589793;
         }
 
         public bool Chance(double probability)
         {
             CallCount++;
-            return false;
+            return probability >= 0.5;
         }
-    }
-
-    private sealed class FixedDriftRandom : IGameRandom
-    {
-        private readonly double _nextDouble;
-        private readonly bool _chanceResult;
-
-        public FixedDriftRandom(double nextDouble, bool chanceResult)
-        {
-            _nextDouble = nextDouble;
-            _chanceResult = chanceResult;
-        }
-
-        public int NextInt(int minInclusive, int maxInclusive) => minInclusive;
-        public double NextDouble() => _nextDouble;
-        public bool Chance(double probability) => _chanceResult;
     }
 
     private sealed class StubPluginContext : IGamePluginContext
@@ -436,6 +503,11 @@ public sealed class TownLifeBatch2Tests
         public int? GetEventStartYear(string eventId) =>
             eventId.Equals(_eventId, StringComparison.OrdinalIgnoreCase)
                 ? _startYear
+                : null;
+
+        public int? GetEventEndYear(string eventId) =>
+            eventId.Equals(_eventId, StringComparison.OrdinalIgnoreCase)
+                ? _endYear
                 : null;
 
         public HistoricalResidenceSnapshot? GetExternalResidence(IPerson person) => null;

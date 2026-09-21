@@ -104,6 +104,9 @@ public interface ITownProsperityService
 {
     TownProsperitySnapshot Get(TownInfo town);
 
+    TownProsperitySnapshot Get(TownInfo town, int year) =>
+        Get(town);
+
     decimal GetIncomeMultiplier(
         TownInfo town,
         LocalEconomicStrength strength);
@@ -124,7 +127,13 @@ public sealed record BankOfferQualityInfo(
     decimal InterestMultiplierMin,
     decimal InterestMultiplierMax,
     decimal DurationMultiplierMin,
-    decimal DurationMultiplierMax)
+    decimal DurationMultiplierMax,
+    decimal LendingPrincipalMultiplierMin = 1m,
+    decimal LendingPrincipalMultiplierMax = 1m,
+    decimal LendingInterestMultiplierMin = 1m,
+    decimal LendingInterestMultiplierMax = 1m,
+    decimal LendingDurationMultiplierMin = 1m,
+    decimal LendingDurationMultiplierMax = 1m)
 {
     public bool IsAvailable => Tier > 0;
 }

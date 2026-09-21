@@ -22,12 +22,22 @@ public sealed class Development10WorkCapacityRelationsHousingTests
         health.EnsureHealth(healthy);
         Assert.Equal(1.0, capacity.GetWorkCapacity(healthy).OutputMultiplier, 6);
 
+        var cold = AlivePerson("Cold", 40);
+        health.EnsureHealth(cold);
+        Assert.True(health.AddCondition(cold, "common_cold"));
+        Assert.Equal(1.0, capacity.GetWorkCapacity(cold).OutputMultiplier, 6);
+
         var pneumonia = AlivePerson("Pneumonia", 40);
         health.EnsureHealth(pneumonia);
         Assert.True(health.AddCondition(pneumonia, "pneumonia"));
         var reduced = capacity.GetWorkCapacity(pneumonia);
         Assert.True(reduced.CanWork);
-        Assert.InRange(reduced.OutputMultiplier, 0.01, 0.99);
+        Assert.Equal(0.50, reduced.OutputMultiplier, 6);
+
+        var brokenLeg = AlivePerson("Broken Leg", 40);
+        health.EnsureHealth(brokenLeg);
+        Assert.True(health.AddCondition(brokenLeg, "broken_leg"));
+        Assert.Equal(0.35, capacity.GetWorkCapacity(brokenLeg).OutputMultiplier, 6);
 
         var stroke = AlivePerson("Stroke", 65);
         health.EnsureHealth(stroke);
@@ -56,7 +66,7 @@ public sealed class Development10WorkCapacityRelationsHousingTests
     }
 
     [Fact]
-    public void VeryLowHealthCanPreventWorkWithoutACondition()
+    public void CriticalHealthStopsWorkButOtherwiseRawHealthDoesNotDoublePenalizeConditions()
     {
         var health = new StandardHealthService(
             CreateRepositoryData(),
@@ -64,8 +74,32 @@ public sealed class Development10WorkCapacityRelationsHousingTests
         var capacity = new StandardWorkCapacityService(health);
         var person = AlivePerson("Weak", 40);
         health.SetHealth(person, 8);
-
         Assert.False(capacity.GetWorkCapacity(person).CanWork);
+
+        health.SetHealth(person, 40);
+        Assert.Equal(1.0, capacity.GetWorkCapacity(person).OutputMultiplier, 6);
+        Assert.True(health.AddCondition(person, "pneumonia"));
+        var before = health.GetHealth(person).Current;
+        var snapshot = capacity.GetWorkCapacity(person);
+
+        Assert.Equal(0.50, snapshot.OutputMultiplier, 6);
+        Assert.Equal(before, health.GetHealth(person).Current, 6);
+    }
+
+    [Fact]
+    public void MultipleConditionsUseTheSingleMostRestrictiveWorkMultiplier()
+    {
+        var health = new StandardHealthService(
+            CreateRepositoryData(),
+            new FixedRandom());
+        var capacity = new StandardWorkCapacityService(health);
+        var person = AlivePerson("Injured", 40);
+        health.EnsureHealth(person);
+
+        Assert.True(health.AddCondition(person, "broken_arm"));
+        Assert.True(health.AddCondition(person, "broken_leg"));
+
+        Assert.Equal(0.35, capacity.GetWorkCapacity(person).OutputMultiplier, 6);
     }
 
     [Fact]
@@ -110,10 +144,16 @@ public sealed class Development10WorkCapacityRelationsHousingTests
         var distant = FamilyRelationDistanceRules.GetAnnualDrift(450, false);
         var coResident = FamilyRelationDistanceRules.GetAnnualDrift(450, true);
 
-        Assert.Equal(0, nearby.FamiliarityLoss);
-        Assert.True(distant.FamiliarityLoss > nearby.FamiliarityLoss);
-        Assert.True(distant.SympathyDrift > nearby.SympathyDrift);
+        Assert.Equal(0.10, nearby.FamiliarityLoss, 6);
+        Assert.Equal(0.15, nearby.SympathyDrift, 6);
+        Assert.Equal(0.65, distant.FamiliarityLoss, 6);
+        Assert.Equal(0.85, distant.SympathyDrift, 6);
         Assert.Equal(0, coResident.FamiliarityLoss);
+        Assert.Equal(0, coResident.SympathyDrift);
+
+        var sameTown = FamilyRelationDistanceRules.GetAnnualDrift(0.5, false);
+        Assert.Equal(0, sameTown.FamiliarityLoss);
+        Assert.Equal(0, sameTown.SympathyDrift);
 
         Assert.True(
             FamilyRelationDistanceRules.DistanceKm(
@@ -127,9 +167,9 @@ public sealed class Development10WorkCapacityRelationsHousingTests
     public void HouseExtensionsCostQuarterOfPurchasePriceAndAddTwoCapacity()
     {
         Assert.Equal(10_000m, HouseExtensionRules.GetExtensionCost(40_000m));
-        Assert.Equal(8, HouseExtensionRules.GetResidentCapacity(0));
-        Assert.Equal(10, HouseExtensionRules.GetResidentCapacity(1));
-        Assert.Equal(14, HouseExtensionRules.GetResidentCapacity(3));
+        Assert.Equal(6, HouseExtensionRules.GetResidentCapacity(0));
+        Assert.Equal(8, HouseExtensionRules.GetResidentCapacity(1));
+        Assert.Equal(12, HouseExtensionRules.GetResidentCapacity(3));
 
         Assert.Equal(
             0,

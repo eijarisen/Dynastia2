@@ -1,3 +1,4 @@
+using System.Globalization;
 using Dynastia.Contracts;
 
 namespace Dynastia.Mechanics.Inheritance;
@@ -8,12 +9,28 @@ public sealed class EstateInheritanceSystem :
     private readonly IFamilyService _family;
     private readonly IEconomyService _economy;
     private readonly IHeirloomService _heirlooms;
+    private readonly Func<IFarmingService?> _farmingResolver;
     private readonly IGameEventBus _events;
 
     public EstateInheritanceSystem(
         IFamilyService family,
         IEconomyService economy,
         IHeirloomService heirlooms,
+        IGameEventBus events)
+        : this(
+            family,
+            economy,
+            heirlooms,
+            () => null,
+            events)
+    {
+    }
+
+    public EstateInheritanceSystem(
+        IFamilyService family,
+        IEconomyService economy,
+        IHeirloomService heirlooms,
+        Func<IFarmingService?> farmingResolver,
         IGameEventBus events)
     {
         _family =
@@ -24,6 +41,9 @@ public sealed class EstateInheritanceSystem :
 
         _heirlooms =
             heirlooms;
+
+        _farmingResolver =
+            farmingResolver;
 
         _events =
             events;
@@ -809,31 +829,37 @@ public sealed class EstateInheritanceSystem :
         if (!hasExplicitDesignation)
             return;
 
-        var received = heirs.ToDictionary(heir => heir.Id, _ => 0);
+        var received = heirs.ToDictionary(heir => heir.Id, _ => 0m);
 
-        foreach (var recipient in HouseInheritanceAssignmentRules.ResolveRecipients(
-                     heirIds,
-                     houses.Select(asset => asset.AssignedHeirId).ToList()))
+        var houseRecipients = HouseInheritanceAssignmentRules.ResolveRecipients(
+            heirIds,
+            houses.Select(asset => asset.AssignedHeirId).ToList());
+        for (var index = 0; index < houses.Count; index++)
         {
-            received[recipient]++;
+            received[houseRecipients[index]] +=
+                Math.Max(0m, _economy.GetHouseValue(houses[index]));
         }
 
-        foreach (var recipient in HouseInheritanceAssignmentRules.ResolveRecipients(
-                     heirIds,
-                     farmland.Select(asset => asset.AssignedHeirId).ToList()))
+        var farmlandValue = Math.Max(
+            0m,
+            _farmingResolver()?.PurchasePrice ?? 0m);
+        var farmlandRecipients = HouseInheritanceAssignmentRules.ResolveRecipients(
+            heirIds,
+            farmland.Select(asset => asset.AssignedHeirId).ToList());
+        for (var index = 0; index < farmland.Count; index++)
+            received[farmlandRecipients[index]] += farmlandValue;
+
+        var heirloomRecipients = HouseInheritanceAssignmentRules.ResolveRecipients(
+            heirIds,
+            heirlooms.Select(asset => asset.AssignedHeirId).ToList());
+        for (var index = 0; index < heirlooms.Count; index++)
         {
-            received[recipient]++;
+            received[heirloomRecipients[index]] +=
+                Math.Max(0m, heirlooms[index].AppraisedValue);
         }
 
-        foreach (var recipient in HouseInheritanceAssignmentRules.ResolveRecipients(
-                     heirIds,
-                     heirlooms.Select(asset => asset.AssignedHeirId).ToList()))
-        {
-            received[recipient]++;
-        }
-
-        var maximum = received.Values.DefaultIfEmpty(0).Max();
-        if (maximum <= 0)
+        var maximum = received.Values.DefaultIfEmpty(0m).Max();
+        if (maximum <= 0m)
             return;
 
         var favored = received
@@ -843,14 +869,14 @@ public sealed class EstateInheritanceSystem :
 
         foreach (var heir in heirs)
         {
-            var count = received[heir.Id];
+            var receivedValue = received[heir.Id];
             string? severity = null;
 
-            if (count == 0)
+            if (receivedValue == 0m)
             {
                 severity = "skipped";
             }
-            else if (count * 2 < maximum)
+            else if (receivedValue * 2m < maximum)
             {
                 severity = "heavy";
             }
@@ -873,8 +899,8 @@ public sealed class EstateInheritanceSystem :
                     {
                         ["sourceId"] = source.Id.ToString(),
                         ["severity"] = severity,
-                        ["receivedAssets"] = count.ToString(),
-                        ["favoredAssets"] = maximum.ToString(),
+                        ["receivedAssetValue"] = receivedValue.ToString(CultureInfo.InvariantCulture),
+                        ["favoredAssetValue"] = maximum.ToString(CultureInfo.InvariantCulture),
                         ["favoredHeirIds"] = string.Join(";", favoredIds),
                         ["suppressChronicle"] = "true",
                         ["text"] = severity == "skipped"

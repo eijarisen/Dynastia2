@@ -1,3 +1,6 @@
+using System.Buffers.Binary;
+using System.Security.Cryptography;
+using System.Text;
 using Dynastia.Contracts;
 
 namespace Dynastia.Mechanics.Farming;
@@ -18,6 +21,7 @@ internal sealed class StandardFarmingService :
     private readonly IGameRandom _random;
     private readonly IGameEventBus _events;
     private readonly FarmingEraSchedule _eraSchedule;
+    private readonly FarmingFlavorCatalog _flavors;
 
     public StandardFarmingService(
         IGameState gameState,
@@ -28,7 +32,8 @@ internal sealed class StandardFarmingService :
         IWorkCapacityService workCapacity,
         IGameRandom random,
         IGameEventBus events,
-        FarmingEraSchedule eraSchedule)
+        FarmingEraSchedule eraSchedule,
+        FarmingFlavorCatalog flavors)
     {
         _gameState = gameState;
         _economy = economy;
@@ -39,6 +44,7 @@ internal sealed class StandardFarmingService :
         _random = random;
         _events = events;
         _eraSchedule = eraSchedule;
+        _flavors = flavors;
     }
 
     public string Id =>
@@ -53,11 +59,17 @@ internal sealed class StandardFarmingService :
     public decimal SalePrice =>
         FarmingRules.SalePrice;
 
+    public decimal LivestockPurchasePrice =>
+        FarmingRules.LivestockPurchasePrice;
+
+    public decimal LivestockSalePrice =>
+        FarmingRules.LivestockSalePrice;
+
     public FarmingHouseholdSnapshot GetSnapshot(
         IPerson householdRepresentative)
     {
         var farmland =
-            _economy.GetFarmland(
+            GetResolvedFarmland(
                 householdRepresentative);
 
         var residence =
@@ -152,16 +164,22 @@ internal sealed class StandardFarmingService :
     public decimal GetExpectedAnnualIncome(
         IPerson householdRepresentative)
     {
+        var (localParcels, localLivestock) =
+            GetLocalFarmlandCounts(
+                householdRepresentative);
+
         return GetExpectedAnnualIncomeForWorkers(
             householdRepresentative,
-            GetWorkingFarmWorkers(householdRepresentative));
+            GetWorkingFarmWorkers(householdRepresentative),
+            localParcels,
+            localLivestock);
     }
 
     public decimal GetExpectedAnnualIncomeAfterAddingLocalParcel(
         IPerson householdRepresentative)
     {
-        var localParcels =
-            GetLocalParcelCount(
+        var (localParcels, localLivestock) =
+            GetLocalFarmlandCounts(
                 householdRepresentative);
 
         var workers =
@@ -174,12 +192,204 @@ internal sealed class StandardFarmingService :
 
         return GetExpectedAnnualIncomeForWorkers(
             householdRepresentative,
-            workers.Take(activeWorkers));
+            workers.Take(activeWorkers),
+            localParcels + 1,
+            localLivestock);
+    }
+
+    public IReadOnlyList<FarmingFlavorInfo> GetAvailableLivestockOptions(
+        TownInfo town,
+        int year)
+    {
+        ArgumentNullException.ThrowIfNull(town);
+        return _flavors.GetAvailableLivestock(town.RegionId, year);
+    }
+
+    public decimal GetFarmlandSaleValue(
+        FarmlandAssetInfo farmland)
+    {
+        ArgumentNullException.ThrowIfNull(farmland);
+        return SalePrice
+            + (string.IsNullOrWhiteSpace(farmland.LivestockTypeId)
+                ? 0m
+                : LivestockSalePrice);
+    }
+
+    public FarmlandAssetInfo? AssignNewFarmlandType(
+        IPerson householdRepresentative,
+        Guid farmlandId)
+    {
+        var parcel = _economy.GetFarmland(householdRepresentative)
+            .FirstOrDefault(asset => asset.Id == farmlandId);
+        if (parcel is null)
+            return null;
+
+        if (!string.IsNullOrWhiteSpace(parcel.FarmTypeId)
+            && _flavors.FindFarmType(parcel.FarmTypeId) is not null)
+        {
+            return ResolveDisplay(parcel);
+        }
+
+        var type = _flavors.SelectFarmType(
+            parcel.Town.RegionId,
+            parcel.AcquiredYear,
+            _random.NextDouble());
+
+        if (!_economy.SetFarmlandFlavor(
+                householdRepresentative,
+                parcel.Id,
+                type.Id,
+                parcel.LivestockTypeId))
+        {
+            return null;
+        }
+
+        return ResolveDisplay(parcel with { FarmTypeId = type.Id });
+    }
+
+    public FarmlandAssetInfo? EnsureFarmlandFlavor(
+        IPerson householdRepresentative,
+        Guid farmlandId)
+    {
+        var parcel = _economy.GetFarmland(householdRepresentative)
+            .FirstOrDefault(asset => asset.Id == farmlandId);
+        if (parcel is null)
+            return null;
+
+        var farmType = _flavors.FindFarmType(parcel.FarmTypeId);
+        var livestock = _flavors.FindLivestock(parcel.LivestockTypeId);
+        var changed = false;
+
+        if (farmType is null)
+        {
+            farmType = _flavors.SelectFarmType(
+                parcel.Town.RegionId,
+                parcel.AcquiredYear,
+                DeterministicRoll(
+                    parcel.Id,
+                    parcel.Town.RegionId,
+                    parcel.AcquiredYear,
+                    "farm-type"));
+            changed = true;
+        }
+
+        if (!string.IsNullOrWhiteSpace(parcel.LivestockTypeId)
+            && livestock is null)
+        {
+            changed = true;
+        }
+
+        var livestockId = livestock?.Id;
+        if (changed
+            && !_economy.SetFarmlandFlavor(
+                householdRepresentative,
+                parcel.Id,
+                farmType.Id,
+                livestockId))
+        {
+            return null;
+        }
+
+        return ResolveDisplay(parcel with
+        {
+            FarmTypeId = farmType.Id,
+            LivestockTypeId = livestockId
+        });
+    }
+
+    public FarmlandAssetInfo? AddLivestock(
+        IPerson householdRepresentative,
+        Guid farmlandId,
+        int year)
+    {
+        var parcel = EnsureFarmlandFlavor(
+            householdRepresentative,
+            farmlandId);
+        if (parcel is null
+            || !string.IsNullOrWhiteSpace(parcel.LivestockTypeId))
+        {
+            return null;
+        }
+
+        var livestock = _flavors.SelectLivestock(
+            parcel.Town.RegionId,
+            year,
+            _random.NextDouble());
+
+        if (!_economy.SetFarmlandFlavor(
+                householdRepresentative,
+                parcel.Id,
+                parcel.FarmTypeId,
+                livestock.Id))
+        {
+            return null;
+        }
+
+        return ResolveDisplay(parcel with
+        {
+            LivestockTypeId = livestock.Id
+        });
+    }
+
+    public FarmlandRelocationSaleResult SellOriginFarmlandForVoluntaryRelocation(
+        IPerson householdRepresentative,
+        TownInfo origin,
+        TownInfo destination)
+    {
+        ArgumentNullException.ThrowIfNull(origin);
+        ArgumentNullException.ThrowIfNull(destination);
+
+        var originParcels = GetResolvedFarmland(householdRepresentative)
+            .Where(asset => asset.Town.Id.Equals(
+                origin.Id,
+                StringComparison.OrdinalIgnoreCase))
+            .ToList();
+
+        if (originParcels.Count == 0)
+            return FarmlandRelocationSaleResult.None;
+
+        var livestockCount = originParcels.Count(asset =>
+            !string.IsNullOrWhiteSpace(asset.LivestockTypeId));
+        var proceeds = originParcels.Sum(GetFarmlandSaleValue);
+
+        foreach (var parcel in originParcels)
+            _economy.TakeFarmland(householdRepresentative, parcel.Id);
+
+        _economy.ChangeWealth(householdRepresentative, proceeds);
+
+        var farmLabel = originParcels.Count == 1 ? "farm" : "farms";
+        var livestockText = livestockCount == 0
+            ? string.Empty
+            : $" and {livestockCount} livestock {(livestockCount == 1 ? "holding" : "holdings")}";
+
+        _events.Publish(new GameEvent
+        {
+            Type = "farming.relocation_sale",
+            Year = _gameState.Year,
+            SubjectId = householdRepresentative.Id,
+            Data = new Dictionary<string, string>
+            {
+                ["fromTown"] = origin.Town,
+                ["toTown"] = destination.Town,
+                ["parcelCount"] = originParcels.Count.ToString(),
+                ["livestockCount"] = livestockCount.ToString(),
+                ["amount"] = proceeds.ToString(),
+                ["text"] =
+                    $"Before moving to {destination.Town}, the household sold {originParcels.Count} {farmLabel}{livestockText} near {origin.Town} for {proceeds:N0} zł."
+            }
+        });
+
+        return new FarmlandRelocationSaleResult(
+            originParcels.Count,
+            livestockCount,
+            proceeds);
     }
 
     private decimal GetExpectedAnnualIncomeForWorkers(
         IPerson householdRepresentative,
-        IEnumerable<IPerson> workers)
+        IEnumerable<IPerson> workers,
+        int localParcelCount,
+        int localLivestockCount)
     {
         var workerBaseIncome = GetWorkerBaseIncome();
         decimal baseIncome = 0m;
@@ -194,6 +404,11 @@ internal sealed class StandardFarmingService :
                 .GetWorkCapacity(worker)
                 .Apply(output);
         }
+
+        var coverage = FarmingRules.GetLivestockCoverage(
+            localParcelCount,
+            localLivestockCount);
+        baseIncome *= FarmingRules.GetLivestockIncomeMultiplier(coverage);
 
         return ApplyTownIncomeMultiplier(
             householdRepresentative,
@@ -212,13 +427,23 @@ internal sealed class StandardFarmingService :
 
         var workerBaseIncome =
             GetWorkerBaseIncome();
+        var (localParcels, localLivestock) =
+            GetLocalFarmlandCounts(householdRepresentative);
+        var coverage = FarmingRules.GetLivestockCoverage(
+            localParcels,
+            localLivestock);
 
         decimal total = 0m;
 
         foreach (var worker in workers)
         {
-            var output = workerBaseIncome
-                * (decimal)(_random.NextDouble() * 2.0);
+            var rawMultiplier =
+                (decimal)(_random.NextDouble() * 2.0);
+            var adjustedMultiplier =
+                FarmingRules.AdjustVolatilityMultiplier(
+                    rawMultiplier,
+                    coverage);
+            var output = workerBaseIncome * adjustedMultiplier;
 
             output = ApplyRecoverReduction(
                 worker,
@@ -229,6 +454,7 @@ internal sealed class StandardFarmingService :
                 .Apply(output);
         }
 
+        total *= FarmingRules.GetLivestockIncomeMultiplier(coverage);
         total = ApplyTownIncomeMultiplier(
             householdRepresentative,
             total);
@@ -359,23 +585,6 @@ internal sealed class StandardFarmingService :
             .ToList();
     }
 
-    private int GetActiveWorkerCount(
-        IPerson householdRepresentative)
-    {
-        var localParcels =
-            GetLocalParcelCount(
-                householdRepresentative);
-
-        var workers =
-            GetAvailableWorkers(
-                householdRepresentative)
-            .Count;
-
-        return FarmingRules.GetActiveWorkerCount(
-            localParcels,
-            workers);
-    }
-
     private decimal GetWorkerBaseIncome() =>
         _career.GetLevelOneSalary(
             AgricultureCareerId)
@@ -384,17 +593,66 @@ internal sealed class StandardFarmingService :
         * FarmingRules.WorkerBaseIncomeScale;
 
     private int GetLocalParcelCount(
+        IPerson householdRepresentative) =>
+        GetLocalFarmlandCounts(householdRepresentative).LocalParcels;
+
+    private (int LocalParcels, int LocalLivestock) GetLocalFarmlandCounts(
         IPerson householdRepresentative)
     {
         var residence =
             _economy.GetResidenceTown(
                 householdRepresentative);
+        var local = GetResolvedFarmland(householdRepresentative)
+            .Where(asset => asset.Town.Id.Equals(
+                residence.Id,
+                StringComparison.OrdinalIgnoreCase))
+            .ToList();
 
-        return _economy.GetFarmland(
-                householdRepresentative)
-            .Count(asset =>
-                asset.Town.Id.Equals(
-                    residence.Id,
-                    StringComparison.OrdinalIgnoreCase));
+        return (
+            local.Count,
+            local.Count(asset => !string.IsNullOrWhiteSpace(asset.LivestockTypeId)));
+    }
+
+    private IReadOnlyList<FarmlandAssetInfo> GetResolvedFarmland(
+        IPerson householdRepresentative)
+    {
+        var raw = _economy.GetFarmland(householdRepresentative);
+        var result = new List<FarmlandAssetInfo>(raw.Count);
+        foreach (var parcel in raw)
+        {
+            var resolved = EnsureFarmlandFlavor(
+                householdRepresentative,
+                parcel.Id);
+            if (resolved is not null)
+                result.Add(resolved);
+        }
+
+        return result;
+    }
+
+    private FarmlandAssetInfo ResolveDisplay(FarmlandAssetInfo parcel)
+    {
+        var farm = _flavors.FindFarmType(parcel.FarmTypeId);
+        var livestock = _flavors.FindLivestock(parcel.LivestockTypeId);
+
+        return parcel with
+        {
+            FarmTypeDisplayName = farm?.DisplayName ?? "Farm",
+            FarmTypeEmoji = farm?.Emoji ?? "🌾",
+            LivestockDisplayName = livestock?.DisplayName,
+            LivestockEmoji = livestock?.Emoji
+        };
+    }
+
+    private static double DeterministicRoll(
+        Guid farmlandId,
+        string regionId,
+        int acquiredYear,
+        string purpose)
+    {
+        var key = $"{farmlandId:N}|{regionId}|{acquiredYear}|{purpose}";
+        var hash = SHA256.HashData(Encoding.UTF8.GetBytes(key));
+        var value = BinaryPrimitives.ReadUInt64LittleEndian(hash.AsSpan(0, 8));
+        return value / ((double)ulong.MaxValue + 1d);
     }
 }

@@ -228,24 +228,52 @@ public sealed partial class StandardEconomyService
                             head)
             );
 
+        return AddHouseCore(
+            household,
+            head,
+            assignedTown,
+            GetHousePrice(assignedTown),
+            _houseMarketRules.StandardCapacity);
+    }
+
+    public HousePropertyInfo AddHouse(
+        IPerson person,
+        TownInfo town,
+        decimal purchasePrice,
+        int baseResidentCapacity)
+    {
+        ArgumentNullException.ThrowIfNull(town);
+
+        var household = GetRequiredHousehold(person);
+        var head = GetHead(household);
+        SynchronizeHouses(head, household);
+
+        return AddHouseCore(
+            household,
+            head,
+            town,
+            purchasePrice > 0m ? purchasePrice : GetHousePrice(town),
+            baseResidentCapacity);
+    }
+
+    private HousePropertyInfo AddHouseCore(
+        HouseholdEconomyComponent household,
+        IPerson head,
+        TownInfo town,
+        decimal purchasePrice,
+        int baseResidentCapacity)
+    {
         var state =
             new HousePropertyState
             {
-                Id =
-                    _random.NextGuid(),
-
-                TownId =
-                    assignedTown.Id,
-
-                PurchasePrice =
-                    GetHousePrice(assignedTown)
+                Id = _random.NextGuid(),
+                TownId = town.Id,
+                PurchasePrice = RoundCurrency(purchasePrice),
+                BaseResidentCapacity = NormalizeBaseResidentCapacity(baseResidentCapacity)
             };
 
-        household.Houses.Add(
-            state);
-
-        SynchronizeDerivedHouseCounts(
-            household);
+        household.Houses.Add(state);
+        SynchronizeDerivedHouseCounts(household);
 
         return ToInfo(
             state,
@@ -299,7 +327,10 @@ public sealed partial class StandardEconomyService
                         : GetHousePrice(house.Town),
 
                 CapacityExtensions =
-                    Math.Max(0, house.CapacityExtensions)
+                    Math.Max(0, house.CapacityExtensions),
+
+                BaseResidentCapacity =
+                    NormalizeBaseResidentCapacity(house.BaseResidentCapacity)
             });
 
         SynchronizeDerivedHouseCounts(
@@ -376,9 +407,12 @@ public sealed partial class StandardEconomyService
         return true;
     }
 
-    public decimal GetHousePrice(TownInfo town) =>
-        RoundCurrency(
-            BaseHousePrice * town.HousingIndex);
+    public decimal GetHousePrice(TownInfo town)
+    {
+        ArgumentNullException.ThrowIfNull(town);
+        var marketTown = _localServiceTowns?.Resolve(town) ?? town;
+        return RoundCurrency(BaseHousePrice * marketTown.HousingIndex);
+    }
 
     public decimal GetHouseSaleValue(TownInfo town) =>
         RoundCurrency(
@@ -387,6 +421,7 @@ public sealed partial class StandardEconomyService
     public decimal GetHouseValue(HousePropertyInfo house)
     {
         ArgumentNullException.ThrowIfNull(house);
+
         var purchasePrice = house.PurchasePrice > 0m
             ? house.PurchasePrice
             : GetHousePrice(house.Town);
@@ -394,13 +429,24 @@ public sealed partial class StandardEconomyService
             purchasePrice
             * HouseExtensionRules.ExtensionPriceFraction
             * Math.Max(0, house.CapacityExtensions);
+        var marketTown = _localServiceTowns?.Resolve(house.Town) ?? house.Town;
+        var prosperityMultiplier =
+            _houseMarketRules.GetProsperityMultiplier(
+                _prosperity.Get(marketTown).Index);
+        var capacityMultiplier =
+            _houseMarketRules.GetCapacityMultiplier(
+                NormalizeBaseResidentCapacity(house.BaseResidentCapacity));
+
         return RoundCurrency(
-            GetHousePrice(house.Town) + improvementValue);
+            GetHousePrice(house.Town)
+            * capacityMultiplier
+            * prosperityMultiplier
+            + improvementValue);
     }
 
     public decimal GetHouseSaleValue(HousePropertyInfo house) =>
         RoundCurrency(
-            GetHouseValue(house) * 0.80m);
+            GetHouseValue(house) * _houseMarketRules.SaleValueMultiplier);
 
     public decimal GetLivingCostPerPerson(TownInfo town) =>
         RoundCurrency(
@@ -412,6 +458,18 @@ public sealed partial class StandardEconomyService
     public decimal GetRentalIncome(TownInfo town) =>
         RoundCurrency(
             GetHousePrice(town) / 40m);
+
+    public decimal GetRentalIncome(HousePropertyInfo house)
+    {
+        ArgumentNullException.ThrowIfNull(house);
+        return RoundCurrency(
+            GetHouseValue(house) / 40m);
+    }
+
+    private int NormalizeBaseResidentCapacity(int capacity) =>
+        capacity > 0
+            ? capacity
+            : _houseMarketRules.StandardCapacity;
 
     private static decimal RoundCurrency(
         decimal amount) =>
@@ -575,7 +633,10 @@ public sealed partial class StandardEconomyService
                             : GetHousePrice(house.Town),
 
                     CapacityExtensions =
-                        Math.Max(0, house.CapacityExtensions)
+                        Math.Max(0, house.CapacityExtensions),
+
+                    BaseResidentCapacity =
+                        NormalizeBaseResidentCapacity(house.BaseResidentCapacity)
                 });
         }
 

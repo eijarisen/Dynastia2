@@ -63,14 +63,10 @@ public sealed partial class StandardLoanService :
         if (maximumThousands < 1)
             return [];
 
-        BankOfferQualityInfo? bankQuality = null;
-        if (!isGivingLoan)
-        {
-            var town = _locations.GetLocation(householdRepresentative).HomeTown;
-            bankQuality = _facilityQuality.GetBankQuality(town, _gameState.Year);
-            if (!bankQuality.IsAvailable)
-                return [];
-        }
+        var town = _locations.GetLocation(householdRepresentative).HomeTown;
+        var bankQuality = _facilityQuality.GetBankQuality(town, _gameState.Year);
+        if (!bankQuality.IsAvailable)
+            return [];
 
         int[] durations = [1, 3, 5, 10, 15, 20, 30, 40, 50];
         var offers = new List<LoanOfferInfo>(3);
@@ -105,24 +101,42 @@ public sealed partial class StandardLoanService :
             var offerDuration = duration;
             var interestMultiplier = 1m;
 
-            if (bankQuality is not null)
-            {
-                var qualityRandom =
-                    new LoanOfferRandom(CreateQualitySeed(seed));
-                principal = ApplyPrincipalQuality(
-                    baselinePrincipal,
-                    maximumPrincipal,
-                    bankQuality,
-                    qualityRandom);
-                offerDuration = ApplyDurationQuality(
-                    duration,
-                    bankQuality,
-                    qualityRandom);
-                interestMultiplier = NextMultiplier(
-                    qualityRandom,
-                    bankQuality.InterestMultiplierMin,
-                    bankQuality.InterestMultiplierMax);
-            }
+            var qualityRandom =
+                new LoanOfferRandom(CreateQualitySeed(seed));
+            var principalMinimum = isGivingLoan
+                ? bankQuality.LendingPrincipalMultiplierMin
+                : bankQuality.PrincipalMultiplierMin;
+            var principalMaximum = isGivingLoan
+                ? bankQuality.LendingPrincipalMultiplierMax
+                : bankQuality.PrincipalMultiplierMax;
+            var interestMinimum = isGivingLoan
+                ? bankQuality.LendingInterestMultiplierMin
+                : bankQuality.InterestMultiplierMin;
+            var interestMaximum = isGivingLoan
+                ? bankQuality.LendingInterestMultiplierMax
+                : bankQuality.InterestMultiplierMax;
+            var durationMinimum = isGivingLoan
+                ? bankQuality.LendingDurationMultiplierMin
+                : bankQuality.DurationMultiplierMin;
+            var durationMaximum = isGivingLoan
+                ? bankQuality.LendingDurationMultiplierMax
+                : bankQuality.DurationMultiplierMax;
+
+            principal = ApplyPrincipalQuality(
+                baselinePrincipal,
+                maximumPrincipal,
+                principalMinimum,
+                principalMaximum,
+                qualityRandom);
+            offerDuration = ApplyDurationQuality(
+                duration,
+                durationMinimum,
+                durationMaximum,
+                qualityRandom);
+            interestMultiplier = NextMultiplier(
+                qualityRandom,
+                interestMinimum,
+                interestMaximum);
 
             var terms = CalculateTerms(
                 principal,
@@ -143,7 +157,7 @@ public sealed partial class StandardLoanService :
                 terms)
             {
                 OriginTownId = counterparty.OriginTown.Id,
-                OriginTownDisplayName = counterparty.OriginTown.DisplayName,
+                OriginTownDisplayName = counterparty.OriginDisplayName,
                 NationalityId = counterparty.NationalityId,
                 DisplayNationality = counterparty.DisplayNationality
             });
@@ -282,12 +296,14 @@ public sealed partial class StandardLoanService :
         IPerson lender,
         decimal principal,
         int durationYears,
-        int startYear)
+        int startYear,
+        decimal interestMultiplier = 1m)
     {
         var terms =
             CalculateTerms(
                 principal,
-                durationYears);
+                durationYears,
+                interestMultiplier);
 
         var contract =
             new LoanContractState
@@ -410,6 +426,7 @@ public sealed partial class StandardLoanService :
             age,
             portrait,
             originTown,
+            identity.ForeignBirthplaceDisplayName ?? originTown.DisplayName,
             identity.NationalityId,
             identity.DisplayNationality);
     }
@@ -472,13 +489,14 @@ public sealed partial class StandardLoanService :
     private static decimal ApplyPrincipalQuality(
         decimal baselinePrincipal,
         decimal maximumPrincipal,
-        BankOfferQualityInfo quality,
+        decimal minimumMultiplier,
+        decimal maximumMultiplier,
         IGameRandom random)
     {
         var multiplier = NextMultiplier(
             random,
-            quality.PrincipalMultiplierMin,
-            quality.PrincipalMultiplierMax);
+            minimumMultiplier,
+            maximumMultiplier);
         var adjusted = Math.Round(
             baselinePrincipal * multiplier / LoanTermsCalculator.PrincipalStep,
             0,
@@ -496,13 +514,14 @@ public sealed partial class StandardLoanService :
 
     private static int ApplyDurationQuality(
         int baselineDuration,
-        BankOfferQualityInfo quality,
+        decimal minimumMultiplier,
+        decimal maximumMultiplier,
         IGameRandom random)
     {
         var multiplier = NextMultiplier(
             random,
-            quality.DurationMultiplierMin,
-            quality.DurationMultiplierMax);
+            minimumMultiplier,
+            maximumMultiplier);
         var adjusted = (int)Math.Round(
             baselineDuration * multiplier,
             0,
@@ -554,6 +573,7 @@ public sealed partial class StandardLoanService :
         int Age,
         string PortraitEmoji,
         TownInfo OriginTown,
+        string OriginDisplayName,
         string NationalityId,
         string DisplayNationality);
 

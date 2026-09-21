@@ -40,6 +40,21 @@ public sealed partial class EconomyPlugin : IGamePlugin
             ?? throw new InvalidOperationException(
                 "Game event bus is unavailable.");
 
+        var data =
+            context.GetService<IGameDataService>()
+            ?? throw new InvalidOperationException(
+                "Game data service is unavailable.");
+
+        var prosperity =
+            context.GetService<ITownProsperityService>()
+            ?? throw new InvalidOperationException(
+                "Town prosperity service is unavailable.");
+
+        var localServiceTowns =
+            context.GetService<ILocalServiceTownResolver>()
+            ?? throw new InvalidOperationException(
+                "Local service town resolver is unavailable.");
+
         var systems =
             context.GetService<IYearSystemRegistry>()
             ?? throw new InvalidOperationException(
@@ -59,6 +74,9 @@ public sealed partial class EconomyPlugin : IGamePlugin
         var financeProjectionRegistry =
             new HouseholdFinanceProjectionProviderRegistry();
 
+        var houseMarketRules =
+            HouseMarketRules.Load(data);
+
         var economy =
             new StandardEconomyService(
                 gameState,
@@ -68,7 +86,19 @@ public sealed partial class EconomyPlugin : IGamePlugin
                 householdIncomeRegistry,
                 financeProjectionRegistry,
                 stats,
-                random);
+                random,
+                prosperity,
+                houseMarketRules,
+                localServiceTowns);
+
+        var houseMarket =
+            new StandardHouseMarketService(
+                gameState,
+                locations,
+                economy,
+                prosperity,
+                houseMarketRules,
+                localServiceTowns);
 
         context.AddService<IIncomeProviderRegistry>(
             incomeRegistry);
@@ -81,6 +111,9 @@ public sealed partial class EconomyPlugin : IGamePlugin
 
         context.AddService<IEconomyService>(
             economy);
+
+        context.AddService<IHouseMarketService>(
+            houseMarket);
 
         context.AddService<IEconomyBalanceService>(
             economy);

@@ -35,56 +35,56 @@ public static class HouseholdLifestyleRules
         HouseholdLifestyleStance stance) =>
         stance switch
         {
-            HouseholdLifestyleStance.Lavish => 1.25m,
-            HouseholdLifestyleStance.Thrifty => 0.80m,
+            HouseholdLifestyleStance.Lavish => 1.10m,
+            HouseholdLifestyleStance.Thrifty => 0.90m,
             _ => 1.00m
         };
 
     public static double GetHealthRegenerationModifier(IPerson person) =>
         GetStance(person) switch
         {
-            HouseholdLifestyleStance.Lavish => 0.5,
-            HouseholdLifestyleStance.Thrifty => -0.5,
+            HouseholdLifestyleStance.Lavish => 0.25,
+            HouseholdLifestyleStance.Thrifty => -0.25,
             _ => 0.0
         };
 
     public static double GetEducationChanceMultiplier(IPerson person) =>
         GetStance(person) switch
         {
-            HouseholdLifestyleStance.Lavish => 1.08,
-            HouseholdLifestyleStance.Thrifty => 0.92,
+            HouseholdLifestyleStance.Lavish => 1.05,
+            HouseholdLifestyleStance.Thrifty => 0.95,
             _ => 1.00
         };
 
     public static double GetPartnerChanceMultiplier(IPerson person) =>
         GetStance(person) switch
         {
-            HouseholdLifestyleStance.Lavish => 1.10,
-            HouseholdLifestyleStance.Thrifty => 0.90,
+            HouseholdLifestyleStance.Lavish => 1.05,
+            HouseholdLifestyleStance.Thrifty => 0.95,
             _ => 1.00
         };
 
     public static double GetMarriageSatisfactionModifier(IPerson person) =>
         GetStance(person) switch
         {
-            HouseholdLifestyleStance.Lavish => 0.5,
-            HouseholdLifestyleStance.Thrifty => -0.5,
+            HouseholdLifestyleStance.Lavish => 0.25,
+            HouseholdLifestyleStance.Thrifty => -0.25,
             _ => 0.0
         };
 
     public static double GetStressAdjustment(IPerson person) =>
         GetStance(person) switch
         {
-            HouseholdLifestyleStance.Lavish => -0.5,
-            HouseholdLifestyleStance.Thrifty => 0.5,
+            HouseholdLifestyleStance.Lavish => -0.25,
+            HouseholdLifestyleStance.Thrifty => 0.25,
             _ => 0.0
         };
 
     public static double GetMoraleShiftChance(IPerson person) =>
         GetStance(person) switch
         {
-            HouseholdLifestyleStance.Lavish => 0.10,
-            HouseholdLifestyleStance.Thrifty => 0.10,
+            HouseholdLifestyleStance.Lavish => 0.05,
+            HouseholdLifestyleStance.Thrifty => 0.05,
             _ => 0.0
         };
 }

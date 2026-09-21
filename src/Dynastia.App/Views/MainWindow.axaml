@@ -70,6 +70,13 @@
                                     Text="{Binding HealthTooltipText}" />
 
                                 <TextBlock
+                                    IsVisible="{Binding ShowStress}"
+                                    FontSize="12"
+                                    FontWeight="SemiBold"
+                                    Foreground="#D6B76A"
+                                    Text="{Binding StressTooltipText}" />
+
+                                <TextBlock
                                     IsVisible="{Binding ShowChildEducation}"
                                     FontSize="12"
                                     FontWeight="SemiBold"

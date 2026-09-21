@@ -28,7 +28,7 @@ public sealed partial class MainWindowViewModel
             Id = ManageFinancesUiActionId,
             Label = "Manage Finances",
             Description =
-                "Open Family Inventory to review income, expenses, and loans.",
+                "Open Family Inventory to review income, expenses, lifestyle, loans and local banking access.",
             Mode = ActionExecutionMode.Immediate,
             IsAvailable = _ => true,
             Execute = _ => new GameActionResult(false)
@@ -127,8 +127,6 @@ public sealed partial class MainWindowViewModel
             heirlooms,
             children,
             finance.Lifestyle,
-            CanUseFamilyInventoryAction("loan.take"),
-            CanUseFamilyInventoryAction("loan.give"),
             CanUseFamilyInventoryAction("economy.lifestyle.lavish"),
             CanUseFamilyInventoryAction("economy.lifestyle.balanced"),
             CanUseFamilyInventoryAction("economy.lifestyle.thrifty"),
@@ -137,14 +135,20 @@ public sealed partial class MainWindowViewModel
             CanUseFamilyInventoryAction("household.sell_house"),
             CanUseFamilyInventoryAction("farming.buy_farmland"),
             CanUseFamilyInventoryAction("farming.sell_farmland"),
+            CanUseFamilyInventoryAction("farming.add_livestock"),
             CanUseFamilyInventoryAction("heirloom.sell"),
             _farmingService?.PurchasePrice ?? 10000m,
-            _farmingService?.SalePrice ?? 8000m);
+            _farmingService?.SalePrice ?? 8000m,
+            _farmingService?.LivestockPurchasePrice ?? 2500m);
     }
 
     internal decimal GetHouseValue(HousePropertyInfo house) =>
         _economyService?.GetHouseValue(house)
         ?? house.PurchasePrice + house.ImprovementValue;
+
+    internal decimal GetFarmlandSaleValue(FarmlandAssetInfo farmland) =>
+        _farmingService?.GetFarmlandSaleValue(farmland)
+        ?? 8000m + (string.IsNullOrWhiteSpace(farmland.LivestockTypeId) ? 0m : 2000m);
 
     internal bool SetHouseInheritanceHeir(
         Guid propertyId,
@@ -374,8 +378,6 @@ internal sealed record FamilyInventoryData(
     IReadOnlyList<HeirloomAssetInfo> Heirlooms,
     IReadOnlyList<FamilyInventoryChildData> Children,
     HouseholdLifestyleStance Lifestyle,
-    bool CanTakeLoan,
-    bool CanGiveLoan,
     bool CanUseLavishLifestyle,
     bool CanUseBalancedLifestyle,
     bool CanUseThriftyLifestyle,
@@ -384,9 +386,11 @@ internal sealed record FamilyInventoryData(
     bool CanSellHouse,
     bool CanBuyFarmland,
     bool CanSellFarmland,
+    bool CanAddLivestock,
     bool CanSellHeirloom,
     decimal FarmlandPurchasePrice,
-    decimal FarmlandSalePrice);
+    decimal FarmlandSalePrice,
+    decimal LivestockPurchasePrice);
 
 internal sealed record FamilyInventoryChildData(
     Guid Id,

@@ -202,6 +202,18 @@ public sealed partial class StandardHouseholdService
                     husband,
                     womanHouseholdIdBefore);
 
+                var transferredOrigin =
+                    _economy.GetResidenceTown(husband);
+                if (!transferredOrigin.Id.Equals(
+                        husbandResidence.Id,
+                        StringComparison.OrdinalIgnoreCase))
+                {
+                    _farming.SellOriginFarmlandForVoluntaryRelocation(
+                        husband,
+                        transferredOrigin,
+                        husbandResidence);
+                }
+
                 _economy.SetResidenceTown(
                     husband,
                     husbandResidence);

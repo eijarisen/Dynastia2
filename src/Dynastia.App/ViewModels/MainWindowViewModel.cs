@@ -16,6 +16,8 @@ public sealed partial class MainWindowViewModel : ViewModelBase
     private readonly IHealthService? _healthService;
     private readonly IStressService? _stressService;
     private readonly IEconomyService? _economyService;
+    private readonly IHouseMarketService? _houseMarketService;
+    private readonly ITownProsperityService? _townProsperityService;
     private readonly IFarmingService? _farmingService;
     private readonly ICraftService? _craftService;
     private readonly ILoanService? _loanService;
@@ -97,6 +99,8 @@ public sealed partial class MainWindowViewModel : ViewModelBase
         IHealthService? healthService,
         IStressService? stressService,
         IEconomyService? economyService,
+        IHouseMarketService? houseMarketService,
+        ITownProsperityService? townProsperityService,
         IFarmingService? farmingService,
         ICraftService? craftService,
         ILoanService? loanService,
@@ -136,6 +140,8 @@ public sealed partial class MainWindowViewModel : ViewModelBase
         _healthService = healthService;
         _stressService = stressService;
         _economyService = economyService;
+        _houseMarketService = houseMarketService;
+        _townProsperityService = townProsperityService;
         _farmingService = farmingService;
         _craftService = craftService;
         _loanService = loanService;

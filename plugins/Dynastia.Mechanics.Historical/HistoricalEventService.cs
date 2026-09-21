@@ -60,6 +60,16 @@ internal sealed class HistoricalEventService :
             ?.StartYear;
     }
 
+    public int? GetEventEndYear(string eventId)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(eventId);
+        return _catalog.Events
+            .FirstOrDefault(item =>
+                item.Id.Equals(eventId, StringComparison.OrdinalIgnoreCase)
+                && HistoricalEventContentConfiguration.IsEnabled(item))
+            ?.EndYear;
+    }
+
     public HistoricalResidenceSnapshot? GetExternalResidence(IPerson person)
     {
         ArgumentNullException.ThrowIfNull(person);

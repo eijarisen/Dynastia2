@@ -18,6 +18,8 @@ public static class MarriageBalanceRules
     public const double CrimePenalty = 5;
     public const double UncaughtCrimePenalty = 2.5;
     public const double AffairPenalty = 25;
+    public const double LowFertilityPenalty = 1.25;
+    public const double LowIntellectPenalty = 0.625;
 
     public static double GetAnnualSatisfactionChange(
         double totalPenalty) =>
@@ -36,10 +38,35 @@ public static class MarriageBalanceRules
     }
 
     public static double GetLowAttractionPenalty(
-        int firstAppeal,
-        int secondAppeal) =>
-        AppealPenalty(firstAppeal)
-        + AppealPenalty(secondAppeal);
+        int husbandAppeal,
+        int wifeAppeal,
+        bool wifeRetired = false)
+    {
+        if (wifeRetired)
+            return 0;
+
+        var husband = Math.Clamp(husbandAppeal, 1, 5);
+        var wife = Math.Clamp(wifeAppeal, 1, 5);
+
+        // Low appeal only creates recurring pressure when the husband is
+        // meaningfully more appealing than his wife. Couples with similar
+        // appeal do not penalize one another simply for both being unattractive.
+        if (husband - wife < 2)
+            return 0;
+
+        return AppealPenalty(wife);
+    }
+
+
+    public static bool ShouldApplyLowFertilityPenalty(
+        int wifeAge,
+        int fertility) =>
+        wifeAge <= 40
+        && Math.Clamp(fertility, 0, 5) <= 2;
+
+    public static bool ShouldApplyLowIntellectPenalty(
+        int intellect) =>
+        Math.Clamp(intellect, 1, 5) == 1;
 
     public static double GetPersonalityIncompatibilityPenalty(
         PersonalitySnapshot? first,
@@ -48,43 +75,15 @@ public static class MarriageBalanceRules
         if (first is null || second is null)
             return 0;
 
-        var firstTemperament = first.Temperament.ToLowerInvariant();
-        var secondTemperament = second.Temperament.ToLowerInvariant();
-        var temperaments = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
-        {
-            firstTemperament,
-            secondTemperament
-        };
-
-        var temperamentPenalty =
-            firstTemperament.Equals(secondTemperament, StringComparison.OrdinalIgnoreCase)
-                ? 0
-                : temperaments.SetEquals(["choleric", "melancholic"])
-                    ? 2.0
-                    : temperaments.SetEquals(["choleric", "phlegmatic"])
-                        ? 1.5
-                        : temperaments.SetEquals(["melancholic", "sanguine"])
-                            ? 1.25
-                            : 0.75;
-
         var firstMorals = first.Morals.ToLowerInvariant();
         var secondMorals = second.Morals.ToLowerInvariant();
-        var morals = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
-        {
-            firstMorals,
-            secondMorals
-        };
 
-        var moralsPenalty =
-            firstMorals.Equals(secondMorals, StringComparison.OrdinalIgnoreCase)
-                ? 0
-                : morals.SetEquals(["good", "evil"])
-                    ? 2.0
-                    : morals.Contains("evil")
-                        ? 1.0
-                        : 0.25;
-
-        return temperamentPenalty + moralsPenalty;
+        return (firstMorals.Equals("good", StringComparison.OrdinalIgnoreCase)
+                && secondMorals.Equals("evil", StringComparison.OrdinalIgnoreCase))
+            || (firstMorals.Equals("evil", StringComparison.OrdinalIgnoreCase)
+                && secondMorals.Equals("good", StringComparison.OrdinalIgnoreCase))
+                ? 1.5
+                : 0;
     }
 
     public static double GetSeriousIllnessPenalty(
@@ -152,8 +151,8 @@ public static class MarriageBalanceRules
     private static double AppealPenalty(int appeal) =>
         Math.Clamp(appeal, 1, 5) switch
         {
-            1 => 2.5,
-            2 => 1.5,
+            1 => 1.50,
+            2 => 0.75,
             _ => 0
         };
 }

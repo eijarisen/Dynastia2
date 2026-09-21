@@ -11,4 +11,6 @@ public sealed class HousePropertyState
     public decimal PurchasePrice { get; set; }
 
     public int CapacityExtensions { get; set; }
+
+    public int BaseResidentCapacity { get; set; } = 6;
 }

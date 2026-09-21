@@ -31,7 +31,13 @@ internal sealed class TownFacilityQualityCatalog
                 ParseDecimal(row, "InterestMultiplierMin", BankPath),
                 ParseDecimal(row, "InterestMultiplierMax", BankPath),
                 ParseDecimal(row, "DurationMultiplierMin", BankPath),
-                ParseDecimal(row, "DurationMultiplierMax", BankPath)))
+                ParseDecimal(row, "DurationMultiplierMax", BankPath),
+                ParseDecimal(row, "LendingPrincipalMultiplierMin", BankPath),
+                ParseDecimal(row, "LendingPrincipalMultiplierMax", BankPath),
+                ParseDecimal(row, "LendingInterestMultiplierMin", BankPath),
+                ParseDecimal(row, "LendingInterestMultiplierMax", BankPath),
+                ParseDecimal(row, "LendingDurationMultiplierMin", BankPath),
+                ParseDecimal(row, "LendingDurationMultiplierMax", BankPath)))
             .ToDictionary(row => row.Tier);
 
         var medical = ParseCsv(data.ReadText(MedicalPath), MedicalPath)
@@ -50,6 +56,9 @@ internal sealed class TownFacilityQualityCatalog
             ValidateRange(row.PrincipalMultiplierMin, row.PrincipalMultiplierMax, BankPath, row.Tier, "principal");
             ValidateRange(row.InterestMultiplierMin, row.InterestMultiplierMax, BankPath, row.Tier, "interest");
             ValidateRange(row.DurationMultiplierMin, row.DurationMultiplierMax, BankPath, row.Tier, "duration");
+            ValidateRange(row.LendingPrincipalMultiplierMin, row.LendingPrincipalMultiplierMax, BankPath, row.Tier, "lending principal");
+            ValidateRange(row.LendingInterestMultiplierMin, row.LendingInterestMultiplierMax, BankPath, row.Tier, "lending interest");
+            ValidateRange(row.LendingDurationMultiplierMin, row.LendingDurationMultiplierMax, BankPath, row.Tier, "lending duration");
         }
 
         foreach (var row in medical.Values)

@@ -224,16 +224,69 @@ public sealed class MarriageCareerEducationBalanceTests
     }
 
     [Fact]
-    public void LowAttractionAndPersonalityMismatchCreateCumulativeMarriagePressure()
+    public void LowAttractionAndGoodEvilConflictCreateSubtleRecurringMarriagePressure()
     {
-        var attraction = MarriageBalanceRules.GetLowAttractionPenalty(2, 2);
+        var attraction = MarriageBalanceRules.GetLowAttractionPenalty(3, 1);
         var incompatibility = MarriageBalanceRules.GetPersonalityIncompatibilityPenalty(
             new PersonalitySnapshot("Choleric", "Good"),
             new PersonalitySnapshot("Melancholic", "Evil"));
 
-        Assert.Equal(3.0, attraction, 10);
-        Assert.Equal(4.0, incompatibility, 10);
+        Assert.Equal(1.5, attraction, 10);
+        Assert.Equal(1.5, incompatibility, 10);
         Assert.True(MarriageBalanceRules.GetAnnualSatisfactionChange(attraction + incompatibility) < 0);
+    }
+
+    [Fact]
+    public void TemperamentAndOrdinaryMoralsMismatchDoNotPassivelyDamageMarriage()
+    {
+        Assert.Equal(
+            0,
+            MarriageBalanceRules.GetPersonalityIncompatibilityPenalty(
+                new PersonalitySnapshot("Choleric", "Good"),
+                new PersonalitySnapshot("Melancholic", "Good")),
+            10);
+        Assert.Equal(
+            0,
+            MarriageBalanceRules.GetPersonalityIncompatibilityPenalty(
+                new PersonalitySnapshot("Sanguine", "Neutral"),
+                new PersonalitySnapshot("Phlegmatic", "Evil")),
+            10);
+    }
+
+    [Fact]
+    public void StaticMarriageTraitPenaltiesMatchTheAgreedSubtleRates()
+    {
+        Assert.Equal(-0.5, MarriageBalanceRules.GetAnnualSatisfactionChange(
+            MarriageBalanceRules.GetLowAttractionPenalty(3, 1)), 10);
+        Assert.Equal(1.25, MarriageBalanceRules.LowFertilityPenalty, 10);
+        Assert.Equal(-0.25, MarriageBalanceRules.GetAnnualSatisfactionChange(
+            MarriageBalanceRules.LowFertilityPenalty), 10);
+        Assert.Equal(0.625, MarriageBalanceRules.LowIntellectPenalty, 10);
+        Assert.Equal(-0.25, MarriageBalanceRules.GetAnnualSatisfactionChange(
+            MarriageBalanceRules.LowIntellectPenalty * 2), 10);
+    }
+
+
+    [Fact]
+    public void AttractionPenaltyRequiresARealAppealGapAndStopsAfterWifeRetires()
+    {
+        Assert.Equal(0, MarriageBalanceRules.GetLowAttractionPenalty(1, 1), 10);
+        Assert.Equal(0, MarriageBalanceRules.GetLowAttractionPenalty(2, 1), 10);
+        Assert.Equal(1.5, MarriageBalanceRules.GetLowAttractionPenalty(3, 1), 10);
+        Assert.Equal(0.75, MarriageBalanceRules.GetLowAttractionPenalty(4, 2), 10);
+        Assert.Equal(0, MarriageBalanceRules.GetLowAttractionPenalty(5, 1, wifeRetired: true), 10);
+    }
+
+    [Fact]
+    public void FertilityAndIntellectMarriagePenaltiesStopAtRequestedThresholds()
+    {
+        Assert.True(MarriageBalanceRules.ShouldApplyLowFertilityPenalty(40, 1));
+        Assert.False(MarriageBalanceRules.ShouldApplyLowFertilityPenalty(41, 1));
+        Assert.False(MarriageBalanceRules.ShouldApplyLowFertilityPenalty(35, 3));
+
+        Assert.True(MarriageBalanceRules.ShouldApplyLowIntellectPenalty(1));
+        Assert.False(MarriageBalanceRules.ShouldApplyLowIntellectPenalty(2));
+        Assert.False(MarriageBalanceRules.ShouldApplyLowIntellectPenalty(5));
     }
 
     [Fact]

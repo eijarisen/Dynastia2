@@ -11,6 +11,7 @@ public sealed partial class StandardHouseholdService :
     private readonly IHouseholdCapacityService _capacity;
     private readonly ILocationService _locations;
     private readonly ICareerService _career;
+    private readonly IFarmingService _farming;
     private readonly IGameEventBus _events;
 
     private bool _reconciling;
@@ -22,6 +23,7 @@ public sealed partial class StandardHouseholdService :
         IHouseholdCapacityService capacity,
         ILocationService locations,
         ICareerService career,
+        IFarmingService farming,
         IGameEventBus events)
     {
         _gameState =
@@ -41,6 +43,9 @@ public sealed partial class StandardHouseholdService :
 
         _career =
             career;
+
+        _farming =
+            farming;
 
         _events =
             events;

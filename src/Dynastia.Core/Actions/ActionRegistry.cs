@@ -56,6 +56,13 @@ public sealed class ActionRegistry : IActionRegistry
         _dynamicProviders.Add(provider);
     }
 
+    public IReadOnlyList<GameActionDefinition> GetCandidateActions(
+        IPerson actor,
+        IPerson target) =>
+        GetActionCandidates(actor, target)
+            .OrderBy(action => action.Label)
+            .ToList();
+
     public IReadOnlyList<GameActionDefinition> GetAvailableActions(
         IPerson actor,
         IPerson target) =>

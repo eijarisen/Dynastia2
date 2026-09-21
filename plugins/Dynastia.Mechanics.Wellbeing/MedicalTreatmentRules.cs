@@ -3,6 +3,8 @@ namespace Dynastia.Mechanics.Wellbeing;
 public static class MedicalTreatmentRules
 {
     public const double MaximumSuccessChance = 0.95;
+    public const decimal VisitingPhysicianCostMultiplier = 1.50m;
+    public const double VisitingPhysicianHealMultiplier = 0.85;
 
     public static decimal AdjustCost(
         decimal baseCost,
@@ -26,4 +28,19 @@ public static class MedicalTreatmentRules
             baseChance + successAdd,
             0,
             MaximumSuccessChance);
+
+    public static double AdjustHealAmount(
+        double baseHealAmount,
+        double healMultiplier)
+    {
+        if (baseHealAmount < 0)
+            throw new ArgumentOutOfRangeException(nameof(baseHealAmount));
+        if (healMultiplier < 0)
+            throw new ArgumentOutOfRangeException(nameof(healMultiplier));
+
+        return Math.Round(
+            baseHealAmount * healMultiplier,
+            1,
+            MidpointRounding.AwayFromZero);
+    }
 }

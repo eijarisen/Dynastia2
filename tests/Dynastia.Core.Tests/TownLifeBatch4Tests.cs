@@ -19,7 +19,10 @@ public sealed class TownLifeBatch4Tests
             {
                 Principal = Mean(row, "PrincipalMultiplierMin", "PrincipalMultiplierMax"),
                 Interest = Mean(row, "InterestMultiplierMin", "InterestMultiplierMax"),
-                Duration = Mean(row, "DurationMultiplierMin", "DurationMultiplierMax")
+                Duration = Mean(row, "DurationMultiplierMin", "DurationMultiplierMax"),
+                LendingPrincipal = Mean(row, "LendingPrincipalMultiplierMin", "LendingPrincipalMultiplierMax"),
+                LendingInterest = Mean(row, "LendingInterestMultiplierMin", "LendingInterestMultiplierMax"),
+                LendingDuration = Mean(row, "LendingDurationMultiplierMin", "LendingDurationMultiplierMax")
             })
             .ToArray();
 
@@ -28,6 +31,9 @@ public sealed class TownLifeBatch4Tests
             Assert.True(means[index].Principal > means[index - 1].Principal);
             Assert.True(means[index].Interest < means[index - 1].Interest);
             Assert.True(means[index].Duration > means[index - 1].Duration);
+            Assert.True(means[index].LendingPrincipal > means[index - 1].LendingPrincipal);
+            Assert.True(means[index].LendingInterest > means[index - 1].LendingInterest);
+            Assert.True(means[index].LendingDuration < means[index - 1].LendingDuration);
         }
     }
 
@@ -46,7 +52,7 @@ public sealed class TownLifeBatch4Tests
     }
 
     [Fact]
-    public void MedicalQualityChangesTreatmentCostAndSuccessWithNinetyFivePercentCap()
+    public void MedicalQualityChangesTreatmentCostSuccessAndHealAmount()
     {
         Assert.Equal(3750m, MedicalTreatmentRules.AdjustCost(3000m, 1.25m));
         Assert.Equal(3000m, MedicalTreatmentRules.AdjustCost(3000m, 1.00m));
@@ -54,6 +60,8 @@ public sealed class TownLifeBatch4Tests
 
         Assert.Equal(0.55, MedicalTreatmentRules.AdjustSuccessChance(0.50, 0.05), 6);
         Assert.Equal(0.95, MedicalTreatmentRules.AdjustSuccessChance(0.90, 0.20), 6);
+        Assert.Equal(30.0, MedicalTreatmentRules.AdjustHealAmount(25, 1.20), 6);
+        Assert.Equal(21.3, MedicalTreatmentRules.AdjustHealAmount(25, 0.85), 6);
     }
 
     [Fact]
@@ -73,7 +81,7 @@ public sealed class TownLifeBatch4Tests
     }
 
     [Fact]
-    public void BorrowingRequiresLocalBankButExistingLoanServicingDoesNot()
+    public void NewBorrowingAndLendingRequireLocalBankButExistingLoanServicingDoesNot()
     {
         var root = RepositoryRoot();
         var plugin = File.ReadAllText(Path.Combine(
@@ -98,8 +106,15 @@ public sealed class TownLifeBatch4Tests
             "Dynastia.Mechanics.Households",
             "AdvancedAutonomousHouseholdStrategy.cs"));
 
-        Assert.Contains("HasLocalBank", plugin);
+        Assert.True(
+            plugin.Split("HasLocalBank", StringSplitOptions.None).Length - 1 >= 4,
+            "Both Take Loan and Give Loan must validate a local Bank in availability and execution.");
         Assert.Contains("if (!bankQuality.IsAvailable)", service);
+        Assert.Contains("LendingPrincipalMultiplierMin", service);
+        Assert.Contains("LendingInterestMultiplierMin", service);
+        Assert.Contains("LendingDurationMultiplierMin", service);
+        Assert.Contains("interestMultiplier", service);
+        Assert.Contains("durationYears,\n                interestMultiplier", service);
         Assert.Contains("new List<LoanOfferInfo>(3)", service);
         Assert.Contains("index < 3", service);
         Assert.Contains("loans.GetOffers(snapshot.Head, isGivingLoan: false, 10000m)", autonomy);
@@ -177,10 +192,12 @@ public sealed class TownLifeBatch4Tests
             "Dynastia.Mechanics.Wellbeing",
             "WellbeingPlugin.TreatmentActions.cs"));
 
-        Assert.Contains("IsVisitingPhysicianVariant", wellbeing);
-        Assert.Contains("currentVisitingPhysician", wellbeing);
-        Assert.Contains("|| currentMedical.IsAvailable", wellbeing);
-        Assert.Contains("? HealCost", wellbeing);
+        Assert.Contains("Summon a Physician", wellbeing);
+        Assert.Contains("visiting physician from another town", wellbeing);
+        Assert.Contains("VisitingPhysicianCostMultiplier", wellbeing);
+        Assert.Contains("VisitingPhysicianHealMultiplier", wellbeing);
+        Assert.Contains("medical.IsAvailable", wellbeing);
+        Assert.DoesNotContain("IsVisitingPhysicianVariant", wellbeing);
     }
 
     [Fact]

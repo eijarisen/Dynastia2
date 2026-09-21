@@ -25,6 +25,7 @@ internal sealed class StandardPartnerSearchService :
     private readonly ICareerService _career;
     private readonly ICraftService _crafts;
     private readonly IEconomyService _economy;
+    private readonly IFarmingService _farming;
     private readonly IPersonalityService _personality;
     private readonly IAppearanceService _appearance;
     private readonly Func<IHobbyService?> _hobbyResolver;
@@ -45,6 +46,7 @@ internal sealed class StandardPartnerSearchService :
         ICareerService career,
         ICraftService crafts,
         IEconomyService economy,
+        IFarmingService farming,
         IPersonalityService personality,
         IAppearanceService appearance,
         Func<IHobbyService?> hobbyResolver,
@@ -64,6 +66,7 @@ internal sealed class StandardPartnerSearchService :
         _career = career;
         _crafts = crafts;
         _economy = economy;
+        _farming = farming;
         _personality = personality;
         _appearance = appearance;
         _hobbyResolver = hobbyResolver;
@@ -321,7 +324,10 @@ internal sealed class StandardPartnerSearchService :
                 EstimatedFarmland = estimatedFarmland,
                 NationalityId = identity.NationalityId,
                 DisplayNationality = identity.DisplayNationality,
-                OriginTownDisplayName = candidateTown.DisplayName
+                OriginTownDisplayName = identity.ForeignBirthplaceDisplayName
+                    ?? candidateTown.DisplayName,
+                ForeignBirthplaceCity = identity.ForeignBirthplaceCity,
+                ForeignBirthplaceCountry = identity.ForeignBirthplaceCountry
             });
         }
 
@@ -363,23 +369,13 @@ internal sealed class StandardPartnerSearchService :
                     _gameState.Year),
                 seekerNationalityId,
                 random);
-        var nameCultureId =
-            _nationalities.GetNameCultureId(
-                nationalityId);
-
-        return new GeneratedOutsiderIdentity(
+        return _outsiderIdentities.GenerateForNationality(
+            originTown,
+            sex,
+            birthYear,
+            _gameState.Year,
             nationalityId,
-            _nationalities.GetDisplayName(nationalityId),
-            nameCultureId,
-            _historicalNames.GetRandomFirstName(
-                sex,
-                birthYear,
-                nameCultureId,
-                random),
-            _historicalNames.GetRandomSurname(
-                sex,
-                nameCultureId,
-                random));
+            random);
     }
 
     public double GetPartnerValue(IPerson person)
@@ -449,6 +445,8 @@ internal sealed class StandardPartnerSearchService :
             ["partner.nationalityId"] = candidate.NationalityId,
             ["partner.displayNationality"] = candidate.DisplayNationality,
             ["partner.originTownDisplayName"] = candidate.OriginTownDisplayName,
+            ["partner.birthplaceCity"] = candidate.ForeignBirthplaceCity ?? string.Empty,
+            ["partner.birthplaceCountry"] = candidate.ForeignBirthplaceCountry ?? string.Empty,
             ["partner.appearance.hairGeneA"] = candidate.Appearance.HairGeneA.ToString(),
             ["partner.appearance.hairGeneB"] = candidate.Appearance.HairGeneB.ToString(),
             ["partner.appearance.hairColor"] = candidate.Appearance.HairColor.ToString(),
@@ -752,6 +750,11 @@ internal sealed class StandardPartnerSearchService :
                 originTown);
         }
 
+        _locations.SetForeignBirthplace(
+            person,
+            candidate.ForeignBirthplaceCity,
+            candidate.ForeignBirthplaceCountry);
+
         GeneratedFamilyBackgroundGenerator.Assign(
             person,
             candidate.Surname,
@@ -830,6 +833,18 @@ internal sealed class StandardPartnerSearchService :
                     ? storedOriginTownDisplayName
                     : _locations.FindTown(townId)?.DisplayName
                       ?? townId;
+        var foreignBirthplaceCity = parameters.TryGetValue(
+            "partner.birthplaceCity",
+            out var storedBirthplaceCity)
+                && !string.IsNullOrWhiteSpace(storedBirthplaceCity)
+                    ? storedBirthplaceCity
+                    : null;
+        var foreignBirthplaceCountry = parameters.TryGetValue(
+            "partner.birthplaceCountry",
+            out var storedBirthplaceCountry)
+                && !string.IsNullOrWhiteSpace(storedBirthplaceCountry)
+                    ? storedBirthplaceCountry
+                    : null;
         var candidateId = Guid.ParseExact(key, "N");
         var appearance = TryReadAppearance(parameters, out var storedAppearance)
             ? storedAppearance
@@ -872,7 +887,9 @@ internal sealed class StandardPartnerSearchService :
             EstimatedFarmland = estimatedFarmland,
             NationalityId = nationalityId,
             DisplayNationality = displayNationality,
-            OriginTownDisplayName = originTownDisplayName
+            OriginTownDisplayName = originTownDisplayName,
+            ForeignBirthplaceCity = foreignBirthplaceCity,
+            ForeignBirthplaceCountry = foreignBirthplaceCountry
         };
     }
 
@@ -962,11 +979,14 @@ internal sealed class StandardPartnerSearchService :
             index < Math.Max(0, candidate.EstimatedFarmland);
             index++)
         {
-            _economy.AddFarmland(
+            var farmland = _economy.AddFarmland(
                 husband,
                 town,
                 _gameState.Year,
                 "marriage-candidate");
+            _farming.EnsureFarmlandFlavor(
+                husband,
+                farmland.Id);
         }
     }
 

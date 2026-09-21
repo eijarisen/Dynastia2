@@ -86,7 +86,13 @@ public sealed class Development10HouseholdFamilyBalanceTests
 
         Assert.Contains("inheritance.disadvantaged", inheritance);
         Assert.Contains("hasExplicitDesignation", inheritance);
+        Assert.Contains("_economy.GetHouseValue", inheritance);
+        Assert.Contains("_farmingResolver()?.PurchasePrice", inheritance);
+        Assert.Contains("AppraisedValue", inheritance);
+        Assert.Contains("receivedAssetValue", inheritance);
+        Assert.Contains("favoredAssetValue", inheritance);
         Assert.Contains("favoredHeirIds", inheritance);
+        Assert.Contains("receivedValue * 2m < maximum", inheritance);
         Assert.Contains("inheritance.disadvantaged", bridge);
         Assert.Contains("ApplyInheritanceDisadvantage", bridge);
     }

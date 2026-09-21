@@ -16,6 +16,9 @@ public interface IHistoricalEventService
 
     int? GetEventStartYear(string eventId) =>
         null;
+
+    int? GetEventEndYear(string eventId) =>
+        null;
 }
 
 public sealed record HistoricalResidenceSnapshot(

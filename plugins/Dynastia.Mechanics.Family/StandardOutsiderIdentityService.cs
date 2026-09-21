@@ -7,13 +7,23 @@ public sealed class StandardOutsiderIdentityService :
 {
     private readonly INationalityService _nationalities;
     private readonly IHistoricalNameService _historicalNames;
+    private readonly ForeignBirthplaceCatalog? _foreignBirthplaces;
 
     public StandardOutsiderIdentityService(
         INationalityService nationalities,
         IHistoricalNameService historicalNames)
+        : this(nationalities, historicalNames, null)
+    {
+    }
+
+    internal StandardOutsiderIdentityService(
+        INationalityService nationalities,
+        IHistoricalNameService historicalNames,
+        ForeignBirthplaceCatalog? foreignBirthplaces)
     {
         _nationalities = nationalities;
         _historicalNames = historicalNames;
+        _foreignBirthplaces = foreignBirthplaces;
     }
 
     public GeneratedOutsiderIdentity Generate(
@@ -38,6 +48,27 @@ public sealed class StandardOutsiderIdentityService :
                 year,
                 random);
 
+        return GenerateForNationality(
+            originTown,
+            sex,
+            birthYear,
+            year,
+            nationalityId,
+            random);
+    }
+
+    public GeneratedOutsiderIdentity GenerateForNationality(
+        TownInfo originTown,
+        Sex sex,
+        int birthYear,
+        int year,
+        string nationalityId,
+        IGameRandom random)
+    {
+        ArgumentNullException.ThrowIfNull(originTown);
+        ArgumentException.ThrowIfNullOrWhiteSpace(nationalityId);
+        ArgumentNullException.ThrowIfNull(random);
+
         var nameCultureId =
             _nationalities.GetNameCultureId(
                 nationalityId);
@@ -55,11 +86,21 @@ public sealed class StandardOutsiderIdentityService :
                 nameCultureId,
                 random);
 
+        var foreignBirthplace =
+            _foreignBirthplaces?.Select(
+                originTown,
+                nationalityId,
+                birthYear,
+                year,
+                random);
+
         return new GeneratedOutsiderIdentity(
             nationalityId,
             _nationalities.GetDisplayName(nationalityId),
             nameCultureId,
             firstName,
-            surname);
+            surname,
+            foreignBirthplace?.City,
+            foreignBirthplace?.Country);
     }
 }

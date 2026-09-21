@@ -1722,6 +1722,31 @@ internal sealed class AdvancedAutonomousHouseholdStrategy :
             foreach (var pair in partnerSearch.BuildActionParameters(best))
                 parameters[pair.Key] = pair.Value;
         }
+        else if (actionId.Equals("household.buy_house", StringComparison.OrdinalIgnoreCase))
+        {
+            var market = _context.GetService<IHouseMarketService>();
+            if (market is null)
+                return null;
+
+            var town = _economy.GetResidenceTown(snapshot.Head);
+            var offer = market.GetOffers(snapshot.Head, town, _gameState.Year)
+                .Where(candidate => _economy.CanAfford(snapshot.Head, candidate.AskingPrice))
+                .OrderBy(candidate => candidate.AskingPrice)
+                .ThenByDescending(candidate => candidate.BaseResidentCapacity)
+                .FirstOrDefault();
+
+            if (offer is null)
+                return null;
+
+            parameters["townId"] = offer.Town.Id;
+            parameters["houseOfferId"] = offer.OfferId;
+            parameters["houseOfferYear"] = offer.OfferYear.ToString(CultureInfo.InvariantCulture);
+            parameters["houseCapacity"] = offer.BaseResidentCapacity.ToString(CultureInfo.InvariantCulture);
+            parameters["houseAskingPrice"] = offer.AskingPrice.ToString(CultureInfo.InvariantCulture);
+            parameters["summaryTown"] = offer.Town.Town;
+            parameters["summaryPrice"] = offer.AskingPrice.ToString(CultureInfo.InvariantCulture);
+            parameters["summaryCapacity"] = offer.BaseResidentCapacity.ToString(CultureInfo.InvariantCulture);
+        }
         else if (actionId.Equals("household.ask_move_out", StringComparison.OrdinalIgnoreCase))
         {
             var residence = _economy.GetResidenceTown(snapshot.Head);

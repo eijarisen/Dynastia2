@@ -8,18 +8,23 @@ public sealed partial class MainWindowViewModel
         string actionId)
     {
         var actor = _succession.ActiveController;
-        if (actor is null
-            || _careerService is null
-            || _locationService is null)
-        {
+        if (actor is null)
             return null;
-        }
 
         var applicant = IsFamilyJobSearchAction(actionId)
             ? FindSelectedPerson()
             : actor;
 
-        if (applicant is null)
+        return applicant is null
+            ? null
+            : GetJobOpportunityDialog(actionId, applicant);
+    }
+
+    internal JobOpportunityDialogViewModel? GetJobOpportunityDialog(
+        string actionId,
+        IPerson applicant)
+    {
+        if (_careerService is null || _locationService is null)
             return null;
 
         var opportunities = _careerService
@@ -63,6 +68,18 @@ public sealed partial class MainWindowViewModel
             : actor;
 
         if (target is null)
+            return;
+
+        QueueJobApplication(actionId, opportunity, target);
+    }
+
+    internal void QueueJobApplication(
+        string actionId,
+        JobOpportunityInfo opportunity,
+        IPerson target)
+    {
+        var actor = _succession.ActiveController;
+        if (actor is null || _succession.IsGameOver)
             return;
 
         var result = _actionRegistry.Execute(

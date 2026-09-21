@@ -4,8 +4,6 @@ namespace Dynastia.Mechanics.Relationships;
 
 public sealed class MarriageSatisfactionYearSystem : IYearSystem
 {
-    private const double LowFertilityPenalty = 1;
-    private const double LowIntellectPenalty = 0.75;
     private const double HouseholdStrainPenalty = 2;
 
     private readonly StandardMarriageSatisfactionService _satisfaction;
@@ -15,6 +13,7 @@ public sealed class MarriageSatisfactionYearSystem : IYearSystem
     private readonly ICareerService _career;
     private readonly IHouseholdService _households;
     private readonly IEconomyService _economy;
+    private readonly IFarmingService _farming;
     private readonly IPersonalityService _personality;
     private readonly Func<IFamilyRelationService?> _familyRelationsResolver;
 
@@ -26,6 +25,7 @@ public sealed class MarriageSatisfactionYearSystem : IYearSystem
         ICareerService career,
         IHouseholdService households,
         IEconomyService economy,
+        IFarmingService farming,
         IPersonalityService personality,
         Func<IFamilyRelationService?> familyRelationsResolver)
     {
@@ -36,6 +36,7 @@ public sealed class MarriageSatisfactionYearSystem : IYearSystem
         _career = career;
         _households = households;
         _economy = economy;
+        _farming = farming;
         _personality = personality;
         _familyRelationsResolver = familyRelationsResolver;
     }
@@ -105,10 +106,14 @@ public sealed class MarriageSatisfactionYearSystem : IYearSystem
             issues.Add("personality incompatibility");
         }
 
+        var husbandCareer = _career.GetCareer(husband);
+        var wifeCareer = _career.GetCareer(wife);
+
         var attractionPenalty =
             MarriageBalanceRules.GetLowAttractionPenalty(
                 GetStat(husband, "appeal"),
-                GetStat(wife, "appeal"));
+                GetStat(wife, "appeal"),
+                wifeCareer.IsRetired);
         if (attractionPenalty > 0)
         {
             total += attractionPenalty;
@@ -133,26 +138,28 @@ public sealed class MarriageSatisfactionYearSystem : IYearSystem
             issues.Add("wife's serious illness");
         }
 
-        if (GetStat(wife, "fertility") <= 2)
+        if (MarriageBalanceRules.ShouldApplyLowFertilityPenalty(
+                wife.Age,
+                GetStat(wife, "fertility")))
         {
-            total += LowFertilityPenalty;
+            total += MarriageBalanceRules.LowFertilityPenalty;
             issues.Add("low fertility");
         }
 
-        if (GetStat(husband, "intellect") <= 2)
+        if (MarriageBalanceRules.ShouldApplyLowIntellectPenalty(
+                GetStat(husband, "intellect")))
         {
-            total += LowIntellectPenalty;
+            total += MarriageBalanceRules.LowIntellectPenalty;
             issues.Add("husband's low intellect");
         }
 
-        if (GetStat(wife, "intellect") <= 2)
+        if (MarriageBalanceRules.ShouldApplyLowIntellectPenalty(
+                GetStat(wife, "intellect")))
         {
-            total += LowIntellectPenalty;
+            total += MarriageBalanceRules.LowIntellectPenalty;
             issues.Add("wife's low intellect");
         }
 
-        var husbandCareer = _career.GetCareer(husband);
-        var wifeCareer = _career.GetCareer(wife);
         var husbandImprisoned = husband.Tags.Has("state.imprisoned");
         var wifeImprisoned = wife.Tags.Has("state.imprisoned");
 
@@ -161,7 +168,7 @@ public sealed class MarriageSatisfactionYearSystem : IYearSystem
         if (!husbandImprisoned
             && !husbandCareer.IsRetired
             && husband.Age >= 18
-            && !husbandCareer.IsEmployed)
+            && !IsEconomicallyEmployed(husband, husbandCareer))
         {
             total += MarriageBalanceRules.UnemployedHusbandPenalty;
             issues.Add("husband unemployed");
@@ -173,7 +180,7 @@ public sealed class MarriageSatisfactionYearSystem : IYearSystem
         if (!wifeImprisoned
             && !wifeCareer.IsRetired
             && wife.Age >= 18
-            && !wifeCareer.IsEmployed
+            && !IsEconomicallyEmployed(wife, wifeCareer)
             && wifeCareer.PeakJobLevel > 0)
         {
             total += MarriageBalanceRules.UnemployedWorkingSpousePenalty;
@@ -205,8 +212,8 @@ public sealed class MarriageSatisfactionYearSystem : IYearSystem
         if (household?.IsBroke == true)
         {
             var hasWorkingSpouse =
-                husbandCareer.IsEmployed
-                || wifeCareer.IsEmployed;
+                IsEconomicallyEmployed(husband, husbandCareer)
+                || IsEconomicallyEmployed(wife, wifeCareer);
 
             total +=
                 MarriageBalanceRules.GetFinancialPressurePenalty(
@@ -229,6 +236,13 @@ public sealed class MarriageSatisfactionYearSystem : IYearSystem
 
         return total;
     }
+
+
+    private bool IsEconomicallyEmployed(
+        IPerson person,
+        CareerSnapshot career) =>
+        career.IsEmployed
+        || _farming.IsWorkingFarmWorker(person, person);
 
     private double GetPoorFamilyRelationsPenalty(
         IGameState gameState,

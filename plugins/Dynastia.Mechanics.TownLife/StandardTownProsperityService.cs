@@ -18,9 +18,12 @@ internal sealed class StandardTownProsperityService : ITownProsperityService
     public TownProsperitySnapshot Get(TownInfo town)
     {
         ArgumentNullException.ThrowIfNull(town);
-        var state = GetOrCreateTownState(town.Id);
+        var state = FindTownState(town.Id)
+            ?? CreateTownState(
+                town.Id,
+                _gameState.Year,
+                includeInitialHistory: false);
         var effective = GetEffectiveIndex(state, _gameState.Year);
-        EnsureHistoryPoint(state, _gameState.Year, effective);
 
         return new TownProsperitySnapshot(
             effective,
@@ -32,6 +35,45 @@ internal sealed class StandardTownProsperityService : ITownProsperityService
                 .Distinct(StringComparer.OrdinalIgnoreCase)
                 .ToArray(),
             state.History
+                .OrderBy(point => point.Year)
+                .Select(point => new TownProsperityHistoryPoint(point.Year, point.Index))
+                .ToArray());
+    }
+
+    public TownProsperitySnapshot Get(TownInfo town, int year)
+    {
+        ArgumentNullException.ThrowIfNull(town);
+
+        var state = FindTownState(town.Id)
+            ?? CreateTownState(
+                town.Id,
+                year,
+                includeInitialHistory: false);
+        var history = state.History ?? new List<TownProsperityHistoryPointState>();
+        var shocks = state.Shocks ?? new List<TownProsperityShockState>();
+        var historical = history
+            .FirstOrDefault(point => point.Year == year);
+        var effective = historical?.Index
+            ?? GetEffectiveIndex(state, year);
+        var previous = history
+            .Where(point => point.Year < year)
+            .OrderByDescending(point => point.Year)
+            .FirstOrDefault();
+        var trend = previous is null
+            ? 0
+            : effective - previous.Index;
+
+        return new TownProsperitySnapshot(
+            effective,
+            _rules.LabelFor(effective),
+            trend,
+            shocks
+                .Where(shock => GetShockAmount(shock, year) != 0)
+                .Select(shock => shock.SourceId)
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .ToArray(),
+            history
+                .Where(point => point.Year <= year)
                 .OrderBy(point => point.Year)
                 .Select(point => new TownProsperityHistoryPoint(point.Year, point.Index))
                 .ToArray());
@@ -116,8 +158,14 @@ internal sealed class StandardTownProsperityService : ITownProsperityService
             var state = GetOrCreateTownState(placeId);
             var existing = state.Shocks.FirstOrDefault(shock =>
                 shock.SourceId.Equals(sourceId, StringComparison.OrdinalIgnoreCase));
-            if (existing is not null && !replaceExisting)
+            if (existing is not null
+                && !replaceExisting
+                && existing.Amount == delta
+                && existing.RecoveryYears == recoveryYears
+                && existing.AppliedYear == appliedYear)
+            {
                 continue;
+            }
 
             var before = GetEffectiveIndex(state, _gameState.Year);
             if (existing is not null)
@@ -163,7 +211,7 @@ internal sealed class StandardTownProsperityService : ITownProsperityService
         }
     }
 
-    internal void AdvanceTrackedTowns(IGameRandom random)
+    internal void AdvanceTrackedTowns()
     {
         var component = GetStateComponent(create: false);
         if (component is null)
@@ -180,12 +228,17 @@ internal sealed class StandardTownProsperityService : ITownProsperityService
             {
                 var before = GetEffectiveIndex(town, year - 1);
                 var originalBase = town.BaseIndex;
-                var drift = _rules.DrawOrdinaryDrift(random);
+                var drift = _rules.DrawOrdinaryDrift(
+                    StableUnitRoll(town.PlaceId, year, "prosperity.drift"));
                 var candidate = originalBase + drift;
 
                 if (candidate != _rules.MeanReversionTarget
                     && _rules.MeanReversionMaxAdditionalStep > 0
-                    && random.Chance(_rules.MeanReversionProbability(candidate)))
+                    && StableUnitRoll(
+                        town.PlaceId,
+                        year,
+                        "prosperity.mean_reversion")
+                        < _rules.MeanReversionProbability(candidate))
                 {
                     candidate += Math.Sign(_rules.MeanReversionTarget - candidate)
                         * _rules.MeanReversionMaxAdditionalStep;
@@ -216,6 +269,13 @@ internal sealed class StandardTownProsperityService : ITownProsperityService
             : state.Towns;
     }
 
+    private TownProsperityTownState? FindTownState(string placeId)
+    {
+        var component = GetStateComponent(create: false);
+        return component?.Towns.FirstOrDefault(
+            town => town.PlaceId.Equals(placeId, StringComparison.OrdinalIgnoreCase));
+    }
+
     private TownProsperityTownState GetOrCreateTownState(string placeId)
     {
         var component = GetStateComponent(create: true);
@@ -236,7 +296,10 @@ internal sealed class StandardTownProsperityService : ITownProsperityService
         return created;
     }
 
-    private TownProsperityTownState CreateTownState(string placeId, int firstRelevantYear)
+    private TownProsperityTownState CreateTownState(
+        string placeId,
+        int firstRelevantYear,
+        bool includeInitialHistory = true)
     {
         var minimum = _rules.InitialDeviationMin;
         var maximum = _rules.InitialDeviationMax;
@@ -267,14 +330,16 @@ internal sealed class StandardTownProsperityService : ITownProsperityService
             FirstRelevantYear = firstRelevantYear,
             LastAdvancedYear = firstRelevantYear,
             LastTrend = 0,
-            History =
-            [
-                new TownProsperityHistoryPointState
-                {
-                    Year = firstRelevantYear,
-                    Index = initialIndex
-                }
-            ]
+            History = includeInitialHistory
+                ?
+                [
+                    new TownProsperityHistoryPointState
+                    {
+                        Year = firstRelevantYear,
+                        Index = initialIndex
+                    }
+                ]
+                : []
         };
     }
 
@@ -330,6 +395,21 @@ internal sealed class StandardTownProsperityService : ITownProsperityService
 
         var fraction = (shock.RecoveryYears - elapsed) / (double)shock.RecoveryYears;
         return (int)Math.Round(shock.Amount * fraction, MidpointRounding.AwayFromZero);
+    }
+
+    private double StableUnitRoll(
+        string placeId,
+        int year,
+        string salt)
+    {
+        var anchor = _gameState.People.FirstOrDefault();
+        var worldIdentity = anchor is null
+            ? $"{_gameState.DynastySurname}|{_gameState.StartYear}"
+            : anchor.Id.ToString("N");
+        var hash = StableHash(
+            $"{worldIdentity}|{placeId}|{year}|{salt}");
+
+        return hash / ((double)uint.MaxValue + 1.0);
     }
 
     private static uint StableHash(string value)

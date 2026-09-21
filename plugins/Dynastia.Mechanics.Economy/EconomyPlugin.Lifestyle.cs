@@ -17,7 +17,7 @@ public sealed partial class EconomyPlugin
             events,
             "economy.lifestyle.lavish",
             "Lavish Lifestyle",
-            "Spend freely on comfort, leisure and opportunities. Living costs rise by 25%, while household wellbeing and social advantages improve slightly.",
+            "Spend freely on comfort, leisure and opportunities. Living costs rise by 10%, while household wellbeing and social advantages improve slightly.",
             HouseholdLifestyleStance.Lavish);
 
         RegisterLifestyleAction(
@@ -37,7 +37,7 @@ public sealed partial class EconomyPlugin
             events,
             "economy.lifestyle.thrifty",
             "Thrifty Lifestyle",
-            "Cut discretionary spending and live carefully. Living costs fall by 20%, with small trade-offs to comfort, morale and opportunity.",
+            "Cut discretionary spending and live carefully. Living costs fall by 10%, with small trade-offs to comfort, morale and opportunity.",
             HouseholdLifestyleStance.Thrifty);
     }
 

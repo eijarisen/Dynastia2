@@ -36,6 +36,10 @@ public sealed record PartnerCandidateInfo(
 
     public string OriginTownDisplayName { get; init; } = string.Empty;
 
+    public string? ForeignBirthplaceCity { get; init; }
+
+    public string? ForeignBirthplaceCountry { get; init; }
+
     public string DisplayName => $"{Name} {DisplaySurname}";
 
     public string DisplaySurname

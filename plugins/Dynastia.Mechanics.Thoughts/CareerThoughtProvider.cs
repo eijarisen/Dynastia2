@@ -195,6 +195,32 @@ internal sealed class CareerThoughtProvider :
             yield break;
         }
 
+        var householdHead =
+            context.Households.ResolveHouseholdHead(person);
+
+        // Farm work is real employment for thought/status purposes. Check it
+        // before recent job-loss state so someone who moved onto the family
+        // farm does not continue thinking of themselves as unemployed.
+        if (householdHead is not null
+            && _farming.IsWorkingFarmWorker(person, householdHead))
+        {
+            yield return new ThoughtCandidate(
+                "career.farm_work",
+                "career.work",
+                "career.work",
+                20,
+                "🌾",
+                "state",
+                "farming.work",
+                "farming.work",
+                new Dictionary<string, string>
+                {
+                    ["performance"] = "ordinary"
+                });
+
+            yield break;
+        }
+
         if (person.Tags.Has(
             "recent.job_loss"))
         {
@@ -207,15 +233,6 @@ internal sealed class CareerThoughtProvider :
                 "state",
                 "recent.job_loss",
                 "career.jobloss");
-        }
-
-        var householdHead =
-            context.Households.ResolveHouseholdHead(person);
-
-        if (householdHead is not null
-            && _farming.IsWorkingFarmWorker(person, householdHead))
-        {
-            yield break;
         }
 
         if (context.Justice

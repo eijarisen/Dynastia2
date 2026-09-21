@@ -94,7 +94,7 @@ public sealed class PersonRowViewModel
 
             BirthplaceText =
                 $"Birthplace: " +
-                $"{location.Birthplace.DisplayName}";
+                locationService.GetBirthplaceDisplayName(person);
 
             if (person.Tags.Has(
                     "state.dead"))

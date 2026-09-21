@@ -49,12 +49,16 @@ public sealed partial class StandardEconomyService
             : GetHousePrice(residence.Info.Town);
         var extensions = Math.Max(0, residence.State.CapacityExtensions);
 
+        var baseCapacity = residence.State.BaseResidentCapacity > 0
+            ? residence.State.BaseResidentCapacity
+            : HouseExtensionRules.BaseResidenceCapacity;
+
         return new HouseholdResidenceCapacitySnapshot(
             residence.State.Id,
             true,
-            HouseExtensionRules.BaseResidenceCapacity,
+            baseCapacity,
             extensions,
-            HouseExtensionRules.GetResidentCapacity(extensions),
+            HouseExtensionRules.GetResidentCapacity(baseCapacity, extensions),
             purchasePrice,
             HouseExtensionRules.GetExtensionCost(purchasePrice));
     }

@@ -83,6 +83,11 @@ public sealed class HistoricalTownCatalog : IHistoricalTownCatalog
 
     public IReadOnlyDictionary<string, HistoricalPolityInfo> Polities { get; }
 
+    internal string? GetProxyPlaceId(string placeId) =>
+        _places.TryGetValue(placeId, out var place)
+            ? place.Coordinates.ProxyPlaceId
+            : null;
+
     public static HistoricalTownCatalog Load(IGameDataService data)
     {
         ArgumentNullException.ThrowIfNull(data);
@@ -605,6 +610,7 @@ public sealed class HistoricalTownCatalog : IHistoricalTownCatalog
         public CoordinateRecord() { }
         public double Latitude { get; set; }
         public double Longitude { get; set; }
+        public string? ProxyPlaceId { get; set; }
     }
 
     private sealed class NameSeriesRecord

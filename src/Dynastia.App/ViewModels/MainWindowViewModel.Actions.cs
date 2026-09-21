@@ -302,6 +302,9 @@ public sealed partial class MainWindowViewModel
             "farming.sell_farmland",
             StringComparison.OrdinalIgnoreCase)
         || actionId.Equals(
+            "farming.add_livestock",
+            StringComparison.OrdinalIgnoreCase)
+        || actionId.Equals(
             "heirloom.sell",
             StringComparison.OrdinalIgnoreCase);
 
@@ -462,6 +465,12 @@ public sealed partial class MainWindowViewModel
                 "education.get_education",
                 StringComparison.OrdinalIgnoreCase)
             || actionId.Equals(
+                "wellbeing.heal_relative",
+                StringComparison.OrdinalIgnoreCase)
+            || actionId.Equals(
+                "wellbeing.therapy",
+                StringComparison.OrdinalIgnoreCase)
+            || actionId.Equals(
                 "household.buy_house",
                 StringComparison.OrdinalIgnoreCase)
             || actionId.Equals(
@@ -538,6 +547,7 @@ public sealed partial class MainWindowViewModel
 
         if (actionId.Equals("household.buy_house", StringComparison.OrdinalIgnoreCase))
         {
+            var currentTown = _economyService.GetResidenceTown(actor);
             var ownedTownIds =
                 _economyService.GetHouses(actor)
                     .Select(house => house.Town.Id)
@@ -546,27 +556,58 @@ public sealed partial class MainWindowViewModel
             return _locationService.GetTowns()
                 .Select(town =>
                 {
-                    var opportunities = _localCareerOpportunityService?.GetOpportunitySnapshot(town);
-                    var price = _economyService.GetHousePrice(town);
-                    var livingCost = _economyService.GetLivingCostPerPerson(town);
-                    var rentalIncome = _economyService.GetRentalIncome(town);
+                    var opportunities = _localCareerOpportunityService?
+                        .GetOpportunitySnapshot(town);
+                    var prosperity = _townProsperityService?.Get(town);
                     var region = opportunities?.RegionName ?? town.RegionId;
-                    var affordable = _economyService.CanAfford(actor, price);
-                    var details = $"Population: {town.Population:N0} • {town.SettlementClassDisplayName}\n"
-                        + $"{opportunities?.Description ?? "General local work and services."}\n"
-                        + $"Living costs: {livingCost:N0} zł per person/year • Rental income: {rentalIncome:N0} zł/year";
-                    var search = $"{town.Town} {town.County} {region} {opportunities?.Description}";
-                    return new PropertySelectionOption(
-                        town.Id,
-                        town.Town,
-                        $"{town.County} • {region}",
-                        details,
-                        $"{price:N0} zł",
-                        search,
-                        affordable);
+                    var category = town.Id.Equals(
+                            currentTown.Id,
+                            StringComparison.OrdinalIgnoreCase)
+                        ? 0
+                        : ownedTownIds.Contains(town.Id)
+                            ? 1
+                            : 2;
+                    var opportunityText = opportunities is null
+                        ? "—"
+                        : string.Join(
+                            ", ",
+                            opportunities.TownOpportunityTags
+                                .Concat(opportunities.RegionOpportunityTags)
+                                .Distinct(StringComparer.OrdinalIgnoreCase)
+                                .Select(FormatOpportunityTag));
+                    if (string.IsNullOrWhiteSpace(opportunityText))
+                        opportunityText = "—";
+
+                    var details =
+                        $"Population: {town.Population:N0} • "
+                        + $"Prosperity: {prosperity?.Index ?? 100} ({prosperity?.Label ?? "Stable"}) • "
+                        + $"Opportunities: {opportunityText}";
+
+                    var regionalText = opportunities is { RegionOpportunityTags.Count: > 0 }
+                        ? string.Join(", ", opportunities.RegionOpportunityTags
+                            .Select(FormatOpportunityTag))
+                        : string.Empty;
+
+                    var search =
+                        $"{town.Town} {town.County} {region} {town.PolityName} "
+                        + $"{town.SettlementClassDisplayName} {opportunityText} "
+                        + $"{regionalText}";
+
+                    return new
+                    {
+                        Category = category,
+                        Option = new PropertySelectionOption(
+                            town.Id,
+                            town.Town,
+                            $"{town.PolityName} • {region} • {town.County}",
+                            details,
+                            string.Empty,
+                            search)
+                    };
                 })
-                .OrderByDescending(option => ownedTownIds.Contains(option.Id))
-                .ThenBy(option => option.PrimaryText, StringComparer.CurrentCultureIgnoreCase)
+                .OrderBy(item => item.Category)
+                .ThenBy(item => item.Option.PrimaryText, StringComparer.CurrentCultureIgnoreCase)
+                .Select(item => item.Option)
                 .ToList();
         }
 
@@ -579,7 +620,7 @@ public sealed partial class MainWindowViewModel
                     var localPrice = _economyService.GetHousePrice(house.Town);
                     var propertyValue = _economyService.GetHouseValue(house);
                     var sale = _economyService.GetHouseSaleValue(house);
-                    var rentalIncome = _economyService.GetRentalIncome(house.Town);
+                    var rentalIncome = _economyService.GetRentalIncome(house);
                     var status = house.IsResidence ? "Residence" : "Rented property";
                     var region = opportunities?.RegionName ?? house.Town.RegionId;
                     return new PropertySelectionOption(
@@ -596,6 +637,34 @@ public sealed partial class MainWindowViewModel
         }
 
         if (actionId.Equals(
+                "farming.sell_farmland",
+                StringComparison.OrdinalIgnoreCase)
+            && _farmingService is not null)
+        {
+            return _farmingService.GetSnapshot(actor).Farmland
+                .Select(farmland =>
+                {
+                    var sale = _farmingService.GetFarmlandSaleValue(farmland);
+                    var livestock = string.IsNullOrWhiteSpace(farmland.LivestockDisplayName)
+                        ? "No livestock"
+                        : $"Livestock: {farmland.LivestockEmoji} {farmland.LivestockDisplayName}";
+                    var title =
+                        $"{farmland.FarmTypeEmoji} {farmland.FarmTypeDisplayName}";
+
+                    return new PropertySelectionOption(
+                        farmland.Id.ToString(),
+                        title,
+                        $"{farmland.Town.Town} • {farmland.Town.County}",
+                        $"{livestock}\nAcquired: {farmland.AcquiredYear}",
+                        $"Sale: {sale:N0} zł",
+                        $"{title} {farmland.Town.Town} {farmland.Town.County} {livestock}");
+                })
+                .OrderBy(option => option.PrimaryText, StringComparer.CurrentCultureIgnoreCase)
+                .ThenBy(option => option.SecondaryText, StringComparer.CurrentCultureIgnoreCase)
+                .ToList();
+        }
+
+        if (actionId.Equals(
                 "household.ask_move_out",
                 StringComparison.OrdinalIgnoreCase))
         {
@@ -605,7 +674,7 @@ public sealed partial class MainWindowViewModel
                 {
                     var opportunities =
                         _localCareerOpportunityService?.GetOpportunitySnapshot(house.Town);
-                    var rentalIncome = _economyService.GetRentalIncome(house.Town);
+                    var rentalIncome = _economyService.GetRentalIncome(house);
                     var region = opportunities?.RegionName ?? house.Town.RegionId;
                     return new PropertySelectionOption(
                         house.Id.ToString(),
@@ -647,7 +716,10 @@ public sealed partial class MainWindowViewModel
             ? "townId"
             : actionId.Equals("heirloom.sell", StringComparison.OrdinalIgnoreCase)
                 ? "heirloomId"
-                : "propertyId";
+                : (actionId.Equals("farming.sell_farmland", StringComparison.OrdinalIgnoreCase)
+                   || actionId.Equals("farming.add_livestock", StringComparison.OrdinalIgnoreCase))
+                    ? "farmlandId"
+                    : "propertyId";
 
         var parameters =
             new Dictionary<string, string>(
@@ -689,6 +761,31 @@ public sealed partial class MainWindowViewModel
                         StringComparison.OrdinalIgnoreCase)
                         ? house.ExtensionCost
                         : _economyService.GetHouseSaleValue(house))
+                    .ToString(CultureInfo.InvariantCulture);
+            }
+        }
+        else if ((actionId.Equals(
+                      "farming.sell_farmland",
+                      StringComparison.OrdinalIgnoreCase)
+                  || actionId.Equals(
+                      "farming.add_livestock",
+                      StringComparison.OrdinalIgnoreCase))
+                 && _farmingService is not null
+                 && Guid.TryParse(selectedId, out var farmlandId)
+                 && _succession.ActiveController is { } farmingActor)
+        {
+            var farmland = _farmingService.GetSnapshot(farmingActor).Farmland
+                .FirstOrDefault(item => item.Id == farmlandId);
+            if (farmland is not null)
+            {
+                parameters["summaryFarmland"] =
+                    $"{farmland.FarmTypeEmoji} {farmland.FarmTypeDisplayName} — {farmland.Town.Town}";
+                parameters["summaryPrice"] =
+                    (actionId.Equals(
+                        "farming.add_livestock",
+                        StringComparison.OrdinalIgnoreCase)
+                        ? _farmingService.LivestockPurchasePrice
+                        : _farmingService.GetFarmlandSaleValue(farmland))
                     .ToString(CultureInfo.InvariantCulture);
             }
         }
@@ -943,6 +1040,13 @@ public sealed partial class MainWindowViewModel
         }
 
         if (queued.ActionId.Equals(
+                "farming.add_livestock",
+                StringComparison.OrdinalIgnoreCase))
+        {
+            return "Add Livestock";
+        }
+
+        if (queued.ActionId.Equals(
                 "heirloom.sell",
                 StringComparison.OrdinalIgnoreCase))
         {
@@ -1017,11 +1121,28 @@ public sealed partial class MainWindowViewModel
 
         if (queued.ActionId.Equals(
                 "farming.sell_farmland",
+                StringComparison.OrdinalIgnoreCase)
+            || queued.ActionId.Equals(
+                "farming.add_livestock",
                 StringComparison.OrdinalIgnoreCase))
         {
-            return _farmingService is null
-                ? "16,000 zł"
-                : $"{_farmingService.SalePrice.ToString("N0", CultureInfo.InvariantCulture)} zł";
+            var name = parameters.TryGetValue("summaryFarmland", out var storedFarm)
+                ? storedFarm
+                : "Selected farmland";
+            if (TryReadDecimalParameter(parameters, "summaryPrice", out var farmlandPrice))
+            {
+                return $"{name} — {farmlandPrice.ToString("N0", CultureInfo.InvariantCulture)} zł";
+            }
+
+            if (_farmingService is null)
+                return name;
+
+            var fallback = queued.ActionId.Equals(
+                    "farming.add_livestock",
+                    StringComparison.OrdinalIgnoreCase)
+                ? _farmingService.LivestockPurchasePrice
+                : _farmingService.SalePrice;
+            return $"{name} — {fallback.ToString("N0", CultureInfo.InvariantCulture)} zł";
         }
 
         if (queued.ActionId.Equals(
@@ -1101,8 +1222,16 @@ public sealed partial class MainWindowViewModel
             if (!string.IsNullOrWhiteSpace(townName)
                 && price is not null)
             {
+                var capacityText =
+                    queued.ActionId.Equals(
+                            "household.buy_house",
+                            StringComparison.OrdinalIgnoreCase)
+                        && TryReadIntParameter(parameters, "summaryCapacity", out var capacity)
+                            ? $", {capacity} residents"
+                            : string.Empty;
+
                 return
-                    $"{townName}, " +
+                    $"{townName}{capacityText}, " +
                     $"{price.Value.ToString("N0", CultureInfo.InvariantCulture)} zł";
             }
 
@@ -1111,6 +1240,18 @@ public sealed partial class MainWindowViewModel
         }
 
         return string.Empty;
+    }
+
+    private static string FormatOpportunityTag(string tag)
+    {
+        var value = tag;
+        var separator = value.LastIndexOf('.');
+        if (separator >= 0 && separator + 1 < value.Length)
+            value = value[(separator + 1)..];
+
+        value = value.Replace('_', ' ').Replace('-', ' ');
+        return System.Globalization.CultureInfo.CurrentCulture.TextInfo
+            .ToTitleCase(value);
     }
 
     private static bool TryReadDecimalParameter(
@@ -1172,6 +1313,9 @@ public sealed partial class MainWindowViewModel
                    StringComparison.OrdinalIgnoreCase)
                || actionId.Equals(
                    "farming.sell_farmland",
+                   StringComparison.OrdinalIgnoreCase)
+               || actionId.Equals(
+                   "farming.add_livestock",
                    StringComparison.OrdinalIgnoreCase)
                || actionId.Equals(
                    "heirloom.sell",

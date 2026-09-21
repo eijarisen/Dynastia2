@@ -502,6 +502,7 @@ public sealed partial class MainWindowViewModel
             person,
             _familyService,
             _healthService,
+            _stressService,
             _educationService,
             _careerService,
             _farmingService,

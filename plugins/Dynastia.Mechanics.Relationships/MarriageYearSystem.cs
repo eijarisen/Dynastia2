@@ -223,6 +223,11 @@ public sealed class MarriageYearSystem : IYearSystem
             spouse,
             originTown);
 
+        _locations.SetForeignBirthplace(
+            spouse,
+            identity.ForeignBirthplaceCity,
+            identity.ForeignBirthplaceCountry);
+
         spouse.Tags.Add("state.alive");
         spouse.Tags.Add("age.adult");
         spouse.Tags.Add("relationship.single");

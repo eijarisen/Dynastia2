@@ -5,4 +5,13 @@ public sealed record GeneratedOutsiderIdentity(
     string DisplayNationality,
     string NameCultureId,
     string FirstName,
-    string Surname);
+    string Surname,
+    string? ForeignBirthplaceCity = null,
+    string? ForeignBirthplaceCountry = null)
+{
+    public string? ForeignBirthplaceDisplayName =>
+        string.IsNullOrWhiteSpace(ForeignBirthplaceCity)
+        || string.IsNullOrWhiteSpace(ForeignBirthplaceCountry)
+            ? null
+            : $"{ForeignBirthplaceCity}, {ForeignBirthplaceCountry}";
+}

@@ -1,0 +1,16 @@
+﻿LivestockTypeId,StartYear,EndYear,WeightMultiplier
+chickens,1700,2026,1.0
+cows,1700,1945,0.95
+cows,1946,2026,1.1
+pigs,1700,1849,0.8
+pigs,1850,2026,1.05
+sheep,1700,1899,1.2
+sheep,1900,1945,0.9
+sheep,1946,2026,0.6
+goats,1700,1899,0.85
+goats,1900,2026,0.65
+geese,1700,1945,1.05
+geese,1946,2026,0.75
+horses,1700,1945,1.15
+horses,1946,1969,0.65
+horses,1970,2026,0.25

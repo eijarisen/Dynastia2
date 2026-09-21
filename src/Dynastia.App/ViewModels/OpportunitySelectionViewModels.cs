@@ -111,7 +111,7 @@ public sealed class PotentialPartnerCardViewModel
         Candidate.Personality.DisplayName;
 
     public string OriginNationalityText =>
-        $"Origin: {Candidate.OriginTownDisplayName} · Nationality: {Candidate.DisplayNationality}";
+        $"Birthplace: {Candidate.OriginTownDisplayName} · Nationality: {Candidate.DisplayNationality}";
 
     public string OccupationText =>
         Candidate.JobLevel <= 0

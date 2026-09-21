@@ -32,7 +32,7 @@ public sealed class LoanOfferCardViewModel
         IsGivingLoan ? "Borrower" : "Lender";
 
     public string OriginNationalityText =>
-        $"Origin: {Offer.OriginTownDisplayName} · Nationality: {Offer.DisplayNationality}";
+        $"Birthplace: {Offer.OriginTownDisplayName} · Nationality: {Offer.DisplayNationality}";
 
     public string AmountText =>
         $"Amount: {Offer.Terms.Principal:N0} zł";

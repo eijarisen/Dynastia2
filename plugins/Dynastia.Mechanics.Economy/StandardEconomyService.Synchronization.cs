@@ -295,6 +295,8 @@ public sealed partial class StandardEconomyService
                 house.PurchasePrice = GetHousePrice(houseTown);
 
             house.CapacityExtensions = Math.Max(0, house.CapacityExtensions);
+            house.BaseResidentCapacity = NormalizeBaseResidentCapacity(
+                house.BaseResidentCapacity);
 
             if (house.AssignedHeirId is Guid assignedHeirId)
             {
@@ -359,6 +361,8 @@ public sealed partial class StandardEconomyService
                 house.PurchasePrice = GetHousePrice(pendingTown);
 
             house.CapacityExtensions = Math.Max(0, house.CapacityExtensions);
+            house.BaseResidentCapacity = NormalizeBaseResidentCapacity(
+                house.BaseResidentCapacity);
         }
 
         claim.PendingHouses =
@@ -436,7 +440,9 @@ public sealed partial class StandardEconomyService
             IsRented: !isResidence,
             AssignedHeirId: house.AssignedHeirId,
             PurchasePrice: house.PurchasePrice,
-            CapacityExtensions: house.CapacityExtensions);
+            CapacityExtensions: house.CapacityExtensions,
+            BaseResidentCapacity: NormalizeBaseResidentCapacity(
+                house.BaseResidentCapacity));
     }
 
     private HousePropertyInfo ToInfo(

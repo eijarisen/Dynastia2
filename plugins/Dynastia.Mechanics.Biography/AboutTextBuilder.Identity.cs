@@ -16,7 +16,7 @@ public sealed partial class AboutTextBuilder
         var opening =
             $"{_family.GetDisplayName(person)} " +
             $"was born on {birthDate} in " +
-            $"{location.Birthplace.DisplayName}";
+            _locations.GetBirthplaceDisplayName(person);
 
         var parents =
             GetKnownParents(

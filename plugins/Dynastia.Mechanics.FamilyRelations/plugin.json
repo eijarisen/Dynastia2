@@ -8,6 +8,7 @@
   "dependencies": [
     "dynastia.family",
     "dynastia.economy",
+    "dynastia.farming",
     "dynastia.households",
     "dynastia.career",
     "dynastia.relationships",

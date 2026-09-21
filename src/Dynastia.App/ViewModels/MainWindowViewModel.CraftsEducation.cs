@@ -59,7 +59,8 @@ public sealed partial class MainWindowViewModel
                     $"Become self-employed as {craft.SelfEmploymentTitle}.\n" +
                     $"Expected long-run income: about {expected:N0} zł/year. Income is highly variable.",
                     "Choose",
-                    $"{craft.Name} {craft.SelfEmploymentTitle} {mastery} profession");
+                    $"{craft.Name} {craft.SelfEmploymentTitle} {mastery} profession",
+                    LeadingEmoji: craft.Emoji);
             })
             .OrderBy(option => option.PrimaryText, StringComparer.CurrentCultureIgnoreCase)
             .ToList();
@@ -100,10 +101,56 @@ public sealed partial class MainWindowViewModel
 
     public IReadOnlyList<PropertySelectionOption> GetEducationSelectionOptions()
     {
-        var actor = _succession.ActiveController;
         var target = FindSelectedPerson();
-        if (actor is null || target is null || _educationService is null)
+        return target is null
+            ? Array.Empty<PropertySelectionOption>()
+            : GetEducationSelectionOptions(target);
+    }
+
+    internal IReadOnlyList<PropertySelectionOption> GetEducationSelectionOptions(
+        IPerson target)
+    {
+        var actor = _succession.ActiveController;
+        if (actor is null || _educationService is null)
             return Array.Empty<PropertySelectionOption>();
+
+        if (target.Age < 18)
+        {
+            if (target.Age < 6
+                || (_familyService?.GetFather(target)?.Id != actor.Id
+                    && _familyService?.GetMother(target)?.Id != actor.Id))
+            {
+                return Array.Empty<PropertySelectionOption>();
+            }
+
+            var definition = _actionRegistry
+                .GetCandidateActions(actor, target)
+                .FirstOrDefault(action => action.Id.Equals(
+                    "education.help_learning",
+                    StringComparison.OrdinalIgnoreCase));
+            if (definition is null)
+                return Array.Empty<PropertySelectionOption>();
+
+            var evaluation = _actionRegistry.Evaluate(
+                definition.Id,
+                actor,
+                target);
+            var currentLevel = _educationService.GetEducationLevel(target);
+            var helperLevel = _educationService.GetEducationLevel(actor);
+
+            return
+            [
+                new PropertySelectionOption(
+                    "help_learning",
+                    definition.Label,
+                    $"Current Education: Level {currentLevel} · Parent Education: Level {helperLevel}",
+                    definition.Description,
+                    "No cost",
+                    "help learning child education parent study",
+                    evaluation.Available,
+                    LeadingEmoji: "📚")
+            ];
+        }
 
         var canAffordStandard =
             _economyService?.CanAfford(actor, StandardEducationUiCost) == true;
@@ -119,7 +166,7 @@ public sealed partial class MainWindowViewModel
         {
             new(
                 "standard",
-                "🎓 Standard Education",
+                "Standard Education",
                 $"Current formal Education: Level {_educationService.GetEducationLevel(target)} · Local School cap: Level {localEducationCeiling}",
                 localEducationCeiling <= 0
                     ? "No ordinary local schooling is available."
@@ -128,7 +175,8 @@ public sealed partial class MainWindowViewModel
                 "standard education formal study",
                 _educationService.GetEducationLevel(target) < localEducationCeiling
                     && canAffordStandard,
-                standardChance)
+                standardChance,
+                "🎓")
         };
 
         if (_craftService is null)
@@ -141,6 +189,13 @@ public sealed partial class MainWindowViewModel
                 .ToHashSet(StringComparer.OrdinalIgnoreCase)
             ?? new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
+        var craftOptions =
+            new List<(
+                PropertySelectionOption Option,
+                bool HasRegionalSupport,
+                bool IsKnownCraft,
+                string CraftName)>();
+
         foreach (var craft in _craftService.GetEducationOptions(target))
         {
             var statName = CultureInfo.InvariantCulture.TextInfo.ToTitleCase(craft.PrimaryStat);
@@ -151,8 +206,8 @@ public sealed partial class MainWindowViewModel
             var emoji = craftDefinition?.Emoji
                 ?? "🛠️";
             var heading = craft.IsKnownCraft
-                ? $"{emoji} {craft.CraftName} — {craft.CurrentMasteryName}"
-                : $"{emoji} Learn {craft.CraftName}";
+                ? $"{craft.CraftName} — {craft.CurrentMasteryName}"
+                : $"Learn {craft.CraftName}";
             var supportTags = craftDefinition is null
                 ? Array.Empty<string>()
                 : craftDefinition.RequiredOpportunityTags.Count > 0
@@ -168,16 +223,31 @@ public sealed partial class MainWindowViewModel
             var secondary =
                 $"Requires: {statName} · {supportText}";
 
-            options.Add(new PropertySelectionOption(
-                $"craft:{craft.CraftId}",
-                heading,
-                secondary,
-                string.Empty,
-                $"{CraftEducationUiCost:N0} zł",
-                $"{craft.CraftName} craft education {craft.CurrentMasteryName} {craft.PrimaryStat}",
-                canAffordCraft,
-                craft.SuccessChance));
+            craftOptions.Add((
+                new PropertySelectionOption(
+                    $"craft:{craft.CraftId}",
+                    heading,
+                    secondary,
+                    string.Empty,
+                    $"{CraftEducationUiCost:N0} zł",
+                    $"{craft.CraftName} craft education {craft.CurrentMasteryName} {craft.PrimaryStat}",
+                    canAffordCraft,
+                    craft.SuccessChance,
+                    emoji),
+                hasRegionalSupport,
+                craft.IsKnownCraft,
+                craft.CraftName));
         }
+
+        // Standard education remains the first choice. Among Crafts, put
+        // locally supported industries first, then preserve the useful known-
+        // craft preference before falling back to alphabetical order.
+        options.AddRange(
+            craftOptions
+                .OrderByDescending(option => option.HasRegionalSupport)
+                .ThenByDescending(option => option.IsKnownCraft)
+                .ThenBy(option => option.CraftName, StringComparer.CurrentCultureIgnoreCase)
+                .Select(option => option.Option));
 
         return options;
     }
@@ -185,8 +255,13 @@ public sealed partial class MainWindowViewModel
     public string GetEducationSelectionContextText()
     {
         var target = FindSelectedPerson();
-        if (target is null)
-            return string.Empty;
+        return target is null
+            ? string.Empty
+            : GetEducationSelectionContextText(target);
+    }
+
+    internal string GetEducationSelectionContextText(IPerson target)
+    {
 
         var displayName = _familyService?.GetDisplayName(target)
             ?? $"{target.Name} {target.Surname}";
@@ -203,30 +278,53 @@ public sealed partial class MainWindowViewModel
 
     public void QueueEducationAction(string selectedOptionId)
     {
-        var actor = _succession.ActiveController;
         var target = FindSelectedPerson();
-        if (actor is null || target is null || _succession.IsGameOver)
+        if (target is null)
             return;
 
-        var parameters = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
-        {
-            ["educationOption"] = selectedOptionId,
-            ["summaryEducationOption"] = selectedOptionId.Equals(
-                "standard",
-                StringComparison.OrdinalIgnoreCase)
-                ? "Standard Education"
-                : _craftService?.GetEducationOptions(target)
-                    .FirstOrDefault(option => selectedOptionId.Equals(
-                        $"craft:{option.CraftId}",
-                        StringComparison.OrdinalIgnoreCase))?.CraftName
-                    ?? selectedOptionId
-        };
+        QueueEducationAction(selectedOptionId, target);
+    }
 
-        var result = _actionRegistry.Execute(
-            "education.get_education",
-            actor,
-            target,
-            parameters);
+    internal void QueueEducationAction(
+        string selectedOptionId,
+        IPerson target)
+    {
+        var actor = _succession.ActiveController;
+        if (actor is null || _succession.IsGameOver)
+            return;
+
+        GameActionResult result;
+        if (selectedOptionId.Equals(
+                "help_learning",
+                StringComparison.OrdinalIgnoreCase))
+        {
+            result = _actionRegistry.Execute(
+                "education.help_learning",
+                actor,
+                target);
+        }
+        else
+        {
+            var parameters = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+            {
+                ["educationOption"] = selectedOptionId,
+                ["summaryEducationOption"] = selectedOptionId.Equals(
+                    "standard",
+                    StringComparison.OrdinalIgnoreCase)
+                    ? "Standard Education"
+                    : _craftService?.GetEducationOptions(target)
+                        .FirstOrDefault(option => selectedOptionId.Equals(
+                            $"craft:{option.CraftId}",
+                            StringComparison.OrdinalIgnoreCase))?.CraftName
+                        ?? selectedOptionId
+            };
+
+            result = _actionRegistry.Execute(
+                "education.get_education",
+                actor,
+                target,
+                parameters);
+        }
 
         if (!result.Success && !string.IsNullOrWhiteSpace(result.Message))
             PersistenceStatusText = result.Message;

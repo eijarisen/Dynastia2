@@ -10,6 +10,7 @@ internal static partial class FamilyRelationActions
         IEconomyService economy,
         ILocationService locations,
         ICareerService career,
+        IFarmingService farming,
         IGameRandom random,
         IGameEventBus events,
         IFamilyService family,
@@ -67,7 +68,7 @@ internal static partial class FamilyRelationActions
             if (!recipientHadHouse
                 && !origin.Id.Equals(house.Town.Id, StringComparison.OrdinalIgnoreCase))
             {
-                RelocateHousehold(gameState, c.Actor, house.Town, family, economy, career, events);
+                RelocateHousehold(gameState, c.Actor, house.Town, family, economy, career, farming, events);
             }
 
             relations.RecordInteraction(c.Actor, c.Target, 8, 8);
@@ -83,6 +84,7 @@ internal static partial class FamilyRelationActions
         IEconomyService economy,
         ILocationService locations,
         ICareerService career,
+        IFarmingService farming,
         IGameRandom random,
         IGameEventBus events,
         IFamilyService family,
@@ -132,7 +134,7 @@ internal static partial class FamilyRelationActions
             if (!recipientHadHouse
                 && !targetTown.Id.Equals(house.Town.Id, StringComparison.OrdinalIgnoreCase))
             {
-                RelocateHousehold(gameState, targetHead, house.Town, family, economy, career, events);
+                RelocateHousehold(gameState, targetHead, house.Town, family, economy, career, farming, events);
             }
 
             relations.RecordInteraction(c.Actor, c.Target, 8, 8);
@@ -149,6 +151,7 @@ internal static partial class FamilyRelationActions
         IFamilyService family,
         IEconomyService economy,
         ICareerService career,
+        IFarmingService farming,
         IGameEventBus events)
     {
         var origin = economy.GetResidenceTown(head);
@@ -168,6 +171,11 @@ internal static partial class FamilyRelationActions
                 return !c.IsRetired && c.IsEmployed && !c.IsSelfEmployed;
             })
             .ToList();
+
+        farming.SellOriginFarmlandForVoluntaryRelocation(
+            head,
+            origin,
+            destination);
 
         economy.SetResidenceTown(head, destination);
         foreach (var worker in employed)

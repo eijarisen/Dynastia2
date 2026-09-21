@@ -6,7 +6,10 @@ namespace Dynastia.App.ViewModels;
 public enum FamilyInventoryTab
 {
     Money = 0,
-    Properties = 1
+    Houses = 1,
+    Properties = Houses,
+    Farmland = 2,
+    Heirlooms = 3
 }
 
 public sealed class FamilyInventoryWindowViewModel :
@@ -29,8 +32,6 @@ public sealed class FamilyInventoryWindowViewModel :
     private string _buyFarmlandActionText = "Buy Farmland";
     private string _sellFarmlandActionText = "Sell Farmland";
     private int _selectedTabIndex;
-    private bool _canTakeLoan;
-    private bool _canGiveLoan;
     private string _lifestyleText = "Balanced";
     private string _lifestyleDescription = "Current living costs and household wellbeing are balanced.";
     private bool _canUseLavishLifestyle;
@@ -45,10 +46,12 @@ public sealed class FamilyInventoryWindowViewModel :
 
     public FamilyInventoryWindowViewModel(
         MainWindowViewModel main,
-        FamilyInventoryTab initialTab = FamilyInventoryTab.Money)
+        FamilyInventoryTab initialTab = FamilyInventoryTab.Money,
+        bool canVisitBank = false)
     {
         _main = main;
         _selectedTabIndex = (int)initialTab;
+        CanVisitBank = canVisitBank;
         Refresh();
     }
 
@@ -58,7 +61,7 @@ public sealed class FamilyInventoryWindowViewModel :
         get => _selectedTabIndex;
         set
         {
-            var normalized = Math.Clamp(value, 0, 1);
+            var normalized = Math.Clamp(value, 0, 3);
             if (_selectedTabIndex == normalized)
                 return;
 
@@ -261,31 +264,7 @@ public sealed class FamilyInventoryWindowViewModel :
         }
     }
 
-    public bool CanTakeLoan
-    {
-        get => _canTakeLoan;
-        private set
-        {
-            if (_canTakeLoan == value)
-                return;
-
-            _canTakeLoan = value;
-            OnPropertyChanged();
-        }
-    }
-
-    public bool CanGiveLoan
-    {
-        get => _canGiveLoan;
-        private set
-        {
-            if (_canGiveLoan == value)
-                return;
-
-            _canGiveLoan = value;
-            OnPropertyChanged();
-        }
-    }
+    public bool CanVisitBank { get; }
 
     public string LifestyleText
     {
@@ -450,8 +429,6 @@ public sealed class FamilyInventoryWindowViewModel :
             HeirloomEmptyText = "No family heirlooms.";
             BuyFarmlandActionText = "Buy Farmland";
             SellFarmlandActionText = "Sell Farmland";
-            CanTakeLoan = false;
-            CanGiveLoan = false;
             LifestyleText = "Balanced";
             LifestyleDescription = "Current living costs and household wellbeing are balanced.";
             CanUseLavishLifestyle = false;
@@ -564,6 +541,15 @@ public sealed class FamilyInventoryWindowViewModel :
                     new InventoryFarmlandViewModel(
                         farmland,
                         status,
+                        _main.GetFarmlandSaleValue(farmland),
+                        data.CanSellFarmland,
+                        data.CanAddLivestock
+                            && farmland.Town.Id.Equals(
+                                farmlandSnapshot.ResidenceTownId,
+                                StringComparison.OrdinalIgnoreCase)
+                            && string.IsNullOrWhiteSpace(farmland.LivestockTypeId)
+                            && data.Budget >= data.LivestockPurchasePrice,
+                        data.LivestockPurchasePrice,
                         heirOptions,
                         _main.SetFarmlandInheritanceHeir));
             }
@@ -621,15 +607,13 @@ public sealed class FamilyInventoryWindowViewModel :
         LifestyleDescription = data.Lifestyle switch
         {
             HouseholdLifestyleStance.Lavish =>
-                "+25% living costs. Subtle gains to family happiness, marriage, work morale, recovery, education and spouse prospects; slightly less Stress.",
+                "+10% living costs. Subtle gains to family happiness, marriage, work morale, recovery, education and spouse prospects; slightly less Stress.",
             HouseholdLifestyleStance.Thrifty =>
-                "-20% living costs. Subtle penalties to family happiness, marriage, work morale, recovery, education and spouse prospects; slightly more Stress.",
+                "-10% living costs. Subtle penalties to family happiness, marriage, work morale, recovery, education and spouse prospects; slightly more Stress.",
             _ =>
                 "Baseline living costs and household wellbeing."
         };
 
-        CanTakeLoan = data.CanTakeLoan;
-        CanGiveLoan = data.CanGiveLoan;
         CanUseLavishLifestyle = data.CanUseLavishLifestyle;
         CanUseBalancedLifestyle = data.CanUseBalancedLifestyle;
         CanUseThriftyLifestyle = data.CanUseThriftyLifestyle;
@@ -693,7 +677,14 @@ public sealed class InventoryHeirloomViewModel :
         HeirloomId = heirloom.Id;
         Emoji = heirloom.Emoji;
         DisplayName = heirloom.DisplayName;
-        DetailsText = $"{heirloom.AcquiredYear} · Value {heirloom.AppraisedValue:N0} zł · sells for {Math.Round(heirloom.AppraisedValue * 0.8m, 0, MidpointRounding.AwayFromZero):N0} zł";
+        var saleValue = Math.Round(
+            heirloom.AppraisedValue * 0.8m,
+            0,
+            MidpointRounding.AwayFromZero);
+        DetailsText = $"{heirloom.AcquiredYear} · Value {heirloom.AppraisedValue:N0} zł · sells for {saleValue:N0} zł";
+        AcquiredText = $"Acquired {heirloom.AcquiredYear}";
+        ValueText = $"Value {heirloom.AppraisedValue:N0} zł";
+        SaleValueText = $"Sale value {saleValue:N0} zł";
         OriginText = string.IsNullOrWhiteSpace(heirloom.OriginDescription)
             ? "Family heirloom"
             : heirloom.OriginDescription;
@@ -709,6 +700,9 @@ public sealed class InventoryHeirloomViewModel :
     public string Emoji { get; }
     public string DisplayName { get; }
     public string DetailsText { get; }
+    public string AcquiredText { get; }
+    public string ValueText { get; }
+    public string SaleValueText { get; }
     public string OriginText { get; }
     public bool CanSell { get; }
     public IReadOnlyList<HouseHeirOptionViewModel> HeirOptions { get; }
@@ -739,12 +733,33 @@ public sealed class InventoryFarmlandViewModel :
     public InventoryFarmlandViewModel(
         FarmlandAssetInfo farmland,
         string statusText,
+        decimal saleValue,
+        bool canSell,
+        bool canAddLivestock,
+        decimal livestockPurchasePrice,
         IReadOnlyList<HouseHeirOptionViewModel> heirOptions,
         Func<Guid, Guid?, bool> assign)
     {
         FarmlandId = farmland.Id;
-        TownText = farmland.Town.DisplayName;
-        StatusText = statusText;
+        var farmName = string.IsNullOrWhiteSpace(farmland.FarmTypeDisplayName)
+            ? "Farm"
+            : farmland.FarmTypeDisplayName;
+        var farmEmoji = string.IsNullOrWhiteSpace(farmland.FarmTypeEmoji)
+            ? "🌾"
+            : farmland.FarmTypeEmoji;
+        Emoji = farmEmoji;
+        FarmTypeText = farmName;
+        TownText = $"{farmEmoji} {farmName} — {farmland.Town.DisplayName}";
+
+        var livestockText = string.IsNullOrWhiteSpace(farmland.LivestockTypeId)
+            ? "No livestock"
+            : $"{farmland.LivestockEmoji} {farmland.LivestockDisplayName}";
+        LivestockText = livestockText;
+        ValueText = $"Value {saleValue:N0} zł";
+        StatusText = $"{livestockText} · Sale value {saleValue:N0} zł · {statusText}";
+        CanSell = canSell;
+        CanAddLivestock = canAddLivestock;
+        AddLivestockActionText = $"Add Livestock ({livestockPurchasePrice:N0} zł)";
         HeirOptions = heirOptions;
         _assign = assign;
         _selectedHeir =
@@ -754,8 +769,15 @@ public sealed class InventoryFarmlandViewModel :
     }
 
     public Guid FarmlandId { get; }
+    public string Emoji { get; }
+    public string FarmTypeText { get; }
+    public string LivestockText { get; }
+    public string ValueText { get; }
     public string TownText { get; }
     public string StatusText { get; }
+    public bool CanSell { get; }
+    public bool CanAddLivestock { get; }
+    public string AddLivestockActionText { get; }
     public IReadOnlyList<HouseHeirOptionViewModel> HeirOptions { get; }
 
     public HouseHeirOptionViewModel SelectedHeir
@@ -812,7 +834,11 @@ public sealed class InventoryHouseViewModel :
         Func<Guid, Guid?, bool> assign)
     {
         PropertyId = house.Id;
+        Emoji = "🏠";
         TownText = house.Town.DisplayName;
+        CountyText = house.Town.County;
+        CapacityText = $"Capacity {house.ResidentCapacity}";
+        ValueText = $"Value {currentValue:N0} zł";
         CanExtend = canExtend;
         ExtendActionText = $"Extend ({house.ExtensionCost:N0} zł)";
         var status = house.IsResidence
@@ -833,7 +859,11 @@ public sealed class InventoryHouseViewModel :
     }
 
     public Guid PropertyId { get; }
+    public string Emoji { get; }
     public string TownText { get; }
+    public string CountyText { get; }
+    public string CapacityText { get; }
+    public string ValueText { get; }
     public string StatusText { get; }
     public bool CanExtend { get; }
     public string ExtendActionText { get; }

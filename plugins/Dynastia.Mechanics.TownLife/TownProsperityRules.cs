@@ -124,10 +124,10 @@ internal sealed class TownProsperityRules
         Labels.FirstOrDefault(label => index >= label.Min && index <= label.Max)?.Label
         ?? "Stable";
 
-    public int DrawOrdinaryDrift(IGameRandom random)
+    public int DrawOrdinaryDrift(double unitRoll)
     {
         var total = WeightedSteps.Sum(step => step.Weight);
-        var roll = random.NextDouble() * total;
+        var roll = Math.Clamp(unitRoll, 0, 0.9999999999999999) * total;
         var cumulative = 0.0;
         foreach (var step in WeightedSteps)
         {

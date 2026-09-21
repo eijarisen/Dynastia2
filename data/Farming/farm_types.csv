@@ -1,0 +1,9 @@
+﻿Id,DisplayName,Emoji,StartYear,EndYear,BaseWeight
+wheat,Wheat Farm,🌾,1700,,1.0
+rye,Rye Farm,🌾,1700,,0.85
+vegetables,Vegetable Farm,🥕,1700,,0.65
+orchard,Orchard,🍎,1700,,0.55
+potatoes,Potato Farm,🥔,1750,,0.7
+flax,Flax Farm,🧵,1700,,0.35
+hops,Hop Farm,🌿,1700,,0.25
+vineyard,Vineyard,🍇,1700,,0.12

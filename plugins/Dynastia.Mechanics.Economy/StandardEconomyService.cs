@@ -20,6 +20,9 @@ public sealed partial class StandardEconomyService :
     private readonly IHouseholdFinanceProjectionProviderRegistry _financeProjections;
     private readonly IStatsService _stats;
     private readonly IGameRandom _random;
+    private readonly ITownProsperityService _prosperity;
+    private readonly HouseMarketRules _houseMarketRules;
+    private readonly ILocalServiceTownResolver? _localServiceTowns;
 
     public StandardEconomyService(
         IGameState gameState,
@@ -30,6 +33,33 @@ public sealed partial class StandardEconomyService :
         IHouseholdFinanceProjectionProviderRegistry financeProjections,
         IStatsService stats,
         IGameRandom random)
+        : this(
+            gameState,
+            family,
+            locations,
+            income,
+            householdIncome,
+            financeProjections,
+            stats,
+            random,
+            NeutralTownProsperityService.Instance,
+            HouseMarketRules.CreateDefault(),
+            null)
+    {
+    }
+
+    internal StandardEconomyService(
+        IGameState gameState,
+        IFamilyService family,
+        ILocationService locations,
+        IIncomeProviderRegistry income,
+        IHouseholdIncomeProviderRegistry householdIncome,
+        IHouseholdFinanceProjectionProviderRegistry financeProjections,
+        IStatsService stats,
+        IGameRandom random,
+        ITownProsperityService prosperity,
+        HouseMarketRules houseMarketRules,
+        ILocalServiceTownResolver? localServiceTowns = null)
     {
         _gameState =
             gameState;
@@ -54,6 +84,15 @@ public sealed partial class StandardEconomyService :
 
         _random =
             random;
+
+        _prosperity =
+            prosperity;
+
+        _houseMarketRules =
+            houseMarketRules;
+
+        _localServiceTowns =
+            localServiceTowns;
     }
 
     public bool HasHousehold(

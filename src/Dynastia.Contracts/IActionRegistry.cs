@@ -10,6 +10,10 @@ public interface IActionRegistry
     void RegisterDynamicProvider(
         Func<IPerson, IPerson, IEnumerable<GameActionDefinition>> provider);
 
+    IReadOnlyList<GameActionDefinition> GetCandidateActions(
+        IPerson actor,
+        IPerson target);
+
     IReadOnlyList<GameActionDefinition> GetAvailableActions(
         IPerson actor,
         IPerson target);

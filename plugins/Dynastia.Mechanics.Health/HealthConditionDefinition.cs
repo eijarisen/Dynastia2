@@ -25,6 +25,7 @@ public sealed class HealthConditionDefinition
     public double HealthImpact { get; init; }
     public double ImmediateHealthImpact { get; init; }
     public double Weight { get; init; }
+    public double WorkCapacityMultiplier { get; init; } = 1.0;
 
     // Kept for backward-compatible data loading. The reworked generator uses Category.
     public bool RandomIllness { get; init; }

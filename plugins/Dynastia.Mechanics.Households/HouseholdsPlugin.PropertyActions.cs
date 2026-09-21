@@ -1,3 +1,4 @@
+using System.Globalization;
 using Dynastia.Contracts;
 
 namespace Dynastia.Mechanics.Households;
@@ -11,8 +12,10 @@ public sealed partial class HouseholdsPlugin
         IHouseholdService households,
         IEconomyService economy,
         IHouseholdCapacityService householdCapacity,
+        IHouseMarketService houseMarket,
         ILocationService locations,
         ICareerService career,
+        IFarmingService farming,
         IGameRandom random,
         IGameEventBus events)
     {
@@ -22,13 +25,14 @@ public sealed partial class HouseholdsPlugin
                 Id = "household.buy_house",
                 Label = "Buy a House",
                 Description =
-                    "Choose any town and queue a property purchase. The local house price is paid when the action resolves next year. Buying elsewhere creates a rented investment and never moves the household.",
+                    "Choose any town, inspect its housing market, and queue a specific offer. The selected offer price is preserved when the action resolves next year. Buying elsewhere creates a rented investment and never moves the household.",
                 Mode = ActionExecutionMode.Queued,
                 QueuePhase = YearPhase.QueuedActionsEarly,
                 EvaluateAvailability = context =>
                     EvaluateBuyHouseAvailability(
                         context,
                         economy,
+                        houseMarket,
                         locations),
                 Execute = context =>
                 {
@@ -45,7 +49,34 @@ public sealed partial class HouseholdsPlugin
                             ActionReasonCodes.NoLongerEligible);
                     }
 
-                    var price = economy.GetHousePrice(town);
+                    decimal price;
+                    int baseCapacity;
+
+                    if (TryResolveQueuedHouseOffer(
+                            context,
+                            houseMarket,
+                            town,
+                            out var offer,
+                            out var invalidReason))
+                    {
+                        price = offer!.AskingPrice;
+                        baseCapacity = offer.BaseResidentCapacity;
+                    }
+                    else if (context.Parameters.ContainsKey("houseOfferId"))
+                    {
+                        return new GameActionResult(
+                            false,
+                            invalidReason ?? "The selected housing offer is no longer valid.",
+                            ActionReasonCodes.NoLongerEligible);
+                    }
+                    else
+                    {
+                        // Compatibility for autonomous/legacy queues created
+                        // before the offer-snapshot market flow existed.
+                        price = economy.GetHousePrice(town);
+                        baseCapacity = 6;
+                    }
+
                     if (!economy.CanAfford(context.Actor, price))
                     {
                         return new GameActionResult(
@@ -55,7 +86,11 @@ public sealed partial class HouseholdsPlugin
                     }
 
                     economy.ChangeWealth(context.Actor, -price);
-                    var house = economy.AddHouse(context.Actor, town);
+                    var house = economy.AddHouse(
+                        context.Actor,
+                        town,
+                        price,
+                        baseCapacity);
 
                     events.Publish(new GameEvent
                     {
@@ -64,9 +99,10 @@ public sealed partial class HouseholdsPlugin
                         SubjectId = context.Actor.Id,
                         Data = new Dictionary<string, string>
                         {
-                            ["amount"] = price.ToString(),
+                            ["amount"] = price.ToString(CultureInfo.InvariantCulture),
                             ["town"] = town.Town,
                             ["propertyId"] = house.Id.ToString(),
+                            ["residentCapacity"] = house.ResidentCapacity.ToString(CultureInfo.InvariantCulture),
                             ["text"] = $"{family.GetDisplayName(context.Actor)} bought a house in {town.Town} for {price:N0} zł."
                         }
                     });
@@ -296,6 +332,7 @@ public sealed partial class HouseholdsPlugin
                                     economy,
                                     locations,
                                     career,
+                                    farming,
                                     events);
 
                                 return new GameActionResult(true);
@@ -394,6 +431,7 @@ public sealed partial class HouseholdsPlugin
         IEconomyService economy,
         ILocationService locations,
         ICareerService career,
+        IFarmingService farming,
         IGameRandom random,
         IGameEventBus events)
     {
@@ -415,7 +453,7 @@ public sealed partial class HouseholdsPlugin
                         ? fatherHead
                         : null;
             },
-            gameState, family, households, economy, locations, career, random, events);
+            gameState, family, households, economy, locations, career, farming, random, events);
 
         RegisterAskParentHouseAction(
             actions,
@@ -434,7 +472,7 @@ public sealed partial class HouseholdsPlugin
                         ? fatherHead
                         : null;
             },
-            gameState, family, households, economy, locations, career, random, events);
+            gameState, family, households, economy, locations, career, farming, random, events);
 
         RegisterAskParentHouseAction(
             actions,
@@ -453,7 +491,7 @@ public sealed partial class HouseholdsPlugin
                         ? motherHead
                         : null;
             },
-            gameState, family, households, economy, locations, career, random, events);
+            gameState, family, households, economy, locations, career, farming, random, events);
     }
 
     private static void RegisterAskParentHouseAction(
@@ -467,6 +505,7 @@ public sealed partial class HouseholdsPlugin
         IEconomyService economy,
         ILocationService locations,
         ICareerService career,
+        IFarmingService farming,
         IGameRandom random,
         IGameEventBus events)
     {
@@ -541,6 +580,7 @@ public sealed partial class HouseholdsPlugin
                         economy,
                         locations,
                         career,
+                        farming,
                         events);
                 }
 
@@ -566,6 +606,7 @@ public sealed partial class HouseholdsPlugin
     private static ActionEvaluationResult EvaluateBuyHouseAvailability(
         GameActionContext context,
         IEconomyService economy,
+        IHouseMarketService houseMarket,
         ILocationService locations)
     {
         if (!CanActOnSelf(context))
@@ -583,25 +624,56 @@ public sealed partial class HouseholdsPlugin
                 "The acting character no longer has a household.");
         }
 
-        var required = 15000m;
         var metadata = new Dictionary<string, string>(
             StringComparer.OrdinalIgnoreCase);
 
-        if (context.Parameters.TryGetValue("townId", out var townId)
-            && !string.IsNullOrWhiteSpace(townId))
+        if (!context.Parameters.TryGetValue("townId", out var townId)
+            || string.IsNullOrWhiteSpace(townId))
         {
-            var town = locations.FindTown(townId);
-            if (town is null)
+            // The presentation action opens the Town selector first. Exact
+            // affordability is evaluated after a deterministic offer is chosen.
+            return ActionEvaluationResult.Allowed(
+                economy.GetHouseholdId(context.Actor),
+                presentationMetadata: metadata);
+        }
+
+        var town = locations.FindTown(townId);
+        if (town is null)
+        {
+            return ActionEvaluationResult.Denied(
+                ActionReasonCodes.InvalidParameter,
+                "The selected town is no longer available.",
+                economy.GetHouseholdId(context.Actor));
+        }
+
+        metadata["townId"] = town.Id;
+        metadata["town"] = town.Town;
+
+        decimal required;
+        if (context.Parameters.ContainsKey("houseOfferId"))
+        {
+            if (!TryResolveQueuedHouseOffer(
+                    context,
+                    houseMarket,
+                    town,
+                    out var offer,
+                    out var invalidReason))
             {
                 return ActionEvaluationResult.Denied(
                     ActionReasonCodes.InvalidParameter,
-                    "The selected town is no longer available.",
-                    economy.GetHouseholdId(context.Actor));
+                    invalidReason ?? "The selected housing offer is no longer valid.",
+                    economy.GetHouseholdId(context.Actor),
+                    presentationMetadata: metadata);
             }
 
+            required = offer!.AskingPrice;
+            metadata["houseOfferId"] = offer.OfferId;
+            metadata["houseCapacity"] = offer.BaseResidentCapacity.ToString(CultureInfo.InvariantCulture);
+        }
+        else
+        {
+            // Legacy queued purchases contained only townId.
             required = economy.GetHousePrice(town);
-            metadata["townId"] = town.Id;
-            metadata["town"] = town.Town;
         }
 
         var requirements = new[]
@@ -628,6 +700,47 @@ public sealed partial class HouseholdsPlugin
             economy.GetHouseholdId(context.Actor),
             requirements,
             metadata);
+    }
+
+    private static bool TryResolveQueuedHouseOffer(
+        GameActionContext context,
+        IHouseMarketService houseMarket,
+        TownInfo town,
+        out HousePurchaseOfferInfo? offer,
+        out string? invalidReason)
+    {
+        offer = null;
+        invalidReason = null;
+
+        if (!context.Parameters.TryGetValue("houseOfferId", out var offerId)
+            || string.IsNullOrWhiteSpace(offerId)
+            || !context.Parameters.TryGetValue("houseOfferYear", out var yearText)
+            || !int.TryParse(yearText, NumberStyles.Integer, CultureInfo.InvariantCulture, out var offerYear)
+            || !context.Parameters.TryGetValue("houseCapacity", out var capacityText)
+            || !int.TryParse(capacityText, NumberStyles.Integer, CultureInfo.InvariantCulture, out var capacity)
+            || !context.Parameters.TryGetValue("houseAskingPrice", out var priceText)
+            || !decimal.TryParse(priceText, NumberStyles.Number, CultureInfo.InvariantCulture, out var askingPrice))
+        {
+            invalidReason = "The queued housing offer is incomplete.";
+            return false;
+        }
+
+        offer = houseMarket.ResolveOffer(
+            context.Actor,
+            town.Id,
+            offerYear,
+            offerId);
+
+        if (offer is null
+            || offer.BaseResidentCapacity != capacity
+            || offer.AskingPrice != askingPrice)
+        {
+            invalidReason = "The queued housing offer no longer matches the selected market listing.";
+            offer = null;
+            return false;
+        }
+
+        return true;
     }
 
     private static ActionEvaluationResult EvaluateSellHouseAvailability(
@@ -678,6 +791,7 @@ public sealed partial class HouseholdsPlugin
         IEconomyService economy,
         ILocationService locations,
         ICareerService career,
+        IFarmingService farming,
         IGameEventBus events)
     {
         var origin = locations.GetLocation(head).HomeTown;
@@ -694,6 +808,11 @@ public sealed partial class HouseholdsPlugin
             .Select(person => new { Person = person, Career = career.GetCareer(person) })
             .Where(item => !item.Career.IsRetired && item.Career.IsEmployed && !item.Career.IsSelfEmployed)
             .ToList();
+
+        farming.SellOriginFarmlandForVoluntaryRelocation(
+            head,
+            origin,
+            destination);
 
         economy.SetResidenceTown(head, destination);
 

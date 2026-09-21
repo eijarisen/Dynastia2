@@ -5,18 +5,15 @@ namespace Dynastia.Mechanics.TownLife;
 internal sealed class TownProsperityYearSystem : IYearSystem
 {
     private readonly IGamePluginContext _context;
-    private readonly IGameRandom _random;
     private readonly StandardTownProsperityService _prosperity;
     private readonly IReadOnlyList<HistoricalProsperityEffect> _historicalEffects;
 
     public TownProsperityYearSystem(
         IGamePluginContext context,
-        IGameRandom random,
         StandardTownProsperityService prosperity,
         IReadOnlyList<HistoricalProsperityEffect> historicalEffects)
     {
         _context = context;
-        _random = random;
         _prosperity = prosperity;
         _historicalEffects = historicalEffects;
     }
@@ -29,7 +26,7 @@ internal sealed class TownProsperityYearSystem : IYearSystem
     public void Execute(IGameState gameState)
     {
         _prosperity.TrackActiveHouseholdTowns(_context);
-        _prosperity.AdvanceTrackedTowns(_random);
+        _prosperity.AdvanceTrackedTowns();
         ReconcileHistoricalEffects(gameState);
     }
 
@@ -42,15 +39,30 @@ internal sealed class TownProsperityYearSystem : IYearSystem
         foreach (var effect in _historicalEffects)
         {
             var startYear = historical.GetEventStartYear(effect.EventId);
-            if (startYear is null || startYear > gameState.Year)
+            var endYear = historical.GetEventEndYear(effect.EventId);
+            if (startYear is null
+                || endYear is null
+                || startYear > gameState.Year)
+            {
+                continue;
+            }
+
+            // The configured shock remains at full strength for the complete
+            // historical event. Recovery starts only after EndYear.
+            if (gameState.Year - endYear.Value >= effect.RecoveryYears)
                 continue;
 
-            // The economic aftermath can outlive a one-shot/short event. This
-            // also migrates saves or start years that begin inside recovery.
-            if (gameState.Year - startYear.Value >= effect.RecoveryYears)
-                continue;
+            var eventIsActive = gameState.Year <= endYear.Value;
+            var scopeYear = eventIsActive
+                ? gameState.Year
+                : endYear.Value;
+            var appliedYear = eventIsActive
+                ? gameState.Year
+                : endYear.Value;
 
-            var places = historical.GetAffectedPlaceIds(effect.EventId, startYear.Value);
+            var places = historical.GetAffectedPlaceIds(
+                effect.EventId,
+                scopeYear);
             if (places.Count == 0)
                 continue;
 
@@ -59,7 +71,7 @@ internal sealed class TownProsperityYearSystem : IYearSystem
                 effect.EventId,
                 effect.Delta,
                 effect.RecoveryYears,
-                startYear.Value);
+                appliedYear);
         }
     }
 

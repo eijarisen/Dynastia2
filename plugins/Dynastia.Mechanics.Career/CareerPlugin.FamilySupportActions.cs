@@ -8,11 +8,12 @@ public sealed partial class CareerPlugin
         IActionRegistry actions,
         StandardCareerService career,
         IStatsService stats,
-        IHealthService health,
         IGameRandom random,
         IFamilyService family,
         IEconomyService economy,
-        IGameEventBus events)
+        IGameEventBus events,
+        Func<ICraftService?> craftResolver,
+        Func<IFarmingService?> farmingResolver)
     {
         actions.Register(
             new GameActionDefinition
@@ -209,8 +210,8 @@ public sealed partial class CareerPlugin
                 Id = "career.ask_to_recover",
                 Label = "Ask to Recover",
                 Description =
-                    "Ask an unhappy employed adult relative living in this household to take a year easier. " +
-                    "There is a 50% refusal chance. On success their salary is reduced by 10-50% for the year.",
+                    "Ask a working adult relative in this household to take the year easier. " +
+                    "They may refuse. On success they recover Health and reduce their work output/income for the year.",
                 Mode = ActionExecutionMode.Queued,
                 QueuePhase = YearPhase.QueuedActionsEarly,
 
@@ -235,17 +236,12 @@ public sealed partial class CareerPlugin
                         return false;
                     }
 
-                    var targetCareer =
-                        career.GetCareer(target);
-
-                    var maximumSatisfaction =
-                        family.GetSpouse(actor)?.Id == target.Id
-                            ? 2
-                            : 1;
-
-                    return targetCareer.IsEmployed
-                        && targetCareer.JobSatisfaction
-                            <= maximumSatisfaction;
+                    return IsCurrentlyWorking(
+                        actor,
+                        target,
+                        career,
+                        craftResolver,
+                        farmingResolver);
                 },
 
                 Execute = actionContext =>
@@ -267,29 +263,27 @@ public sealed partial class CareerPlugin
                     var targetCareer =
                         career.GetCareer(target);
 
-                    var maximumSatisfaction =
-                        family.GetSpouse(actor)?.Id == target.Id
-                            ? 2
-                            : 1;
-
-                    if (!targetCareer.IsEmployed
-                        || targetCareer.JobSatisfaction
-                            > maximumSatisfaction)
+                    if (!IsCurrentlyWorking(
+                            actor,
+                            target,
+                            career,
+                            craftResolver,
+                            farmingResolver))
                     {
                         return new GameActionResult(false);
                     }
 
                     if (random.NextDouble() > 0.5)
                     {
-                        career.ChangeJobSatisfaction(
-                            target,
-                            2);
+                        if (targetCareer.IsEmployed)
+                        {
+                            career.ChangeJobSatisfaction(
+                                target,
+                                2);
+                        }
 
-                        // Requested recovery restores 15 health immediately.
-                        // Annual health processing later caps any overflow.
-                        health.ChangeHealthUnclamped(
-                            target,
-                            15);
+                        target.Tags.Add(
+                            "modifier.recover");
 
                         foreach (var tag in target.Tags.All
                             .Where(tag => tag.StartsWith(
@@ -445,4 +439,19 @@ public sealed partial class CareerPlugin
             });
     }
 
+    private static bool IsCurrentlyWorking(
+        IPerson actor,
+        IPerson target,
+        StandardCareerService career,
+        Func<ICraftService?> craftResolver,
+        Func<IFarmingService?> farmingResolver)
+    {
+        if (career.GetCareer(target).IsEmployed)
+            return true;
+
+        if (craftResolver()?.IsSelfEmployed(target) == true)
+            return true;
+
+        return farmingResolver()?.IsWorkingFarmWorker(target, actor) == true;
+    }
 }

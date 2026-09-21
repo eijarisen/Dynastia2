@@ -1,0 +1,33 @@
+{
+  "schemaVersion": "1.0",
+  "polishNationalityId": "polish",
+  "foreignBornChanceByLocalNationalityShare": [
+    {
+      "minimumLocalSharePercent": 10.0,
+      "chance": 0.1
+    },
+    {
+      "minimumLocalSharePercent": 3.0,
+      "chance": 0.25
+    },
+    {
+      "minimumLocalSharePercent": 1.0,
+      "chance": 0.45
+    },
+    {
+      "minimumLocalSharePercent": 0.0,
+      "chance": 0.7
+    }
+  ],
+  "selection": {
+    "country": "weighted by nationality_country_weights.csv for birth year",
+    "city": "uniform among foreign_cities.csv rows active for selected country and birth year",
+    "randomSource": "existing deterministic candidate/IGameRandom stream"
+  },
+  "behavior": {
+    "foreignBirthplaceIsPresentationIdentityOnly": true,
+    "homeTownRemainsInGameTown": true,
+    "localMechanicalBirthplaceProxyRemainsOriginTown": true,
+    "childrenBornInGameUseNormalInGameBirthplaces": true
+  }
+}

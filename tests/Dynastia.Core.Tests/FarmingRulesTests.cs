@@ -32,6 +32,30 @@ public sealed class FarmingRulesTests
             FarmingRules.GetActiveWorkerCount(parcels, workers));
     }
 
+
+    [Fact]
+    public void LivestockRules_MatchCoverageIncomeAndVolatilityDesign()
+    {
+        Assert.Equal(2500m, FarmingRules.LivestockPurchasePrice);
+        Assert.Equal(2000m, FarmingRules.LivestockSalePrice);
+
+        Assert.Equal(1m, FarmingRules.GetLivestockCoverage(4, 4));
+        Assert.Equal(0.5m, FarmingRules.GetLivestockCoverage(4, 2));
+        Assert.Equal(0m, FarmingRules.GetLivestockCoverage(0, 0));
+
+        Assert.Equal(1.10m, FarmingRules.GetLivestockIncomeMultiplier(1m));
+        Assert.Equal(1.05m, FarmingRules.GetLivestockIncomeMultiplier(0.5m));
+
+        Assert.Equal(0.2m, FarmingRules.AdjustVolatilityMultiplier(0m, 1m));
+        Assert.Equal(0.6m, FarmingRules.AdjustVolatilityMultiplier(0.5m, 1m));
+        Assert.Equal(1m, FarmingRules.AdjustVolatilityMultiplier(1m, 1m));
+        Assert.Equal(1.4m, FarmingRules.AdjustVolatilityMultiplier(1.5m, 1m));
+        Assert.Equal(1.8m, FarmingRules.AdjustVolatilityMultiplier(2m, 1m));
+
+        Assert.Equal(0.1m, FarmingRules.AdjustVolatilityMultiplier(0m, 0.5m));
+        Assert.Equal(1.9m, FarmingRules.AdjustVolatilityMultiplier(2m, 0.5m));
+    }
+
     [Theory]
     [InlineData(1700, "1.40")]
     [InlineData(1800, "1.25")]

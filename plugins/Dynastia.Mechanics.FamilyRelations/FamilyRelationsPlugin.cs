@@ -12,6 +12,7 @@ public sealed class FamilyRelationsPlugin : IGamePlugin
         var households = context.GetService<IHouseholdService>() ?? throw new InvalidOperationException("Household service is unavailable.");
         var marriage = context.GetService<IMarriageSatisfactionService>() ?? throw new InvalidOperationException("Marriage satisfaction service is unavailable.");
         var career = context.GetService<ICareerService>() ?? throw new InvalidOperationException("Career service is unavailable.");
+        var farming = context.GetService<IFarmingService>() ?? throw new InvalidOperationException("Farming service is unavailable.");
         var locations = context.GetService<ILocationService>() ?? throw new InvalidOperationException("Location service is unavailable.");
         var personality = context.GetService<IPersonalityService>();
         var random = context.GetService<IGameRandom>() ?? throw new InvalidOperationException("Random service is unavailable.");
@@ -66,7 +67,7 @@ public sealed class FamilyRelationsPlugin : IGamePlugin
             events));
 
         FamilyRelationActions.Register(
-            actions, gameState, family, relations, households, economy, locations, career, marriage, personality, random, events);
+            actions, gameState, family, relations, households, economy, locations, career, farming, marriage, personality, random, events);
         LegacyFamilyRelationActions.Register(actions);
 
         context.GetService<IThoughtProviderRegistry>()?

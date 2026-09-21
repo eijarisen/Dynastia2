@@ -385,6 +385,16 @@ public sealed class StandardHealthService : IHealthService
                     value: definition.DurationMax);
             }
 
+            if (definition.WorkCapacityMultiplier is < 0 or > 1)
+            {
+                throw CatalogValidation.Error(
+                    ConditionsPath,
+                    "a workCapacityMultiplier between 0 and 1",
+                    item: definition.Id,
+                    field: "workCapacityMultiplier",
+                    value: definition.WorkCapacityMultiplier);
+            }
+
             if ((definition.Category.Equals("Mild", StringComparison.OrdinalIgnoreCase)
                  || definition.Category.Equals("Serious", StringComparison.OrdinalIgnoreCase))
                 && definition.Weight <= 0)

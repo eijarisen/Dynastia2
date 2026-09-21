@@ -29,7 +29,7 @@ public sealed class Development10TownAffairsPropertySurnameTests
             CapacityExtensions: 2);
 
         Assert.Equal(10_000m, house.ExtensionCost);
-        Assert.Equal(12, house.ResidentCapacity);
+        Assert.Equal(10, house.ResidentCapacity);
         Assert.Equal(20_000m, house.ImprovementValue);
     }
 

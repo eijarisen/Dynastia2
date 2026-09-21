@@ -10,4 +10,8 @@ public sealed class LocationComponent
     public string? HomeTownId { get; set; }
 
     public string? DeathTownId { get; set; }
+
+    public string? ForeignBirthplaceCity { get; set; }
+
+    public string? ForeignBirthplaceCountry { get; set; }
 }

@@ -1,4 +1,5 @@
 using Avalonia.Media;
+
 namespace Dynastia.App.ViewModels;
 
 public sealed record PropertySelectionOption(
@@ -9,7 +10,8 @@ public sealed record PropertySelectionOption(
     string PriceText,
     string SearchText,
     bool IsEnabled = true,
-    double? SuccessChance = null)
+    double? SuccessChance = null,
+    string LeadingEmoji = "")
 {
     public double DisplayOpacity =>
         IsEnabled ? 1.0 : 0.42;
@@ -19,6 +21,9 @@ public sealed record PropertySelectionOption(
 
     public bool HasSuccessChance =>
         SuccessChance.HasValue;
+
+    public bool HasLeadingEmoji =>
+        !string.IsNullOrWhiteSpace(LeadingEmoji);
 
     public string SuccessChanceText =>
         SuccessChance is { } chance

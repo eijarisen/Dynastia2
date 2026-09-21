@@ -63,7 +63,9 @@ public sealed partial class StandardEconomyService
             TownId = farmland.Town.Id,
             AcquiredYear = farmland.AcquiredYear,
             AcquisitionSource = farmland.AcquisitionSource,
-            AssignedHeirId = farmland.AssignedHeirId
+            AssignedHeirId = farmland.AssignedHeirId,
+            FarmTypeId = farmland.FarmTypeId,
+            LivestockTypeId = farmland.LivestockTypeId
         });
     }
 
@@ -109,6 +111,28 @@ public sealed partial class StandardEconomyService
         }
 
         farmland.AssignedHeirId = heirId;
+        return true;
+    }
+
+    public bool SetFarmlandFlavor(
+        IPerson person,
+        Guid farmlandId,
+        string farmTypeId,
+        string? livestockTypeId)
+    {
+        var household = GetRequiredHousehold(person);
+        NormalizeFarmland(household);
+
+        var farmland = household.Farmland
+            .FirstOrDefault(candidate => candidate.Id == farmlandId);
+
+        if (farmland is null)
+            return false;
+
+        farmland.FarmTypeId = farmTypeId?.Trim() ?? string.Empty;
+        farmland.LivestockTypeId = string.IsNullOrWhiteSpace(livestockTypeId)
+            ? null
+            : livestockTypeId.Trim();
         return true;
     }
 
@@ -160,7 +184,9 @@ public sealed partial class StandardEconomyService
             TownId = farmland.Town.Id,
             AcquiredYear = farmland.AcquiredYear,
             AcquisitionSource = farmland.AcquisitionSource,
-            AssignedHeirId = farmland.AssignedHeirId
+            AssignedHeirId = farmland.AssignedHeirId,
+            FarmTypeId = farmland.FarmTypeId,
+            LivestockTypeId = farmland.LivestockTypeId
         });
     }
 
@@ -224,6 +250,8 @@ public sealed partial class StandardEconomyService
             town,
             state.AcquiredYear,
             state.AcquisitionSource,
-            state.AssignedHeirId);
+            state.AssignedHeirId,
+            state.FarmTypeId,
+            LivestockTypeId: state.LivestockTypeId);
     }
 }

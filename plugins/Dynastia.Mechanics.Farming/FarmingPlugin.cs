@@ -41,7 +41,8 @@ public sealed class FarmingPlugin : IGamePlugin
             workCapacity,
             random,
             events,
-            FarmingEraSchedule.Load(data));
+            FarmingEraSchedule.Load(data),
+            FarmingFlavorCatalog.Load(data));
 
         context.AddService<IFarmingService>(service);
         householdIncome.Register(service);
@@ -101,6 +102,9 @@ public sealed class FarmingPlugin : IGamePlugin
                         town,
                         context.GameState.Year,
                         "purchase");
+                    var flavored = farming.AssignNewFarmlandType(
+                        context.Actor,
+                        parcel.Id) ?? parcel;
 
                     events.Publish(
                         new GameEvent
@@ -112,9 +116,10 @@ public sealed class FarmingPlugin : IGamePlugin
                             {
                                 ["amount"] = farming.PurchasePrice.ToString(),
                                 ["town"] = town.Town,
-                                ["farmlandId"] = parcel.Id.ToString(),
+                                ["farmlandId"] = flavored.Id.ToString(),
+                                ["farmTypeId"] = flavored.FarmTypeId,
                                 ["text"] =
-                                    $"{family.GetDisplayName(context.Actor)} purchased farmland near {town.Town}."
+                                    $"{family.GetDisplayName(context.Actor)} purchased a {flavored.FarmTypeDisplayName} near {town.Town}."
                             }
                         });
 
@@ -126,36 +131,32 @@ public sealed class FarmingPlugin : IGamePlugin
             new GameActionDefinition
             {
                 Id = "farming.sell_farmland",
-                Label = $"Sell Farmland ({farming.SalePrice:N0} zł)",
+                Label = $"Sell Farmland ({farming.SalePrice:N0}+ zł)",
                 Description =
-                    $"Queue the sale of one farmland parcel for {farming.SalePrice:N0} zł. Local land is sold first; otherwise the oldest owned parcel is sold.",
+                    $"Queue the sale of a selected farmland parcel for {farming.SalePrice:N0} zł, plus {farming.LivestockSalePrice:N0} zł when it has Livestock.",
                 Mode = ActionExecutionMode.Queued,
                 QueuePhase = YearPhase.QueuedActionsEarly,
                 IsAvailable = context =>
                     context.Actor.Id == context.Target.Id
-                    && economy.GetFarmland(context.Actor).Count > 0,
+                    && ResolveFarmlandForAction(context, economy, allowLegacyFallback: true) is not null,
                 Execute = context =>
                 {
-                    var residence = economy.GetResidenceTown(context.Actor);
-                    var parcel = economy.GetFarmland(context.Actor)
-                        .OrderBy(asset =>
-                            asset.Town.Id.Equals(
-                                residence.Id,
-                                StringComparison.OrdinalIgnoreCase)
-                                ? 0
-                                : 1)
-                        .ThenBy(asset => asset.AcquiredYear)
-                        .ThenBy(asset => asset.Id)
-                        .FirstOrDefault();
-
+                    var parcel = ResolveFarmlandForAction(
+                        context,
+                        economy,
+                        allowLegacyFallback: true);
                     if (parcel is null)
-                        return new GameActionResult(false, "No farmland remains to sell.");
+                        return new GameActionResult(false, "The selected farmland is no longer owned.");
 
+                    var flavored = farming.EnsureFarmlandFlavor(
+                        context.Actor,
+                        parcel.Id) ?? parcel;
+                    var saleValue = farming.GetFarmlandSaleValue(flavored);
                     var sold = economy.TakeFarmland(context.Actor, parcel.Id);
                     if (sold is null)
                         return new GameActionResult(false, "The selected farmland is no longer owned.");
 
-                    economy.ChangeWealth(context.Actor, farming.SalePrice);
+                    economy.ChangeWealth(context.Actor, saleValue);
 
                     events.Publish(
                         new GameEvent
@@ -165,17 +166,148 @@ public sealed class FarmingPlugin : IGamePlugin
                             SubjectId = context.Actor.Id,
                             Data = new Dictionary<string, string>
                             {
-                                ["amount"] = farming.SalePrice.ToString(),
-                                ["town"] = sold.Town.Town,
-                                ["farmlandId"] = sold.Id.ToString(),
+                                ["amount"] = saleValue.ToString(),
+                                ["town"] = flavored.Town.Town,
+                                ["farmlandId"] = flavored.Id.ToString(),
+                                ["farmTypeId"] = flavored.FarmTypeId,
+                                ["livestockTypeId"] = flavored.LivestockTypeId ?? string.Empty,
                                 ["text"] =
-                                    $"The household sold farmland near {sold.Town.Town} for {farming.SalePrice:N0} zł."
+                                    $"The household sold its {flavored.FarmTypeDisplayName} near {flavored.Town.Town} for {saleValue:N0} zł."
                             }
                         });
 
                     return new GameActionResult(true);
                 }
             });
+
+        actions.Register(
+            new GameActionDefinition
+            {
+                Id = "farming.add_livestock",
+                Label = $"Add Livestock ({farming.LivestockPurchasePrice:N0} zł)",
+                Description =
+                    $"Queue one Livestock upgrade for a selected farmland parcel in the current town for {farming.LivestockPurchasePrice:N0} zł. The animal type is chosen automatically from the local historical pool.",
+                Mode = ActionExecutionMode.Queued,
+                QueuePhase = YearPhase.QueuedActionsEarly,
+                IsAvailable = context =>
+                    context.Actor.Id == context.Target.Id
+                    && economy.CanAfford(context.Actor, farming.LivestockPurchasePrice)
+                    && HasEligibleLivestockParcel(context, economy),
+                Execute = context =>
+                {
+                    if (!economy.CanAfford(context.Actor, farming.LivestockPurchasePrice))
+                    {
+                        return new GameActionResult(
+                            false,
+                            "The household can no longer afford Livestock.");
+                    }
+
+                    if (!context.Parameters.TryGetValue("farmlandId", out var rawId)
+                        || !Guid.TryParse(rawId, out var farmlandId))
+                    {
+                        return new GameActionResult(false, "No farmland parcel was selected.");
+                    }
+
+                    var residence = economy.GetResidenceTown(context.Actor);
+                    var parcel = economy.GetFarmland(context.Actor)
+                        .FirstOrDefault(asset => asset.Id == farmlandId);
+                    if (parcel is null)
+                        return new GameActionResult(false, "The selected farmland is no longer owned.");
+                    if (!parcel.Town.Id.Equals(residence.Id, StringComparison.OrdinalIgnoreCase))
+                        return new GameActionResult(false, "Livestock can only be added to farmland in the household's current town.");
+                    if (!string.IsNullOrWhiteSpace(parcel.LivestockTypeId))
+                        return new GameActionResult(false, "This farmland parcel already has Livestock.");
+
+                    var options = farming.GetAvailableLivestockOptions(
+                        parcel.Town,
+                        context.GameState.Year);
+                    if (options.Count == 0)
+                        return new GameActionResult(false, "No locally plausible Livestock is available this year.");
+
+                    economy.ChangeWealth(context.Actor, -farming.LivestockPurchasePrice);
+                    var updated = farming.AddLivestock(
+                        context.Actor,
+                        parcel.Id,
+                        context.GameState.Year);
+                    if (updated is null)
+                    {
+                        economy.ChangeWealth(context.Actor, farming.LivestockPurchasePrice);
+                        return new GameActionResult(false, "Livestock could not be added to the selected farmland.");
+                    }
+
+                    events.Publish(
+                        new GameEvent
+                        {
+                            Type = "farming.livestock_added",
+                            Year = context.GameState.Year,
+                            SubjectId = context.Actor.Id,
+                            Data = new Dictionary<string, string>
+                            {
+                                ["amount"] = farming.LivestockPurchasePrice.ToString(),
+                                ["town"] = updated.Town.Town,
+                                ["farmlandId"] = updated.Id.ToString(),
+                                ["farmTypeId"] = updated.FarmTypeId,
+                                ["livestockTypeId"] = updated.LivestockTypeId ?? string.Empty,
+                                ["text"] =
+                                    $"{updated.LivestockEmoji} The family added {updated.LivestockDisplayName} to its {updated.FarmTypeDisplayName} near {updated.Town.Town}."
+                            }
+                        });
+
+                    return new GameActionResult(true);
+                }
+            });
+    }
+
+    private static bool HasEligibleLivestockParcel(
+        GameActionContext context,
+        IEconomyService economy)
+    {
+        var residence = economy.GetResidenceTown(context.Actor);
+        var farmland = economy.GetFarmland(context.Actor);
+
+        if (context.Parameters.TryGetValue("farmlandId", out var rawId))
+        {
+            if (!Guid.TryParse(rawId, out var farmlandId))
+                return false;
+
+            return farmland.Any(parcel =>
+                parcel.Id == farmlandId
+                && parcel.Town.Id.Equals(residence.Id, StringComparison.OrdinalIgnoreCase)
+                && string.IsNullOrWhiteSpace(parcel.LivestockTypeId));
+        }
+
+        return farmland.Any(parcel =>
+            parcel.Town.Id.Equals(residence.Id, StringComparison.OrdinalIgnoreCase)
+            && string.IsNullOrWhiteSpace(parcel.LivestockTypeId));
+    }
+
+    private static FarmlandAssetInfo? ResolveFarmlandForAction(
+        GameActionContext context,
+        IEconomyService economy,
+        bool allowLegacyFallback)
+    {
+        var farmland = economy.GetFarmland(context.Actor);
+        if (context.Parameters.TryGetValue("farmlandId", out var rawId))
+        {
+            return Guid.TryParse(rawId, out var farmlandId)
+                ? farmland.FirstOrDefault(asset => asset.Id == farmlandId)
+                : null;
+        }
+
+        if (!allowLegacyFallback)
+            return null;
+
+        var residence = economy.GetResidenceTown(context.Actor);
+        return farmland
+            .OrderBy(asset =>
+                asset.Town.Id.Equals(
+                    residence.Id,
+                    StringComparison.OrdinalIgnoreCase)
+                    ? 0
+                    : 1)
+            .ThenBy(asset => asset.AcquiredYear)
+            .ThenBy(asset => asset.Id)
+            .FirstOrDefault();
     }
 
     private static bool OwnsHouseInResidenceTown(
@@ -188,5 +320,4 @@ public sealed class FarmingPlugin : IGamePlugin
                 residence.Id,
                 StringComparison.OrdinalIgnoreCase));
     }
-
 }

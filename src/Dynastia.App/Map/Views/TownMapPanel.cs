@@ -53,6 +53,10 @@ public sealed class TownMapPanel :
 
     private TownMapSnapshot _snapshot;
     private string? _selectedTownId;
+    private int _overlapDismissVersion;
+    private bool _preserveOverlapPickerDuringSelection;
+    private string? _lastOverlapClickTownId;
+    private DateTime _lastOverlapClickUtc;
 
     public TownMapPanel(
         GameMapDataSource data,
@@ -417,16 +421,49 @@ public sealed class TownMapPanel :
                 };
 
             var selectedTownId = town.TownId;
-            button.Click +=
-                (_, _) =>
+            button.PointerPressed +=
+                async (_, e) =>
                 {
-                    _overlapPicker.IsVisible = false;
-                    _canvas.SelectTown(selectedTownId);
+                    var point = e.GetCurrentPoint(button);
+                    if (!point.Properties.IsLeftButtonPressed)
+                        return;
 
-                    if (activateAfterSelection)
+                    var now = DateTime.UtcNow;
+                    var isRapidSecondClick =
+                        string.Equals(
+                            _lastOverlapClickTownId,
+                            selectedTownId,
+                            StringComparison.OrdinalIgnoreCase)
+                        && now - _lastOverlapClickUtc <= TimeSpan.FromMilliseconds(500);
+                    _lastOverlapClickTownId = selectedTownId;
+                    _lastOverlapClickUtc = now;
+
+                    var dismissVersion = ++_overlapDismissVersion;
+                    _preserveOverlapPickerDuringSelection = true;
+                    try
                     {
+                        _canvas.SelectTown(selectedTownId);
+                    }
+                    finally
+                    {
+                        _preserveOverlapPickerDuringSelection = false;
+                    }
+
+                    if (activateAfterSelection || e.ClickCount >= 2 || isRapidSecondClick)
+                    {
+                        ++_overlapDismissVersion;
+                        _overlapPicker.IsVisible = false;
+                        _lastOverlapClickTownId = null;
                         OnTownActivated(selectedTownId);
                     }
+                    else
+                    {
+                        await Task.Delay(500);
+                        if (dismissVersion == _overlapDismissVersion)
+                            _overlapPicker.IsVisible = false;
+                    }
+
+                    e.Handled = true;
                 };
 
             _overlapOptions.Children.Add(button);
@@ -447,13 +484,19 @@ public sealed class TownMapPanel :
                 Math.Clamp(pointer.Y + 12, 4, maxTop),
                 0,
                 0);
+        ++_overlapDismissVersion;
         _overlapPicker.IsVisible = true;
     }
 
     private void OnTownSelected(
         string townId)
     {
-        _overlapPicker.IsVisible = false;
+        if (!_preserveOverlapPickerDuringSelection)
+        {
+            ++_overlapDismissVersion;
+            _overlapPicker.IsVisible = false;
+        }
+
         _selectedTownId =
             townId;
 

@@ -3,6 +3,7 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:ui="using:Dynastia.App.Controls"
     xmlns:vm="using:Dynastia.App.ViewModels"
+    xmlns:primitives="using:Avalonia.Controls.Primitives"
     x:Class="Dynastia.App.Views.FamilyInventoryWindow"
     x:DataType="vm:FamilyInventoryWindowViewModel"
     Width="1040"
@@ -36,7 +37,7 @@
             <Setter Property="Opacity" Value="0.42" />
         </Style>
         <Style Selector="ComboBox.houseHeir">
-            <Setter Property="MinWidth" Value="245" />
+            <Setter Property="Width" Value="180" />
             <Setter Property="FontFamily" Value="Georgia" />
             <Setter Property="FontSize" Value="12" />
             <Setter Property="Foreground" Value="#352110" />
@@ -195,20 +196,13 @@
                                                 FontWeight="Bold"
                                                 Foreground="#352110"
                                                 Text="💰 Loans" />
-                                            <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="5">
-                                                <Button
-                                                    Classes="inventoryAction"
-                                                    MinWidth="105"
-                                                    IsEnabled="{Binding CanTakeLoan}"
-                                                    Content="Take Loan"
-                                                    Click="OnTakeLoanClick" />
-                                                <Button
-                                                    Classes="inventoryAction"
-                                                    MinWidth="105"
-                                                    IsEnabled="{Binding CanGiveLoan}"
-                                                    Content="Give Loan"
-                                                    Click="OnGiveLoanClick" />
-                                            </StackPanel>
+                                            <Button
+                                                Grid.Column="1"
+                                                Classes="inventoryAction"
+                                                MinWidth="120"
+                                                IsEnabled="{Binding CanVisitBank}"
+                                                Content="Visit a Bank"
+                                                Click="OnVisitBankClick" />
                                         </Grid>
 
                                         <TextBlock
@@ -271,29 +265,32 @@
                                             TextWrapping="Wrap"
                                             Text="{Binding LifestyleDescription}" />
 
-                                        <Grid ColumnDefinitions="*,*,*" ColumnSpacing="4">
+                                        <StackPanel
+                                            HorizontalAlignment="Center"
+                                            Orientation="Horizontal"
+                                            Spacing="8">
                                             <Button
-                                                Grid.Column="0"
                                                 Classes="inventoryAction"
+                                                Width="104"
                                                 MinWidth="0"
                                                 IsEnabled="{Binding CanUseLavishLifestyle}"
                                                 Tag="economy.lifestyle.lavish"
-                                                Content="Lavish"
+                                                Content="💎 Lavish"
                                                 Click="OnLifestyleClick">
                                                 <ToolTip.Tip>
                                                     <TextBlock
                                                         MaxWidth="290"
                                                         TextWrapping="Wrap"
-                                                        Text="+25% living costs. Slightly improves child happiness, marriage and job satisfaction, health recovery, education and spouse prospects, while reducing Stress." />
+                                                        Text="+10% living costs. Slightly improves child happiness, marriage and job satisfaction, health recovery, education and spouse prospects, while reducing Stress." />
                                                 </ToolTip.Tip>
                                             </Button>
                                             <Button
-                                                Grid.Column="1"
                                                 Classes="inventoryAction"
+                                                Width="104"
                                                 MinWidth="0"
                                                 IsEnabled="{Binding CanUseBalancedLifestyle}"
                                                 Tag="economy.lifestyle.balanced"
-                                                Content="Balanced"
+                                                Content="⚖️ Balanced"
                                                 Click="OnLifestyleClick">
                                                 <ToolTip.Tip>
                                                     <TextBlock
@@ -303,21 +300,21 @@
                                                 </ToolTip.Tip>
                                             </Button>
                                             <Button
-                                                Grid.Column="2"
                                                 Classes="inventoryAction"
+                                                Width="104"
                                                 MinWidth="0"
                                                 IsEnabled="{Binding CanUseThriftyLifestyle}"
                                                 Tag="economy.lifestyle.thrifty"
-                                                Content="Thrifty"
+                                                Content="🪙 Thrifty"
                                                 Click="OnLifestyleClick">
                                                 <ToolTip.Tip>
                                                     <TextBlock
                                                         MaxWidth="290"
                                                         TextWrapping="Wrap"
-                                                        Text="-20% living costs. Slightly lowers child happiness, marriage and job satisfaction, health recovery, education and spouse prospects, while increasing Stress." />
+                                                        Text="-10% living costs. Slightly lowers child happiness, marriage and job satisfaction, health recovery, education and spouse prospects, while increasing Stress." />
                                                 </ToolTip.Tip>
                                             </Button>
-                                        </Grid>
+                                        </StackPanel>
                                     </StackPanel>
                                 </Border>
                             </Grid>
@@ -325,302 +322,392 @@
                     </ScrollViewer>
                 </TabItem>
 
-                <TabItem Header="Properties">
+                <TabItem Header="Houses">
                     <ScrollViewer
                         Margin="8"
                         HorizontalScrollBarVisibility="Disabled"
                         VerticalScrollBarVisibility="Auto">
                         <StackPanel Spacing="12">
-                            <Border
-                                Margin="4"
-                                Padding="16,13"
-                                Background="#35FFF4D9"
-                                BorderBrush="#A17A43"
-                                BorderThickness="1"
-                                CornerRadius="4">
-                                <StackPanel Spacing="9">
-                                    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
-                                        <TextBlock
-                                            VerticalAlignment="Center"
-                                            FontFamily="Georgia"
-                                            FontSize="20"
-                                            FontWeight="Bold"
-                                            Foreground="#352110"
-                                            Text="Houses" />
-                                        <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8">
-                                            <Button
-                                                Classes="inventoryAction"
-                                                IsEnabled="{Binding CanBuyHouse}"
-                                                Content="Buy a House"
-                                                Click="OnBuyHouseClick" />
-                                            <Button
-                                                Classes="inventoryAction"
-                                                IsEnabled="{Binding CanSellHouse}"
-                                                Content="Sell a House"
-                                                Click="OnSellHouseClick" />
-                                        </StackPanel>
-                                    </Grid>
-
-                                    <TextBlock
-                                        FontFamily="Georgia"
-                                        FontSize="12"
-                                        FontStyle="Italic"
-                                        Foreground="#6B5131"
-                                        Text="{Binding HouseEmptyText}" />
-
-                                    <ItemsControl ItemsSource="{Binding Houses}">
-                                        <ItemsControl.ItemTemplate>
-                                            <DataTemplate x:DataType="vm:InventoryHouseViewModel">
-                                                <Grid Margin="0,4" ColumnDefinitions="*,Auto" ColumnSpacing="18">
-                                                    <StackPanel Spacing="2">
-                                                        <TextBlock
-                                                            FontFamily="Georgia"
-                                                            FontSize="13.5"
-                                                            FontWeight="Bold"
-                                                            Foreground="#46321C"
-                                                            Text="{Binding TownText}" />
-                                                        <TextBlock
-                                                            FontFamily="Georgia"
-                                                            FontSize="11.5"
-                                                            Foreground="#6B5131"
-                                                            Text="{Binding StatusText}" />
-                                                    </StackPanel>
-                                                    <StackPanel
-                                                        Grid.Column="1"
-                                                        Orientation="Horizontal"
-                                                        VerticalAlignment="Center"
-                                                        Spacing="8">
-                                                        <Button
-                                                            Classes="inventoryAction"
-                                                            IsEnabled="{Binding CanExtend}"
-                                                            Tag="{Binding PropertyId}"
-                                                            Content="{Binding ExtendActionText}"
-                                                            Click="OnExtendHouseClick" />
-                                                        <TextBlock
-                                                            VerticalAlignment="Center"
-                                                            FontFamily="Georgia"
-                                                            FontSize="12"
-                                                            FontWeight="Bold"
-                                                            Foreground="#46321C"
-                                                            Text="Inherits:" />
-                                                        <ComboBox
-                                                            Classes="houseHeir"
-                                                            ItemsSource="{Binding HeirOptions}"
-                                                            SelectedItem="{Binding SelectedHeir, Mode=TwoWay}">
-                                                            <ComboBox.ItemTemplate>
-                                                                <DataTemplate x:DataType="vm:HouseHeirOptionViewModel">
-                                                                    <TextBlock
-                                                                        FontFamily="Georgia"
-                                                                        FontSize="12"
-                                                                        Foreground="#352110"
-                                                                        Text="{Binding Label}" />
-                                                                </DataTemplate>
-                                                            </ComboBox.ItemTemplate>
-                                                        </ComboBox>
-                                                    </StackPanel>
-                                                </Grid>
-                                            </DataTemplate>
-                                        </ItemsControl.ItemTemplate>
-                                    </ItemsControl>
+                            <Grid Margin="4" ColumnDefinitions="*,Auto" ColumnSpacing="12">
+                                <TextBlock
+                                    VerticalAlignment="Center"
+                                    FontFamily="Georgia"
+                                    FontSize="20"
+                                    FontWeight="Bold"
+                                    Foreground="#352110"
+                                    Text="Houses" />
+                                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8">
+                                    <Button
+                                        Classes="inventoryAction"
+                                        IsEnabled="{Binding CanBuyHouse}"
+                                        Content="Buy a House"
+                                        Click="OnBuyHouseClick" />
+                                    <Button
+                                        Classes="inventoryAction"
+                                        IsEnabled="{Binding CanSellHouse}"
+                                        Content="Sell a House"
+                                        Click="OnSellHouseClick" />
                                 </StackPanel>
-                            </Border>
+                            </Grid>
 
-                            <Border
-                                Margin="4"
-                                Padding="16,13"
-                                Background="#35FFF4D9"
-                                BorderBrush="#A17A43"
-                                BorderThickness="1"
-                                CornerRadius="4">
-                                <StackPanel Spacing="9">
-                                    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
-                                        <TextBlock
-                                            VerticalAlignment="Center"
-                                            FontFamily="Georgia"
-                                            FontSize="20"
-                                            FontWeight="Bold"
-                                            Foreground="#352110"
-                                            Text="{Binding FarmlandTitle}" />
-                                        <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8">
-                                            <Button
-                                                Classes="inventoryAction"
-                                                IsEnabled="{Binding CanBuyFarmland}"
-                                                Content="{Binding BuyFarmlandActionText}"
-                                                Click="OnBuyFarmlandClick" />
-                                            <Button
-                                                Classes="inventoryAction"
-                                                IsEnabled="{Binding CanSellFarmland}"
-                                                Content="{Binding SellFarmlandActionText}"
-                                                Click="OnSellFarmlandClick" />
-                                        </StackPanel>
-                                    </Grid>
+                            <TextBlock
+                                Margin="4,0"
+                                FontFamily="Georgia"
+                                FontSize="12"
+                                FontStyle="Italic"
+                                Foreground="#6B5131"
+                                Text="{Binding HouseEmptyText}" />
 
-                                    <TextBlock
-                                        FontFamily="Georgia"
-                                        FontSize="12"
-                                        FontStyle="Italic"
-                                        Foreground="#6B5131"
-                                        Text="{Binding FarmlandEmptyText}" />
-
-                                    <TextBlock
-                                        FontFamily="Georgia"
-                                        FontSize="11.5"
-                                        Foreground="#5A3A18"
-                                        TextWrapping="Wrap"
-                                        Text="{Binding FarmlandSummaryText}" />
-
-                                    <ItemsControl ItemsSource="{Binding Farmland}">
-                                        <ItemsControl.ItemTemplate>
-                                            <DataTemplate x:DataType="vm:InventoryFarmlandViewModel">
-                                                <Grid Margin="0,4" ColumnDefinitions="*,Auto" ColumnSpacing="18">
-                                                    <StackPanel Spacing="2">
-                                                        <TextBlock
-                                                            FontFamily="Georgia"
-                                                            FontSize="13.5"
-                                                            FontWeight="Bold"
-                                                            Foreground="#46321C"
-                                                            Text="{Binding TownText}" />
-                                                        <TextBlock
-                                                            FontFamily="Georgia"
-                                                            FontSize="11.5"
-                                                            Foreground="#6B5131"
-                                                            Text="{Binding StatusText}" />
-                                                    </StackPanel>
-                                                    <StackPanel
-                                                        Grid.Column="1"
-                                                        Orientation="Horizontal"
-                                                        VerticalAlignment="Center"
-                                                        Spacing="8">
-                                                        <TextBlock
-                                                            VerticalAlignment="Center"
-                                                            FontFamily="Georgia"
-                                                            FontSize="12"
-                                                            FontWeight="Bold"
-                                                            Foreground="#46321C"
-                                                            Text="Inherits:" />
-                                                        <ComboBox
-                                                            Classes="houseHeir"
-                                                            ItemsSource="{Binding HeirOptions}"
-                                                            SelectedItem="{Binding SelectedHeir, Mode=TwoWay}">
-                                                            <ComboBox.ItemTemplate>
-                                                                <DataTemplate x:DataType="vm:HouseHeirOptionViewModel">
-                                                                    <TextBlock
-                                                                        FontFamily="Georgia"
-                                                                        FontSize="12"
-                                                                        Foreground="#352110"
-                                                                        Text="{Binding Label}" />
-                                                                </DataTemplate>
-                                                            </ComboBox.ItemTemplate>
-                                                        </ComboBox>
-                                                    </StackPanel>
-                                                </Grid>
-                                            </DataTemplate>
-                                        </ItemsControl.ItemTemplate>
-                                    </ItemsControl>
-                                </StackPanel>
-                            </Border>
-
-                            <Border
-                                Margin="4"
-                                Padding="16,13"
-                                Background="#35FFF4D9"
-                                BorderBrush="#A17A43"
-                                BorderThickness="1"
-                                CornerRadius="4">
-                                <StackPanel Spacing="9">
-                                    <TextBlock
-                                        FontFamily="Georgia"
-                                        FontSize="20"
-                                        FontWeight="Bold"
-                                        Foreground="#352110"
-                                        Text="Heirlooms" />
-
-                                    <TextBlock
-                                        FontFamily="Georgia"
-                                        FontSize="12"
-                                        FontStyle="Italic"
-                                        Foreground="#6B5131"
-                                        Text="{Binding HeirloomEmptyText}" />
-
-                                    <ItemsControl ItemsSource="{Binding Heirlooms}">
-                                        <ItemsControl.ItemTemplate>
-                                            <DataTemplate x:DataType="vm:InventoryHeirloomViewModel">
-                                                <Grid Margin="0,5" ColumnDefinitions="48,*,Auto" ColumnSpacing="12" ToolTip.Tip="{Binding OriginText}">
+                            <ItemsControl ItemsSource="{Binding Houses}">
+                                <ItemsControl.ItemsPanel>
+                                    <ItemsPanelTemplate>
+                                        <primitives:UniformGrid Columns="4" />
+                                    </ItemsPanelTemplate>
+                                </ItemsControl.ItemsPanel>
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate x:DataType="vm:InventoryHouseViewModel">
+                                        <Border
+                                            MinHeight="214"
+                                            Margin="4"
+                                            Padding="11"
+                                            Background="#44F8EDD1"
+                                            BorderBrush="#A17A43"
+                                            BorderThickness="1"
+                                            CornerRadius="4">
+                                            <Grid RowDefinitions="Auto,Auto,Auto" RowSpacing="9">
+                                                <Grid ColumnDefinitions="54,*" ColumnSpacing="10">
                                                     <Border
-                                                        Width="42"
-                                                        Height="42"
-                                                        VerticalAlignment="Center"
+                                                        Width="48"
+                                                        Height="48"
+                                                        VerticalAlignment="Top"
                                                         Background="#55F4E4BC"
                                                         BorderBrush="#9C7440"
                                                         BorderThickness="1"
-                                                        CornerRadius="3">
+                                                        CornerRadius="4">
                                                         <TextBlock
                                                             HorizontalAlignment="Center"
                                                             VerticalAlignment="Center"
-                                                            FontSize="23"
+                                                            FontSize="28"
                                                             Text="{Binding Emoji}" />
                                                     </Border>
-
-                                                    <StackPanel Grid.Column="1" Spacing="2" VerticalAlignment="Center">
+                                                    <StackPanel Grid.Column="1" Spacing="3">
                                                         <TextBlock
                                                             FontFamily="Georgia"
-                                                            FontSize="13.5"
+                                                            FontSize="12.5"
+                                                            FontWeight="Bold"
+                                                            Foreground="#46321C"
+                                                            TextWrapping="Wrap"
+                                                            Text="{Binding TownText}" />
+                                                        <TextBlock
+                                                            FontFamily="Georgia"
+                                                            FontSize="11.5"
+                                                            Foreground="#6B5131"
+                                                            Text="{Binding CapacityText}" />
+                                                        <TextBlock
+                                                            FontFamily="Georgia"
+                                                            FontSize="12"
+                                                            FontWeight="Bold"
+                                                            Foreground="#46321C"
+                                                            Text="{Binding ValueText}" />
+                                                    </StackPanel>
+                                                </Grid>
+
+                                                <StackPanel Grid.Row="1" Orientation="Horizontal" Spacing="8">
+                                                    <Button
+                                                        Classes="inventoryAction"
+                                                        MinWidth="0"
+                                                        IsEnabled="{Binding CanExtend}"
+                                                        Tag="{Binding PropertyId}"
+                                                        Content="{Binding ExtendActionText}"
+                                                        Click="OnExtendHouseClick" />
+                                                </StackPanel>
+
+                                                <StackPanel Grid.Row="2" Spacing="4">
+                                                    <TextBlock
+                                                        FontFamily="Georgia"
+                                                        FontSize="12"
+                                                        FontWeight="Bold"
+                                                        Foreground="#46321C"
+                                                        Text="Inheritance:" />
+                                                    <ComboBox
+                                                        Classes="houseHeir"
+                                                        HorizontalAlignment="Left"
+                                                        ItemsSource="{Binding HeirOptions}"
+                                                        SelectedItem="{Binding SelectedHeir, Mode=TwoWay}">
+                                                        <ComboBox.ItemTemplate>
+                                                            <DataTemplate x:DataType="vm:HouseHeirOptionViewModel">
+                                                                <TextBlock
+                                                                    FontFamily="Georgia"
+                                                                    FontSize="12"
+                                                                    Foreground="#352110"
+                                                                    Text="{Binding Label}" />
+                                                            </DataTemplate>
+                                                        </ComboBox.ItemTemplate>
+                                                    </ComboBox>
+                                                </StackPanel>
+                                            </Grid>
+                                        </Border>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </StackPanel>
+                    </ScrollViewer>
+                </TabItem>
+
+                <TabItem Header="Farmland">
+                    <ScrollViewer
+                        Margin="8"
+                        HorizontalScrollBarVisibility="Disabled"
+                        VerticalScrollBarVisibility="Auto">
+                        <StackPanel Spacing="12">
+                            <Grid Margin="4" ColumnDefinitions="*,Auto" ColumnSpacing="12">
+                                <TextBlock
+                                    VerticalAlignment="Center"
+                                    FontFamily="Georgia"
+                                    FontSize="20"
+                                    FontWeight="Bold"
+                                    Foreground="#352110"
+                                    Text="Farmland" />
+                                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8">
+                                    <Button
+                                        Classes="inventoryAction"
+                                        IsEnabled="{Binding CanBuyFarmland}"
+                                        Content="{Binding BuyFarmlandActionText}"
+                                        Click="OnBuyFarmlandClick" />
+                                    <Button
+                                        Classes="inventoryAction"
+                                        IsEnabled="{Binding CanSellFarmland}"
+                                        Content="{Binding SellFarmlandActionText}"
+                                        Click="OnSellFarmlandClick" />
+                                </StackPanel>
+                            </Grid>
+
+                            <TextBlock
+                                Margin="4,0"
+                                FontFamily="Georgia"
+                                FontSize="12"
+                                FontStyle="Italic"
+                                Foreground="#6B5131"
+                                Text="{Binding FarmlandEmptyText}" />
+
+                            <ItemsControl ItemsSource="{Binding Farmland}">
+                                <ItemsControl.ItemsPanel>
+                                    <ItemsPanelTemplate>
+                                        <primitives:UniformGrid Columns="4" />
+                                    </ItemsPanelTemplate>
+                                </ItemsControl.ItemsPanel>
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate x:DataType="vm:InventoryFarmlandViewModel">
+                                        <Border
+                                            MinHeight="214"
+                                            Margin="4"
+                                            Padding="11"
+                                            Background="#44F8EDD1"
+                                            BorderBrush="#A17A43"
+                                            BorderThickness="1"
+                                            CornerRadius="4">
+                                            <Grid RowDefinitions="Auto,Auto,Auto" RowSpacing="9">
+                                                <Grid ColumnDefinitions="54,*" ColumnSpacing="10">
+                                                    <Border
+                                                        Width="48"
+                                                        Height="48"
+                                                        VerticalAlignment="Top"
+                                                        Background="#55F4E4BC"
+                                                        BorderBrush="#9C7440"
+                                                        BorderThickness="1"
+                                                        CornerRadius="4">
+                                                        <TextBlock
+                                                            HorizontalAlignment="Center"
+                                                            VerticalAlignment="Center"
+                                                            FontSize="28"
+                                                            Text="{Binding Emoji}" />
+                                                    </Border>
+                                                    <StackPanel Grid.Column="1" Spacing="3">
+                                                        <TextBlock
+                                                            FontFamily="Georgia"
+                                                            FontSize="12.5"
+                                                            FontWeight="Bold"
+                                                            Foreground="#46321C"
+                                                            TextWrapping="Wrap"
+                                                            Text="{Binding FarmTypeText}" />
+                                                        <TextBlock
+                                                            FontFamily="Georgia"
+                                                            FontSize="11.5"
+                                                            Foreground="#6B5131"
+                                                            TextWrapping="Wrap"
+                                                            Text="{Binding LivestockText}" />
+                                                        <TextBlock
+                                                            FontFamily="Georgia"
+                                                            FontSize="12"
+                                                            FontWeight="Bold"
+                                                            Foreground="#46321C"
+                                                            Text="{Binding ValueText}" />
+                                                    </StackPanel>
+                                                </Grid>
+
+                                                <StackPanel Grid.Row="1" Orientation="Horizontal" Spacing="8">
+                                                    <Button
+                                                        Classes="inventoryAction"
+                                                        MinWidth="0"
+                                                        IsEnabled="{Binding CanAddLivestock}"
+                                                        Tag="{Binding FarmlandId}"
+                                                        Content="{Binding AddLivestockActionText}"
+                                                        Click="OnAddLivestockClick" />
+                                                </StackPanel>
+
+                                                <StackPanel Grid.Row="2" Spacing="4">
+                                                    <TextBlock
+                                                        FontFamily="Georgia"
+                                                        FontSize="12"
+                                                        FontWeight="Bold"
+                                                        Foreground="#46321C"
+                                                        Text="Inheritance:" />
+                                                    <ComboBox
+                                                        Classes="houseHeir"
+                                                        HorizontalAlignment="Left"
+                                                        ItemsSource="{Binding HeirOptions}"
+                                                        SelectedItem="{Binding SelectedHeir, Mode=TwoWay}">
+                                                        <ComboBox.ItemTemplate>
+                                                            <DataTemplate x:DataType="vm:HouseHeirOptionViewModel">
+                                                                <TextBlock
+                                                                    FontFamily="Georgia"
+                                                                    FontSize="12"
+                                                                    Foreground="#352110"
+                                                                    Text="{Binding Label}" />
+                                                            </DataTemplate>
+                                                        </ComboBox.ItemTemplate>
+                                                    </ComboBox>
+                                                </StackPanel>
+                                            </Grid>
+                                        </Border>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </StackPanel>
+                    </ScrollViewer>
+                </TabItem>
+
+                <TabItem Header="Heirlooms">
+                    <ScrollViewer
+                        Margin="8"
+                        HorizontalScrollBarVisibility="Disabled"
+                        VerticalScrollBarVisibility="Auto">
+                        <StackPanel Spacing="12">
+                            <TextBlock
+                                Margin="4"
+                                FontFamily="Georgia"
+                                FontSize="20"
+                                FontWeight="Bold"
+                                Foreground="#352110"
+                                Text="Heirlooms" />
+
+                            <TextBlock
+                                Margin="4,0"
+                                FontFamily="Georgia"
+                                FontSize="12"
+                                FontStyle="Italic"
+                                Foreground="#6B5131"
+                                Text="{Binding HeirloomEmptyText}" />
+
+                            <ItemsControl ItemsSource="{Binding Heirlooms}">
+                                <ItemsControl.ItemsPanel>
+                                    <ItemsPanelTemplate>
+                                        <primitives:UniformGrid Columns="4" />
+                                    </ItemsPanelTemplate>
+                                </ItemsControl.ItemsPanel>
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate x:DataType="vm:InventoryHeirloomViewModel">
+                                        <Border
+                                            MinHeight="230"
+                                            Margin="4"
+                                            Padding="11"
+                                            Background="#44F8EDD1"
+                                            BorderBrush="#A17A43"
+                                            BorderThickness="1"
+                                            CornerRadius="4">
+                                            <Grid RowDefinitions="Auto,Auto,Auto" RowSpacing="9">
+                                                <Grid ColumnDefinitions="54,*" ColumnSpacing="10">
+                                                    <Border
+                                                        Width="48"
+                                                        Height="48"
+                                                        VerticalAlignment="Top"
+                                                        Background="#55F4E4BC"
+                                                        BorderBrush="#9C7440"
+                                                        BorderThickness="1"
+                                                        CornerRadius="4">
+                                                        <TextBlock
+                                                            HorizontalAlignment="Center"
+                                                            VerticalAlignment="Center"
+                                                            FontSize="28"
+                                                            Text="{Binding Emoji}" />
+                                                    </Border>
+                                                    <StackPanel Grid.Column="1" Spacing="3">
+                                                        <TextBlock
+                                                            FontFamily="Georgia"
+                                                            FontSize="12.5"
                                                             FontWeight="Bold"
                                                             Foreground="#46321C"
                                                             TextWrapping="Wrap"
                                                             Text="{Binding DisplayName}" />
                                                         <TextBlock
                                                             FontFamily="Georgia"
-                                                            FontSize="11.5"
+                                                            FontSize="10.8"
                                                             Foreground="#6B5131"
-                                                            Text="{Binding DetailsText}" />
+                                                            TextWrapping="Wrap"
+                                                            MaxHeight="48"
+                                                            Text="{Binding OriginText}" />
                                                         <TextBlock
                                                             FontFamily="Georgia"
-                                                            FontSize="11"
-                                                            Foreground="#7A5C37"
-                                                            TextTrimming="CharacterEllipsis"
-                                                            Text="{Binding OriginText}" />
-                                                    </StackPanel>
-
-                                                    <StackPanel
-                                                        Grid.Column="2"
-                                                        Orientation="Horizontal"
-                                                        VerticalAlignment="Center"
-                                                        Spacing="8">
+                                                            FontSize="11.5"
+                                                            Foreground="#6B5131"
+                                                            Text="{Binding AcquiredText}" />
                                                         <TextBlock
-                                                            VerticalAlignment="Center"
                                                             FontFamily="Georgia"
                                                             FontSize="12"
                                                             FontWeight="Bold"
                                                             Foreground="#46321C"
-                                                            Text="Inherits:" />
-                                                        <ComboBox
-                                                            Classes="houseHeir"
-                                                            ItemsSource="{Binding HeirOptions}"
-                                                            SelectedItem="{Binding SelectedHeir, Mode=TwoWay}">
-                                                            <ComboBox.ItemTemplate>
-                                                                <DataTemplate x:DataType="vm:HouseHeirOptionViewModel">
-                                                                    <TextBlock
-                                                                        FontFamily="Georgia"
-                                                                        FontSize="12"
-                                                                        Foreground="#352110"
-                                                                        Text="{Binding Label}" />
-                                                                </DataTemplate>
-                                                            </ComboBox.ItemTemplate>
-                                                        </ComboBox>
-                                                        <Button
-                                                            Classes="inventoryAction"
-                                                            IsEnabled="{Binding CanSell}"
-                                                            Tag="{Binding HeirloomId}"
-                                                            Content="Sell"
-                                                            Click="OnSellHeirloomClick" />
+                                                            Text="{Binding ValueText}" />
                                                     </StackPanel>
                                                 </Grid>
-                                            </DataTemplate>
-                                        </ItemsControl.ItemTemplate>
-                                    </ItemsControl>
-                                </StackPanel>
-                            </Border>
+
+                                                <StackPanel Grid.Row="1" Orientation="Horizontal" Spacing="8">
+                                                    <Button
+                                                        Classes="inventoryAction"
+                                                        MinWidth="0"
+                                                        IsEnabled="{Binding CanSell}"
+                                                        Tag="{Binding HeirloomId}"
+                                                        Content="Sell"
+                                                        Click="OnSellHeirloomClick" />
+                                                </StackPanel>
+
+                                                <StackPanel Grid.Row="2" Spacing="4">
+                                                    <TextBlock
+                                                        FontFamily="Georgia"
+                                                        FontSize="12"
+                                                        FontWeight="Bold"
+                                                        Foreground="#46321C"
+                                                        Text="Inheritance:" />
+                                                    <ComboBox
+                                                        Classes="houseHeir"
+                                                        HorizontalAlignment="Left"
+                                                        ItemsSource="{Binding HeirOptions}"
+                                                        SelectedItem="{Binding SelectedHeir, Mode=TwoWay}">
+                                                        <ComboBox.ItemTemplate>
+                                                            <DataTemplate x:DataType="vm:HouseHeirOptionViewModel">
+                                                                <TextBlock
+                                                                    FontFamily="Georgia"
+                                                                    FontSize="12"
+                                                                    Foreground="#352110"
+                                                                    Text="{Binding Label}" />
+                                                            </DataTemplate>
+                                                        </ComboBox.ItemTemplate>
+                                                    </ComboBox>
+                                                </StackPanel>
+                                            </Grid>
+                                        </Border>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
                         </StackPanel>
                     </ScrollViewer>
                 </TabItem>

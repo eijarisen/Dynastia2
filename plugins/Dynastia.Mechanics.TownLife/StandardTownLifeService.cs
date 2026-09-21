@@ -80,6 +80,20 @@ internal sealed class StandardTownLifeService : ITownLifeService
         MedicalQualityInfo medicalQuality)
     {
         return institutions.Institutions
+            .Where(institution =>
+                institution.Tier > 0
+                || institution.InstitutionId.Equals("medical", StringComparison.OrdinalIgnoreCase)
+                || institution.InstitutionId.Equals("school", StringComparison.OrdinalIgnoreCase)
+                || institution.InstitutionId.Equals("bank", StringComparison.OrdinalIgnoreCase))
+            .OrderBy(institution => institution.InstitutionId.ToLowerInvariant() switch
+            {
+                "administration" => 0,
+                "medical" => 1,
+                "school" => 2,
+                "bank" => 3,
+                _ => 10
+            })
+            .ThenBy(institution => institution.DisplayName, StringComparer.CurrentCultureIgnoreCase)
             .Select(institution =>
             {
                 var serviceText = institution.InstitutionId.ToLowerInvariant() switch

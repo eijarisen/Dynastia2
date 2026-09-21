@@ -265,7 +265,12 @@ public sealed class LoansPlugin :
                             actionContext.Actor,
                             actionContext.Target,
                             actionContext.ActorHasControl,
-                            family))
+                            family)
+                        || !HasLocalBank(
+                            actionContext.Actor,
+                            actionContext.GameState.Year,
+                            locations,
+                            facilityQuality))
                     {
                         return false;
                     }
@@ -300,6 +305,11 @@ public sealed class LoansPlugin :
                             actionContext.Target,
                             actionContext.ActorHasControl,
                             family)
+                        || !HasLocalBank(
+                            lender,
+                            actionContext.GameState.Year,
+                            locations,
+                            facilityQuality)
                         || !TryReadTerms(
                             actionContext.Parameters,
                             loans,
@@ -324,7 +334,8 @@ public sealed class LoansPlugin :
                             lender,
                             terms.Principal,
                             terms.DurationYears,
-                            actionContext.GameState.Year);
+                            actionContext.GameState.Year,
+                            terms.InterestMultiplier);
 
                     var borrower =
                         ResolveCounterparty(

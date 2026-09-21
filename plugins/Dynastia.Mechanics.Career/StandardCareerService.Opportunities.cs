@@ -517,6 +517,7 @@ public sealed partial class StandardCareerService
             chance += 0.05;
 
         chance += _craftResolver()?.GetApplicationBonus(person, definition.Id) ?? 0;
+        chance += _statusResolver()?.GetCareerApplicationBonus(person) ?? 0;
         chance += Math.Min(5, component.PeakJobLevel) * 0.02;
 
         chance += local.Strength switch

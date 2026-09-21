@@ -280,6 +280,8 @@ public sealed partial class MainWindowViewModel
             BuildRelationshipHistoryItems(
                 relationshipHistory);
 
+        var socialStatus = _statusService?.GetStatus(person);
+
         SelectedFamily =
             new FamilyDetailsViewModel
             {
@@ -352,7 +354,10 @@ public sealed partial class MainWindowViewModel
                     _familyService
                         .IsMaleLineage(person)
                             ? "Yes"
-                            : "No"
+                            : "No",
+
+                Renown = socialStatus?.RenownText ?? string.Empty,
+                Reputation = socialStatus?.ReputationText ?? string.Empty
             };
     }
 

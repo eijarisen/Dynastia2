@@ -1,0 +1,247 @@
+{
+  "schemaVersion": "1.0",
+  "ranges": {
+    "renown": [
+      0,
+      100
+    ],
+    "reputation": [
+      -100,
+      100
+    ],
+    "baseRenown": 15,
+    "baseReputation": 0
+  },
+  "profile": {
+    "wealthNetWorth": {
+      "definition": "household cash + appraised Houses + Farmland + Heirlooms - outstanding debt",
+      "bands": [
+        {
+          "max": 0,
+          "renown": -10,
+          "reputation": -5
+        },
+        {
+          "min": 0.01,
+          "max": 9999,
+          "renown": -4,
+          "reputation": -1
+        },
+        {
+          "min": 10000,
+          "max": 49999,
+          "renown": 0,
+          "reputation": 0
+        },
+        {
+          "min": 50000,
+          "max": 99999,
+          "renown": 2,
+          "reputation": 0
+        },
+        {
+          "min": 100000,
+          "max": 499999,
+          "renown": 5,
+          "reputation": 0
+        },
+        {
+          "min": 500000,
+          "max": 1999999,
+          "renown": 8,
+          "reputation": 1
+        },
+        {
+          "min": 2000000,
+          "renown": 12,
+          "reputation": 2
+        }
+      ]
+    },
+    "education": {
+      "0": {
+        "renown": -3,
+        "reputation": 0
+      },
+      "1": {
+        "renown": -2,
+        "reputation": 0
+      },
+      "2": {
+        "renown": 0,
+        "reputation": 0
+      },
+      "3": {
+        "renown": 2,
+        "reputation": 0
+      },
+      "4": {
+        "renown": 5,
+        "reputation": 1
+      },
+      "5": {
+        "renown": 9,
+        "reputation": 2
+      }
+    },
+    "careerLevel": {
+      "0": {
+        "renown": -1,
+        "reputation": 0
+      },
+      "1": {
+        "renown": -2,
+        "reputation": 0
+      },
+      "2": {
+        "renown": 0,
+        "reputation": 0
+      },
+      "3": {
+        "renown": 2,
+        "reputation": 0
+      },
+      "4": {
+        "renown": 5,
+        "reputation": 1
+      },
+      "5": {
+        "renown": 10,
+        "reputation": 2
+      }
+    },
+    "craftMastery": {
+      "0": {
+        "renown": 0,
+        "reputation": 0
+      },
+      "1": {
+        "renown": -1,
+        "reputation": 0
+      },
+      "2": {
+        "renown": 0,
+        "reputation": 0
+      },
+      "3": {
+        "renown": 2,
+        "reputation": 0
+      },
+      "4": {
+        "renown": 5,
+        "reputation": 1
+      },
+      "5": {
+        "renown": 9,
+        "reputation": 2
+      }
+    },
+    "activeFarmWorker": {
+      "renown": -3,
+      "reputation": 0
+    },
+    "civicHead": {
+      "renown": 12,
+      "reputation": 2
+    },
+    "connectionRenownBonusCap": 5
+  },
+  "inheritance": {
+    "onAdulthoodAge": 18,
+    "renownFractionOfHousehold": 0.15,
+    "renownCap": 10,
+    "reputationFractionOfHousehold": 0.1,
+    "reputationMin": -5,
+    "reputationMax": 5,
+    "minorDisplay": "household_average"
+  },
+  "localRenown": {
+    "enabled": true,
+    "onMoveMultiplier": 0.65,
+    "yearsToFullRecognition": 7,
+    "formula": "Renown * (0.65 + 0.35 * min(YearsInCurrentTown,7)/7)",
+    "reputationTransfersFully": true
+  },
+  "career": {
+    "applicationBonusFormula": "clamp(LocalRenown*0.00020 + Reputation*0.00005, -0.005, 0.025)",
+    "promotionBonusFormula": "clamp(LocalRenown*0.00035 + Reputation*0.00010, -0.010, 0.045)",
+    "neverBypassesEducation": true,
+    "neverBypassesInstitutionOrEraEligibility": true,
+    "salaryEffect": 0
+  },
+  "household": {
+    "renown": "average living adults",
+    "reputation": "average living adults"
+  },
+  "labels": {
+    "renown": [
+      {
+        "min": 0,
+        "max": 14,
+        "label": "Obscure"
+      },
+      {
+        "min": 15,
+        "max": 29,
+        "label": "Known"
+      },
+      {
+        "min": 30,
+        "max": 49,
+        "label": "Established"
+      },
+      {
+        "min": 50,
+        "max": 69,
+        "label": "Prominent"
+      },
+      {
+        "min": 70,
+        "max": 84,
+        "label": "Notable"
+      },
+      {
+        "min": 85,
+        "max": 100,
+        "label": "Eminent"
+      }
+    ],
+    "reputation": [
+      {
+        "min": -100,
+        "max": -61,
+        "label": "Disgraced"
+      },
+      {
+        "min": -60,
+        "max": -31,
+        "label": "Bad"
+      },
+      {
+        "min": -30,
+        "max": -11,
+        "label": "Questionable"
+      },
+      {
+        "min": -10,
+        "max": 10,
+        "label": "Neutral"
+      },
+      {
+        "min": 11,
+        "max": 30,
+        "label": "Good"
+      },
+      {
+        "min": 31,
+        "max": 60,
+        "label": "Respected"
+      },
+      {
+        "min": 61,
+        "max": 100,
+        "label": "Esteemed"
+      }
+    ]
+  }
+}

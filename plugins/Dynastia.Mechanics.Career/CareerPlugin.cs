@@ -110,7 +110,8 @@ public sealed partial class CareerPlugin : IGamePlugin
                 workCapacity,
                 institutions,
                 institutionRequirements,
-                () => context.GetService<ICraftService>());
+                () => context.GetService<ICraftService>(),
+                () => context.GetService<IStatusService>());
 
         context.AddService<ICareerService>(career);
         context.AddService<ICareerPresentationService>(career);
@@ -198,7 +199,8 @@ public sealed partial class CareerPlugin : IGamePlugin
                 random,
                 family,
                 retirementRules,
-                events));
+                events,
+                () => context.GetService<IStatusService>()));
 
         systems.Register(
             new CareerJobLossYearSystem(

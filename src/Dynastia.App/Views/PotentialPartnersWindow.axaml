@@ -66,7 +66,7 @@
                 <ItemsControl.ItemTemplate>
                     <DataTemplate x:DataType="vm:PotentialPartnerCardViewModel">
                         <Border
-                            Height="170"
+                            Height="184"
                             Margin="4,4"
                             Padding="12,9"
                             Background="#35FFF4D9"
@@ -192,6 +192,13 @@
                                                 FontWeight="SemiBold"
                                                 Foreground="#5A3A18"
                                                 Text="{Binding FinancialText}" />
+                                            <TextBlock
+                                                IsVisible="{Binding HasStatus}"
+                                                FontFamily="Georgia"
+                                                FontSize="11.2"
+                                                FontWeight="SemiBold"
+                                                Foreground="#5A3A18"
+                                                Text="{Binding StatusText}" />
                                             <TextBlock
                                                 FontFamily="Georgia"
                                                 FontSize="11.5"

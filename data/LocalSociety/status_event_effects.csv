@@ -1,0 +1,9 @@
+﻿EventType,RenownDelta,ReputationDelta,TargetRule,Notes
+relationship.affair,0,-8,actor_and_affair_partner,Public affair damages reputation.
+relationship.divorce,0,-4,divorcing_spouses,Divorce carries a modest reputation cost.
+relationship.low_satisfaction_divorce,0,-4,divorcing_spouses,Divorce carries a modest reputation cost.
+justice.released,0,0,none,No extra release penalty; crime/imprisonment already carries the social cost.
+community.lobby_attempt,0.25,0.1,actor,Public participation makes the person slightly better known.
+community.lobbied_policy_enacted,0.75,0.3,actor,Successful civic influence increases status.
+community.office_duty,0.25,0.25,actor,Visible civic work modestly increases status.
+church.attend,0.15,0.25,actor,Small public/community effect.

@@ -134,6 +134,13 @@ public sealed class PotentialPartnerCardViewModel
     public string FinancialText =>
         $"Estimated wealth: {Candidate.EstimatedWealth:N0} zł · Houses: {Candidate.EstimatedHouses} · Farmland: {Candidate.EstimatedFarmland}";
 
+    public string StatusText =>
+        Candidate.Status is null
+            ? string.Empty
+            : $"Status: {Candidate.Status.RenownLabel} ({Candidate.Status.Renown:0.#}) · {Candidate.Status.ReputationLabel} ({Candidate.Status.Reputation:0.#})";
+
+    public bool HasStatus => Candidate.Status is not null;
+
     public string SuccessChanceText =>
         $"Chance of success: {Candidate.AcceptanceChance:P0}";
 

@@ -21,6 +21,7 @@ public sealed class CareerAdvancementYearSystem :
     private readonly RetirementRuleCatalog
         _retirementRules;
     private readonly IGameEventBus _events;
+    private readonly Func<IStatusService?> _statusResolver;
 
     public CareerAdvancementYearSystem(
         StandardCareerService career,
@@ -29,7 +30,8 @@ public sealed class CareerAdvancementYearSystem :
         IGameRandom random,
         IFamilyService family,
         RetirementRuleCatalog retirementRules,
-        IGameEventBus events)
+        IGameEventBus events,
+        Func<IStatusService?> statusResolver)
     {
         _career = career;
         _education = education;
@@ -38,6 +40,7 @@ public sealed class CareerAdvancementYearSystem :
         _family = family;
         _retirementRules = retirementRules;
         _events = events;
+        _statusResolver = statusResolver;
     }
 
     public string Id =>
@@ -150,6 +153,11 @@ public sealed class CareerAdvancementYearSystem :
                     promotionAptitude,
                     education);
         }
+
+        // Status is a small local edge and is deliberately added before the
+        // education/level multipliers, so it cannot bypass qualification gates.
+        promotionChance +=
+            _statusResolver()?.GetCareerPromotionBonus(person) ?? 0;
 
         var targetJobLevel =
             career.JobLevel + 1;

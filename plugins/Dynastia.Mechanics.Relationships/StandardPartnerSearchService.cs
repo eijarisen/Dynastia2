@@ -37,6 +37,7 @@ internal sealed class StandardPartnerSearchService :
     private readonly IGameRandom _random;
     private readonly IGameEventBus _events;
     private readonly RelationshipEventVariantCatalog _eventVariants;
+    private readonly Func<IStatusService?> _statusResolver;
 
     public StandardPartnerSearchService(
         IGameState gameState,
@@ -57,7 +58,8 @@ internal sealed class StandardPartnerSearchService :
         IGameCalendar calendar,
         IGameRandom random,
         IGameEventBus events,
-        RelationshipEventVariantCatalog eventVariants)
+        RelationshipEventVariantCatalog eventVariants,
+        Func<IStatusService?> statusResolver)
     {
         _gameState = gameState;
         _family = family;
@@ -78,6 +80,7 @@ internal sealed class StandardPartnerSearchService :
         _random = random;
         _events = events;
         _eventVariants = eventVariants;
+        _statusResolver = statusResolver;
     }
 
     public IReadOnlyList<PartnerCandidateInfo> GetCandidates(
@@ -293,6 +296,31 @@ internal sealed class StandardPartnerSearchService :
                 partnerSex,
                 age,
                 candidateId);
+            var estimatedCraftMastery = candidateCrafts.Count == 0
+                ? 0
+                : Math.Clamp(1 + (education + career.JobLevel) / 3, 1, 5);
+            // Status represents the candidate's pre-marital social profile,
+            // even where the current marriage economy does not transfer a
+            // female candidate's family property into the playable household.
+            var statusResources = partnerSex == Sex.Male
+                ? (estimatedWealth, estimatedHouses, estimatedFarmland)
+                : EstimateMaleResources(
+                    career,
+                    education,
+                    candidateTown,
+                    _gameState.Year);
+            var estimatedNetWorth = statusResources.Item1
+                + statusResources.Item2 * _economy.GetHousePrice(candidateTown)
+                + statusResources.Item3 * _farming.PurchasePrice;
+            var candidateStatus = _statusResolver()?.GetCandidateStatus(
+                new StatusCandidateProfile(
+                    estimatedNetWorth,
+                    education,
+                    career.JobLevel,
+                    estimatedCraftMastery,
+                    statusResources.Item3 > 0
+                    && career.JobLevel <= 0
+                    && candidateCrafts.Count == 0));
 
             result.Add(new PartnerCandidateInfo(
                 candidateId.ToString("N"),
@@ -322,6 +350,8 @@ internal sealed class StandardPartnerSearchService :
             {
                 Crafts = candidateCrafts,
                 EstimatedFarmland = estimatedFarmland,
+                EstimatedCraftMastery = estimatedCraftMastery,
+                Status = candidateStatus,
                 NationalityId = identity.NationalityId,
                 DisplayNationality = identity.DisplayNationality,
                 OriginTownDisplayName = identity.ForeignBirthplaceDisplayName
@@ -436,6 +466,7 @@ internal sealed class StandardPartnerSearchService :
             ["partner.estimatedWealth"] = candidate.EstimatedWealth.ToString(CultureInfo.InvariantCulture),
             ["partner.estimatedHouses"] = candidate.EstimatedHouses.ToString(CultureInfo.InvariantCulture),
             ["partner.estimatedFarmland"] = candidate.EstimatedFarmland.ToString(CultureInfo.InvariantCulture),
+            ["partner.estimatedCraftMastery"] = candidate.EstimatedCraftMastery.ToString(CultureInfo.InvariantCulture),
             ["partner.hobbies"] = string.Join('|', candidate.Hobbies.Select(hobby => hobby.Id)),
             ["partner.crafts"] = string.Join('|', candidate.Crafts.Select(craft => craft.Id)),
             ["partner.value"] = candidate.PartnerValue.ToString("R", CultureInfo.InvariantCulture),
@@ -755,6 +786,11 @@ internal sealed class StandardPartnerSearchService :
             candidate.ForeignBirthplaceCity,
             candidate.ForeignBirthplaceCountry);
 
+        // Seed recognition in the candidate's origin before the marriage
+        // household move. The Status service will then recognize the new
+        // spouse as newly arrived in the destination town.
+        _statusResolver()?.GetStatus(person);
+
         GeneratedFamilyBackgroundGenerator.Assign(
             person,
             candidate.Surname,
@@ -815,6 +851,9 @@ internal sealed class StandardPartnerSearchService :
         var estimatedFarmland = OptionalInt(
             parameters,
             "partner.estimatedFarmland");
+        var estimatedCraftMastery = OptionalInt(
+            parameters,
+            "partner.estimatedCraftMastery");
         var value = RequiredDouble(parameters, "partner.value");
         var acceptance = RequiredDouble(parameters, "partner.acceptance");
         var searchYear = RequiredInt(parameters, "partner.searchYear");
@@ -885,6 +924,7 @@ internal sealed class StandardPartnerSearchService :
         {
             Crafts = crafts,
             EstimatedFarmland = estimatedFarmland,
+            EstimatedCraftMastery = estimatedCraftMastery,
             NationalityId = nationalityId,
             DisplayNationality = displayNationality,
             OriginTownDisplayName = originTownDisplayName,

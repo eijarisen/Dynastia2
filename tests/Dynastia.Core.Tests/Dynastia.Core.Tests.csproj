@@ -40,6 +40,7 @@
     <ProjectReference Include="..\..\plugins\Dynastia.Mechanics.Mortality\Dynastia.Mechanics.Mortality.csproj" />
     <ProjectReference Include="..\..\plugins\Dynastia.Mechanics.Reproduction\Dynastia.Mechanics.Reproduction.csproj" />
     <ProjectReference Include="..\..\plugins\Dynastia.Mechanics.Relationships\Dynastia.Mechanics.Relationships.csproj" />
+    <ProjectReference Include="..\..\plugins\Dynastia.Mechanics.Status\Dynastia.Mechanics.Status.csproj" />
     <ProjectReference Include="..\..\plugins\Dynastia.Mechanics.TownLife\Dynastia.Mechanics.TownLife.csproj" />
     <ProjectReference Include="..\..\plugins\Dynastia.Mechanics.Wellbeing\Dynastia.Mechanics.Wellbeing.csproj" />
     <ProjectReference Include="..\..\plugins\Dynastia.Mechanics.RareEvents\Dynastia.Mechanics.RareEvents.csproj" />

@@ -30,6 +30,10 @@ public sealed record PartnerCandidateInfo(
 
     public int EstimatedFarmland { get; init; }
 
+    public int EstimatedCraftMastery { get; init; }
+
+    public StatusSnapshot? Status { get; init; }
+
     public string NationalityId { get; init; } = "polish";
 
     public string DisplayNationality { get; init; } = "Polish";

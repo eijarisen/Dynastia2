@@ -116,7 +116,9 @@ public sealed partial class StandardCareerService
         var successChance =
             CareerBalanceRules.GetEmploymentSearchChance(
                 statValue,
-                locationEvaluation.Strength);
+                locationEvaluation.Strength)
+            + (_statusResolver()?.GetCareerApplicationBonus(person) ?? 0);
+        successChance = Math.Clamp(successChance, 0.05, 0.95);
 
         return new EmploymentOpportunity(
             definition,

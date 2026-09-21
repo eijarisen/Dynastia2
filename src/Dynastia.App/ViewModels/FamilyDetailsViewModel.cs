@@ -42,4 +42,8 @@ public sealed class FamilyDetailsViewModel
 
     public string Bloodline { get; init; } = "";
     public string MaleLineage { get; init; } = "";
+
+    public string Renown { get; init; } = "";
+    public string Reputation { get; init; } = "";
+    public bool HasStatus => !string.IsNullOrWhiteSpace(Renown);
 }

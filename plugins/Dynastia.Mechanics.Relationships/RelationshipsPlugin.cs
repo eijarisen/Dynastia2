@@ -150,7 +150,8 @@ public sealed partial class RelationshipsPlugin : IGamePlugin
                 calendar,
                 random,
                 events,
-                relationshipEventVariants);
+                relationshipEventVariants,
+                () => context.GetService<IStatusService>());
 
         context.AddService<IRelationshipEraService>(
             relationshipEras);

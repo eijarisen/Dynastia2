@@ -22,6 +22,7 @@ public sealed partial class MainWindowViewModel : ViewModelBase
     private readonly ICraftService? _craftService;
     private readonly ILoanService? _loanService;
     private readonly IHeirloomService? _heirloomService;
+    private readonly IStatusService? _statusService;
     private readonly IHouseholdService? _householdService;
     private readonly IAutonomousHouseholdDecisionService?
         _autonomousHouseholdDecisionService;
@@ -105,6 +106,7 @@ public sealed partial class MainWindowViewModel : ViewModelBase
         ICraftService? craftService,
         ILoanService? loanService,
         IHeirloomService? heirloomService,
+        IStatusService? statusService,
         IHouseholdService? householdService,
         IAutonomousHouseholdDecisionService? autonomousHouseholdDecisionService,
         IAdoptionService? adoptionService,
@@ -146,6 +148,7 @@ public sealed partial class MainWindowViewModel : ViewModelBase
         _craftService = craftService;
         _loanService = loanService;
         _heirloomService = heirloomService;
+        _statusService = statusService;
         _householdService = householdService;
         _autonomousHouseholdDecisionService =
             autonomousHouseholdDecisionService;

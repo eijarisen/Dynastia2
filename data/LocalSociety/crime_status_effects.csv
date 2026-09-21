@@ -1,0 +1,10 @@
+﻿CrimeCategory,RenownDelta,ReputationDeltaOnPublicCrime
+impulsive,0,-4
+property,0,-5
+financial,0,-6
+technology,0,-6
+property_violent,0,-10
+violent_impulsive,0,-10
+violent,0,-12
+severe_violent,0,-18
+extreme,0,-25

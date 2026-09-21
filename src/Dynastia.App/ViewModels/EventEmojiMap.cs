@@ -104,6 +104,10 @@ public static class EventEmojiMap
                 ["loan.receivable_repaid"] = "✅",
                 ["loan.debt_inherited"] = "📜",
                 ["personality.religious_study"] = "📖",
+                ["church.attend"] = "⛪",
+                ["church.donate"] = "⛪",
+                ["church.aid_poor"] = "🤝",
+                ["church.welfare"] = "🥖",
                 ["relationship.divorce_refused"] = "💍",
                 ["life.death"] = "💀",
                 ["career.quit"] = "🚶",
@@ -252,6 +256,7 @@ public static class EventEmojiMap
         if (eventType.StartsWith("loan.", StringComparison.OrdinalIgnoreCase)) return "🏦";
         if (eventType.StartsWith("inheritance.", StringComparison.OrdinalIgnoreCase)) return "💰";
         if (eventType.StartsWith("personality.", StringComparison.OrdinalIgnoreCase)) return "🧭";
+        if (eventType.StartsWith("church.", StringComparison.OrdinalIgnoreCase)) return "⛪";
         if (eventType.StartsWith("stats.", StringComparison.OrdinalIgnoreCase)) return "📈";
         if (eventType.StartsWith("rare.", StringComparison.OrdinalIgnoreCase)) return "⚠️";
         if (eventType.StartsWith("life.", StringComparison.OrdinalIgnoreCase)) return "📜";

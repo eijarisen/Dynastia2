@@ -1089,6 +1089,21 @@ public sealed partial class MainWindowViewModel
         }
 
         if (queued.ActionId.StartsWith(
+                "church.",
+                StringComparison.OrdinalIgnoreCase)
+            && TryReadDecimalParameter(
+                parameters,
+                "churchAmount",
+                out var churchAmount))
+        {
+            var amountText =
+                $"{churchAmount.ToString("N0", CultureInfo.InvariantCulture)} zł";
+            return parameters.TryGetValue("churchTier", out var churchTier)
+                ? $"{CultureInfo.CurrentCulture.TextInfo.ToTitleCase(churchTier)} — {amountText}"
+                : amountText;
+        }
+
+        if (queued.ActionId.StartsWith(
                 "loan.",
                 StringComparison.OrdinalIgnoreCase)
             && TryReadDecimalParameter(

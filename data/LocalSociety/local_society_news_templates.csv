@@ -1,0 +1,15 @@
+﻿EventType,Emoji,TextTemplate
+status.changed,⭐,"{Person}'s local standing changed: {RenownLabel}, {ReputationLabel}."
+church.attend,⛪,{Person} attended {ChurchName}.
+church.donate,⛪,{Person} donated {Amount} zł to {ChurchName}.
+church.aid_poor,🤝,{Person} gave {Amount} zł to the struggling {FamilyName} family.
+church.welfare,🥖,{ChurchName} provided {Amount} zł in emergency welfare to the household.
+community.policy_enacted,🏛️,{Town} adopted the local policy: {PolicyName}. It will remain in effect for {DurationYears} years.
+community.lobby,🗣️,"{Person} publicly supported {PolicyName}, proposed by {ConnectionName}."
+community.head_appointed,🏛️,{Person} was appointed {OfficeTitle} of {Town}.
+community.head_replaced,📜,{Person} left the office of {OfficeTitle} in {Town}.
+community.head_removed,⚠️,{Person} lost the office of {OfficeTitle} in {Town}.
+connection.created,🤝,"The household became acquainted with {ConnectionName}, a local {Occupation}."
+connection.request_refused,🤝,{ConnectionName} refused the household's request.
+connection.request_accepted,🤝,{ConnectionName} agreed to the household's request.
+connection.lost,👋,The household lost contact with {ConnectionName}.

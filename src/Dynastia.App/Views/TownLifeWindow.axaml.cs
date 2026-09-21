@@ -135,6 +135,19 @@ public partial class TownLifeWindow : Window
         CloseIfQueued(model);
     }
 
+    private void OnChurchActionClick(object? sender, RoutedEventArgs e)
+    {
+        if (DataContext is not TownAffairsViewModel model
+            || sender is not Button { DataContext: TownAffairsChurchActionViewModel action }
+            || !action.IsAvailable)
+        {
+            return;
+        }
+
+        model.QueueChurch(action);
+        CloseIfQueued(model);
+    }
+
     private void CloseIfQueued(TownAffairsViewModel model)
     {
         if (model.HasQueuedAction)

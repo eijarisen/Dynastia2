@@ -78,7 +78,11 @@ public static class ActionEmojiMap
                 ["family_relations.give_money"] = "🎁",
                 ["family_relations.improve"] = "❤️‍🩹",
                 ["loan.give"] = "🤝",
-                ["loan.take"] = "🏦"
+                ["loan.take"] = "🏦",
+                ["church.attend"] = "⛪",
+                ["church.donate"] = "⛪",
+                ["church.aid_poor_family"] = "🤝",
+                ["church.ask_welfare"] = "🥖"
             };
 
     public static string GetEmoji(string actionId)
@@ -119,7 +123,9 @@ public static class ActionEmojiMap
                                     ? "🌾"
                                     : actionId.StartsWith("education.", StringComparison.OrdinalIgnoreCase)
                                         ? "🎓"
-                                        : "⚙️";
+                                        : actionId.StartsWith("church.", StringComparison.OrdinalIgnoreCase)
+                                            ? "⛪"
+                                            : "⚙️";
     }
 
     public static string Format(

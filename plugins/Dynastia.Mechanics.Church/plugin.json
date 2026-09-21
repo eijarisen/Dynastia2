@@ -1,0 +1,15 @@
+{
+  "id": "dynastia.church",
+  "name": "Church",
+  "version": "0.1.0",
+  "apiVersion": 1,
+  "assembly": "Dynastia.Mechanics.Church.dll",
+  "entryType": "Dynastia.Mechanics.Church.ChurchPlugin",
+  "dependencies": [
+    "dynastia.family",
+    "dynastia.economy",
+    "dynastia.personality",
+    "dynastia.status",
+    "dynastia.townlife"
+  ]
+}

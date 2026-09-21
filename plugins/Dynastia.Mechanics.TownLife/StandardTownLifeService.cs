@@ -81,10 +81,11 @@ internal sealed class StandardTownLifeService : ITownLifeService
     {
         return institutions.Institutions
             .Where(institution =>
-                institution.Tier > 0
-                || institution.InstitutionId.Equals("medical", StringComparison.OrdinalIgnoreCase)
-                || institution.InstitutionId.Equals("school", StringComparison.OrdinalIgnoreCase)
-                || institution.InstitutionId.Equals("bank", StringComparison.OrdinalIgnoreCase))
+                !institution.InstitutionId.Equals("church", StringComparison.OrdinalIgnoreCase)
+                && (institution.Tier > 0
+                    || institution.InstitutionId.Equals("medical", StringComparison.OrdinalIgnoreCase)
+                    || institution.InstitutionId.Equals("school", StringComparison.OrdinalIgnoreCase)
+                    || institution.InstitutionId.Equals("bank", StringComparison.OrdinalIgnoreCase)))
             .OrderBy(institution => institution.InstitutionId.ToLowerInvariant() switch
             {
                 "administration" => 0,

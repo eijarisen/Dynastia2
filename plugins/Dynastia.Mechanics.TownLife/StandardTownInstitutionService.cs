@@ -7,14 +7,25 @@ internal sealed class StandardTownInstitutionService : ITownInstitutionService
     private readonly TownInstitutionCatalog _catalog;
     private readonly ILocalCareerOpportunityService _opportunities;
     private readonly ILocalServiceTownResolver? _localServiceTowns;
+    private readonly ChurchInstitutionRules? _church;
 
     public StandardTownInstitutionService(
         TownInstitutionCatalog catalog,
         ILocalCareerOpportunityService opportunities,
         ILocalServiceTownResolver? localServiceTowns = null)
+        : this(catalog, opportunities, null, localServiceTowns)
+    {
+    }
+
+    public StandardTownInstitutionService(
+        TownInstitutionCatalog catalog,
+        ILocalCareerOpportunityService opportunities,
+        ChurchInstitutionRules? church,
+        ILocalServiceTownResolver? localServiceTowns)
     {
         _catalog = catalog;
         _opportunities = opportunities;
+        _church = church;
         _localServiceTowns = localServiceTowns;
     }
 
@@ -81,6 +92,9 @@ internal sealed class StandardTownInstitutionService : ITownInstitutionService
                     tier,
                     _catalog.ResolveTierName(type.Id, tier, year));
             })
+            .Concat(_church is null
+                ? Array.Empty<TownInstitutionInfo>()
+                : new[] { _church.Resolve(town.Population) })
             .ToArray();
 
         return new TownInstitutionSnapshot(

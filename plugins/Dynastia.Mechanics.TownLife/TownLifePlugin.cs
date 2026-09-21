@@ -22,9 +22,11 @@ public sealed class TownLifePlugin : IGamePlugin
             ?? throw new InvalidOperationException("Year-system registry is unavailable.");
         var institutionCatalog = TownInstitutionCatalog.Load(data, historicalTowns);
         var institutionCareers = TownInstitutionCareerCatalog.Load(data);
+        var churchRules = ChurchInstitutionRules.Load(data);
         var institutions = new StandardTownInstitutionService(
             institutionCatalog,
             opportunities,
+            churchRules,
             localServiceTowns);
         var facilityQuality = new StandardTownFacilityQualityService(
             institutions,

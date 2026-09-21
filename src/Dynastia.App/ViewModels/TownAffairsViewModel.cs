@@ -10,7 +10,8 @@ public enum TownAffairsTab
     Jobs = 2,
     Health = 3,
     Education = 4,
-    Bank = 5
+    Bank = 5,
+    Church = 6
 }
 
 public enum TownAffairsMode
@@ -118,7 +119,7 @@ public sealed class TownAffairsViewModel : ViewModelBase
             var normalized = Math.Clamp(
                 value,
                 (int)TownAffairsTab.Institutions,
-                (int)TownAffairsTab.Bank);
+                (int)TownAffairsTab.Church);
             var tab = (TownAffairsTab)normalized;
             if (!IsTabVisible(tab) || _selectedTabIndex == normalized)
                 return;
@@ -153,6 +154,9 @@ public sealed class TownAffairsViewModel : ViewModelBase
 
     public bool ShowBankTab =>
         !IsRemote && Snapshot.Bank.IsAvailable;
+
+    public bool ShowChurchTab =>
+        !IsRemote && Snapshot.Church.IsAvailable;
 
     public IReadOnlyList<TownAffairsHouseOfferViewModel> HouseOffers { get; }
 
@@ -206,6 +210,13 @@ public sealed class TownAffairsViewModel : ViewModelBase
 
     public bool HasHealthActions => HealthActions.Count > 0;
 
+    public IReadOnlyList<TownAffairsChurchActionViewModel> ChurchActions { get; private set; }
+        = Array.Empty<TownAffairsChurchActionViewModel>();
+
+    public bool HasChurchActions => ChurchActions.Count > 0;
+
+    public bool ShowChurchEmpty => !HasChurchActions;
+
     public bool ShowHealthEmpty => !HasHealthActions;
 
     public string HealthEmptyText =>
@@ -222,6 +233,7 @@ public sealed class TownAffairsViewModel : ViewModelBase
             TownAffairsTab.Health => ShowHealthTab,
             TownAffairsTab.Education => ShowEducationTab,
             TownAffairsTab.Bank => ShowBankTab,
+            TownAffairsTab.Church => ShowChurchTab,
             _ => false
         };
 
@@ -232,6 +244,7 @@ public sealed class TownAffairsViewModel : ViewModelBase
             "school" => TownAffairsTab.Education,
             "bank" => TownAffairsTab.Bank,
             "medical" => TownAffairsTab.Health,
+            "church" => TownAffairsTab.Church,
             _ => (TownAffairsTab?)null
         };
 
@@ -315,6 +328,14 @@ public sealed class TownAffairsViewModel : ViewModelBase
         _owner.QueueTownAffairsHealthAction(actionId, Subject);
     }
 
+    public void QueueChurch(TownAffairsChurchActionViewModel action)
+    {
+        if (!ShowChurchTab || !action.IsAvailable)
+            return;
+
+        _owner.QueueTownAffairsChurchAction(action);
+    }
+
     private void RefreshMemberTabs()
     {
         HouseholdMembers = _householdPeople
@@ -345,6 +366,10 @@ public sealed class TownAffairsViewModel : ViewModelBase
         EducationOptions = Array.Empty<PropertySelectionOption>();
         EducationContextText = string.Empty;
         HealthActions = Array.Empty<TownAffairsHealthActionViewModel>();
+        ChurchActions = Array.Empty<TownAffairsChurchActionViewModel>();
+
+        if (!IsRemote)
+            ChurchActions = _owner.GetTownAffairsChurchActions();
 
         if (!IsRemote && Subject is not null)
         {
@@ -382,6 +407,9 @@ public sealed class TownAffairsViewModel : ViewModelBase
         OnPropertyChanged(nameof(HealthActions));
         OnPropertyChanged(nameof(HasHealthActions));
         OnPropertyChanged(nameof(ShowHealthEmpty));
+        OnPropertyChanged(nameof(ChurchActions));
+        OnPropertyChanged(nameof(HasChurchActions));
+        OnPropertyChanged(nameof(ShowChurchEmpty));
     }
 }
 
@@ -423,4 +451,29 @@ public sealed record TownAffairsHealthActionViewModel(
             : string.Empty;
 
     public bool HasCost => Cost.HasValue;
+}
+
+public sealed record TownAffairsChurchActionViewModel(
+    string ActionId,
+    string Label,
+    string Description,
+    decimal? Amount,
+    bool IsBenefit,
+    bool IsAvailable,
+    string? UnavailableReason,
+    IReadOnlyDictionary<string, string> Parameters)
+{
+    public string Emoji => ActionEmojiMap.GetEmoji(ActionId);
+
+    public double DisplayOpacity =>
+        IsAvailable ? 1.0 : 0.42;
+
+    public bool HasAmount => Amount.HasValue;
+
+    public string AmountText =>
+        Amount is decimal amount
+            ? IsBenefit
+                ? $"Relief: {amount:N0} zł"
+                : $"Amount: {amount:N0} zł"
+            : string.Empty;
 }

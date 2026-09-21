@@ -23,6 +23,18 @@ public sealed partial class MainWindowViewModel
             "wellbeing.therapy"
         };
 
+    private static readonly HashSet<string> TownAffairsChurchActionIds =
+        new(StringComparer.OrdinalIgnoreCase)
+        {
+            "church.attend",
+            "church.donate",
+            "church.aid_poor_family",
+            "church.ask_welfare"
+        };
+
+    private static readonly string[] ChurchDonationTiers =
+        ["modest", "generous", "major"];
+
     public string TownLifeNavigationLabel
     {
         get
@@ -106,6 +118,10 @@ public sealed partial class MainWindowViewModel
             "loan.give" => TownAffairsTab.Bank,
             "wellbeing.heal_relative" => TownAffairsTab.Health,
             "wellbeing.therapy" => TownAffairsTab.Health,
+            "church.attend" => TownAffairsTab.Church,
+            "church.donate" => TownAffairsTab.Church,
+            "church.aid_poor_family" => TownAffairsTab.Church,
+            "church.ask_welfare" => TownAffairsTab.Church,
             _ => null
         };
 
@@ -344,6 +360,110 @@ public sealed partial class MainWindowViewModel
                 item.Evaluation.Reason))
             .ToArray();
     }
+
+    internal IReadOnlyList<TownAffairsChurchActionViewModel>
+        GetTownAffairsChurchActions()
+    {
+        var actor = _succession.ActiveController;
+        if (actor is null)
+            return [];
+
+        var definitions = _actionRegistry
+            .GetCandidateActions(actor, actor)
+            .Where(action => TownAffairsChurchActionIds.Contains(action.Id))
+            .ToDictionary(action => action.Id, StringComparer.OrdinalIgnoreCase);
+        var result = new List<TownAffairsChurchActionViewModel>();
+
+        AddChurchAction("church.attend", null, null, isBenefit: false);
+        foreach (var tier in ChurchDonationTiers)
+            AddChurchAction("church.donate", tier, TitleCaseTier(tier), isBenefit: false);
+        foreach (var tier in ChurchDonationTiers)
+            AddChurchAction("church.aid_poor_family", tier, TitleCaseTier(tier), isBenefit: false);
+        AddChurchAction("church.ask_welfare", null, null, isBenefit: true);
+
+        return result;
+
+        void AddChurchAction(
+            string actionId,
+            string? tier,
+            string? optionLabel,
+            bool isBenefit)
+        {
+            if (!definitions.TryGetValue(actionId, out var action))
+                return;
+
+            var parameters = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+            if (!string.IsNullOrWhiteSpace(tier))
+                parameters["churchTier"] = tier;
+
+            var evaluation = _actionRegistry.Evaluate(
+                actionId,
+                actor,
+                actor,
+                parameters);
+
+            decimal? amount = null;
+            if (evaluation.PresentationMetadata.TryGetValue("amount", out var amountText)
+                && decimal.TryParse(
+                    amountText,
+                    System.Globalization.NumberStyles.Number,
+                    System.Globalization.CultureInfo.InvariantCulture,
+                    out var parsedAmount))
+            {
+                amount = parsedAmount;
+                parameters["churchAmount"] = parsedAmount.ToString(
+                    System.Globalization.CultureInfo.InvariantCulture);
+            }
+
+            result.Add(new TownAffairsChurchActionViewModel(
+                action.Id,
+                string.IsNullOrWhiteSpace(optionLabel)
+                    ? action.Label
+                    : $"{action.Label} — {optionLabel}",
+                action.Description,
+                amount,
+                isBenefit,
+                evaluation.Available,
+                evaluation.Reason,
+                parameters));
+        }
+    }
+
+    internal void QueueTownAffairsChurchAction(
+        TownAffairsChurchActionViewModel action)
+    {
+        if (!TownAffairsChurchActionIds.Contains(action.ActionId)
+            || !action.IsAvailable)
+        {
+            return;
+        }
+
+        var actor = _succession.ActiveController;
+        if (actor is null || _succession.IsGameOver)
+            return;
+
+        var result = _actionRegistry.Execute(
+            action.ActionId,
+            actor,
+            actor,
+            action.Parameters);
+        if (!result.Success && !string.IsNullOrWhiteSpace(result.Message))
+            PersistenceStatusText = result.Message;
+
+        RefreshPeople();
+        RefreshAlbum();
+        RefreshHealth();
+        RefreshEconomy();
+        RefreshEducation();
+        RefreshCareer();
+        RefreshJustice();
+        RefreshNarrative();
+        RefreshActions();
+    }
+
+    private static string TitleCaseTier(string tier) =>
+        System.Globalization.CultureInfo.CurrentCulture.TextInfo
+            .ToTitleCase(tier);
 
     internal void QueueTownAffairsHealthAction(
         string actionId,

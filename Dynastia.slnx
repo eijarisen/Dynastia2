@@ -7,6 +7,7 @@
     <Project Path="plugins/Dynastia.Mechanics.Career/Dynastia.Mechanics.Career.csproj" />
     <Project Path="plugins/Dynastia.Mechanics.Crafts/Dynastia.Mechanics.Crafts.csproj" />
     <Project Path="plugins/Dynastia.Mechanics.Childhood/Dynastia.Mechanics.Childhood.csproj" />
+    <Project Path="plugins/Dynastia.Mechanics.Church/Dynastia.Mechanics.Church.csproj" />
     <Project Path="plugins/Dynastia.Mechanics.Economy/Dynastia.Mechanics.Economy.csproj" />
     <Project Path="plugins/Dynastia.Mechanics.Education/Dynastia.Mechanics.Education.csproj" />
     <Project Path="plugins/Dynastia.Mechanics.Family/Dynastia.Mechanics.Family.csproj" />

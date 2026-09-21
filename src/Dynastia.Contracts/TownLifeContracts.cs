@@ -25,6 +25,7 @@ public sealed record TownInstitutionInfo(
             "post_office" => "📮",
             "railway_station" => "🚉",
             "port" => "⚓",
+            "church" => "⛪",
             _ => "🏢"
         };
 
@@ -209,6 +210,19 @@ public sealed record TownLifeSnapshot(
     public TownInstitutionInfo Medical =>
         Institutions.Find("medical")
         ?? new TownInstitutionInfo("medical", "Medical Facility", 0, "Unavailable");
+
+    public TownInstitutionInfo Church =>
+        Institutions.Find("church")
+        ?? new TownInstitutionInfo("church", "Church", 0, "Unavailable");
+
+    public TownInstitutionAffairsInfo ChurchCard =>
+        new(
+            Church.InstitutionId,
+            Church.DisplayName,
+            Church.Emoji,
+            Church.Summary,
+            "Worship, charity and emergency welfare",
+            "Careers: —");
 
     public IReadOnlyList<TownInstitutionAffairsInfo> InstitutionCards =>
         InstitutionAffairs

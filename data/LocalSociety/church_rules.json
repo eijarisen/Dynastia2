@@ -1,0 +1,108 @@
+{
+  "schemaVersion": "1.0",
+  "alwaysPresent": true,
+  "tierByPopulation": [
+    {
+      "maxPopulation": 1999,
+      "tier": 1,
+      "displayName": "Chapel"
+    },
+    {
+      "minPopulation": 2000,
+      "maxPopulation": 9999,
+      "tier": 2,
+      "displayName": "Parish Church"
+    },
+    {
+      "minPopulation": 10000,
+      "maxPopulation": 39999,
+      "tier": 3,
+      "displayName": "Large Church"
+    },
+    {
+      "minPopulation": 40000,
+      "maxPopulation": 99999,
+      "tier": 4,
+      "displayName": "Major Church"
+    },
+    {
+      "minPopulation": 100000,
+      "tier": 5,
+      "displayName": "Principal City Church"
+    }
+  ],
+  "actions": {
+    "attend": {
+      "actionId": "church.attend",
+      "renown": 0.15,
+      "reputation": 0.25,
+      "moralsImproveChance": 0.05,
+      "goodMoralsProtectionChance": 0.05
+    },
+    "donateChurch": {
+      "actionId": "church.donate",
+      "amounts": {
+        "modest": {
+          "expenseFraction": 0.05,
+          "minimum": 200,
+          "renown": 0.5,
+          "reputation": 0.1,
+          "moralsImproveChance": 0.02
+        },
+        "generous": {
+          "expenseFraction": 0.15,
+          "minimum": 500,
+          "renown": 1.25,
+          "reputation": 0.2,
+          "moralsImproveChance": 0.04
+        },
+        "major": {
+          "expenseFraction": 0.35,
+          "minimum": 1000,
+          "renown": 2.5,
+          "reputation": 0.4,
+          "moralsImproveChance": 0.06
+        }
+      },
+      "roundMoneyTo": 100
+    },
+    "aidPoorFamily": {
+      "actionId": "church.aid_poor_family",
+      "amounts": {
+        "modest": {
+          "expenseFraction": 0.05,
+          "minimum": 200,
+          "renown": 0.15,
+          "reputation": 0.5,
+          "moralsImproveChance": 0.08
+        },
+        "generous": {
+          "expenseFraction": 0.15,
+          "minimum": 500,
+          "renown": 0.35,
+          "reputation": 1.25,
+          "moralsImproveChance": 0.15
+        },
+        "major": {
+          "expenseFraction": 0.35,
+          "minimum": 1000,
+          "renown": 0.75,
+          "reputation": 2.5,
+          "moralsImproveChance": 0.25
+        }
+      },
+      "roundMoneyTo": 100,
+      "recipient": "random local broke family; names/flavor only"
+    },
+    "welfare": {
+      "actionId": "church.ask_welfare",
+      "requiresHouseholdWealthAtMost": 0,
+      "requiresHouseholdReputationAtLeast": -10,
+      "oncePerHouseholdPerYear": true,
+      "amountFormula": "clamp(AnnualHouseholdExpenses * (0.08 + 0.02*ChurchTier), 300, 1500)",
+      "roundMoneyTo": 100,
+      "guaranteedIfEligible": true,
+      "statusPenalty": 0
+    }
+  }
+}

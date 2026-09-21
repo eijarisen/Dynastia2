@@ -134,32 +134,54 @@
                 SelectedIndex="{Binding SelectedTabIndex, Mode=TwoWay}">
                 <TabItem Header="Institutions">
                     <ScrollViewer VerticalScrollBarVisibility="Auto">
-                        <ItemsControl ItemsSource="{Binding Snapshot.InstitutionCards}">
-                            <ItemsControl.ItemsPanel>
-                                <ItemsPanelTemplate>
-                                    <primitives:UniformGrid Columns="4" Rows="2" />
-                                </ItemsPanelTemplate>
-                            </ItemsControl.ItemsPanel>
-                            <ItemsControl.ItemTemplate>
-                                <DataTemplate x:DataType="contracts:TownInstitutionAffairsInfo">
-                                    <Border Margin="4" Padding="7" Background="#25FFF4D9" BorderBrush="#7E623D" BorderThickness="1" CornerRadius="4" Cursor="Hand" PointerPressed="OnInstitutionPointerPressed">
-                                        <StackPanel Spacing="5">
-                                            <Grid ColumnDefinitions="42,*" ColumnSpacing="10">
-                                                <Border Width="38" Height="38" HorizontalAlignment="Left" VerticalAlignment="Top" Background="#54000000" BorderBrush="#8A6435" BorderThickness="1.5" CornerRadius="4">
+                        <StackPanel>
+                            <ContentControl Content="{Binding Snapshot.ChurchCard}">
+                                <ContentControl.ContentTemplate>
+                                    <DataTemplate x:DataType="contracts:TownInstitutionAffairsInfo">
+                                        <Border Margin="4" Padding="7" Background="#25FFF4D9" BorderBrush="#7E623D" BorderThickness="1" CornerRadius="4" Cursor="Hand" PointerPressed="OnInstitutionPointerPressed">
+                                            <Grid ColumnDefinitions="42,*,Auto" ColumnSpacing="10">
+                                                <Border Width="38" Height="38" HorizontalAlignment="Left" VerticalAlignment="Center" Background="#54000000" BorderBrush="#8A6435" BorderThickness="1.5" CornerRadius="4">
                                                     <TextBlock HorizontalAlignment="Center" VerticalAlignment="Center" TextAlignment="Center" FontSize="25" Text="{Binding Emoji}" />
                                                 </Border>
                                                 <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="1">
                                                     <TextBlock HorizontalAlignment="Left" TextAlignment="Left" FontSize="13" FontWeight="Bold" TextWrapping="Wrap" Text="{Binding DisplayName}" />
                                                     <TextBlock HorizontalAlignment="Left" TextAlignment="Left" FontSize="10.5" Foreground="#654621" TextWrapping="Wrap" Text="{Binding Summary}" />
+                                                    <TextBlock IsVisible="{Binding HasServiceText}" Classes="value" FontSize="10.5" TextAlignment="Left" TextWrapping="Wrap" Text="{Binding ServiceText}" />
                                                 </StackPanel>
+                                                <TextBlock Grid.Column="2" Margin="12,0,0,0" VerticalAlignment="Center" Classes="value" FontSize="10.5" Text="{Binding CareerText}" />
                                             </Grid>
-                                            <TextBlock IsVisible="{Binding HasServiceText}" Classes="value" FontSize="10.5" TextAlignment="Left" TextWrapping="Wrap" Text="{Binding ServiceText}" />
-                                            <TextBlock Classes="value" FontSize="10.5" TextAlignment="Left" TextWrapping="Wrap" Text="{Binding CareerText}" />
-                                        </StackPanel>
-                                    </Border>
-                                </DataTemplate>
-                            </ItemsControl.ItemTemplate>
-                        </ItemsControl>
+                                        </Border>
+                                    </DataTemplate>
+                                </ContentControl.ContentTemplate>
+                            </ContentControl>
+
+                            <ItemsControl ItemsSource="{Binding Snapshot.InstitutionCards}">
+                                <ItemsControl.ItemsPanel>
+                                    <ItemsPanelTemplate>
+                                        <primitives:UniformGrid Columns="4" Rows="2" />
+                                    </ItemsPanelTemplate>
+                                </ItemsControl.ItemsPanel>
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate x:DataType="contracts:TownInstitutionAffairsInfo">
+                                        <Border Margin="4" Padding="7" Background="#25FFF4D9" BorderBrush="#7E623D" BorderThickness="1" CornerRadius="4" Cursor="Hand" PointerPressed="OnInstitutionPointerPressed">
+                                            <StackPanel Spacing="5">
+                                                <Grid ColumnDefinitions="42,*" ColumnSpacing="10">
+                                                    <Border Width="38" Height="38" HorizontalAlignment="Left" VerticalAlignment="Top" Background="#54000000" BorderBrush="#8A6435" BorderThickness="1.5" CornerRadius="4">
+                                                        <TextBlock HorizontalAlignment="Center" VerticalAlignment="Center" TextAlignment="Center" FontSize="25" Text="{Binding Emoji}" />
+                                                    </Border>
+                                                    <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="1">
+                                                        <TextBlock HorizontalAlignment="Left" TextAlignment="Left" FontSize="13" FontWeight="Bold" TextWrapping="Wrap" Text="{Binding DisplayName}" />
+                                                        <TextBlock HorizontalAlignment="Left" TextAlignment="Left" FontSize="10.5" Foreground="#654621" TextWrapping="Wrap" Text="{Binding Summary}" />
+                                                    </StackPanel>
+                                                </Grid>
+                                                <TextBlock IsVisible="{Binding HasServiceText}" Classes="value" FontSize="10.5" TextAlignment="Left" TextWrapping="Wrap" Text="{Binding ServiceText}" />
+                                                <TextBlock Classes="value" FontSize="10.5" TextAlignment="Left" TextWrapping="Wrap" Text="{Binding CareerText}" />
+                                            </StackPanel>
+                                        </Border>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </StackPanel>
                     </ScrollViewer>
                 </TabItem>
 
@@ -333,6 +355,39 @@
                                     <Button Grid.Column="2" Classes="paperAction" VerticalAlignment="Center" IsEnabled="{Binding CanGiveLoan}" Content="View Offers" Click="OnGiveLoanClick" />
                                 </Grid>
                             </Border>
+                        </StackPanel>
+                    </ScrollViewer>
+                </TabItem>
+
+                <TabItem Header="Church" IsVisible="{Binding ShowChurchTab}">
+                    <ScrollViewer VerticalScrollBarVisibility="Auto">
+                        <StackPanel Margin="6" Spacing="8">
+                            <Grid ColumnDefinitions="Auto,*" ColumnSpacing="10">
+                                <TextBlock VerticalAlignment="Center" FontSize="30" Text="⛪" />
+                                <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="1">
+                                    <TextBlock Classes="sectionHeader" Text="{Binding Snapshot.Church.DisplayName}" />
+                                    <TextBlock FontSize="12" Foreground="#654621" Text="{Binding Snapshot.Church.Summary}" />
+                                </StackPanel>
+                            </Grid>
+                            <TextBlock FontSize="11.5" TextWrapping="Wrap" Text="Church actions are queued for the next year. Attendance has only a small Morals effect; direct charity favors Reputation while Church donations favor Renown." />
+                            <TextBlock IsVisible="{Binding ShowChurchEmpty}" Margin="0,18,0,0" HorizontalAlignment="Center" TextAlignment="Center" FontStyle="Italic" Text="No Church action is currently available." />
+                            <ItemsControl ItemsSource="{Binding ChurchActions}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate x:DataType="vm:TownAffairsChurchActionViewModel">
+                                        <Border Margin="2" Padding="10,7" Background="#25FFF4D9" BorderBrush="#A17A43" BorderThickness="1" CornerRadius="4" Opacity="{Binding DisplayOpacity}" ToolTip.Tip="{Binding UnavailableReason}">
+                                            <Grid ColumnDefinitions="54,*,Auto" ColumnSpacing="10">
+                                                <TextBlock HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="28" Text="{Binding Emoji}" />
+                                                <StackPanel Grid.Column="1" Spacing="2">
+                                                    <TextBlock FontSize="14" FontWeight="Bold" TextWrapping="Wrap" Text="{Binding Label}" />
+                                                    <TextBlock FontSize="11.5" TextWrapping="Wrap" Text="{Binding Description}" />
+                                                    <TextBlock IsVisible="{Binding HasAmount}" FontSize="11.5" FontWeight="Bold" Text="{Binding AmountText}" />
+                                                </StackPanel>
+                                                <Button Grid.Column="2" Classes="paperAction" VerticalAlignment="Center" IsEnabled="{Binding IsAvailable}" Content="Queue" Click="OnChurchActionClick" />
+                                            </Grid>
+                                        </Border>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
                         </StackPanel>
                     </ScrollViewer>
                 </TabItem>

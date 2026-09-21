@@ -22,6 +22,7 @@ internal sealed class StandardFarmingService :
     private readonly IGameEventBus _events;
     private readonly FarmingEraSchedule _eraSchedule;
     private readonly FarmingFlavorCatalog _flavors;
+    private readonly Func<ICommunityPolicyService?> _communityResolver;
 
     public StandardFarmingService(
         IGameState gameState,
@@ -33,7 +34,8 @@ internal sealed class StandardFarmingService :
         IGameRandom random,
         IGameEventBus events,
         FarmingEraSchedule eraSchedule,
-        FarmingFlavorCatalog flavors)
+        FarmingFlavorCatalog flavors,
+        Func<ICommunityPolicyService?>? communityResolver = null)
     {
         _gameState = gameState;
         _economy = economy;
@@ -45,6 +47,7 @@ internal sealed class StandardFarmingService :
         _events = events;
         _eraSchedule = eraSchedule;
         _flavors = flavors;
+        _communityResolver = communityResolver ?? (() => null);
     }
 
     public string Id =>
@@ -541,6 +544,7 @@ internal sealed class StandardFarmingService :
         var town = _economy.GetResidenceTown(householdRepresentative);
         var strength = _economicStrength.ResolveFarming(town);
         var multiplier = _prosperity.GetIncomeMultiplier(town, strength);
+        multiplier *= _communityResolver()?.GetModifiers(town, _gameState.Year).FarmingIncomeMultiplier ?? 1m;
         return Math.Round(
             income * multiplier,
             0,

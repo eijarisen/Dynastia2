@@ -232,13 +232,32 @@ internal sealed class HistoricalEventYearSystem : IYearSystem
     {
         var outcome = new ImpactOutcome();
         var householdEffectsEnabled = !selected.Filter.HouseholdEffects.Equals("none", StringComparison.OrdinalIgnoreCase);
+        var residenceTown = economy.GetResidenceTown(head);
+        var communityModifiers = _context.GetService<ICommunityPolicyService>()?
+            .GetModifiers(residenceTown, state.Year)
+            ?? new CommunityPolicyModifierSnapshot();
+        var isFlood = selected.Event.Id.Contains("flood", StringComparison.OrdinalIgnoreCase)
+            || selected.Event.EffectProfileId.Contains("flood", StringComparison.OrdinalIgnoreCase);
+        var floodMultiplier = isFlood
+            ? communityModifiers.FloodLossMultiplier
+            : 1m;
+        var wealthLossMultiplier =
+            communityModifiers.HistoricalWealthLossMultiplier
+            * floodMultiplier;
+        var healthLossMultiplier =
+            communityModifiers.HistoricalHealthLossMultiplier
+            * floodMultiplier;
 
         if (householdEffectsEnabled && profile.WealthLossPercent is { Length: >= 2 })
         {
             var snapshot = economy.GetHousehold(head);
             if (snapshot is not null && snapshot.Wealth > 0)
             {
-                var fraction = Math.Min(0.55, RollRange(profile.WealthLossPercent, random) * WealthSeverityScale);
+                var fraction = Math.Min(
+                    0.55,
+                    RollRange(profile.WealthLossPercent, random)
+                    * WealthSeverityScale
+                    * (double)wealthLossMultiplier);
                 var amount = Math.Round(snapshot.Wealth * (decimal)fraction, 0, MidpointRounding.AwayFromZero);
                 if (amount > 0)
                 {
@@ -289,7 +308,12 @@ internal sealed class HistoricalEventYearSystem : IYearSystem
         }
 
         if (householdEffectsEnabled && profile.PropertyConfiscationChance > 0
-            && random.Chance(Math.Clamp(profile.PropertyConfiscationChance * 0.60, 0, 1)))
+            && random.Chance(Math.Clamp(
+                profile.PropertyConfiscationChance
+                * 0.60
+                * (double)wealthLossMultiplier,
+                0,
+                1)))
         {
             // A generic confiscation roll removes at most one asset.  Forced
             // relocation routes may still remove all origin property where the
@@ -318,9 +342,10 @@ internal sealed class HistoricalEventYearSystem : IYearSystem
             && economy.GetHouses(head).Count > 0
             && random.Chance(Math.Clamp(profile.HouseRepairCostChance * OrdinaryChanceScale, 0, 1)))
         {
-            var town = economy.GetResidenceTown(head);
-            var fraction = RollRange(profile.HouseRepairCostPercentOfValue, random) * 0.60;
-            var repair = Math.Round(economy.GetHousePrice(town) * (decimal)fraction, 0, MidpointRounding.AwayFromZero);
+            var fraction = RollRange(profile.HouseRepairCostPercentOfValue, random)
+                * 0.60
+                * (double)wealthLossMultiplier;
+            var repair = Math.Round(economy.GetHousePrice(residenceTown) * (decimal)fraction, 0, MidpointRounding.AwayFromZero);
             if (repair > 0)
             {
                 economy.ChangeWealth(head, -repair);
@@ -333,7 +358,9 @@ internal sealed class HistoricalEventYearSystem : IYearSystem
             && economy.GetFarmland(head).Count > 0)
         {
             var baseValue = farming?.SalePrice ?? 8000m;
-            var fraction = RollRange(profile.FarmlandLossValuePercent, random) * 0.55;
+            var fraction = RollRange(profile.FarmlandLossValuePercent, random)
+                * 0.55
+                * (double)wealthLossMultiplier;
             var loss = Math.Round(baseValue * economy.GetFarmland(head).Count * (decimal)fraction, 0, MidpointRounding.AwayFromZero);
             if (loss > 0)
             {
@@ -361,7 +388,9 @@ internal sealed class HistoricalEventYearSystem : IYearSystem
                 && profile.Person.HealthDamage is { Length: >= 2 }
                 && random.Chance(Math.Clamp(profile.Person.InjuryChance * riskMultiplier * OrdinaryChanceScale, 0, 1)))
             {
-                var damage = RollRange(profile.Person.HealthDamage, random) * HealthSeverityScale;
+                var damage = RollRange(profile.Person.HealthDamage, random)
+                    * HealthSeverityScale
+                    * (double)healthLossMultiplier;
                 health.ChangeHealth(person, -damage);
                 outcome.Injuries++;
                 outcome.InjuryNames.Add(family.GetDisplayName(person));
@@ -369,7 +398,16 @@ internal sealed class HistoricalEventYearSystem : IYearSystem
         }
 
         if (profile.Illness is not null)
-            ApplyIllness(state, selected, profile.Illness, health, random, deaths, family, outcome);
+            ApplyIllness(
+                state,
+                selected,
+                profile.Illness,
+                health,
+                random,
+                deaths,
+                family,
+                outcome,
+                (double)healthLossMultiplier);
 
         outcome.StressGain = Math.Min(7.0, profile.StressGain * StressSeverityScale);
         return outcome;
@@ -383,7 +421,8 @@ internal sealed class HistoricalEventYearSystem : IYearSystem
         IGameRandom random,
         IDeathTransitionService deaths,
         IFamilyService family,
-        ImpactOutcome outcome)
+        ImpactOutcome outcome,
+        double healthLossMultiplier)
     {
         var candidates = selected.Target.PersonTargets
             .Where(person => person.Tags.Has("state.alive"))
@@ -437,7 +476,9 @@ internal sealed class HistoricalEventYearSystem : IYearSystem
 
             if (illness.FallbackHealthDamage is { Length: >= 2 })
             {
-                var damage = RollRange(illness.FallbackHealthDamage, random) * HealthSeverityScale;
+                var damage = RollRange(illness.FallbackHealthDamage, random)
+                    * HealthSeverityScale
+                    * healthLossMultiplier;
                 health.ChangeHealth(person, -damage);
                 outcome.Illnesses++;
                 outcome.IllnessNames.Add(family.GetDisplayName(person));

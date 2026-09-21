@@ -179,8 +179,13 @@ public sealed record TownLifeSnapshot(
     TownProsperitySnapshot Prosperity,
     BankOfferQualityInfo BankQuality,
     MedicalQualityInfo MedicalQuality,
-    IReadOnlyList<TownInstitutionAffairsInfo>? InstitutionAffairs = null)
+    IReadOnlyList<TownInstitutionAffairsInfo>? InstitutionAffairs = null,
+    CommunityAffairsSnapshot? Community = null)
 {
+
+    public CommunityAffairsSnapshot CommunityAffairs =>
+        Community ?? CommunityAffairsSnapshot.Empty;
+
     public string NavigationLabel =>
         Town.SettlementClass is SettlementClass.City
             or SettlementClass.MajorCity

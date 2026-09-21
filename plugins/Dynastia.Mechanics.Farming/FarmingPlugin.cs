@@ -42,7 +42,8 @@ public sealed class FarmingPlugin : IGamePlugin
             random,
             events,
             FarmingEraSchedule.Load(data),
-            FarmingFlavorCatalog.Load(data));
+            FarmingFlavorCatalog.Load(data),
+            () => context.GetService<ICommunityPolicyService>());
 
         context.AddService<IFarmingService>(service);
         householdIncome.Register(service);

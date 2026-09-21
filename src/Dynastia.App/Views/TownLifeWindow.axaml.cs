@@ -148,6 +148,19 @@ public partial class TownLifeWindow : Window
         CloseIfQueued(model);
     }
 
+    private void OnCommunityLobbyClick(object? sender, RoutedEventArgs e)
+    {
+        if (DataContext is not TownAffairsViewModel model
+            || sender is not Button { DataContext: TownAffairsCommunityProposalViewModel proposal }
+            || !proposal.IsAvailable)
+        {
+            return;
+        }
+
+        model.QueueCommunity(proposal);
+        CloseIfQueued(model);
+    }
+
     private void CloseIfQueued(TownAffairsViewModel model)
     {
         if (model.HasQueuedAction)

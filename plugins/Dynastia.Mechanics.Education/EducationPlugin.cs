@@ -56,7 +56,9 @@ public sealed class EducationPlugin : IGamePlugin
             eras,
             locations,
             institutions,
-            localityRules);
+            localityRules,
+            gameState,
+            () => context.GetService<ICommunityPolicyService>());
 
         context.AddService<IEducationService>(education);
 

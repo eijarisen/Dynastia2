@@ -1,0 +1,18 @@
+{
+  "id": "dynastia.community",
+  "name": "Community Policies",
+  "version": "0.1.0",
+  "apiVersion": 1,
+  "assembly": "Dynastia.Mechanics.Community.dll",
+  "entryType": "Dynastia.Mechanics.Community.CommunityPlugin",
+  "dependencies": [
+    "dynastia.family",
+    "dynastia.economy",
+    "dynastia.education",
+    "dynastia.stats",
+    "dynastia.status",
+    "dynastia.households",
+    "dynastia.locations",
+    "dynastia.townlife"
+  ]
+}

@@ -35,6 +35,9 @@ public sealed partial class MainWindowViewModel
     private static readonly string[] ChurchDonationTiers =
         ["modest", "generous", "major"];
 
+    private const string TownAffairsCommunityLobbyActionId =
+        "community.lobby_policy";
+
     public string TownLifeNavigationLabel
     {
         get
@@ -122,6 +125,7 @@ public sealed partial class MainWindowViewModel
             "church.donate" => TownAffairsTab.Church,
             "church.aid_poor_family" => TownAffairsTab.Church,
             "church.ask_welfare" => TownAffairsTab.Church,
+            TownAffairsCommunityLobbyActionId => TownAffairsTab.Community,
             _ => null
         };
 
@@ -427,6 +431,91 @@ public sealed partial class MainWindowViewModel
                 evaluation.Reason,
                 parameters));
         }
+    }
+
+    internal IReadOnlyList<TownAffairsCommunityProposalViewModel>
+        GetTownAffairsCommunityProposals(TownLifeSnapshot snapshot)
+    {
+        var actor = _succession.ActiveController;
+        if (actor is null)
+            return [];
+
+        var definition = _actionRegistry
+            .GetCandidateActions(actor, actor)
+            .FirstOrDefault(action => action.Id.Equals(
+                TownAffairsCommunityLobbyActionId,
+                StringComparison.OrdinalIgnoreCase));
+        if (definition is null)
+            return [];
+
+        return snapshot.CommunityAffairs.Proposals
+            .Select(proposal =>
+            {
+                var parameters = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+                {
+                    ["communityTownId"] = proposal.TownId,
+                    ["communityProposalYear"] = proposal.ProposalYear.ToString(
+                        System.Globalization.CultureInfo.InvariantCulture),
+                    ["communityPolicyId"] = proposal.PolicyId
+                };
+                var evaluation = _actionRegistry.Evaluate(
+                    TownAffairsCommunityLobbyActionId,
+                    actor,
+                    actor,
+                    parameters);
+                double? bonus = null;
+                if (evaluation.PresentationMetadata.TryGetValue("supportBonus", out var rawBonus)
+                    && double.TryParse(
+                        rawBonus,
+                        System.Globalization.NumberStyles.Float,
+                        System.Globalization.CultureInfo.InvariantCulture,
+                        out var parsedBonus))
+                {
+                    bonus = parsedBonus;
+                }
+
+                return new TownAffairsCommunityProposalViewModel(
+                    proposal,
+                    evaluation.Available,
+                    evaluation.Reason,
+                    bonus,
+                    parameters);
+            })
+            .ToArray();
+    }
+
+    internal IReadOnlyList<TownAffairsActivePolicyViewModel>
+        GetTownAffairsActiveCommunityPolicies(TownLifeSnapshot snapshot) =>
+        snapshot.CommunityAffairs.ActivePolicies
+            .Select(policy => new TownAffairsActivePolicyViewModel(
+                policy,
+                policy.RemainingYears(_gameState.Year)))
+            .ToArray();
+
+    internal void QueueTownAffairsCommunityLobby(
+        TownAffairsCommunityProposalViewModel proposal)
+    {
+        if (!proposal.IsAvailable)
+            return;
+
+        var actor = _succession.ActiveController;
+        if (actor is null || _succession.IsGameOver)
+            return;
+
+        var result = _actionRegistry.Execute(
+            TownAffairsCommunityLobbyActionId,
+            actor,
+            actor,
+            proposal.Parameters);
+        if (!result.Success && !string.IsNullOrWhiteSpace(result.Message))
+            PersistenceStatusText = result.Message;
+
+        RefreshPeople();
+        RefreshAlbum();
+        RefreshEconomy();
+        RefreshCareer();
+        RefreshNarrative();
+        RefreshActions();
     }
 
     internal void QueueTownAffairsChurchAction(

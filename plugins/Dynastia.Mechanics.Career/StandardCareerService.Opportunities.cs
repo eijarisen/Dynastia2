@@ -518,6 +518,8 @@ public sealed partial class StandardCareerService
 
         chance += _craftResolver()?.GetApplicationBonus(person, definition.Id) ?? 0;
         chance += _statusResolver()?.GetCareerApplicationBonus(person) ?? 0;
+        var town = _localOpportunities.GetOpportunitySnapshot(person).Town;
+        chance += _communityResolver()?.GetModifiers(town, _gameState.Year).JobApplicationAdd ?? 0;
         chance += Math.Min(5, component.PeakJobLevel) * 0.02;
 
         chance += local.Strength switch

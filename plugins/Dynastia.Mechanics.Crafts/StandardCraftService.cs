@@ -22,6 +22,7 @@ internal sealed class StandardCraftService : ICraftService, IIncomeProvider
     private readonly IGameEventBus _events;
     private readonly CraftCatalog _catalog;
     private readonly IContextWeightCatalog _context;
+    private readonly Func<ICommunityPolicyService?> _communityResolver;
 
     public StandardCraftService(
         IGameState gameState,
@@ -37,7 +38,8 @@ internal sealed class StandardCraftService : ICraftService, IIncomeProvider
         IGameRandom random,
         IGameEventBus events,
         IContextWeightService contextWeights,
-        CraftCatalog catalog)
+        CraftCatalog catalog,
+        Func<ICommunityPolicyService?>? communityResolver = null)
     {
         _gameState = gameState;
         _family = family;
@@ -53,6 +55,7 @@ internal sealed class StandardCraftService : ICraftService, IIncomeProvider
         _events = events;
         _catalog = catalog;
         _context = contextWeights.LoadCatalog(ContextPath, catalog.All.Select(craft => craft.Id));
+        _communityResolver = communityResolver ?? (() => null);
     }
 
     public string Id => "crafts";
@@ -752,6 +755,7 @@ internal sealed class StandardCraftService : ICraftService, IIncomeProvider
         var town = _localOpportunities.GetOpportunitySnapshot(person).Town;
         var strength = _economicStrength.ResolveCraft(town, craft);
         var multiplier = _prosperity.GetIncomeMultiplier(town, strength);
+        multiplier *= _communityResolver()?.GetModifiers(town, _gameState.Year).CraftIncomeMultiplier ?? 1m;
         return Math.Round(
             income * multiplier,
             0,

@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <EnableDynamicLoading>true</EnableDynamicLoading>
+    <DynastiaPluginId>dynastia.community</DynastiaPluginId>
+    <PluginInstallDirectory>$(MSBuildProjectDirectory)\..\..\src\Dynastia.App\bin\$(Configuration)\$(TargetFramework)\plugins\$(DynastiaPluginId)</PluginInstallDirectory>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Dynastia.Contracts\Dynastia.Contracts.csproj">
+      <Private>false</Private>
+      <ExcludeAssets>runtime</ExcludeAssets>
+    </ProjectReference>
+  </ItemGroup>
+  <Target Name="InstallPluginForDevelopment" AfterTargets="Build">
+    <MakeDir Directories="$(PluginInstallDirectory)" />
+    <Copy SourceFiles="$(TargetPath)" DestinationFolder="$(PluginInstallDirectory)" SkipUnchangedFiles="true" />
+    <Copy SourceFiles="$(TargetDir)$(AssemblyName).deps.json" DestinationFolder="$(PluginInstallDirectory)" SkipUnchangedFiles="true" Condition="Exists('$(TargetDir)$(AssemblyName).deps.json')" />
+    <Copy SourceFiles="$(TargetDir)$(AssemblyName).pdb" DestinationFolder="$(PluginInstallDirectory)" SkipUnchangedFiles="true" Condition="Exists('$(TargetDir)$(AssemblyName).pdb')" />
+    <Copy SourceFiles="$(MSBuildProjectDirectory)\plugin.json" DestinationFolder="$(PluginInstallDirectory)" SkipUnchangedFiles="true" />
+  </Target>
+</Project>

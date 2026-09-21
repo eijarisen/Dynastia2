@@ -30,10 +30,12 @@ public sealed class TownLifePlugin : IGamePlugin
             localServiceTowns);
         var facilityQuality = new StandardTownFacilityQualityService(
             institutions,
-            TownFacilityQualityCatalog.Load(data));
+            TownFacilityQualityCatalog.Load(data),
+            () => context.GetService<ICommunityPolicyService>());
         var prosperity = new StandardTownProsperityService(
             gameState,
-            TownProsperityRules.Load(data));
+            TownProsperityRules.Load(data),
+            () => context.GetService<ICommunityPolicyService>());
         var economicCatalog = TownEconomicStrengthCatalog.Load(data);
         var economicStrength = new StandardLocalEconomicStrengthService(
             opportunities,
@@ -45,7 +47,8 @@ public sealed class TownLifePlugin : IGamePlugin
             institutions,
             prosperity,
             facilityQuality,
-            institutionCareers);
+            institutionCareers,
+            () => context.GetService<ICommunityPolicyService>());
 
         context.AddService<ITownInstitutionService>(institutions);
         context.AddService<ITownFacilityQualityService>(facilityQuality);

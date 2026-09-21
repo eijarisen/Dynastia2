@@ -411,7 +411,13 @@ public sealed partial class StandardEconomyService
     {
         ArgumentNullException.ThrowIfNull(town);
         var marketTown = _localServiceTowns?.Resolve(town) ?? town;
-        return RoundCurrency(BaseHousePrice * marketTown.HousingIndex);
+        var policyMultiplier = _communityResolver?.Invoke()?
+            .GetModifiers(marketTown, _gameState.Year)
+            .HousingPriceMultiplier ?? 1m;
+        return RoundCurrency(
+            BaseHousePrice
+            * marketTown.HousingIndex
+            * policyMultiplier);
     }
 
     public decimal GetHouseSaleValue(TownInfo town) =>

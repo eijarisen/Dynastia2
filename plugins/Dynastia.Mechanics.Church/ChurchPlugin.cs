@@ -51,7 +51,13 @@ public sealed class ChurchPlugin : IGamePlugin
             aidPoorFamily: true,
             nationalities,
             names);
-        RegisterWelfare(actions, economy, status, institutions, rules);
+        RegisterWelfare(
+            actions,
+            economy,
+            status,
+            institutions,
+            rules,
+            () => context.GetService<ICommunityPolicyService>());
 
         context.Log("Church actions and welfare registered.");
     }
@@ -244,7 +250,8 @@ public sealed class ChurchPlugin : IGamePlugin
         IEconomyService economy,
         IStatusService status,
         ITownInstitutionService institutions,
-        ChurchRules rules)
+        ChurchRules rules,
+        Func<ICommunityPolicyService?> communityResolver)
     {
         actions.Register(new GameActionDefinition
         {
@@ -290,9 +297,13 @@ public sealed class ChurchPlugin : IGamePlugin
 
                 var church = ResolveChurch(actionContext, economy, institutions);
                 var amount = ResolveFixedAmount(actionContext.Parameters)
-                    ?? rules.CalculateWelfareAmount(
-                        GetAnnualExpenses(economy, actionContext.Actor),
-                        church.Tier);
+                    ?? ApplyWelfarePolicy(
+                        rules.CalculateWelfareAmount(
+                            GetAnnualExpenses(economy, actionContext.Actor),
+                            church.Tier),
+                        actionContext,
+                        economy,
+                        communityResolver);
 
                 return ActionEvaluationResult.Allowed(
                     economy.GetHouseholdId(actionContext.Actor),
@@ -305,9 +316,13 @@ public sealed class ChurchPlugin : IGamePlugin
             {
                 var church = ResolveChurch(actionContext, economy, institutions);
                 var amount = ResolveFixedAmount(actionContext.Parameters)
-                    ?? rules.CalculateWelfareAmount(
-                        GetAnnualExpenses(economy, actionContext.Actor),
-                        church.Tier);
+                    ?? ApplyWelfarePolicy(
+                        rules.CalculateWelfareAmount(
+                            GetAnnualExpenses(economy, actionContext.Actor),
+                            church.Tier),
+                        actionContext,
+                        economy,
+                        communityResolver);
 
                 economy.ChangeWealth(actionContext.Actor, amount);
                 MarkWelfareForYear(
@@ -332,6 +347,26 @@ public sealed class ChurchPlugin : IGamePlugin
                 return new GameActionResult(true);
             }
         });
+    }
+
+    private static decimal ApplyWelfarePolicy(
+        decimal baseAmount,
+        GameActionContext context,
+        IEconomyService economy,
+        Func<ICommunityPolicyService?> communityResolver)
+    {
+        var community = communityResolver();
+        if (community is null)
+            return baseAmount;
+
+        var town = economy.GetResidenceTown(context.Actor);
+        var multiplier = community
+            .GetModifiers(town, context.GameState.Year)
+            .ChurchWelfareMultiplier;
+        return Math.Round(
+            baseAmount * multiplier,
+            0,
+            MidpointRounding.AwayFromZero);
     }
 
     private static ActionEvaluationResult EvaluateBase(

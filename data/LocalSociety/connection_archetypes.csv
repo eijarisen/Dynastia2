@@ -1,0 +1,16 @@
+﻿ArchetypeId,DisplayOccupation,MinimumWealthBand,MaximumWealthBand,TypicalRenown,TypicalReputation,PolicyThemes
+merchant,Merchant,Comfortable,Wealthy,45,10,commerce;housing;development
+banker,Banker,Wealthy,Rich,60,15,commerce;banking
+teacher,Teacher,Modest,Comfortable,35,20,education;culture
+physician,Physician,Comfortable,Wealthy,50,25,healthcare;poor_relief
+clerk,Clerk,Modest,Comfortable,30,10,administration;development
+lawyer,Lawyer,Comfortable,Wealthy,55,15,administration;housing;commerce
+landowner,Landowner,Wealthy,Rich,60,5,agriculture;housing
+farmer,Farmer,Modest,Comfortable,25,10,agriculture;poor_relief
+craftsman,Craftsman,Modest,Comfortable,35,15,craft;development
+builder,Builder,Comfortable,Wealthy,40,10,housing;development
+shopkeeper,Shopkeeper,Modest,Comfortable,35,10,commerce;poor_relief
+priest,Clergyman,Modest,Comfortable,45,30,poor_relief;education
+retired_officer,Retired Officer,Comfortable,Wealthy,55,10,emergency;monument
+artist,Artist,Modest,Comfortable,35,10,culture;festival
+engineer,Engineer,Comfortable,Wealthy,50,15,development;flood_defence

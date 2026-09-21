@@ -11,6 +11,7 @@ internal sealed class StandardTownLifeService : ITownLifeService
     private readonly ITownProsperityService _prosperity;
     private readonly ITownFacilityQualityService _facilityQuality;
     private readonly TownInstitutionCareerCatalog? _careerInstitutions;
+    private readonly Func<ICommunityPolicyService?> _communityResolver;
 
     public StandardTownLifeService(
         IGameState gameState,
@@ -19,7 +20,8 @@ internal sealed class StandardTownLifeService : ITownLifeService
         ITownInstitutionService institutions,
         ITownProsperityService prosperity,
         ITownFacilityQualityService facilityQuality,
-        TownInstitutionCareerCatalog? careerInstitutions = null)
+        TownInstitutionCareerCatalog? careerInstitutions = null,
+        Func<ICommunityPolicyService?>? communityResolver = null)
     {
         _gameState = gameState;
         _locations = locations;
@@ -28,6 +30,7 @@ internal sealed class StandardTownLifeService : ITownLifeService
         _prosperity = prosperity;
         _facilityQuality = facilityQuality;
         _careerInstitutions = careerInstitutions;
+        _communityResolver = communityResolver ?? (() => null);
     }
 
     public TownLifeSnapshot GetCurrentTownLife(
@@ -71,7 +74,19 @@ internal sealed class StandardTownLifeService : ITownLifeService
             BuildInstitutionCards(
                 institutionSnapshot,
                 bankQuality,
-                medicalQuality));
+                medicalQuality),
+            BuildCommunitySnapshot(town));
+    }
+
+
+    private CommunityAffairsSnapshot BuildCommunitySnapshot(TownInfo town)
+    {
+        var community = _communityResolver();
+        return community is null
+            ? CommunityAffairsSnapshot.Empty
+            : new CommunityAffairsSnapshot(
+                community.GetProposals(town, _gameState.Year),
+                community.GetActivePolicies(town, _gameState.Year));
     }
 
     private IReadOnlyList<TownInstitutionAffairsInfo> BuildInstitutionCards(

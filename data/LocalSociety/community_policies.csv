@@ -1,0 +1,39 @@
+﻿PolicyId,DisplayName,StartYear,EndYear,MinimumSettlementClass,RequiredInstitutionId,RequiredOpportunityTag,RequiredProsperityMax,RequiredRegionIds,Rarity,SelectionWeight,ImpactTier,BaseSupport,DurationYears,EffectKey,Magnitude,Favorability,ProposerArchetypes,Description
+school_supplies,School Supplies Fund,1700,,SmallTown,school,,,,Common,100,Weak,0.12,3,education_success_add,0.03,Favorable,teacher;clerk;merchant,A modest grant for teaching materials.
+clinic_subsidy,Clinic Subsidy,1800,,SmallTown,medical,,,,Common,100,Weak,0.12,3,medical_cost_multiplier,0.95,Favorable,physician;clerk;merchant,Small subsidy for local treatment.
+bank_liaison,Banking Liaison Committee,1800,,SmallTown,bank,,,,Common,100,Weak,0.12,3,bank_quality_multiplier,1.03,Favorable,banker;merchant;clerk,Modest improvement to local financial offers.
+housing_permits,Streamline Housing Permits,1750,,SmallTown,,,,,Common,100,Weak,0.12,3,housing_price_multiplier,0.97,Favorable,builder;merchant;clerk,Small reduction in housing-market friction.
+market_day,Expand Market Days,1700,,SmallTown,,,,,Common,100,Weak,0.12,2,prosperity_flat,1,Favorable,merchant;shopkeeper;farmer,A small boost to local commerce.
+road_repairs,Repair Local Roads,1700,,SmallTown,,,,,Common,100,Weak,0.12,2,prosperity_flat,1,Favorable,merchant;farmer;clerk,Basic infrastructure work.
+farm_extension,Agricultural Extension Advice,1750,,SmallTown,,agriculture,,,Common,100,Weak,0.12,3,farming_income_multiplier,1.03,Favorable,farmer;landowner;clerk,A small farming-support programme.
+artisan_fair,Artisan Fair,1700,,SmallTown,,,,,Common,100,Weak,0.12,2,craft_income_multiplier,1.03,Favorable,craftsman;merchant,A temporary fair for local crafts.
+employment_board,Local Employment Board,1850,,SmallTown,,,,,Common,100,Weak,0.12,2,job_application_add,0.02,Favorable,clerk;merchant;teacher,Small assistance matching workers to employers.
+poor_relief,Poor Relief Collection,1700,,SmallTown,church,,,,Common,100,Weak,0.12,3,church_welfare_multiplier,1.25,Favorable,priest;merchant;teacher,Improves local emergency welfare.
+fire_watch,Organize Fire Watch,1700,,SmallTown,,,,,Common,100,Weak,0.12,4,historical_wealth_loss_multiplier,0.95,Favorable,clerk;craftsman;merchant,Minor preparation against destructive local emergencies.
+emergency_stores,Emergency Stores,1800,,SmallTown,,,,,Common,100,Weak,0.12,3,historical_health_loss_multiplier,0.95,Favorable,physician;merchant;clerk,Basic local crisis preparation.
+reconstruction_committee,Reconstruction Committee,1800,,SmallTown,,,99,,Common,100,Weak,0.12,3,prosperity_recovery_bonus,1,Favorable,builder;merchant;clerk,Speeds recovery from temporary prosperity shocks.
+market_square,Beautify Market Square,1700,,SmallTown,,,,,Common,100,Weak,0.12,2,prosperity_flat,1,Favorable,merchant;craftsman;clerk,A small civic improvement.
+town_festival,Town Festival,1700,,SmallTown,,,,,Common,80,Weak,0.12,1,none,0,Neutral,merchant;artist;clerk,Mostly ceremonial community spending.
+new_fountain,New Public Fountain,1750,,SmallTown,,,,,Common,70,Weak,0.12,1,none,0,Neutral,clerk;merchant;artist,A visible civic project with little practical effect.
+monument,Commemorative Monument,1800,,SmallTown,,,,,Common,65,Weak,0.12,1,none,0,Neutral,clerk;teacher;retired_officer,Prestige project with little direct economic effect.
+anniversary,Official Anniversary Programme,1800,,SmallTown,,,,,Common,65,Weak,0.12,1,none,0,Neutral,clerk;teacher;merchant,Ceremonial local programme.
+credit_restrictions,Tighter Local Credit Rules,1800,,SmallTown,bank,,,,Common,35,Weak,0.12,3,bank_quality_multiplier,0.96,Unfavorable,clerk;lawyer;banker,Makes local Bank terms slightly worse.
+building_restrictions,Restrictive Building Rules,1800,,SmallTown,,,,,Common,35,Weak,0.12,3,housing_price_multiplier,1.05,Unfavorable,clerk;lawyer;landowner,Slightly raises housing prices.
+school_retrenchment,Reduce School Spending,1800,,SmallTown,school,,,,Common,30,Weak,0.12,3,education_success_add,-0.03,Unfavorable,clerk;landowner;merchant,Small reduction in local education quality.
+clinic_cuts,Reduce Medical Subsidies,1850,,SmallTown,medical,,,,Common,30,Weak,0.12,3,medical_cost_multiplier,1.05,Unfavorable,clerk;landowner;merchant,Slightly raises treatment cost.
+market_levy,Temporary Market Levy,1800,,SmallTown,,,,,Common,30,Weak,0.12,2,prosperity_flat,-1,Unfavorable,clerk;landowner,A small drag on local prosperity.
+school_grant,Expanded School Grant,1800,,SmallTown,school,,,,Uncommon,28,Medium,0.08,3,education_success_add,0.05,Favorable,teacher;lawyer;merchant,Meaningful temporary support for education.
+hospital_grant,Hospital Support Programme,1850,,SmallTown,medical,,,,Uncommon,28,Medium,0.08,3,medical_bundle_medium,1,Favorable,physician;merchant;clerk,Improves treatment success and affordability.
+commercial_charter,Commercial Development Charter,1800,,SmallTown,bank,,,,Uncommon,24,Medium,0.08,3,bank_quality_multiplier,1.05,Favorable,banker;merchant;lawyer,Moderately better local financial offers.
+housing_initiative,Housing Construction Initiative,1850,,SmallTown,,,,,Uncommon,24,Medium,0.08,3,housing_bundle_medium,1,Favorable,builder;merchant;clerk,Adds one housing offer and modestly reduces asking prices.
+development_program,Town Development Programme,1800,,SmallTown,,,,,Uncommon,25,Medium,0.08,3,prosperity_flat,2,Favorable,merchant;builder;clerk,Temporary +2 prosperity.
+agricultural_grant,Agricultural Support Programme,1850,,SmallTown,,agriculture,,,Uncommon,24,Medium,0.08,3,farming_income_multiplier,1.05,Favorable,farmer;landowner;merchant,Temporary +5% farming income.
+craft_grant,Local Craft Grant,1850,,SmallTown,,,,,Uncommon,24,Medium,0.08,3,craft_income_multiplier,1.05,Favorable,craftsman;merchant;clerk,Temporary +5% craft income.
+employment_initiative,Employment Initiative,1900,,SmallTown,,,,,Uncommon,20,Medium,0.08,3,job_application_add,0.04,Favorable,merchant;clerk;teacher,Moderately improves local hiring chances.
+flood_preparation,Flood Preparation Works,1800,,SmallTown,,,,lesser_poland;subcarpathia;silesia;lower_silesia;opole;lublin;masovia,Uncommon,18,Medium,0.08,5,flood_loss_multiplier,0.9,Favorable,builder;farmer;clerk,Reduces household losses in major flood events.
+crisis_fund,Emergency Relief Fund,1850,,SmallTown,,,,,Uncommon,18,Medium,0.08,4,historical_wealth_loss_multiplier,0.9,Favorable,merchant;physician;clerk,Reduces wealth losses from major historical crises.
+university_extension,Temporary Higher Education Programme,1850,,City,school,,,,Rare,5,Strong,0.04,3,school_service_tier_add,1,Favorable,teacher;lawyer;physician,School acts one tier higher for education access only.
+medical_expansion,Temporary Medical Expansion,1850,,City,medical,,,,Rare,5,Strong,0.04,3,medical_service_tier_add,1,Favorable,physician;merchant;clerk,Medical service quality acts one tier higher.
+banking_expansion,Temporary Banking Expansion,1850,,City,bank,,,,Rare,5,Strong,0.04,3,bank_service_tier_add,1,Favorable,banker;merchant;lawyer,Bank offer quality acts one tier higher.
+major_development,Major Urban Development Programme,1850,,City,,,,,Rare,5,Strong,0.04,4,prosperity_flat,3,Favorable,merchant;builder;clerk,Rare temporary +3 prosperity.
+major_flood_defences,Major Flood Defences,1900,,Town,,,,lesser_poland;subcarpathia;silesia;lower_silesia;opole;lublin;masovia,Rare,4,Strong,0.04,6,flood_loss_multiplier,0.8,Favorable,engineer;builder;clerk,Rare but meaningful reduction in major flood losses.

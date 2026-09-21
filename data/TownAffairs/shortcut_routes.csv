@@ -14,3 +14,4 @@ church.attend,church,active_controller,resident,Open the local Church tab and pr
 church.donate,church,active_controller,resident,Choose a donation tier in the local Church tab.
 church.aid_poor_family,church,active_controller,resident,Choose a direct-charity tier in the local Church tab.
 church.ask_welfare,church,active_household,resident,Open Church emergency welfare for the active household.
+community.lobby_policy,community,active_controller,resident,Choose one of the current Town proposals and queue the annual lobbying action.

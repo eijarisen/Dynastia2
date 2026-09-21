@@ -10,6 +10,8 @@ public sealed class StandardEducationService : IEducationService
     private readonly ILocationService _locations;
     private readonly ITownInstitutionService _institutions;
     private readonly EducationLocalityRules _localityRules;
+    private readonly IGameState? _gameState;
+    private readonly Func<ICommunityPolicyService?> _communityResolver;
 
     public StandardEducationService(
         IFamilyService family,
@@ -17,7 +19,9 @@ public sealed class StandardEducationService : IEducationService
         EducationEraCatalog eras,
         ILocationService locations,
         ITownInstitutionService institutions,
-        EducationLocalityRules localityRules)
+        EducationLocalityRules localityRules,
+        IGameState? gameState = null,
+        Func<ICommunityPolicyService?>? communityResolver = null)
     {
         _family = family;
         _stats = stats;
@@ -25,6 +29,8 @@ public sealed class StandardEducationService : IEducationService
         _locations = locations;
         _institutions = institutions;
         _localityRules = localityRules;
+        _gameState = gameState;
+        _communityResolver = communityResolver ?? (() => null);
     }
 
     public void EnsureEducation(IPerson person)
@@ -98,11 +104,18 @@ public sealed class StandardEducationService : IEducationService
                 StringComparison.OrdinalIgnoreCase))
             .Value;
 
-        return PersonalityInfluence.AdjustProbability(
+        var chance = PersonalityInfluence.AdjustProbability(
             EducationProgressionRules.GetPaidEducationSuccessChance(intellect),
             person,
             melancholic: 0.10,
             choleric: -0.10);
+        if (_gameState is not null)
+        {
+            var town = _locations.GetLocation(person).HomeTown;
+            chance += _communityResolver()?.GetModifiers(town, _gameState.Year).EducationSuccessAdd ?? 0;
+        }
+
+        return Math.Clamp(chance, 0, 1);
     }
 
     public int GetLocalEducationCeiling(
@@ -122,9 +135,7 @@ public sealed class StandardEducationService : IEducationService
     {
         ArgumentNullException.ThrowIfNull(town);
 
-        var schoolTier = _institutions
-            .Resolve(town, year)
-            .GetTier("school");
+        var schoolTier = GetEffectiveSchoolServiceTier(town, year);
 
         return _localityRules.GetMaximumLocalEducation(
             schoolTier);
@@ -147,13 +158,19 @@ public sealed class StandardEducationService : IEducationService
         ArgumentNullException.ThrowIfNull(town);
 
         var rule = _eras.GetRule(year);
-        var schoolTier = _institutions
-            .Resolve(town, year)
-            .GetTier("school");
+        var schoolTier = GetEffectiveSchoolServiceTier(town, year);
 
         return _localityRules.GetGeneratedAdultRange(
             rule,
             schoolTier);
+    }
+
+
+    private int GetEffectiveSchoolServiceTier(TownInfo town, int year)
+    {
+        var baseTier = _institutions.Resolve(town, year).GetTier("school");
+        var bonus = _communityResolver()?.GetModifiers(town, year).SchoolServiceTierAdd ?? 0;
+        return Math.Clamp(baseTier + bonus, 0, 5);
     }
 
     private static EducationComponent GetRequired(IPerson person)

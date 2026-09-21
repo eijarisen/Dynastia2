@@ -11,7 +11,8 @@ public enum TownAffairsTab
     Health = 3,
     Education = 4,
     Bank = 5,
-    Church = 6
+    Church = 6,
+    Community = 7
 }
 
 public enum TownAffairsMode
@@ -75,6 +76,13 @@ public sealed class TownAffairsViewModel : ViewModelBase
                 ?? Subject;
         }
 
+        CommunityProposals = IsRemote
+            ? Array.Empty<TownAffairsCommunityProposalViewModel>()
+            : owner.GetTownAffairsCommunityProposals(snapshot);
+        ActiveCommunityPolicies = IsRemote
+            ? Array.Empty<TownAffairsActivePolicyViewModel>()
+            : owner.GetTownAffairsActiveCommunityPolicies(snapshot);
+
         RefreshMemberTabs();
         RefreshSubjectContent();
 
@@ -119,7 +127,7 @@ public sealed class TownAffairsViewModel : ViewModelBase
             var normalized = Math.Clamp(
                 value,
                 (int)TownAffairsTab.Institutions,
-                (int)TownAffairsTab.Church);
+                (int)TownAffairsTab.Community);
             var tab = (TownAffairsTab)normalized;
             if (!IsTabVisible(tab) || _selectedTabIndex == normalized)
                 return;
@@ -157,6 +165,22 @@ public sealed class TownAffairsViewModel : ViewModelBase
 
     public bool ShowChurchTab =>
         !IsRemote && Snapshot.Church.IsAvailable;
+
+    public bool ShowCommunityTab => !IsRemote;
+
+    public IReadOnlyList<TownAffairsCommunityProposalViewModel> CommunityProposals { get; }
+        = Array.Empty<TownAffairsCommunityProposalViewModel>();
+
+    public IReadOnlyList<TownAffairsActivePolicyViewModel> ActiveCommunityPolicies { get; }
+        = Array.Empty<TownAffairsActivePolicyViewModel>();
+
+    public bool HasCommunityProposals => CommunityProposals.Count > 0;
+
+    public bool ShowCommunityEmpty => !HasCommunityProposals;
+
+    public bool HasActiveCommunityPolicies => ActiveCommunityPolicies.Count > 0;
+
+    public bool ShowNoActiveCommunityPolicies => !HasActiveCommunityPolicies;
 
     public IReadOnlyList<TownAffairsHouseOfferViewModel> HouseOffers { get; }
 
@@ -234,6 +258,7 @@ public sealed class TownAffairsViewModel : ViewModelBase
             TownAffairsTab.Education => ShowEducationTab,
             TownAffairsTab.Bank => ShowBankTab,
             TownAffairsTab.Church => ShowChurchTab,
+            TownAffairsTab.Community => ShowCommunityTab,
             _ => false
         };
 
@@ -334,6 +359,14 @@ public sealed class TownAffairsViewModel : ViewModelBase
             return;
 
         _owner.QueueTownAffairsChurchAction(action);
+    }
+
+    public void QueueCommunity(TownAffairsCommunityProposalViewModel proposal)
+    {
+        if (!ShowCommunityTab || !proposal.IsAvailable)
+            return;
+
+        _owner.QueueTownAffairsCommunityLobby(proposal);
     }
 
     private void RefreshMemberTabs()
@@ -476,4 +509,38 @@ public sealed record TownAffairsChurchActionViewModel(
                 ? $"Relief: {amount:N0} zł"
                 : $"Amount: {amount:N0} zł"
             : string.Empty;
+}
+
+public sealed record TownAffairsCommunityProposalViewModel(
+    CommunityPolicyProposalInfo Proposal,
+    bool IsAvailable,
+    string? UnavailableReason,
+    double? LobbySupportBonus,
+    IReadOnlyDictionary<string, string> Parameters)
+{
+    public string Emoji => "🏛️";
+
+    public double DisplayOpacity =>
+        IsAvailable ? 1.0 : 0.50;
+
+    public string ProposerText =>
+        $"Proposed by {Proposal.Proposer.Name}, {Proposal.Proposer.Occupation}";
+
+    public string DetailText =>
+        $"{Proposal.Rarity} · {Proposal.ImpactTier} · {Proposal.Favorability} · {Proposal.DurationYears} years · base support {Proposal.BaseSupport:P0}";
+
+    public bool HasLobbyBonus => LobbySupportBonus.HasValue;
+
+    public string LobbyBonusText => LobbySupportBonus is double bonus
+        ? $"Lobby support: +{bonus:P0}"
+        : string.Empty;
+}
+
+public sealed record TownAffairsActivePolicyViewModel(
+    CommunityActivePolicyInfo Policy,
+    int RemainingYears)
+{
+    public string DurationText => RemainingYears == 1
+        ? "1 year remaining"
+        : $"{RemainingYears} years remaining";
 }

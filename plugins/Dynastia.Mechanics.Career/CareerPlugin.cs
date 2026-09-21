@@ -111,7 +111,8 @@ public sealed partial class CareerPlugin : IGamePlugin
                 institutions,
                 institutionRequirements,
                 () => context.GetService<ICraftService>(),
-                () => context.GetService<IStatusService>());
+                () => context.GetService<IStatusService>(),
+                () => context.GetService<ICommunityPolicyService>());
 
         context.AddService<ICareerService>(career);
         context.AddService<ICareerPresentationService>(career);

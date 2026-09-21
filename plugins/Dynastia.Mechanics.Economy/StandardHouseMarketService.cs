@@ -14,6 +14,7 @@ internal sealed class StandardHouseMarketService : IHouseMarketService
     private readonly ITownProsperityService _prosperity;
     private readonly HouseMarketRules _rules;
     private readonly ILocalServiceTownResolver? _localServiceTowns;
+    private readonly Func<ICommunityPolicyService?>? _communityResolver;
 
     public StandardHouseMarketService(
         IGameState gameState,
@@ -21,7 +22,8 @@ internal sealed class StandardHouseMarketService : IHouseMarketService
         IEconomyService economy,
         ITownProsperityService prosperity,
         HouseMarketRules rules,
-        ILocalServiceTownResolver? localServiceTowns = null)
+        ILocalServiceTownResolver? localServiceTowns = null,
+        Func<ICommunityPolicyService?>? communityResolver = null)
     {
         _gameState = gameState;
         _locations = locations;
@@ -29,6 +31,7 @@ internal sealed class StandardHouseMarketService : IHouseMarketService
         _prosperity = prosperity;
         _rules = rules;
         _localServiceTowns = localServiceTowns;
+        _communityResolver = communityResolver;
     }
 
     public IReadOnlyList<HousePurchaseOfferInfo> GetOffers(
@@ -44,10 +47,14 @@ internal sealed class StandardHouseMarketService : IHouseMarketService
         var countUnit = Unit(BuildKey(town.Id, year, "count"));
         var count = range.Min + (int)Math.Floor(countUnit * (range.Max - range.Min + 1));
         count = Math.Clamp(count, range.Min, range.Max);
+        var policyModifiers = _communityResolver?.Invoke()?
+            .GetModifiers(marketTown, year)
+            ?? new CommunityPolicyModifierSnapshot();
+        count += policyModifiers.ExtraHousingOffers;
 
         var prosperity = _prosperity.Get(marketTown, year);
         var prosperityMultiplier = _rules.GetProsperityMultiplier(prosperity.Index);
-        var basePrice = _economy.GetHousePrice(town);
+        var basePrice = GetHousePriceForYear(town, marketTown, year);
         var offers = new List<HousePurchaseOfferInfo>(count);
 
         for (var slot = 0; slot < count; slot++)
@@ -102,6 +109,28 @@ internal sealed class StandardHouseMarketService : IHouseMarketService
                 .FirstOrDefault(offer => offer.OfferId.Equals(
                     offerId,
                     StringComparison.OrdinalIgnoreCase));
+    }
+
+    private decimal GetHousePriceForYear(
+        TownInfo town,
+        TownInfo marketTown,
+        int year)
+    {
+        var currentPrice = _economy.GetHousePrice(town);
+        var community = _communityResolver?.Invoke();
+        if (community is null)
+            return currentPrice;
+
+        var currentMultiplier = community
+            .GetModifiers(marketTown, _gameState.Year)
+            .HousingPriceMultiplier;
+        var requestedMultiplier = community
+            .GetModifiers(marketTown, year)
+            .HousingPriceMultiplier;
+        var normalizedPrice = currentMultiplier == 0m
+            ? currentPrice
+            : currentPrice / currentMultiplier;
+        return RoundCurrency(normalizedPrice * requestedMultiplier);
     }
 
     private string BuildKey(string townId, int year, string salt) =>

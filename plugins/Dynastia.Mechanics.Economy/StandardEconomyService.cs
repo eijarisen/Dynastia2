@@ -23,6 +23,7 @@ public sealed partial class StandardEconomyService :
     private readonly ITownProsperityService _prosperity;
     private readonly HouseMarketRules _houseMarketRules;
     private readonly ILocalServiceTownResolver? _localServiceTowns;
+    private readonly Func<ICommunityPolicyService?>? _communityResolver;
 
     public StandardEconomyService(
         IGameState gameState,
@@ -44,6 +45,7 @@ public sealed partial class StandardEconomyService :
             random,
             NeutralTownProsperityService.Instance,
             HouseMarketRules.CreateDefault(),
+            null,
             null)
     {
     }
@@ -59,7 +61,8 @@ public sealed partial class StandardEconomyService :
         IGameRandom random,
         ITownProsperityService prosperity,
         HouseMarketRules houseMarketRules,
-        ILocalServiceTownResolver? localServiceTowns = null)
+        ILocalServiceTownResolver? localServiceTowns = null,
+        Func<ICommunityPolicyService?>? communityResolver = null)
     {
         _gameState =
             gameState;
@@ -93,6 +96,9 @@ public sealed partial class StandardEconomyService :
 
         _localServiceTowns =
             localServiceTowns;
+
+        _communityResolver =
+            communityResolver;
     }
 
     public bool HasHousehold(

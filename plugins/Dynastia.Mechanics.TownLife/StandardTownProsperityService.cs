@@ -6,13 +6,16 @@ internal sealed class StandardTownProsperityService : ITownProsperityService
 {
     private readonly IGameState _gameState;
     private readonly TownProsperityRules _rules;
+    private readonly Func<ICommunityPolicyService?> _communityResolver;
 
     public StandardTownProsperityService(
         IGameState gameState,
-        TownProsperityRules rules)
+        TownProsperityRules rules,
+        Func<ICommunityPolicyService?>? communityResolver = null)
     {
         _gameState = gameState;
         _rules = rules;
+        _communityResolver = communityResolver ?? (() => null);
     }
 
     public TownProsperitySnapshot Get(TownInfo town)
@@ -23,7 +26,11 @@ internal sealed class StandardTownProsperityService : ITownProsperityService
                 town.Id,
                 _gameState.Year,
                 includeInitialHistory: false);
-        var effective = GetEffectiveIndex(state, _gameState.Year);
+        var effective = ApplyCommunityModifiers(
+            town,
+            _gameState.Year,
+            GetEffectiveIndex(state, _gameState.Year),
+            state);
 
         return new TownProsperitySnapshot(
             effective,
@@ -53,8 +60,11 @@ internal sealed class StandardTownProsperityService : ITownProsperityService
         var shocks = state.Shocks ?? new List<TownProsperityShockState>();
         var historical = history
             .FirstOrDefault(point => point.Year == year);
-        var effective = historical?.Index
-            ?? GetEffectiveIndex(state, year);
+        var effective = ApplyCommunityModifiers(
+            town,
+            year,
+            historical?.Index ?? GetEffectiveIndex(state, year),
+            state);
         var previous = history
             .Where(point => point.Year < year)
             .OrderByDescending(point => point.Year)
@@ -379,6 +389,26 @@ internal sealed class StandardTownProsperityService : ITownProsperityService
                 Year = year,
                 Index = index
             });
+    }
+
+
+    private int ApplyCommunityModifiers(
+        TownInfo town,
+        int year,
+        int baseIndex,
+        TownProsperityTownState state)
+    {
+        var modifiers = _communityResolver()?.GetModifiers(town, year);
+        if (modifiers is null)
+            return baseIndex;
+
+        var recoveryBonus = state.Shocks.Any(shock => GetShockAmount(shock, year) < 0)
+            ? modifiers.ProsperityRecoveryBonus
+            : 0;
+        return Math.Clamp(
+            baseIndex + modifiers.ProsperityFlat + recoveryBonus,
+            _rules.MinimumIndex,
+            _rules.MaximumIndex);
     }
 
     private int GetEffectiveIndex(TownProsperityTownState town, int year)

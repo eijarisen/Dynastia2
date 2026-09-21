@@ -29,6 +29,7 @@ public sealed partial class StandardCareerService :
     private readonly CareerInstitutionRequirementCatalog _institutionRequirements;
     private readonly Func<ICraftService?> _craftResolver;
     private readonly Func<IStatusService?> _statusResolver;
+    private readonly Func<ICommunityPolicyService?> _communityResolver;
 
     internal StandardCareerService(
         IGameState gameState,
@@ -48,7 +49,8 @@ public sealed partial class StandardCareerService :
         ITownInstitutionService institutions,
         CareerInstitutionRequirementCatalog institutionRequirements,
         Func<ICraftService?> craftResolver,
-        Func<IStatusService?> statusResolver)
+        Func<IStatusService?> statusResolver,
+        Func<ICommunityPolicyService?>? communityResolver = null)
     {
         _gameState = gameState;
         _family = family;
@@ -77,6 +79,7 @@ public sealed partial class StandardCareerService :
             craftResolver;
         _statusResolver =
             statusResolver;
+        _communityResolver = communityResolver ?? (() => null);
     }
 
     public void EnsureCareer(

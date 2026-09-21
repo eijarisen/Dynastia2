@@ -1,0 +1,54 @@
+{
+  "schemaVersion": "1.0",
+  "proposalsPerTownYear": 3,
+  "generation": {
+    "deterministic": true,
+    "key": "world_seed + place_id + year + proposal_slot",
+    "usesGlobalRng": false,
+    "withoutReplacement": true,
+    "maximumUnfavorablePerSet": 1,
+    "maximumNoEffectPerSet": 1,
+    "preferAtLeastOneFavorableSubstantive": true,
+    "activePolicyCannotBeProposedAgain": true
+  },
+  "resolution": {
+    "resolvePreviousYearAfterQueuedLobbyActions": true,
+    "overallImplementationChance": "min(0.65, sum(effectiveSupport))",
+    "ifImplemented": "choose one proposal weighted by effectiveSupport",
+    "atMostOnePolicyImplementedPerTownPerYear": true
+  },
+  "lobby": {
+    "actionId": "community.lobby_policy",
+    "createsHouseholdConnection": true,
+    "participationCountGain": 1,
+    "renownGain": 0.25,
+    "reputationGain": 0.1,
+    "enactedExtraRenown": 0.75,
+    "enactedExtraReputation": 0.3,
+    "bonusFormula": "clamp(LocalRenown*0.003 + Reputation*0.001 + Education*0.008 + Appeal*0.004 + OfficeBonus, -0.05, OfficeCap)",
+    "ordinaryOfficeBonus": 0,
+    "townHeadOfficeBonus": 0.1,
+    "ordinaryCap": 0.35,
+    "townHeadCap": 0.45
+  },
+  "activePolicyCaps": {
+    "prosperityFlatTotal": 4,
+    "educationSuccessAddTotal": 0.1,
+    "jobApplicationAddTotal": 0.08,
+    "farmingIncomeMultiplierMax": 1.1,
+    "craftIncomeMultiplierMax": 1.1,
+    "medicalCostMultiplierMin": 0.8,
+    "medicalCostMultiplierMax": 1.15,
+    "bankQualityMultiplierMin": 0.9,
+    "bankQualityMultiplierMax": 1.1,
+    "housingPriceMultiplierMin": 0.9,
+    "housingPriceMultiplierMax": 1.1,
+    "serviceTierBonusMax": 1,
+    "historicalLossMultiplierMin": 0.8
+  },
+  "news": {
+    "publishOnlyForTownsWithPlayableHouseholds": true,
+    "publishWhenPolicyImplemented": true,
+    "publishFailedProposals": false
+  }
+}

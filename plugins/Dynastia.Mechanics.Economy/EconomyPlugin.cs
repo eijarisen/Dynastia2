@@ -89,7 +89,8 @@ public sealed partial class EconomyPlugin : IGamePlugin
                 random,
                 prosperity,
                 houseMarketRules,
-                localServiceTowns);
+                localServiceTowns,
+                () => context.GetService<ICommunityPolicyService>());
 
         var houseMarket =
             new StandardHouseMarketService(
@@ -98,7 +99,8 @@ public sealed partial class EconomyPlugin : IGamePlugin
                 economy,
                 prosperity,
                 houseMarketRules,
-                localServiceTowns);
+                localServiceTowns,
+                () => context.GetService<ICommunityPolicyService>());
 
         context.AddService<IIncomeProviderRegistry>(
             incomeRegistry);

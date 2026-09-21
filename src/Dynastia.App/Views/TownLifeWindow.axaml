@@ -391,6 +391,58 @@
                         </StackPanel>
                     </ScrollViewer>
                 </TabItem>
+
+                <TabItem Header="Community" IsVisible="{Binding ShowCommunityTab}">
+                    <ScrollViewer VerticalScrollBarVisibility="Auto">
+                        <StackPanel Margin="6" Spacing="10">
+                            <Grid ColumnDefinitions="Auto,*" ColumnSpacing="10">
+                                <TextBlock VerticalAlignment="Center" FontSize="30" Text="🏛️" />
+                                <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="1">
+                                    <TextBlock Classes="sectionHeader" Text="Community" />
+                                    <TextBlock FontSize="11.5" TextWrapping="Wrap" Text="Each year the town considers three deterministic local proposals. You may spend the household's annual action lobbying one proposal; passage is never guaranteed." />
+                                </StackPanel>
+                            </Grid>
+
+                            <TextBlock Margin="0,3,0,0" FontSize="13" FontWeight="Bold" Text="Active policies" />
+                            <TextBlock IsVisible="{Binding ShowNoActiveCommunityPolicies}" FontSize="11.5" FontStyle="Italic" Text="No temporary community policy is currently active." />
+                            <ItemsControl ItemsSource="{Binding ActiveCommunityPolicies}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate x:DataType="vm:TownAffairsActivePolicyViewModel">
+                                        <Border Margin="2" Padding="9,6" Background="#18FFF4D9" BorderBrush="#B18C59" BorderThickness="1" CornerRadius="4">
+                                            <StackPanel Spacing="2">
+                                                <TextBlock FontSize="13" FontWeight="Bold" Text="{Binding Policy.DisplayName}" />
+                                                <TextBlock FontSize="11.5" TextWrapping="Wrap" Text="{Binding Policy.Description}" />
+                                                <TextBlock FontSize="11" Foreground="#654621" Text="{Binding DurationText}" />
+                                            </StackPanel>
+                                        </Border>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+
+                            <TextBlock Margin="0,4,0,0" FontSize="13" FontWeight="Bold" Text="This year's proposals" />
+                            <TextBlock IsVisible="{Binding ShowCommunityEmpty}" Margin="0,12,0,0" HorizontalAlignment="Center" TextAlignment="Center" FontStyle="Italic" Text="No eligible community proposals are available this year." />
+                            <ItemsControl ItemsSource="{Binding CommunityProposals}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate x:DataType="vm:TownAffairsCommunityProposalViewModel">
+                                        <Border Margin="2" Padding="10,8" Background="#25FFF4D9" BorderBrush="#A17A43" BorderThickness="1" CornerRadius="4" Opacity="{Binding DisplayOpacity}" ToolTip.Tip="{Binding UnavailableReason}">
+                                            <Grid ColumnDefinitions="54,*,Auto" ColumnSpacing="10">
+                                                <TextBlock HorizontalAlignment="Center" VerticalAlignment="Top" FontSize="28" Text="{Binding Emoji}" />
+                                                <StackPanel Grid.Column="1" Spacing="2">
+                                                    <TextBlock FontSize="14" FontWeight="Bold" TextWrapping="Wrap" Text="{Binding Proposal.DisplayName}" />
+                                                    <TextBlock FontSize="11.5" TextWrapping="Wrap" Text="{Binding Proposal.Description}" />
+                                                    <TextBlock FontSize="11" Foreground="#654621" TextWrapping="Wrap" Text="{Binding ProposerText}" />
+                                                    <TextBlock FontSize="11" Foreground="#654621" TextWrapping="Wrap" Text="{Binding DetailText}" />
+                                                    <TextBlock IsVisible="{Binding HasLobbyBonus}" FontSize="11.5" FontWeight="Bold" Text="{Binding LobbyBonusText}" />
+                                                </StackPanel>
+                                                <Button Grid.Column="2" Classes="paperAction" VerticalAlignment="Center" IsEnabled="{Binding IsAvailable}" Content="Lobby" Click="OnCommunityLobbyClick" />
+                                            </Grid>
+                                        </Border>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </StackPanel>
+                    </ScrollViewer>
+                </TabItem>
             </TabControl>
 
             <controls:ImageStateButton

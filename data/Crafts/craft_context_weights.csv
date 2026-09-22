@@ -405,3 +405,7 @@ computer_hardware_repair,1970,,SettlementClass,SmallTown,0.70
 computer_hardware_repair,1970,,SettlementClass,Town,1.00
 computer_hardware_repair,1970,,SettlementClass,City,1.20
 computer_hardware_repair,1970,,SettlementClass,MajorCity,1.30
+musician,1700,,AgeBand,Adult,1.00
+painter,1700,,AgeBand,Adult,1.00
+writer,1700,,AgeBand,Adult,1.00
+sculptor,1700,,AgeBand,Adult,1.00

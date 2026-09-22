@@ -192,7 +192,7 @@ public sealed class SharedMechanics4ECatalogValidationTests
         Assert.NotNull(StandardRelationshipEraService.Load(data).GetRule(1900));
         Assert.True(HealthcareEraCatalog.Load(data).GetHealAmount(1900) > 0);
         CraftVocationDataValidation.Validate(data);
-        Assert.Equal(25, CraftCatalog.Load(data).All.Count);
+        Assert.Equal(29, CraftCatalog.Load(data).All.Count);
         Assert.NotEmpty(HobbyCatalog.Load(data).Hobbies);
         Assert.NotEmpty(RareEventEpidemicCatalog.Load(data).Entries);
     }

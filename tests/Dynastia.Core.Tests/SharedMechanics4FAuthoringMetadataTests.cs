@@ -103,7 +103,9 @@ public sealed class SharedMechanics4FAuthoringMetadataTests
         var catalog = CraftCatalog.Load(data);
 
         Assert.Equal(650m, catalog.Find("metalworking")!.BaseSalary);
-        Assert.All(catalog.All, craft => Assert.InRange(craft.BaseSalary, 400m, 800m));
+        Assert.All(catalog.All, craft => Assert.InRange(craft.BaseSalary, 100m, 800m));
+        var artistic = new HashSet<string>(["musician", "painter", "writer", "sculptor"], StringComparer.OrdinalIgnoreCase);
+        Assert.All(catalog.All.Where(craft => !artistic.Contains(craft.Id)), craft => Assert.InRange(craft.BaseSalary, 400m, 800m));
 
         var source = data.ReadText("Crafts/crafts.csv");
         var invalid = source.Replace(
@@ -123,7 +125,7 @@ public sealed class SharedMechanics4FAuthoringMetadataTests
                     })));
 
         Assert.Contains("field 'BaseSalary'", error.Message);
-        Assert.Contains("400 through 800", error.Message);
+        Assert.Contains("100 through 800", error.Message);
     }
 
     private static IGameDataService CreateRepositoryData()

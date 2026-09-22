@@ -1,0 +1,5 @@
+﻿CraftId,MinimumSchoolTier,ArtSupportRule,ArtsOpportunityTags
+musician,3,CityOrArtsOpportunity,media;tourism
+painter,3,CityOrArtsOpportunity,media;tourism
+writer,4,CityOrArtsOpportunity,media;tourism
+sculptor,3,CityOrArtsOpportunity,media;tourism

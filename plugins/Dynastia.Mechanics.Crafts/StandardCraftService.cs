@@ -15,12 +15,14 @@ internal sealed class StandardCraftService : ICraftService, IIncomeProvider
     private readonly IStatsService _stats;
     private readonly IPersonalityService _personality;
     private readonly ILocalCareerOpportunityService _localOpportunities;
+    private readonly ITownInstitutionService _institutions;
     private readonly ITownProsperityService _prosperity;
     private readonly ILocalEconomicStrengthService _economicStrength;
     private readonly IWorkCapacityService _workCapacity;
     private readonly IGameRandom _random;
     private readonly IGameEventBus _events;
     private readonly CraftCatalog _catalog;
+    private readonly ArtisticCraftTrainingRules _artisticTraining;
     private readonly IContextWeightCatalog _context;
     private readonly Func<ICommunityPolicyService?> _communityResolver;
     private readonly Func<ICriminalOccupationService?> _criminalResolver;
@@ -33,6 +35,7 @@ internal sealed class StandardCraftService : ICraftService, IIncomeProvider
         IStatsService stats,
         IPersonalityService personality,
         ILocalCareerOpportunityService localOpportunities,
+        ITownInstitutionService institutions,
         ITownProsperityService prosperity,
         ILocalEconomicStrengthService economicStrength,
         IWorkCapacityService workCapacity,
@@ -40,6 +43,7 @@ internal sealed class StandardCraftService : ICraftService, IIncomeProvider
         IGameEventBus events,
         IContextWeightService contextWeights,
         CraftCatalog catalog,
+        ArtisticCraftTrainingRules artisticTraining,
         Func<ICommunityPolicyService?>? communityResolver = null,
         Func<ICriminalOccupationService?>? criminalResolver = null)
     {
@@ -50,12 +54,14 @@ internal sealed class StandardCraftService : ICraftService, IIncomeProvider
         _stats = stats;
         _personality = personality;
         _localOpportunities = localOpportunities;
+        _institutions = institutions;
         _prosperity = prosperity;
         _economicStrength = economicStrength;
         _workCapacity = workCapacity;
         _random = random;
         _events = events;
         _catalog = catalog;
+        _artisticTraining = artisticTraining;
         _context = contextWeights.LoadCatalog(ContextPath, catalog.All.Select(craft => craft.Id));
         _communityResolver = communityResolver ?? (() => null);
         _criminalResolver = criminalResolver ?? (() => null);
@@ -397,7 +403,6 @@ internal sealed class StandardCraftService : ICraftService, IIncomeProvider
         ArgumentNullException.ThrowIfNull(town);
 
         var location = _localOpportunities.GetOpportunitySnapshot(town);
-        var tags = OpportunityTags(location);
         var stats = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase)
         {
             ["strength"] = strength,
@@ -405,7 +410,7 @@ internal sealed class StandardCraftService : ICraftService, IIncomeProvider
         };
 
         var available = _catalog.All
-            .Where(craft => craft.MeetsHardAvailability(year, age, town.SettlementClass, tags))
+            .Where(craft => MeetsTrainingAvailability(craft, year, age, location))
             .Select(craft => new WeightedCraft(
                 craft,
                 GetSelectionWeight(craft, year, age, sex, stats, temperament, location)
@@ -781,11 +786,40 @@ internal sealed class StandardCraftService : ICraftService, IIncomeProvider
             return false;
 
         var location = _localOpportunities.GetOpportunitySnapshot(person);
-        return craft.MeetsHardAvailability(
+        return MeetsTrainingAvailability(
+            craft,
             _gameState.Year,
             person.Age,
-            location.Town.SettlementClass,
-            OpportunityTags(location));
+            location);
+    }
+
+    private bool MeetsTrainingAvailability(
+        CraftInfo craft,
+        int year,
+        int age,
+        LocationOpportunitySnapshot location)
+    {
+        if (!_artisticTraining.IsArtistic(craft.Id))
+        {
+            return craft.MeetsHardAvailability(
+                year,
+                age,
+                location.Town.SettlementClass,
+                OpportunityTags(location));
+        }
+
+        var baseSchoolTier = _institutions.Resolve(location.Town, year).GetTier("school");
+        var policyBonus =
+            _communityResolver()?.GetModifiers(location.Town, year).SchoolServiceTierAdd
+            ?? 0;
+        var effectiveSchoolTier = Math.Clamp(baseSchoolTier + policyBonus, 0, 5);
+
+        return _artisticTraining.MeetsTrainingAvailability(
+            craft,
+            year,
+            age,
+            location,
+            effectiveSchoolTier);
     }
 
     private void SeedPriorCareerExperience(
@@ -948,7 +982,7 @@ internal sealed class StandardCraftService : ICraftService, IIncomeProvider
 
     private IReadOnlyDictionary<string, int> GetCraftStats(IPerson person) =>
         _stats.GetStats(person)
-            .Where(stat => stat.Id is "strength" or "intellect")
+            .Where(stat => stat.Id is "strength" or "intellect" or "appeal")
             .ToDictionary(stat => stat.Id, stat => stat.Value, StringComparer.OrdinalIgnoreCase);
 
     private static IReadOnlySet<string> OpportunityTags(LocationOpportunitySnapshot location) =>

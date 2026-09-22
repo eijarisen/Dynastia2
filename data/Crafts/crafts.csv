@@ -24,3 +24,7 @@ radio_electronics,Radio & Electronics,1920,,12,0.80,700,intellect,-,Urban,SmallT
 aircraft_maintenance,Aircraft Maintenance,1930,,14,0.40,800,intellect,strength,Urban,SmallTown,aviation,manufacturing,🛩️,Aircraft Mechanic
 plastics_fabrication,Plastics Fabrication,1950,,14,0.70,650,intellect,strength,Urban,SmallTown,-,chemicals;manufacturing,🧪,Plastics Fabricator
 computer_hardware_repair,Computer Hardware & Repair,1970,,12,0.80,750,intellect,-,Urban,SmallTown,-,technology;manufacturing,🖥️,Computer Technician
+musician,Musician,1700,,8,0.30,130,appeal,intellect,Urban,SmallTown,-,media;tourism,🎵,Musician
+painter,Painter,1700,,10,0.25,150,intellect,appeal,Urban,SmallTown,-,media;tourism,🎨,Painter
+writer,Writer,1700,,12,0.22,120,intellect,appeal,Urban,SmallTown,-,media;tourism,✍️,Writer
+sculptor,Sculptor,1700,,12,0.20,180,strength,intellect,Urban,SmallTown,-,tourism;media,🗿,Sculptor

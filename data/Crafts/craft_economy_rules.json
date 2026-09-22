@@ -2,7 +2,7 @@
   "educationCost": 5000,
   "baseSalary": {
     "source": "Crafts/crafts.csv#BaseSalary",
-    "minimum": 400,
+    "minimum": 100,
     "maximum": 800
   },
   "incomeRoll": {

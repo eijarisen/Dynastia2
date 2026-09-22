@@ -145,7 +145,7 @@ public static class CraftVocationDataValidation
 
         RequireDecimal(root, "educationCost", CraftRules.EducationCost, EconomyRulesPath);
         RequireString(baseSalary, "source", "Crafts/crafts.csv#BaseSalary", EconomyRulesPath);
-        RequireInt(baseSalary, "minimum", 400, EconomyRulesPath);
+        RequireInt(baseSalary, "minimum", 100, EconomyRulesPath);
         RequireInt(baseSalary, "maximum", 800, EconomyRulesPath);
         RequireInt(incomeRoll, "integerMinimum", 0, EconomyRulesPath);
         RequireInt(incomeRoll, "integerMaximumInclusive", 94, EconomyRulesPath);

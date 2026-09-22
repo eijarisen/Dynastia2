@@ -14,6 +14,7 @@ public sealed class CraftsPlugin : IGamePlugin
         var personality = Require<IPersonalityService>(context, "Personality service");
         var localOpportunities = Require<ILocalCareerOpportunityService>(context, "Local opportunity service");
         var prosperity = Require<ITownProsperityService>(context, "Town prosperity service");
+        var institutions = Require<ITownInstitutionService>(context, "Town institution service");
         var economicStrength = Require<ILocalEconomicStrengthService>(context, "Local economic-strength service");
         var workCapacity = Require<IWorkCapacityService>(context, "Work-capacity service");
         var contextWeights = Require<IContextWeightService>(context, "Context-weight service");
@@ -25,6 +26,7 @@ public sealed class CraftsPlugin : IGamePlugin
         var income = Require<IIncomeProviderRegistry>(context, "Income provider registry");
 
         var catalog = CraftCatalog.Load(data);
+        var artisticTraining = ArtisticCraftTrainingRules.Load(data, catalog);
         CraftVocationDataValidation.Validate(data);
         ValidateCareerReferences(catalog, career);
 
@@ -36,6 +38,7 @@ public sealed class CraftsPlugin : IGamePlugin
             stats,
             personality,
             localOpportunities,
+            institutions,
             prosperity,
             economicStrength,
             workCapacity,
@@ -43,6 +46,7 @@ public sealed class CraftsPlugin : IGamePlugin
             events,
             contextWeights,
             catalog,
+            artisticTraining,
             () => context.GetService<ICommunityPolicyService>(),
             () => context.GetService<ICriminalOccupationService>());
 
@@ -160,7 +164,7 @@ public sealed class CraftsPlugin : IGamePlugin
                         return new GameActionResult(false);
 
                     var targetStats = stats.GetStats(context.Target)
-                        .Where(stat => stat.Id is "strength" or "intellect")
+                        .Where(stat => stat.Id is "strength" or "intellect" or "appeal")
                         .ToDictionary(stat => stat.Id, stat => stat.Value, StringComparer.OrdinalIgnoreCase);
                     var chance = CraftRules.GetTeachingSuccessChance(definition, targetStats);
                     var success = random.NextDouble() < chance

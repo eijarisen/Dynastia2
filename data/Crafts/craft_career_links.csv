@@ -73,3 +73,13 @@ computer_hardware_repair,computing_and_it_services,Primary
 computer_hardware_repair,electronics_manufacturing,Secondary
 computer_hardware_repair,telecommunications,Secondary
 computer_hardware_repair,software_industry,Secondary
+musician,performing_arts,Primary
+musician,radio_broadcasting,Secondary
+musician,digital_media,Secondary
+painter,performing_arts,Secondary
+painter,digital_media,Secondary
+writer,newspapers_and_publishing,Primary
+writer,traditional_printworks,Secondary
+writer,digital_media,Secondary
+sculptor,construction,Secondary
+sculptor,performing_arts,Secondary

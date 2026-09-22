@@ -1,0 +1,11 @@
+﻿CraftId,CareerId,LinkStrength
+musician,performing_arts,Primary
+musician,radio_broadcasting,Secondary
+musician,digital_media,Secondary
+painter,performing_arts,Secondary
+painter,digital_media,Secondary
+writer,newspapers_and_publishing,Primary
+writer,traditional_printworks,Secondary
+writer,digital_media,Secondary
+sculptor,construction,Secondary
+sculptor,performing_arts,Secondary

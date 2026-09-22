@@ -1,0 +1,33 @@
+{
+  "schemaVersion": "1.0",
+  "craftCatalogBaseSalaryMinimum": 100,
+  "existingOrdinaryCraftSalaryRangeRemains": [
+    400,
+    800
+  ],
+  "artisticCraftIds": [
+    "musician",
+    "painter",
+    "writer",
+    "sculptor"
+  ],
+  "educationAvailability": {
+    "artSupport": "SettlementClass is City/MajorCity OR current Town/Region opportunity snapshot contains media or tourism",
+    "minimumSchoolTierByCraft": {
+      "musician": 3,
+      "painter": 3,
+      "writer": 4,
+      "sculptor": 3
+    },
+    "requiredForNewCraftStudy": true,
+    "requiredForKnownCraftMasteryStudy": true,
+    "requiredForTeachCraft": true,
+    "practiceKnownCraftAnywhere": true
+  },
+  "income": {
+    "useExistingCraftIncomeFormula": true,
+    "useExistingTownProsperityMultiplier": true,
+    "majorCommissionUnchanged": true,
+    "purpose": "Cash income remains deliberately weak; valuable produced works are the high-Mastery upside."
+  }
+}

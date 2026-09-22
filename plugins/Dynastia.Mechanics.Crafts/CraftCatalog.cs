@@ -11,7 +11,7 @@ public sealed class CraftCatalog
     private const string OpportunityTagsPath = "Towns/opportunity_tags.csv";
 
     private static readonly IReadOnlySet<string> AllowedStats =
-        new HashSet<string>(["strength", "intellect"], StringComparer.OrdinalIgnoreCase);
+        new HashSet<string>(["strength", "intellect", "appeal"], StringComparer.OrdinalIgnoreCase);
 
     private static readonly IReadOnlySet<string> TownPreferences =
         new HashSet<string>(["Universal", "Rural", "Urban"], StringComparer.OrdinalIgnoreCase);
@@ -116,10 +116,10 @@ public sealed class CraftCatalog
                 .Select(link => link.CareerId).Distinct(StringComparer.OrdinalIgnoreCase).ToList();
             var secondary = craftLinks.Where(link => link.Relevance.Equals("Secondary", StringComparison.OrdinalIgnoreCase))
                 .Select(link => link.CareerId).Distinct(StringComparer.OrdinalIgnoreCase).ToList();
-            if (primary.Count == 0)
+            if (craftLinks.Count == 0)
                 throw CatalogValidation.Error(
                     LinksPath,
-                    "at least one Primary career link for every craft",
+                    "at least one career link for every craft",
                     item: row.Id,
                     field: "Relevance",
                     value: "<missing>");
@@ -144,10 +144,10 @@ public sealed class CraftCatalog
                 secondary);
         }).ToList();
 
-        if (crafts.Count != 25)
+        if (crafts.Count != 29)
             throw CatalogValidation.Error(
                 DataPath,
-                "exactly 25 target crafts",
+                "exactly 29 target crafts",
                 field: "RowCount",
                 value: crafts.Count);
 
@@ -199,8 +199,8 @@ public sealed class CraftCatalog
                 throw CatalogValidation.Error(DataPath, "an age of at least 0", row, id, "MinimumLearningAge", minimumAge);
             if (baseWeight <= 0)
                 throw CatalogValidation.Error(DataPath, "a number greater than 0", row, id, "BaseWeight", baseWeight);
-            if (baseSalary < 400m || baseSalary > 800m)
-                throw CatalogValidation.Error(DataPath, "a base salary from 400 through 800", row, id, "BaseSalary", baseSalary);
+            if (baseSalary < 100m || baseSalary > 800m)
+                throw CatalogValidation.Error(DataPath, "a base salary from 100 through 800", row, id, "BaseSalary", baseSalary);
             if (!AllowedStats.Contains(primaryStat))
                 throw CatalogValidation.Error(DataPath, $"one of: {string.Join(", ", AllowedStats)}", row, id, "PrimaryStat", primaryStat);
             if (secondaryStat is not null && !AllowedStats.Contains(secondaryStat))

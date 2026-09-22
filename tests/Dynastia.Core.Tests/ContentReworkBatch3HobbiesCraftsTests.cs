@@ -51,16 +51,18 @@ public sealed class ContentReworkBatch3HobbiesCraftsTests
     }
 
     [Fact]
-    public void CraftCatalogLoadsTwentyFiveBroadCraftsAndMigratesLegacyIds()
+    public void CraftCatalogLoadsTwentyNineCraftsIncludingArtisticVocationsAndMigratesLegacyIds()
     {
         var catalog = CraftCatalog.Load(CreateRepositoryData());
 
-        Assert.Equal(25, catalog.All.Count);
+        Assert.Equal(29, catalog.All.Count);
         Assert.Equal("metalworking", catalog.Find("blacksmithing")!.Id);
         Assert.Equal("woodworking_carpentry", catalog.Find("carpentry")!.Id);
         Assert.Equal("computer_hardware_repair", catalog.Find("computer_hardware")!.Id);
         Assert.Equal("welding_metal_fabrication", catalog.Find("welding")!.Id);
-        Assert.All(catalog.All, craft => Assert.InRange(craft.BaseSalary, 400m, 800m));
+        Assert.All(catalog.All, craft => Assert.InRange(craft.BaseSalary, 100m, 800m));
+        var artistic = new HashSet<string>(["musician", "painter", "writer", "sculptor"], StringComparer.OrdinalIgnoreCase);
+        Assert.All(catalog.All.Where(craft => !artistic.Contains(craft.Id)), craft => Assert.InRange(craft.BaseSalary, 400m, 800m));
         Assert.Equal(650m, catalog.Find("metalworking")!.BaseSalary);
         Assert.Equal(800m, catalog.Find("aircraft_maintenance")!.BaseSalary);
     }
@@ -72,14 +74,14 @@ public sealed class ContentReworkBatch3HobbiesCraftsTests
         var none = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         var shipbuilding = new HashSet<string>(["shipbuilding"], StringComparer.OrdinalIgnoreCase);
 
-        Assert.Equal(13, CountAvailable(catalog, 1700, SettlementClass.SmallTown, none));
-        Assert.Equal(13, CountAvailable(catalog, 1700, SettlementClass.Town, none));
-        Assert.Equal(17, CountAvailable(catalog, 1850, SettlementClass.Town, none));
-        Assert.Equal(20, CountAvailable(catalog, 1900, SettlementClass.Town, none));
-        Assert.Equal(21, CountAvailable(catalog, 1900, SettlementClass.City, shipbuilding));
-        Assert.Equal(22, CountAvailable(catalog, 1950, SettlementClass.MajorCity, none));
-        Assert.Equal(23, CountAvailable(catalog, 2026, SettlementClass.SmallTown, none));
-        Assert.Equal(23, CountAvailable(catalog, 2026, SettlementClass.MajorCity, none));
+        Assert.Equal(17, CountAvailable(catalog, 1700, SettlementClass.SmallTown, none));
+        Assert.Equal(17, CountAvailable(catalog, 1700, SettlementClass.Town, none));
+        Assert.Equal(21, CountAvailable(catalog, 1850, SettlementClass.Town, none));
+        Assert.Equal(24, CountAvailable(catalog, 1900, SettlementClass.Town, none));
+        Assert.Equal(25, CountAvailable(catalog, 1900, SettlementClass.City, shipbuilding));
+        Assert.Equal(26, CountAvailable(catalog, 1950, SettlementClass.MajorCity, none));
+        Assert.Equal(27, CountAvailable(catalog, 2026, SettlementClass.SmallTown, none));
+        Assert.Equal(27, CountAvailable(catalog, 2026, SettlementClass.MajorCity, none));
     }
 
     [Fact]
@@ -160,7 +162,7 @@ public sealed class ContentReworkBatch3HobbiesCraftsTests
         var rows = data.ReadText("Crafts/craft_career_links.csv")
             .Split(['\r', '\n'], StringSplitOptions.RemoveEmptyEntries);
 
-        Assert.Equal(75, rows.Length); // header + 74 validated links
+        Assert.Equal(85, rows.Length); // header + 84 validated links
 
         var woodworking = catalog.Find("woodworking_carpentry")!;
         Assert.Contains("furniture_and_carpentry", woodworking.PrimaryCareerIds);

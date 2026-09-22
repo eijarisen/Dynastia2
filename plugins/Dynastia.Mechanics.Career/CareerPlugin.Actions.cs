@@ -36,6 +36,7 @@ public sealed partial class CareerPlugin
 
                     return current.IsEmployed
                         && !actionContext.Actor.Tags.Has("civic.office.town_head")
+                        && !actionContext.Actor.Tags.Has("occupation.criminal")
                         && !current.IsSelfEmployed
                         && !current.IsRetired;
                 },

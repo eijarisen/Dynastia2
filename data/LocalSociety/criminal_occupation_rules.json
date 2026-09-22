@@ -1,0 +1,65 @@
+{
+  "schemaVersion": "1.0",
+  "startActionId": "justice.commit_crime",
+  "stopActionId": "justice.leave_life_of_crime",
+  "occupationTag": "occupation.criminal",
+  "minimumAge": 18,
+  "requiredMorals": "Evil",
+  "firstUse": {
+    "startsOccupation": true,
+    "performsImmediateHeist": true,
+    "neverAvailableAgainOnceOccupationHasEverStarted": true
+  },
+  "occupation": {
+    "exclusiveWithRegularCareer": true,
+    "exclusiveWithCraftSelfEmployment": true,
+    "excludedFromFarmLabor": true,
+    "automaticRetirement": false,
+    "continuesAfterPrisonRelease": true,
+    "noHeistWhileImprisoned": true
+  },
+  "mastery": {
+    "source": "active heist years only",
+    "noEducation": true,
+    "masteryFile": "criminal_mastery_levels.csv"
+  },
+  "archetype": {
+    "highestStatDeterminesType": true,
+    "stats": [
+      "appeal",
+      "strength",
+      "intellect"
+    ],
+    "allThreeFiveIsMastermind": true,
+    "tieHandling": {
+      "appeal_strength": "appeal_strength",
+      "appeal_intellect": "appeal_intellect",
+      "strength_intellect": "strength_intellect",
+      "threeWayNon555": "balanced"
+    }
+  },
+  "heist": {
+    "baseIncome": 1000,
+    "incomeRollMinimum": 0,
+    "incomeRollMaximumInclusive": 94,
+    "formula": "round(baseIncome * 100 / min(99, 100-randomRoll-masteryLevel) * aptitudeMultiplier * archetypeIncomeMultiplier)",
+    "aptitudeMultiplier": "clamp(1 + 0.05 * (((appeal+strength+intellect)/3.0)-3), 0.90, 1.10)",
+    "mastermindSentenceMultiplier": 0.8,
+    "crimeSelection": "profit crimes available for year/age; weight x2 if PrimaryStat is dominant; x1.5 if SecondaryStat is dominant; exclude RequiresEmployment when no regular Job",
+    "caughtConfiscation": "50% of heist proceeds",
+    "uncaughtKeepsAllProceeds": true
+  },
+  "annualSystem": {
+    "phase": "LifeEvents",
+    "oneHeistPerCalendarYear": true,
+    "skipOrdinaryRandomCrimeSystemWhenActive": true,
+    "recordMasteryYearAfterHeistAttempt": true
+  },
+  "news": {
+    "occupationStarted": "justice.life_of_crime_started",
+    "income": "justice.criminal_income",
+    "mastery": "justice.criminal_mastery",
+    "master": "justice.criminal_master",
+    "occupationStopped": "justice.life_of_crime_ended"
+  }
+}

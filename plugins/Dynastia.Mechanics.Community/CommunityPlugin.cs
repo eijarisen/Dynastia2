@@ -77,7 +77,8 @@ public sealed class CommunityPlugin : IGamePlugin
             random,
             events,
             civicCatalog,
-            civicRules);
+            civicRules,
+            () => context.GetService<ICriminalOccupationService>());
 
         context.AddService<ICommunityPolicyService>(community);
         context.AddService<IHouseholdConnectionService>(connections);

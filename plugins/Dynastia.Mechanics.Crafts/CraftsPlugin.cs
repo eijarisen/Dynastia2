@@ -43,7 +43,8 @@ public sealed class CraftsPlugin : IGamePlugin
             events,
             contextWeights,
             catalog,
-            () => context.GetService<ICommunityPolicyService>());
+            () => context.GetService<ICommunityPolicyService>(),
+            () => context.GetService<ICriminalOccupationService>());
 
         context.AddService<ICraftService>(service);
         income.Register(service);

@@ -33,6 +33,7 @@ public sealed partial class StandardCareerService :
     private readonly Func<IStatusService?> _statusResolver;
     private readonly Func<ICommunityPolicyService?> _communityResolver;
     private readonly Func<ICivicOfficeService?> _civicOfficeResolver;
+    private readonly Func<ICriminalOccupationService?> _criminalResolver;
 
     internal StandardCareerService(
         IGameState gameState,
@@ -54,7 +55,8 @@ public sealed partial class StandardCareerService :
         Func<ICraftService?> craftResolver,
         Func<IStatusService?> statusResolver,
         Func<ICommunityPolicyService?>? communityResolver = null,
-        Func<ICivicOfficeService?>? civicOfficeResolver = null)
+        Func<ICivicOfficeService?>? civicOfficeResolver = null,
+        Func<ICriminalOccupationService?>? criminalResolver = null)
     {
         _gameState = gameState;
         _family = family;
@@ -85,6 +87,7 @@ public sealed partial class StandardCareerService :
             statusResolver;
         _communityResolver = communityResolver ?? (() => null);
         _civicOfficeResolver = civicOfficeResolver ?? (() => null);
+        _criminalResolver = criminalResolver ?? (() => null);
     }
 
     public void EnsureCareer(
@@ -195,6 +198,30 @@ public sealed partial class StandardCareerService :
                 null);
         }
 
+        var criminal = _criminalResolver();
+        if (criminal?.IsActive(person) == true)
+        {
+            var crime = criminal.GetSnapshot(person);
+            return new CareerSnapshot(
+                0,
+                $"Life of Crime — {crime.ArchetypeName} · {crime.MasteryName}",
+                career.JobSatisfaction,
+                ResolveJobSatisfactionText(career.JobSatisfaction),
+                crime.LastAnnualIncome,
+                crime.ExpectedAnnualIncome,
+                false,
+                null,
+                "Life of Crime",
+                1000m,
+                career.PeakJobLevel,
+                career.PeakCareerId,
+                ResolvePeakJobTitle(career),
+                null,
+                true,
+                false,
+                null);
+        }
+
         var definition =
             ResolveDefinition(
                 person,
@@ -252,8 +279,11 @@ public sealed partial class StandardCareerService :
 
     public bool IsEmployed(IPerson person)
     {
-        if (_civicOfficeResolver()?.IsTownHead(person) == true)
+        if (_civicOfficeResolver()?.IsTownHead(person) == true
+            || _criminalResolver()?.IsActive(person) == true)
+        {
             return true;
+        }
 
         var career = GetRequired(person);
         return (!career.IsRetired && career.JobLevel > 0)
@@ -379,6 +409,8 @@ public sealed partial class StandardCareerService :
 
             return;
         }
+
+        _criminalResolver()?.EndLifeOfCrime(person, "formal employment");
 
         var definition =
             _catalog.Find(

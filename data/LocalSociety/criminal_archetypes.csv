@@ -1,0 +1,9 @@
+﻿ArchetypeId,DisplayName,DominantStats,IncomeMultiplier
+appeal,Charming Scammer,appeal,1.0
+strength,Brute Offender,strength,1.0
+intellect,Clever Robber,intellect,1.0
+appeal_strength,Intimidating Grifter,appeal;strength,1.03
+appeal_intellect,Con Artist,appeal;intellect,1.05
+strength_intellect,Professional Thief,strength;intellect,1.05
+balanced,Versatile Criminal,appeal;strength;intellect,1.0
+mastermind,Criminal Mastermind,appeal;strength;intellect,1.25

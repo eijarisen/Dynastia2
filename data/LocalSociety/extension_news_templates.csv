@@ -1,0 +1,14 @@
+﻿EventType,Emoji,TextTemplate
+justice.life_of_crime_started,🕵️,{Person} turned to a life of crime as a {Archetype}.
+justice.criminal_income,💰,{Person}'s criminal operation brought in {Amount} zł.
+justice.criminal_mastery,🕵️,{Person} advanced to {Mastery} in the criminal underworld.
+justice.criminal_master,🎭,{Person} became a Master {Archetype}.
+justice.life_of_crime_ended,🚪,{Person} left the life of crime.
+justice.bailed_out,💵,The household paid {Amount} zł to secure {Person}'s release from prison.
+justice.escape_success,🔓,{Person} escaped from prison.
+justice.escape_failed,⛓️,"{Person}'s escape attempt failed, adding {Years} years to the sentence."
+justice.stolen_heirloom_sale_caught,🚨,{Person} was caught trying to sell {Item}; the item was confiscated.
+reproduction.unknown_father_birth,👶,{Mother} gave birth to {Child}. The father is unknown.
+reproduction.birth_and_marriage,💍,{Mother} gave birth to {Child} and married {Father} in the same year.
+reproduction.teen_birth,👶,"At age {Age}, {Mother} gave birth to {Child}."
+reproduction.teen_marriage,💍,"At age {Age}, {Mother} married {Father}."

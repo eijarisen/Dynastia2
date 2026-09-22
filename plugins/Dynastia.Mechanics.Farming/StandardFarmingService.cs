@@ -121,6 +121,7 @@ internal sealed class StandardFarmingService :
         if (!person.Tags.Has("state.alive")
             || person.Age < 10
             || person.Tags.Has("state.imprisoned")
+            || person.Tags.Has("occupation.criminal")
             || !_workCapacity.GetWorkCapacity(person).CanWork
             || person.Tags.Has("role.nanny")
             || person.Tags.Has("role.family_nanny"))

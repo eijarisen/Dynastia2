@@ -231,6 +231,9 @@ public sealed partial class StandardCareerService
                 level > 0 ? "formal employment" : "ended");
         }
 
+        if (level > 0)
+            _criminalResolver()?.EndLifeOfCrime(person, "formal employment");
+
         var definition = level > 0
             ? _catalog.Find(careerId)
             : null;

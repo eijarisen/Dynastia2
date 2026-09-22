@@ -23,6 +23,7 @@ internal sealed class StandardCraftService : ICraftService, IIncomeProvider
     private readonly CraftCatalog _catalog;
     private readonly IContextWeightCatalog _context;
     private readonly Func<ICommunityPolicyService?> _communityResolver;
+    private readonly Func<ICriminalOccupationService?> _criminalResolver;
 
     public StandardCraftService(
         IGameState gameState,
@@ -39,7 +40,8 @@ internal sealed class StandardCraftService : ICraftService, IIncomeProvider
         IGameEventBus events,
         IContextWeightService contextWeights,
         CraftCatalog catalog,
-        Func<ICommunityPolicyService?>? communityResolver = null)
+        Func<ICommunityPolicyService?>? communityResolver = null,
+        Func<ICriminalOccupationService?>? criminalResolver = null)
     {
         _gameState = gameState;
         _family = family;
@@ -56,6 +58,7 @@ internal sealed class StandardCraftService : ICraftService, IIncomeProvider
         _catalog = catalog;
         _context = contextWeights.LoadCatalog(ContextPath, catalog.All.Select(craft => craft.Id));
         _communityResolver = communityResolver ?? (() => null);
+        _criminalResolver = criminalResolver ?? (() => null);
     }
 
     public string Id => "crafts";
@@ -473,6 +476,8 @@ internal sealed class StandardCraftService : ICraftService, IIncomeProvider
         {
             return false;
         }
+
+        _criminalResolver()?.EndLifeOfCrime(person, "craft occupation");
 
         var component = GetMutable(person);
         if (component.ActiveCraftOccupationId?.Equals(craft.Id, StringComparison.OrdinalIgnoreCase) == true)

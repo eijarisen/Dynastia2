@@ -27,6 +27,7 @@ internal sealed class CivicOfficeService : ICivicOfficeService
     private readonly IGameEventBus _events;
     private readonly CivicOfficeCatalog _catalog;
     private readonly CivicOfficeRules _rules;
+    private readonly Func<ICriminalOccupationService?> _criminalResolver;
 
     public CivicOfficeService(
         IGameState gameState,
@@ -45,7 +46,8 @@ internal sealed class CivicOfficeService : ICivicOfficeService
         IGameRandom random,
         IGameEventBus events,
         CivicOfficeCatalog catalog,
-        CivicOfficeRules rules)
+        CivicOfficeRules rules,
+        Func<ICriminalOccupationService?>? criminalResolver = null)
     {
         _gameState = gameState;
         _locations = locations;
@@ -64,6 +66,7 @@ internal sealed class CivicOfficeService : ICivicOfficeService
         _events = events;
         _catalog = catalog;
         _rules = rules;
+        _criminalResolver = criminalResolver ?? (() => null);
     }
 
     public CivicOfficeProfileInfo? GetProfile(TownInfo town, int year) =>
@@ -383,6 +386,7 @@ internal sealed class CivicOfficeService : ICivicOfficeService
         var before = _career.GetCareer(person);
         _career.AssignCareer(person, null, 0, before.JobSatisfaction);
         _crafts.EndOccupation(person, "civic office");
+        _criminalResolver()?.EndLifeOfCrime(person, "civic office");
         person.Tags.Add(TownHeadTag);
 
         state.HeadPersonId = person.Id;

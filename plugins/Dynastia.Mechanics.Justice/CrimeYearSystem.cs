@@ -65,8 +65,12 @@ public sealed class CrimeYearSystem : IYearSystem
             .Where(p => p.Tags.Has("state.alive") && !SimulationState.IsInactive(p))
             .ToList())
         {
-            if (person.Age < _attemptRules.MinimumAge || _justice.IsImprisoned(person))
+            if (person.Age < _attemptRules.MinimumAge
+                || _justice.IsImprisoned(person)
+                || person.Tags.Has("occupation.criminal"))
+            {
                 continue;
+            }
 
             var household = _economy.GetHousehold(person);
             var broke = household is not null && household.Wealth <= 0;

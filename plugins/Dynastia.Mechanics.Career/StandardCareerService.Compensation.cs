@@ -7,6 +7,9 @@ public sealed partial class StandardCareerService
     public void Retire(
         IPerson person)
     {
+        if (_criminalResolver()?.IsActive(person) == true)
+            return;
+
         var career =
             GetRequired(
                 person);

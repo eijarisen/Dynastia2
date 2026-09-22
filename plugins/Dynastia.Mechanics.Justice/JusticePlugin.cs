@@ -3,7 +3,7 @@ using Dynastia.Contracts;
 
 namespace Dynastia.Mechanics.Justice;
 
-public sealed class JusticePlugin : IGamePlugin
+public sealed partial class JusticePlugin : IGamePlugin
 {
     private const string CrimesPath = "Common/crimes.json";
     private const string AttemptRulesPath = "Justice/crime_attempt_rules.json";
@@ -27,6 +27,7 @@ public sealed class JusticePlugin : IGamePlugin
     public void Initialize(IGamePluginContext context)
     {
         var family = context.GetService<IFamilyService>() ?? throw new InvalidOperationException("Family service is unavailable.");
+        var personality = context.GetService<IPersonalityService>() ?? throw new InvalidOperationException("Personality service is unavailable.");
         var stats = context.GetService<IStatsService>() ?? throw new InvalidOperationException("Stats service is unavailable.");
         var career = context.GetService<ICareerService>() ?? throw new InvalidOperationException("Career service is unavailable.");
         var economy = context.GetService<IEconomyService>() ?? throw new InvalidOperationException("Economy service is unavailable.");
@@ -37,6 +38,8 @@ public sealed class JusticePlugin : IGamePlugin
         var random = context.GetService<IGameRandom>() ?? throw new InvalidOperationException("Random service is unavailable.");
         var events = context.GetService<IGameEventBus>() ?? throw new InvalidOperationException("Game event bus is unavailable.");
         var systems = context.GetService<IYearSystemRegistry>() ?? throw new InvalidOperationException("Year system registry is unavailable.");
+        var actions = context.GetService<IActionRegistry>() ?? throw new InvalidOperationException("Action registry is unavailable.");
+        var income = context.GetService<IIncomeProviderRegistry>() ?? throw new InvalidOperationException("Income provider registry is unavailable.");
         var guards = context.GetService<IActionGuardRegistry>() ?? throw new InvalidOperationException("Action guard registry is unavailable.");
         var stressModifiers = context.GetService<IStressModifierRegistry>() ?? throw new InvalidOperationException("Stress modifier registry is unavailable.");
         var stress = context.GetService<IStressService>();
@@ -61,24 +64,53 @@ public sealed class JusticePlugin : IGamePlugin
         var historicalCrimes = CrimeHistoricalCatalog.Load(
             data,
             crimes.Select(crime => crime.Id));
+        var criminalCatalog = CriminalOccupationCatalog.Load(data);
         var attemptContext = contextWeights.LoadGlobalCatalog(AttemptContextPath);
         var crimeContext = contextWeights.LoadCatalog(
             CrimeContextPath,
             crimes.Select(crime => crime.Id));
 
         var justice = new StandardJusticeService();
+        var criminalOccupation = new CriminalOccupationService(
+            context.GetService<IGameState>()!,
+            family,
+            stats,
+            career,
+            economy,
+            justice,
+            random,
+            events,
+            criminalCatalog,
+            crimes,
+            historicalCrimes,
+            () => context.GetService<ICraftService>());
         context.AddService<IJusticeService>(justice);
+        context.AddService<ICriminalOccupationService>(criminalOccupation);
+        income.Register(criminalOccupation);
 
         context.GetService<IStateReconciliationLifecycle>()?
             .Register(
                 "justice.components",
                 Enum.GetValues<ReconciliationLifecycleStage>(),
-                _ => justice.ReconcileAll(context.GetService<IGameState>()!.People),
+                _ =>
+                {
+                    var people = context.GetService<IGameState>()!.People;
+                    justice.ReconcileAll(people);
+                    criminalOccupation.ReconcileAll(people);
+                },
                 order: 42);
 
         stressModifiers.Register(new JusticeStressModifierProvider(justice));
         guards.Register(new PrisonActionGuard(justice));
+        RegisterCriminalOccupationActions(
+            actions,
+            criminalOccupation,
+            family,
+            economy,
+            personality,
+            criminalCatalog.Rules);
         systems.Register(new PrisonStatusYearSystem(justice, family, events));
+        systems.Register(new CriminalOccupationYearSystem(criminalOccupation));
         systems.Register(new CrimeYearSystem(
             justice,
             family,

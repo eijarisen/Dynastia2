@@ -1,0 +1,6 @@
+﻿Level,DisplayName,RequiredActiveHeistYears,BaseDetectionChance
+1,Novice,0,0.45
+2,Apprentice,2,0.34
+3,Adept,5,0.24
+4,Expert,9,0.15
+5,Master,15,0.08

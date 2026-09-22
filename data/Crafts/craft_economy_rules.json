@@ -10,7 +10,7 @@
     "integerMaximumInclusive": 94,
     "denominatorMaximum": 99
   },
-  "incomeFormula": "yearlyIncome = round(baseSalary * 100 / min(99, (100 - randomRoll - masteryLevel)))",
+  "incomeFormula": "yearlyIncome = round(baseSalary * meanPreservingTailCompressedMultiplier(randomRoll, masteryLevel, cap=20))",
   "majorCommission": {
     "integerRollRequired": 94,
     "minimumMasteryLevel": 5,

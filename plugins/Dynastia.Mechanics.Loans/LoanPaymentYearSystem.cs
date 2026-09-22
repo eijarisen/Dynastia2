@@ -40,20 +40,63 @@ internal sealed class LoanPaymentYearSystem :
     public void Execute(
         IGameState gameState)
     {
-        foreach (var item in
-            _loans.EnumerateContracts()
-                .Where(item =>
-                    item.Contract.Status == LoanStatus.Active)
-                .ToList())
-        {
-            ProcessContract(
+        // Materialize every due payment before changing household balances or
+        // loan-contract progress. This keeps cross-household settlement
+        // independent of the order in which contracts happen to be stored.
+        var duePayments = _loans.EnumerateContracts()
+            .Where(item => item.Contract.Status == LoanStatus.Active)
+            .Select(item => MaterializeDuePayment(
                 gameState,
                 item.PortfolioOwner,
-                item.Contract);
+                item.Contract))
+            .Where(item => item is not null)
+            .Cast<DuePayment>()
+            .ToList();
+
+        // Creditor income is part of this year's Finance phase. Credit all
+        // recipients first so equivalent annual resources fund equivalent
+        // basic needs regardless of reciprocal loan-contract ordering.
+        foreach (var due in duePayments)
+        {
+            if (due.Contract.IsExternalReceivable
+                || due.Contract.CreditorType == LoanCreditorType.Private)
+            {
+                DistributePrivatePayment(
+                    gameState,
+                    due.Contract,
+                    due.Payment);
+            }
+        }
+
+        // Simulated borrowers are debited only after all creditor allocations
+        // have been realized. External receivables have no simulated borrower.
+        foreach (var due in duePayments)
+        {
+            if (due.BorrowerRepresentative is null)
+                continue;
+
+            _economy.ChangeWealthAllowDebt(
+                due.BorrowerRepresentative,
+                -due.Payment);
+
+            _economy.RecordRealizedExpense(
+                due.BorrowerRepresentative,
+                "loan repayments",
+                due.Payment);
+        }
+
+        // Advance each contract exactly once after money movement is complete.
+        foreach (var due in duePayments)
+        {
+            ProgressContract(
+                gameState,
+                due.PortfolioOwner,
+                due.Contract,
+                due.Payment);
         }
     }
 
-    private void ProcessContract(
+    private DuePayment? MaterializeDuePayment(
         IGameState gameState,
         IPerson portfolioOwner,
         LoanContractState contract)
@@ -64,7 +107,7 @@ internal sealed class LoanPaymentYearSystem :
             || contract.RemainingAmount <= 0
             || contract.YearsPaid >= contract.DurationYears)
         {
-            return;
+            return null;
         }
 
         var payment =
@@ -72,61 +115,53 @@ internal sealed class LoanPaymentYearSystem :
                 contract);
 
         if (payment <= 0)
-            return;
+            return null;
 
         if (contract.IsExternalReceivable)
         {
-            // The customer exists outside the simulated family economy. No
-            // borrower household receives principal or loses repayments.
-            DistributePrivatePayment(
-                gameState,
+            return new DuePayment(
+                portfolioOwner,
                 contract,
-                payment);
+                payment,
+                null);
         }
-        else
+
+        var householdId =
+            _loans.ResolveServicingHouseholdId(
+                portfolioOwner,
+                contract);
+
+        if (householdId is not Guid id)
+            return null;
+
+        var representative =
+            _loans.FindHouseholdRepresentative(
+                id);
+
+        if (representative is null)
+            return null;
+
+        if (portfolioOwner.Tags.Has("state.dead")
+            && !_loans.HasSurvivingFormerPartnerInHousehold(
+                portfolioOwner,
+                id))
         {
-            var householdId =
-                _loans.ResolveServicingHouseholdId(
-                    portfolioOwner,
-                    contract);
-
-            if (householdId is not Guid id)
-                return;
-
-            var representative =
-                _loans.FindHouseholdRepresentative(
-                    id);
-
-            if (representative is null)
-                return;
-
-            if (portfolioOwner.Tags.Has("state.dead")
-                && !_loans.HasSurvivingFormerPartnerInHousehold(
-                    portfolioOwner,
-                    id))
-            {
-                return;
-            }
-
-            _economy.ChangeWealthAllowDebt(
-                representative,
-                -payment);
-
-            _economy.RecordRealizedExpense(
-                representative,
-                "loan repayments",
-                payment);
-
-            if (contract.CreditorType
-                == LoanCreditorType.Private)
-            {
-                DistributePrivatePayment(
-                    gameState,
-                    contract,
-                    payment);
-            }
+            return null;
         }
 
+        return new DuePayment(
+            portfolioOwner,
+            contract,
+            payment,
+            representative);
+    }
+
+    private void ProgressContract(
+        IGameState gameState,
+        IPerson portfolioOwner,
+        LoanContractState contract,
+        decimal payment)
+    {
         contract.RemainingAmount =
             LoanTermsCalculator.RoundCurrency(
                 Math.Max(
@@ -235,8 +270,9 @@ internal sealed class LoanPaymentYearSystem :
                     share.RecipientHouseholdId =
                         ownerHouseholdId;
 
-                    _economy.ChangeWealth(
+                    _economy.ApplyAnnualFinanceReceipt(
                         owner,
+                        "loan repayments",
                         amount);
 
                     continue;
@@ -259,8 +295,9 @@ internal sealed class LoanPaymentYearSystem :
                     && !_economy.IsEstateReady(
                         representative))
                 {
-                    _economy.ChangeWealth(
+                    _economy.ApplyAnnualFinanceReceipt(
                         representative,
+                        "loan repayments",
                         amount);
                 }
             }
@@ -339,4 +376,10 @@ internal sealed class LoanPaymentYearSystem :
                 });
         }
     }
+
+    private sealed record DuePayment(
+        IPerson PortfolioOwner,
+        LoanContractState Contract,
+        decimal Payment,
+        IPerson? BorrowerRepresentative);
 }

@@ -11,6 +11,7 @@ public sealed record HouseholdStatusSnapshot(
     bool IsLargeFamilyStrained,
     bool IsAtCapacityWarning,
     bool IsBroke,
+    bool HasUnfundedBasicNeeds,
     IReadOnlyList<string> Warnings,
     string? NannyRoleLabel = null,
     int ResidentCount = 0,

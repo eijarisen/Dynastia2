@@ -8,6 +8,7 @@ internal sealed class ArtisticWorkYearSystem : IYearSystem
     private readonly IFamilyService _family;
     private readonly ICraftService _crafts;
     private readonly IHeirloomService _heirlooms;
+    private readonly IWorkCapacityService _workCapacity;
     private readonly IGameRandom _random;
     private readonly IGameEventBus _events;
     private readonly ArtisticWorkCatalog _catalog;
@@ -16,6 +17,7 @@ internal sealed class ArtisticWorkYearSystem : IYearSystem
         IFamilyService family,
         ICraftService crafts,
         IHeirloomService heirlooms,
+        IWorkCapacityService workCapacity,
         IGameRandom random,
         IGameEventBus events,
         ArtisticWorkCatalog catalog)
@@ -23,6 +25,7 @@ internal sealed class ArtisticWorkYearSystem : IYearSystem
         _family = family;
         _crafts = crafts;
         _heirlooms = heirlooms;
+        _workCapacity = workCapacity;
         _random = random;
         _events = events;
         _catalog = catalog;
@@ -39,6 +42,8 @@ internal sealed class ArtisticWorkYearSystem : IYearSystem
         {
             if (!person.Tags.Has("state.alive")
                 || SimulationState.IsInactive(person)
+                || SimulationState.IsExternallyResident(person)
+                || person.Tags.Has("state.imprisoned")
                 || !_crafts.IsSelfEmployed(person))
             {
                 continue;
@@ -50,6 +55,12 @@ internal sealed class ArtisticWorkYearSystem : IYearSystem
 
             var progress = _crafts.GetProgress(person, craft.Id);
             if (progress is null || progress.MasteryLevel is < 1 or > 5)
+                continue;
+
+            var productiveEffort = AnnualProductiveEffortRules.Get(
+                person,
+                _workCapacity);
+            if (!productiveEffort.CanProduce)
                 continue;
 
             var state = person.Components.Get<ArtisticWorkPersonComponent>();
@@ -80,7 +91,11 @@ internal sealed class ArtisticWorkYearSystem : IYearSystem
             }
 
             var production = _catalog.GetProductionRule(progress.MasteryLevel);
-            if (_random.Chance(production.AnnualProductionChance))
+            var adjustedProductionChance = Math.Clamp(
+                production.AnnualProductionChance * productiveEffort.OutputMultiplier,
+                0,
+                1);
+            if (_random.Chance(adjustedProductionChance))
                 CreateWork(person, craft, progress, gameState.Year, guaranteedMasterwork: false);
         }
     }

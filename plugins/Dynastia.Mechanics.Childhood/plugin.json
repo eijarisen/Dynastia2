@@ -9,6 +9,7 @@
     "dynastia.family",
     "dynastia.personality",
     "dynastia.health",
-    "dynastia.economy"
+    "dynastia.economy",
+    "dynastia.households"
   ]
 }

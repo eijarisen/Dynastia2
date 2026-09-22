@@ -48,6 +48,7 @@ public sealed class LocalSocietyArtisticWorksBatch11Tests
             fixture.Family,
             crafts,
             fixture.Heirlooms,
+            new FullWorkCapacityService(),
             random,
             fixture.Events,
             artistic);
@@ -66,6 +67,69 @@ public sealed class LocalSocietyArtisticWorksBatch11Tests
         system.Execute(fixture.State);
         Assert.Equal(1, random.ChanceCalls);
         Assert.Single(fixture.Heirlooms.GetHeirlooms(fixture.Head));
+    }
+
+    [Fact]
+    public void ZeroWorkCapacityDefersMasterGuaranteeWithoutConsumingEvaluation()
+    {
+        var fixture = CreateFixture();
+        var data = RepositoryData();
+        var craftCatalog = CraftCatalog.Load(data);
+        var artistic = ArtisticWorkCatalog.Load(data, fixture.Catalog, craftCatalog.All);
+        var writer = craftCatalog.Find("writer")!;
+        var crafts = new MasterWriterCraftService(writer);
+        var random = new DeterministicRandom(chanceResult: false);
+
+        new ArtisticWorkYearSystem(
+            fixture.Family,
+            crafts,
+            fixture.Heirlooms,
+            new NoWorkCapacityService(),
+            random,
+            fixture.Events,
+            artistic).Execute(fixture.State);
+
+        Assert.Empty(fixture.Heirlooms.GetHeirlooms(fixture.Head));
+        Assert.Null(fixture.Head.Components.Get<ArtisticWorkPersonComponent>());
+        Assert.Equal(0, random.ChanceCalls);
+
+        new ArtisticWorkYearSystem(
+            fixture.Family,
+            crafts,
+            fixture.Heirlooms,
+            new FullWorkCapacityService(),
+            random,
+            fixture.Events,
+            artistic).Execute(fixture.State);
+
+        Assert.Single(fixture.Heirlooms.GetHeirlooms(fixture.Head));
+        Assert.Equal(0, random.ChanceCalls);
+    }
+
+    [Fact]
+    public void OrdinaryArtChanceScalesWithSharedProductiveEffort()
+    {
+        var fixture = CreateFixture();
+        var data = RepositoryData();
+        var craftCatalog = CraftCatalog.Load(data);
+        var artistic = ArtisticWorkCatalog.Load(data, fixture.Catalog, craftCatalog.All);
+        var writer = craftCatalog.Find("writer")!;
+        var crafts = new MasterWriterCraftService(writer, masteryLevel: 4);
+        var random = new DeterministicRandom(chanceResult: false);
+        var system = new ArtisticWorkYearSystem(
+            fixture.Family,
+            crafts,
+            fixture.Heirlooms,
+            new HalfWorkCapacityService(),
+            random,
+            fixture.Events,
+            artistic);
+
+        system.Execute(fixture.State);
+
+        Assert.Equal(1, random.ChanceCalls);
+        Assert.Equal(0.035, random.LastChanceProbability, 10);
+        Assert.Empty(fixture.Heirlooms.GetHeirlooms(fixture.Head));
     }
 
     [Fact]
@@ -274,16 +338,36 @@ public sealed class LocalSocietyArtisticWorksBatch11Tests
         HeirloomCatalog Catalog,
         StandardHeirloomService Heirlooms);
 
+    private sealed class FullWorkCapacityService : IWorkCapacityService
+    {
+        public WorkCapacitySnapshot GetWorkCapacity(IPerson person) =>
+            new(1.0, true);
+    }
+
+    private sealed class HalfWorkCapacityService : IWorkCapacityService
+    {
+        public WorkCapacitySnapshot GetWorkCapacity(IPerson person) =>
+            new(0.5, true);
+    }
+
+    private sealed class NoWorkCapacityService : IWorkCapacityService
+    {
+        public WorkCapacitySnapshot GetWorkCapacity(IPerson person) =>
+            new(0, false);
+    }
+
     private sealed class DeterministicRandom : IGameRandom
     {
         private readonly bool _chanceResult;
         public DeterministicRandom(bool chanceResult = false) => _chanceResult = chanceResult;
         public int ChanceCalls { get; private set; }
+        public double LastChanceProbability { get; private set; }
         public int NextInt(int minInclusive, int maxInclusive) => minInclusive;
         public double NextDouble() => 0.5;
         public bool Chance(double probability)
         {
             ChanceCalls++;
+            LastChanceProbability = probability;
             return _chanceResult;
         }
     }
@@ -291,7 +375,12 @@ public sealed class LocalSocietyArtisticWorksBatch11Tests
     private sealed class MasterWriterCraftService : ICraftService
     {
         private readonly CraftInfo _writer;
-        public MasterWriterCraftService(CraftInfo writer) => _writer = writer;
+        private readonly int _masteryLevel;
+        public MasterWriterCraftService(CraftInfo writer, int masteryLevel = 5)
+        {
+            _writer = writer;
+            _masteryLevel = masteryLevel;
+        }
         public IReadOnlyList<CraftInfo> Catalog => [_writer];
         public CraftSnapshot GetSnapshot(IPerson person) => new(
             [_writer], _writer.Id, _writer.SelfEmploymentTitle, _writer.Emoji,
@@ -301,7 +390,19 @@ public sealed class LocalSocietyArtisticWorksBatch11Tests
         public bool IsSelfEmployed(IPerson person) => true;
         public CraftInfo? GetActiveCraft(IPerson person) => _writer;
         public CraftProgressSnapshot? GetProgress(IPerson person, string craftId) => new(
-            _writer.Id, _writer.Name, 5, "Master", 100, 100, 0, 10, 10, 0, 0m, null, null);
+            _writer.Id,
+            _writer.Name,
+            _masteryLevel,
+            _masteryLevel >= 5 ? "Master" : "Expert",
+            100,
+            100,
+            0,
+            10,
+            10,
+            0,
+            0m,
+            null,
+            null);
         public IReadOnlyList<CraftEducationOption> GetEducationOptions(IPerson person) => [];
         public CraftEducationResult StudyCraft(IPerson person, string craftId) => throw new NotSupportedException();
         public bool CanLearnCraft(IPerson person, string craftId) => false;

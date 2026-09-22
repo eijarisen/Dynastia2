@@ -592,18 +592,12 @@ internal sealed class StandardCraftService : ICraftService, IIncomeProvider
             return 0m;
 
         var income = GetExpectedAnnualIncome(active, progress.MasteryLevel);
-        var recoverReduction = ReadPercent(person, "modifier.salary.recover.");
-        if (recoverReduction > 0m)
-        {
-            income = Math.Round(
-                income * (1m - recoverReduction / 100m),
-                0,
-                MidpointRounding.AwayFromZero);
-        }
-
-        income = _workCapacity
-            .GetWorkCapacity(person)
-            .Apply(income);
+        var productiveEffort = AnnualProductiveEffortRules.Get(
+            person,
+            _workCapacity);
+        income = ApplyProductiveEffort(
+            income,
+            productiveEffort);
 
         return ApplyTownIncomeMultiplier(
             person,
@@ -633,18 +627,12 @@ internal sealed class StandardCraftService : ICraftService, IIncomeProvider
             progress.MasteryLevel,
             randomRoll);
 
-        var recoverReduction = ReadPercent(person, "modifier.salary.recover.");
-        if (recoverReduction > 0m)
-        {
-            income = Math.Round(
-                income * (1m - recoverReduction / 100m),
-                0,
-                MidpointRounding.AwayFromZero);
-        }
-
-        income = _workCapacity
-            .GetWorkCapacity(person)
-            .Apply(income);
+        var productiveEffort = AnnualProductiveEffortRules.Get(
+            person,
+            _workCapacity);
+        income = ApplyProductiveEffort(
+            income,
+            productiveEffort);
 
         income = ApplyTownIncomeMultiplier(person, active, income);
 
@@ -991,16 +979,24 @@ internal sealed class StandardCraftService : ICraftService, IIncomeProvider
             .Concat(location.TownOpportunityTags)
             .ToHashSet(StringComparer.OrdinalIgnoreCase);
 
-    private static decimal ReadPercent(IPerson person, string prefix)
+    private static decimal ApplyProductiveEffort(
+        decimal income,
+        AnnualProductiveEffortSnapshot effort)
     {
-        foreach (var tag in person.Tags.All)
+        if (!effort.CanProduce || income <= 0m)
+            return 0m;
+
+        if (effort.RecoverReductionPercent > 0m)
         {
-            if (!tag.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
-                continue;
-            if (decimal.TryParse(tag[prefix.Length..], NumberStyles.Number, CultureInfo.InvariantCulture, out var percent))
-                return Math.Clamp(percent, 0m, 50m);
+            // Preserve Craft's existing whole-zloty Recover rounding before
+            // health work capacity is applied.
+            income = Math.Round(
+                income * effort.RecoverMultiplier,
+                0,
+                MidpointRounding.AwayFromZero);
         }
-        return 0m;
+
+        return income * (decimal)effort.WorkCapacityMultiplier;
     }
 
     internal void ReconcileAll()

@@ -167,6 +167,9 @@ public sealed partial class StandardHouseholdService :
         var broke =
             finance.Wealth <= 0;
 
+        var hasUnfundedBasicNeeds =
+            finance.HasUnfundedBasicNeeds;
+
         var nanny =
             GetNanny(
                 actualHead);
@@ -188,10 +191,10 @@ public sealed partial class StandardHouseholdService :
                 "Having more kids will strain the family.");
         }
 
-        if (broke)
+        if (hasUnfundedBasicNeeds)
         {
             warnings.Add(
-                "Being broke is negatively impacting the family's health.");
+                "The household could not fully cover its basic needs this year.");
         }
 
         if (overcrowded)
@@ -219,6 +222,7 @@ public sealed partial class StandardHouseholdService :
             strained,
             atCapacity,
             broke,
+            hasUnfundedBasicNeeds,
             warnings,
             _career.GetStatusLabel(
                 "role.nanny"),

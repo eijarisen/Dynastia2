@@ -70,8 +70,18 @@ internal sealed class CivicOfficeService : ICivicOfficeService
         _criminalResolver = criminalResolver ?? (() => null);
     }
 
-    public CivicOfficeProfileInfo? GetProfile(TownInfo town, int year) =>
-        _catalog.Resolve(town.PolityId, year);
+    public CivicOfficeProfileInfo? GetProfile(TownInfo town, int year)
+    {
+        ArgumentNullException.ThrowIfNull(town);
+
+        var profileYear = Math.Min(
+            year,
+            GameCalendarConfiguration.TechnologyFreezeYear);
+
+        return _catalog.Resolve(
+            town.PolityId,
+            profileYear);
+    }
 
     public CivicOfficeHeadInfo? GetTownHead(TownInfo town, int year)
     {
@@ -81,14 +91,19 @@ internal sealed class CivicOfficeService : ICivicOfficeService
             return null;
 
         var state = GetOrCreateOfficeState(town, year, profile);
+        if (state.HeadPersonId is Guid
+            && !IsActiveSimulatedIncumbent(state, town, profile))
+        {
+            return null;
+        }
+
         return BuildInfo(state, town, year, profile);
     }
 
     public CivicOfficeHeadInfo? GetOffice(IPerson person)
     {
         ArgumentNullException.ThrowIfNull(person);
-        var state = GetWorldState(create: false)?.CivicOffices
-            .FirstOrDefault(office => office.HeadPersonId == person.Id);
+        var state = FindOfficeByPerson(person.Id);
         if (state is null)
             return null;
 
@@ -98,34 +113,28 @@ internal sealed class CivicOfficeService : ICivicOfficeService
             return null;
 
         var profile = GetProfile(town, _gameState.Year);
-        return profile is null
-            ? null
-            : BuildInfo(state, town, _gameState.Year, profile);
+        if (profile is null
+            || !IsActiveSimulatedIncumbent(state, town, profile))
+        {
+            return null;
+        }
+
+        return BuildInfo(state, town, _gameState.Year, profile);
     }
 
     public bool IsTownHead(IPerson person) =>
-        GetWorldState(create: false)?.CivicOffices.Any(
-            office => office.HeadPersonId == person.Id) == true;
+        GetOffice(person) is not null;
 
-    public string? GetOfficeTitle(IPerson person)
-    {
-        var state = FindOfficeByPerson(person.Id);
-        if (state is null)
-            return null;
-        var town = _locations.FindTownAtYear(state.TownId, _gameState.Year)
-            ?? _locations.FindTown(state.TownId);
-        var profile = town is null ? null : GetProfile(town, _gameState.Year);
-        return town is null || profile is null
-            ? null
-            : profile.ResolveHeadTitle(town.SettlementClass);
-    }
+    public string? GetOfficeTitle(IPerson person) =>
+        GetOffice(person)?.OfficeTitle;
 
     public bool IsEligible(IPerson person, TownInfo town, int year)
     {
         if (!person.Tags.Has("state.alive")
             || person.Tags.Has("state.imprisoned")
             || person.Tags.Has("vocation.religious.active")
-            || SimulationState.IsInactive(person))
+            || SimulationState.IsInactive(person)
+            || SimulationState.IsExternallyResident(person))
         {
             return false;
         }
@@ -161,15 +170,8 @@ internal sealed class CivicOfficeService : ICivicOfficeService
         return GetParticipationCount(person) >= profile.MinimumParticipation;
     }
 
-    public decimal GetAnnualSalary(IPerson person)
-    {
-        var state = FindOfficeByPerson(person.Id);
-        if (state is null)
-            return 0m;
-        var town = _locations.FindTownAtYear(state.TownId, _gameState.Year)
-            ?? _locations.FindTown(state.TownId);
-        return town is null ? 0m : CalculateSalary(town);
-    }
+    public decimal GetAnnualSalary(IPerson person) =>
+        GetOffice(person)?.AnnualSalary ?? 0m;
 
     internal void MarkOfficeAction(IPerson actor) =>
         MarkOfficeAction(actor.Id);
@@ -224,7 +226,21 @@ internal sealed class CivicOfficeService : ICivicOfficeService
         }
 
         var simulatedHeads = world?.CivicOffices
-            .Where(office => office.HeadPersonId.HasValue)
+            .Where(office =>
+            {
+                if (office.HeadPersonId is null)
+                    return false;
+
+                var town = _locations.FindTownAtYear(office.TownId, _gameState.Year)
+                    ?? _locations.FindTown(office.TownId);
+                var profile = town is null
+                    ? null
+                    : GetProfile(town, _gameState.Year);
+
+                return town is not null
+                    && profile is not null
+                    && IsActiveSimulatedIncumbent(office, town, profile);
+            })
             .Select(office => office.HeadPersonId!.Value)
             .ToHashSet() ?? [];
 
@@ -267,26 +283,35 @@ internal sealed class CivicOfficeService : ICivicOfficeService
     {
         var profile = GetProfile(town, _gameState.Year);
         if (profile is null)
+        {
+            DeactivateUnsupportedOffice(town);
             return;
+        }
 
         var state = GetOrCreateOfficeState(town, _gameState.Year, profile);
-        if (state.LastProcessedYear >= _gameState.Year)
-            return;
-
         var outgoing = state.HeadPersonId is Guid id
             ? _gameState.People.FirstOrDefault(person => person.Id == id)
             : null;
 
-        if (outgoing is not null
-            && (!outgoing.Tags.Has("state.alive")
-                || outgoing.Tags.Has("state.imprisoned")
-                || !_economy.GetResidenceTown(outgoing).Id.Equals(town.Id, StringComparison.OrdinalIgnoreCase)))
+        if (state.HeadPersonId is Guid outgoingId
+            && !IsActiveSimulatedIncumbent(state, town, profile))
         {
-            LoseSimulatedOffice(outgoing, state, town, "lost civic office");
-            SelectReplacement(state, town, outgoing.Id);
+            if (outgoing is not null)
+            {
+                LoseSimulatedOffice(outgoing, state, town, "lost civic office");
+            }
+            else
+            {
+                state.HeadPersonId = null;
+            }
+
+            SelectReplacement(state, town, outgoingId);
             state.LastProcessedYear = _gameState.Year;
             return;
         }
+
+        if (state.LastProcessedYear >= _gameState.Year)
+            return;
 
         UpdateApproval(state, town);
 
@@ -301,6 +326,52 @@ internal sealed class CivicOfficeService : ICivicOfficeService
         }
 
         state.LastProcessedYear = _gameState.Year;
+    }
+
+    private bool IsActiveSimulatedIncumbent(
+        CivicOfficeTownState state,
+        TownInfo town,
+        CivicOfficeProfileInfo profile)
+    {
+        if (state.HeadPersonId is not Guid personId)
+            return false;
+
+        var person = _gameState.People.FirstOrDefault(candidate => candidate.Id == personId);
+        if (person is null
+            || !person.Tags.Has("state.alive")
+            || person.Tags.Has("state.imprisoned")
+            || SimulationState.IsInactive(person)
+            || SimulationState.IsExternallyResident(person)
+            || _economy.GetHouseholdId(person) is null)
+        {
+            return false;
+        }
+
+        var resolvedProfile = GetProfile(town, _gameState.Year);
+        if (resolvedProfile is null
+            || !resolvedProfile.PolityId.Equals(profile.PolityId, StringComparison.OrdinalIgnoreCase))
+        {
+            return false;
+        }
+
+        return _economy.GetResidenceTown(person).Id.Equals(
+            town.Id,
+            StringComparison.OrdinalIgnoreCase);
+    }
+
+    private void DeactivateUnsupportedOffice(TownInfo town)
+    {
+        var state = GetWorldState(create: false)?.CivicOffices
+            .FirstOrDefault(office => office.TownId.Equals(
+                town.Id,
+                StringComparison.OrdinalIgnoreCase));
+
+        if (state?.HeadPersonId is not Guid personId)
+            return;
+
+        var person = _gameState.People.FirstOrDefault(candidate => candidate.Id == personId);
+        person?.Tags.Remove(TownHeadTag);
+        state.HeadPersonId = null;
     }
 
     private void UpdateApproval(CivicOfficeTownState state, TownInfo town)

@@ -85,6 +85,64 @@ public sealed class SharedMechanics4DEconomyConsolidationTests
     }
 
     [Fact]
+    public void AnnualFinanceReceiptsFundCurrentBasicNeedsBeforeCreatingSpendableWealth()
+    {
+        var state = new GameState { Year = 1901 };
+        var head = state.CreatePerson("Jan", "Nowak", 40);
+        head.Tags.Add("state.alive");
+        var town = TestTown();
+
+        var economy = new StandardEconomyService(
+            state,
+            new TestFamilyService(),
+            new TestLocationService(town),
+            new IncomeProviderRegistry(),
+            new HouseholdIncomeProviderRegistry(),
+            new TestProjectionRegistry(),
+            new TestStatsService(),
+            new FixedRandom());
+
+        var component = new HouseholdEconomyComponent
+        {
+            HouseholdId = Guid.NewGuid(),
+            HeadId = head.Id,
+            DynastyAnchorId = head.Id,
+            ResidenceTownId = town.Id,
+            Wealth = 0m,
+            LegacyMembershipSeeded = true,
+            FundingYear = state.Year,
+            BasicNeedsRequired = 1000m,
+            BasicNeedsFunded = 0m,
+            BasicNeedsShortfall = 1000m
+        };
+        component.MemberIds.Add(head.Id);
+        head.Components.Set(component);
+
+        economy.ApplyAnnualFinanceReceipt(head, "loan repayments", 60m);
+
+        var partial = economy.GetHousehold(head)!;
+        Assert.Equal(0m, partial.Wealth);
+        Assert.Equal(60m, partial.BasicNeedsFunded);
+        Assert.Equal(940m, partial.BasicNeedsShortfall);
+        Assert.True(partial.HasUnfundedBasicNeeds);
+        Assert.Equal(60m, partial.LastIncome);
+        Assert.Contains(partial.LastIncomeBreakdown, line =>
+            line.Label == "loan repayments" && line.Amount == 60m);
+        Assert.Contains(partial.History, point => point.Year == state.Year);
+
+        economy.ApplyAnnualFinanceReceipt(head, "loan repayments", 1140m);
+
+        var settled = economy.GetHousehold(head)!;
+        Assert.Equal(200m, settled.Wealth);
+        Assert.Equal(1000m, settled.BasicNeedsFunded);
+        Assert.Equal(0m, settled.BasicNeedsShortfall);
+        Assert.False(settled.HasUnfundedBasicNeeds);
+        Assert.Equal(1200m, settled.LastIncome);
+        Assert.Contains(settled.LastIncomeBreakdown, line =>
+            line.Label == "loan repayments" && line.Amount == 1200m);
+    }
+
+    [Fact]
     public void ForecastUsesTheSameAuthoritativeRentalIncomeRule()
     {
         var state = new GameState();

@@ -1,0 +1,8 @@
+{
+  "schemaVersion": "1.0",
+  "ageBands": [
+    { "minAge": 10, "maxAge": 13, "multiplier": 0.25 },
+    { "minAge": 14, "maxAge": 17, "multiplier": 0.50 },
+    { "minAge": 18, "maxAge": null, "multiplier": 1.00 }
+  ]
+}

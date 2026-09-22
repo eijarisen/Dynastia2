@@ -478,9 +478,13 @@ internal sealed class CriminalOccupationService :
             + values.GetValueOrDefault("strength", 3)
             + values.GetValueOrDefault("intellect", 3)) / 3m;
         var aptitude = Math.Clamp(1m + 0.05m * (average - 3m), 0.90m, 1.10m);
-        var denominator = Math.Min(99, 100 - roll - masteryLevel);
+        var incomeMultiplier = OccupationalIncomeCurve.GetMultiplier(
+            roll,
+            masteryLevel,
+            _catalog.Rules.Heist.IncomeRollMinimum,
+            _catalog.Rules.Heist.IncomeRollMaximumInclusive);
         var income = _catalog.Rules.Heist.BaseIncome
-            * 100m / denominator
+            * incomeMultiplier
             * aptitude
             * archetype.IncomeMultiplier;
         return Math.Round(income, 0, MidpointRounding.AwayFromZero);

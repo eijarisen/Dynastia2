@@ -133,6 +133,7 @@ internal sealed class CommunityConnectionService : IHouseholdConnectionService
         {
             connection.Familiarity = _rules.StartingFamiliarity;
             connection.Sympathy = _rules.StartingSympathy;
+            MarkMeaningfulInteraction(connection);
             var houseChance = _rules.SpareHouseChance.GetValueOrDefault(connection.WealthBand, 0d);
             var farmlandChance = _rules.SpareFarmlandChance.GetValueOrDefault(connection.WealthBand, 0d);
             if (connection.ArchetypeId.Equals("farmer", StringComparison.OrdinalIgnoreCase)
@@ -167,6 +168,7 @@ internal sealed class CommunityConnectionService : IHouseholdConnectionService
             connection.Familiarity + _rules.ImproveFamiliarityGain, 0, 100);
         connection.Sympathy = Math.Clamp(
             connection.Sympathy + _rules.ImproveSympathyGain, -100, 100);
+        MarkMeaningfulInteraction(connection);
     }
 
     internal decimal GetSendMoneyMaximum(IPerson actor)
@@ -190,6 +192,7 @@ internal sealed class CommunityConnectionService : IHouseholdConnectionService
             ?? _economy.GetResidenceTown(actor);
         if (amount >= 2m * Math.Max(1m, _economy.GetLivingCostPerPerson(town)))
             MoveWealthBand(connection, +1);
+        MarkMeaningfulInteraction(connection);
         return true;
     }
 
@@ -204,6 +207,7 @@ internal sealed class CommunityConnectionService : IHouseholdConnectionService
         connection.HasSpareHouse = true;
         MoveWealthBand(connection, +1);
         AdjustRelation(connection, _rules.AssetGiftFamiliarityGain, _rules.AssetGiftSympathyGain);
+        MarkMeaningfulInteraction(connection);
         return true;
     }
 
@@ -214,6 +218,7 @@ internal sealed class CommunityConnectionService : IHouseholdConnectionService
         connection.HasSpareFarmland = true;
         MoveWealthBand(connection, +1);
         AdjustRelation(connection, _rules.AssetGiftFamiliarityGain, _rules.AssetGiftSympathyGain);
+        MarkMeaningfulInteraction(connection);
         return true;
     }
 
@@ -245,6 +250,7 @@ internal sealed class CommunityConnectionService : IHouseholdConnectionService
         var maximum = Math.Max(_rules.MinimumTransfer, GetEstimatedMoneyRequestMaximum(actor, connection.Id));
         if (amount >= maximum * 0.5m)
             LowerWealthForRequest(actor, connection, 1);
+        MarkMeaningfulInteraction(connection);
         Publish(actor, connection, "connection.request_accepted",
             $"{connection.Name} agreed to give the household {amount:N0} zł.");
         return true;
@@ -275,6 +281,7 @@ internal sealed class CommunityConnectionService : IHouseholdConnectionService
         AdjustRelation(connection, _rules.AcceptedAssetFamiliarityCost, _rules.AcceptedAssetSympathyCost);
         LowerWealthForRequest(actor, connection, _rules.AssetRequestWealthBandLoss);
         EnsureWarmRelation(connection);
+        MarkMeaningfulInteraction(connection);
         Publish(actor, connection, "connection.request_accepted",
             $"{connection.Name} agreed to transfer a house to the household.");
         return true;
@@ -305,6 +312,7 @@ internal sealed class CommunityConnectionService : IHouseholdConnectionService
         AdjustRelation(connection, _rules.AcceptedAssetFamiliarityCost, _rules.AcceptedAssetSympathyCost);
         LowerWealthForRequest(actor, connection, _rules.AssetRequestWealthBandLoss);
         EnsureWarmRelation(connection);
+        MarkMeaningfulInteraction(connection);
         Publish(actor, connection, "connection.request_accepted",
             $"{connection.Name} agreed to transfer farmland to the household.");
         return true;
@@ -331,11 +339,18 @@ internal sealed class CommunityConnectionService : IHouseholdConnectionService
 
             SimulateSimpleFamily(connection, age);
             DriftWealth(connection);
-            connection.Familiarity = Math.Max(0, connection.Familiarity - _rules.FamiliarityDecayPerYear);
-            if (connection.Sympathy > 0)
-                connection.Sympathy = Math.Max(0, connection.Sympathy - _rules.SympathyDriftTowardNeutralPerYear);
-            else if (connection.Sympathy < 0)
-                connection.Sympathy = Math.Min(0, connection.Sympathy + _rules.SympathyDriftTowardNeutralPerYear);
+
+            // Old active saves receive this transition grace once. The value is
+            // persisted, so loading again cannot refresh it.
+            connection.LastMeaningfulInteractionYear ??= _gameState.Year;
+            if (!HasMeaningfulInteractionGrace(connection))
+            {
+                connection.Familiarity = Math.Max(0, connection.Familiarity - _rules.FamiliarityDecayPerYear);
+                if (connection.Sympathy > 0)
+                    connection.Sympathy = Math.Max(0, connection.Sympathy - _rules.SympathyDriftTowardNeutralPerYear);
+                else if (connection.Sympathy < 0)
+                    connection.Sympathy = Math.Min(0, connection.Sympathy + _rules.SympathyDriftTowardNeutralPerYear);
+            }
 
             var relationState = GetRelationState(connection);
             var weakPoorConnection = connection.WealthBand.Equals(
@@ -376,6 +391,13 @@ internal sealed class CommunityConnectionService : IHouseholdConnectionService
             connection.HasSpareFarmland,
             connection.OriginPolicyId,
             connection.IsActive);
+
+    private void MarkMeaningfulInteraction(CommunityConnectionState connection) =>
+        connection.LastMeaningfulInteractionYear = _gameState.Year;
+
+    private bool HasMeaningfulInteractionGrace(CommunityConnectionState connection) =>
+        connection.LastMeaningfulInteractionYear is int interactionYear
+        && _gameState.Year <= interactionYear + _rules.MeaningfulInteractionDecayGraceYears;
 
     private double CalculateAcceptance(
         IPerson actor,

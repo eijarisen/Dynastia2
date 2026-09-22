@@ -43,6 +43,7 @@ public sealed class FarmingPlugin : IGamePlugin
             events,
             FarmingEraSchedule.Load(data),
             FarmingFlavorCatalog.Load(data),
+            FarmingWorkerContributionCatalog.Load(data),
             () => context.GetService<ICommunityPolicyService>());
 
         context.AddService<IFarmingService>(service);

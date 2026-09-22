@@ -136,6 +136,18 @@ public sealed partial class StandardEconomyService
         household.LastExpenses =
             RoundCurrency(household.LastExpenses);
 
+        household.BasicNeedsRequired =
+            RoundCurrency(Math.Max(0m, household.BasicNeedsRequired));
+        household.BasicNeedsFunded =
+            RoundCurrency(Math.Clamp(
+                household.BasicNeedsFunded,
+                0m,
+                household.BasicNeedsRequired));
+        household.BasicNeedsShortfall =
+            RoundCurrency(Math.Max(
+                0m,
+                household.BasicNeedsRequired - household.BasicNeedsFunded));
+
         foreach (var line in household.LastIncomeBreakdown)
             line.Amount = RoundCurrency(line.Amount);
 

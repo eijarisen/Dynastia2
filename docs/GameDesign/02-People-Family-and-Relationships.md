@@ -116,7 +116,10 @@ Status: **Implemented**
 Owner: `dynastia.reproduction`
 
 Rules:
-- Standard childbirth is processed from a living male + living female spouse pair; the mother must be age 18–45 and not imprisoned/in active religious vocation.
+- Standard childbirth uses one shared marital-conception eligibility rule for both passive yearly conception and the active `Try for Baby` action.
+- The father and mother must both be alive, current spouses in an active marriage established before the current year, resident in the same Economy household, and neither may be imprisoned, in an active religious vocation, simulation-inactive or externally resident.
+- The mother must remain within the existing age 18–45 bounds. A prisoner released before the conception phase is eligible again when all other requirements are met.
+- Active `Try for Baby` execution revalidates the same rule; an invalid attempt does not leave its yearly conception modifier behind.
 - Base fertility chance uses the lower parental fertility: 0/5/7/10/12/16% for Fertility 0–5.
 - Female fertility declines after 30 and receives an additional late-age reduction from 40 onward.
 - `Try for Baby` multiplies the final chance by 5. A failed active attempt reduces Marriage Satisfaction by 2.
@@ -133,7 +136,7 @@ Regression tests: `HealthContentReworkBatch1Tests.cs`, `LocalSocietyNonmaritalBi
 Status: **Implemented**  
 Owner: `dynastia.reproduction` with Local Society rules
 
-Nonmarital births are a separate annual system for eligible people and use data-driven rules in `data/LocalSociety/nonmarital_birth_rules.json`. Resulting children are normal simulated people and participate in family, household, inheritance and status systems according to recorded parentage/residence.
+Nonmarital births are a separate annual system for eligible people and use data-driven rules in `data/LocalSociety/nonmarital_birth_rules.json`. Simulation-inactive or externally resident mothers are excluded in addition to the existing prison/vocation restrictions. Resulting children are normal simulated people and participate in family, household, inheritance and status systems according to recorded parentage/residence.
 
 ## Childhood, Happiness and Raise Child
 Status: **Implemented**  
@@ -141,6 +144,8 @@ Owner: `dynastia.childhood`
 
 Rules:
 - Children have persistent Happiness affected by health, household circumstances and personality/context.
+- A child below Content can recover one Happiness step under stable care when healthy, fully funded, not overcrowded/strained and supported by an available resident caregiver. Serious illness, parental divorce/affair and the death of a parent/resident caregiver temporarily block this passive recovery.
+- Parent Work Harder/Recover side effects apply only to co-resident underage biological children.
 - `childhood.raise_child` is an annual queued action targeting an eligible child.
 - Childhood outcomes can feed adult family-relation foundations when a child later establishes an independent household.
 - UI intentionally hides adult-only details such as education/crafts/hobbies for very young children where those concepts do not yet apply.

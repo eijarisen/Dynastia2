@@ -22,6 +22,7 @@ internal sealed class StandardFarmingService :
     private readonly IGameEventBus _events;
     private readonly FarmingEraSchedule _eraSchedule;
     private readonly FarmingFlavorCatalog _flavors;
+    private readonly FarmingWorkerContributionCatalog _workerContribution;
     private readonly Func<ICommunityPolicyService?> _communityResolver;
 
     public StandardFarmingService(
@@ -35,6 +36,7 @@ internal sealed class StandardFarmingService :
         IGameEventBus events,
         FarmingEraSchedule eraSchedule,
         FarmingFlavorCatalog flavors,
+        FarmingWorkerContributionCatalog workerContribution,
         Func<ICommunityPolicyService?>? communityResolver = null)
     {
         _gameState = gameState;
@@ -47,6 +49,7 @@ internal sealed class StandardFarmingService :
         _events = events;
         _eraSchedule = eraSchedule;
         _flavors = flavors;
+        _workerContribution = workerContribution;
         _communityResolver = communityResolver ?? (() => null);
     }
 
@@ -119,7 +122,7 @@ internal sealed class StandardFarmingService :
         IPerson householdRepresentative)
     {
         if (!person.Tags.Has("state.alive")
-            || person.Age < 10
+            || _workerContribution.GetAgeContribution(person.Age) <= 0m
             || person.Tags.Has("state.imprisoned")
             || person.Tags.Has("occupation.criminal")
             || person.Tags.Has("vocation.religious.active")
@@ -188,7 +191,7 @@ internal sealed class StandardFarmingService :
                 householdRepresentative);
 
         var workers =
-            GetAvailableWorkers(
+            GetRankedAvailableWorkers(
                 householdRepresentative);
 
         var activeWorkers = FarmingRules.GetActiveWorkerCount(
@@ -401,13 +404,13 @@ internal sealed class StandardFarmingService :
 
         foreach (var worker in workers)
         {
-            var output = ApplyRecoverReduction(
+            var productiveEffort = AnnualProductiveEffortRules.Get(
                 worker,
-                workerBaseIncome);
+                _workCapacity);
 
-            baseIncome += _workCapacity
-                .GetWorkCapacity(worker)
-                .Apply(output);
+            var ageContribution = _workerContribution.GetAgeContribution(worker.Age);
+            baseIncome += productiveEffort.Apply(
+                workerBaseIncome * ageContribution);
         }
 
         var coverage = FarmingRules.GetLivestockCoverage(
@@ -448,15 +451,13 @@ internal sealed class StandardFarmingService :
                 FarmingRules.AdjustVolatilityMultiplier(
                     rawMultiplier,
                     coverage);
-            var output = workerBaseIncome * adjustedMultiplier;
-
-            output = ApplyRecoverReduction(
+            var ageContribution = _workerContribution.GetAgeContribution(worker.Age);
+            var output = workerBaseIncome * adjustedMultiplier * ageContribution;
+            var productiveEffort = AnnualProductiveEffortRules.Get(
                 worker,
-                output);
+                _workCapacity);
 
-            total += _workCapacity
-                .GetWorkCapacity(worker)
-                .Apply(output);
+            total += productiveEffort.Apply(output);
         }
 
         total *= FarmingRules.GetLivestockIncomeMultiplier(coverage);
@@ -507,35 +508,6 @@ internal sealed class StandardFarmingService :
         GetExpectedAnnualIncome(
             householdRepresentative);
 
-    private static decimal ApplyRecoverReduction(
-        IPerson worker,
-        decimal income)
-    {
-        var reduction = ReadPercent(
-            worker,
-            "modifier.salary.recover.");
-
-        return reduction <= 0m
-            ? income
-            : income * (1m - reduction / 100m);
-    }
-
-    private static decimal ReadPercent(
-        IPerson person,
-        string prefix)
-    {
-        foreach (var tag in person.Tags.All)
-        {
-            if (!tag.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
-                continue;
-
-            if (decimal.TryParse(tag[prefix.Length..], out var percent))
-                return Math.Clamp(percent, 0m, 50m);
-        }
-
-        return 0m;
-    }
-
     private decimal ApplyTownIncomeMultiplier(
         IPerson householdRepresentative,
         decimal income)
@@ -585,10 +557,25 @@ internal sealed class StandardFarmingService :
         if (localParcels <= 0)
             return [];
 
-        return GetAvailableWorkers(
+        return GetRankedAvailableWorkers(
                 householdRepresentative)
             .Take(localParcels * 2)
             .ToList();
+    }
+
+    private IReadOnlyList<IPerson> GetRankedAvailableWorkers(
+        IPerson householdRepresentative) =>
+        GetAvailableWorkers(householdRepresentative)
+            .OrderByDescending(GetExpectedProductiveContribution)
+            .ThenByDescending(worker => worker.Age)
+            .ThenBy(worker => worker.Id)
+            .ToList();
+
+    private decimal GetExpectedProductiveContribution(IPerson worker)
+    {
+        var ageContribution = _workerContribution.GetAgeContribution(worker.Age);
+        var productiveEffort = AnnualProductiveEffortRules.Get(worker, _workCapacity);
+        return ageContribution * (decimal)productiveEffort.OutputMultiplier;
     }
 
     private decimal GetWorkerBaseIncome() =>

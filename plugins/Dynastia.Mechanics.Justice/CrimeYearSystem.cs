@@ -73,7 +73,7 @@ public sealed class CrimeYearSystem : IYearSystem
             }
 
             var household = _economy.GetHousehold(person);
-            var broke = household is not null && household.Wealth <= 0;
+            var broke = household?.HasUnfundedBasicNeeds == true;
             var location = _localOpportunities.GetOpportunitySnapshot(person);
             var stress = _stress?.GetStress(person).Total ?? 0;
             var context = BuildContext(person, gameState.Year, location.Town.SettlementClass);

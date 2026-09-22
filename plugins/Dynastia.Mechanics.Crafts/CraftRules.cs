@@ -156,22 +156,14 @@ public static class CraftRules
         return 1.0 + Math.Min(matches, 3) * 0.25;
     }
 
-    public static decimal GetExpectedIncomeMultiplier(int masteryLevel)
-    {
-        decimal total = 0m;
-        var mastery = Math.Clamp(masteryLevel, 1, 5);
-
-        for (var roll = 0; roll <= 94; roll++)
-            total += 100m / GetIncomeDenominator(roll, mastery);
-
-        return total / 95m;
-    }
+    public static decimal GetExpectedIncomeMultiplier(int masteryLevel) =>
+        OccupationalIncomeCurve.GetExpectedMultiplier(masteryLevel);
 
     public static decimal GetMedianIncomeMultiplier(int masteryLevel) =>
-        100m / GetIncomeDenominator(47, Math.Clamp(masteryLevel, 1, 5));
+        OccupationalIncomeCurve.GetMedianMultiplier(masteryLevel);
 
     public static decimal GetMaximumIncomeMultiplier(int masteryLevel) =>
-        100m / GetIncomeDenominator(94, Math.Clamp(masteryLevel, 1, 5));
+        OccupationalIncomeCurve.GetMaximumMultiplier(masteryLevel);
 
     public static decimal GetExpectedAnnualIncome(
         decimal baseSalary,
@@ -186,24 +178,15 @@ public static class CraftRules
         int masteryLevel,
         int randomRoll)
     {
-        var denominator = GetIncomeDenominator(
+        var multiplier = OccupationalIncomeCurve.GetMultiplier(
             randomRoll,
-            Math.Clamp(masteryLevel, 1, 5));
+            masteryLevel);
 
         return Math.Round(
-            baseSalary * 100m / denominator,
+            baseSalary * multiplier,
             0,
             MidpointRounding.AwayFromZero);
     }
-
-    private static int GetIncomeDenominator(
-        int randomRoll,
-        int masteryLevel) =>
-        Math.Max(
-            1,
-            Math.Min(
-                99,
-                100 - Math.Clamp(randomRoll, 0, 94) - masteryLevel));
 
     private static int GetStat(IReadOnlyDictionary<string, int> stats, string statId) =>
         stats.TryGetValue(statId, out var value)

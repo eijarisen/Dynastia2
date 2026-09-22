@@ -10,6 +10,7 @@ public sealed class HeirloomsPlugin : IGamePlugin
         var gameState = Require<IGameState>(context, "Game state");
         var economy = Require<IEconomyService>(context, "Economy service");
         var family = Require<IFamilyService>(context, "Family service");
+        var workCapacity = Require<IWorkCapacityService>(context, "Work capacity service");
         var random = Require<IGameRandom>(context, "Game random");
         var events = Require<IGameEventBus>(context, "Game event bus");
         var actions = Require<IActionRegistry>(context, "Action registry");
@@ -60,6 +61,7 @@ public sealed class HeirloomsPlugin : IGamePlugin
                     family,
                     crafts,
                     service,
+                    workCapacity,
                     random,
                     events,
                     artisticWorks));

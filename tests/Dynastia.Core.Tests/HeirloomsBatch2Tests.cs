@@ -195,6 +195,7 @@ public sealed class HeirloomsBatch2Tests
         context.AddService<IGameState>(state);
         context.AddService<IEconomyService>(economy);
         context.AddService<IFamilyService>(family);
+        context.AddService<IWorkCapacityService>(new FullWorkCapacityService());
         context.AddService<IGameRandom>(random);
         context.AddService<IGameEventBus>(events);
         context.AddService<IActionRegistry>(actions);
@@ -275,6 +276,13 @@ public sealed class HeirloomsBatch2Tests
             ChanceCalls++;
             return true;
         }
+    }
+
+
+    private sealed class FullWorkCapacityService : IWorkCapacityService
+    {
+        public WorkCapacitySnapshot GetWorkCapacity(IPerson person) =>
+            new(1.0, true);
     }
 
     private sealed class TestProjectionRegistry : IHouseholdFinanceProjectionProviderRegistry

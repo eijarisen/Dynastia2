@@ -51,8 +51,8 @@ public sealed class StandardStressService : IStressService
         }
 
         var household = _economy.GetHousehold(person);
-        if (household is not null && household.Wealth <= 0)
-            contributions.Add(new("economy.wealth_zero", 1));
+        if (household?.HasUnfundedBasicNeeds == true)
+            contributions.Add(new("economy.basic_needs_shortfall", 1));
 
         if (person.Age < 18)
         {

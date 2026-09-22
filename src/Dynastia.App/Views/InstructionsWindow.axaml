@@ -200,7 +200,7 @@
                                     <TextBlock Classes="guideTip">
                                         <Run Text="• " />
                                         <Run FontWeight="Bold" Text="Childhood and care. " />
-                                        <Run Text="Children have Happiness and can be actively raised. Nannies or resident family caregivers help with childcare, while crowding and family disruption can make childhood harder." />
+                                        <Run Text="Children have Happiness and can be actively raised. Stable care can help unhappy children recover over time, while serious family shocks can have lasting effects. Nannies or resident family caregivers help with childcare, while crowding and family disruption can make childhood harder." />
                                     </TextBlock>
                                 </Border>
                                 <Border Classes="tipCard">
@@ -340,7 +340,7 @@
                                     <TextBlock Classes="guideTip">
                                         <Run Text="• " />
                                         <Run FontWeight="Bold" Text="Farming work. " />
-                                        <Run Text="Local farmland can employ eligible household members. Farm output depends on land, available labour and the surrounding economy; parcels also carry historical farm and livestock character." />
+                                        <Run Text="Local farmland can employ eligible household members. Children can provide limited farm help, while older and healthier available workers contribute more. Farm output also depends on land and the surrounding economy; parcels carry historical farm and livestock character." />
                                     </TextBlock>
                                 </Border>
                                 <Border Classes="tipCard">
@@ -466,7 +466,7 @@
                                     <TextBlock Classes="guideTip">
                                         <Run Text="• " />
                                         <Run FontWeight="Bold" Text="Community connections. " />
-                                        <Run Text="Households can build relationships with local acquaintances, exchange gifts or assistance, and sometimes request money, housing or farmland outside the bloodline." />
+                                        <Run Text="Households can build relationships with local acquaintances, exchange gifts or assistance, and sometimes request money, housing or farmland outside the bloodline. Relationships fade after long neglect, while meaningful contact keeps them active." />
                                     </TextBlock>
                                 </Border>
                                 <Border Classes="tipCard">

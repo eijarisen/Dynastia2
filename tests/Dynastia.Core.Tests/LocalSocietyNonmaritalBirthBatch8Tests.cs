@@ -84,14 +84,14 @@ public sealed class LocalSocietyNonmaritalBirthBatch8Tests
     {
         var system = Read(
             "plugins", "Dynastia.Mechanics.Reproduction", "NonmaritalBirthYearSystem.cs");
-        var ordinary = Read(
-            "plugins", "Dynastia.Mechanics.Reproduction", "ReproductionYearSystem.cs");
+        var eligibility = Read(
+            "plugins", "Dynastia.Mechanics.Reproduction", "ReproductionEligibilityRules.cs");
 
         Assert.Contains("public string Id => \"reproduction.nonmarital_births\"", system);
         Assert.Contains("Before => [\"reproduction.births\"]", system);
         Assert.Contains("\"relationships.marriage\"", system);
         Assert.Contains("\"relationships.affairs\"", system);
-        Assert.Contains("activeMarriage.StartYear\n                == gameState.Year", ordinary);
+        Assert.Contains("activeMarriage.StartYear == year", eligibility);
     }
 
     [Fact]

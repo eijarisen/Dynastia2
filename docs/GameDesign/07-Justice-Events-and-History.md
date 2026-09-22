@@ -30,6 +30,7 @@ Rules:
 - One heist attempt per active calendar year; imprisonment suppresses heists.
 - Mastery comes from active heist years. Dominant Appeal/Strength/Intellect determines archetype; all three at 5 creates Mastermind.
 - While criminal occupation is active, ordinary random-crime processing is skipped for that person.
+- Criminal heist income uses the same mean-preserving compressed long-tail mastery curve as Craft self-employment: expected income by mastery is retained while extreme single-year payouts are reduced. Detection, confiscation, sentencing and archetype bonuses are unchanged.
 
 Primary data: `data/LocalSociety/criminal_occupation_rules.json`, archetype/mastery CSVs.
 

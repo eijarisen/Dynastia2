@@ -160,22 +160,27 @@ public sealed class CraftRulesTests
     }
 
     [Theory]
-    [InlineData(600, 1, 0, 606)]
-    [InlineData(600, 3, 47, 1200)]
-    [InlineData(600, 5, 94, 60000)]
-    [InlineData(800, 5, 94, 80000)]
-    public void AnnualProfessionIncome_UsesBaseMasteryAndSingleZeroToNinetyFourRoll(
+    [InlineData(600, 1, 0)]
+    [InlineData(600, 3, 47)]
+    [InlineData(600, 5, 94)]
+    [InlineData(800, 5, 94)]
+    public void AnnualProfessionIncome_UsesSharedOccupationalCurve(
         double baseSalary,
         int masteryLevel,
-        int randomRoll,
-        double expected)
+        int randomRoll)
     {
+        var salary = (decimal)baseSalary;
+        var expected = Math.Round(
+            salary * OccupationalIncomeCurve.GetMultiplier(randomRoll, masteryLevel),
+            0,
+            MidpointRounding.AwayFromZero);
+
         var actual = CraftRules.CalculateAnnualIncome(
-            (decimal)baseSalary,
+            salary,
             masteryLevel,
             randomRoll);
 
-        Assert.Equal(expected, (double)actual, 6);
+        Assert.Equal(expected, actual);
     }
 
     [Fact]

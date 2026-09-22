@@ -49,7 +49,7 @@ internal sealed class MoralsDeteriorationYearSystem : IYearSystem
             }
 
             var stress = CalculateStress(person, yearEvents);
-            if (_economy.GetHousehold(person)?.Wealth <= 0)
+            if (_economy.GetHousehold(person)?.HasUnfundedBasicNeeds == true)
                 stress += 1;
 
             // Stress should shape a minority of lives even after repeated hardship.

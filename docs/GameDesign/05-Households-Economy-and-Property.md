@@ -8,10 +8,13 @@ Authoritative state: household wealth, income/expense ledger, assets, lifestyle,
 
 Rules:
 - Finances are calculated once per active household in the `Finances` phase.
-- Income is assembled from registered providers (career/pension, craft, farming, rents, royalties, loan receivables and other mechanic-owned streams).
-- Expenses are assembled from household living costs, rent/property obligations, childcare/domestic staff, loan repayments and other registered obligations.
+- Ordinary income is assembled from registered providers (career/pension, craft, farming, rents, royalties and other mechanic-owned streams).
+- Farming income uses age-appropriate household labor: children from age 10 may help at reduced contribution while adults retain full output; passive education is not reduced by farm assistance.
+- Ordinary expenses are assembled from household living costs, rent/property obligations, childcare/domestic staff and other registered obligations.
+- Each current-year household record tracks `BasicNeedsRequired`, `BasicNeedsFunded` and `BasicNeedsShortfall`. Basic needs are funded from starting wealth plus ordinary income after existing debt; deprivation means a positive current-year shortfall, not simply `Wealth <= 0`.
+- `IsBroke` remains a literal cash/debt concept for purchases, transfers and settlement. Health, Stress, Childhood, Marriage Satisfaction, poverty Thoughts, ordinary Crime pressure, Morals deterioration and deprivation rare-event predicates use the basic-needs shortfall signal instead.
 - Ordinary yearly finance is applied through shared balance rules; UI projections are not a second rules engine.
-- Household history stores annual income/expense breakdowns for Family Inventory/budget presentation.
+- Household history stores annual income/expense breakdowns for Family Inventory/budget presentation and is reconciled after late Finance receipts/expenses.
 
 Primary code: `StandardEconomyService*.cs`, `EconomyYearSystem.cs`, provider registries.
 
@@ -86,7 +89,10 @@ Owner: `dynastia.loans`, Economy/Inheritance
 Rules:
 - `loan.take` and `loan.give` are queued early actions selected through Town Affairs Bank/loan-selection UI.
 - Historical era and local bank availability determine whether/which offers exist.
-- Loan terms are generated as contracts; repayment/receivable flows run in `Finances`.
+- Loan terms are generated as contracts; repayment/receivable flows run late in `Finances`, after ordinary household funding has been measured.
+- Annual loan receipts first cover any remaining current-year basic-needs shortfall; only the excess becomes spendable Wealth. The entire receipt is still recorded once as annual income/breakdown.
+- Due contracts are materialized before money changes; creditor allocations are applied before simulated borrower debits, then contracts progress/finalize once. This makes settlement independent of contract enumeration order while preserving minor-creditor pending-inheritance behavior and existing first-payment timing.
+- Loan repayment remains an allowed debt-producing finance path even when ordinary basic needs were fully funded.
 - Outstanding debts and receivables are inherited/reassigned in the inheritance phase according to Loans rules rather than disappearing at death.
 - Bank UI shows offer favorability qualitatively with bold color-coded text; exact hidden multipliers are not exposed as player-facing percentages.
 

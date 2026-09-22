@@ -11,6 +11,7 @@ internal sealed class CommunityConnectionRules
     public int StartingSympathy { get; init; }
     public int FamiliarityDecayPerYear { get; init; }
     public int SympathyDriftTowardNeutralPerYear { get; init; }
+    public int MeaningfulInteractionDecayGraceYears { get; init; }
     public int ImproveFamiliarityGain { get; init; }
     public int ImproveSympathyGain { get; init; }
     public double WealthDriftChance { get; init; }
@@ -70,12 +71,13 @@ internal sealed class CommunityConnectionRules
         var network = root.GetProperty("networkStatus");
         var family = root.GetProperty("simpleFamily");
 
-        return new CommunityConnectionRules
+        var rules = new CommunityConnectionRules
         {
             StartingFamiliarity = relationship.GetProperty("startingFamiliarity").GetInt32(),
             StartingSympathy = relationship.GetProperty("startingSympathy").GetInt32(),
             FamiliarityDecayPerYear = decay.GetProperty("familiarity").GetInt32(),
             SympathyDriftTowardNeutralPerYear = decay.GetProperty("sympathyTowardNeutral").GetInt32(),
+            MeaningfulInteractionDecayGraceYears = relationship.GetProperty("meaningfulInteractionDecayGraceYears").GetInt32(),
             ImproveFamiliarityGain = improve.GetProperty("familiarityGain").GetInt32(),
             ImproveSympathyGain = improve.GetProperty("sympathyGain").GetInt32(),
             WealthDriftChance = root.GetProperty("annualWealthDrift").GetProperty("chanceOfChange").GetDouble(),
@@ -122,6 +124,16 @@ internal sealed class CommunityConnectionRules
                     item.GetProperty("annualChance").GetDouble()))
                 .ToArray()
         };
+
+        if (rules.MeaningfulInteractionDecayGraceYears < 0
+            || rules.ImproveFamiliarityGain < 0
+            || rules.ImproveSympathyGain < 0)
+        {
+            throw new InvalidDataException(
+                "Community relationship interaction gains and decay grace must be non-negative.");
+        }
+
+        return rules;
     }
 
     private static IReadOnlyDictionary<string, double> ReadDoubleMap(JsonElement element) =>

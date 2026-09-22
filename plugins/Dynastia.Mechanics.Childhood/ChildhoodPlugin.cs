@@ -10,12 +10,15 @@ public sealed class ChildhoodPlugin : IGamePlugin
         var family = context.GetService<IFamilyService>() ?? throw new InvalidOperationException("Family service is unavailable.");
         var health = context.GetService<IHealthService>() ?? throw new InvalidOperationException("Health service is unavailable.");
         var economy = context.GetService<IEconomyService>() ?? throw new InvalidOperationException("Economy service is unavailable.");
+        var households = context.GetService<IHouseholdService>() ?? throw new InvalidOperationException("Household service is unavailable.");
+        var data = context.GetService<IGameDataService>() ?? throw new InvalidOperationException("Game data service is unavailable.");
         var personality = context.GetService<IPersonalityService>() ?? throw new InvalidOperationException("Personality service is unavailable.");
         var random = context.GetService<IGameRandom>() ?? throw new InvalidOperationException("Random service is unavailable.");
         var events = context.GetService<IGameEventBus>() ?? throw new InvalidOperationException("Event bus is unavailable.");
         var actions = context.GetService<IActionRegistry>() ?? throw new InvalidOperationException("Action registry is unavailable.");
         var systems = context.GetService<IYearSystemRegistry>() ?? throw new InvalidOperationException("Year registry is unavailable.");
 
+        var rules = ChildhoodBalanceRules.Load(data);
         var happiness = new StandardChildHappinessService();
         context.AddService<IChildHappinessService>(happiness);
 
@@ -30,10 +33,26 @@ public sealed class ChildhoodPlugin : IGamePlugin
                 },
                 order: 75);
 
-        events.EventPublished += (_, e) => ApplyEvent(e, gameState, family, happiness, random);
+        events.EventPublished += (_, e) => ApplyEvent(
+            e,
+            gameState,
+            family,
+            economy,
+            households,
+            happiness,
+            random,
+            rules);
 
         actions.Register(CreateRaiseChildAction(family, economy, happiness, personality, random, events));
-        systems.Register(new ChildHappinessYearSystem(happiness, health, economy, personality, random));
+        systems.Register(new ChildHappinessYearSystem(
+            happiness,
+            health,
+            economy,
+            family,
+            households,
+            rules,
+            personality,
+            random));
 
         context.Log("Child happiness mechanics registered.");
     }
@@ -111,8 +130,11 @@ public sealed class ChildhoodPlugin : IGamePlugin
         GameEvent e,
         IGameState gameState,
         IFamilyService family,
+        IEconomyService economy,
+        IHouseholdService households,
         IChildHappinessService happiness,
-        IGameRandom random)
+        IGameRandom random,
+        ChildhoodBalanceRules rules)
     {
         if (e.Type.Equals("career.work_harder", StringComparison.OrdinalIgnoreCase))
         {
@@ -121,7 +143,9 @@ public sealed class ChildhoodPlugin : IGamePlugin
                 return;
 
             foreach (var child in family.GetChildren(parent)
-                .Where(child => child.Age < 18 && child.Tags.Has("state.alive")))
+                .Where(child => child.Age < 18
+                    && child.Tags.Has("state.alive")
+                    && ChildhoodCareRules.SharesHousehold(parent, child, economy)))
             {
                 happiness.ChangeHappiness(child, -1);
             }
@@ -146,7 +170,9 @@ public sealed class ChildhoodPlugin : IGamePlugin
                 return;
 
             foreach (var child in family.GetChildren(parent)
-                .Where(child => child.Age < 18 && child.Tags.Has("state.alive")))
+                .Where(child => child.Age < 18
+                    && child.Tags.Has("state.alive")
+                    && ChildhoodCareRules.SharesHousehold(parent, child, economy)))
             {
                 var chance = PersonalityInfluence.AdjustProbability(
                     0.25,
@@ -158,6 +184,40 @@ public sealed class ChildhoodPlugin : IGamePlugin
 
                 if (random.NextDouble() < chance)
                     happiness.ChangeHappiness(child, 1);
+            }
+
+            return;
+        }
+
+        if (e.Type.Equals("health.serious_illness", StringComparison.OrdinalIgnoreCase))
+        {
+            var child = Find(gameState, e.SubjectId);
+            if (child is not null && child.Age < 18 && child.Tags.Has("state.alive"))
+                BlockStableCareRecovery(child, happiness, e.Year, rules);
+            return;
+        }
+
+        if (e.Type.Equals("life.death", StringComparison.OrdinalIgnoreCase))
+        {
+            var deceased = Find(gameState, e.SubjectId);
+            if (deceased is null)
+                return;
+
+            foreach (var child in gameState.People.Where(person =>
+                         person.Age < 18 && person.Tags.Has("state.alive")))
+            {
+                var parentDied = family.GetFather(child)?.Id == deceased.Id
+                    || family.GetMother(child)?.Id == deceased.Id;
+                if (parentDied
+                    || ChildhoodCareRules.WasResidentCaregiver(
+                        child,
+                        deceased,
+                        family,
+                        economy,
+                        households))
+                {
+                    BlockStableCareRecovery(child, happiness, e.Year, rules);
+                }
             }
 
             return;
@@ -194,7 +254,24 @@ public sealed class ChildhoodPlugin : IGamePlugin
                      (family.GetFather(c)?.Id == secondId || family.GetMother(c)?.Id == secondId)))
         {
             happiness.ChangeHappiness(child, -1);
+            BlockStableCareRecovery(child, happiness, e.Year, rules);
         }
+    }
+
+    private static void BlockStableCareRecovery(
+        IPerson child,
+        IChildHappinessService happiness,
+        int eventYear,
+        ChildhoodBalanceRules rules)
+    {
+        happiness.EnsureHappiness(child);
+        var component = child.Components.Get<ChildHappinessComponent>();
+        if (component is null)
+            return;
+
+        component.RecoveryBlockedThroughYear = Math.Max(
+            component.RecoveryBlockedThroughYear,
+            eventYear + rules.MajorTraumaRecoveryBlockYears);
     }
 
     private static IPerson? Find(IGameState state, Guid? id) =>

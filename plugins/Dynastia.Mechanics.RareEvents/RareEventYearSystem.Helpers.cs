@@ -12,7 +12,7 @@ internal sealed partial class RareEventYearSystem
     private bool IsHouseholdBroke(IPerson person)
     {
         var head = _households.ResolveHouseholdHead(person);
-        return head is not null && _households.GetStatus(head)?.IsBroke == true;
+        return head is not null && _households.GetStatus(head)?.HasUnfundedBasicNeeds == true;
     }
 
     private bool IsEligible(

@@ -21,6 +21,11 @@ public sealed class ReproductionPlugin : IGamePlugin
             ?? throw new InvalidOperationException(
                 "Stats service is unavailable.");
 
+        var economy =
+            context.GetService<IEconomyService>()
+            ?? throw new InvalidOperationException(
+                "Economy service is unavailable.");
+
         var health =
             context.GetService<IHealthService>()
             ?? throw new InvalidOperationException(
@@ -124,6 +129,8 @@ public sealed class ReproductionPlugin : IGamePlugin
                 [
                     CreateTryForBabyAction(
                         family,
+                        economy,
+                        gameState,
                         RequireHistoricalVariant(
                             historical,
                             "reproduction.try_for_baby",
@@ -133,6 +140,7 @@ public sealed class ReproductionPlugin : IGamePlugin
         var reproductionSystem =
             new ReproductionYearSystem(
                 family,
+                economy,
                 stats,
                 health,
                 appearance,
@@ -170,6 +178,8 @@ public sealed class ReproductionPlugin : IGamePlugin
     private static GameActionDefinition
         CreateTryForBabyAction(
             IFamilyService family,
+            IEconomyService economy,
+            IGameState gameState,
             HistoricalActionVariant variant)
     {
         return new GameActionDefinition
@@ -195,13 +205,8 @@ public sealed class ReproductionPlugin : IGamePlugin
                     var actor =
                         actionContext.Actor;
 
-                    if (!actor.Tags.Has(
-                            "state.alive")
-                        || actor.Tags.Has("vocation.religious.active")
-                        || !actionContext.ActorHasControl)
-                    {
+                    if (!actionContext.ActorHasControl)
                         return false;
-                    }
 
                     var spouse =
                         family.GetSpouse(
@@ -214,28 +219,34 @@ public sealed class ReproductionPlugin : IGamePlugin
                         return false;
                     }
 
-                    return spouse.Tags.Has(
-                            "state.alive")
-                        && !spouse.Tags.Has("vocation.religious.active")
-                        && family.GetSex(
-                            spouse)
-                            == Sex.Female
-                        && spouse.Age <= 45
-                        && !spouse.Tags.Has(
-                            "state.imprisoned");
+                    return ReproductionEligibilityRules.CanAttemptMaritalConception(
+                        family,
+                        economy,
+                        actor,
+                        spouse,
+                        gameState.Year);
                 },
 
             Execute =
                 actionContext =>
                 {
-                    var spouse = family.GetSpouse(actionContext.Actor);
-                    if (actionContext.Actor.Tags.Has("vocation.religious.active")
-                        || spouse?.Tags.Has("vocation.religious.active") == true)
+                    var actor = actionContext.Actor;
+                    var spouse = family.GetSpouse(actor);
+
+                    if (!ReproductionEligibilityRules.CanAttemptMaritalConception(
+                            family,
+                            economy,
+                            actor,
+                            spouse,
+                            actionContext.GameState.Year))
                     {
+                        actor.Tags.Remove(
+                            "modifier.try_for_baby");
+
                         return new GameActionResult(false);
                     }
 
-                    actionContext.Actor.Tags.Add(
+                    actor.Tags.Add(
                         "modifier.try_for_baby");
 
                     return new GameActionResult(

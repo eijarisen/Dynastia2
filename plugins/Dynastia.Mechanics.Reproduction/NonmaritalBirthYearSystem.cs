@@ -76,6 +76,8 @@ internal sealed class NonmaritalBirthYearSystem : IYearSystem
     private bool IsEligible(IPerson person)
     {
         if (!person.Tags.Has("state.alive")
+            || SimulationState.IsInactive(person)
+            || SimulationState.IsExternallyResident(person)
             || person.Tags.Has("state.imprisoned")
             || person.Tags.Has("vocation.religious.active")
             || _family.GetSex(person) != Sex.Female

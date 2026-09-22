@@ -53,9 +53,8 @@ public sealed class Development10HouseholdFamilyBalanceTests
             "StandardFarmingService.cs");
 
         Assert.Contains("modifier.salary.recover.", career);
-        Assert.Contains("modifier.salary.recover.", crafts);
-        Assert.Contains("ApplyRecoverReduction", farming);
-        Assert.Contains("modifier.salary.recover.", farming);
+        Assert.Contains("AnnualProductiveEffortRules.Get", crafts);
+        Assert.Contains("AnnualProductiveEffortRules.Get", farming);
     }
 
     [Fact]

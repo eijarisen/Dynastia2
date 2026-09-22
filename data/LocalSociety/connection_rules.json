@@ -9,9 +9,10 @@
       "sympathyTowardNeutral": 1
     },
     "improveRelationsAction": {
-      "familiarityGain": 4,
-      "sympathyGain": 2
-    }
+      "familiarityGain": 6,
+      "sympathyGain": 3
+    },
+    "meaningfulInteractionDecayGraceYears": 2
   },
   "wealthBands": [
     "Poor",

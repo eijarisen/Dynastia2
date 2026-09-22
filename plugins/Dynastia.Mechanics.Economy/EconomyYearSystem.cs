@@ -83,6 +83,16 @@ public sealed class EconomyYearSystem : IYearSystem
 
         household.LastIncome = calculation.Income;
         household.LastExpenses = calculation.Expenses;
+
+        var funding = EconomyBalanceRules.CalculateBasicNeedsFunding(
+            household.Wealth,
+            calculation.Income,
+            calculation.Expenses);
+        household.FundingYear = gameState.Year;
+        household.BasicNeedsRequired = funding.Required;
+        household.BasicNeedsFunded = funding.Funded;
+        household.BasicNeedsShortfall = funding.Shortfall;
+
         household.Wealth = EconomyBalanceRules.ApplyOrdinaryAnnualFinance(
             household.Wealth,
             calculation.Income,

@@ -45,6 +45,35 @@ public static class EconomyBalanceRules
                     - ordinaryExpenses));
     }
 
+
+    public static (
+        decimal Required,
+        decimal Funded,
+        decimal Shortfall) CalculateBasicNeedsFunding(
+        decimal startingWealth,
+        decimal ordinaryIncome,
+        decimal ordinaryExpenses)
+    {
+        var required = RoundCurrency(
+            Math.Max(0m, ordinaryExpenses));
+        var resourcesAfterExistingDebt = RoundCurrency(
+            startingWealth + ordinaryIncome);
+        var availableForBasicNeeds = Math.Max(
+            0m,
+            resourcesAfterExistingDebt);
+        var funded = Math.Min(
+            required,
+            availableForBasicNeeds);
+        var shortfall = Math.Max(
+            0m,
+            required - funded);
+
+        return (
+            required,
+            RoundCurrency(funded),
+            RoundCurrency(shortfall));
+    }
+
     private static decimal RoundCurrency(
         decimal amount) =>
         Math.Round(

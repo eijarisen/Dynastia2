@@ -1,0 +1,7 @@
+{
+  "schemaVersion": "1.0",
+  "stableCareRecoveryChance": 0.25,
+  "stableCareHealthMinimum": 75,
+  "stableCareTarget": 3,
+  "majorTraumaRecoveryBlockYears": 2
+}

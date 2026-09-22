@@ -50,10 +50,20 @@ Owner: `dynastia.health` plus stress providers from other mechanics
 Rules:
 - Stress is accumulated from registered sources instead of one monolithic formula.
 - Career strain, relationships, justice/prison, households and other systems can contribute.
+- Household deprivation is based on whether ordinary basic needs were fully funded during the current Finance phase, not on whether the household merely ends the year with zero cash. A household that exactly pays its needs and retains no reserve is not treated as poor for Health/Stress/Childhood penalties.
 - The late `health.life_stress` system may create eligible mental-health conditions based on total Stress, existing conditions, personality and context weights.
 - Mental-health conditions then behave like normal Health conditions and may be treatable through Therapy when local historical medical rules permit.
 
 Primary code/data: `MentalHealthYearSystem.cs`, `StressModifierRegistry.cs`, `data/Health/health_stress_outcomes.csv`.
+
+
+## Stable-care childhood recovery
+Status: **Implemented**  
+Owner: `dynastia.childhood` with Economy/Households/Health
+
+Children below Content can passively regain one Happiness step toward Content when current-year basic needs are fully funded, Health is at least 75, the household is neither overcrowded nor under large-family strain, and an available resident adult relative or nanny is providing care. Major family/health trauma blocks this passive recovery through the event year plus two years. The recovery never raises a child above Content and does not replace active `Raise Child`/Help Learning support.
+
+Primary data: `data/Childhood/childhood_balance.json`.
 
 ## Recover
 Status: **Implemented**  
@@ -125,7 +135,7 @@ Primary data: `data/LocalSociety/medical_stat_improvement_rules.csv`, `data/Comm
 Status: **Implemented**  
 Owners: Health + Career + Households + Farming/Crafts
 
-Health affects whether people can work effectively and other mechanics can register annual Health modifiers. Poverty, crowding, childcare load, unemployment/overwork and historical events are applied by their owning systems rather than hard-coded inside Health.
+Health affects whether people can work effectively and other mechanics can register annual Health modifiers. Basic-needs deprivation, crowding, childcare load, unemployment/overwork and historical events are applied by their owning systems rather than hard-coded inside Health. Work-producing systems consume the shared work-capacity snapshot rather than independently inventing health-output penalties.
 
 ## Mortality
 Status: **Implemented**  

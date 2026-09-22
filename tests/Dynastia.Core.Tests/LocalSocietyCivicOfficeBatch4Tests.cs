@@ -99,7 +99,7 @@ public sealed class LocalSocietyCivicOfficeBatch4Tests
         Assert.Contains("state.LastOfficeActionYear != _gameState.Year", civic);
         Assert.Contains("participation.Count += 1", civic);
         Assert.Contains("PendingApprovalAdjustment += _rules.DutiesBonus", civic);
-        Assert.Contains("outgoing.Tags.Has(\"state.imprisoned\")", civic);
+        Assert.Contains("person.Tags.Has(\"state.imprisoned\")", civic);
         Assert.Contains("\"justice.crime\"", system);
     }
 

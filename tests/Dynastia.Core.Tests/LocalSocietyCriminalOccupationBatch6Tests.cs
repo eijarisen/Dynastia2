@@ -75,7 +75,7 @@ public sealed class LocalSocietyCriminalOccupationBatch6Tests
     }
 
     [Fact]
-    public void CrimeIncomeUsesLongTailFormulaAndMastermindSentenceReduction()
+    public void CrimeIncomeUsesSharedCompressedLongTailAndMastermindSentenceReduction()
     {
         var rules = CriminalOccupationCatalog.Load(
             new RepositoryDataService(RepositoryRoot())).Rules;
@@ -87,7 +87,7 @@ public sealed class LocalSocietyCriminalOccupationBatch6Tests
         Assert.Equal(94, rules.Heist.IncomeRollMaximumInclusive);
         Assert.Equal(0.8m, rules.Heist.MastermindSentenceMultiplier);
 
-        Assert.Contains("100m / denominator", service);
+        Assert.Contains("OccupationalIncomeCurve.GetMultiplier", service);
         Assert.Contains("Math.Clamp(1m + 0.05m * (average - 3m), 0.90m, 1.10m)", service);
         Assert.Contains("archetype.IncomeMultiplier", service);
         Assert.Contains("Math.Floor(proceeds / 2m)", service);

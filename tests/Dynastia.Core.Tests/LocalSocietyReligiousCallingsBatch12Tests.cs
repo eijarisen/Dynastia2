@@ -115,7 +115,7 @@ public sealed class LocalSocietyReligiousCallingsBatch12Tests
         AssertTagGuard("plugins", "Dynastia.Mechanics.Relationships", "MarriageYearSystem.cs");
         AssertTagGuard("plugins", "Dynastia.Mechanics.Relationships", "FemaleRemarriageYearSystem.cs");
         AssertTagGuard("plugins", "Dynastia.Mechanics.Relationships", "StandardPartnerSearchService.cs");
-        AssertTagGuard("plugins", "Dynastia.Mechanics.Reproduction", "ReproductionYearSystem.cs");
+        AssertTagGuard("plugins", "Dynastia.Mechanics.Reproduction", "ReproductionEligibilityRules.cs");
         AssertTagGuard("plugins", "Dynastia.Mechanics.Reproduction", "NonmaritalBirthYearSystem.cs");
         AssertTagGuard("plugins", "Dynastia.Mechanics.Adoption", "AdoptionYearSystem.cs");
         AssertTagGuard("plugins", "Dynastia.Mechanics.Succession", "StandardSuccessionService.cs");

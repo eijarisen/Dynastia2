@@ -7,19 +7,28 @@ public sealed class ChildHappinessYearSystem : IYearSystem
     private readonly IChildHappinessService _happiness;
     private readonly IHealthService _health;
     private readonly IEconomyService _economy;
+    private readonly IFamilyService _family;
+    private readonly IHouseholdService _households;
+    private readonly ChildhoodBalanceRules _rules;
     private readonly IPersonalityService _personality;
     private readonly IGameRandom _random;
 
-    public ChildHappinessYearSystem(
+    internal ChildHappinessYearSystem(
         IChildHappinessService happiness,
         IHealthService health,
         IEconomyService economy,
+        IFamilyService family,
+        IHouseholdService households,
+        ChildhoodBalanceRules rules,
         IPersonalityService personality,
         IGameRandom random)
     {
         _happiness = happiness;
         _health = health;
         _economy = economy;
+        _family = family;
+        _households = households;
+        _rules = rules;
         _personality = personality;
         _random = random;
     }
@@ -47,8 +56,7 @@ public sealed class ChildHappinessYearSystem : IYearSystem
                      && _random.NextDouble() < 0.30)
                 _happiness.ChangeHappiness(child, 1);
 
-            if (household is not null
-                && household.Wealth <= 0
+            if (household?.HasUnfundedBasicNeeds == true
                 && _random.NextDouble() < 0.55)
             {
                 _happiness.ChangeHappiness(child, -1);
@@ -85,6 +93,8 @@ public sealed class ChildHappinessYearSystem : IYearSystem
                 _happiness.ChangeHappiness(child, 1);
             }
 
+            TryStableCareRecovery(gameState, child, health, household);
+
             var current = _happiness.GetHappiness(child)?.Value ?? 3;
             if (child.Age < 5 || current > 2)
                 continue;
@@ -101,4 +111,45 @@ public sealed class ChildHappinessYearSystem : IYearSystem
                 _personality.ShiftMorals(child, -1);
         }
     }
+    private void TryStableCareRecovery(
+        IGameState gameState,
+        IPerson child,
+        double health,
+        HouseholdFinanceSnapshot? finance)
+    {
+        var current = _happiness.GetHappiness(child)?.Value ?? 3;
+        if (current >= _rules.StableCareTarget
+            || health < _rules.StableCareHealthMinimum
+            || finance is null
+            || finance.FundingYear != gameState.Year
+            || finance.BasicNeedsShortfall > 0m)
+        {
+            return;
+        }
+
+        var householdStatus = _households.GetStatus(child);
+        if (householdStatus is null
+            || householdStatus.IsLargeFamilyStrained
+            || householdStatus.IsOvercrowded
+            || !ChildhoodCareRules.HasAvailableResidentCaregiver(
+                child,
+                gameState,
+                _family,
+                _economy,
+                _households))
+        {
+            return;
+        }
+
+        var state = child.Components.Get<ChildHappinessComponent>();
+        if (state is null
+            || gameState.Year <= state.RecoveryBlockedThroughYear
+            || !_random.Chance(_rules.StableCareRecoveryChance))
+        {
+            return;
+        }
+
+        _happiness.ChangeHappiness(child, 1);
+    }
+
 }

@@ -89,6 +89,11 @@ public interface IEconomyService
         string label,
         decimal amount);
 
+    void ApplyAnnualFinanceReceipt(
+        IPerson recipient,
+        string label,
+        decimal amount);
+
     void SetHousesOwned(
         IPerson person,
         int housesOwned);

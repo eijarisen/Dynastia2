@@ -42,6 +42,16 @@ public sealed class HouseholdEconomyComponent
 
     public decimal LastExpenses { get; set; }
 
+    // Annual record of whether ordinary living costs were actually funded.
+    // Additive fields preserve compatibility with existing economy.household saves.
+    public int FundingYear { get; set; } = int.MinValue;
+
+    public decimal BasicNeedsRequired { get; set; }
+
+    public decimal BasicNeedsFunded { get; set; }
+
+    public decimal BasicNeedsShortfall { get; set; }
+
     public HouseholdLifestyleStance Lifestyle { get; set; } =
         HouseholdLifestyleStance.Balanced;
 

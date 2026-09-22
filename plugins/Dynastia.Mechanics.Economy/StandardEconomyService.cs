@@ -218,7 +218,14 @@ public sealed partial class StandardEconomyService :
             History = household.BudgetHistory
                 .OrderBy(point => point.Year)
                 .ToList(),
-            Lifestyle = household.Lifestyle
+            Lifestyle = household.Lifestyle,
+            FundingYear = household.FundingYear,
+            BasicNeedsRequired = household.BasicNeedsRequired,
+            BasicNeedsFunded = household.BasicNeedsFunded,
+            BasicNeedsShortfall = household.BasicNeedsShortfall,
+            HasUnfundedBasicNeeds = household.FundingYear == _gameState.Year
+                ? household.BasicNeedsShortfall > 0m
+                : household.Wealth <= 0m
         };
     }
 
@@ -259,6 +266,79 @@ public sealed partial class StandardEconomyService :
         {
             existing.Amount = RoundCurrency(existing.Amount + rounded);
         }
+
+        RecordBudgetHistory(
+            household,
+            _gameState.Year);
+    }
+
+    public void ApplyAnnualFinanceReceipt(
+        IPerson recipient,
+        string label,
+        decimal amount)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(label);
+
+        var rounded = RoundCurrency(amount);
+        if (rounded <= 0m)
+            return;
+
+        var resolved = FindHousehold(recipient);
+        if (resolved is null)
+            return;
+
+        var household = resolved.Value.Household;
+        var remaining = rounded;
+
+        if (household.FundingYear == _gameState.Year
+            && household.BasicNeedsShortfall > 0m)
+        {
+            var funded = Math.Min(
+                household.BasicNeedsShortfall,
+                remaining);
+
+            household.BasicNeedsFunded = RoundCurrency(
+                household.BasicNeedsFunded + funded);
+            household.BasicNeedsShortfall = RoundCurrency(
+                Math.Max(
+                    0m,
+                    household.BasicNeedsRequired - household.BasicNeedsFunded));
+            remaining = RoundCurrency(remaining - funded);
+        }
+
+        if (remaining > 0m)
+        {
+            household.Wealth = RoundCurrency(
+                EconomyBalanceRules.ApplyOrdinaryWealthChange(
+                    household.Wealth,
+                    remaining));
+        }
+
+        household.LastIncome = RoundCurrency(
+            household.LastIncome + rounded);
+
+        var existing = household.LastIncomeBreakdown
+            .FirstOrDefault(line => line.Label.Equals(
+                label,
+                StringComparison.OrdinalIgnoreCase));
+
+        if (existing is null)
+        {
+            household.LastIncomeBreakdown.Add(
+                new LedgerLineState
+                {
+                    Label = label,
+                    Amount = rounded
+                });
+        }
+        else
+        {
+            existing.Amount = RoundCurrency(existing.Amount + rounded);
+        }
+
+        RecordBudgetHistory(
+            household,
+            _gameState.Year);
     }
 
     public bool CanAfford(

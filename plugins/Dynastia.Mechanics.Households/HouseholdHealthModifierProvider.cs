@@ -78,7 +78,7 @@ public sealed class HouseholdHealthModifierProvider :
                         status.OvercrowdingThreshold);
                 }
 
-                if (status.IsBroke)
+                if (status.HasUnfundedBasicNeeds)
                 {
                     var immunity =
                         GetImmunity(person);

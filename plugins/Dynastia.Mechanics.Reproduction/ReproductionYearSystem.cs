@@ -4,12 +4,6 @@ namespace Dynastia.Mechanics.Reproduction;
 
 public sealed class ReproductionYearSystem : IYearSystem
 {
-    private const int MinimumChildbearingAge =
-        18;
-
-    private const int MaximumChildbearingAge =
-        45;
-
     private const int FertilityDeclineStartAge =
         30;
 
@@ -50,6 +44,7 @@ public sealed class ReproductionYearSystem : IYearSystem
         ];
 
     private readonly IFamilyService _family;
+    private readonly IEconomyService _economy;
     private readonly IStatsService _stats;
     private readonly IHealthService _health;
     private readonly IAppearanceService _appearance;
@@ -70,6 +65,7 @@ public sealed class ReproductionYearSystem : IYearSystem
 
     public ReproductionYearSystem(
         IFamilyService family,
+        IEconomyService economy,
         IStatsService stats,
         IHealthService health,
         IAppearanceService appearance,
@@ -87,6 +83,7 @@ public sealed class ReproductionYearSystem : IYearSystem
             birthConditionContext)
     {
         _family = family;
+        _economy = economy;
         _stats = stats;
         _health = health;
         _appearance = appearance;
@@ -145,10 +142,12 @@ public sealed class ReproductionYearSystem : IYearSystem
                 _family.GetSpouse(
                     father);
 
-            if (!CanAttemptBirth(
-                gameState,
+            if (!ReproductionEligibilityRules.CanAttemptMaritalConception(
+                _family,
+                _economy,
                 father,
-                mother))
+                mother,
+                gameState.Year))
             {
                 father.Tags.Remove(
                     "modifier.try_for_baby");
@@ -214,65 +213,6 @@ public sealed class ReproductionYearSystem : IYearSystem
         }
     }
 
-    private bool CanAttemptBirth(
-        IGameState gameState,
-        IPerson father,
-        IPerson? mother)
-    {
-        if (mother is null
-            || father.Tags.Has("vocation.religious.active")
-            || mother.Tags.Has("vocation.religious.active"))
-        {
-            return false;
-        }
-
-        if (!mother.Tags.Has(
-            "state.alive"))
-        {
-            return false;
-        }
-
-        if (_family.GetSex(mother)
-            != Sex.Female)
-        {
-            return false;
-        }
-
-        if (mother.Age
-            < MinimumChildbearingAge
-            || mother.Age
-            > MaximumChildbearingAge)
-        {
-            return false;
-        }
-
-        if (mother.Tags.Has(
-            "state.imprisoned"))
-        {
-            return false;
-        }
-
-        var activeMarriage =
-            _family
-                .GetRelationshipHistory(
-                    father)
-                .LastOrDefault(
-                    relationship =>
-                        relationship.SpouseId
-                            == mother.Id
-                        && relationship.EndYear
-                            is null);
-
-        if (activeMarriage is not null
-            && activeMarriage.StartYear
-                == gameState.Year)
-        {
-            return false;
-        }
-
-        return true;
-    }
-
     private double CalculateChildChance(
         IPerson father,
         IPerson mother)
@@ -303,7 +243,7 @@ public sealed class ReproductionYearSystem : IYearSystem
             > FertilityDeclineStartAge)
         {
             var ageRange =
-                MaximumChildbearingAge
+                ReproductionEligibilityRules.MaximumChildbearingAge
                 - FertilityDeclineStartAge;
 
             var yearsIntoDecline =

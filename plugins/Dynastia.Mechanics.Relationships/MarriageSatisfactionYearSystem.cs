@@ -209,7 +209,7 @@ public sealed class MarriageSatisfactionYearSystem : IYearSystem
             issues.Add("household strain");
         }
 
-        if (household?.IsBroke == true)
+        if (household?.HasUnfundedBasicNeeds == true)
         {
             var hasWorkingSpouse =
                 IsEconomicallyEmployed(husband, husbandCareer)

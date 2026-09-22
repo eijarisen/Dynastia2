@@ -52,6 +52,7 @@ public sealed class CommunityConnectionState
     public double Reputation { get; set; }
     public int Familiarity { get; set; } = 20;
     public int Sympathy { get; set; } = 5;
+    public int? LastMeaningfulInteractionYear { get; set; }
     public string? SpouseName { get; set; }
     public List<string> Children { get; set; } = [];
     public bool HasSpareHouse { get; set; }

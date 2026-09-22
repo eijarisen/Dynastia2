@@ -22,7 +22,7 @@ internal sealed class HouseholdThoughtProvider :
                 : context.Households.GetStatus(
                     head);
 
-        if (status?.IsBroke
+        if (status?.HasUnfundedBasicNeeds
             == true)
         {
             yield return new ThoughtCandidate(

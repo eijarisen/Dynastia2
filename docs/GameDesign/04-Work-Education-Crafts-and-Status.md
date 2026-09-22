@@ -30,6 +30,7 @@ Rules:
 - Job loss and advancement are separate yearly systems and can be modified by personality, education, Work Harder and context.
 - Level 5 is intentionally exceptional: promotion requires Education 5 and has a strong target-level probability reduction.
 - Retirement is historical-rule driven. Pension availability/age comes from `retirement_rules.csv`; annual pension is based on lifetime career earnings when a pension system is available.
+- Civic-office careers continue to simulate after the technology horizon. Historical office/profile content freezes at the shared technology-freeze year, while incumbent aging, appointment years, approval processing and salary eligibility continue in the actual simulation year.
 
 Primary code/data:
 - `StandardCareerService*.cs`
@@ -73,6 +74,7 @@ Rules:
 - Crafts are data-driven by historical era, regional/local context and education/career links.
 - People can learn crafts, gain mastery through experience/passive learning, teach relatives and become self-employed where the craft/local economy allows it.
 - Craft self-employment is treated as real work/income and is mutually exclusive with incompatible occupation states.
+- The mastery income curve keeps the same expected multiplier at each mastery tier while compressing extreme annual windfalls; the same shared curve is also used by criminal occupations.
 - `craft.stop_occupation` leaves craft self-employment.
 - Craft education/mastery/income rules live in `data/Crafts/`, not in UI.
 
@@ -80,14 +82,24 @@ Primary code/data: `CraftsPlugin.cs`, `StandardCraftService*`, `data/Crafts/`.
 
 Regression tests: `CraftRulesTests.cs`, `ContentReworkBatch3HobbiesCraftsTests.cs`.
 
+## Shared annual productive effort
+Status: **Implemented**
+Owners: Health + Wellbeing + Crafts/Farming/Heirlooms
+
+Productive work uses `AnnualProductiveEffortRules`, which combines the current `IWorkCapacityService` output multiplier with the already-rolled Recover reduction (`modifier.salary.recover.X`). The helper is deterministic and does not reroll Recover or consume RNG. No productive output is generated when work capacity is unavailable or effectively zero. Crafts and Farming use this shared rule while preserving their established rounding/output behavior.
+
+Primary code: `src/Dynastia.Contracts/AnnualProductiveEffortRules.cs`.
+
 ## Artistic work
 Status: **Implemented**  
 Owner: `dynastia.heirlooms` + Crafts
 
 Rules:
 - Artistic crafts can generate notable works during yearly simulation.
+- Ordinary artistic production chance is scaled by shared annual productive effort. Dead, imprisoned, simulation-inactive or externally resident artists cannot create works.
+- A due Master production guarantee is deferred rather than consumed when productive effort is zero; once the artist has positive eligible effort, the guarantee resolves exactly once under the existing guarantee rules.
 - Works are represented as heirloom/family assets, can affect Status and can carry royalty/income behavior.
-- Generation, quality/availability and royalty rules are data driven.
+- Generation, quality/availability and royalty rules are data driven; royalties remain independent of the author's current work capacity.
 
 Primary data: `data/Crafts/artistic_*`, `data/Heirlooms/artistic_*`.
 
@@ -101,7 +113,8 @@ Rules:
 - Farm labor is an economic work state separate from ordinary Career employment, but career/marriage logic recognizes it as economically employed where appropriate.
 - Eligible household members can work family farmland.
 - Output depends on farmland, labor, farm/livestock flavor and historical/local multipliers.
-- Recover reduces farming work output in the same annual tradeoff as regular work/craft self-employment.
+- Recover and health work capacity reduce farming output through the same shared annual productive-effort rule used by Crafts/artistic production.
+- Farm help is age-scaled: ages 10–13 contribute 25% of adult output, ages 14–17 contribute 50%, and adults contribute 100%. When farm-worker capacity is scarce, higher expected contributors are selected first with deterministic age/ID tie-breaks.
 
 Primary data: `data/Farming/`.
 

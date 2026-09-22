@@ -150,7 +150,7 @@ public static class CraftVocationDataValidation
         RequireInt(incomeRoll, "integerMinimum", 0, EconomyRulesPath);
         RequireInt(incomeRoll, "integerMaximumInclusive", 94, EconomyRulesPath);
         RequireInt(incomeRoll, "denominatorMaximum", 99, EconomyRulesPath);
-        RequireString(root, "incomeFormula", "yearlyIncome = round(baseSalary * 100 / min(99, (100 - randomRoll - masteryLevel)))", EconomyRulesPath);
+        RequireString(root, "incomeFormula", "yearlyIncome = round(baseSalary * meanPreservingTailCompressedMultiplier(randomRoll, masteryLevel, cap=20))", EconomyRulesPath);
         RequireInt(commission, "integerRollRequired", 94, EconomyRulesPath);
         RequireInt(commission, "minimumMasteryLevel", 5, EconomyRulesPath);
         RequireBool(selfEmployment, "subjectToRandomFiring", false, EconomyRulesPath);

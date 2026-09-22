@@ -141,8 +141,11 @@ Owner: `dynastia.community`, Career/Status
 Rules:
 - The current town head/mayor is represented through the civic-office service and public-administration career integration.
 - Civic-office appointment is restricted to Polish nationality; generated NPC mayors are Polish as well.
+- Historical civic profile content freezes at `GameCalendarConfiguration.TechnologyFreezeYear` after the data horizon, but the office simulation continues in the actual game year: incumbents keep aging, appointments record the actual year, and approval/neglect/replacement processing continues normally.
+- A salaried simulated incumbent must still be alive, not imprisoned, not simulation-inactive or externally resident, belong to an active dynasty household and reside in the office town. Invalid/stale heads are reconciled before yearly office processing and cannot retain the office tag or salary. Unsupported polity/profile state has no active civic office.
 - Town Affairs shows the mayor's name and current approval.
 - An eligible controller who holds the simulated town office can use `community.perform_office_duties` from Town Affairs.
+- `ReconcileTags`, `IsTownHead`, office/title queries and annual salary use the same active-incumbent validity rule.
 - Office appointment/loss, approval and duties affect local/status state through Community rules.
 
 Primary data: `data/LocalSociety/civic_office_rules.json`, `civic_office_profiles.csv`.
@@ -155,7 +158,8 @@ Owner: `dynastia.community`
 
 Rules:
 - Non-family local acquaintances have persistent connection relation state/archetypes.
-- Actions include improving relations, sending/requesting money and giving/requesting house/farmland.
+- Actions include improving relations, sending/requesting money and giving/requesting house/farmland. Improve Relations grants +6 Familiarity and +3 Sympathy.
+- Successful meaningful contact pauses passive Familiarity/Sympathy decay for the interaction year and the following two years; refused requests do not refresh this grace period, and long-neglected connections resume normal decay.
 - Major accepted help (house/farmland) moves the relation to Warm rather than terminating the acquaintance after the transfer.
 - Warm/Close contacts remain valid even if a generous transfer leaves the donor Poor; only the explicit connection-retention rules should end the relationship.
 

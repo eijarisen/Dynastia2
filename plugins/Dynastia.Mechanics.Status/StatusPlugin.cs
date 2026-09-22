@@ -23,6 +23,7 @@ public sealed class StatusPlugin : IGamePlugin
 
         var rules = StatusRules.Load(data);
         var eventCatalog = StatusEventCatalog.Load(data);
+        var artisticStatus = ArtisticStatusRules.Load(data);
         var status = new StandardStatusService(
             gameState,
             family,
@@ -54,7 +55,7 @@ public sealed class StatusPlugin : IGamePlugin
             order: 85);
 
         events.EventPublished += (_, gameEvent) =>
-            HandleEvent(gameState, status, eventCatalog, gameEvent);
+            HandleEvent(gameState, status, eventCatalog, artisticStatus, gameEvent);
 
         context.Log("Status mechanics registered.");
     }
@@ -63,6 +64,7 @@ public sealed class StatusPlugin : IGamePlugin
         IGameState gameState,
         IStatusService status,
         StatusEventCatalog catalog,
+        ArtisticStatusRules artisticStatus,
         GameEvent gameEvent)
     {
         if (gameEvent.Type.Equals("life.adult", StringComparison.OrdinalIgnoreCase))
@@ -70,6 +72,12 @@ public sealed class StatusPlugin : IGamePlugin
             var adult = Find(gameState, gameEvent.SubjectId);
             if (adult is not null)
                 status.SeedAdultInheritance(adult);
+            return;
+        }
+
+        if (gameEvent.Type.Equals("artistic.work_created", StringComparison.OrdinalIgnoreCase))
+        {
+            ApplyArtisticWorkStatus(gameState, status, artisticStatus, gameEvent);
             return;
         }
 
@@ -128,6 +136,40 @@ public sealed class StatusPlugin : IGamePlugin
         }
     }
 
+
+    private static void ApplyArtisticWorkStatus(
+        IGameState gameState,
+        IStatusService status,
+        ArtisticStatusRules rules,
+        GameEvent gameEvent)
+    {
+        var person = Find(gameState, gameEvent.SubjectId);
+        if (person is null
+            || !gameEvent.Data.TryGetValue("craftId", out var craftId)
+            || string.IsNullOrWhiteSpace(craftId)
+            || !gameEvent.Data.TryGetValue("masteryLevel", out var rawMastery)
+            || !int.TryParse(rawMastery, NumberStyles.Integer, CultureInfo.InvariantCulture, out var mastery))
+        {
+            return;
+        }
+
+        var component = person.Components.Get<StatusComponent>();
+        if (component is null)
+        {
+            component = new StatusComponent();
+            person.Components.Set(component);
+        }
+
+        var delta = rules.Consume(component, craftId, mastery);
+        if (delta.Renown != 0 || delta.Reputation != 0)
+        {
+            status.ApplyPersistentDelta(
+                person,
+                delta.Renown,
+                delta.Reputation,
+                $"artistic:{craftId}");
+        }
+    }
 
     private static IReadOnlyList<Guid> ResolveEventTargets(
         GameEvent gameEvent,

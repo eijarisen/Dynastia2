@@ -41,6 +41,30 @@ public sealed class HeirloomsPlugin : IGamePlugin
         var crafts = context.GetService<ICraftService>();
         var systems = context.GetService<IYearSystemRegistry>();
 
+        ArtisticWorkCatalog? artisticWorks = null;
+        if (crafts is not null)
+        {
+            artisticWorks = ArtisticWorkCatalog.Load(
+                data,
+                catalog,
+                crafts.Catalog);
+
+            context.GetService<IHouseholdIncomeProviderRegistry>()?.Register(
+                new ArtisticRoyaltyIncomeProvider(
+                    gameState,
+                    service,
+                    artisticWorks.RoyaltyAfterDeathYears));
+
+            systems?.Register(
+                new ArtisticWorkYearSystem(
+                    family,
+                    crafts,
+                    service,
+                    random,
+                    events,
+                    artisticWorks));
+        }
+
         HeirloomAchievementGenerator? achievementGenerator = null;
         if (education is not null
             && career is not null
@@ -61,7 +85,8 @@ public sealed class HeirloomsPlugin : IGamePlugin
                 career,
                 service,
                 random,
-                achievementCatalog);
+                achievementCatalog,
+                artisticWorks);
 
             systems.Register(
                 new HeirloomWealthMilestoneYearSystem(
@@ -97,8 +122,8 @@ public sealed class HeirloomsPlugin : IGamePlugin
         };
 
         context.Log(achievementGenerator is null
-            ? "Heirloom mechanics registered with event and hobby generation."
-            : "Heirloom mechanics registered with achievement, wealth, event and hobby generation.");
+            ? "Heirloom mechanics registered with event, hobby and artistic-work generation."
+            : "Heirloom mechanics registered with achievement, wealth, event, hobby, artistic-work and royalty generation.");
     }
 
     private static void RegisterSaleAction(

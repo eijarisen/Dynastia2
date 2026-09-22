@@ -19,7 +19,9 @@ public sealed record HeirloomAssetInfo(
     string OriginDescription,
     Guid? AssignedHeirId,
     bool IsStolen,
-    IReadOnlyList<HeirloomOwnershipRecordInfo> OwnershipHistory);
+    IReadOnlyList<HeirloomOwnershipRecordInfo> OwnershipHistory,
+    Guid? RoyaltyAuthorId = null,
+    decimal RoyaltyAnnualRate = 0m);
 
 public sealed record HeirloomCreationRequest(
     string TemplateId,
@@ -28,7 +30,10 @@ public sealed record HeirloomCreationRequest(
     string OriginTriggerId,
     string OriginDescription,
     bool IsStolen = false,
-    IReadOnlyDictionary<string, string>? NewsTokens = null);
+    IReadOnlyDictionary<string, string>? NewsTokens = null,
+    decimal? AppraisedValueOverride = null,
+    Guid? RoyaltyAuthorId = null,
+    decimal RoyaltyAnnualRate = 0m);
 
 public interface IHeirloomService
 {

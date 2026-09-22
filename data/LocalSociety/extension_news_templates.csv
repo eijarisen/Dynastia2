@@ -12,3 +12,4 @@ reproduction.unknown_father_birth,👶,{Mother} gave birth to {Child}. The fathe
 reproduction.birth_and_marriage,💍,{Mother} gave birth to {Child} and married {Father} in the same year.
 reproduction.teen_birth,👶,"At age {Age}, {Mother} gave birth to {Child}."
 reproduction.teen_marriage,💍,"At age {Age}, {Mother} married {Father}."
+artistic.work_created,🎨,"{Person} created {Item}, valued at {Value} zł."

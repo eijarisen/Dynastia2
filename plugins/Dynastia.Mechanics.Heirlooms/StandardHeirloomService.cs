@@ -67,10 +67,20 @@ public sealed class StandardHeirloomService : IHeirloomService
             personName ?? "Family",
             StringComparison.Ordinal);
 
-        var min = (double)_catalog.Rules.Creation.ValueVarianceMultiplierMin;
-        var max = (double)_catalog.Rules.Creation.ValueVarianceMultiplierMax;
-        var multiplier = min + (_random.NextDouble() * (max - min));
-        var value = RoundCurrency(template.BaseValue * (decimal)multiplier);
+        decimal value;
+        if (request.AppraisedValueOverride is decimal overrideValue)
+        {
+            if (overrideValue <= 0m)
+                throw new InvalidOperationException("Heirloom appraised-value overrides must be positive.");
+            value = overrideValue;
+        }
+        else
+        {
+            var min = (double)_catalog.Rules.Creation.ValueVarianceMultiplierMin;
+            var max = (double)_catalog.Rules.Creation.ValueVarianceMultiplierMax;
+            var multiplier = min + (_random.NextDouble() * (max - min));
+            value = RoundCurrency(template.BaseValue * (decimal)multiplier);
+        }
 
         var state = new HeirloomAssetState
         {
@@ -84,7 +94,9 @@ public sealed class StandardHeirloomService : IHeirloomService
             OriginTriggerType = request.OriginTriggerType,
             OriginTriggerId = request.OriginTriggerId,
             OriginDescription = request.OriginDescription,
-            IsStolen = request.IsStolen
+            IsStolen = request.IsStolen,
+            RoyaltyAuthorId = request.RoyaltyAuthorId,
+            RoyaltyAnnualRate = request.RoyaltyAnnualRate
         };
 
         state.OwnershipHistory.Add(
@@ -112,7 +124,16 @@ public sealed class StandardHeirloomService : IHeirloomService
                     ["templateId"] = info.TemplateId,
                     ["item"] = info.DisplayName,
                     ["value"] = info.AppraisedValue.ToString(CultureInfo.InvariantCulture),
-                    ["familyNews"] = "true",
+                    ["familyNews"] = request.OriginTriggerType.Equals(
+                        "artistic_work",
+                        StringComparison.OrdinalIgnoreCase)
+                            ? "false"
+                            : "true",
+                    ["suppressChronicle"] = request.OriginTriggerType.Equals(
+                        "artistic_work",
+                        StringComparison.OrdinalIgnoreCase)
+                            ? "true"
+                            : "false",
                     ["text"] = _catalog.BuildCreationNews(
                         template,
                         info.DisplayName,
@@ -341,7 +362,9 @@ public sealed class StandardHeirloomService : IHeirloomService
                     record.HouseholdId,
                     record.PersonId,
                     record.Reason))
-                .ToList());
+                .ToList(),
+            state.RoyaltyAuthorId,
+            state.RoyaltyAnnualRate);
 
     private static HeirloomAssetState ToState(HeirloomAssetInfo info)
     {
@@ -358,7 +381,9 @@ public sealed class StandardHeirloomService : IHeirloomService
             OriginTriggerId = info.OriginTriggerId,
             OriginDescription = info.OriginDescription,
             AssignedHeirId = info.AssignedHeirId,
-            IsStolen = info.IsStolen
+            IsStolen = info.IsStolen,
+            RoyaltyAuthorId = info.RoyaltyAuthorId,
+            RoyaltyAnnualRate = info.RoyaltyAnnualRate
         };
 
         foreach (var record in info.OwnershipHistory)

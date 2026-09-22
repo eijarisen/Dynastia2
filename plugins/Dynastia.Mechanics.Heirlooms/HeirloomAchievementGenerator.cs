@@ -13,6 +13,7 @@ internal sealed class HeirloomAchievementGenerator
     private readonly IHeirloomService _heirlooms;
     private readonly IGameRandom _random;
     private readonly HeirloomAchievementCatalog _catalog;
+    private readonly ArtisticWorkCatalog? _artisticWorks;
 
     public HeirloomAchievementGenerator(
         IGameState gameState,
@@ -22,7 +23,8 @@ internal sealed class HeirloomAchievementGenerator
         ICareerService career,
         IHeirloomService heirlooms,
         IGameRandom random,
-        HeirloomAchievementCatalog catalog)
+        HeirloomAchievementCatalog catalog,
+        ArtisticWorkCatalog? artisticWorks = null)
     {
         _gameState = gameState;
         _economy = economy;
@@ -32,6 +34,7 @@ internal sealed class HeirloomAchievementGenerator
         _heirlooms = heirlooms;
         _random = random;
         _catalog = catalog;
+        _artisticWorks = artisticWorks;
     }
 
     public void Handle(GameEvent gameEvent)
@@ -122,6 +125,7 @@ internal sealed class HeirloomAchievementGenerator
     {
         if (!sourceEvent.Data.TryGetValue("craftId", out var craftId)
             || string.IsNullOrWhiteSpace(craftId)
+            || _artisticWorks?.IsArtisticCraft(craftId) == true
             || !_catalog.CraftTemplates.TryGetValue(craftId, out var templateId)
             || !CanCreateFor(person))
         {

@@ -9,6 +9,7 @@ public sealed class HeirloomCatalog
 {
     private const string CatalogPath = "Heirlooms/heirloom_catalog.csv";
     private const string RulesPath = "Heirlooms/heirloom_rules.json";
+    private const string ArtisticCatalogPath = "Heirlooms/artistic_heirloom_catalog_append.csv";
     private const string NewsPath = "Heirlooms/heirloom_news_templates.csv";
 
     private readonly IReadOnlyDictionary<string, HeirloomTemplateDefinition> _templates;
@@ -30,7 +31,17 @@ public sealed class HeirloomCatalog
     {
         ArgumentNullException.ThrowIfNull(data);
 
-        var templates = ParseCatalog(data.ReadText(CatalogPath));
+        var templates = ParseCatalog(data.ReadText(CatalogPath), CatalogPath)
+            .ToDictionary(
+                pair => pair.Key,
+                pair => pair.Value,
+                StringComparer.OrdinalIgnoreCase);
+        foreach (var pair in ParseCatalog(data.ReadText(ArtisticCatalogPath), ArtisticCatalogPath))
+        {
+            if (!templates.TryAdd(pair.Key, pair.Value))
+                throw new InvalidDataException($"{ArtisticCatalogPath}: duplicate TemplateId '{pair.Key}'.");
+        }
+
         var news = ParseNews(data.ReadText(NewsPath));
         var rules = JsonSerializer.Deserialize<HeirloomRules>(
             data.ReadText(RulesPath),
@@ -72,11 +83,13 @@ public sealed class HeirloomCatalog
             : text;
     }
 
-    private static IReadOnlyDictionary<string, HeirloomTemplateDefinition> ParseCatalog(string text)
+    private static IReadOnlyDictionary<string, HeirloomTemplateDefinition> ParseCatalog(
+        string text,
+        string path)
     {
         var rows = ParseCsv(text);
         if (rows.Count < 2)
-            throw new InvalidDataException($"{CatalogPath}: catalog is empty.");
+            throw new InvalidDataException($"{path}: catalog is empty.");
 
         var header = rows[0];
         var expected = new[]
@@ -85,14 +98,14 @@ public sealed class HeirloomCatalog
             "Significance", "StartYear", "EndYear", "AcquisitionNewsKey", "Notes"
         };
         if (!header.SequenceEqual(expected, StringComparer.Ordinal))
-            throw new InvalidDataException($"{CatalogPath}: unexpected header.");
+            throw new InvalidDataException($"{path}: unexpected header.");
 
         var result = new Dictionary<string, HeirloomTemplateDefinition>(StringComparer.OrdinalIgnoreCase);
         for (var index = 1; index < rows.Count; index++)
         {
             var row = rows[index];
             if (row.Count != expected.Length)
-                throw new InvalidDataException($"{CatalogPath}: row {index + 1} has {row.Count} fields, expected {expected.Length}.");
+                throw new InvalidDataException($"{path}: row {index + 1} has {row.Count} fields, expected {expected.Length}.");
 
             var template = new HeirloomTemplateDefinition(
                 row[0].Trim(), row[1].Trim(), row[2].Trim(), row[3].Trim(),
@@ -102,7 +115,7 @@ public sealed class HeirloomCatalog
                 row[8].Trim(), row[9].Trim());
 
             if (!result.TryAdd(template.TemplateId, template))
-                throw new InvalidDataException($"{CatalogPath}: duplicate TemplateId '{template.TemplateId}'.");
+                throw new InvalidDataException($"{path}: duplicate TemplateId '{template.TemplateId}'.");
         }
 
         return result;

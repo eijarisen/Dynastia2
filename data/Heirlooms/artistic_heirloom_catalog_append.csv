@@ -1,0 +1,21 @@
+﻿TemplateId,Category,NamePattern,Emoji,BaseValue,Significance,StartYear,EndYear,AcquisitionNewsKey,Notes
+art_music_1_songbook,Artistic,{Person}'s Songbook,🎼,750,Personal,1700,,artistic_work,Value overridden by artistic production rules; royalties where configured.
+art_music_2_original_songs,Artistic,{Person}'s Original Songs,🎵,1500,Personal,1700,,artistic_work,Value overridden by artistic production rules; royalties where configured.
+art_music_3_published_composition,Artistic,{Person}'s Published Composition,🎼,3750,Notable,1700,,artistic_work,Value overridden by artistic production rules; royalties where configured.
+art_music_4_celebrated_composition,Artistic,{Person}'s Celebrated Composition,🎼,10500,Notable,1700,,artistic_work,Value overridden by artistic production rules; royalties where configured.
+art_music_5_masterwork_composition,Artistic,{Person}'s Masterwork Composition,🎼,29000,Exceptional,1700,,artistic_work,Value overridden by artistic production rules; royalties where configured.
+art_paint_1_sketchbook,Artistic,{Person}'s Sketchbook,🎨,750,Personal,1700,,artistic_work,Value overridden by artistic production rules; royalties where configured.
+art_paint_2_small_painting,Artistic,{Person}'s Small Painting,🖼️,1500,Personal,1700,,artistic_work,Value overridden by artistic production rules; royalties where configured.
+art_paint_3_portrait,Artistic,{Person}'s Portrait,🖼️,3750,Notable,1700,,artistic_work,Value overridden by artistic production rules; royalties where configured.
+art_paint_4_major_painting,Artistic,{Person}'s Major Painting,🖼️,10500,Notable,1700,,artistic_work,Value overridden by artistic production rules; royalties where configured.
+art_paint_5_masterwork_painting,Artistic,{Person}'s Masterwork Painting,🖼️,29000,Exceptional,1700,,artistic_work,Value overridden by artistic production rules; royalties where configured.
+art_write_1_manuscript,Artistic,{Person}'s Manuscript,✒️,750,Personal,1700,,artistic_work,Value overridden by artistic production rules; royalties where configured.
+art_write_2_writings,Artistic,{Person}'s Collection of Writings,📖,1500,Personal,1700,,artistic_work,Value overridden by artistic production rules; royalties where configured.
+art_write_3_published_book,Artistic,{Person}'s Published Book,📚,3750,Notable,1700,,artistic_work,Value overridden by artistic production rules; royalties where configured.
+art_write_4_celebrated_book,Artistic,{Person}'s Celebrated Book,📚,10500,Notable,1700,,artistic_work,Value overridden by artistic production rules; royalties where configured.
+art_write_5_masterwork_book,Artistic,{Person}'s Masterwork Book,📚,29000,Exceptional,1700,,artistic_work,Value overridden by artistic production rules; royalties where configured.
+art_sculpt_1_figure,Artistic,{Person}'s Carved Figure,🗿,750,Personal,1700,,artistic_work,Value overridden by artistic production rules; royalties where configured.
+art_sculpt_2_small_sculpture,Artistic,{Person}'s Small Sculpture,🗿,1500,Personal,1700,,artistic_work,Value overridden by artistic production rules; royalties where configured.
+art_sculpt_3_bust,Artistic,{Person}'s Sculpted Bust,🗿,3750,Notable,1700,,artistic_work,Value overridden by artistic production rules; royalties where configured.
+art_sculpt_4_major_sculpture,Artistic,{Person}'s Major Sculpture,🗿,10500,Notable,1700,,artistic_work,Value overridden by artistic production rules; royalties where configured.
+art_sculpt_5_masterwork_sculpture,Artistic,{Person}'s Masterwork Sculpture,🗿,29000,Exceptional,1700,,artistic_work,Value overridden by artistic production rules; royalties where configured.

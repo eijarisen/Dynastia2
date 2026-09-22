@@ -12,3 +12,4 @@ longevity,🕯️,"After {Person} died at the age of {Age}, the family kept {Ite
 inheritance,🎁,{Heir} inherited {Item} from the family estate.
 pending,⏳,{Item} was set aside for {Heir} until the inheritance can be received.
 sale,💵,The household sold {Item} for {SaleValue} zł.
+artistic_work,🎨,{Person} created {Item}.

@@ -12,4 +12,8 @@ public sealed class StatusComponent
     public bool AdultInheritanceSeeded { get; set; }
     public string LocalTownId { get; set; } = string.Empty;
     public int LocalTownSinceYear { get; set; }
+    public Dictionary<string, double> ArtisticRenownByCraft { get; set; } =
+        new(StringComparer.OrdinalIgnoreCase);
+    public Dictionary<string, double> ArtisticReputationByCraft { get; set; } =
+        new(StringComparer.OrdinalIgnoreCase);
 }

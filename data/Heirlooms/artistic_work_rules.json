@@ -1,0 +1,22 @@
+{
+  "schemaVersion": "1.0",
+  "onlyWhileActiveSelfEmployment": true,
+  "oneProductionRollPerArtistYear": true,
+  "mastery5Guarantee": {
+    "onFirstReachingMaster": true,
+    "usesMasterValueBand": true,
+    "countsAsThatYearProduction": true,
+    "suppressRandomProductionRollThatYear": true,
+    "replaceOrdinaryCraftMasterHeirloomForArtisticCrafts": true
+  },
+  "creation": {
+    "useIGameRandom": true,
+    "selectTemplateMatchingCraftAndMastery": true,
+    "appraisedValueUniformBetweenLevelMinimumMaximum": true,
+    "createThroughIHeirloomService": true
+  },
+  "news": {
+    "eventType": "artistic.work_created",
+    "familyNews": true
+  }
+}

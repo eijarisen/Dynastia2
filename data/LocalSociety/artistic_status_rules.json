@@ -1,0 +1,31 @@
+{
+  "schemaVersion": "1.0",
+  "eventType": "artistic.work_created",
+  "deltasByMastery": {
+    "1": {
+      "renown": 0.25,
+      "reputation": 0
+    },
+    "2": {
+      "renown": 0.5,
+      "reputation": 0.1
+    },
+    "3": {
+      "renown": 1,
+      "reputation": 0.25
+    },
+    "4": {
+      "renown": 2,
+      "reputation": 0.5
+    },
+    "5": {
+      "renown": 4,
+      "reputation": 1
+    }
+  },
+  "perPersonPerCraftCaps": {
+    "renown": 12,
+    "reputation": 3
+  },
+  "note": "Heirloom value also raises household Net Worth."
+}

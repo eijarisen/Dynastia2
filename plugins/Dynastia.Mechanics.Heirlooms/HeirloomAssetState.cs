@@ -14,6 +14,8 @@ public sealed class HeirloomAssetState
     public string OriginDescription { get; set; } = string.Empty;
     public Guid? AssignedHeirId { get; set; }
     public bool IsStolen { get; set; }
+    public Guid? RoyaltyAuthorId { get; set; }
+    public decimal RoyaltyAnnualRate { get; set; }
     public List<HeirloomOwnershipRecordState> OwnershipHistory { get; } = [];
 }
 

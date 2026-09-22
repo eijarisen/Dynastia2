@@ -1,0 +1,44 @@
+{
+  "schemaVersion": "1.0",
+  "eligibleCraftIds": [
+    "musician",
+    "writer"
+  ],
+  "eligibleMinimumMastery": 3,
+  "annualRatesByMastery": {
+    "3": 0.005,
+    "4": 0.0075,
+    "5": 0.01
+  },
+  "incomeProvider": {
+    "type": "IHouseholdIncomeProvider",
+    "label": "royalties",
+    "townProsperityMultiplier": false,
+    "deterministic": true
+  },
+  "ownership": {
+    "royaltiesFollowHeirloomOwner": true,
+    "pendingInheritancePaysRoyalties": false,
+    "saleEndsFamilyRoyaltyIncome": true
+  },
+  "duration": {
+    "whileAuthorAlive": true,
+    "afterAuthorDeathYears": 70,
+    "lastEligibleYearInclusive": "author.DeathDate.Year + 70"
+  },
+  "heirloomContractExtensions": {
+    "HeirloomCreationRequest": [
+      "AppraisedValueOverride?",
+      "RoyaltyAuthorId?",
+      "RoyaltyAnnualRate"
+    ],
+    "HeirloomAssetInfo": [
+      "RoyaltyAuthorId?",
+      "RoyaltyAnnualRate"
+    ],
+    "HeirloomAssetState": [
+      "RoyaltyAuthorId?",
+      "RoyaltyAnnualRate"
+    ]
+  }
+}

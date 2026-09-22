@@ -175,6 +175,7 @@ public static class EventEmojiMap
                 ["craft.teaching_failed"] = "🧱",
                 ["craft.self_employment_started"] = "🛠️",
                 ["craft.self_employment_ended"] = "🚶",
+                ["artistic.work_created"] = "🎨",
 
                 // Filled the other missing action-family event emoji.
                 ["household.house_promised"] = "🎁",

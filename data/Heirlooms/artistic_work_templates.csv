@@ -1,0 +1,21 @@
+﻿TemplateId,CraftId,MasteryLevel,NamePattern,Emoji,MinimumValue,MaximumValue,RoyaltyAnnualRate
+art_music_1_songbook,musician,1,{Person}'s Songbook,🎼,500,1000,0
+art_music_2_original_songs,musician,2,{Person}'s Original Songs,🎵,1000,2000,0
+art_music_3_published_composition,musician,3,{Person}'s Published Composition,🎼,2500,5000,0.005
+art_music_4_celebrated_composition,musician,4,{Person}'s Celebrated Composition,🎼,7000,14000,0.0075
+art_music_5_masterwork_composition,musician,5,{Person}'s Masterwork Composition,🎼,18000,40000,0.01
+art_paint_1_sketchbook,painter,1,{Person}'s Sketchbook,🎨,500,1000,0
+art_paint_2_small_painting,painter,2,{Person}'s Small Painting,🖼️,1000,2000,0
+art_paint_3_portrait,painter,3,{Person}'s Portrait,🖼️,2500,5000,0
+art_paint_4_major_painting,painter,4,{Person}'s Major Painting,🖼️,7000,14000,0
+art_paint_5_masterwork_painting,painter,5,{Person}'s Masterwork Painting,🖼️,18000,40000,0
+art_write_1_manuscript,writer,1,{Person}'s Manuscript,✒️,500,1000,0
+art_write_2_writings,writer,2,{Person}'s Collection of Writings,📖,1000,2000,0
+art_write_3_published_book,writer,3,{Person}'s Published Book,📚,2500,5000,0.005
+art_write_4_celebrated_book,writer,4,{Person}'s Celebrated Book,📚,7000,14000,0.0075
+art_write_5_masterwork_book,writer,5,{Person}'s Masterwork Book,📚,18000,40000,0.01
+art_sculpt_1_figure,sculptor,1,{Person}'s Carved Figure,🗿,500,1000,0
+art_sculpt_2_small_sculpture,sculptor,2,{Person}'s Small Sculpture,🗿,1000,2000,0
+art_sculpt_3_bust,sculptor,3,{Person}'s Sculpted Bust,🗿,2500,5000,0
+art_sculpt_4_major_sculpture,sculptor,4,{Person}'s Major Sculpture,🗿,7000,14000,0
+art_sculpt_5_masterwork_sculpture,sculptor,5,{Person}'s Masterwork Sculpture,🗿,18000,40000,0

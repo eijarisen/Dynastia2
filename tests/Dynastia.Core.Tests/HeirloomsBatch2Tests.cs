@@ -348,6 +348,8 @@ public sealed class HeirloomsBatch2Tests
         public void SetEducationLevel(IPerson person, int level) => _levels[person.Id] = level;
         public void IncreaseEducation(IPerson person, int amount = 1) => _levels[person.Id] = GetEducationLevel(person) + amount;
         public double GetPaidEducationSuccessChance(IPerson person) => 1;
+        public double GetPrivateTutorSuccessChance(IPerson person) => 1;
+        public int GetHelpedEducationCeiling(int year) => 5;
         public int GetLocalEducationCeiling(IPerson person, int year) => 5;
         public int GetLocalEducationCeiling(TownInfo town, int year) => 5;
         public EducationGenerationRange GetGeneratedAdultRange(int year) => new(0, 5);

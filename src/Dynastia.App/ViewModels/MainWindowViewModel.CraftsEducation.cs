@@ -14,6 +14,9 @@ public sealed partial class MainWindowViewModel
     private const decimal CraftEducationUiCost =
         5000m;
 
+    private const decimal PrivateTutorUiCost =
+        3000m;
+
     private static GameActionDefinition CreateCraftProfessionPresentationAction() =>
         new()
         {
@@ -116,40 +119,61 @@ public sealed partial class MainWindowViewModel
 
         if (target.Age < 18)
         {
-            if (target.Age < 6
-                || (_familyService?.GetFather(target)?.Id != actor.Id
-                    && _familyService?.GetMother(target)?.Id != actor.Id))
-            {
+            if (target.Age < 6)
                 return Array.Empty<PropertySelectionOption>();
-            }
 
-            var definition = _actionRegistry
+            var childOptions = new List<PropertySelectionOption>();
+            var currentLevel = _educationService.GetEducationLevel(target);
+
+            var helpDefinition = _actionRegistry
                 .GetCandidateActions(actor, target)
                 .FirstOrDefault(action => action.Id.Equals(
                     "education.help_learning",
                     StringComparison.OrdinalIgnoreCase));
-            if (definition is null)
-                return Array.Empty<PropertySelectionOption>();
-
-            var evaluation = _actionRegistry.Evaluate(
-                definition.Id,
-                actor,
-                target);
-            var currentLevel = _educationService.GetEducationLevel(target);
-            var helperLevel = _educationService.GetEducationLevel(actor);
-
-            return
-            [
-                new PropertySelectionOption(
+            if (helpDefinition is not null)
+            {
+                var evaluation = _actionRegistry.Evaluate(
+                    helpDefinition.Id,
+                    actor,
+                    target);
+                var helperLevel = _educationService.GetEducationLevel(actor);
+                childOptions.Add(new PropertySelectionOption(
                     "help_learning",
-                    definition.Label,
+                    helpDefinition.Label,
                     $"Current Education: Level {currentLevel} · Parent Education: Level {helperLevel}",
-                    definition.Description,
+                    helpDefinition.Description,
                     "No cost",
                     "help learning child education parent study",
                     evaluation.Available,
-                    LeadingEmoji: "📚")
-            ];
+                    LeadingEmoji: "📚"));
+            }
+
+            var tutorDefinition = _actionRegistry
+                .GetCandidateActions(actor, target)
+                .FirstOrDefault(action => action.Id.Equals(
+                    "education.private_tutor",
+                    StringComparison.OrdinalIgnoreCase));
+            if (tutorDefinition is not null)
+            {
+                var evaluation = _actionRegistry.Evaluate(
+                    tutorDefinition.Id,
+                    actor,
+                    target);
+                var ceiling = _educationService.GetHelpedEducationCeiling(_gameState.Year);
+                var chance = _educationService.GetPrivateTutorSuccessChance(target);
+                childOptions.Add(new PropertySelectionOption(
+                    "private_tutor",
+                    tutorDefinition.Label,
+                    $"Current Education: Level {currentLevel} · Tutoring cap: Level {ceiling}",
+                    "Private tutoring is independent of local School quality and the parent's Education.",
+                    $"{PrivateTutorUiCost:N0} zł",
+                    "private tutor child education school",
+                    evaluation.Available,
+                    chance,
+                    "🧑‍🏫"));
+            }
+
+            return childOptions;
         }
 
         var canAffordStandard =
@@ -300,6 +324,15 @@ public sealed partial class MainWindowViewModel
         {
             result = _actionRegistry.Execute(
                 "education.help_learning",
+                actor,
+                target);
+        }
+        else if (selectedOptionId.Equals(
+                     "private_tutor",
+                     StringComparison.OrdinalIgnoreCase))
+        {
+            result = _actionRegistry.Execute(
+                "education.private_tutor",
                 actor,
                 target);
         }

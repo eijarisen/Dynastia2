@@ -369,6 +369,9 @@ internal sealed class HistoricalEventYearSystem : IYearSystem
             }
         }
 
+        var permanentInjuryExposures =
+            new List<(IPerson Person, double Damage, string SourceCategory, bool PermanentRisk)>();
+
         foreach (var person in selected.Target.PersonTargets.ToList())
         {
             if (!person.Tags.Has("state.alive"))
@@ -392,6 +395,11 @@ internal sealed class HistoricalEventYearSystem : IYearSystem
                     * HealthSeverityScale
                     * (double)healthLossMultiplier;
                 health.ChangeHealth(person, -damage);
+                var sourceCategory = selected.Event.ExclusiveGroup ?? string.Empty;
+                var permanentRisk =
+                    sourceCategory.Equals("armed_conflict", StringComparison.OrdinalIgnoreCase)
+                    || sourceCategory.Equals("natural_disaster", StringComparison.OrdinalIgnoreCase);
+                permanentInjuryExposures.Add((person, damage, sourceCategory, permanentRisk));
                 outcome.Injuries++;
                 outcome.InjuryNames.Add(family.GetDisplayName(person));
             }
@@ -408,6 +416,24 @@ internal sealed class HistoricalEventYearSystem : IYearSystem
                 family,
                 outcome,
                 (double)healthLossMultiplier);
+
+        foreach (var exposure in permanentInjuryExposures)
+        {
+            Require<IGameEventBus>("Event bus").Publish(new GameEvent
+            {
+                Type = "health.injury_exposure",
+                Year = state.Year,
+                SubjectId = exposure.Person.Id,
+                Data = new Dictionary<string, string>
+                {
+                    ["sourceId"] = selected.Event.Id,
+                    ["sourceCategory"] = exposure.SourceCategory,
+                    ["healthDamage"] = exposure.Damage.ToString("0.####", CultureInfo.InvariantCulture),
+                    ["permanentRisk"] = exposure.PermanentRisk.ToString(),
+                    ["suppressChronicle"] = "true"
+                }
+            });
+        }
 
         outcome.StressGain = Math.Min(7.0, profile.StressGain * StressSeverityScale);
         return outcome;

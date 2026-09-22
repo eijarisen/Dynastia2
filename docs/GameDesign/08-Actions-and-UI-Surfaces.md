@@ -53,6 +53,7 @@ Legacy `family_support.*` actions remain compatibility-owned by `dynastia.family
 | `career.ask_to_quit` | Ask to Quit Job | working resident relative | Queued / Early | Actions |
 | `education.get_education` | Get Education | eligible household member in a town with a School | Queued / Early | Education / selected person |
 | `education.help_learning` | Help in Learning | child/learner | Queued / Early | Education / selected child |
+| `education.private_tutor` | Hire Private Tutor | supported resident child age 6–17 | Queued / Early | Town Affairs → Education |
 
 ## Wellbeing and medical actions
 
@@ -68,6 +69,8 @@ Legacy `family_support.*` actions remain compatibility-owned by `dynastia.family
 | `stats.improve_appeal` | medical Appeal improvement | adult household person | Queued / Early | same |
 | `stats.improve_longevity` | medical Longevity improvement | adult household person | Queued / Early | same |
 | `stats.improve_fertility` | medical Fertility improvement | adult household person | Queued / Early | same |
+
+Gambling Disorder has no voluntary Gamble action. Its win/loss outcome is an automatic annual Health-owned Finance system; Therapy is the direct player mitigation route.
 
 ## Household, property, farming and inventory actions
 

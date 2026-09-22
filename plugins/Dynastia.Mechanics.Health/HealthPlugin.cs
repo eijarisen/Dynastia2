@@ -93,6 +93,12 @@ public sealed class HealthPlugin : IGamePlugin
             random,
             events));
 
+        systems.Register(new GamblingDisorderYearSystem(
+            health,
+            economy,
+            random,
+            events));
+
         _ = new HealthInjuryEventTracker(state, health, random, events);
 
         context.Log("Health mechanics registered.");

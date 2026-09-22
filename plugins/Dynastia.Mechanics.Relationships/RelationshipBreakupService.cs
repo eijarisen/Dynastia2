@@ -569,12 +569,14 @@ public sealed class RelationshipBreakupService
         EnsureDivorcedParentResidence(
             gameState,
             first,
+            second,
             custody,
             residenceTown,
             createdHeads);
         EnsureDivorcedParentResidence(
             gameState,
             second,
+            first,
             custody,
             residenceTown,
             createdHeads);
@@ -639,10 +641,16 @@ public sealed class RelationshipBreakupService
     private void EnsureDivorcedParentResidence(
         IGameState gameState,
         IPerson parent,
+        IPerson formerPartner,
         IReadOnlyDictionary<Guid, IPerson> custody,
         TownInfo? residenceTown,
         ICollection<IPerson> createdHeads)
     {
+        var sharedChildren =
+            GetSharedBiologicalChildren(parent, formerPartner)
+                .Where(child => child.Tags.Has("state.alive"))
+                .ToList();
+
         var assignedBloodlineChildren =
             custody
                 .Where(pair => pair.Value.Id == parent.Id)
@@ -654,25 +662,19 @@ public sealed class RelationshipBreakupService
                 .Cast<IPerson>()
                 .ToList();
 
-        var requiresBloodlineHousehold =
-            _family.IsBloodline(parent)
-            || assignedBloodlineChildren.Count > 0;
-
         var currentHead = FindHouseholdHead(gameState, parent);
         if (currentHead?.Id == parent.Id)
-        {
             return;
-        }
 
-        if (!requiresBloodlineHousehold)
-        {
-            _economy.RemoveHouseholdMember(parent);
-            return;
-        }
-
+        // Divorce always separates the former spouses into real residences.
+        // A non-bloodline ex-spouse still needs an independent peripheral
+        // household even when custody goes to the other parent; otherwise later
+        // finances and chronicle events can be incorrectly attributed to a child.
         var dynastyAnchor = _family.IsBloodline(parent)
             ? parent
-            : assignedBloodlineChildren[0];
+            : assignedBloodlineChildren.FirstOrDefault()
+                ?? sharedChildren.FirstOrDefault(_family.IsBloodline)
+                ?? (_family.IsBloodline(formerPartner) ? formerPartner : parent);
 
         _economy.EnsureIndependentHousehold(
             parent,

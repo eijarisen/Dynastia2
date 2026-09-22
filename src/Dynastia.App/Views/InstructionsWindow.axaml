@@ -256,7 +256,7 @@
                                     <TextBlock Classes="guideTip">
                                         <Run Text="• " />
                                         <Run FontWeight="Bold" Text="Health and Stress. " />
-                                        <Run Text="Illness, injury, mental health, work, poverty, family circumstances and imprisonment can affect wellbeing. Treatment, recovery and psychotherapy can help." />
+                                        <Run Text="Illness, injury, mental health, work, poverty, family circumstances and imprisonment can affect wellbeing. Wars and disasters may leave permanent injuries, while chronic conditions such as Gambling Disorder can create lasting risks. Treatment, recovery and psychotherapy can help." />
                                     </TextBlock>
                                 </Border>
                                 <Border Classes="tipCard">
@@ -298,7 +298,7 @@
                                     <TextBlock Classes="guideTip">
                                         <Run Text="• " />
                                         <Run FontWeight="Bold" Text="Education. " />
-                                        <Run Text="Children can learn as they grow, while household members can pursue or support further study. Local schools and the historical era limit what can be learned nearby." />
+                                        <Run Text="Children can learn as they grow, while household members can pursue or support further study. Local schools and the historical era limit ordinary study, while affluent households can hire a private tutor for an eligible child even where schooling is weak or absent." />
                                     </TextBlock>
                                 </Border>
                                 <Border Classes="tipCard">
@@ -340,7 +340,7 @@
                                     <TextBlock Classes="guideTip">
                                         <Run Text="• " />
                                         <Run FontWeight="Bold" Text="Farming work. " />
-                                        <Run Text="Local farmland can employ eligible household members. Children can provide limited farm help, while older and healthier available workers contribute more. Farm output also depends on land and the surrounding economy; parcels carry historical farm and livestock character." />
+                                        <Run Text="Local farmland can employ eligible household members. Children can provide limited farm help, while older and healthier available workers contribute more. All farms share the same annual weather, while livestock can soften crop-weather volatility. Output also depends on land and the surrounding economy." />
                                     </TextBlock>
                                 </Border>
                                 <Border Classes="tipCard">

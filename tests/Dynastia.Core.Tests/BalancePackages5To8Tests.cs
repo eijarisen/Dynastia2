@@ -54,7 +54,9 @@ public sealed class BalancePackages5To8Tests
         Assert.Contains(".ThenByDescending(worker => worker.Age)", farming);
         Assert.Contains(".ThenBy(worker => worker.Id)", farming);
         Assert.Contains("workerBaseIncome * ageContribution", farming);
-        Assert.Contains("workerBaseIncome * adjustedMultiplier * ageContribution", farming);
+        Assert.Contains("baseIncome += productiveEffort.Apply(", farming);
+        Assert.Contains("total += productiveEffort.Apply(output);", farming);
+        Assert.Contains("total *= adjustedWeatherMultiplier;", farming);
         Assert.Contains("AnnualProductiveEffortRules.Get", farming);
     }
 

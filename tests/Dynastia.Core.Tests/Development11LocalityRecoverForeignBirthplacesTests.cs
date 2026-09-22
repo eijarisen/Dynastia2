@@ -59,7 +59,8 @@ public sealed class Development11LocalityRecoverForeignBirthplacesTests
         var source = File.ReadAllText(Path.Combine(RepositoryRoot(),
             "src", "Dynastia.App", "Map", "Views", "TownMapPanel.cs"));
 
-        Assert.Contains("e.ClickCount >= 2", source);
+        Assert.Contains("button.Click +=", source);
+        Assert.Contains("isRapidSecondClick", source);
         Assert.Contains("Task.Delay(500)", source);
     }
 

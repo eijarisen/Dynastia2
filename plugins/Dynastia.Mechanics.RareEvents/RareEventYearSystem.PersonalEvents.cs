@@ -204,6 +204,12 @@ internal sealed partial class RareEventYearSystem
                 person,
                 "rare.lightning_strike");
         }
+
+        PublishPermanentInjuryExposure(
+            gameState,
+            person,
+            "rare.lightning_strike",
+            damage);
     }
 
     private void ExecuteSeriousFall(

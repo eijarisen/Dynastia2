@@ -10,5 +10,6 @@ public static class TherapyRules
         || conditionId.Equals("depression", StringComparison.OrdinalIgnoreCase)
         || conditionId.Equals("anxiety", StringComparison.OrdinalIgnoreCase)
         || conditionId.Equals("drug_dependence", StringComparison.OrdinalIgnoreCase)
-        || conditionId.Equals("burnout", StringComparison.OrdinalIgnoreCase);
+        || conditionId.Equals("burnout", StringComparison.OrdinalIgnoreCase)
+        || conditionId.Equals("gambling_disorder", StringComparison.OrdinalIgnoreCase);
 }

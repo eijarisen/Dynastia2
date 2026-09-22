@@ -57,7 +57,6 @@
   },
   "news": {
     "occupationStarted": "justice.life_of_crime_started",
-    "income": "justice.criminal_income",
     "mastery": "justice.criminal_mastery",
     "master": "justice.criminal_master",
     "occupationStopped": "justice.life_of_crime_ended"

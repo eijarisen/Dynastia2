@@ -8,6 +8,7 @@ Rules:
 - Education is persisted per person and participates in careers/crafts/status.
 - Children can gain passive education during the yearly `Status` phase.
 - `education.get_education` is an active queued action available only where the person’s town has an actual School institution; `education.help_learning` lets a controller support an eligible child/household learner even when local schooling is limited.
+- `education.private_tutor` is a 3,000 zł queued childhood action for eligible resident relatives age 6–17. It ignores local School availability/ceiling and parent Education, but still respects the historical tutoring ceiling; success depends only on the child’s Intellect.
 - Historical era and local school/institution access affect which education opportunities are available.
 - Craft education can also report regional industry support where relevant.
 
@@ -115,6 +116,7 @@ Rules:
 - Output depends on farmland, labor, farm/livestock flavor and historical/local multipliers.
 - Recover and health work capacity reduce farming output through the same shared annual productive-effort rule used by Crafts/artistic production.
 - Farm help is age-scaled: ages 10–13 contribute 25% of adult output, ages 14–17 contribute 50%, and adults contribute 100%. When farm-worker capacity is scarce, higher expected contributors are selected first with deterministic age/ID tie-breaks.
+- Realized farm output uses one persisted global four-season weather result per game year, shared by every farming household. Livestock diversification can soften each household’s exposure to the same crop-weather result; expected income assumes neutral weather.
 
 Primary data: `data/Farming/`.
 

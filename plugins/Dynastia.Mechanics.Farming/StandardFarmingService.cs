@@ -1,4 +1,5 @@
 using System.Buffers.Binary;
+using System.Globalization;
 using System.Security.Cryptography;
 using System.Text;
 using Dynastia.Contracts;
@@ -445,14 +446,8 @@ internal sealed class StandardFarmingService :
 
         foreach (var worker in workers)
         {
-            var rawMultiplier =
-                (decimal)(_random.NextDouble() * 2.0);
-            var adjustedMultiplier =
-                FarmingRules.AdjustVolatilityMultiplier(
-                    rawMultiplier,
-                    coverage);
             var ageContribution = _workerContribution.GetAgeContribution(worker.Age);
-            var output = workerBaseIncome * adjustedMultiplier * ageContribution;
+            var output = workerBaseIncome * ageContribution;
             var productiveEffort = AnnualProductiveEffortRules.Get(
                 worker,
                 _workCapacity);
@@ -460,6 +455,12 @@ internal sealed class StandardFarmingService :
             total += productiveEffort.Apply(output);
         }
 
+        var weather = ResolveWeatherState();
+        var adjustedWeatherMultiplier =
+            FarmingRules.AdjustVolatilityMultiplier(
+                weather.RawYieldMultiplier,
+                coverage);
+        total *= adjustedWeatherMultiplier;
         total *= FarmingRules.GetLivestockIncomeMultiplier(coverage);
         total = ApplyTownIncomeMultiplier(
             householdRepresentative,
@@ -484,6 +485,10 @@ internal sealed class StandardFarmingService :
                         ? "poor"
                         : "ordinary";
 
+        PublishWeatherNewsOnce(
+            weather,
+            householdRepresentative);
+
         _events.Publish(
             new GameEvent
             {
@@ -507,6 +512,122 @@ internal sealed class StandardFarmingService :
         IPerson householdRepresentative) =>
         GetExpectedAnnualIncome(
             householdRepresentative);
+
+    private FarmingWeatherStateComponent ResolveWeatherState()
+    {
+        var anchor = _gameState.People.FirstOrDefault()
+            ?? throw new InvalidOperationException(
+                "Farming weather requires at least one game person.");
+
+        var state = anchor.Components.Get<FarmingWeatherStateComponent>();
+        if (state is null)
+        {
+            state = new FarmingWeatherStateComponent();
+            anchor.Components.Set(state);
+        }
+
+        if (state.ResolvedGameYear == _gameState.Year)
+            return state;
+
+        state.ResolvedGameYear = _gameState.Year;
+        state.WeatherYear = _gameState.Year - 1;
+        state.WinterTemperature = RollNormalizedSeason();
+        state.SpringTemperature = RollNormalizedSeason();
+        state.SummerPrecipitation = RollNormalizedSeason();
+        state.AutumnPrecipitation = RollNormalizedSeason();
+        state.RawYieldMultiplier = FarmingRules.GetRawWeatherYieldMultiplier(
+            state.WinterTemperature,
+            state.SpringTemperature,
+            state.SummerPrecipitation,
+            state.AutumnPrecipitation);
+        state.NewsPublished = false;
+        return state;
+    }
+
+    private double RollNormalizedSeason() =>
+        _random.NextDouble() * 2.0 - 1.0;
+
+    private void PublishWeatherNewsOnce(
+        FarmingWeatherStateComponent weather,
+        IPerson householdRepresentative)
+    {
+        if (weather.NewsPublished)
+            return;
+
+        weather.NewsPublished = true;
+        var harvestBand = GetHarvestBand(weather.RawYieldMultiplier);
+        var text =
+            $"Last year's weather brought {DescribeWinter(weather.WinterTemperature)}, " +
+            $"{DescribeSpring(weather.SpringTemperature)}, " +
+            $"{DescribeSummer(weather.SummerPrecipitation)} and " +
+            $"{DescribeAutumn(weather.AutumnPrecipitation)}. " +
+            $"Harvests were {harvestBand} across farming households.";
+
+        _events.Publish(new GameEvent
+        {
+            Type = "farming.weather",
+            Year = _gameState.Year,
+            SubjectId = householdRepresentative.Id,
+            Data = new Dictionary<string, string>
+            {
+                ["weatherYear"] = weather.WeatherYear.ToString(CultureInfo.InvariantCulture),
+                ["winterTemperature"] = weather.WinterTemperature.ToString("0.0000", CultureInfo.InvariantCulture),
+                ["springTemperature"] = weather.SpringTemperature.ToString("0.0000", CultureInfo.InvariantCulture),
+                ["summerPrecipitation"] = weather.SummerPrecipitation.ToString("0.0000", CultureInfo.InvariantCulture),
+                ["autumnPrecipitation"] = weather.AutumnPrecipitation.ToString("0.0000", CultureInfo.InvariantCulture),
+                ["rawYieldMultiplier"] = weather.RawYieldMultiplier.ToString("0.0000", CultureInfo.InvariantCulture),
+                ["harvestBand"] = harvestBand,
+                ["globalNews"] = "true",
+                ["suppressChronicle"] = "false",
+                ["text"] = text
+            }
+        });
+    }
+
+    private static string DescribeWinter(double value) => value switch
+    {
+        <= -0.65 => "a harsh winter that kept pests down",
+        <= -0.20 => "a cold winter with fewer pests",
+        < 0.20 => "an average winter",
+        < 0.65 => "a mild winter that favored pests",
+        _ => "a very mild winter in which pests flourished"
+    };
+
+    private static string DescribeSpring(double value) => value switch
+    {
+        <= -0.65 => "severe spring frosts",
+        <= -0.20 => "a cold spring with some frost damage",
+        < 0.20 => "an average spring",
+        < 0.65 => "a warm spring",
+        _ => "a very warm spring"
+    };
+
+    private static string DescribeSummer(double value) => value switch
+    {
+        <= -0.65 => "a severe summer drought",
+        <= -0.20 => "a dry summer",
+        < 0.20 => "average summer rainfall",
+        < 0.65 => "a well-watered summer",
+        _ => "a very wet summer"
+    };
+
+    private static string DescribeAutumn(double value) => value switch
+    {
+        <= -0.65 => "a very dry autumn with an easy harvest",
+        <= -0.20 => "a dry autumn",
+        < 0.20 => "average autumn rainfall",
+        < 0.65 => "a rainy autumn that complicated harvest",
+        _ => "a very rainy autumn that seriously complicated harvest"
+    };
+
+    private static string GetHarvestBand(decimal multiplier) => multiplier switch
+    {
+        < 0.40m => "disastrous",
+        < 0.75m => "poor",
+        < 1.25m => "broadly average",
+        < 1.60m => "good",
+        _ => "exceptional"
+    };
 
     private decimal ApplyTownIncomeMultiplier(
         IPerson householdRepresentative,

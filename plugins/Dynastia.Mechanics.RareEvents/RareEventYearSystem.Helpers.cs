@@ -162,6 +162,31 @@ internal sealed partial class RareEventYearSystem
         return actual;
     }
 
+    private void PublishPermanentInjuryExposure(
+        IGameState gameState,
+        IPerson person,
+        string sourceId,
+        double damage)
+    {
+        if (damage <= 0)
+            return;
+
+        _events.Publish(new GameEvent
+        {
+            Type = "health.injury_exposure",
+            Year = gameState.Year,
+            SubjectId = person.Id,
+            Data = new Dictionary<string, string>
+            {
+                ["sourceId"] = sourceId,
+                ["sourceCategory"] = "natural_disaster",
+                ["healthDamage"] = damage.ToString("0.####", System.Globalization.CultureInfo.InvariantCulture),
+                ["permanentRisk"] = "true",
+                ["suppressChronicle"] = "true"
+            }
+        });
+    }
+
     private decimal RemoveHouseholdWealth(IPerson head, decimal requestedLoss)
     {
         var finance = _economy.GetHousehold(head);

@@ -1,6 +1,5 @@
 ﻿EventType,Emoji,TextTemplate
 justice.life_of_crime_started,🕵️,{Person} turned to a life of crime as a {Archetype}.
-justice.criminal_income,💰,{Person}'s criminal operation brought in {Amount} zł.
 justice.criminal_mastery,🕵️,{Person} advanced to {Mastery} in the criminal underworld.
 justice.criminal_master,🎭,{Person} became a Master {Archetype}.
 justice.life_of_crime_ended,🚪,{Person} left the life of crime.

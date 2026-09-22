@@ -97,8 +97,11 @@ internal static class ActionPresentationPolicy
                 ActionCategory.Career);
 
             if (actionId.Equals(
-                "education.help_learning",
-                StringComparison.OrdinalIgnoreCase))
+                    "education.help_learning",
+                    StringComparison.OrdinalIgnoreCase)
+                || actionId.Equals(
+                    "education.private_tutor",
+                    StringComparison.OrdinalIgnoreCase))
             {
                 categories.Add(
                     ActionCategory.Family);

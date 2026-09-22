@@ -219,7 +219,8 @@ public sealed class Development11TownAffairsPresentationTests
         Assert.Contains("Header=\"Health\" IsVisible=\"{Binding ShowHealthTab}\"", window);
         Assert.Contains("Header=\"Education\" IsVisible=\"{Binding ShowEducationTab}\"", window);
         Assert.Contains("Header=\"Bank\" IsVisible=\"{Binding ShowBankTab}\"", window);
-        Assert.Contains("!IsRemote && Snapshot.School.IsAvailable", hub);
+        Assert.Contains("Snapshot.School.IsAvailable", hub);
+        Assert.Contains("Subject is { Age: >= 6 and < 18 }", hub);
         Assert.Contains("!IsRemote && Snapshot.Bank.IsAvailable", hub);
         Assert.Contains("if (tab is null || !IsTabVisible(tab.Value))", hub);
         Assert.DoesNotContain("Move here before using local services.", hub);
@@ -337,7 +338,8 @@ public sealed class Development11TownAffairsPresentationTests
 
         Assert.Contains("_lastOverlapClickTownId", panel);
         Assert.Contains("TimeSpan.FromMilliseconds(500)", panel);
-        Assert.Contains("e.ClickCount >= 2 || isRapidSecondClick", panel);
+        Assert.Contains("button.Click +=", panel);
+        Assert.Contains("activateAfterSelection || isRapidSecondClick", panel);
         Assert.Contains("_overlapPicker.IsVisible = false;", panel);
         Assert.Contains("OnTownActivated(selectedTownId);", panel);
         Assert.Contains("await Task.Delay(500);", panel);

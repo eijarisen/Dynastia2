@@ -131,6 +131,22 @@ Rules:
 
 Primary data: `data/LocalSociety/medical_stat_improvement_rules.csv`, `data/Common/historical_action_variants.json`.
 
+## Gambling Disorder
+Status: **Implemented**  
+Owners: Health + Wellbeing + Economy
+
+Gambling Disorder is a permanent Stress-related mental-health condition with no direct annual Health or Work Capacity penalty. An active adult gambler who is not imprisoned makes an independent yearly financial outcome during `Finances`, after ordinary household funding: losses are more common than wins, are recorded as `gambling losses`, and may push household Wealth below zero without creating a Loan contract. Existing Therapy can remove the condition. There is intentionally no voluntary Gamble action.
+
+Primary code/data: `GamblingDisorderYearSystem.cs`, `data/Common/health_conditions.json`, `data/Health/health_stress_outcomes.csv`, `TherapyRules.cs`.
+
+## Permanent injuries from war and disaster
+Status: **Implemented**  
+Owners: Health + Historical Events + Rare Events
+
+Severe injuries from historical armed conflict/natural disasters and the designated disaster Rare Events can additionally leave Chronic Pain, Hearing Loss, Mobility Impairment, Traumatic Brain Injury or, rarely, Paraplegia. Producers publish the internal `health.injury_exposure` signal after applying their established immediate Health damage; Health owns the permanent-outcome roll and condition persistence. Ordinary workplace, traffic, assault and similar accidents keep their existing acute-injury behavior and do not use this new permanent-risk path.
+
+Primary code/data: `HealthInjuryEventTracker.cs`, `HistoricalEventYearSystem.cs`, `RareEventYearSystem*.cs`, `data/Common/health_conditions.json`.
+
 ## Work capacity and household health pressure
 Status: **Implemented**  
 Owners: Health + Career + Households + Farming/Crafts

@@ -448,6 +448,9 @@ public sealed partial class MainWindowViewModel
                 "education.get_education",
                 StringComparison.OrdinalIgnoreCase)
             || actionId.Equals(
+                "education.private_tutor",
+                StringComparison.OrdinalIgnoreCase)
+            || actionId.Equals(
                 "wellbeing.heal_relative",
                 StringComparison.OrdinalIgnoreCase)
             || actionId.Equals(

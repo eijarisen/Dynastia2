@@ -87,11 +87,11 @@ public sealed class HealthContentReworkBatch1Tests
         service.ConfigureHistoricalCatalog(
             HistoricalHealthCatalog.Load(data, conditions.Select(condition => condition.Id)));
 
-        Assert.Equal(53, conditions.Count);
+        Assert.Equal(58, conditions.Count);
         Assert.Equal(0.126, HealthIncidenceRules.ScaleMildConditionChance(0.28), 6);
         Assert.Equal(0.0035, HealthIncidenceRules.ScaleSeriousConditionChance(0.01), 6);
 
-        foreach (var id in new[] { "depression", "anxiety", "burnout", "alcoholism", "drug_dependence" })
+        foreach (var id in new[] { "depression", "anxiety", "burnout", "alcoholism", "drug_dependence", "gambling_disorder" })
         {
             var definition = Assert.Single(conditions, condition => condition.Id == id);
             Assert.Equal("Mental", definition.Category);
@@ -140,7 +140,7 @@ public sealed class HealthContentReworkBatch1Tests
         var conditions = LoadHealthDefinitions(data);
         var outcomes = StressOutcomeCatalog.Load(data, conditions);
 
-        Assert.Equal(5, outcomes.Definitions.Count);
+        Assert.Equal(6, outcomes.Definitions.Count);
         var drugs = outcomes.Definitions.Single(outcome => outcome.ConditionId == "drug_dependence");
         Assert.Equal(18, drugs.MinimumAge);
         Assert.Equal(5, drugs.MinimumStress);
@@ -150,6 +150,12 @@ public sealed class HealthContentReworkBatch1Tests
         Assert.Equal(18, burnout.MinimumAge);
         Assert.Equal(2.5, burnout.MinimumStress, 6);
         Assert.Equal(1700, burnout.StartYear);
+
+        var gambling = outcomes.Definitions.Single(outcome => outcome.ConditionId == "gambling_disorder");
+        Assert.Equal(18, gambling.MinimumAge);
+        Assert.Equal(3, gambling.MinimumStress, 6);
+        Assert.Equal(0.30, gambling.BaseWeight, 6);
+        Assert.Equal(1700, gambling.StartYear);
 
         Assert.All(outcomes.Definitions, outcome =>
             Assert.Equal(0d, conditions.Single(condition => condition.Id == outcome.ConditionId).Weight));
@@ -232,6 +238,7 @@ public sealed class HealthContentReworkBatch1Tests
     {
         Assert.True(TherapyRules.IsTreatableCondition("drug_dependence"));
         Assert.True(TherapyRules.IsTreatableCondition("burnout"));
+        Assert.True(TherapyRules.IsTreatableCondition("gambling_disorder"));
     }
 
     [Fact]

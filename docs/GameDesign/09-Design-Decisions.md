@@ -167,3 +167,55 @@ Affected mechanics: Contracts, Crafts, Justice.
 Implementation notes: the same original income roll is remapped with no additional RNG. Novice is unchanged; the Master maximum is about 26.66× while its pre-rounding expected multiplier remains about 5.40668×.
 Save compatibility: no persisted-state migration; future payouts change for the same roll while RNG call order is preserved.
 Supersedes: uncapped reciprocal outcomes up to 100× at Master.
+
+---
+
+ID: **GD-2026-012**
+Status: **Implemented**
+Date: **2026-09-22**
+Area: **Farming / Weather**
+Decision: Ordinary annual farm volatility is one persisted four-season global weather result shared by every farming household, applied after worker productive effort and before livestock/local multipliers.
+Reasoning: Weather should be a coherent world event rather than an independent jackpot/failure roll for every worker; livestock remains a diversification mechanism.
+Affected mechanics: Farming, Rare Events, Chronicle/news.
+Implementation notes: `FarmingWeatherStateComponent` prevents rerolls within a year and publishes one `farming.weather` report only when farming actually occurs. Exceptional Harvest/Crop Failure Rare Event rows are retired; Local Epidemic remains.
+Save compatibility: additive persisted Farming component; no manual migration.
+Supersedes: per-worker `0–200%` Farming volatility and overlapping ordinary harvest Rare Events.
+
+---
+
+ID: **GD-2026-013**
+Status: **Implemented**
+Date: **2026-09-22**
+Area: **Education / Childhood**
+Decision: Affluent households may hire a Private Tutor for eligible resident children independently of local School availability and parent Education, while still respecting the historical tutoring ceiling.
+Reasoning: Wealth should provide a costly route around weak local schooling without making ordinary School quality irrelevant.
+Affected mechanics: Education, Town Affairs, autonomous household action scoring.
+Implementation notes: action `education.private_tutor`, cost 3,000 zł, queued early; final success chance is determined only by child Intellect.
+Save compatibility: no persisted-state migration.
+Supersedes: no school-independent paid childhood education route.
+
+---
+
+ID: **GD-2026-014**
+Status: **Implemented**
+Date: **2026-09-22**
+Area: **Health / Economy**
+Decision: Gambling Disorder is a persistent Stress-acquired condition whose annual consequence is a mostly losing household-finance roll rather than direct Health or Work Capacity damage.
+Reasoning: The condition should create a distinct financial risk and potential unstructured debt while remaining treatable through the existing Therapy system.
+Affected mechanics: Health, Stress, Wellbeing, Economy.
+Implementation notes: `health.gambling_disorder_finances` runs after ordinary household finance; losses use the debt-capable wealth path and are not Loan contracts or basic-needs costs. No voluntary Gamble action is added.
+Save compatibility: condition data is additive; existing Health persistence handles future acquisition/removal.
+Supersedes: none.
+
+---
+
+ID: **GD-2026-015**
+Status: **Implemented**
+Date: **2026-09-22**
+Area: **Health / Historical and disaster injuries**
+Decision: Severe injuries from armed conflict, natural-disaster Historical Events and selected disaster Rare Events can additionally create permanent Health conditions through a shared Health-owned injury-exposure signal.
+Reasoning: Major wars and disasters should sometimes leave lasting consequences without making event-producing plugins own Health condition selection or changing their existing injury incidence/damage.
+Affected mechanics: Health, Historical Events, Rare Events.
+Implementation notes: `health.injury_exposure` carries actual damage/source context; Health selects among Chronic Pain, Mobility Impairment, Hearing Loss, Traumatic Brain Injury and Paraplegia while retaining existing acute Rare Event injury behavior.
+Save compatibility: additive condition definitions/events; no manual migration.
+Supersedes: war/disaster injury consequences being limited to immediate Health loss/temporary injuries.

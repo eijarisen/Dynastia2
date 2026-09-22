@@ -46,6 +46,27 @@ public static class FarmingRules
             * (1m - MaximumLivestockVolatilityCompression * normalizedCoverage);
     }
 
+    public static decimal GetRawWeatherYieldMultiplier(
+        double winterTemperature,
+        double springTemperature,
+        double summerPrecipitation,
+        double autumnPrecipitation)
+    {
+        var winterFavourability = -(decimal)Math.Clamp(winterTemperature, -1.0, 1.0);
+        var springFavourability = (decimal)Math.Clamp(springTemperature, -1.0, 1.0);
+        var summerFavourability = (decimal)Math.Clamp(summerPrecipitation, -1.0, 1.0);
+        var autumnFavourability = -(decimal)Math.Clamp(autumnPrecipitation, -1.0, 1.0);
+
+        return Math.Clamp(
+            1.00m
+            + 0.25m * winterFavourability
+            + 0.25m * springFavourability
+            + 0.25m * summerFavourability
+            + 0.25m * autumnFavourability,
+            0.00m,
+            2.00m);
+    }
+
     public static decimal InterpolateEraMultiplier(
         int year,
         IReadOnlyList<(int Year, decimal Multiplier)> anchors)

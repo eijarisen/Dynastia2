@@ -169,7 +169,7 @@ internal sealed class CriminalOccupationService :
         if (component.LastHeistYear == _gameState.Year)
             return 0m;
 
-        var proceeds = PrepareHeistProceeds(person, component, publishIncome: true);
+        var proceeds = PrepareHeistProceeds(person, component);
         return proceeds;
     }
 
@@ -187,7 +187,7 @@ internal sealed class CriminalOccupationService :
             return false;
         }
 
-        var proceeds = PrepareHeistProceeds(person, component, publishIncome: true);
+        var proceeds = PrepareHeistProceeds(person, component);
         if (proceeds > 0m)
             _economy.ChangeWealth(person, proceeds);
         ResolveHeist(person, component, proceeds);
@@ -207,7 +207,7 @@ internal sealed class CriminalOccupationService :
         }
 
         var incomeWasPrepared = component.PendingHeistYear == _gameState.Year;
-        var proceeds = PrepareHeistProceeds(person, component, publishIncome: !incomeWasPrepared);
+        var proceeds = PrepareHeistProceeds(person, component);
         if (!incomeWasPrepared && proceeds > 0m)
             _economy.ChangeWealth(person, proceeds);
         ResolveHeist(person, component, proceeds);
@@ -227,8 +227,7 @@ internal sealed class CriminalOccupationService :
 
     private decimal PrepareHeistProceeds(
         IPerson person,
-        CriminalOccupationComponent component,
-        bool publishIncome)
+        CriminalOccupationComponent component)
     {
         if (component.PendingHeistYear == _gameState.Year)
             return component.PendingHeistProceeds;
@@ -244,24 +243,6 @@ internal sealed class CriminalOccupationService :
         component.PendingHeistProceeds = proceeds;
         component.LastAnnualIncome = proceeds;
         component.LastIncomeYear = _gameState.Year;
-
-        if (publishIncome)
-        {
-            _events.Publish(new GameEvent
-            {
-                Type = "justice.criminal_income",
-                Year = _gameState.Year,
-                SubjectId = person.Id,
-                Data = new Dictionary<string, string>
-                {
-                    ["amount"] = proceeds.ToString(CultureInfo.InvariantCulture),
-                    ["mastery"] = mastery.DisplayName,
-                    ["archetype"] = archetype.DisplayName,
-                    ["randomRoll"] = roll.ToString(CultureInfo.InvariantCulture),
-                    ["text"] = $"{_family.GetDisplayName(person)}'s criminal operation brought in {proceeds:N0} zł."
-                }
-            });
-        }
 
         return proceeds;
     }

@@ -118,6 +118,17 @@ public sealed class StandardEducationService : IEducationService
         return Math.Clamp(chance, 0, 1);
     }
 
+    public double GetPrivateTutorSuccessChance(IPerson person)
+    {
+        var intellect = _stats.GetStats(person)
+            .First(stat => stat.Id.Equals("intellect", StringComparison.OrdinalIgnoreCase))
+            .Value;
+        return EducationProgressionRules.GetPrivateTutorSuccessChance(intellect);
+    }
+
+    public int GetHelpedEducationCeiling(int year) =>
+        Math.Clamp(_eras.GetRule(year).HelpedMaxLevel, 0, 5);
+
     public int GetLocalEducationCeiling(
         IPerson person,
         int year)

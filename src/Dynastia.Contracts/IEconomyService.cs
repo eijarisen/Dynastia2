@@ -77,9 +77,9 @@ public interface IEconomyService
         IPerson person,
         decimal amount);
 
-    // Debt repayment is the only ordinary finance path allowed to make a
-    // household balance negative. All existing ChangeWealth callers retain
-    // the historical zero floor.
+    // Explicit debt-producing mechanics (for example loan repayment and
+    // gambling losses) may make a household balance negative. Ordinary
+    // ChangeWealth callers retain the historical zero floor.
     void ChangeWealthAllowDebt(
         IPerson person,
         decimal amount);

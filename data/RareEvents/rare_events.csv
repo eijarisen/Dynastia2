@@ -6,8 +6,6 @@ rare.structural_accident,Structural Accident,Household,HouseholdDisaster,1700,,1
 rare.legal_dispute,Costly Legal Dispute,Household,HouseholdLoss,1700,,15,0,,True,300,False,False,False,False,0,-,None,Urban,SmallTown,-,-,legal;property;commerce,generic.wealth_loss
 rare.major_repair,Major Property Repair,Household,HouseholdLoss,1700,,25,0,,True,0,False,True,False,False,0,-,None,Universal,SmallTown,-,-,property;construction,generic.wealth_loss
 rare.house_discovery,Valuable Discovery at Home,Household,HouseholdFortune,1700,,10,0,,True,0,False,True,False,False,0,-,None,Universal,SmallTown,-,-,-,generic.wealth_gain
-rare.exceptional_harvest,Exceptional Harvest,Household,FarmingFortune,1700,,20,0,,True,0,False,False,True,False,0,-,None,Rural,SmallTown,agriculture,agriculture,agriculture,bespoke.exceptional_harvest
-rare.crop_failure,Crop Failure,Household,FarmingLoss,1700,,20,0,,True,0,False,False,True,False,0,-,None,Rural,SmallTown,agriculture,agriculture,agriculture,bespoke.crop_failure
 rare.local_epidemic,Local Epidemic,Household,HealthCrisis,1700,,15,0,,False,0,False,False,False,False,0,-,None,Urban,SmallTown,-,-,-,bespoke.local_epidemic
 rare.assault,Assault,Personal,Violence,1700,,20,15,,False,0,False,False,False,False,0,-,None,Urban,SmallTown,-,-,security,bespoke.assault
 rare.mugging,Mugging,Personal,Violence,1700,,15,15,,True,1,False,False,False,False,0,-,None,Urban,SmallTown,-,-,-,bespoke.mugging

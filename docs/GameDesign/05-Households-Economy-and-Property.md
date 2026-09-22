@@ -65,6 +65,7 @@ Rules:
 - Farm type and livestock species are flavor/production context rather than separate playable entities; their historical/regional weighting is data-driven.
 - Family Relations can transfer/request farmland; household logic avoids giving away the last essential parcel when rules require a reserve.
 - Relocation may trigger farmland sale/handling according to Farming relocation rules.
+- Crop production uses one global annual weather result shared across all farms. Livestock can reduce crop-volatility exposure but does not create separate local weather. The retired `rare.exceptional_harvest` and `rare.crop_failure` definitions no longer enter future Rare Event selection.
 
 Primary code/data: `FarmingRules.cs`, `FarmingPlugin.cs`, `data/Farming/`.
 
@@ -99,6 +100,12 @@ Rules:
 Primary code/data: `LoansPlugin.cs`, `LoanPaymentYearSystem.cs`, `LoanInheritanceYearSystem.cs`, `data/Loans/loan_eras.csv`, `data/TownLife/bank_offer_quality.csv`.
 
 Regression tests: `LoanAndDebtRulesTests.cs`, `Development13ContinuationTests.cs`.
+
+## Gambling losses and negative wealth
+Status: **Implemented**  
+Owners: Health + Economy
+
+Annual Gambling Disorder outcomes occur after ordinary household basic-needs funding. Losses are discretionary realized expenses and may drive household Wealth below zero through the existing debt-capable Economy path; they do not increase `BasicNeedsRequired` and do not create a lender, principal, interest schedule or `LoanContractState`. Future income repairs the negative balance through normal Economy semantics.
 
 ## Heirlooms and artistic works
 Status: **Implemented**  

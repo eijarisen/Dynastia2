@@ -10,8 +10,8 @@ public sealed class ContentReworkBatch4RareEventsTests
     public void RareEventCatalogUsesThirtyStableRowsAndSeparatePools()
     {
         var catalog = RareEventCatalog.Load(CreateRepositoryData());
-        Assert.Equal(30, catalog.Events.Count);
-        Assert.Equal(10, catalog.GetPool("Household").Count);
+        Assert.Equal(28, catalog.Events.Count);
+        Assert.Equal(8, catalog.GetPool("Household").Count);
         Assert.Equal(19, catalog.GetPool("Personal").Count);
         Assert.Single(catalog.GetPool("Special"));
         Assert.Equal("rare.suicide", catalog.GetPool("Special")[0].EventId);
@@ -47,8 +47,9 @@ public sealed class ContentReworkBatch4RareEventsTests
     public void FarmingAndCraftEventsUseCapabilityRequirements()
     {
         var catalog = RareEventCatalog.Load(CreateRepositoryData());
-        Assert.True(catalog.Find("rare.exceptional_harvest")!.RequiresFarmland);
-        Assert.True(catalog.Find("rare.crop_failure")!.RequiresFarmland);
+        Assert.Null(catalog.Find("rare.exceptional_harvest"));
+        Assert.Null(catalog.Find("rare.crop_failure"));
+        Assert.NotNull(catalog.Find("rare.local_epidemic"));
         Assert.True(catalog.Find("rare.craft_setback")!.RequiresCraft);
         Assert.True(catalog.Find("rare.craft_commission")!.RequiresCraft);
     }

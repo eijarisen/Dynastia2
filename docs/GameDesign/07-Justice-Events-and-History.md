@@ -63,6 +63,8 @@ Rules:
 - Rare events use fixed aggregate Household/Personal pool gates; adding content rows must not accidentally increase the overall annual gate frequency.
 - Within a triggered pool, year, age, context, career/family and supplemental eligibility/weights select the event.
 - Effects can change Health, economy, careers, justice, household state, mortality and heirlooms through explicit effect definitions.
+- `rare.exceptional_harvest` and `rare.crop_failure` are retired from future selection because ordinary crop volatility is now owned by global Farming weather; `rare.local_epidemic` remains active.
+- House fire, storm/flood, structural accident and lightning injuries publish a Health injury-exposure signal that can create a lasting injury without replacing their existing immediate/acute effects.
 - Recent-event tags/state are cleaned during `PreYear`.
 
 Primary data: `data/RareEvents/rare_event_pool_rules.csv`, `rare_events.csv`, variants/context/effect CSVs.
@@ -77,6 +79,7 @@ Rules:
 - Historical events run in `PreYear` and use event scope, target filters, candidate modifiers and effect profiles.
 - Events are defined for the historical period supported by content (currently through 2026) and can be local/regional/national or household/person-targeted.
 - They may affect wealth, health, career, justice, property/prosperity, migration and mortality where the selected effect profile says so.
+- Successful Injury effects from events classified as `armed_conflict` or `natural_disaster` also request a Health-owned permanent-injury roll after the existing immediate damage is applied. Other historical injury categories keep their established immediate effects only.
 - Partition/news presentation describes the current historical change rather than announcing later future partitions.
 - Historical action wording/availability for other plugins is supplied through `historical_action_variants.json`.
 

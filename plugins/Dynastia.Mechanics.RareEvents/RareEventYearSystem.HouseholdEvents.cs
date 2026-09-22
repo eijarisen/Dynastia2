@@ -68,6 +68,8 @@ internal sealed partial class RareEventYearSystem
 
             var damage =
                 new List<string>();
+            var permanentExposures =
+                new List<(IPerson Person, double Damage)>();
 
             foreach (var person in
                 injured)
@@ -77,6 +79,7 @@ internal sealed partial class RareEventYearSystem
                         person,
                         10,
                         30);
+                permanentExposures.Add((person, amount));
 
                 damage.Add(
                     $"{_family.GetDisplayName(person)} (-{amount:0} Health)");
@@ -107,6 +110,15 @@ internal sealed partial class RareEventYearSystem
                 preferredSubject:
                     injured[0]);
 
+            foreach (var exposure in permanentExposures)
+            {
+                PublishPermanentInjuryExposure(
+                    gameState,
+                    exposure.Person,
+                    "rare.house_fire",
+                    exposure.Damage);
+            }
+
             return;
         }
 
@@ -135,13 +147,16 @@ internal sealed partial class RareEventYearSystem
                 finance.Houses.Count - 1);
         }
 
+        var catastrophicExposures =
+            new List<(IPerson Person, double Damage)>();
         foreach (var occupant in
             household.Occupants)
         {
-            ApplyNonFatalDamage(
+            var damage = ApplyNonFatalDamage(
                 occupant,
                 25,
                 50);
+            catastrophicExposures.Add((occupant, damage));
         }
 
         IPerson? fatalVictim =
@@ -199,6 +214,15 @@ internal sealed partial class RareEventYearSystem
                 gameState,
                 fatalVictim,
                 "rare.house_fire");
+        }
+
+        foreach (var exposure in catastrophicExposures)
+        {
+            PublishPermanentInjuryExposure(
+                gameState,
+                exposure.Person,
+                "rare.house_fire",
+                exposure.Damage);
         }
     }
 
@@ -346,6 +370,15 @@ internal sealed partial class RareEventYearSystem
             preferredSubject:
                 injured
                 ?? household.PrimaryOccupant);
+
+        if (injured is not null)
+        {
+            PublishPermanentInjuryExposure(
+                gameState,
+                injured,
+                "rare.storm_flood",
+                damage);
+        }
     }
 
     private void ExecuteStructuralAccident(
@@ -402,6 +435,15 @@ internal sealed partial class RareEventYearSystem
             preferredSubject:
                 injured
                 ?? household.PrimaryOccupant);
+
+        if (injured is not null)
+        {
+            PublishPermanentInjuryExposure(
+                gameState,
+                injured,
+                "rare.structural_accident",
+                damage);
+        }
     }
 
 }

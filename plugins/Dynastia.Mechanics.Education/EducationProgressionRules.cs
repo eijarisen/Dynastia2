@@ -13,6 +13,17 @@ public static class EducationProgressionRules
             _ => 0.70
         };
 
+    public static double GetPrivateTutorSuccessChance(
+        int intellect) =>
+        Math.Clamp(intellect, 1, 5) switch
+        {
+            1 => 0.80,
+            2 => 0.85,
+            3 => 0.90,
+            4 => 0.95,
+            _ => 1.00
+        };
+
     public static double GetHelpInEducationSuccessChance(
         int childIntellect,
         int helperIntellect) =>

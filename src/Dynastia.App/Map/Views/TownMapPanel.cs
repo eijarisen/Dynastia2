@@ -421,13 +421,13 @@ public sealed class TownMapPanel :
                 };
 
             var selectedTownId = town.TownId;
-            button.PointerPressed +=
-                async (_, e) =>
+            button.Click +=
+                async (_, _) =>
                 {
-                    var point = e.GetCurrentPoint(button);
-                    if (!point.Properties.IsLeftButtonPressed)
-                        return;
-
+                    // Button.PointerPressed click counts are not reliable across
+                    // Avalonia platforms. Detect the second completed click
+                    // ourselves so a double-click on an overlap entry always
+                    // opens Town Affairs, while a single click only selects it.
                     var now = DateTime.UtcNow;
                     var isRapidSecondClick =
                         string.Equals(
@@ -449,21 +449,18 @@ public sealed class TownMapPanel :
                         _preserveOverlapPickerDuringSelection = false;
                     }
 
-                    if (activateAfterSelection || e.ClickCount >= 2 || isRapidSecondClick)
+                    if (activateAfterSelection || isRapidSecondClick)
                     {
                         ++_overlapDismissVersion;
                         _overlapPicker.IsVisible = false;
                         _lastOverlapClickTownId = null;
                         OnTownActivated(selectedTownId);
-                    }
-                    else
-                    {
-                        await Task.Delay(500);
-                        if (dismissVersion == _overlapDismissVersion)
-                            _overlapPicker.IsVisible = false;
+                        return;
                     }
 
-                    e.Handled = true;
+                    await Task.Delay(500);
+                    if (dismissVersion == _overlapDismissVersion)
+                        _overlapPicker.IsVisible = false;
                 };
 
             _overlapOptions.Children.Add(button);

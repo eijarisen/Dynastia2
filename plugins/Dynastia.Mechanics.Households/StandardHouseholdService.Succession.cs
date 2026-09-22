@@ -40,6 +40,25 @@ public sealed partial class StandardHouseholdService
 
             if (livingBloodline.Count == 0)
             {
+                // A living divorced spouse may head a non-playable peripheral
+                // household even after no Bloodline resident remains there.
+                // That residence must stay active so finances and chronicle
+                // ownership remain attached to the person instead of a child or
+                // other relative elsewhere.
+                if (oldHead.Tags.Has("state.alive")
+                    && !_family.IsBloodline(oldHead)
+                    && HasDirectBloodlineMarriage(oldHead))
+                {
+                    oldHead.Tags.Add(
+                        "simulation.peripheral_ex");
+                    oldHead.Tags.Remove(
+                        "simulation.peripheral_detached");
+                    _economy.MarkEstateReady(
+                        oldHead,
+                        false);
+                    continue;
+                }
+
                 foreach (var survivor in
                     livingMembers.Where(
                         member =>

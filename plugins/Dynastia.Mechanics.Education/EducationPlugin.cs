@@ -6,6 +6,7 @@ public sealed class EducationPlugin : IGamePlugin
 {
     private const decimal StandardEducationCost = 5000m;
     private const decimal CraftEducationCost = 5000m;
+    private const decimal PrivateTutorCost = 3000m;
     private const int HelpLearningMinimumAge = 6;
     private const int HelpLearningAdultAge = 18;
 
@@ -113,6 +114,14 @@ public sealed class EducationPlugin : IGamePlugin
                 random,
                 events,
                 eras));
+
+        actions.Register(
+            CreatePrivateTutorAction(
+                education,
+                family,
+                economy,
+                random,
+                events));
 
         systems.Register(
             new PassiveEducationYearSystem(
@@ -483,6 +492,88 @@ public sealed class EducationPlugin : IGamePlugin
     {
         var town = locations.GetLocation(person).HomeTown;
         return institutions.Resolve(town, year).GetTier("school") > 0;
+    }
+
+    private static GameActionDefinition CreatePrivateTutorAction(
+        IEducationService education,
+        IFamilyService family,
+        IEconomyService economy,
+        IGameRandom random,
+        IGameEventBus events)
+    {
+        return new GameActionDefinition
+        {
+            Id = "education.private_tutor",
+            Label = "Hire Private Tutor",
+            Description =
+                "Hire a private tutor for a child. Tutoring is not limited by the local School or the parent's Education, but it still respects the historical education ceiling.",
+            DisplayCost = PrivateTutorCost,
+            Mode = ActionExecutionMode.Queued,
+            QueuePhase = YearPhase.QueuedActionsEarly,
+            IsAvailable = actionContext =>
+            {
+                var actor = actionContext.Actor;
+                var child = actionContext.Target;
+                if (!actor.Tags.Has("state.alive")
+                    || !actionContext.ActorHasControl
+                    || !child.Tags.Has("state.alive")
+                    || child.Age < HelpLearningMinimumAge
+                    || child.Age >= HelpLearningAdultAge)
+                {
+                    return false;
+                }
+
+                var ceiling = education.GetHelpedEducationCeiling(actionContext.GameState.Year);
+                return education.GetEducationLevel(child) < Math.Min(5, ceiling)
+                    && HouseholdKinshipRules.IsSupportedResidentRelative(actor, child, family, economy)
+                    && economy.CanAfford(actor, PrivateTutorCost);
+            },
+            Execute = actionContext =>
+            {
+                var actor = actionContext.Actor;
+                var child = actionContext.Target;
+                var ceiling = education.GetHelpedEducationCeiling(actionContext.GameState.Year);
+                if (!actor.Tags.Has("state.alive")
+                    || !child.Tags.Has("state.alive")
+                    || child.Age < HelpLearningMinimumAge
+                    || child.Age >= HelpLearningAdultAge
+                    || !HouseholdKinshipRules.IsSupportedResidentRelative(actor, child, family, economy)
+                    || education.GetEducationLevel(child) >= Math.Min(5, ceiling))
+                {
+                    return new GameActionResult(false, "Private tutoring is no longer available.", ActionReasonCodes.NoLongerEligible);
+                }
+
+                if (!economy.CanAfford(actor, PrivateTutorCost))
+                    return new GameActionResult(false, "The household can no longer afford a private tutor.");
+
+                economy.ChangeWealth(actor, -PrivateTutorCost);
+                var chance = education.GetPrivateTutorSuccessChance(child);
+                var success = random.NextDouble() < chance;
+                if (success)
+                    education.IncreaseEducation(child);
+
+                events.Publish(new GameEvent
+                {
+                    Type = success
+                        ? "education.private_tutor_success"
+                        : "education.private_tutor_failure",
+                    Year = actionContext.GameState.Year,
+                    SubjectId = child.Id,
+                    RelatedPersonIds = [actor.Id],
+                    Data = new Dictionary<string, string>
+                    {
+                        ["chance"] = chance.ToString("0.00", System.Globalization.CultureInfo.InvariantCulture),
+                        ["cost"] = PrivateTutorCost.ToString(System.Globalization.CultureInfo.InvariantCulture),
+                        ["level"] = education.GetEducationLevel(child).ToString(),
+                        ["text"] = success
+                            ? $"{family.GetDisplayName(child)} advanced to Education level {education.GetEducationLevel(child)} with a private tutor."
+                            : $"{family.GetDisplayName(child)} studied with a private tutor but did not advance this year."
+                    }
+                });
+
+                return new GameActionResult(true);
+            }
+        };
     }
 
     private static GameActionDefinition CreateHelpLearningAction(

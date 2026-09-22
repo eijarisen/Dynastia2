@@ -172,7 +172,8 @@ public sealed partial class WellbeingPlugin
                                     "depression",
                                     "anxiety",
                                     "drug_dependence",
-                                    "burnout"
+                                    "burnout",
+                                    "gambling_disorder"
                                 })
                                 {
                                     health.RemoveCondition(

@@ -387,6 +387,9 @@ internal sealed class AdvancedAutonomousHouseholdStrategy :
             "education.help_learning" =>
                 ScoreHelpLearning(option, snapshot, targetMember),
 
+            "education.private_tutor" =>
+                ScorePrivateTutor(option, snapshot, targetMember),
+
             "education.get_education" =>
                 ScoreEducation(option, snapshot),
 
@@ -1105,6 +1108,32 @@ internal sealed class AdvancedAutonomousHouseholdStrategy :
         return WithScore(option, AutonomyCategory.ChildProtection,
             AutonomousPriorityBands.LongTermImprovement,
             snapshot.HasRealisticReproductivePath ? 52 : 60);
+    }
+
+    private AutonomousActionCandidate? ScorePrivateTutor(
+        AutonomousActionCandidate option,
+        AutonomousHouseholdSnapshot snapshot,
+        AutonomousMemberSnapshot? target)
+    {
+        if (target is null
+            || !target.IsChild
+            || snapshot.HasSeriousMedicalDanger
+            || !IsAtLeast(snapshot.FinancialState, AutonomousFinancialState.Stable))
+        {
+            return null;
+        }
+
+        var reserve = (snapshot.Finance?.Wealth ?? 0m) - snapshot.ExpectedExpenses;
+        if (reserve < 6000m)
+            return null;
+
+        var intellect = _stats.GetStats(target.Person)
+            .FirstOrDefault(stat => stat.Id.Equals("intellect", StringComparison.OrdinalIgnoreCase))?.Value ?? 3;
+        return WithScore(
+            option,
+            AutonomyCategory.ChildProtection,
+            AutonomousPriorityBands.LongTermImprovement,
+            34 + intellect * 4);
     }
 
     private AutonomousActionCandidate? ScoreEducation(

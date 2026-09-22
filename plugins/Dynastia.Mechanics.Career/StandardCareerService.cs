@@ -215,7 +215,7 @@ public sealed partial class StandardCareerService :
             var crime = criminal.GetSnapshot(person);
             return new CareerSnapshot(
                 0,
-                $"Life of Crime — {crime.ArchetypeName} · {crime.MasteryName}",
+                $"{crime.ArchetypeName} · {crime.MasteryName}",
                 career.JobSatisfaction,
                 ResolveJobSatisfactionText(career.JobSatisfaction),
                 crime.LastAnnualIncome,

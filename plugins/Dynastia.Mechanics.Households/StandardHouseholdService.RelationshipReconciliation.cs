@@ -159,6 +159,16 @@ public sealed partial class StandardHouseholdService
                     formerPartner,
                     successor);
             }
+            else
+            {
+                // A divorced former partner with no resident Bloodline
+                // successor remains the head of a peripheral household. Do not
+                // strip the head from its own MemberIds; that would make later
+                // finances and death-news attribution fall through to relatives.
+                formerPartner.Tags.Remove(
+                    "simulation.peripheral_detached");
+                return;
+            }
         }
 
         // TransferHouseholdHead already removes the old head from MemberIds.
@@ -278,6 +288,31 @@ public sealed partial class StandardHouseholdService
             {
                 person.Tags.Add(
                     "simulation.peripheral_ex");
+
+                // Compatibility repair for saves created before divorced
+                // external partners received their own residence. Keep these
+                // households peripheral (they are not exposed as playable
+                // dynasty households), but make household ownership explicit.
+                if (_economy.HasHousehold(person))
+                {
+                    _economy.MarkEstateReady(
+                        person,
+                        false);
+                }
+                else if (_economy.GetHouseholdId(person) is null)
+                {
+                    var dynastyAnchor =
+                        _family.GetRelationshipHistory(person)
+                            .Select(history => FindPerson(history.SpouseId))
+                            .FirstOrDefault(spouse =>
+                                spouse is not null
+                                && _family.IsBloodline(spouse))
+                        ?? person;
+
+                    _economy.EnsureIndependentHousehold(
+                        person,
+                        dynastyAnchor);
+                }
             }
         }
 

@@ -1,0 +1,164 @@
+{
+  "schemaVersion": "1.0",
+  "relationship": {
+    "householdLevel": true,
+    "startingFamiliarity": 20,
+    "startingSympathy": 5,
+    "decayPerYear": {
+      "familiarity": 2,
+      "sympathyTowardNeutral": 1
+    },
+    "improveRelationsAction": {
+      "familiarityGain": 4,
+      "sympathyGain": 2
+    }
+  },
+  "wealthBands": [
+    "Poor",
+    "Modest",
+    "Comfortable",
+    "Wealthy",
+    "Rich"
+  ],
+  "annualWealthDrift": {
+    "chanceOfChange": 0.1,
+    "moveAtMostOneBand": true,
+    "archetypeBiasMayAffectDirection": true
+  },
+  "abstractAssets": {
+    "spareHouseChance": {
+      "Poor": 0,
+      "Modest": 0.01,
+      "Comfortable": 0.05,
+      "Wealthy": 0.2,
+      "Rich": 0.35
+    },
+    "spareFarmlandChance": {
+      "Poor": 0,
+      "Modest": 0.01,
+      "Comfortable": 0.04,
+      "Wealthy": 0.15,
+      "Rich": 0.25
+    },
+    "farmerOrLandownerFarmlandChanceMultiplier": 2.0
+  },
+  "moneyRequest": {
+    "baseAcceptanceChance": 0.08,
+    "minimumTransfer": 1000,
+    "fullThousandIncrements": true,
+    "estimatedMaximumByWealthBandInLivingCostUnits": {
+      "Poor": 0,
+      "Modest": 2,
+      "Comfortable": 5,
+      "Wealthy": 15,
+      "Rich": 40
+    }
+  },
+  "assetRequest": {
+    "houseBaseAcceptanceChance": 0.03,
+    "farmlandBaseAcceptanceChance": 0.04
+  },
+  "acceptanceModifiersPercentagePoints": {
+    "relationship": {
+      "Close": 8,
+      "Warm": 4,
+      "Neutral": 0,
+      "Cool": -3,
+      "Cold": -100
+    },
+    "wealthBand": {
+      "Poor": -100,
+      "Modest": -5,
+      "Comfortable": 0,
+      "Wealthy": 5,
+      "Rich": 10
+    },
+    "requesterReputation": "clamp(HouseholdReputation/10, -5, 5)",
+    "requesterRenown": "clamp(HouseholdRenown/25, 0, 3)"
+  },
+  "requestRelationshipCost": {
+    "onAnyRequest": {
+      "sympathy": -3,
+      "familiarity": -4
+    },
+    "onRefusalAdditional": {
+      "sympathy": -5,
+      "familiarity": -3
+    },
+    "onAcceptedMoneyAdditional": {
+      "sympathy": 0,
+      "familiarity": -2
+    },
+    "onAcceptedMajorAssetAdditional": {
+      "sympathy": -4,
+      "familiarity": -6
+    }
+  },
+  "giftRelationshipGain": {
+    "money": {
+      "sympathy": 6,
+      "familiarity": 3
+    },
+    "houseOrFarmland": {
+      "sympathy": 10,
+      "familiarity": 5
+    }
+  },
+  "wealthConsequences": {
+    "acceptedMoneyMayLowerBand": true,
+    "acceptedHouseOrFarmlandLowersBandBy": 1,
+    "playerGiftMayRaiseBand": true,
+    "requestCausedPoorPersistentReputationPenalty": -3
+  },
+  "poorConnection": {
+    "removeFromActiveViewAtYearEnd": true,
+    "keepOnlyHistoricalConnectionRecord": true
+  },
+  "networkStatus": {
+    "prominentConnectionThreshold": 50,
+    "warmBonus": 0.25,
+    "closeBonus": 0.5,
+    "notableConnectionThreshold": 75,
+    "notableWarmBonus": 0.5,
+    "notableCloseBonus": 1.0,
+    "householdRenownBonusCap": 5
+  },
+  "simpleFamily": {
+    "simulateNamesOnly": true,
+    "unmarriedAnnualMarriageChance": 0.05,
+    "marriedAnnualDivorceChance": 0.005,
+    "annualChildChanceIfPlausible": 0.04,
+    "maximumChildren": 4,
+    "mortalityByAge": [
+      {
+        "minAge": 0,
+        "maxAge": 49,
+        "annualChance": 0.001
+      },
+      {
+        "minAge": 50,
+        "maxAge": 59,
+        "annualChance": 0.005
+      },
+      {
+        "minAge": 60,
+        "maxAge": 69,
+        "annualChance": 0.01
+      },
+      {
+        "minAge": 70,
+        "maxAge": 79,
+        "annualChance": 0.03
+      },
+      {
+        "minAge": 80,
+        "maxAge": 89,
+        "annualChance": 0.08
+      },
+      {
+        "minAge": 90,
+        "annualChance": 0.2
+      }
+    ]
+  }
+}

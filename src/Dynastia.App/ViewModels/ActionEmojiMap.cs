@@ -84,7 +84,14 @@ public static class ActionEmojiMap
                 ["church.aid_poor_family"] = "🤝",
                 ["church.ask_welfare"] = "🥖",
                 ["community.lobby_policy"] = "🗣️",
-                ["community.perform_office_duties"] = "🏛️"
+                ["community.perform_office_duties"] = "🏛️",
+                ["community.connection.improve"] = "🤝",
+                ["community.connection.send_money"] = "🎁",
+                ["community.connection.give_house"] = "🎁",
+                ["community.connection.give_farmland"] = "🎁",
+                ["community.connection.request_money"] = "🙏",
+                ["community.connection.request_house"] = "🙏",
+                ["community.connection.request_farmland"] = "🙏"
             };
 
     public static string GetEmoji(string actionId)

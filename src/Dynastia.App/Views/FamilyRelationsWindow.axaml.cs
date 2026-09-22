@@ -107,6 +107,46 @@ public partial class FamilyRelationsWindow : Window
         }
     }
 
+
+    private async void OnConnectionActionClick(object? sender, RoutedEventArgs e)
+    {
+        if (sender is not Button { DataContext: HouseholdConnectionActionViewModel action })
+            return;
+
+        string? propertyId = null;
+        decimal? moneyAmount = null;
+
+        if (action.RequiresPropertySelection)
+        {
+            var options = _viewModel.GetConnectionPropertyOptions(action);
+            if (options.Count == 0)
+                return;
+
+            var selector = new PropertySelectionWindow(
+                "Select Property",
+                action.Label,
+                options);
+            propertyId = await selector.ShowDialog<string?>(this);
+            if (string.IsNullOrWhiteSpace(propertyId))
+                return;
+        }
+
+        if (action.RequiresMoneySelection)
+        {
+            var maximum = _viewModel.GetConnectionMoneyMaximum(action);
+            if (maximum < 1000m)
+                return;
+
+            var selector = new FamilyMoneySelectionWindow(action.Label, maximum);
+            moneyAmount = await selector.ShowDialog<decimal?>(this);
+            if (moneyAmount is null)
+                return;
+        }
+
+        if (_viewModel.QueueConnection(action, propertyId, moneyAmount))
+            Close();
+    }
+
     private void OnCloseClick(object? sender, RoutedEventArgs e) => Close();
 
     private void OnKeyDown(object? sender, KeyEventArgs e)

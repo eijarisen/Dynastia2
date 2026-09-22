@@ -15,6 +15,7 @@ internal sealed class StandardStatusService : IStatusService
     private readonly ILoanService _loans;
     private readonly IHeirloomService _heirlooms;
     private readonly StatusRules _rules;
+    private readonly Func<IHouseholdConnectionService?> _connectionsResolver;
 
     public StandardStatusService(
         IGameState gameState,
@@ -27,7 +28,8 @@ internal sealed class StandardStatusService : IStatusService
         ILocationService locations,
         ILoanService loans,
         IHeirloomService heirlooms,
-        StatusRules rules)
+        StatusRules rules,
+        Func<IHouseholdConnectionService?>? connectionsResolver = null)
     {
         _gameState = gameState;
         _family = family;
@@ -40,6 +42,7 @@ internal sealed class StandardStatusService : IStatusService
         _loans = loans;
         _heirlooms = heirlooms;
         _rules = rules;
+        _connectionsResolver = connectionsResolver ?? (() => null);
     }
 
     public StatusSnapshot GetStatus(IPerson person)
@@ -164,11 +167,16 @@ internal sealed class StandardStatusService : IStatusService
             _farming.IsWorkingFarmWorker(person, person),
             person.Tags.Has("civic.office.town_head"));
 
+        var householdId = _economy.GetHouseholdId(person);
+        var networkRenown = householdId.HasValue
+            ? _connectionsResolver()?.GetNetworkRenownBonus(householdId.Value) ?? 0d
+            : 0d;
         var renown = Math.Clamp(
             _rules.BaseRenown
             + profile.Renown
             + component.InheritedRenown
-            + component.PersistentRenownDelta,
+            + component.PersistentRenownDelta
+            + networkRenown,
             _rules.RenownMinimum,
             _rules.RenownMaximum);
         var reputation = Math.Clamp(

@@ -33,6 +33,8 @@ public sealed partial class MainWindowViewModel : ViewModelBase
         _marriageSatisfactionService;
     private readonly IFamilyRelationService?
         _familyRelationService;
+    private readonly IHouseholdConnectionService?
+        _householdConnectionService;
     private readonly IThoughtService? _thoughtService;
     private readonly IHobbyService? _hobbyService;
     private readonly IPersonalityService? _personalityService;
@@ -114,6 +116,7 @@ public sealed partial class MainWindowViewModel : ViewModelBase
         ILocalCareerOpportunityService? localCareerOpportunityService,
         IMarriageSatisfactionService? marriageSatisfactionService,
         IFamilyRelationService? familyRelationService,
+        IHouseholdConnectionService? householdConnectionService,
         IThoughtService? thoughtService,
         IHobbyService? hobbyService,
         IPersonalityService? personalityService,
@@ -159,6 +162,8 @@ public sealed partial class MainWindowViewModel : ViewModelBase
             marriageSatisfactionService;
         _familyRelationService =
             familyRelationService;
+        _householdConnectionService =
+            householdConnectionService;
         _thoughtService =
             thoughtService;
         _hobbyService =

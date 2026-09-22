@@ -34,7 +34,8 @@ public sealed class StatusPlugin : IGamePlugin
             locations,
             loans,
             heirlooms,
-            rules);
+            rules,
+            () => context.GetService<IHouseholdConnectionService>());
 
         context.AddService<IStatusService>(status);
 

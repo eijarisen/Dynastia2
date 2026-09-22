@@ -226,6 +226,10 @@ public partial class App : Application
                 pluginContext.GetService<
                     IFamilyRelationService>();
 
+            var householdConnectionService =
+                pluginContext.GetService<
+                    IHouseholdConnectionService>();
+
             var thoughtService =
                 pluginContext.GetService<
                     IThoughtService>();
@@ -366,6 +370,7 @@ public partial class App : Application
                             localCareerOpportunityService,
                             marriageSatisfactionService,
                             familyRelationService,
+                            householdConnectionService,
                             thoughtService,
                             hobbyService,
                             personalityService,

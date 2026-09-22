@@ -8,7 +8,8 @@ public sealed partial class MainWindowViewModel
         IsGameStarted
         && IsLineageFamilyView
         && _succession.ActiveController is not null
-        && _familyRelationService is not null;
+        && (_familyRelationService is not null
+            || _householdConnectionService is not null);
 
     internal string GetFamilyRelationsActiveHouseholdText()
     {
@@ -122,6 +123,175 @@ public sealed partial class MainWindowViewModel
             .Where(item => item is not null)
             .Cast<FamilyRelationHouseholdViewModel>()
             .ToList();
+    }
+
+
+    internal IReadOnlyList<HouseholdConnectionViewModel> GetHouseholdConnections()
+    {
+        var actor = _succession.ActiveController;
+        if (actor is null
+            || _householdConnectionService is null
+            || _economyService is null)
+        {
+            return [];
+        }
+
+        var householdId = _economyService.GetHouseholdId(actor);
+        if (householdId is null)
+            return [];
+
+        return _householdConnectionService.GetConnections(householdId.Value)
+            .Select(connection =>
+            {
+                var parameters = new Dictionary<string, string>
+                {
+                    ["connectionRelations"] = "true",
+                    ["connectionId"] = connection.Id.ToString("D")
+                };
+                var actions = _actionRegistry
+                    .GetAvailableActions(actor, actor, parameters)
+                    .Where(action => action.Id.StartsWith(
+                        "community.connection.",
+                        StringComparison.OrdinalIgnoreCase))
+                    .OrderBy(action => ConnectionActionOrder(action.Id))
+                    .Select(action => new HouseholdConnectionActionViewModel(
+                        action.Id,
+                        action.Label,
+                        action.Description,
+                        connection.Id,
+                        action.Id is "community.connection.give_house"
+                            or "community.connection.give_farmland",
+                        action.Id is "community.connection.send_money"
+                            or "community.connection.request_money"))
+                    .ToArray();
+
+                var nationality = _nationalityService?.GetDisplayName(connection.NationalityId)
+                    ?? connection.NationalityId;
+                var town = _locationService?.FindTownAtYear(connection.TownId, _gameState.Year);
+                var townName = town?.Town ?? town?.Id ?? connection.TownId;
+                var profile = $"Age {connection.Age} · {nationality} · {connection.OccupationLabel} · {townName}";
+                var status = $"Renown {connection.Renown:0.#} · Reputation {connection.Reputation:0.#}";
+                var familyParts = new List<string>();
+                if (!string.IsNullOrWhiteSpace(connection.SpouseName))
+                    familyParts.Add($"Spouse: {connection.SpouseName}");
+                if (connection.Children.Count > 0)
+                    familyParts.Add($"Children: {string.Join(", ", connection.Children)}");
+                var familyText = familyParts.Count == 0
+                    ? "Family: none recorded"
+                    : string.Join(" · ", familyParts);
+                var assets = new List<string>();
+                if (connection.HasSpareHouse) assets.Add("spare house");
+                if (connection.HasSpareFarmland) assets.Add("spare farmland");
+                var assetsText = assets.Count == 0
+                    ? "Spare assets: none known"
+                    : $"Spare assets: {string.Join(", ", assets)}";
+
+                return new HouseholdConnectionViewModel(
+                    connection.Id,
+                    connection.Name,
+                    connection.RelationState,
+                    profile,
+                    $"Wealth: {connection.WealthBand}",
+                    status,
+                    familyText,
+                    assetsText,
+                    actions);
+            })
+            .ToArray();
+    }
+
+    internal IReadOnlyList<PropertySelectionOption> GetHouseholdConnectionPropertyOptions(
+        string actionId)
+    {
+        var actor = _succession.ActiveController;
+        if (actor is null || _economyService is null)
+            return [];
+
+        if (actionId.Equals("community.connection.give_house", StringComparison.OrdinalIgnoreCase))
+        {
+            return _economyService.GetHouses(actor)
+                .Where(house => !house.IsResidence)
+                .Select(house => new PropertySelectionOption(
+                    house.Id.ToString(),
+                    house.Town.Town,
+                    house.Town.County,
+                    "Spare house",
+                    $"Value {_economyService.GetHouseValue(house):N0} zł",
+                    $"{house.Town.Town} {house.Town.County} {house.Town.RegionId}"))
+                .ToArray();
+        }
+
+        if (actionId.Equals("community.connection.give_farmland", StringComparison.OrdinalIgnoreCase))
+        {
+            return _economyService.GetFarmland(actor)
+                .Select(asset => new PropertySelectionOption(
+                    asset.Id.ToString(),
+                    asset.Town.Town,
+                    asset.Town.County,
+                    string.IsNullOrWhiteSpace(asset.FarmTypeDisplayName)
+                        ? "Farmland"
+                        : asset.FarmTypeDisplayName,
+                    "Owned farmland parcel",
+                    $"{asset.Town.Town} {asset.Town.County} {asset.Town.RegionId}"))
+                .ToArray();
+        }
+
+        return [];
+    }
+
+    internal decimal GetHouseholdConnectionMoneyMaximum(
+        Guid connectionId,
+        string actionId)
+    {
+        var actor = _succession.ActiveController;
+        if (actor is null || _economyService is null)
+            return 0m;
+
+        if (actionId.Equals("community.connection.request_money", StringComparison.OrdinalIgnoreCase))
+        {
+            return _householdConnectionService?.GetEstimatedMoneyRequestMaximum(
+                actor,
+                connectionId) ?? 0m;
+        }
+
+        if (actionId.Equals("community.connection.send_money", StringComparison.OrdinalIgnoreCase))
+        {
+            var wealth = _economyService.GetHousehold(actor)?.Wealth ?? 0m;
+            return Math.Floor(Math.Max(0m, wealth) / 1000m) * 1000m;
+        }
+
+        return 0m;
+    }
+
+    internal GameActionResult QueueHouseholdConnectionAction(
+        Guid connectionId,
+        string actionId,
+        string? propertyId,
+        decimal? moneyAmount)
+    {
+        var actor = _succession.ActiveController;
+        if (actor is null)
+            return new GameActionResult(false, "The active household is no longer available.");
+
+        var parameters = new Dictionary<string, string>
+        {
+            ["connectionRelations"] = "true",
+            ["connectionId"] = connectionId.ToString("D")
+        };
+        if (!string.IsNullOrWhiteSpace(propertyId))
+            parameters["propertyId"] = propertyId;
+        if (moneyAmount.HasValue)
+        {
+            parameters["amount"] = moneyAmount.Value.ToString(
+                System.Globalization.CultureInfo.InvariantCulture);
+        }
+
+        var result = _actionRegistry.Execute(actionId, actor, actor, parameters);
+        RefreshActions();
+        RefreshFamilySection();
+        OnPropertyChanged(nameof(HasQueuedAction));
+        OnPropertyChanged(nameof(QueuedActionText));
+        return result;
     }
 
     internal bool SelectPlayableFamilyRelationHousehold(
@@ -353,6 +523,18 @@ public sealed partial class MainWindowViewModel
 
         return sex == Sex.Male ? "👨🏻" : "👩🏻";
     }
+
+    private static int ConnectionActionOrder(string id) => id switch
+    {
+        "community.connection.improve" => 0,
+        "community.connection.send_money" => 10,
+        "community.connection.give_house" => 20,
+        "community.connection.give_farmland" => 30,
+        "community.connection.request_money" => 40,
+        "community.connection.request_house" => 50,
+        "community.connection.request_farmland" => 60,
+        _ => 100
+    };
 
     private static int RelationActionOrder(string id) => id switch
     {

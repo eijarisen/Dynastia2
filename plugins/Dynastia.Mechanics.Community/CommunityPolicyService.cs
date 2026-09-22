@@ -581,6 +581,9 @@ internal sealed class CommunityPolicyService : ICommunityPolicyService
         return created;
     }
 
+    internal CommunityWorldStateComponent? GetWorldStateForConnections(bool create) =>
+        GetWorldState(create);
+
     private CommunityWorldStateComponent? GetWorldState(bool create)
     {
         var anchor = _gameState.People.FirstOrDefault();

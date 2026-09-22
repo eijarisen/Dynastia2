@@ -37,6 +37,7 @@ public sealed class CommunityPlugin : IGamePlugin
         var rules = CommunityPolicyRules.Load(data);
         var civicCatalog = CivicOfficeCatalog.Load(data);
         var civicRules = CivicOfficeRules.Load(data);
+        var connectionRules = CommunityConnectionRules.Load(data);
         var community = new CommunityPolicyService(
             gameState,
             opportunities,
@@ -46,6 +47,19 @@ public sealed class CommunityPlugin : IGamePlugin
             names,
             catalog,
             rules);
+        var connections = new CommunityConnectionService(
+            gameState,
+            community,
+            catalog,
+            connectionRules,
+            economy,
+            status,
+            locations,
+            nationalities,
+            names,
+            family,
+            random,
+            events);
         var civic = new CivicOfficeService(
             gameState,
             locations,
@@ -66,6 +80,7 @@ public sealed class CommunityPlugin : IGamePlugin
             civicRules);
 
         context.AddService<ICommunityPolicyService>(community);
+        context.AddService<IHouseholdConnectionService>(connections);
         context.AddService<ICivicOfficeService>(civic);
         RegisterLobbyAction(
             actions,
@@ -77,7 +92,8 @@ public sealed class CommunityPlugin : IGamePlugin
             education,
             stats,
             rules,
-            civic);
+            civic,
+            connections);
         systems.Register(new CommunityPolicyYearSystem(
             community,
             households,
@@ -88,7 +104,9 @@ public sealed class CommunityPlugin : IGamePlugin
             events,
             civic));
         systems.Register(new CivicOfficeYearSystem(civic));
+        systems.Register(new CommunityConnectionYearSystem(connections));
         RegisterOfficeDutiesAction(actions, civic, family);
+        CommunityConnectionActions.Register(actions, connections, economy, family);
 
         context.GetService<IStateReconciliationLifecycle>()?.Register(
             "community.civic_office_tags",
@@ -114,7 +132,8 @@ public sealed class CommunityPlugin : IGamePlugin
         IEducationService education,
         IStatsService stats,
         CommunityPolicyRules rules,
-        CivicOfficeService civic)
+        CivicOfficeService civic,
+        CommunityConnectionService connections)
     {
         actions.Register(new GameActionDefinition
         {
@@ -232,11 +251,23 @@ public sealed class CommunityPlugin : IGamePlugin
                     status,
                     education,
                     stats);
+                var connectionId = Guid.TryParse(proposal.Proposer.Id, out var parsedConnectionId)
+                    ? parsedConnectionId
+                    : Guid.Empty;
+                var connectionExisted = connectionId != Guid.Empty
+                    && connections.Has(householdId.Value, connectionId);
                 community.RecordLobby(
                     actionContext.Actor,
                     householdId.Value,
                     proposal,
                     bonus);
+                if (connectionId != Guid.Empty)
+                {
+                    connections.InitializeLobbyConnection(
+                        actionContext.Actor,
+                        connectionId,
+                        publishCreated: !connectionExisted);
+                }
                 civic.MarkOfficeAction(actionContext.Actor);
                 status.ApplyPersistentDelta(
                     actionContext.Actor,

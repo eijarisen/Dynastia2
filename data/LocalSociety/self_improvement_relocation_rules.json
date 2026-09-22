@@ -1,0 +1,13 @@
+{
+  "schemaVersion": "1.0",
+  "removeUiAction": "ui.self_improvement",
+  "removeWindow": "SelfImprovementWindow",
+  "removeOldSelector": true,
+  "religiousStudyDestination": "Town Affairs -> Church",
+  "statImprovementDestination": "Town Affairs -> Health / Medical Improvements",
+  "therapyDestination": "Town Affairs -> Health",
+  "medicalCost": "BaseCost * current MedicalQuality.TreatmentCostMultiplier",
+  "statImprovementStillGuaranteedOnValidExecution": true,
+  "underlyingActionIdsRemainStable": true,
+  "directActionEligibilityMustEnforceFacilityTier": true
+}

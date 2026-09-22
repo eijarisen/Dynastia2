@@ -265,7 +265,30 @@ public sealed class TownAffairsViewModel : ViewModelBase
     public IReadOnlyList<TownAffairsHealthActionViewModel> HealthActions { get; private set; }
         = Array.Empty<TownAffairsHealthActionViewModel>();
 
+    public IReadOnlyList<TownAffairsHealthActionViewModel> TreatmentHealthActions { get; private set; }
+        = Array.Empty<TownAffairsHealthActionViewModel>();
+
+    public IReadOnlyList<TownAffairsHealthActionViewModel> TherapyHealthActions { get; private set; }
+        = Array.Empty<TownAffairsHealthActionViewModel>();
+
+    public IReadOnlyList<TownAffairsHealthActionViewModel> MedicalImprovementActions { get; private set; }
+        = Array.Empty<TownAffairsHealthActionViewModel>();
+
+    public TownAffairsHealthSummaryViewModel HealthSummary { get; private set; } =
+        new("Health information is unavailable.", "Conditions: unavailable");
+
+    public string MedicalQualityText =>
+        Snapshot.MedicalQuality.IsAvailable
+            ? $"Local medical care: {Snapshot.MedicalQuality.DisplayName} · Tier {Snapshot.MedicalQuality.Tier} · Cost ×{Snapshot.MedicalQuality.TreatmentCostMultiplier:0.##}"
+            : "No local medical facility is available.";
+
     public bool HasHealthActions => HealthActions.Count > 0;
+
+    public bool ShowTreatmentEmpty => TreatmentHealthActions.Count == 0;
+
+    public bool ShowTherapyEmpty => TherapyHealthActions.Count == 0;
+
+    public bool ShowMedicalImprovementEmpty => MedicalImprovementActions.Count == 0;
 
     public IReadOnlyList<TownAffairsChurchActionViewModel> ChurchActions { get; private set; }
         = Array.Empty<TownAffairsChurchActionViewModel>();
@@ -454,6 +477,12 @@ public sealed class TownAffairsViewModel : ViewModelBase
         EducationOptions = Array.Empty<PropertySelectionOption>();
         EducationContextText = string.Empty;
         HealthActions = Array.Empty<TownAffairsHealthActionViewModel>();
+        TreatmentHealthActions = Array.Empty<TownAffairsHealthActionViewModel>();
+        TherapyHealthActions = Array.Empty<TownAffairsHealthActionViewModel>();
+        MedicalImprovementActions = Array.Empty<TownAffairsHealthActionViewModel>();
+        HealthSummary = new TownAffairsHealthSummaryViewModel(
+            "Health information is unavailable.",
+            "Conditions: unavailable");
         ChurchActions = Array.Empty<TownAffairsChurchActionViewModel>();
         CourtModel = null;
 
@@ -480,7 +509,23 @@ public sealed class TownAffairsViewModel : ViewModelBase
 
             EducationOptions = _owner.GetEducationSelectionOptions(Subject);
             EducationContextText = _owner.GetEducationSelectionContextText(Subject);
+            HealthSummary = _owner.GetTownAffairsHealthSummary(Subject);
             HealthActions = _owner.GetTownAffairsHealthActions(Subject);
+            TreatmentHealthActions = HealthActions
+                .Where(action => action.ActionId.Equals(
+                    "wellbeing.heal_relative",
+                    StringComparison.OrdinalIgnoreCase))
+                .ToArray();
+            TherapyHealthActions = HealthActions
+                .Where(action => action.ActionId.Equals(
+                    "wellbeing.therapy",
+                    StringComparison.OrdinalIgnoreCase))
+                .ToArray();
+            MedicalImprovementActions = HealthActions
+                .Where(action => action.ActionId.StartsWith(
+                    "stats.improve_",
+                    StringComparison.OrdinalIgnoreCase))
+                .ToArray();
             if (Subject.Age >= 18)
                 CourtModel = _owner.GetTownAffairsCourtModel(Snapshot, Subject);
         }
@@ -496,7 +541,15 @@ public sealed class TownAffairsViewModel : ViewModelBase
         OnPropertyChanged(nameof(HasEducationOptions));
         OnPropertyChanged(nameof(ShowEducationEmpty));
         OnPropertyChanged(nameof(HealthActions));
+        OnPropertyChanged(nameof(TreatmentHealthActions));
+        OnPropertyChanged(nameof(TherapyHealthActions));
+        OnPropertyChanged(nameof(MedicalImprovementActions));
+        OnPropertyChanged(nameof(HealthSummary));
+        OnPropertyChanged(nameof(MedicalQualityText));
         OnPropertyChanged(nameof(HasHealthActions));
+        OnPropertyChanged(nameof(ShowTreatmentEmpty));
+        OnPropertyChanged(nameof(ShowTherapyEmpty));
+        OnPropertyChanged(nameof(ShowMedicalImprovementEmpty));
         OnPropertyChanged(nameof(ShowHealthEmpty));
         OnPropertyChanged(nameof(ChurchActions));
         OnPropertyChanged(nameof(HasChurchActions));
@@ -525,6 +578,10 @@ public sealed record TownAffairsHouseOfferViewModel(
     public string AskingPriceText =>
         $"{Offer.AskingPrice:N0} zł";
 }
+
+public sealed record TownAffairsHealthSummaryViewModel(
+    string HealthText,
+    string ConditionsText);
 
 public sealed record TownAffairsHealthActionViewModel(
     string ActionId,
@@ -566,9 +623,13 @@ public sealed record TownAffairsChurchActionViewModel(
 
     public string AmountText =>
         Amount is decimal amount
-            ? IsBenefit
-                ? $"Relief: {amount:N0} zł"
-                : $"Amount: {amount:N0} zł"
+            ? ActionId.Equals(
+                "personality.religious_study",
+                StringComparison.OrdinalIgnoreCase)
+                    ? $"Cost: {amount:N0} zł"
+                    : IsBenefit
+                        ? $"Relief: {amount:N0} zł"
+                        : $"Amount: {amount:N0} zł"
             : string.Empty;
 }
 

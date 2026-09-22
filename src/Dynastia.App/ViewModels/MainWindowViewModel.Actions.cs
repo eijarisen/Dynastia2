@@ -102,8 +102,6 @@ public sealed partial class MainWindowViewModel
                                 TownAffairsUiActionId)));
                 }
 
-                var selfImprovementAdded =
-                    false;
                 var craftProfessionAdded =
                     false;
                 var managePropertiesAdded =
@@ -181,30 +179,6 @@ public sealed partial class MainWindowViewModel
                                         ActionCategory.Career
                                     },
                                     () => ExecuteAction(CraftProfessionUiActionId)));
-                        }
-
-                        continue;
-                    }
-
-                    if (IsSelfImprovementAction(actionId))
-                    {
-                        if (!selfImprovementAdded)
-                        {
-                            selfImprovementAdded = true;
-
-                            var selfImprovement =
-                                CreateSelfImprovementPresentationAction();
-
-                            _allAvailableActions.Add(
-                                new AvailableActionViewModel(
-                                    selfImprovement,
-                                    new HashSet<ActionCategory>
-                                    {
-                                        ActionCategory.Personal
-                                    },
-                                    () =>
-                                        ExecuteAction(
-                                            SelfImprovementUiActionId)));
                         }
 
                         continue;
@@ -456,11 +430,10 @@ public sealed partial class MainWindowViewModel
                 ManageFinancesUiActionId,
                 StringComparison.OrdinalIgnoreCase)
             || actionId.Equals(
-                SelfImprovementUiActionId,
-                StringComparison.OrdinalIgnoreCase)
-            || actionId.Equals(
                 CraftProfessionUiActionId,
                 StringComparison.OrdinalIgnoreCase)
+            || TownAffairsHealthActionIds.Contains(actionId)
+            || TownAffairsChurchActionIds.Contains(actionId)
             || actionId.Equals(
                 "education.get_education",
                 StringComparison.OrdinalIgnoreCase)

@@ -136,7 +136,7 @@
                             <StackPanel Margin="12,8,12,6" Spacing="12">
                                 <TextBlock
                                     Classes="guideParagraph"
-                                    Text="Each person is more than an age and occupation. Six core traits—Immunity, Longevity, Fertility, Appeal, Strength and Intellect—shape different parts of life. Children inherit these traits with variation, so strong and weak tendencies can run through a family without producing identical descendants. People also develop a temperament and Morals, which influence behavior, relationships and some decisions. Paid Self Improvement can strengthen an adult’s effective traits when the relevant treatment or training exists in that era." />
+                                    Text="Each person is more than an age and occupation. Six core traits—Immunity, Longevity, Fertility, Appeal, Strength and Intellect—shape different parts of life. Children inherit these traits with variation, so strong and weak tendencies can run through a family without producing identical descendants. People also develop a temperament and Morals, which influence behavior, relationships and some decisions. Paid Medical Improvements in Town Affairs → Health can strengthen an adult’s effective traits when the current era and local Medical facility permit them. Religious Study is available through the local Church, with success improving as Church tier rises." />
 
                                 <TextBlock
                                     Classes="guideParagraph"

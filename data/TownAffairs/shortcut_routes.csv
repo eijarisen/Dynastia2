@@ -10,6 +10,13 @@ loan.take,bank,active_household,resident,Open the local Bank tab and preserve th
 loan.give,bank,active_household,resident,Open the local Bank tab and preserve the existing lending action.
 wellbeing.heal_relative,health,selected_household_member,resident,Patient may be a child; Town Affairs itself remains directly openable only for adults.
 wellbeing.therapy,health,selected_adult_household_member,resident,Therapy remains local-facility dependent.
+stats.improve_strength,health,selected_adult_household_member,resident,Medical Improvement; requires Medical Tier 1+.
+stats.improve_intellect,health,selected_adult_household_member,resident,Medical Improvement; requires Medical Tier 2+.
+stats.improve_immunity,health,selected_adult_household_member,resident,Medical Improvement; requires Medical Tier 2+.
+stats.improve_appeal,health,selected_adult_household_member,resident,Medical Improvement; requires Medical Tier 2+.
+stats.improve_longevity,health,selected_adult_household_member,resident,Medical Improvement; requires Medical Tier 3+.
+stats.improve_fertility,health,selected_adult_household_member,resident,Medical Improvement; requires Medical Tier 3+.
+personality.religious_study,church,active_controller,resident,Religious Study success depends on the local Church tier.
 church.attend,church,active_controller,resident,Open the local Church tab and preserve the queued annual action.
 church.donate,church,active_controller,resident,Choose a donation tier in the local Church tab.
 church.aid_poor_family,church,active_controller,resident,Choose a direct-charity tier in the local Church tab.

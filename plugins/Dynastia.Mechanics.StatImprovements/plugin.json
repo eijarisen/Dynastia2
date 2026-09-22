@@ -11,6 +11,7 @@
     "dynastia.economy",
     "dynastia.households",
     "dynastia.health",
-    "dynastia.historical"
+    "dynastia.historical",
+    "dynastia.townlife"
   ]
 }

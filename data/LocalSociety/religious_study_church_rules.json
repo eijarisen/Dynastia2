@@ -1,0 +1,15 @@
+{
+  "schemaVersion": "1.0",
+  "actionId": "personality.religious_study",
+  "baseCost": 3000,
+  "successChanceFormula": "0.40 + 0.05 * ChurchTier",
+  "tierChances": {
+    "1": 0.45,
+    "2": 0.5,
+    "3": 0.55,
+    "4": 0.6,
+    "5": 0.65
+  },
+  "existingMoralsEffectUnchanged": true,
+  "queuePhase": "MoralsReflection"
+}

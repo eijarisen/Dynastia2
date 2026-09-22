@@ -110,15 +110,21 @@ public sealed class TownAffairsHousingFarmingTa1Tests
     }
 
     [Fact]
-    public void SelfImprovementNoLongerDuplicatesTherapy()
+    public void SelfImprovementSelectorIsRetiredAndServicesRouteThroughTownAffairs()
     {
         var root = RepositoryRoot();
-        var code = File.ReadAllText(Path.Combine(
-            root, "src", "Dynastia.App", "ViewModels", "MainWindowViewModel.SelfImprovement.cs"));
+        var actions = File.ReadAllText(Path.Combine(
+            root, "src", "Dynastia.App", "ViewModels", "MainWindowViewModel.Actions.cs"));
+        var townAffairs = File.ReadAllText(Path.Combine(
+            root, "src", "Dynastia.App", "ViewModels", "MainWindowViewModel.TownLife.cs"));
+        var mainWindow = File.ReadAllText(Path.Combine(
+            root, "src", "Dynastia.App", "Views", "MainWindow.axaml.cs"));
 
-        Assert.DoesNotContain("wellbeing.therapy", code);
-        Assert.Contains("ReligiousStudyActionId", code);
-        Assert.Contains("stats.improve_", code);
+        Assert.DoesNotContain("SelfImprovementUiActionId", actions);
+        Assert.DoesNotContain("ui.self_improvement", mainWindow);
+        Assert.Contains("wellbeing.therapy", townAffairs);
+        Assert.Contains("personality.religious_study", townAffairs);
+        Assert.Contains("stats.improve_strength", townAffairs);
     }
 
     [Fact]

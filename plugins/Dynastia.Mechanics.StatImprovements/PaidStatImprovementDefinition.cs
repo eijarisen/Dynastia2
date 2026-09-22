@@ -4,4 +4,5 @@ internal sealed record PaidStatImprovementDefinition(
     string ActionId,
     string StatId,
     string StatName,
-    decimal Cost);
+    int MinimumMedicalTier,
+    decimal BaseCost);

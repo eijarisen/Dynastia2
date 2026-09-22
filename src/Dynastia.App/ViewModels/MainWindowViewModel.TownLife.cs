@@ -20,7 +20,13 @@ public sealed partial class MainWindowViewModel
         new(StringComparer.OrdinalIgnoreCase)
         {
             "wellbeing.heal_relative",
-            "wellbeing.therapy"
+            "wellbeing.therapy",
+            "stats.improve_strength",
+            "stats.improve_intellect",
+            "stats.improve_immunity",
+            "stats.improve_appeal",
+            "stats.improve_longevity",
+            "stats.improve_fertility"
         };
 
     private static readonly HashSet<string> TownAffairsChurchActionIds =
@@ -29,7 +35,8 @@ public sealed partial class MainWindowViewModel
             "church.attend",
             "church.donate",
             "church.aid_poor_family",
-            "church.ask_welfare"
+            "church.ask_welfare",
+            "personality.religious_study"
         };
 
     private static readonly string[] ChurchDonationTiers =
@@ -131,6 +138,13 @@ public sealed partial class MainWindowViewModel
             "loan.give" => TownAffairsTab.Bank,
             "wellbeing.heal_relative" => TownAffairsTab.Health,
             "wellbeing.therapy" => TownAffairsTab.Health,
+            "stats.improve_strength" => TownAffairsTab.Health,
+            "stats.improve_intellect" => TownAffairsTab.Health,
+            "stats.improve_immunity" => TownAffairsTab.Health,
+            "stats.improve_appeal" => TownAffairsTab.Health,
+            "stats.improve_longevity" => TownAffairsTab.Health,
+            "stats.improve_fertility" => TownAffairsTab.Health,
+            "personality.religious_study" => TownAffairsTab.Church,
             "church.attend" => TownAffairsTab.Church,
             "church.donate" => TownAffairsTab.Church,
             "church.aid_poor_family" => TownAffairsTab.Church,
@@ -343,6 +357,28 @@ public sealed partial class MainWindowViewModel
             && _actionRegistry.Evaluate(actionId, actor, actor).Available;
     }
 
+    internal TownAffairsHealthSummaryViewModel GetTownAffairsHealthSummary(
+        IPerson subject)
+    {
+        if (_healthService is null)
+        {
+            return new TownAffairsHealthSummaryViewModel(
+                "Health information is unavailable.",
+                "Conditions: unavailable");
+        }
+
+        var health = _healthService.GetHealth(subject);
+        var conditions = health.Conditions.Count == 0
+            ? "Conditions: None"
+            : "Conditions: " + string.Join(
+                ", ",
+                health.Conditions.Select(condition => condition.Name));
+
+        return new TownAffairsHealthSummaryViewModel(
+            $"Health: {health.Current:N0} / {health.Maximum:N0} ({health.Percentage:N0}%)",
+            conditions);
+    }
+
     internal IReadOnlyList<TownAffairsHealthActionViewModel>
         GetTownAffairsHealthActions(IPerson subject)
     {
@@ -365,7 +401,13 @@ public sealed partial class MainWindowViewModel
                 item.Evaluation.Available
                 || item.Evaluation.ReasonCode.Equals(
                     ActionReasonCodes.InsufficientFunds,
-                    StringComparison.OrdinalIgnoreCase))
+                    StringComparison.OrdinalIgnoreCase)
+                || (item.Action.Id.StartsWith(
+                        "stats.improve_",
+                        StringComparison.OrdinalIgnoreCase)
+                    && item.Evaluation.ReasonCode.Equals(
+                        ActionReasonCodes.ResourceUnavailable,
+                        StringComparison.OrdinalIgnoreCase)))
             .Select(item => new TownAffairsHealthActionViewModel(
                 item.Action.Id,
                 item.Action.Label,
@@ -390,6 +432,7 @@ public sealed partial class MainWindowViewModel
         var result = new List<TownAffairsChurchActionViewModel>();
 
         AddChurchAction("church.attend", null, null, isBenefit: false);
+        AddChurchAction("personality.religious_study", null, null, isBenefit: false);
         foreach (var tier in ChurchDonationTiers)
             AddChurchAction("church.donate", tier, TitleCaseTier(tier), isBenefit: false);
         foreach (var tier in ChurchDonationTiers)
@@ -429,13 +472,28 @@ public sealed partial class MainWindowViewModel
                 parameters["churchAmount"] = parsedAmount.ToString(
                     System.Globalization.CultureInfo.InvariantCulture);
             }
+            else if (action.DisplayCost is decimal displayCost)
+            {
+                amount = displayCost;
+            }
+
+            var description = action.Description;
+            if (evaluation.PresentationMetadata.TryGetValue("successChance", out var chanceText)
+                && double.TryParse(
+                    chanceText,
+                    System.Globalization.NumberStyles.Float,
+                    System.Globalization.CultureInfo.InvariantCulture,
+                    out var successChance))
+            {
+                description += $" Current success chance: {successChance:P0}.";
+            }
 
             result.Add(new TownAffairsChurchActionViewModel(
                 action.Id,
                 string.IsNullOrWhiteSpace(optionLabel)
                     ? action.Label
                     : $"{action.Label} — {optionLabel}",
-                action.Description,
+                description,
                 amount,
                 isBenefit,
                 evaluation.Available,

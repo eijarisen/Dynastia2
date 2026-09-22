@@ -15,7 +15,7 @@ This map points maintenance work toward the smallest relevant files. It describe
 - `MainWindowViewModel.HouseholdPresentation.cs` — budget, income, expenses, property and household-warning projections.
 - `MainWindowViewModel.Collections.cs` — observable collections exposed to the UI.
 - `MainWindowViewModel.Actions.cs` — action refresh/filter execution.
-- `MainWindowViewModel.SelfImprovement.cs` — Self Improvement selector integration.
+- `MainWindowViewModel.TownLife.cs` — Town Affairs routing for Medical Improvements, Therapy and Religious Study.
 - `MainWindowViewModel.Relations.cs` — Family Relations window projections/interactions.
 - `ActionPresentationPolicy.cs` — action categories and display ordering.
 - `MainWindowViewModel.Events.cs` — album refresh and application event callbacks.

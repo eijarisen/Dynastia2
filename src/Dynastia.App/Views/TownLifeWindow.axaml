@@ -264,8 +264,59 @@
                                     </DataTemplate>
                                 </ItemsControl.ItemTemplate>
                             </ItemsControl>
-                            <TextBlock IsVisible="{Binding ShowHealthEmpty}" Margin="0,18,0,0" HorizontalAlignment="Center" TextAlignment="Center" FontStyle="Italic" TextWrapping="Wrap" Text="{Binding HealthEmptyText}" />
-                            <ItemsControl ItemsSource="{Binding HealthActions}">
+
+                            <TextBlock Classes="sectionHeader" Text="Current Health / Conditions" />
+                            <Border Padding="10,7" Background="#20FFF4D9" BorderBrush="#A17A43" BorderThickness="1" CornerRadius="4">
+                                <StackPanel Spacing="2">
+                                    <TextBlock FontWeight="Bold" Text="{Binding HealthSummary.HealthText}" />
+                                    <TextBlock FontSize="11.5" TextWrapping="Wrap" Text="{Binding HealthSummary.ConditionsText}" />
+                                </StackPanel>
+                            </Border>
+
+                            <TextBlock Classes="sectionHeader" Margin="0,6,0,0" Text="Treatment / Heal" />
+                            <TextBlock IsVisible="{Binding ShowTreatmentEmpty}" FontSize="11.5" FontStyle="Italic" Text="No treatment or healing action is currently available." />
+                            <ItemsControl ItemsSource="{Binding TreatmentHealthActions}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate x:DataType="vm:TownAffairsHealthActionViewModel">
+                                        <Border Margin="2" Padding="10,7" Background="#25FFF4D9" BorderBrush="#A17A43" BorderThickness="1" CornerRadius="4" Opacity="{Binding DisplayOpacity}" ToolTip.Tip="{Binding UnavailableReason}">
+                                            <Grid ColumnDefinitions="54,*,Auto" ColumnSpacing="10">
+                                                <TextBlock HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="28" Text="{Binding Emoji}" />
+                                                <StackPanel Grid.Column="1" Spacing="2">
+                                                    <TextBlock FontSize="14" FontWeight="Bold" Text="{Binding Label}" />
+                                                    <TextBlock FontSize="11.5" TextWrapping="Wrap" Text="{Binding Description}" />
+                                                    <TextBlock IsVisible="{Binding HasCost}" FontSize="11.5" FontWeight="Bold" Text="{Binding CostText}" />
+                                                </StackPanel>
+                                                <Button Grid.Column="2" Classes="paperAction" VerticalAlignment="Center" IsEnabled="{Binding IsAvailable}" Content="Queue" Click="OnHealthActionClick" />
+                                            </Grid>
+                                        </Border>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+
+                            <TextBlock Classes="sectionHeader" Margin="0,6,0,0" Text="Therapy" />
+                            <TextBlock IsVisible="{Binding ShowTherapyEmpty}" FontSize="11.5" FontStyle="Italic" Text="No Therapy action is currently relevant or available." />
+                            <ItemsControl ItemsSource="{Binding TherapyHealthActions}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate x:DataType="vm:TownAffairsHealthActionViewModel">
+                                        <Border Margin="2" Padding="10,7" Background="#25FFF4D9" BorderBrush="#A17A43" BorderThickness="1" CornerRadius="4" Opacity="{Binding DisplayOpacity}" ToolTip.Tip="{Binding UnavailableReason}">
+                                            <Grid ColumnDefinitions="54,*,Auto" ColumnSpacing="10">
+                                                <TextBlock HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="28" Text="{Binding Emoji}" />
+                                                <StackPanel Grid.Column="1" Spacing="2">
+                                                    <TextBlock FontSize="14" FontWeight="Bold" Text="{Binding Label}" />
+                                                    <TextBlock FontSize="11.5" TextWrapping="Wrap" Text="{Binding Description}" />
+                                                    <TextBlock IsVisible="{Binding HasCost}" FontSize="11.5" FontWeight="Bold" Text="{Binding CostText}" />
+                                                </StackPanel>
+                                                <Button Grid.Column="2" Classes="paperAction" VerticalAlignment="Center" IsEnabled="{Binding IsAvailable}" Content="Queue" Click="OnHealthActionClick" />
+                                            </Grid>
+                                        </Border>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+
+                            <TextBlock Classes="sectionHeader" Margin="0,6,0,0" Text="Medical Improvements" />
+                            <TextBlock FontSize="11.5" TextWrapping="Wrap" Text="{Binding MedicalQualityText}" />
+                            <TextBlock IsVisible="{Binding ShowMedicalImprovementEmpty}" FontSize="11.5" FontStyle="Italic" TextWrapping="Wrap" Text="No Medical Improvement is currently available for this adult at the local facility." />
+                            <ItemsControl ItemsSource="{Binding MedicalImprovementActions}">
                                 <ItemsControl.ItemTemplate>
                                     <DataTemplate x:DataType="vm:TownAffairsHealthActionViewModel">
                                         <Border Margin="2" Padding="10,7" Background="#25FFF4D9" BorderBrush="#A17A43" BorderThickness="1" CornerRadius="4" Opacity="{Binding DisplayOpacity}" ToolTip.Tip="{Binding UnavailableReason}">
@@ -369,7 +420,7 @@
                                     <TextBlock FontSize="12" Foreground="#654621" Text="{Binding Snapshot.Church.Summary}" />
                                 </StackPanel>
                             </Grid>
-                            <TextBlock FontSize="11.5" TextWrapping="Wrap" Text="Church actions are queued for the next year. Attendance has only a small Morals effect; direct charity favors Reputation while Church donations favor Renown." />
+                            <TextBlock FontSize="11.5" TextWrapping="Wrap" Text="Church actions are queued for the next year. Religious Study costs 3,000 zł and has a 45–65% success chance based on Church tier; attendance has only a small Morals effect, while charity and donations primarily affect local Status." />
                             <TextBlock IsVisible="{Binding ShowChurchEmpty}" Margin="0,18,0,0" HorizontalAlignment="Center" TextAlignment="Center" FontStyle="Italic" Text="No Church action is currently available." />
                             <ItemsControl ItemsSource="{Binding ChurchActions}">
                                 <ItemsControl.ItemTemplate>

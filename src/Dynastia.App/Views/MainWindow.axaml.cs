@@ -174,38 +174,6 @@ public partial class MainWindow : Window
         try
         {
             if (e.ActionId.Equals(
-                    "ui.self_improvement",
-                    StringComparison.OrdinalIgnoreCase))
-            {
-                var selfImprovementOptions =
-                    viewModel.GetSelfImprovementOptions();
-
-                if (!selfImprovementOptions.Any(option => option.IsAvailable))
-                {
-                    viewModel.ReportPersistenceStatus(
-                        "No self-improvement option is currently available.");
-                    return;
-                }
-
-                var selfImprovementWindow =
-                    new SelfImprovementWindow(
-                        viewModel.GetSelfImprovementTargetName(),
-                        selfImprovementOptions);
-
-                var selectedActionId =
-                    await selfImprovementWindow
-                        .ShowDialog<string?>(this);
-
-                if (!string.IsNullOrWhiteSpace(selectedActionId))
-                {
-                    viewModel.QueueSelfImprovementAction(
-                        selectedActionId);
-                }
-
-                return;
-            }
-
-            if (e.ActionId.Equals(
                     "ui.craft_profession",
                     StringComparison.OrdinalIgnoreCase))
             {
@@ -536,12 +504,6 @@ public partial class MainWindow : Window
                     e.Handled = true;
                     viewModel.TryExecuteAvailableActionShortcut(
                         "education.get_education");
-                    return;
-
-                case Key.I:
-                    e.Handled = true;
-                    viewModel.TryExecuteAvailableActionShortcut(
-                        "ui.self_improvement");
                     return;
 
                 case Key.S:

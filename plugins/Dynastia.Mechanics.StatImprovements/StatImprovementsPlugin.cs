@@ -1,370 +1,320 @@
+using System.Globalization;
 using Dynastia.Contracts;
 
 namespace Dynastia.Mechanics.StatImprovements;
 
-public sealed class StatImprovementsPlugin :
-    IGamePlugin
+public sealed class StatImprovementsPlugin : IGamePlugin
 {
-    private static readonly PaidStatImprovementDefinition[]
-        Definitions =
-        [
-            new("stats.improve_strength", "strength", "Strength", 20000m),
-            new("stats.improve_intellect", "intellect", "Intellect", 20000m),
-            new("stats.improve_immunity", "immunity", "Immunity", 20000m),
-            new("stats.improve_appeal", "appeal", "Appeal", 20000m),
-            new("stats.improve_longevity", "longevity", "Longevity", 20000m),
-            new("stats.improve_fertility", "fertility", "Fertility", 20000m)
-        ];
-
-    public void Initialize(
-        IGamePluginContext context)
+    public void Initialize(IGamePluginContext context)
     {
-        var stats =
-            context.GetService<IStatsService>()
-            ?? throw new InvalidOperationException(
-                "Stats service is unavailable.");
+        var data = Require<IGameDataService>(context, "Game data service");
+        var gameState = Require<IGameState>(context, "Game state");
+        var stats = Require<IStatsService>(context, "Stats service");
+        var family = Require<IFamilyService>(context, "Family service");
+        var economy = Require<IEconomyService>(context, "Economy service");
+        var households = Require<IHouseholdService>(context, "Household service");
+        var health = Require<IHealthService>(context, "Health service");
+        var historical = Require<IHistoricalActionVariantService>(context, "Historical action variant service");
+        var locations = Require<ILocationService>(context, "Location service");
+        var facilities = Require<ITownFacilityQualityService>(context, "Town facility quality service");
+        var actions = Require<IActionRegistry>(context, "Action registry");
 
-        var family =
-            context.GetService<IFamilyService>()
-            ?? throw new InvalidOperationException(
-                "Family service is unavailable.");
+        var definitions = StatImprovementRules.Load(data);
 
-        var economy =
-            context.GetService<IEconomyService>()
-            ?? throw new InvalidOperationException(
-                "Economy service is unavailable.");
-
-        var households =
-            context.GetService<IHouseholdService>()
-            ?? throw new InvalidOperationException(
-                "Household service is unavailable.");
-
-        var health =
-            context.GetService<IHealthService>()
-            ?? throw new InvalidOperationException(
-                "Health service is unavailable.");
-
-        var historical =
-            context.GetService<IHistoricalActionVariantService>()
-            ?? throw new InvalidOperationException(
-                "Historical action variant service is unavailable.");
-
-        var actions =
-            context.GetService<IActionRegistry>()
-            ?? throw new InvalidOperationException(
-                "Action registry is unavailable.");
-
-        foreach (var definition in
-            Definitions)
-        {
-            actions.Register(
-                CreateAction(
-                    definition,
-                    stats,
-                    family,
-                    economy,
-                    households,
-                    health,
-                    historical));
-        }
+        // S9 keeps the stable action IDs but makes their presentation and cost
+        // local-facility dependent. A dynamic provider guarantees that every UI
+        // and direct evaluator sees the current town's Medical tier and price.
+        actions.RegisterDynamicProvider(
+            (_, target) =>
+                definitions.Select(definition =>
+                    CreateAction(
+                        definition,
+                        target,
+                        gameState,
+                        stats,
+                        family,
+                        economy,
+                        households,
+                        health,
+                        historical,
+                        locations,
+                        facilities)));
 
         context.Log(
-            "Paid stat-improvement actions registered.");
+            "Paid stat-improvement actions registered through local Medical facilities.");
     }
 
     private static GameActionDefinition CreateAction(
         PaidStatImprovementDefinition definition,
+        IPerson presentationTarget,
+        IGameState gameState,
         IStatsService stats,
         IFamilyService family,
         IEconomyService economy,
         IHouseholdService households,
         IHealthService health,
-        IHistoricalActionVariantService historical)
+        IHistoricalActionVariantService historical,
+        ILocationService locations,
+        ITownFacilityQualityService facilities)
     {
-        var canonical =
-            historical.GetCanonicalVariant(
-                definition.ActionId)
+        var canonical = historical.GetCanonicalVariant(definition.ActionId)
             ?? throw new InvalidDataException(
                 $"Missing historical action data for '{definition.ActionId}'.");
+        var variant = historical.GetVariant(definition.ActionId, gameState.Year)
+            ?? canonical;
+        var medical = GetMedicalQuality(
+            presentationTarget,
+            gameState.Year,
+            locations,
+            facilities);
+        var displayCost = StatImprovementRules.CalculateCost(
+            definition.BaseCost,
+            medical.TreatmentCostMultiplier);
 
         return new GameActionDefinition
         {
-            Id =
-                definition.ActionId,
-
-            Label =
-                canonical.Label,
-
+            Id = definition.ActionId,
+            Label = variant.Label,
             Description =
-                canonical.Description,
+                $"{variant.Description} Requires a Tier {definition.MinimumMedicalTier}+ local medical facility.",
+            DisplayCost = displayCost,
+            Mode = ActionExecutionMode.Queued,
+            QueuePhase = YearPhase.QueuedActionsEarly,
 
-            Mode =
-                ActionExecutionMode.Queued,
+            EvaluateAvailability = actionContext =>
+                EvaluateAvailability(
+                    actionContext,
+                    definition,
+                    stats,
+                    economy,
+                    households,
+                    historical,
+                    locations,
+                    facilities),
 
-            QueuePhase =
-                YearPhase.QueuedActionsEarly,
+            Execute = actionContext =>
+            {
+                var actor = actionContext.Actor;
+                var target = actionContext.Target;
 
-            IsAvailable =
-                actionContext =>
-                    CanPurchase(
-                        actionContext,
-                        definition,
-                        stats,
-                        economy,
-                        households,
-                        historical),
-
-            Execute =
-                actionContext =>
+                var evaluation = EvaluateAvailability(
+                    actionContext,
+                    definition,
+                    stats,
+                    economy,
+                    households,
+                    historical,
+                    locations,
+                    facilities);
+                if (!evaluation.Available)
                 {
-                    var actor =
-                        actionContext.Actor;
+                    return new GameActionResult(
+                        false,
+                        evaluation.Reason,
+                        evaluation.ReasonCode);
+                }
 
-                    var target =
-                        actionContext.Target;
+                var medicalNow = GetMedicalQuality(
+                    target,
+                    actionContext.GameState.Year,
+                    locations,
+                    facilities);
+                var currentCost = StatImprovementRules.CalculateCost(
+                    definition.BaseCost,
+                    medicalNow.TreatmentCostMultiplier);
 
-                    if (!CanPurchase(
-                        actionContext,
-                        definition,
-                        stats,
-                        economy,
-                        households,
-                        historical))
-                    {
-                        return new GameActionResult(
-                            false,
-                            "This stat improvement is not currently available.");
-                    }
+                var before = GetEffectiveStat(
+                    stats,
+                    target,
+                    definition.StatId);
 
-                    var before =
-                        GetEffectiveStat(
-                            stats,
-                            target,
-                            definition.StatId);
-
-                    if (!stats.TryIncreaseAcquiredStat(
+                if (!stats.TryIncreaseAcquiredStat(
                         target,
                         definition.StatId))
-                    {
-                        return new GameActionResult(
-                            false,
-                            $"{definition.StatName} is already at its maximum.");
-                    }
+                {
+                    return new GameActionResult(
+                        false,
+                        $"{definition.StatName} is already at its maximum.");
+                }
 
-                    economy.ChangeWealth(
-                        actor,
-                        -definition.Cost);
+                economy.ChangeWealth(actor, -currentCost);
 
-                    var after =
-                        GetEffectiveStat(
-                            stats,
-                            target,
-                            definition.StatId);
+                var after = GetEffectiveStat(
+                    stats,
+                    target,
+                    definition.StatId);
 
-                    if (definition.StatId.Equals(
+                if (definition.StatId.Equals(
+                        "fertility",
+                        StringComparison.OrdinalIgnoreCase)
+                    && before == 0
+                    && after >= 1)
+                {
+                    // No separate infertility condition exists in the current
+                    // game, but retain the future-compatible cleanup behavior.
+                    health.RemoveCondition(target, "infertility");
+                    target.Tags.Remove("state.infertile");
+                    target.Tags.Remove("trait.infertile");
+                }
+
+                var displayName = family.GetDisplayName(target);
+                var currentVariant = historical.GetVariant(
+                        definition.ActionId,
+                        actionContext.GameState.Year)
+                    ?? canonical;
+                var narrative =
+                    definition.StatId.Equals(
                             "fertility",
                             StringComparison.OrdinalIgnoreCase)
                         && before == 0
-                        && after >= 1)
+                        && after == 1
+                            ? $"{displayName} {currentVariant.Narrative} and overcame infertility."
+                            : $"{displayName} {currentVariant.Narrative} and improved their {definition.StatName}.";
+
+                actionContext.EventBus.Publish(
+                    new GameEvent
                     {
-                        // No separate infertility condition exists in the
-                        // current game, but clear common future-compatible
-                        // state names if one is later introduced.
-                        health.RemoveCondition(
-                            target,
-                            "infertility");
-
-                        target.Tags.Remove(
-                            "state.infertile");
-
-                        target.Tags.Remove(
-                            "trait.infertile");
-                    }
-
-                    var displayName =
-                        family.GetDisplayName(
-                            target);
-
-                    var variant =
-                        historical.GetVariant(
-                            definition.ActionId,
-                            actionContext.GameState.Year)
-                        ?? canonical;
-
-                    var narrative =
-                        definition.StatId.Equals(
-                                "fertility",
-                                StringComparison.OrdinalIgnoreCase)
-                            && before == 0
-                            && after == 1
-                                ? $"{displayName} {variant.Narrative} " +
-                                  "and overcame infertility."
-                                : $"{displayName} {variant.Narrative} " +
-                                  $"and improved their {definition.StatName}.";
-
-                    actionContext.EventBus.Publish(
-                        new GameEvent
+                        Type = "stats.paid_improvement",
+                        Year = actionContext.GameState.Year,
+                        SubjectId = target.Id,
+                        RelatedPersonIds = actor.Id == target.Id
+                            ? []
+                            : [actor.Id],
+                        Data = new Dictionary<string, string>
                         {
-                            Type =
-                                "stats.paid_improvement",
+                            ["actionId"] = definition.ActionId,
+                            ["statId"] = definition.StatId,
+                            ["statName"] = definition.StatName,
+                            ["medicalTier"] = medicalNow.Tier.ToString(CultureInfo.InvariantCulture),
+                            ["cost"] = currentCost.ToString(CultureInfo.InvariantCulture),
+                            ["previousValue"] = before.ToString(CultureInfo.InvariantCulture),
+                            ["newValue"] = after.ToString(CultureInfo.InvariantCulture),
+                            ["text"] = narrative
+                        }
+                    });
 
-                            Year =
-                                actionContext.GameState.Year,
-
-                            SubjectId =
-                                target.Id,
-
-                            RelatedPersonIds =
-                                actor.Id == target.Id
-                                    ? []
-                                    : [actor.Id],
-
-                            Data =
-                                new Dictionary<string, string>
-                                {
-                                    ["actionId"] =
-                                        definition.ActionId,
-
-                                    ["statId"] =
-                                        definition.StatId,
-
-                                    ["statName"] =
-                                        definition.StatName,
-
-                                    ["cost"] =
-                                        definition.Cost.ToString(),
-
-                                    ["previousValue"] =
-                                        before.ToString(),
-
-                                    ["newValue"] =
-                                        after.ToString(),
-
-                                    ["text"] =
-                                        narrative
-                                }
-                        });
-
-                    return new GameActionResult(
-                        true);
-                }
+                return new GameActionResult(true);
+            }
         };
     }
 
-    private static bool CanPurchase(
+    private static ActionEvaluationResult EvaluateAvailability(
         GameActionContext actionContext,
         PaidStatImprovementDefinition definition,
         IStatsService stats,
         IEconomyService economy,
         IHouseholdService households,
-        IHistoricalActionVariantService historical)
+        IHistoricalActionVariantService historical,
+        ILocationService locations,
+        ITownFacilityQualityService facilities)
     {
-        var actor =
-            actionContext.Actor;
+        var actor = actionContext.Actor;
+        var target = actionContext.Target;
 
-        var target =
-            actionContext.Target;
-
-        if (!actor.Tags.Has(
-                "state.alive")
+        if (!actor.Tags.Has("state.alive")
             || !actionContext.ActorHasControl
-            || !target.Tags.Has(
-                "state.alive")
+            || !target.Tags.Has("state.alive")
             || target.Age < 18)
         {
-            return false;
+            return ActionEvaluationResult.Denied(
+                ActionReasonCodes.NoLongerEligible,
+                "This medical improvement is only available to a living adult in the controlled household.");
         }
 
-        var historicallyAvailable =
-            historical.GetVariant(
+        var historicallyAvailable = historical.GetVariant(
                 definition.ActionId,
                 actionContext.GameState.Year)
             is not null;
-
         if (!historicallyAvailable
             && !ActionCompatibilityParameters.IsRestoredQueuedAction(
                 actionContext.Parameters))
         {
-            return false;
+            return ActionEvaluationResult.Denied(
+                ActionReasonCodes.NoLongerEligible,
+                "This improvement is not available in the current historical period.");
         }
 
-        var actorHousehold =
-            households.ResolveHouseholdHead(
-                actor);
-
-        if (actorHousehold?.Id
-            != actor.Id)
+        var actorHousehold = households.ResolveHouseholdHead(actor);
+        var targetHousehold = households.ResolveHouseholdHead(target);
+        if (actorHousehold?.Id != actor.Id
+            || targetHousehold?.Id != actor.Id)
         {
-            return false;
+            return ActionEvaluationResult.Denied(
+                ActionReasonCodes.NoLongerEligible,
+                "The selected adult must belong to the active household.");
         }
 
-        var targetHousehold =
-            households.ResolveHouseholdHead(
-                target);
-
-        if (targetHousehold?.Id
-            != actor.Id)
+        if (GetEffectiveStat(stats, target, definition.StatId) >= 5)
         {
-            return false;
+            return ActionEvaluationResult.Denied(
+                ActionReasonCodes.NoLongerEligible,
+                $"{definition.StatName} is already at its maximum.");
         }
 
-        var finance =
-            economy.GetHousehold(
-                actor);
-
-        if (finance is null
-            || finance.Wealth
-                < definition.Cost)
-        {
-            return false;
-        }
-
-        return GetEffectiveStat(
-            stats,
+        var medical = GetMedicalQuality(
             target,
-            definition.StatId)
-            < 5;
+            actionContext.GameState.Year,
+            locations,
+            facilities);
+        var currentCost = StatImprovementRules.CalculateCost(
+            definition.BaseCost,
+            medical.TreatmentCostMultiplier);
+        var metadata = new Dictionary<string, string>
+        {
+            ["medicalTier"] = medical.Tier.ToString(CultureInfo.InvariantCulture),
+            ["minimumMedicalTier"] = definition.MinimumMedicalTier.ToString(CultureInfo.InvariantCulture),
+            ["cost"] = currentCost.ToString(CultureInfo.InvariantCulture)
+        };
+
+        // S9 deliberately has no visiting-physician/remote fallback. The
+        // selected person's own residence must meet the minimum Medical tier.
+        if (!medical.IsAvailable
+            || medical.Tier < definition.MinimumMedicalTier)
+        {
+            return ActionEvaluationResult.Denied(
+                ActionReasonCodes.ResourceUnavailable,
+                $"{definition.StatName} improvement requires a local Medical facility of Tier {definition.MinimumMedicalTier} or higher.",
+                presentationMetadata: metadata);
+        }
+
+        var finance = economy.GetHousehold(actor);
+        if (finance is null
+            || finance.Wealth < currentCost)
+        {
+            return ActionEvaluationResult.Denied(
+                ActionReasonCodes.InsufficientFunds,
+                $"The household cannot afford {currentCost:N0} zł for this medical improvement.",
+                presentationMetadata: metadata);
+        }
+
+        return ActionEvaluationResult.Allowed(
+            presentationMetadata: metadata);
+    }
+
+    private static MedicalQualityInfo GetMedicalQuality(
+        IPerson target,
+        int year,
+        ILocationService locations,
+        ITownFacilityQualityService facilities)
+    {
+        var town = locations.GetLocation(target).HomeTown;
+        return facilities.GetMedicalQuality(town, year);
     }
 
     private static int GetEffectiveStat(
         IStatsService stats,
         IPerson person,
-        string statId)
-    {
-        return stats
-            .GetStats(
-                person)
-            .First(
-                stat =>
-                    stat.Id.Equals(
-                        statId,
-                        StringComparison.OrdinalIgnoreCase))
+        string statId) =>
+        stats.GetStats(person)
+            .First(stat => stat.Id.Equals(
+                statId,
+                StringComparison.OrdinalIgnoreCase))
             .Value;
-    }
 
-    private static bool WasUsedThisYear(
-        IPerson person,
-        int year)
-    {
-        return person.Components
-            .Get<PaidStatImprovementComponent>()?
-            .LastImprovementYear
-            == year;
-    }
-
-    private static void MarkUsedThisYear(
-        IPerson person,
-        int year)
-    {
-        var component =
-            person.Components
-                .Get<PaidStatImprovementComponent>()
-            ?? new PaidStatImprovementComponent();
-
-        component.LastImprovementYear =
-            year;
-
-        person.Components.Set(
-            component);
-    }
+    private static T Require<T>(
+        IGamePluginContext context,
+        string label)
+        where T : class =>
+        context.GetService<T>()
+        ?? throw new InvalidOperationException($"{label} is unavailable.");
 }

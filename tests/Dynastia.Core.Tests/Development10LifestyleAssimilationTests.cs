@@ -86,14 +86,14 @@ public sealed class Development10LifestyleAssimilationTests
     public void PsychotherapyIsPresentedThroughTownAffairsHealthWithDynamicPrice()
     {
         var root = RepositoryRoot();
-        var selfImprovement = File.ReadAllText(Path.Combine(
-            root, "src", "Dynastia.App", "ViewModels", "MainWindowViewModel.SelfImprovement.cs"));
+        var actions = File.ReadAllText(Path.Combine(
+            root, "src", "Dynastia.App", "ViewModels", "MainWindowViewModel.Actions.cs"));
         var townAffairs = File.ReadAllText(Path.Combine(
             root, "src", "Dynastia.App", "ViewModels", "MainWindowViewModel.TownLife.cs"));
         var treatment = File.ReadAllText(Path.Combine(
             root, "plugins", "Dynastia.Mechanics.Wellbeing", "WellbeingPlugin.TreatmentActions.cs"));
 
-        Assert.DoesNotContain("TherapyActionId", selfImprovement);
+        Assert.DoesNotContain("SelfImprovementUiActionId", actions);
         Assert.Contains("wellbeing.therapy", townAffairs);
         Assert.Contains("GetCandidateActions(actor, subject)", townAffairs);
         Assert.Contains("TownAffairsHealthActionIds.Contains(action.Id)", townAffairs);

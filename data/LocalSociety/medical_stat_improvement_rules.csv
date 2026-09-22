@@ -1,0 +1,7 @@
+﻿ActionId,StatId,DisplayName,MinimumMedicalTier,BaseCost
+stats.improve_strength,strength,Strength,1,20000
+stats.improve_intellect,intellect,Intellect,2,20000
+stats.improve_immunity,immunity,Immunity,2,20000
+stats.improve_appeal,appeal,Appeal,2,20000
+stats.improve_longevity,longevity,Longevity,3,20000
+stats.improve_fertility,fertility,Fertility,3,20000

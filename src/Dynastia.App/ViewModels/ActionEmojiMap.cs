@@ -38,7 +38,6 @@ public static class ActionEmojiMap
 
                 ["ui.town_affairs"] = "🏛️",
                 ["family.adopt_polish_surname"] = "🇵🇱",
-                ["ui.self_improvement"] = "🛠️",
                 ["ui.manage_properties"] = "🏘️",
                 ["ui.manage_finances"] = "🏦",
                 ["stats.improve_strength"] = "🏋️",

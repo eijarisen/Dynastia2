@@ -36,6 +36,16 @@ public sealed class ReproductionPlugin : IGamePlugin
             ?? throw new InvalidOperationException(
                 "Marriage satisfaction service is unavailable.");
 
+        var personality =
+            context.GetService<IPersonalityService>()
+            ?? throw new InvalidOperationException(
+                "Personality service is unavailable.");
+
+        var partnerSearch =
+            context.GetService<IPartnerSearchService>()
+            ?? throw new InvalidOperationException(
+                "Partner search service is unavailable.");
+
         var data =
             context.GetService<IGameDataService>()
             ?? throw new InvalidOperationException(
@@ -120,7 +130,7 @@ public sealed class ReproductionPlugin : IGamePlugin
                             gameState.Year))
                 ]);
 
-        systems.Register(
+        var reproductionSystem =
             new ReproductionYearSystem(
                 family,
                 stats,
@@ -134,7 +144,24 @@ public sealed class ReproductionPlugin : IGamePlugin
                 calendar,
                 events,
                 birthConditions,
-                birthConditionContext));
+                birthConditionContext);
+
+        var nonmaritalRules =
+            NonmaritalBirthRules.Load(data);
+
+        systems.Register(
+            new NonmaritalBirthYearSystem(
+                family,
+                stats,
+                personality,
+                partnerSearch,
+                random,
+                events,
+                reproductionSystem,
+                nonmaritalRules));
+
+        systems.Register(
+            reproductionSystem);
 
         context.Log(
             "Reproduction mechanics registered.");

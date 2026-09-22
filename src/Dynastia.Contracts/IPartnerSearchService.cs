@@ -10,7 +10,16 @@ public interface IPartnerSearchService
         IPerson seeker,
         Sex partnerSex,
         string poolKey,
-        int count = 3);
+        int count = 3,
+        int minimumSeekerAge = 18,
+        int? minimumPartnerAge = null,
+        int? maximumPartnerAge = null);
+
+    IPerson MaterializeCandidate(
+        PartnerCandidateInfo candidate,
+        int? currentAge = null,
+        IPerson? householdSpouse = null,
+        bool seedHouseholdResources = false);
 
     double GetPartnerValue(IPerson person);
 

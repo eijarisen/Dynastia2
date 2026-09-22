@@ -99,20 +99,16 @@ public sealed class StatusPlugin : IGamePlugin
             return;
         }
 
-        if (catalog.TryGetEvent(gameEvent.Type, out var eventDelta))
+        foreach (var effect in catalog.GetEventEffects(gameEvent.Type))
         {
-            if (gameEvent.Type.Equals("relationship.divorce", StringComparison.OrdinalIgnoreCase)
-                || gameEvent.Type.Equals("relationship.low_satisfaction_divorce", StringComparison.OrdinalIgnoreCase))
+            foreach (var targetId in ResolveEventTargets(gameEvent, effect.TargetRule))
             {
-                Apply(gameState, status, gameEvent.SubjectId, eventDelta, gameEvent.Type);
-                foreach (var id in gameEvent.RelatedPersonIds)
-                    Apply(gameState, status, id, eventDelta, gameEvent.Type);
-            }
-            else
-            {
-                // The current affair event models the outside partner abstractly;
-                // RelatedPersonIds contains the betrayed spouse and must not be penalized.
-                Apply(gameState, status, gameEvent.SubjectId, eventDelta, gameEvent.Type);
+                Apply(
+                    gameState,
+                    status,
+                    targetId,
+                    (effect.Renown, effect.Reputation),
+                    gameEvent.Type);
             }
         }
 
@@ -130,6 +126,75 @@ public sealed class StatusPlugin : IGamePlugin
             if (person is not null)
                 status.ApplyPersistentDelta(person, renown, reputation, gameEvent.Type);
         }
+    }
+
+
+    private static IReadOnlyList<Guid> ResolveEventTargets(
+        GameEvent gameEvent,
+        string targetRule)
+    {
+        var rule = targetRule.Trim().ToLowerInvariant();
+
+        if (rule == "none")
+            return [];
+
+        if (rule == "divorcing_spouses")
+        {
+            return SubjectAndRelated(gameEvent);
+        }
+
+        if (rule == "actor_and_affair_partner")
+        {
+            // The current affair event keeps the outside partner abstract;
+            // RelatedPersonIds contains the betrayed spouse. Preserve the
+            // established behavior by applying the public-affair penalty only
+            // to the acting simulated person.
+            return gameEvent.SubjectId is Guid actorId
+                ? [actorId]
+                : [];
+        }
+
+        if (rule == "mother")
+            return NamedTarget(gameEvent, "motherId");
+
+        if (rule == "husband")
+            return NamedTarget(gameEvent, "husbandId");
+
+        if (rule is "actor" or "seller" or "subject"
+            || string.IsNullOrWhiteSpace(rule))
+        {
+            return gameEvent.SubjectId is Guid subjectId
+                ? [subjectId]
+                : [];
+        }
+
+        return gameEvent.SubjectId is Guid fallbackId
+            ? [fallbackId]
+            : [];
+    }
+
+    private static IReadOnlyList<Guid> NamedTarget(
+        GameEvent gameEvent,
+        string dataKey)
+    {
+        if (gameEvent.Data.TryGetValue(dataKey, out var text)
+            && Guid.TryParse(text, out var parsed))
+        {
+            return [parsed];
+        }
+
+        return gameEvent.SubjectId is Guid subjectId
+            ? [subjectId]
+            : [];
+    }
+
+    private static IReadOnlyList<Guid> SubjectAndRelated(GameEvent gameEvent)
+    {
+        var result = new List<Guid>();
+        if (gameEvent.SubjectId is Guid subjectId)
+            result.Add(subjectId);
+        result.AddRange(gameEvent.RelatedPersonIds);
+        return result.Distinct().ToArray();
     }
 
     private static void Apply(

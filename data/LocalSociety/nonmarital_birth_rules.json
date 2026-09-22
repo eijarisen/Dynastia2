@@ -1,0 +1,102 @@
+{
+  "schemaVersion": "1.0",
+  "systemId": "reproduction.nonmarital_births",
+  "phase": "LifeEvents",
+  "minimumAge": 15,
+  "maximumAge": 45,
+  "baseAnnualChance": 0.002,
+  "eligibility": {
+    "female": true,
+    "alive": true,
+    "unmarried": true,
+    "notImprisoned": true,
+    "fertilityZeroExcluded": true
+  },
+  "fertilityMultipliers": {
+    "1": 0.6,
+    "2": 0.8,
+    "3": 1.0,
+    "4": 1.15,
+    "5": 1.3
+  },
+  "ageMultipliers": [
+    {
+      "min": 15,
+      "max": 17,
+      "multiplier": 0.75
+    },
+    {
+      "min": 18,
+      "max": 29,
+      "multiplier": 1.0
+    },
+    {
+      "min": 30,
+      "max": 34,
+      "multiplier": 0.8
+    },
+    {
+      "min": 35,
+      "max": 39,
+      "multiplier": 0.5
+    },
+    {
+      "min": 40,
+      "max": 45,
+      "multiplier": 0.15
+    }
+  ],
+  "temperamentMultipliers": {
+    "Sanguine": 1.5,
+    "Choleric": 1.35,
+    "Phlegmatic": 0.75,
+    "Melancholic": 0.85
+  },
+  "moralsMultipliers": {
+    "Good": 0.75,
+    "Neutral": 1.0,
+    "Evil": 2.0
+  },
+  "outcomes": {
+    "unknownFatherChance": 0.55,
+    "marryFatherSameYearChance": 0.45,
+    "mutuallyExclusive": true,
+    "singleBirthOnly": true
+  },
+  "unknownFather": {
+    "fatherId": null,
+    "childSurname": "mother's current surname",
+    "childNationality": "mother",
+    "childStats": "inherit each base stat from mother with normal +/-1 mutation; fertility may still roll existing infertility chance",
+    "displayFather": "Unknown"
+  },
+  "marryFather": {
+    "father": "generate one male outsider with existing partner-generation profile pipeline using pool key nonmarital_father; bypass courtship acceptance because event already resolved",
+    "fatherMinimumAge": 18,
+    "fatherMaximumAgeOffsetFromMother": 15,
+    "childUsesBothParents": true,
+    "marriageStartsSameYear": true
+  },
+  "statusEffects": {
+    "unknownFather": {
+      "motherRenown": 2,
+      "motherReputation": -6
+    },
+    "teenBirth": {
+      "motherRenown": 3,
+      "motherReputation": -8
+    },
+    "teenMarriage": {
+      "motherRenown": 2,
+      "motherReputation": -5,
+      "husbandRenown": 1,
+      "husbandReputation": -2
+    }
+  },
+  "eventTypes": {
+    "unknownFather": "reproduction.unknown_father_birth",
+    "birthAndMarriage": "reproduction.birth_and_marriage",
+    "teenBirth": "reproduction.teen_birth",
+    "teenMarriage": "reproduction.teen_marriage"
+  }
+}

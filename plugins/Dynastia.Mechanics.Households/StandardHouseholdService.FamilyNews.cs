@@ -194,6 +194,22 @@ public sealed partial class StandardHouseholdService
         }
 
         if (type.Equals(
+                "reproduction.unknown_father_birth",
+                StringComparison.OrdinalIgnoreCase)
+            || type.Equals(
+                "reproduction.birth_and_marriage",
+                StringComparison.OrdinalIgnoreCase)
+            || type.Equals(
+                "reproduction.teen_birth",
+                StringComparison.OrdinalIgnoreCase)
+            || type.Equals(
+                "reproduction.teen_marriage",
+                StringComparison.OrdinalIgnoreCase))
+        {
+            return true;
+        }
+
+        if (type.Equals(
                 "health.serious_illness",
                 StringComparison.OrdinalIgnoreCase)
             || type.Equals(

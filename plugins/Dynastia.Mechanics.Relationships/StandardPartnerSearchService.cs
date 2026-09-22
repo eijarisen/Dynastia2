@@ -104,13 +104,16 @@ internal sealed class StandardPartnerSearchService :
         IPerson seeker,
         Sex partnerSex,
         string poolKey,
-        int count = 3)
+        int count = 3,
+        int minimumSeekerAge = 18,
+        int? minimumPartnerAge = null,
+        int? maximumPartnerAge = null)
     {
         ArgumentNullException.ThrowIfNull(seeker);
         ArgumentException.ThrowIfNullOrWhiteSpace(poolKey);
 
         if (count <= 0
-            || seeker.Age < 18
+            || seeker.Age < minimumSeekerAge
             || !seeker.Tags.Has("state.alive")
             || _family.GetSpouse(seeker) is not null)
         {
@@ -148,11 +151,21 @@ internal sealed class StandardPartnerSearchService :
                     _gameState.Year,
                     candidateRandom);
 
-            if (!RelationshipPersonalityRules.TryChoosePartnerAge(
+            int age;
+            if (minimumPartnerAge is not null
+                || maximumPartnerAge is not null)
+            {
+                var minimum = Math.Max(18, minimumPartnerAge ?? 18);
+                var maximum = Math.Max(
+                    minimum,
+                    maximumPartnerAge ?? Math.Max(minimum, seeker.Age + 20));
+                age = candidateRandom.NextInt(minimum, maximum);
+            }
+            else if (!RelationshipPersonalityRules.TryChoosePartnerAge(
                     seeker,
                     partnerSex,
                     candidateRandom,
-                    out var age))
+                    out age))
             {
                 continue;
             }
@@ -724,6 +737,29 @@ internal sealed class StandardPartnerSearchService :
         });
 
         return new GameActionResult(true);
+    }
+
+    public IPerson MaterializeCandidate(
+        PartnerCandidateInfo candidate,
+        int? currentAge = null,
+        IPerson? householdSpouse = null,
+        bool seedHouseholdResources = false)
+    {
+        var age = currentAge
+            ?? Math.Max(18, _gameState.Year - candidate.BirthDate.Year);
+        var person = CreatePersonFromCandidate(candidate, age);
+
+        if (seedHouseholdResources
+            && householdSpouse is not null
+            && candidate.Sex == Sex.Male)
+        {
+            SeedArrangedHusbandResources(
+                person,
+                householdSpouse,
+                candidate);
+        }
+
+        return person;
     }
 
     private IPerson CreatePersonFromCandidate(

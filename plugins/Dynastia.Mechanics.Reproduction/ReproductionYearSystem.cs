@@ -526,11 +526,25 @@ public sealed class ReproductionYearSystem : IYearSystem
         return 1;
     }
 
+    internal IPerson CreateNonmaritalChild(
+        IGameState gameState,
+        IPerson mother,
+        IPerson? father)
+    {
+        return CreateChildEntity(
+            gameState,
+            father,
+            mother,
+            RandomDateInYear(gameState.Year),
+            maternalOnly: father is null);
+    }
+
     private IPerson CreateChildEntity(
         IGameState gameState,
-        IPerson father,
+        IPerson? father,
         IPerson mother,
-        GameDate birthDate)
+        GameDate birthDate,
+        bool maternalOnly = false)
     {
         var sex =
             _random.NextDouble() > 0.5
@@ -539,48 +553,52 @@ public sealed class ReproductionYearSystem : IYearSystem
 
         var birthTown =
             _locations.GetLocation(mother).HomeTown;
-        var nationalityId =
-            ResolveChildNationality(
+        var nationalityId = father is null
+            ? _nationalities.GetNationality(mother)
+            : ResolveChildNationality(
                 father,
                 mother,
                 birthTown,
                 birthDate.Year);
+        var polishNaming =
+            UsesPolishNaming(father, mother);
         var nameCultureId =
-            UsesPolishNaming(father, mother)
+            polishNaming
                 ? "polish"
                 : _nationalities.GetNameCultureId(
                     nationalityId);
+        var namingParent = father ?? mother;
 
         var childName =
             GenerateUniqueChildName(
-                father,
+                namingParent,
                 sex,
                 birthDate.Year,
                 nameCultureId);
 
+        var inheritedSurname =
+            father?.Surname
+            ?? mother.Surname;
         var child =
             gameState.CreatePerson(
                 childName,
-                father.Surname,
+                inheritedSurname,
                 age: 0);
 
         if (sex == Sex.Female)
         {
             child.MaidenName =
-                father.Surname;
+                inheritedSurname;
         }
 
         child.BirthDate =
             birthDate;
 
         var bloodlineParent =
-            _family.IsBloodline(
-                father)
+            father is not null
+            && _family.IsBloodline(father)
                 ? father
-                : _family.IsBloodline(
-                    mother)
-                    ? mother
-                    : father;
+                : mother;
 
         var parentGeneration =
             _family.GetGeneration(
@@ -606,13 +624,14 @@ public sealed class ReproductionYearSystem : IYearSystem
         child.Tags.Add(
             "sexuality.heterosexual");
 
-        if (UsesPolishNaming(father, mother))
+        if (polishNaming)
         {
             child.Tags.Add(
                 "family.polish_naming");
         }
 
-        if (_family.IsBloodline(father)
+        if ((father is not null
+                && _family.IsBloodline(father))
             || _family.IsBloodline(mother))
         {
             child.Tags.Add(
@@ -620,6 +639,7 @@ public sealed class ReproductionYearSystem : IYearSystem
         }
 
         if (sex == Sex.Male
+            && father is not null
             && _family.IsMaleLineage(
                 father))
         {
@@ -635,9 +655,12 @@ public sealed class ReproductionYearSystem : IYearSystem
         _appearance.EnsureAppearance(
             child);
 
-        var inheritedStats =
-            InheritStats(
-                father,
+        var inheritedStats = maternalOnly
+            ? InheritMaternalStats(mother)
+            : InheritStats(
+                father
+                    ?? throw new InvalidOperationException(
+                        "Two-parent inheritance requires a father."),
                 mother);
 
         var birthCondition =
@@ -712,6 +735,40 @@ public sealed class ReproductionYearSystem : IYearSystem
         return result;
     }
 
+    private Dictionary<string, int>
+        InheritMaternalStats(
+            IPerson mother)
+    {
+        var result =
+            new Dictionary<string, int>(
+                StringComparer.OrdinalIgnoreCase);
+
+        foreach (var statId in StatIds)
+        {
+            var inherited =
+                GetBaseStat(
+                    mother,
+                    statId)
+                + _random.NextInt(
+                    -1,
+                    1);
+
+            result[statId] =
+                Math.Clamp(
+                    inherited,
+                    1,
+                    5);
+        }
+
+        if (_random.NextDouble()
+            < InfertilityChance)
+        {
+            result["fertility"] = 0;
+        }
+
+        return result;
+    }
+
     private BirthConditionDefinition?
         ApplyBirthConditionStatModifiers(
             Dictionary<string, int> stats,
@@ -757,9 +814,9 @@ public sealed class ReproductionYearSystem : IYearSystem
     }
 
     private static bool UsesPolishNaming(
-        IPerson father,
+        IPerson? father,
         IPerson mother) =>
-        father.Tags.Has("family.polish_naming")
+        (father?.Tags.Has("family.polish_naming") ?? false)
         || mother.Tags.Has("family.polish_naming");
 
     private string ResolveChildNationality(
@@ -861,7 +918,7 @@ public sealed class ReproductionYearSystem : IYearSystem
     private void PublishBirthConditionEvent(
         IGameState gameState,
         IPerson child,
-        IPerson father,
+        IPerson? father,
         IPerson mother,
         BirthConditionDefinition condition)
     {
@@ -878,10 +935,9 @@ public sealed class ReproductionYearSystem : IYearSystem
                     child.Id,
 
                 RelatedPersonIds =
-                    [
-                        father.Id,
-                        mother.Id
-                    ],
+                    father is null
+                        ? [Guid.Empty, mother.Id]
+                        : [father.Id, mother.Id],
 
                 Data =
                     new Dictionary<string, string>

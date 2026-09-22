@@ -25,6 +25,9 @@ public sealed class CommunityPlugin : IGamePlugin
         var status = Require<IStatusService>(context, "Status service");
         var education = Require<IEducationService>(context, "Education service");
         var stats = Require<IStatsService>(context, "Stats service");
+        var career = Require<ICareerService>(context, "Career service");
+        var crafts = Require<ICraftService>(context, "Craft service");
+        var economicStrength = Require<ILocalEconomicStrengthService>(context, "Local economic-strength service");
         var random = Require<IGameRandom>(context, "Game random service");
         var events = Require<IGameEventBus>(context, "Game event bus");
         var actions = Require<IActionRegistry>(context, "Action registry");
@@ -32,6 +35,8 @@ public sealed class CommunityPlugin : IGamePlugin
 
         var catalog = CommunityPolicyCatalog.Load(data);
         var rules = CommunityPolicyRules.Load(data);
+        var civicCatalog = CivicOfficeCatalog.Load(data);
+        var civicRules = CivicOfficeRules.Load(data);
         var community = new CommunityPolicyService(
             gameState,
             opportunities,
@@ -41,8 +46,27 @@ public sealed class CommunityPlugin : IGamePlugin
             names,
             catalog,
             rules);
+        var civic = new CivicOfficeService(
+            gameState,
+            locations,
+            economy,
+            family,
+            nationalities,
+            names,
+            status,
+            education,
+            stats,
+            career,
+            crafts,
+            prosperity,
+            economicStrength,
+            random,
+            events,
+            civicCatalog,
+            civicRules);
 
         context.AddService<ICommunityPolicyService>(community);
+        context.AddService<ICivicOfficeService>(civic);
         RegisterLobbyAction(
             actions,
             community,
@@ -52,7 +76,8 @@ public sealed class CommunityPlugin : IGamePlugin
             status,
             education,
             stats,
-            rules);
+            rules,
+            civic);
         systems.Register(new CommunityPolicyYearSystem(
             community,
             households,
@@ -60,7 +85,21 @@ public sealed class CommunityPlugin : IGamePlugin
             status,
             locations,
             random,
-            events));
+            events,
+            civic));
+        systems.Register(new CivicOfficeYearSystem(civic));
+        RegisterOfficeDutiesAction(actions, civic, family);
+
+        context.GetService<IStateReconciliationLifecycle>()?.Register(
+            "community.civic_office_tags",
+            [
+                ReconciliationLifecycleStage.AfterNewGame,
+                ReconciliationLifecycleStage.AfterLoad,
+                ReconciliationLifecycleStage.AfterYear,
+                ReconciliationLifecycleStage.AfterQueuedAction
+            ],
+            _ => civic.ReconcileTags(),
+            order: 245);
 
         context.Log($"Community policies registered: {catalog.Policies.Count} policy definitions.");
     }
@@ -74,7 +113,8 @@ public sealed class CommunityPlugin : IGamePlugin
         IStatusService status,
         IEducationService education,
         IStatsService stats,
-        CommunityPolicyRules rules)
+        CommunityPolicyRules rules,
+        CivicOfficeService civic)
     {
         actions.Register(new GameActionDefinition
         {
@@ -197,6 +237,7 @@ public sealed class CommunityPlugin : IGamePlugin
                     householdId.Value,
                     proposal,
                     bonus);
+                civic.MarkOfficeAction(actionContext.Actor);
                 status.ApplyPersistentDelta(
                     actionContext.Actor,
                     rules.LobbyRenownGain,
@@ -219,6 +260,60 @@ public sealed class CommunityPlugin : IGamePlugin
                     }
                 });
 
+                return new GameActionResult(true);
+            }
+        });
+    }
+
+    private static void RegisterOfficeDutiesAction(
+        IActionRegistry actions,
+        CivicOfficeService civic,
+        IFamilyService family)
+    {
+        actions.Register(new GameActionDefinition
+        {
+            Id = "community.perform_office_duties",
+            Label = "Perform Office Duties",
+            Description = "Devote the year to the responsibilities of Town Head. This prevents civic neglect and slightly improves local standing and approval.",
+            Mode = ActionExecutionMode.Queued,
+            QueuePhase = YearPhase.QueuedActionsEarly,
+            EvaluateAvailability = actionContext =>
+            {
+                if (actionContext.Actor.Id != actionContext.Target.Id
+                    || !actionContext.ActorHasControl
+                    || !actionContext.Actor.Tags.Has("state.alive")
+                    || actionContext.Actor.Tags.Has("state.imprisoned")
+                    || !civic.IsTownHead(actionContext.Actor))
+                {
+                    return ActionEvaluationResult.Denied(
+                        ActionReasonCodes.NoLongerEligible,
+                        "Only the current simulated Town Head can perform office duties.");
+                }
+
+                return ActionEvaluationResult.Allowed();
+            },
+            Execute = actionContext =>
+            {
+                if (!civic.IsTownHead(actionContext.Actor)
+                    || actionContext.Actor.Tags.Has("state.imprisoned"))
+                {
+                    return new GameActionResult(
+                        false,
+                        "The civic office is no longer held by this person.",
+                        ActionReasonCodes.NoLongerEligible);
+                }
+
+                civic.PerformDuties(actionContext.Actor);
+                actionContext.EventBus.Publish(new GameEvent
+                {
+                    Type = "community.office_duties",
+                    Year = actionContext.GameState.Year,
+                    SubjectId = actionContext.Actor.Id,
+                    Data = new Dictionary<string, string>
+                    {
+                        ["text"] = $"{family.GetDisplayName(actionContext.Actor)} devoted the year to civic office duties."
+                    }
+                });
                 return new GameActionResult(true);
             }
         });

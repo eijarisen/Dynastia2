@@ -148,6 +148,18 @@ public partial class TownLifeWindow : Window
         CloseIfQueued(model);
     }
 
+    private void OnOfficeDutiesClick(object? sender, RoutedEventArgs e)
+    {
+        if (DataContext is not TownAffairsViewModel model
+            || model.OfficeDutiesAction is not { IsAvailable: true } action)
+        {
+            return;
+        }
+
+        model.QueueOfficeDuties(action);
+        CloseIfQueued(model);
+    }
+
     private void OnCommunityLobbyClick(object? sender, RoutedEventArgs e)
     {
         if (DataContext is not TownAffairsViewModel model

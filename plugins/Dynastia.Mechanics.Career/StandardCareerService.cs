@@ -9,6 +9,8 @@ public sealed partial class StandardCareerService :
     public const decimal DefaultBaseIncomePerLevel =
         500m;
 
+    private const string TownHeadStatusId = "civic.office.town_head";
+
     private readonly IGameState _gameState;
     private readonly IFamilyService _family;
     private readonly IGameRandom _random;
@@ -30,6 +32,7 @@ public sealed partial class StandardCareerService :
     private readonly Func<ICraftService?> _craftResolver;
     private readonly Func<IStatusService?> _statusResolver;
     private readonly Func<ICommunityPolicyService?> _communityResolver;
+    private readonly Func<ICivicOfficeService?> _civicOfficeResolver;
 
     internal StandardCareerService(
         IGameState gameState,
@@ -50,7 +53,8 @@ public sealed partial class StandardCareerService :
         CareerInstitutionRequirementCatalog institutionRequirements,
         Func<ICraftService?> craftResolver,
         Func<IStatusService?> statusResolver,
-        Func<ICommunityPolicyService?>? communityResolver = null)
+        Func<ICommunityPolicyService?>? communityResolver = null,
+        Func<ICivicOfficeService?>? civicOfficeResolver = null)
     {
         _gameState = gameState;
         _family = family;
@@ -80,6 +84,7 @@ public sealed partial class StandardCareerService :
         _statusResolver =
             statusResolver;
         _communityResolver = communityResolver ?? (() => null);
+        _civicOfficeResolver = civicOfficeResolver ?? (() => null);
     }
 
     public void EnsureCareer(
@@ -165,6 +170,31 @@ public sealed partial class StandardCareerService :
             GetRequired(
                 person);
 
+        var civicOffice = _civicOfficeResolver();
+        if (civicOffice?.IsTownHead(person) == true)
+        {
+            var title = civicOffice.GetOfficeTitle(person) ?? "Town Head";
+            var income = civicOffice.GetAnnualSalary(person);
+            return new CareerSnapshot(
+                5,
+                title,
+                career.JobSatisfaction,
+                ResolveJobSatisfactionText(career.JobSatisfaction),
+                career.LastIncome,
+                income,
+                false,
+                null,
+                "Civic Office",
+                income / 10m,
+                career.PeakJobLevel,
+                career.PeakCareerId,
+                ResolvePeakJobTitle(career),
+                TownHeadStatusId,
+                true,
+                false,
+                null);
+        }
+
         var definition =
             ResolveDefinition(
                 person,
@@ -222,6 +252,9 @@ public sealed partial class StandardCareerService :
 
     public bool IsEmployed(IPerson person)
     {
+        if (_civicOfficeResolver()?.IsTownHead(person) == true)
+            return true;
+
         var career = GetRequired(person);
         return (!career.IsRetired && career.JobLevel > 0)
             || HasCraftOccupation(person);

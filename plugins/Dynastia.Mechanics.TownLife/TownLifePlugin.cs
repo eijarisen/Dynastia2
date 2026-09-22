@@ -48,7 +48,8 @@ public sealed class TownLifePlugin : IGamePlugin
             prosperity,
             facilityQuality,
             institutionCareers,
-            () => context.GetService<ICommunityPolicyService>());
+            () => context.GetService<ICommunityPolicyService>(),
+            () => context.GetService<ICivicOfficeService>());
 
         context.AddService<ITownInstitutionService>(institutions);
         context.AddService<ITownFacilityQualityService>(facilityQuality);

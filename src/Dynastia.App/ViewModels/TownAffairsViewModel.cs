@@ -82,6 +82,9 @@ public sealed class TownAffairsViewModel : ViewModelBase
         ActiveCommunityPolicies = IsRemote
             ? Array.Empty<TownAffairsActivePolicyViewModel>()
             : owner.GetTownAffairsActiveCommunityPolicies(snapshot);
+        OfficeDutiesAction = IsRemote
+            ? null
+            : owner.GetTownAffairsCivicOfficeAction(snapshot);
 
         RefreshMemberTabs();
         RefreshSubjectContent();
@@ -167,6 +170,30 @@ public sealed class TownAffairsViewModel : ViewModelBase
         !IsRemote && Snapshot.Church.IsAvailable;
 
     public bool ShowCommunityTab => !IsRemote;
+
+    public CivicOfficeHeadInfo? CivicOffice => Snapshot.CivicOffice;
+
+    public bool HasCivicOffice => CivicOffice is not null;
+
+    public string CivicOfficePersonText => CivicOffice is null
+        ? string.Empty
+        : $"{CivicOffice.Name} · age {CivicOffice.Age(Snapshot.Year)}";
+
+    public string CivicOfficeStandingText => CivicOffice is null
+        ? string.Empty
+        : $"Renown {CivicOffice.Renown:0.#} · Reputation {CivicOffice.Reputation:0.#} · Approval {CivicOffice.Approval:0.#}%";
+
+    public string CivicOfficeTermText => CivicOffice is null
+        ? string.Empty
+        : $"In office since {CivicOffice.OfficeStartYear}";
+
+    public TownAffairsCivicOfficeActionViewModel? OfficeDutiesAction { get; }
+
+    public bool HasOfficeDutiesAction => OfficeDutiesAction is not null;
+
+    public bool CanPerformOfficeDuties => OfficeDutiesAction?.IsAvailable == true;
+
+    public string? OfficeDutiesUnavailableReason => OfficeDutiesAction?.UnavailableReason;
 
     public IReadOnlyList<TownAffairsCommunityProposalViewModel> CommunityProposals { get; }
         = Array.Empty<TownAffairsCommunityProposalViewModel>();
@@ -369,6 +396,14 @@ public sealed class TownAffairsViewModel : ViewModelBase
         _owner.QueueTownAffairsCommunityLobby(proposal);
     }
 
+    public void QueueOfficeDuties(TownAffairsCivicOfficeActionViewModel action)
+    {
+        if (!ShowCommunityTab || !action.IsAvailable)
+            return;
+
+        _owner.QueueTownAffairsOfficeDuties(action);
+    }
+
     private void RefreshMemberTabs()
     {
         HouseholdMembers = _householdPeople
@@ -509,6 +544,18 @@ public sealed record TownAffairsChurchActionViewModel(
                 ? $"Relief: {amount:N0} zł"
                 : $"Amount: {amount:N0} zł"
             : string.Empty;
+}
+
+public sealed record TownAffairsCivicOfficeActionViewModel(
+    string ActionId,
+    string Label,
+    string Description,
+    bool IsAvailable,
+    string? UnavailableReason)
+{
+    public string Emoji => ActionEmojiMap.GetEmoji(ActionId);
+
+    public double DisplayOpacity => IsAvailable ? 1.0 : 0.42;
 }
 
 public sealed record TownAffairsCommunityProposalViewModel(

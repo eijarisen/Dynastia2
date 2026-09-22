@@ -11,6 +11,7 @@ internal sealed class CommunityPolicyYearSystem : IYearSystem
     private readonly ILocationService _locations;
     private readonly IGameRandom _random;
     private readonly IGameEventBus _events;
+    private readonly CivicOfficeService _civic;
 
     public CommunityPolicyYearSystem(
         CommunityPolicyService community,
@@ -19,7 +20,8 @@ internal sealed class CommunityPolicyYearSystem : IYearSystem
         IStatusService status,
         ILocationService locations,
         IGameRandom random,
-        IGameEventBus events)
+        IGameEventBus events,
+        CivicOfficeService civic)
     {
         _community = community;
         _households = households;
@@ -28,6 +30,7 @@ internal sealed class CommunityPolicyYearSystem : IYearSystem
         _locations = locations;
         _random = random;
         _events = events;
+        _civic = civic;
     }
 
     public string Id => "community.policy_resolution";
@@ -42,5 +45,6 @@ internal sealed class CommunityPolicyYearSystem : IYearSystem
             _status,
             _locations,
             _random,
-            _events);
+            _events,
+            _civic);
 }

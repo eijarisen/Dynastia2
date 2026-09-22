@@ -1,0 +1,30 @@
+﻿PolityId,StartYear,EndYear,MemberTitle,HeadTitleSmallTown,HeadTitleCity,MinimumAge,AllowedSex,MinimumEducation,MinimumRenown,MinimumReputation,MinimumParticipation
+PLC,1700,1795,Town Councillor,Burmistrz,Burmistrz,25,Male,2,65,0,5
+DUCHY_WARSAW,1807,1815,Municipal Councillor,Mayor,Mayor,25,Male,3,65,0,5
+CONGRESS_POLAND,1815,1915,Municipal Councillor,Town Head,Town Head,25,Male,3,65,0,5
+FREE_KRAKOW,1815,1846,Municipal Councillor,Mayor,Mayor,25,Male,3,65,0,5
+PRUSSIA,1700,1918,Stadtverordneter,Bürgermeister,Bürgermeister,25,Male,3,65,0,5
+DE,1871,1918,Municipal Councillor,Bürgermeister,Bürgermeister,25,Male,3,65,0,5
+DE,1919,1945,Municipal Councillor,Bürgermeister,Bürgermeister,25,Any,3,65,0,5
+HABSBURG,1700,1918,Municipal Councillor,Burmistrz,Burmistrz,25,Male,3,65,0,5
+RU_EMPIRE,1700,1917,Municipal Councillor,Town Head,Town Head,25,Male,3,65,0,5
+SWEDEN,1700,1920,Municipal Councillor,Mayor,Mayor,25,Male,3,65,0,5
+SWEDEN,1921,2026,Municipal Councillor,Mayor,Mayor,25,Any,3,65,0,5
+SAXONY,1700,1918,Municipal Councillor,Mayor,Mayor,25,Male,3,65,0,5
+FREE_DANZIG_NAPOLEONIC,1807,1814,Municipal Councillor,Mayor,Mayor,25,Male,3,65,0,5
+WW1_OCCUPATION,1915,1918,Municipal Committee Member,Town Administrator,Town Administrator,25,Male,3,65,0,5
+TRANSITION_EAST,1918,1922,Municipal Committee Member,Town Administrator,Town Administrator,25,Any,3,65,0,5
+PL,1918,1949,Town Councillor,Burmistrz,City President,25,Any,3,65,0,5
+FREE_DANZIG,1919,1939,City Councillor,Mayor,Mayor,25,Any,3,65,0,5
+PL,1950,1989,National Council Member,Council Chair,Council Chair,25,Any,3,65,0,5
+PL,1990,2026,Municipal Councillor,Burmistrz,City President,25,Any,3,65,0,5
+USSR_UA,1945,1991,Local Soviet Member,Executive Committee Chair,Executive Committee Chair,25,Any,3,65,0,5
+USSR_BY,1945,1991,Local Soviet Member,Executive Committee Chair,Executive Committee Chair,25,Any,3,65,0,5
+USSR_LT,1945,1991,Local Soviet Member,Executive Committee Chair,Executive Committee Chair,25,Any,3,65,0,5
+USSR_LV,1945,1991,Local Soviet Member,Executive Committee Chair,Executive Committee Chair,25,Any,3,65,0,5
+USSR_RU,1945,1991,Local Soviet Member,Executive Committee Chair,Executive Committee Chair,25,Any,3,65,0,5
+UA,1991,2026,Municipal Councillor,Mayor,Mayor,25,Any,3,65,0,5
+BY,1991,2026,Municipal Councillor,Mayor,Mayor,25,Any,3,65,0,5
+LT,1991,2026,Municipal Councillor,Mayor,Mayor,25,Any,3,65,0,5
+LV,1991,2026,Municipal Councillor,Mayor,Mayor,25,Any,3,65,0,5
+RU,1991,2026,Municipal Councillor,Mayor,Mayor,25,Any,3,65,0,5

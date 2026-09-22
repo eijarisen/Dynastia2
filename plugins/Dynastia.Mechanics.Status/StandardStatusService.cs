@@ -157,7 +157,9 @@ internal sealed class StandardStatusService : IStatusService
         var profile = CalculateProfileDelta(
             CalculateNetWorth(person),
             _education.GetEducationLevel(person),
-            _career.GetCareer(person).JobLevel,
+            person.Tags.Has("civic.office.town_head")
+                ? 0
+                : _career.GetCareer(person).JobLevel,
             GetCraftMastery(person),
             _farming.IsWorkingFarmWorker(person, person),
             person.Tags.Has("civic.office.town_head"));

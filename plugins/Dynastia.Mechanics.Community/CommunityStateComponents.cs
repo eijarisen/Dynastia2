@@ -8,6 +8,7 @@ public sealed class CommunityWorldStateComponent
     public List<CommunityTownPolicyState> Towns { get; set; } = [];
     public List<CommunityLobbyState> Lobbies { get; set; } = [];
     public List<CommunityConnectionState> Connections { get; set; } = [];
+    public List<CivicOfficeTownState> CivicOffices { get; set; } = [];
 }
 
 public sealed class CommunityTownPolicyState
@@ -63,4 +64,22 @@ public sealed class CommunityConnectionState
 public sealed class CommunityParticipationComponent
 {
     public int Count { get; set; }
+}
+
+
+public sealed class CivicOfficeTownState
+{
+    public string TownId { get; set; } = string.Empty;
+    public Guid? HeadPersonId { get; set; }
+    public string NpcName { get; set; } = string.Empty;
+    public Sex NpcSex { get; set; }
+    public int NpcBirthYear { get; set; }
+    public string NpcNationalityId { get; set; } = string.Empty;
+    public double NpcRenown { get; set; }
+    public double NpcReputation { get; set; }
+    public double Approval { get; set; }
+    public int OfficeStartYear { get; set; }
+    public int LastOfficeActionYear { get; set; } = int.MinValue;
+    public double PendingApprovalAdjustment { get; set; }
+    public int LastProcessedYear { get; set; } = int.MinValue;
 }

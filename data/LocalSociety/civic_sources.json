@@ -1,0 +1,21 @@
+{
+  "notes": "Office titles/eligibility are deliberately simplified gameplay profiles, not a reconstruction of every franchise/property/citizenship rule.",
+  "references": [
+    {
+      "url": "https://www.lodz.ap.gov.pl/co-robimy/17-grudzien",
+      "use": "1918 municipal election rules: voting regardless of sex; passive municipal eligibility at age 25 with literacy requirements."
+    },
+    {
+      "url": "https://eli.gov.pl/eli/DU/1990/95/ogl",
+      "use": "1990 restoration of municipal self-government."
+    },
+    {
+      "url": "https://api.sejm.gov.pl/eli/acts/DU/1990/95/text.html",
+      "use": "1990 municipal council / burmistrz / prezydent miasta terminology."
+    },
+    {
+      "url": "https://eli.gov.pl/api/acts/DU/1950/129/text.html",
+      "use": "PRL national councils as territorial organs of state authority."
+    }
+  ]
+}

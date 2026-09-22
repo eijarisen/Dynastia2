@@ -35,6 +35,7 @@ public sealed partial class CareerPlugin
                         career.GetCareer(actionContext.Actor);
 
                     return current.IsEmployed
+                        && !actionContext.Actor.Tags.Has("civic.office.town_head")
                         && !current.IsSelfEmployed
                         && !current.IsRetired;
                 },

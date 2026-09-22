@@ -180,7 +180,8 @@ public sealed record TownLifeSnapshot(
     BankOfferQualityInfo BankQuality,
     MedicalQualityInfo MedicalQuality,
     IReadOnlyList<TownInstitutionAffairsInfo>? InstitutionAffairs = null,
-    CommunityAffairsSnapshot? Community = null)
+    CommunityAffairsSnapshot? Community = null,
+    CivicOfficeHeadInfo? CivicOffice = null)
 {
 
     public CommunityAffairsSnapshot CommunityAffairs =>

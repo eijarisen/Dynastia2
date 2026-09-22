@@ -13,6 +13,8 @@
     "dynastia.status",
     "dynastia.households",
     "dynastia.locations",
-    "dynastia.townlife"
+    "dynastia.townlife",
+    "dynastia.career",
+    "dynastia.crafts"
   ]
 }

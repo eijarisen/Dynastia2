@@ -12,6 +12,7 @@ internal sealed class StandardTownLifeService : ITownLifeService
     private readonly ITownFacilityQualityService _facilityQuality;
     private readonly TownInstitutionCareerCatalog? _careerInstitutions;
     private readonly Func<ICommunityPolicyService?> _communityResolver;
+    private readonly Func<ICivicOfficeService?> _civicOfficeResolver;
 
     public StandardTownLifeService(
         IGameState gameState,
@@ -21,7 +22,8 @@ internal sealed class StandardTownLifeService : ITownLifeService
         ITownProsperityService prosperity,
         ITownFacilityQualityService facilityQuality,
         TownInstitutionCareerCatalog? careerInstitutions = null,
-        Func<ICommunityPolicyService?>? communityResolver = null)
+        Func<ICommunityPolicyService?>? communityResolver = null,
+        Func<ICivicOfficeService?>? civicOfficeResolver = null)
     {
         _gameState = gameState;
         _locations = locations;
@@ -31,6 +33,7 @@ internal sealed class StandardTownLifeService : ITownLifeService
         _facilityQuality = facilityQuality;
         _careerInstitutions = careerInstitutions;
         _communityResolver = communityResolver ?? (() => null);
+        _civicOfficeResolver = civicOfficeResolver ?? (() => null);
     }
 
     public TownLifeSnapshot GetCurrentTownLife(
@@ -75,7 +78,8 @@ internal sealed class StandardTownLifeService : ITownLifeService
                 institutionSnapshot,
                 bankQuality,
                 medicalQuality),
-            BuildCommunitySnapshot(town));
+            BuildCommunitySnapshot(town),
+            _civicOfficeResolver()?.GetTownHead(town, _gameState.Year));
     }
 
 

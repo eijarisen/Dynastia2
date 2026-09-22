@@ -39,6 +39,10 @@ public sealed partial class StandardCareerService
     public decimal GetAnnualIncome(
         IPerson person)
     {
+        var civicOffice = _civicOfficeResolver();
+        if (civicOffice?.IsTownHead(person) == true)
+            return civicOffice.GetAnnualSalary(person);
+
         var career =
             GetRequired(
                 person);

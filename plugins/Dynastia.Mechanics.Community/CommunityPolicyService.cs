@@ -266,7 +266,7 @@ internal sealed class CommunityPolicyService : ICommunityPolicyService
             social.Reputation,
             educationLevel,
             appeal,
-            isTownHead: false);
+            isTownHead: actor.Tags.Has("civic.office.town_head"));
     }
 
     internal void RecordLobby(
@@ -330,7 +330,8 @@ internal sealed class CommunityPolicyService : ICommunityPolicyService
         IStatusService status,
         ILocationService locations,
         IGameRandom random,
-        IGameEventBus events)
+        IGameEventBus events,
+        CivicOfficeService? civic = null)
     {
         var proposalYear = _gameState.Year - 1;
         if (proposalYear < _gameState.StartYear)
@@ -410,6 +411,7 @@ internal sealed class CommunityPolicyService : ICommunityPolicyService
                             _rules.EnactedExtraRenown,
                             _rules.EnactedExtraReputation,
                             "community.policy_enacted");
+                        civic?.RecordPolicyEnacted(actor.Id, town.Id);
                     }
                 }
 

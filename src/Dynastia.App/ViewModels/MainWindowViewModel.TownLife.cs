@@ -38,6 +38,9 @@ public sealed partial class MainWindowViewModel
     private const string TownAffairsCommunityLobbyActionId =
         "community.lobby_policy";
 
+    private const string TownAffairsOfficeDutiesActionId =
+        "community.perform_office_duties";
+
     public string TownLifeNavigationLabel
     {
         get
@@ -126,6 +129,7 @@ public sealed partial class MainWindowViewModel
             "church.aid_poor_family" => TownAffairsTab.Church,
             "church.ask_welfare" => TownAffairsTab.Church,
             TownAffairsCommunityLobbyActionId => TownAffairsTab.Community,
+            TownAffairsOfficeDutiesActionId => TownAffairsTab.Community,
             _ => null
         };
 
@@ -431,6 +435,62 @@ public sealed partial class MainWindowViewModel
                 evaluation.Reason,
                 parameters));
         }
+    }
+
+
+    internal TownAffairsCivicOfficeActionViewModel?
+        GetTownAffairsCivicOfficeAction(TownLifeSnapshot snapshot)
+    {
+        var actor = _succession.ActiveController;
+        if (actor is null
+            || snapshot.CivicOffice?.PersonId != actor.Id)
+        {
+            return null;
+        }
+
+        var definition = _actionRegistry
+            .GetCandidateActions(actor, actor)
+            .FirstOrDefault(action => action.Id.Equals(
+                TownAffairsOfficeDutiesActionId,
+                StringComparison.OrdinalIgnoreCase));
+        if (definition is null)
+            return null;
+
+        var evaluation = _actionRegistry.Evaluate(
+            TownAffairsOfficeDutiesActionId,
+            actor,
+            actor);
+        return new TownAffairsCivicOfficeActionViewModel(
+            definition.Id,
+            definition.Label,
+            definition.Description,
+            evaluation.Available,
+            evaluation.Reason);
+    }
+
+    internal void QueueTownAffairsOfficeDuties(
+        TownAffairsCivicOfficeActionViewModel action)
+    {
+        if (!action.IsAvailable)
+            return;
+
+        var actor = _succession.ActiveController;
+        if (actor is null || _succession.IsGameOver)
+            return;
+
+        var result = _actionRegistry.Execute(
+            TownAffairsOfficeDutiesActionId,
+            actor,
+            actor);
+        if (!result.Success && !string.IsNullOrWhiteSpace(result.Message))
+            PersistenceStatusText = result.Message;
+
+        RefreshPeople();
+        RefreshAlbum();
+        RefreshEconomy();
+        RefreshCareer();
+        RefreshNarrative();
+        RefreshActions();
     }
 
     internal IReadOnlyList<TownAffairsCommunityProposalViewModel>

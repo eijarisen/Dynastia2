@@ -1,0 +1,99 @@
+{
+  "schemaVersion": "1.0",
+  "townHead": {
+    "conceptuallyEveryTownHasHead": true,
+    "generation": "lazy deterministic generation on first town relevance; persist thereafter",
+    "npcAgeRange": [
+      35,
+      68
+    ],
+    "npcEducationRange": [
+      3,
+      5
+    ],
+    "npcRenownRange": [
+      60,
+      90
+    ],
+    "npcReputationRange": [
+      -5,
+      50
+    ],
+    "nationalityAndName": "use Town regional nationality/name pipeline for current year"
+  },
+  "eligibility": {
+    "usesProfileTable": true,
+    "mustLiveInTown": true,
+    "mustNotBeImprisoned": true,
+    "communityParticipationCountRequired": true
+  },
+  "appointment": {
+    "onlyWhenOfficeBecomesVacantOrHeadIsReplaced": true,
+    "playerCandidateWeightFormula": "max(1, 1.5*LocalRenown + 0.5*max(Reputation,0) + 4*Education + 3*Appeal + 2*min(CommunityParticipationCount,10))",
+    "npcCandidateCount": 3,
+    "npcCandidateWeightRange": [
+      120,
+      190
+    ],
+    "weightedRandomSelection": true,
+    "reason": "Even an eligible high-status player competes with plausible local elites; head office stays as difficult as a Level-5 career."
+  },
+  "employment": {
+    "exclusivePrimaryOccupation": true,
+    "onAppointment": "end regular Career, stop Craft self-employment, remove Farm-worker contribution",
+    "onLoss": "person becomes unoccupied; previous job is not restored",
+    "salary": {
+      "referenceCareerId": "public_administration",
+      "referenceJobLevel": 5,
+      "settlementMultipliers": {
+        "SmallTown": 0.9,
+        "Town": 1.0,
+        "City": 1.1,
+        "MajorCity": 1.2
+      },
+      "applyTownProsperityNormalIncomeMultiplier": true
+    },
+    "countsTowardLifetimeCareerEarningsAndPension": true
+  },
+  "approval": {
+    "range": [
+      0,
+      100
+    ],
+    "initialAndStatusTargetFormula": "clamp(30 + 0.45*LocalRenown + 0.20*Reputation, 0, 100)",
+    "annualMoveTowardStatusTargetFraction": 0.15,
+    "noCommunityOrOfficeActionPenalty": -8,
+    "performOfficeDutiesBonus": 4,
+    "lobbiedPolicyEnactedBonus": 3,
+    "prosperityImprovedBonus": 2,
+    "prosperityDeclinedPenalty": -2,
+    "imprisonmentCausesImmediateLoss": true,
+    "replacementChanceByApproval": [
+      {
+        "min": 60,
+        "chance": 0.02
+      },
+      {
+        "min": 40,
+        "max": 59,
+        "chance": 0.05
+      },
+      {
+        "min": 25,
+        "max": 39,
+        "chance": 0.15
+      },
+      {
+        "max": 24,
+        "chance": 0.35
+      }
+    ],
+    "age75PlusExtraReplacementChance": 0.1
+  },
+  "officeActions": {
+    "performDutiesActionId": "community.perform_office_duties",
+    "lobbyPolicyCountsAsOfficeDuty": true,
+    "performDutiesRenown": 0.25,
+    "performDutiesReputation": 0.25
+  }
+}

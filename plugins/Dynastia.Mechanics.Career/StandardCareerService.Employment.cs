@@ -8,8 +8,12 @@ public sealed partial class StandardCareerService
         IPerson person)
     {
         var current = GetRequired(person);
-        if (current.IsRetired || current.JobLevel is < 1 or > 2)
+        if (person.Tags.Has("vocation.religious.active")
+            || current.IsRetired
+            || current.JobLevel is < 1 or > 2)
+        {
             return false;
+        }
 
         var oldDefinition = ResolveDefinition(person, current);
         var oldSalary = GetActiveSalary(person, current);
@@ -42,7 +46,8 @@ public sealed partial class StandardCareerService
         double chanceBonus = 0)
     {
         var current = GetRequired(person);
-        if (current.IsRetired
+        if (person.Tags.Has("vocation.religious.active")
+            || current.IsRetired
             || IsEmployed(person)
             || person.Age < 18
             || !person.Tags.Has("state.alive")
@@ -77,6 +82,9 @@ public sealed partial class StandardCareerService
         IPerson person)
     {
         var career = GetRequired(person);
+        if (person.Tags.Has("vocation.religious.active"))
+            return career.JobLevel > 0;
+
         if (career.IsRetired || career.JobLevel <= 0)
             return false;
 
@@ -313,8 +321,11 @@ public sealed partial class StandardCareerService
                     _random,
                     definition =>
                     {
-                        if (!predicate(definition))
+                        if (IsCallingOnlyCareer(definition)
+                            || !predicate(definition))
+                        {
                             return 0;
+                        }
 
                         var evaluation = _localOpportunities.Evaluate(
                             person,
@@ -371,6 +382,9 @@ public sealed partial class StandardCareerService
             _random,
             definition =>
             {
+                if (IsCallingOnlyCareer(definition))
+                    return 0;
+
                 var evaluation =
                     _localOpportunities.Evaluate(
                         person,

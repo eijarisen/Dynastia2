@@ -28,6 +28,7 @@
     <Project Path="plugins/Dynastia.Mechanics.Personality/Dynastia.Mechanics.Personality.csproj" />
     <Project Path="plugins/Dynastia.Mechanics.RareEvents/Dynastia.Mechanics.RareEvents.csproj" />
     <Project Path="plugins/Dynastia.Mechanics.Relationships/Dynastia.Mechanics.Relationships.csproj" />
+    <Project Path="plugins/Dynastia.Mechanics.ReligiousVocation/Dynastia.Mechanics.ReligiousVocation.csproj" />
     <Project Path="plugins/Dynastia.Mechanics.Reproduction/Dynastia.Mechanics.Reproduction.csproj" />
     <Project Path="plugins/Dynastia.Mechanics.StatImprovements/Dynastia.Mechanics.StatImprovements.csproj" />
     <Project Path="plugins/Dynastia.Mechanics.Status/Dynastia.Mechanics.Status.csproj" />

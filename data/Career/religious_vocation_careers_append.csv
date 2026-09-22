@@ -1,0 +1,3 @@
+﻿Number,Id,Name,Emoji,StartYear,EndYear,MaleEarly,FemaleEarly,MaleLate,FemaleLate,BaseSalary,Level1Title,Level2Title,Level3Title,Level4Title,Level5Title,LocationType,MinimumSettlementClass,RequiredOpportunityTags,PrimaryStat,SecondaryStat,EducationProfile,CareerFamily
+75,priest_vocation,Priesthood,⛪,1700,,1,1,1,1,300,Priest,Parish Priest,Senior Priest,Dean,Bishop,Generic,SmallTown,-,appeal,intellect,Clerical,religion
+76,nun_vocation,Religious Vocation,🙏,1700,,1,1,1,1,220,Nun,Sister,Senior Sister,Prioress,Abbess,Generic,SmallTown,-,intellect,appeal,Clerical,religion

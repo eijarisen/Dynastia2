@@ -140,6 +140,7 @@ public sealed class MarriageYearSystem : IYearSystem
                 : Sex.Female;
 
         return person.Tags.Has("state.alive")
+            && !person.Tags.Has("vocation.religious.active")
             && !SimulationState.IsInactive(person)
             && _family.GetSex(person) == Sex.Male
             && (

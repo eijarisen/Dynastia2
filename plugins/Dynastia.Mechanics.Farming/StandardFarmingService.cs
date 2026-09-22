@@ -122,6 +122,7 @@ internal sealed class StandardFarmingService :
             || person.Age < 10
             || person.Tags.Has("state.imprisoned")
             || person.Tags.Has("occupation.criminal")
+            || person.Tags.Has("vocation.religious.active")
             || !_workCapacity.GetWorkCapacity(person).CanWork
             || person.Tags.Has("role.nanny")
             || person.Tags.Has("role.family_nanny"))

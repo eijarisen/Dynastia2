@@ -34,7 +34,8 @@ public sealed partial class CareerPlugin
                     if (!CanActorSupport(actor, actionContext.ActorHasControl)
                         || !target.Tags.Has("state.alive")
                         || target.Id == actor.Id
-                        || target.Age < 18)
+                        || target.Age < 18
+                        || target.Tags.Has("vocation.religious.active"))
                     {
                         return false;
                     }
@@ -61,7 +62,8 @@ public sealed partial class CareerPlugin
                     if (!CanActorSupport(actor, actionContext.ActorHasControl)
                         || !target.Tags.Has("state.alive")
                         || target.Id == actor.Id
-                        || target.Age < 18)
+                        || target.Age < 18
+                        || target.Tags.Has("vocation.religious.active"))
                     {
                         return new GameActionResult(false);
                     }
@@ -145,7 +147,8 @@ public sealed partial class CareerPlugin
                         || !target.Tags.Has("state.alive")
                         || target.Id == actor.Id
                         || target.Age < 18
-                        || target.Tags.Has("state.imprisoned"))
+                        || target.Tags.Has("state.imprisoned")
+                        || target.Tags.Has("vocation.religious.active"))
                     {
                         return false;
                     }
@@ -173,7 +176,8 @@ public sealed partial class CareerPlugin
                     if (!CanActorSupport(actor, actionContext.ActorHasControl)
                         || !target.Tags.Has("state.alive")
                         || target.Id == actor.Id
-                        || target.Age < 18)
+                        || target.Age < 18
+                        || target.Tags.Has("vocation.religious.active"))
                     {
                         return new GameActionResult(false);
                     }
@@ -367,6 +371,9 @@ public sealed partial class CareerPlugin
                         return false;
                     }
 
+                    if (target.Tags.Has("vocation.religious.active"))
+                        return false;
+
                     var targetCareer =
                         career.GetCareer(target);
 
@@ -388,6 +395,9 @@ public sealed partial class CareerPlugin
                     {
                         return new GameActionResult(false);
                     }
+
+                    if (target.Tags.Has("vocation.religious.active"))
+                        return new GameActionResult(false);
 
                     var targetCareer =
                         career.GetCareer(target);

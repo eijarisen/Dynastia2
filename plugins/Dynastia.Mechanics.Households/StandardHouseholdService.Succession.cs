@@ -92,6 +92,7 @@ public sealed partial class StandardHouseholdService
             {
                 var oldHeadIsEligibleLineageHead =
                     oldHead.Age >= 18
+                    && !oldHead.Tags.Has("vocation.religious.active")
                     && _family.GetSex(
                         oldHead) == Sex.Male
                     && _family.IsMaleLineage(
@@ -138,7 +139,8 @@ public sealed partial class StandardHouseholdService
                         livingBloodline
                             .Where(
                                 member =>
-                                    member.Age >= 18)
+                                    member.Age >= 18
+                                    && !member.Tags.Has("vocation.religious.active"))
                             .OrderBy(
                                 BirthSortKey)
                             .ThenBy(
@@ -209,6 +211,7 @@ public sealed partial class StandardHouseholdService
                         candidate) == Sex.Male
                     && _family.IsMaleLineage(
                         candidate)
+                    && !candidate.Tags.Has("vocation.religious.active")
                     && !SimulationState.IsInactive(
                         candidate))
             .OrderBy(
@@ -238,6 +241,7 @@ public sealed partial class StandardHouseholdService
             .Where(
                 candidate =>
                     candidate.Age >= 18
+                    && !candidate.Tags.Has("vocation.religious.active")
                     && minors.Any(
                         child =>
                             _family.GetMother(
@@ -288,7 +292,8 @@ public sealed partial class StandardHouseholdService
 
             if (spouse is not null
                 && spouse.Tags.Has(
-                    "state.alive"))
+                    "state.alive")
+                && !spouse.Tags.Has("vocation.religious.active"))
             {
                 return spouse;
             }
@@ -323,6 +328,7 @@ public sealed partial class StandardHouseholdService
         return livingMembers
             .Where(candidate =>
                 candidate.Age >= 18
+                && !candidate.Tags.Has("vocation.religious.active")
                 && !SimulationState.IsInactive(candidate)
                 && !_family.IsBloodline(candidate)
                 && !IsCurrentSpouseOfBloodline(candidate)

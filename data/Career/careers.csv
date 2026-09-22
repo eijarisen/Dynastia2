@@ -73,3 +73,5 @@
 72,shipbuilding,Shipbuilding,🛳️,1700,,45,1,24,5,650,Shipyard Hand,Shipwright,Master Shipwright,Shipyard Director,Shipbuilding Magnate,Specialist,Town,shipbuilding,strength,intellect,Skilled,maritime
 73,scientific_research,Scientific Research,🔬,1800,,11,1,20,17,800,Research Assistant,Laboratory Researcher,Research Scientist,Research Director,Scientific Institute Director,Urban,City,-,intellect,-,Academic,science_health
 74,municipal_utilities,Municipal Utilities,🚰,1850,,48,2,30,13,600,Utility Hand,Utility Technician,Works Supervisor,Utility Director,Utilities Magnate,Generic,Town,-,strength,intellect,Skilled,utilities
+75,priest_vocation,Priesthood,⛪,1700,,1,1,1,1,300,Priest,Parish Priest,Senior Priest,Dean,Bishop,Generic,SmallTown,-,appeal,intellect,Clerical,religion
+76,nun_vocation,Religious Vocation,🙏,1700,,1,1,1,1,220,Nun,Sister,Senior Sister,Prioress,Abbess,Generic,SmallTown,-,intellect,appeal,Clerical,religion

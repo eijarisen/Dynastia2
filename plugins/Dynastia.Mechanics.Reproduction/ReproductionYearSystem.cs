@@ -219,8 +219,12 @@ public sealed class ReproductionYearSystem : IYearSystem
         IPerson father,
         IPerson? mother)
     {
-        if (mother is null)
+        if (mother is null
+            || father.Tags.Has("vocation.religious.active")
+            || mother.Tags.Has("vocation.religious.active"))
+        {
             return false;
+        }
 
         if (!mother.Tags.Has(
             "state.alive"))

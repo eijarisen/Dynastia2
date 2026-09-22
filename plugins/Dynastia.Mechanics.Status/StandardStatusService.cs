@@ -15,6 +15,7 @@ internal sealed class StandardStatusService : IStatusService
     private readonly ILoanService _loans;
     private readonly IHeirloomService _heirlooms;
     private readonly StatusRules _rules;
+    private readonly ClericalRelativeStatusRules _clericalRelativeStatus;
     private readonly Func<IHouseholdConnectionService?> _connectionsResolver;
 
     public StandardStatusService(
@@ -29,6 +30,7 @@ internal sealed class StandardStatusService : IStatusService
         ILoanService loans,
         IHeirloomService heirlooms,
         StatusRules rules,
+        ClericalRelativeStatusRules clericalRelativeStatus,
         Func<IHouseholdConnectionService?>? connectionsResolver = null)
     {
         _gameState = gameState;
@@ -42,6 +44,7 @@ internal sealed class StandardStatusService : IStatusService
         _loans = loans;
         _heirlooms = heirlooms;
         _rules = rules;
+        _clericalRelativeStatus = clericalRelativeStatus;
         _connectionsResolver = connectionsResolver ?? (() => null);
     }
 
@@ -167,6 +170,7 @@ internal sealed class StandardStatusService : IStatusService
             _farming.IsWorkingFarmWorker(person, person),
             person.Tags.Has("civic.office.town_head"));
 
+        var clericalRelativeBonus = CalculateClericalRelativeBonus(person);
         var householdId = _economy.GetHouseholdId(person);
         var networkRenown = householdId.HasValue
             ? _connectionsResolver()?.GetNetworkRenownBonus(householdId.Value) ?? 0d
@@ -176,6 +180,7 @@ internal sealed class StandardStatusService : IStatusService
             + profile.Renown
             + component.InheritedRenown
             + component.PersistentRenownDelta
+            + clericalRelativeBonus.Renown
             + networkRenown,
             _rules.RenownMinimum,
             _rules.RenownMaximum);
@@ -183,7 +188,8 @@ internal sealed class StandardStatusService : IStatusService
             _rules.BaseReputation
             + profile.Reputation
             + component.InheritedReputation
-            + component.PersistentReputationDelta,
+            + component.PersistentReputationDelta
+            + clericalRelativeBonus.Reputation,
             _rules.ReputationMinimum,
             _rules.ReputationMaximum);
 
@@ -206,6 +212,54 @@ internal sealed class StandardStatusService : IStatusService
         }
 
         return CreateSnapshot(renown, localRenown, reputation);
+    }
+
+    private ClericalRelativeStatusRules.StatusBonus CalculateClericalRelativeBonus(
+        IPerson person)
+    {
+        double renown = 0;
+        double reputation = 0;
+
+        foreach (var child in _family.GetChildren(person))
+            AddRelative(child, "Child");
+
+        var fatherId = _family.GetFather(person)?.Id;
+        var motherId = _family.GetMother(person)?.Id;
+        if (fatherId.HasValue || motherId.HasValue)
+        {
+            foreach (var sibling in _gameState.People)
+            {
+                if (sibling.Id == person.Id)
+                    continue;
+
+                var sharesParent =
+                    (fatherId.HasValue && _family.GetFather(sibling)?.Id == fatherId)
+                    || (motherId.HasValue && _family.GetMother(sibling)?.Id == motherId);
+                if (sharesParent)
+                    AddRelative(sibling, "Sibling");
+            }
+        }
+
+        return new ClericalRelativeStatusRules.StatusBonus(
+            Math.Min(_clericalRelativeStatus.RenownCap, renown),
+            Math.Min(_clericalRelativeStatus.ReputationCap, reputation));
+
+        void AddRelative(IPerson relative, string relationship)
+        {
+            if (!relative.Tags.Has("state.alive")
+                || !relative.Tags.Has("vocation.religious.active"))
+            {
+                return;
+            }
+
+            var career = _career.GetCareer(relative);
+            if (career.JobLevel <= 0)
+                return;
+
+            var delta = _clericalRelativeStatus.Resolve(relationship, career.JobLevel);
+            renown += delta.Renown;
+            reputation += delta.Reputation;
+        }
     }
 
     private HouseholdSocialStatusSnapshot CalculateHouseholdStatus(

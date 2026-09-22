@@ -48,6 +48,7 @@ public sealed class StandardSuccessionService : ISuccessionService
         ArgumentNullException.ThrowIfNull(person);
 
         return person.Tags.Has("state.alive")
+            && !person.Tags.Has("vocation.religious.active")
             && !SimulationState.IsExternallyResident(person)
             && _family.GetSex(person) == Sex.Male
             && _family.IsMaleLineage(person)
@@ -161,6 +162,7 @@ public sealed class StandardSuccessionService : ISuccessionService
         // the historical-events terminal state where the dynasty has left
         // Poland.
         return person.Tags.Has("state.alive")
+            && !person.Tags.Has("vocation.religious.active")
             && _family.GetSex(person) == Sex.Male
             && _family.IsMaleLineage(person);
     }

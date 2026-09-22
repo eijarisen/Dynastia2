@@ -477,6 +477,7 @@ internal sealed class StandardCraftService : ICraftService, IIncomeProvider
             || !person.Tags.Has("state.alive")
             || person.Age < 18
             || person.Tags.Has("state.imprisoned")
+            || person.Tags.Has("vocation.religious.active")
             || !KnowsCraft(person, craft.Id))
         {
             return false;

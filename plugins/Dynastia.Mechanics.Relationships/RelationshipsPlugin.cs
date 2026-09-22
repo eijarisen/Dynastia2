@@ -367,6 +367,7 @@ public sealed partial class RelationshipsPlugin : IGamePlugin
                             "state.alive")
                         && actionContext.ActorHasControl
                         && actionContext.Actor.Age >= 18
+                        && !actionContext.Actor.Tags.Has("vocation.religious.active")
                         && family.GetSpouse(
                             actionContext.Actor) is null
                         && RelationshipPersonalityRules.CanFindPartner(

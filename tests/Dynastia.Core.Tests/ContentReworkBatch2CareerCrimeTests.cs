@@ -41,7 +41,7 @@ public sealed class ContentReworkBatch2CareerCrimeTests
         var rows = ReadCsv(CreateRepositoryData().ReadText("Career/careers.csv"));
         var ids = rows.Select(row => row["Id"]).ToHashSet(StringComparer.OrdinalIgnoreCase);
 
-        Assert.Equal(74, rows.Count);
+        Assert.Equal(76, rows.Count);
         Assert.True(rows.Count > 65);
         Assert.All(LegacyCareerIds, id => Assert.Contains(id, ids));
         Assert.Contains("performing_arts", ids);

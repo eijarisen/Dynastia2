@@ -123,6 +123,7 @@ internal sealed class CivicOfficeService : ICivicOfficeService
     {
         if (!person.Tags.Has("state.alive")
             || person.Tags.Has("state.imprisoned")
+            || person.Tags.Has("vocation.religious.active")
             || SimulationState.IsInactive(person))
         {
             return false;

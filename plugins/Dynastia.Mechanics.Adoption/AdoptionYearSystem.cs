@@ -493,6 +493,7 @@ public sealed class AdoptionYearSystem :
                 "state.alive")
             || person.Tags.Has(
                 "state.imprisoned")
+            || person.Tags.Has("vocation.religious.active")
             || person.Tags.Has(
                 "residence.orphanage")
             || person.Age < 18

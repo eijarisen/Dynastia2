@@ -13,3 +13,6 @@ reproduction.birth_and_marriage,💍,{Mother} gave birth to {Child} and married 
 reproduction.teen_birth,👶,"At age {Age}, {Mother} gave birth to {Child}."
 reproduction.teen_marriage,💍,"At age {Age}, {Mother} married {Father}."
 artistic.work_created,🎨,"{Person} created {Item}, valued at {Value} zł."
+religion.calling_priest,⛪,"At age 18, {Person} entered the priesthood."
+religion.calling_nun,🙏,"At age 18, {Person} entered religious life as a nun."
+religion.vocation_left,🚪,{Person} left religious life and returned to ordinary secular life.

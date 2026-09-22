@@ -14,7 +14,8 @@ public sealed partial class StandardCareerService
             return [];
 
         var career = GetRequired(person);
-        if (career.IsRetired
+        if (person.Tags.Has("vocation.religious.active")
+            || career.IsRetired
             || person.Age < 18
             || !person.Tags.Has("state.alive")
             || person.Tags.Has("state.imprisoned"))
@@ -32,7 +33,9 @@ public sealed partial class StandardCareerService
             $"{_gameState.DynastySurname}|{person.Id:N}|{year}|job-board");
 
         var available = _catalog.All
-            .Where(definition => definition.IsOpenForEntry(year))
+            .Where(definition =>
+                definition.IsOpenForEntry(year)
+                && !IsCallingOnlyCareer(definition))
             .Select(definition =>
             {
                 var evaluation = _localOpportunities.Evaluate(
@@ -137,6 +140,8 @@ public sealed partial class StandardCareerService
         var level = Math.Clamp(jobLevel, 1, 3);
 
         if (definition is null
+            || IsCallingOnlyCareer(definition)
+            || person.Tags.Has("vocation.religious.active")
             || before.IsRetired
             || person.Age < 18
             || !person.Tags.Has("state.alive")
@@ -289,7 +294,9 @@ public sealed partial class StandardCareerService
         }
 
         var candidates = _catalog.All
-            .Where(definition => definition.IsOpenForEntry(context.Year))
+            .Where(definition =>
+                definition.IsOpenForEntry(context.Year)
+                && !IsCallingOnlyCareer(definition))
             .Select(definition =>
             {
                 var evaluation = _localOpportunities.Evaluate(

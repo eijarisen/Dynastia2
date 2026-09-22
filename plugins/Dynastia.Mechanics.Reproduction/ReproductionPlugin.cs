@@ -197,6 +197,7 @@ public sealed class ReproductionPlugin : IGamePlugin
 
                     if (!actor.Tags.Has(
                             "state.alive")
+                        || actor.Tags.Has("vocation.religious.active")
                         || !actionContext.ActorHasControl)
                     {
                         return false;
@@ -215,6 +216,7 @@ public sealed class ReproductionPlugin : IGamePlugin
 
                     return spouse.Tags.Has(
                             "state.alive")
+                        && !spouse.Tags.Has("vocation.religious.active")
                         && family.GetSex(
                             spouse)
                             == Sex.Female
@@ -226,6 +228,13 @@ public sealed class ReproductionPlugin : IGamePlugin
             Execute =
                 actionContext =>
                 {
+                    var spouse = family.GetSpouse(actionContext.Actor);
+                    if (actionContext.Actor.Tags.Has("vocation.religious.active")
+                        || spouse?.Tags.Has("vocation.religious.active") == true)
+                    {
+                        return new GameActionResult(false);
+                    }
+
                     actionContext.Actor.Tags.Add(
                         "modifier.try_for_baby");
 

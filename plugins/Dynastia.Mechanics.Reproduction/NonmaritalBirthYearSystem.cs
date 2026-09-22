@@ -77,6 +77,7 @@ internal sealed class NonmaritalBirthYearSystem : IYearSystem
     {
         if (!person.Tags.Has("state.alive")
             || person.Tags.Has("state.imprisoned")
+            || person.Tags.Has("vocation.religious.active")
             || _family.GetSex(person) != Sex.Female
             || person.Age < _rules.MinimumAge
             || person.Age > _rules.MaximumAge

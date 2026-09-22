@@ -89,9 +89,10 @@ public sealed class CareerAdvancementYearSystem :
                 person);
 
         if (career.IsRetired
-            || IsAtOrPastRetirementAge(
-                person,
-                gameState.Year)
+            || (!person.Tags.Has("vocation.religious.active")
+                && IsAtOrPastRetirementAge(
+                    person,
+                    gameState.Year))
             || career.JobLevel <= 0
             || career.JobLevel >= 5)
         {

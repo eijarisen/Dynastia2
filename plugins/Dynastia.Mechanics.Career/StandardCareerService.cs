@@ -11,6 +11,17 @@ public sealed partial class StandardCareerService :
 
     private const string TownHeadStatusId = "civic.office.town_head";
 
+    internal const string PriestVocationCareerId = "priest_vocation";
+    internal const string NunVocationCareerId = "nun_vocation";
+
+    internal static bool IsCallingOnlyCareerId(string? careerId) =>
+        careerId is not null
+        && (careerId.Equals(PriestVocationCareerId, StringComparison.OrdinalIgnoreCase)
+            || careerId.Equals(NunVocationCareerId, StringComparison.OrdinalIgnoreCase));
+
+    private static bool IsCallingOnlyCareer(CareerDefinition definition) =>
+        IsCallingOnlyCareerId(definition.Id);
+
     private readonly IGameState _gameState;
     private readonly IFamilyService _family;
     private readonly IGameRandom _random;

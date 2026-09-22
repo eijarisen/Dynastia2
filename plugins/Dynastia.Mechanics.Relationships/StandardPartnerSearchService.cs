@@ -115,6 +115,7 @@ internal sealed class StandardPartnerSearchService :
         if (count <= 0
             || seeker.Age < minimumSeekerAge
             || !seeker.Tags.Has("state.alive")
+            || seeker.Tags.Has("vocation.religious.active")
             || _family.GetSpouse(seeker) is not null)
         {
             return [];
@@ -513,8 +514,11 @@ internal sealed class StandardPartnerSearchService :
         GameActionContext actionContext)
     {
         var seeker = actionContext.Actor;
-        if (_family.GetSpouse(seeker) is not null)
+        if (seeker.Tags.Has("vocation.religious.active")
+            || _family.GetSpouse(seeker) is not null)
+        {
             return new GameActionResult(false);
+        }
 
         if (!TryReadCandidate(
                 actionContext.Parameters,
@@ -638,7 +642,8 @@ internal sealed class StandardPartnerSearchService :
             ? Sex.Male
             : Sex.Female;
 
-        if (_family.GetSpouse(child) is not null
+        if (child.Tags.Has("vocation.religious.active")
+            || _family.GetSpouse(child) is not null
             || !TryReadCandidate(
                 actionContext.Parameters,
                 out var candidate)

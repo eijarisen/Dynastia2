@@ -74,6 +74,7 @@ public sealed class CareerJobLossYearSystem :
     {
         if (!person.Tags.Has(
                 "state.alive")
+            || person.Tags.Has("vocation.religious.active")
             || person.Tags.Has(
                 "simulation.peripheral_inactive"))
         {

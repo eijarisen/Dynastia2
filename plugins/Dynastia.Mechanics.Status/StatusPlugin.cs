@@ -24,6 +24,7 @@ public sealed class StatusPlugin : IGamePlugin
         var rules = StatusRules.Load(data);
         var eventCatalog = StatusEventCatalog.Load(data);
         var artisticStatus = ArtisticStatusRules.Load(data);
+        var clericalRelativeStatus = ClericalRelativeStatusRules.Load(data);
         var status = new StandardStatusService(
             gameState,
             family,
@@ -36,6 +37,7 @@ public sealed class StatusPlugin : IGamePlugin
             loans,
             heirlooms,
             rules,
+            clericalRelativeStatus,
             () => context.GetService<IHouseholdConnectionService>());
 
         context.AddService<IStatusService>(status);

@@ -20,6 +20,7 @@ public sealed partial class RelationshipsPlugin
                 "state.dead")
             || daughter.Id == father.Id
             || daughter.Age < 18
+            || daughter.Tags.Has("vocation.religious.active")
             || family.GetSex(
                 daughter) != Sex.Female
             || family.GetSpouse(
@@ -60,6 +61,7 @@ public sealed partial class RelationshipsPlugin
                 "state.imprisoned")
             || son.Id == father.Id
             || son.Age < 18
+            || son.Tags.Has("vocation.religious.active")
             || family.GetSex(son) != Sex.Male
             || family.GetSpouse(son) is not null
             || !RelationshipPersonalityRules.CanFindPartner(

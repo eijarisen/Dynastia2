@@ -1,0 +1,72 @@
+{
+  "schemaVersion": "1.0",
+  "systemId": "religion.calling",
+  "phase": "Status",
+  "after": [
+    "aging.increment_age"
+  ],
+  "callingAge": 18,
+  "callingChance": 0.005,
+  "sameBaseChanceAsCurrentHomosexualityRoll": true,
+  "moralsAffectChance": false,
+  "temperamentAffectsChance": false,
+  "sexualityAffectsChance": false,
+  "requiresUnmarried": true,
+  "careerBySex": {
+    "Male": "priest_vocation",
+    "Female": "nun_vocation"
+  },
+  "tags": {
+    "checked": "vocation.religious.checked",
+    "active": "vocation.religious.active",
+    "former": "vocation.religious.former"
+  },
+  "onCalling": {
+    "endRegularCareer": true,
+    "stopCraftSelfEmployment": true,
+    "stopCriminalOccupationIfAvailable": true,
+    "excludeFromFarmLabor": true,
+    "setCareerLevel": 1,
+    "cannotUseJobSearch": true,
+    "cannotQuitManually": true,
+    "cannotBeAskedToQuit": true,
+    "skipRandomJobLoss": true,
+    "skipAutomaticRetirement": true,
+    "workHarderAllowed": true,
+    "recoverAllowed": true
+  },
+  "celibacy": {
+    "blockMarriageActions": true,
+    "blockAutomaticMarriage": true,
+    "blockPartnerSearch": true,
+    "blockFemaleRemarriage": true,
+    "blockReproduction": true,
+    "blockNonmaritalBirthSystem": true,
+    "blockAdoptionAsParent": true
+  },
+  "succession": {
+    "activeReligiousVocationExcludedFromHouseholdHeadSuccession": true,
+    "ordinaryInheritanceStillAllowed": true
+  },
+  "selfDeparture": {
+    "annualChance": 0.005,
+    "minimumAge": 19,
+    "randomOnly": true,
+    "onDeparture": {
+      "setCareerLevel": 0,
+      "removeActiveTag": true,
+      "addFormerTag": true,
+      "restoreMarriageEligibility": true,
+      "restoreReproductionEligibility": true,
+      "neverRollCallingAgain": true
+    }
+  },
+  "careerProgression": {
+    "useOrdinaryCareerPromotionSystem": true,
+    "level5StillRequiresEducation5": true,
+    "level5Titles": {
+      "priest_vocation": "Bishop",
+      "nun_vocation": "Abbess"
+    }
+  }
+}

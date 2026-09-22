@@ -80,6 +80,7 @@ internal sealed class CriminalOccupationService :
         var component = GetMutable(person);
         if (component.HasStartedLifeOfCrime
             || !person.Tags.Has("state.alive")
+            || person.Tags.Has("vocation.religious.active")
             || person.Age < _catalog.Rules.MinimumAge
             || _justice.IsImprisoned(person))
         {

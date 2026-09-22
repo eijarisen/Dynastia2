@@ -85,6 +85,7 @@ public sealed class FemaleRemarriageYearSystem :
             livingSnapshot)
         {
             if (SimulationState.IsInactive(woman)
+                || woman.Tags.Has("vocation.religious.active")
                 || _family.GetSex(woman)
                     != Sex.Female
                 || _family.GetSpouse(

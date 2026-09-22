@@ -35,6 +35,7 @@ public sealed partial class CareerPlugin
                         career.GetCareer(actionContext.Actor);
 
                     return current.IsEmployed
+                        && !actionContext.Actor.Tags.Has("vocation.religious.active")
                         && !actionContext.Actor.Tags.Has("civic.office.town_head")
                         && !actionContext.Actor.Tags.Has("occupation.criminal")
                         && !current.IsSelfEmployed
@@ -46,7 +47,8 @@ public sealed partial class CareerPlugin
                     var actor = actionContext.Actor;
                     var current = career.GetCareer(actor);
 
-                    if (!current.IsEmployed
+                    if (actor.Tags.Has("vocation.religious.active")
+                        || !current.IsEmployed
                         || current.IsSelfEmployed
                         || current.IsRetired)
                     {
@@ -174,7 +176,8 @@ public sealed partial class CareerPlugin
                     }
 
                     var current = career.GetCareer(actionContext.Actor);
-                    return !current.IsRetired
+                    return !actionContext.Actor.Tags.Has("vocation.religious.active")
+                        && !current.IsRetired
                         && !current.IsEmployed;
                 },
 
@@ -183,7 +186,8 @@ public sealed partial class CareerPlugin
                     var actor = actionContext.Actor;
                     var current = career.GetCareer(actor);
 
-                    if (current.IsRetired
+                    if (actor.Tags.Has("vocation.religious.active")
+                        || current.IsRetired
                         || current.IsEmployed)
                     {
                         return new GameActionResult(false);
@@ -259,7 +263,8 @@ public sealed partial class CareerPlugin
                     }
 
                     var current = career.GetCareer(actionContext.Actor);
-                    return !current.IsRetired
+                    return !actionContext.Actor.Tags.Has("vocation.religious.active")
+                        && !current.IsRetired
                         && current.IsEmployed
                         && (current.IsSelfEmployed || current.JobLevel < 4);
                 },
@@ -268,6 +273,9 @@ public sealed partial class CareerPlugin
                 {
                     var actor = actionContext.Actor;
                     var before = career.GetCareer(actor);
+
+                    if (actor.Tags.Has("vocation.religious.active"))
+                        return new GameActionResult(false);
 
                     if (TryGetSelectedJob(actionContext, out _, out _))
                     {

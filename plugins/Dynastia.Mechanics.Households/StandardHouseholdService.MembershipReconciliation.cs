@@ -15,6 +15,7 @@ public sealed partial class StandardHouseholdService
                         && _family.IsBloodline(
                             person)
                         && person.Age >= 18
+                        && !person.Tags.Has("vocation.religious.active")
                         && _family.GetSex(
                             person) == Sex.Male)
                 .ToList())

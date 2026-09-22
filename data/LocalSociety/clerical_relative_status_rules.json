@@ -1,0 +1,35 @@
+{
+  "schemaVersion": "1.0",
+  "dynamicProfileSource": "active religious vocation relatives",
+  "bonuses": [
+    {
+      "relationship": "Child",
+      "activeVocationLevelMax": 4,
+      "renown": 2,
+      "reputation": 0.5
+    },
+    {
+      "relationship": "Child",
+      "activeVocationLevelMin": 5,
+      "renown": 4,
+      "reputation": 1
+    },
+    {
+      "relationship": "Sibling",
+      "activeVocationLevelMax": 4,
+      "renown": 1,
+      "reputation": 0.25
+    },
+    {
+      "relationship": "Sibling",
+      "activeVocationLevelMin": 5,
+      "renown": 2,
+      "reputation": 0.5
+    }
+  ],
+  "perPersonCaps": {
+    "renown": 6,
+    "reputation": 2
+  },
+  "formerVocationCounts": false
+}

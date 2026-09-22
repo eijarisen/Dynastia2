@@ -70,8 +70,8 @@
                             Margin="5,4"
                             Padding="14,11"
                             Background="#35FFF4D9"
-                            BorderBrush="#A17A43"
-                            BorderThickness="1"
+                            BorderBrush="{Binding FavorabilityBrush}"
+                            BorderThickness="2"
                             CornerRadius="4">
                             <Grid ColumnDefinitions="76,*,Auto" ColumnSpacing="14">
                                 <Border
@@ -103,10 +103,10 @@
                                         Text="{Binding Heading}" />
                                     <TextBlock
                                         FontFamily="Georgia"
-                                        FontSize="11.5"
-                                        FontWeight="SemiBold"
-                                        Foreground="#6A451A"
-                                        Text="{Binding RoleText}" />
+                                        FontSize="15.5"
+                                        FontWeight="Bold"
+                                        Foreground="{Binding FavorabilityBrush}"
+                                        Text="{Binding FavorabilityText}" />
                                     <TextBlock
                                         FontFamily="Georgia"
                                         FontSize="11.2"
@@ -121,32 +121,33 @@
                                         <StackPanel Spacing="1">
                                             <TextBlock
                                                 FontFamily="Georgia"
-                                                FontSize="12"
+                                                FontSize="13.2"
                                                 Foreground="#46321C"
                                                 Text="{Binding AmountText}" />
                                             <TextBlock
                                                 FontFamily="Georgia"
-                                                FontSize="12"
+                                                FontSize="13.2"
                                                 Foreground="#46321C"
                                                 Text="{Binding DurationText}" />
                                             <TextBlock
                                                 FontFamily="Georgia"
-                                                FontSize="12"
-                                                Foreground="#46321C"
+                                                FontSize="13.2"
+                                                FontWeight="Bold"
+                                                Foreground="{Binding FavorabilityBrush}"
                                                 Text="{Binding InterestText}" />
                                         </StackPanel>
                                         <StackPanel Grid.Column="1" Spacing="1">
                                             <TextBlock
                                                 FontFamily="Georgia"
-                                                FontSize="12"
-                                                FontWeight="SemiBold"
-                                                Foreground="#5E3B12"
+                                                FontSize="13.2"
+                                                FontWeight="Bold"
+                                                Foreground="{Binding FavorabilityBrush}"
                                                 Text="{Binding AnnualPaymentText}" />
                                             <TextBlock
                                                 FontFamily="Georgia"
-                                                FontSize="12"
-                                                FontWeight="SemiBold"
-                                                Foreground="#5E3B12"
+                                                FontSize="13.2"
+                                                FontWeight="Bold"
+                                                Foreground="{Binding FavorabilityBrush}"
                                                 Text="{Binding TotalText}" />
                                         </StackPanel>
                                     </Grid>

@@ -53,7 +53,7 @@ public sealed class Development9KeyboardBalanceRegressionTests
         foreach (var key in new[]
         {
             "Key.M", "Key.T", "Key.R", "Key.P", "Key.F", "Key.E",
-            "Key.I", "Key.S", "Key.C", "Key.J", "Key.H", "Key.Q", "Key.Space"
+            "Key.S", "Key.C", "Key.J", "Key.H", "Key.Q", "Key.Space"
         })
         {
             Assert.Contains(key, code);
@@ -62,6 +62,8 @@ public sealed class Development9KeyboardBalanceRegressionTests
         Assert.Contains("viewModel.HasQueuedAction", code);
         Assert.Contains("HideMainMenuPromptCommand.Execute(null)", code);
         Assert.Contains("ReturnToMainMenuCommand.Execute(null)", code);
+        Assert.Contains("ui.manage_properties", code);
+        Assert.Contains("ui.manage_finances", code);
         Assert.Contains("wellbeing.heal_relative", code);
         Assert.Contains("craft.stop_occupation", code);
         Assert.Contains("turn.pass", code);

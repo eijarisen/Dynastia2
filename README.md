@@ -8,7 +8,7 @@ The simulation is organized around a small core and dynamically loaded mechanics
 
 - .NET 10
 - Avalonia desktop application
-- selectable New Game start year from 1700 to 1900 in 10-year steps
+- selectable New Game start year from 1700 to 2000 in 10-year steps
 - dynamically loaded mechanics plugins
 - JSON/CSV gameplay data
 - versioned save/load support
@@ -32,7 +32,7 @@ build/                   Development, cleanup and source-packaging scripts
 docs/                    Maintenance/development maps
 ```
 
-For the current responsibility map, see `docs/DevelopmentMap.md`.
+For gameplay/design rules, start with `docs/GameDesign/00-Index.md`. For the current implementation responsibility map, see `docs/DevelopmentMap.md`.
 
 ## Development build
 

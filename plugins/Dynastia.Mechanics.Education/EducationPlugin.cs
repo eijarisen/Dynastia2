@@ -98,6 +98,8 @@ public sealed class EducationPlugin : IGamePlugin
                 family,
                 stats,
                 economy,
+                locations,
+                institutions,
                 random,
                 events,
                 () => context.GetService<ICraftService>()));
@@ -270,6 +272,8 @@ public sealed class EducationPlugin : IGamePlugin
         IFamilyService family,
         IStatsService stats,
         IEconomyService economy,
+        ILocationService locations,
+        ITownInstitutionService institutions,
         IGameRandom random,
         IGameEventBus events,
         Func<ICraftService?> craftResolver)
@@ -304,6 +308,15 @@ public sealed class EducationPlugin : IGamePlugin
                         economy);
                 if (!validTarget)
                     return false;
+
+                if (!HasLocalSchool(
+                        target,
+                        actionContext.GameState.Year,
+                        locations,
+                        institutions))
+                {
+                    return false;
+                }
 
                 var crafts = craftResolver();
                 if (actionContext.Parameters.TryGetValue("educationOption", out var selected))
@@ -352,6 +365,18 @@ public sealed class EducationPlugin : IGamePlugin
                     return new GameActionResult(
                         false,
                         "Children use Help in Learning instead of paid education.");
+                }
+
+                if (!HasLocalSchool(
+                        target,
+                        actionContext.GameState.Year,
+                        locations,
+                        institutions))
+                {
+                    return new GameActionResult(
+                        false,
+                        "No local School is available.",
+                        ActionReasonCodes.NoLongerEligible);
                 }
 
                 var selected = actionContext.Parameters.TryGetValue("educationOption", out var option)
@@ -448,6 +473,16 @@ public sealed class EducationPlugin : IGamePlugin
                 return new GameActionResult(true);
             }
         };
+    }
+
+    private static bool HasLocalSchool(
+        IPerson person,
+        int year,
+        ILocationService locations,
+        ITownInstitutionService institutions)
+    {
+        var town = locations.GetLocation(person).HomeTown;
+        return institutions.Resolve(town, year).GetTier("school") > 0;
     }
 
     private static GameActionDefinition CreateHelpLearningAction(

@@ -9,6 +9,7 @@ internal sealed class CivicOfficeService : ICivicOfficeService
 {
     private const string TownHeadTag = "civic.office.town_head";
     private const string PublicAdministrationCareerId = "public_administration";
+    private const string PolishNationalityId = "polish";
 
     private readonly IGameState _gameState;
     private readonly ILocationService _locations;
@@ -138,6 +139,7 @@ internal sealed class CivicOfficeService : ICivicOfficeService
         }
 
         if (profile is null
+            || !IsPolish(person)
             || person.Age < profile.MinimumAge
             || !profile.AllowsSex(_family.GetSex(person))
             || _education.GetEducationLevel(person) < profile.MinimumEducation)
@@ -210,7 +212,18 @@ internal sealed class CivicOfficeService : ICivicOfficeService
 
     internal void ReconcileTags()
     {
-        var simulatedHeads = GetWorldState(create: false)?.CivicOffices
+        var world = GetWorldState(create: false);
+        if (world is not null)
+        {
+            foreach (var office in world.CivicOffices)
+            {
+                var town = _locations.FindTownAtYear(office.TownId, _gameState.Year);
+                if (town is not null && GetProfile(town, _gameState.Year) is not null)
+                    NormalizeOfficeNationality(office, town, _gameState.Year);
+            }
+        }
+
+        var simulatedHeads = world?.CivicOffices
             .Where(office => office.HeadPersonId.HasValue)
             .Select(office => office.HeadPersonId!.Value)
             .ToHashSet() ?? [];
@@ -451,7 +464,10 @@ internal sealed class CivicOfficeService : ICivicOfficeService
         var existing = world.CivicOffices.FirstOrDefault(
             office => office.TownId.Equals(town.Id, StringComparison.OrdinalIgnoreCase));
         if (existing is not null)
+        {
+            NormalizeOfficeNationality(existing, town, year);
             return existing;
+        }
 
         var created = new CivicOfficeTownState { TownId = town.Id };
         world.CivicOffices.Add(created);
@@ -471,7 +487,7 @@ internal sealed class CivicOfficeService : ICivicOfficeService
                 : random.Chance(0.5) ? Sex.Male : Sex.Female;
         var age = random.NextInt(_rules.NpcAgeMin, _rules.NpcAgeMax);
         var birthYear = year - age;
-        var nationalityId = _nationalities.GenerateNationality(town.RegionId, year, random);
+        var nationalityId = PolishNationalityId;
         var cultureId = _nationalities.GetNameCultureId(nationalityId);
         var firstName = _names.GetRandomFirstName(sex, birthYear, cultureId, random);
         var surname = _names.GetRandomSurname(sex, cultureId, random);
@@ -490,6 +506,36 @@ internal sealed class CivicOfficeService : ICivicOfficeService
         state.LastOfficeActionYear = int.MinValue;
         state.PendingApprovalAdjustment = 0;
     }
+
+    private void NormalizeOfficeNationality(
+        CivicOfficeTownState state,
+        TownInfo town,
+        int year)
+    {
+        if (state.HeadPersonId is Guid personId)
+        {
+            var person = _gameState.People.FirstOrDefault(candidate => candidate.Id == personId);
+            if (person is not null && IsPolish(person))
+                return;
+
+            if (person is not null)
+                person.Tags.Remove(TownHeadTag);
+        }
+        else if (string.Equals(
+            state.NpcNationalityId,
+            PolishNationalityId,
+            StringComparison.OrdinalIgnoreCase))
+        {
+            return;
+        }
+
+        AppointNpc(state, town, year, "polish-office-normalization");
+    }
+
+    private bool IsPolish(IPerson person) =>
+        _nationalities.GetNationality(person).Equals(
+            PolishNationalityId,
+            StringComparison.OrdinalIgnoreCase);
 
     private CivicOfficeHeadInfo BuildInfo(
         CivicOfficeTownState state,

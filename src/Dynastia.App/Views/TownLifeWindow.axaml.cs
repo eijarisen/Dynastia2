@@ -135,7 +135,7 @@ public partial class TownLifeWindow : Window
         CloseIfQueued(model);
     }
 
-    private void OnChurchActionClick(object? sender, RoutedEventArgs e)
+    private async void OnChurchActionClick(object? sender, RoutedEventArgs e)
     {
         if (DataContext is not TownAffairsViewModel model
             || sender is not Button { DataContext: TownAffairsChurchActionViewModel action }
@@ -144,22 +144,28 @@ public partial class TownLifeWindow : Window
             return;
         }
 
-        model.QueueChurch(action);
-        CloseIfQueued(model);
-    }
-
-    private void OnCourtActionClick(object? sender, RoutedEventArgs e)
-    {
-        if (DataContext is not TownAffairsViewModel model
-            || sender is not Button { DataContext: TownAffairsCourtActionViewModel action }
-            || !action.IsAvailable)
+        decimal? selectedAmount = null;
+        if (action.RequiresMoneySelection)
         {
-            return;
+            if (action.MaximumAmount < action.MinimumAmount)
+                return;
+
+            var selector = new FamilyMoneySelectionWindow(
+                action.Label,
+                action.MaximumAmount,
+                action.MinimumAmount,
+                stepAmount: 100m,
+                explanation: action.Description);
+            selectedAmount = await selector.ShowDialog<decimal?>(this);
+            if (selectedAmount is null)
+                return;
         }
 
-        model.QueueCourt(action.ActionId);
+        model.QueueChurch(action, selectedAmount);
         CloseIfQueued(model);
     }
+
+
 
     private void OnOfficeDutiesClick(object? sender, RoutedEventArgs e)
     {

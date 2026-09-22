@@ -40,13 +40,16 @@ public sealed class LocalSocietyConnectionsBatch5Tests
         Assert.Contains("ApplyRefusalCost(connection);", service);
         Assert.Contains("Math.Clamp(baseChance +", service);
         Assert.Contains("0d, 0.45d", service);
+        Assert.Contains("EnsureWarmRelation(connection);", service);
+        Assert.Contains("Math.Max(connection.Familiarity, 30)", service);
+        Assert.Contains("Math.Max(connection.Sympathy, 15)", service);
 
         var familyRules = Read("plugins", "Dynastia.Mechanics.FamilyRelations", "FamilyRelationScoreRules.cs");
         Assert.Contains("0.95", familyRules);
     }
 
     [Fact]
-    public void AnnualConnectionScriptStaysNamesOnlyAndPoorConnectionsDisappear()
+    public void AnnualConnectionScriptStaysNamesOnlyAndOnlyWeakPoorConnectionsDisappear()
     {
         var service = Read("plugins", "Dynastia.Mechanics.Community", "CommunityConnectionService.cs");
         var system = Read("plugins", "Dynastia.Mechanics.Community", "CommunityConnectionYearSystem.cs");
@@ -56,7 +59,12 @@ public sealed class LocalSocietyConnectionsBatch5Tests
         Assert.Contains("connection.Children.Add(GenerateName", service);
         Assert.Contains("DriftWealth(connection)", service);
         Assert.Contains("connection.WealthBand.Equals(\"Poor\"", service);
+        Assert.Contains("weakPoorConnection", service);
+        Assert.Contains("relationState.Equals(\"Warm\"", service);
+        Assert.Contains("relationState.Equals(\"Close\"", service);
         Assert.Contains("connection.IsActive = false", service);
+        var rules = Read("data", "LocalSociety", "connection_rules.json");
+        Assert.Contains("\"preserveWarmOrCloseConnections\": true", rules);
         Assert.Contains("YearPhase.Thoughts", system);
         Assert.Contains("actions.queued.family_relations", system);
         Assert.DoesNotContain("Components.Set", service);
@@ -88,7 +96,11 @@ public sealed class LocalSocietyConnectionsBatch5Tests
         Assert.Contains("Header=\"Family\"", window);
         Assert.Contains("Header=\"Acquaintances\"", window);
         Assert.Contains("ItemsSource=\"{Binding Connections}\"", window);
+        Assert.Contains("Text=\"{Binding PortraitEmoji}\"", window);
         Assert.Contains("OnConnectionActionClick", window);
+
+        var presentation = Read("src", "Dynastia.App", "ViewModels", "MainWindowViewModel.Relations.cs");
+        Assert.Contains("GenerateCandidateAppearance(\n                            connection.Id", presentation);
 
         foreach (var id in new[]
         {

@@ -384,10 +384,18 @@ public sealed class HeirloomsBatch2Tests
     {
         public TestCraftService(string repoRoot)
         {
-            Catalog = File.ReadLines(Path.Combine(repoRoot, "data", "Heirlooms", "craft_master_heirlooms.csv"))
+            var legacyCraftIds = File.ReadLines(Path.Combine(repoRoot, "data", "Heirlooms", "craft_master_heirlooms.csv"))
                 .Skip(1)
                 .Where(line => !string.IsNullOrWhiteSpace(line))
-                .Select(line => line.TrimStart('\uFEFF').Split(',')[0])
+                .Select(line => line.TrimStart('\uFEFF').Split(',')[0]);
+            var artisticCraftIds = File.ReadLines(Path.Combine(repoRoot, "data", "Crafts", "artistic_crafts_append.csv"))
+                .Skip(1)
+                .Where(line => !string.IsNullOrWhiteSpace(line))
+                .Select(line => line.TrimStart('\uFEFF').Split(',')[0]);
+
+            Catalog = legacyCraftIds
+                .Concat(artisticCraftIds)
+                .Distinct(StringComparer.OrdinalIgnoreCase)
                 .Select(id => new CraftInfo(
                     id, id, 1700, null, 10, 1, 500, "intellect", null, "Universal",
                     SettlementClass.SmallTown, [], [], "🛠️", id, [], []))

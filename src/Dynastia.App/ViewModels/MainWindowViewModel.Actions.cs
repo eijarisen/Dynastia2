@@ -119,6 +119,16 @@ public sealed partial class MainWindowViewModel
                     var actionId =
                         action.Id;
 
+                    if (actionId.Equals(
+                            "church.attend",
+                            StringComparison.OrdinalIgnoreCase)
+                        || actionId.Equals(
+                            "personality.religious_study",
+                            StringComparison.OrdinalIgnoreCase))
+                    {
+                        continue;
+                    }
+
                     if (IsPropertyManagementAction(actionId))
                     {
                         if (!managePropertiesAdded)

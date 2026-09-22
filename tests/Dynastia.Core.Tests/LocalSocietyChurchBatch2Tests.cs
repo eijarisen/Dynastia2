@@ -91,8 +91,9 @@ public sealed class LocalSocietyChurchBatch2Tests
             "plugins",
             "Dynastia.Mechanics.Personality",
             "PersonalityPlugin.cs");
-        Assert.Contains("random.NextDouble() >= 0.50", personality);
-        Assert.True(rules.Attend.MoralsImproveChance < 0.50d);
+        Assert.Contains("rules.GetSuccessChance(churchTier)", personality);
+        Assert.Contains("random.NextDouble() >= successChance", personality);
+        Assert.True(rules.Attend.MoralsImproveChance < 0.45d);
     }
 
     [Fact]
@@ -126,9 +127,15 @@ public sealed class LocalSocietyChurchBatch2Tests
         Assert.Contains("_church.Resolve(town.Population)", townLife);
 
         Assert.Contains("Header=\"Church\"", window);
-        Assert.Contains("Snapshot.ChurchCard", window);
+        Assert.DoesNotContain("Snapshot.ChurchCard", window);
         Assert.Contains("ChurchActions", window);
-        Assert.Contains("<primitives:UniformGrid Columns=\"4\" Rows=\"2\" />", window);
+        Assert.Contains("<primitives:UniformGrid Columns=\"3\" />", window);
+        Assert.Contains("ToolTip.Tip=\"{Binding Description}\"", window);
+        var presentation = Read(
+            "src", "Dynastia.App", "ViewModels", "MainWindowViewModel.TownLife.cs");
+        Assert.Contains("AddChurchMoneyAction(\"church.donate\")", presentation);
+        Assert.Contains("AddChurchMoneyAction(\"church.aid_poor_family\")", presentation);
+        Assert.Contains("ResolveChurchDonationTier", presentation);
 
         Assert.Contains("church.attend", news);
         Assert.Contains("church.donate", news);

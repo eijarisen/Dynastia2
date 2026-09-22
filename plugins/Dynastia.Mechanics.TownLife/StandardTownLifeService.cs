@@ -100,17 +100,17 @@ internal sealed class StandardTownLifeService : ITownLifeService
     {
         return institutions.Institutions
             .Where(institution =>
-                !institution.InstitutionId.Equals("church", StringComparison.OrdinalIgnoreCase)
-                && (institution.Tier > 0
-                    || institution.InstitutionId.Equals("medical", StringComparison.OrdinalIgnoreCase)
-                    || institution.InstitutionId.Equals("school", StringComparison.OrdinalIgnoreCase)
-                    || institution.InstitutionId.Equals("bank", StringComparison.OrdinalIgnoreCase)))
+                institution.Tier > 0
+                || institution.InstitutionId.Equals("medical", StringComparison.OrdinalIgnoreCase)
+                || institution.InstitutionId.Equals("school", StringComparison.OrdinalIgnoreCase)
+                || institution.InstitutionId.Equals("bank", StringComparison.OrdinalIgnoreCase))
             .OrderBy(institution => institution.InstitutionId.ToLowerInvariant() switch
             {
                 "administration" => 0,
                 "medical" => 1,
                 "school" => 2,
                 "bank" => 3,
+                "church" => 4,
                 _ => 10
             })
             .ThenBy(institution => institution.DisplayName, StringComparer.CurrentCultureIgnoreCase)
@@ -141,6 +141,7 @@ internal sealed class StandardTownLifeService : ITownLifeService
                         4 => "Healthcare: good",
                         _ => "Healthcare: excellent"
                     },
+                    "church" => "Worship, charity and emergency welfare",
                     _ => string.Empty
                 };
 

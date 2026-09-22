@@ -27,6 +27,17 @@ public sealed record CourtProtectionSnapshot(
             0.30);
 }
 
+
+public sealed record CourtProtectionRelativeInfo(
+    Guid PersonId,
+    string Name,
+    string JobTitle,
+    string CareerName,
+    int JobLevel,
+    string FamiliarityState,
+    string SympathyState,
+    bool ProvidesProtection);
+
 public sealed record JusticeSnapshot(
     bool IsImprisoned,
     int RemainingYears,

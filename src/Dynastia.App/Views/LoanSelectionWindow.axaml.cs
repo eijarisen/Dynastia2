@@ -25,8 +25,8 @@ public partial class LoanSelectionWindow : Window
 
         TitleText.Text = Title;
         IntroText.Text = isGivingLoan
-            ? "Choose one outside borrower. The person is an offer profile only and will not enter the simulation."
-            : "Choose one outside lender. The person is an offer profile only and will not enter the simulation.";
+            ? "Choose one available lending offer. The person is an offer profile only and will not enter the simulation."
+            : "Choose one available borrowing offer. The person is an offer profile only and will not enter the simulation.";
 
         OffersList.ItemsSource = offers
             .Select(offer => new LoanOfferCardViewModel(offer, isGivingLoan))

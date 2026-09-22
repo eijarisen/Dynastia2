@@ -2,7 +2,6 @@ using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Dynastia.App.ViewModels;
-using Dynastia.Contracts;
 
 namespace Dynastia.App.Views;
 
@@ -20,17 +19,21 @@ public partial class PotentialPartnersWindow : Window
         DataContext = model;
     }
 
-    private void OnApproachClick(
+    private void OnCandidatePointerPressed(
         object? sender,
-        RoutedEventArgs e)
+        PointerPressedEventArgs e)
     {
-        if (sender is Button
+        if (!e.GetCurrentPoint(this).Properties.IsLeftButtonPressed
+            || sender is not Border
             {
                 DataContext: PotentialPartnerCardViewModel card
             })
         {
-            Close(card.Candidate);
+            return;
         }
+
+        e.Handled = true;
+        Close(card.Candidate);
     }
 
     private void OnCloseClick(

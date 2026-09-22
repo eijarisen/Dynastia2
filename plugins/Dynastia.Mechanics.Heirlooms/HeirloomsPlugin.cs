@@ -13,7 +13,7 @@ public sealed class HeirloomsPlugin : IGamePlugin
         var random = Require<IGameRandom>(context, "Game random");
         var events = Require<IGameEventBus>(context, "Game event bus");
         var actions = Require<IActionRegistry>(context, "Action registry");
-        var justice = Require<IJusticeService>(context, "Justice service");
+        var justice = context.GetService<IJusticeService>();
         var data = Require<IGameDataService>(context, "Game data service");
 
         var catalog = HeirloomCatalog.Load(data);
@@ -130,7 +130,7 @@ public sealed class HeirloomsPlugin : IGamePlugin
         IActionRegistry actions,
         IEconomyService economy,
         IHeirloomService heirlooms,
-        IJusticeService justice,
+        IJusticeService? justice,
         IGameEventBus events)
     {
         actions.Register(
@@ -202,7 +202,7 @@ public sealed class HeirloomsPlugin : IGamePlugin
                             ActionReasonCodes.AssetNoLongerOwned);
                     }
 
-                    if (sold.IsStolen)
+                    if (sold.IsStolen && justice is not null)
                     {
                         var detectionChance = justice.GetStolenHeirloomSaleDetectionChance(context.Actor);
                         if (context.Random.NextDouble() < detectionChance)

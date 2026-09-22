@@ -75,7 +75,7 @@ public sealed class TownLifeBatch3Tests
             data,
             ReadCareerIds(data));
 
-        Assert.Equal(14, catalog.Count);
+        Assert.Equal(16, catalog.Count);
 
         var bankTierOne = InstitutionSnapshot(
             new TownInstitutionInfo("bank", "Bank", 1, "Moneylender"));
@@ -86,11 +86,16 @@ public sealed class TownLifeBatch3Tests
         var schoolTierFour = InstitutionSnapshot(
             new TownInstitutionInfo("school", "School", 4, "Higher School"));
 
+        var churchTierOne = InstitutionSnapshot(
+            new TownInstitutionInfo("church", "Church", 1, "Chapel"));
+
         Assert.False(catalog.IsSatisfied("banking", bankTierOne));
         Assert.True(catalog.IsSatisfied("banking", bankTierTwo));
         Assert.False(catalog.IsSatisfied("scientific_research", schoolTierThree));
         Assert.True(catalog.IsSatisfied("scientific_research", schoolTierFour));
         Assert.True(catalog.IsSatisfied("agriculture", bankTierOne));
+        Assert.True(catalog.IsSatisfied("priest_vocation", churchTierOne));
+        Assert.True(catalog.IsSatisfied("nun_vocation", churchTierOne));
     }
 
     [Fact]
@@ -186,6 +191,9 @@ public sealed class TownLifeBatch3Tests
 
         Assert.Contains("GetGeneratedAdultRange(\n                _gameState.Year,\n                candidateTown)", partners);
         Assert.Contains("GetLocalEducationCeiling(target, _gameState.Year)", educationUi);
+        Assert.Contains("HasLocalSchool(", educationPlugin);
+        Assert.Contains("institutions.Resolve(town, year).GetTier(\"school\") > 0", educationPlugin);
+        Assert.Contains("No local School is available.", educationPlugin);
         Assert.Contains("helperEducation", educationPlugin);
         Assert.Contains("Help in Learning", educationPlugin);
         Assert.Contains("IsParentOf(helper, child, family)", educationPlugin);

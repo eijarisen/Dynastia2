@@ -152,6 +152,56 @@ public sealed class StandardJusticeService : IJusticeService
         return ToSnapshot(tier, bestScore, bestHelper, bestCareer);
     }
 
+    public IReadOnlyList<CourtProtectionRelativeInfo> GetCourtProtectionRelatives(
+        IPerson person)
+    {
+        var relations = _relationsResolver?.Invoke();
+        if (relations is null
+            || _gameState is null
+            || _family is null
+            || _career is null
+            || _courtRules is null)
+        {
+            return Array.Empty<CourtProtectionRelativeInfo>();
+        }
+
+        return _gameState.People
+            .Where(candidate =>
+                candidate.Id != person.Id
+                && candidate.Tags.Has("state.alive")
+                && !SimulationState.IsInactive(candidate)
+                && HouseholdKinshipRules.IsSupportedRelative(person, candidate, _family))
+            .Select(candidate =>
+            {
+                var relation = relations.GetRelation(person, candidate);
+                var career = _career.GetCareer(candidate);
+                if (relation is null
+                    || !career.IsEmployed
+                    || career.JobLevel <= 0
+                    || string.IsNullOrWhiteSpace(career.CareerId)
+                    || !TryGetCareerWeight(career.CareerId, out _))
+                {
+                    return null;
+                }
+
+                return new CourtProtectionRelativeInfo(
+                    candidate.Id,
+                    _family.GetDisplayName(candidate),
+                    career.JobTitle,
+                    career.CareerName ?? career.CareerId,
+                    career.JobLevel,
+                    relation.FamiliarityState,
+                    relation.SympathyState,
+                    relations.HasStrongCareerConnectionRelation(person, candidate));
+            })
+            .Where(item => item is not null)
+            .Cast<CourtProtectionRelativeInfo>()
+            .OrderByDescending(item => item.ProvidesProtection)
+            .ThenByDescending(item => item.JobLevel)
+            .ThenBy(item => item.Name, StringComparer.CurrentCultureIgnoreCase)
+            .ToArray();
+    }
+
     public int ConvictKnownOffense(
         IPerson person,
         int originalSentence,

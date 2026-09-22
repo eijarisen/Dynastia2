@@ -3,17 +3,22 @@ namespace Dynastia.Core.Tests;
 public sealed class Development11TownAffairsPresentationTests
 {
     [Fact]
-    public void TownAffairsUsesSixTabLayoutAndLargerTownDescription()
+    public void TownAffairsUsesCurrentNineTabLayoutAndLargerTownDescription()
     {
         var window = Read("src", "Dynastia.App", "Views", "TownLifeWindow.axaml");
         var hub = Read("src", "Dynastia.App", "ViewModels", "TownAffairsViewModel.cs");
 
         Assert.DoesNotContain("Header=\"Instructions\"", window);
         Assert.DoesNotContain("Instructions =", hub);
-        Assert.Contains("Header=\"Bank\"", window);
-        Assert.Contains("Health = 3", hub);
-        Assert.Contains("Education = 4", hub);
-        Assert.Contains("Bank = 5", hub);
+        Assert.Contains("Institutions = 0", hub);
+        Assert.Contains("Community = 1", hub);
+        Assert.Contains("Housing = 2", hub);
+        Assert.Contains("Jobs = 3", hub);
+        Assert.Contains("Health = 4", hub);
+        Assert.Contains("Church = 5", hub);
+        Assert.Contains("Education = 6", hub);
+        Assert.Contains("Bank = 7", hub);
+        Assert.Contains("Court = 8", hub);
         Assert.Contains("FontSize=\"14.5\" Text=\"Polity\"", window);
         Assert.Contains("FontSize=\"14.5\" Text=\"Population\"", window);
     }
@@ -133,7 +138,7 @@ public sealed class Development11TownAffairsPresentationTests
     public void HeirloomDescriptionWrapsBeforeInheritanceControls()
     {
         var inventory = Read("src", "Dynastia.App", "Views", "FamilyInventoryWindow.axaml");
-        var heirlooms = inventory.IndexOf("Text=\"Heirlooms\"", StringComparison.Ordinal);
+        var heirlooms = inventory.IndexOf("Header=\"Heirlooms\"", StringComparison.Ordinal);
 
         Assert.True(heirlooms >= 0);
 
@@ -149,16 +154,11 @@ public sealed class Development11TownAffairsPresentationTests
             StringComparison.Ordinal);
         Assert.True(inheritance > origin);
 
-        var originBlockStart = inventory.LastIndexOf(
-            "<TextBlock",
-            origin,
-            StringComparison.Ordinal);
-        Assert.True(originBlockStart >= 0);
-
-        var originBlock = inventory.Substring(
-            originBlockStart,
-            origin - originBlockStart + "Text=\"{Binding OriginText}\"".Length);
-        Assert.Contains("TextWrapping=\"Wrap\"", originBlock);
+        Assert.Contains(
+            "Classes=\"inventoryAssetDetail\" MaxHeight=\"44\" Text=\"{Binding OriginText}\"",
+            inventory);
+        Assert.Contains("<Style Selector=\"TextBlock.inventoryAssetDetail\">", inventory);
+        Assert.Contains("<Setter Property=\"TextWrapping\" Value=\"Wrap\" />", inventory);
     }
 
     [Fact]
@@ -195,6 +195,11 @@ public sealed class Development11TownAffairsPresentationTests
         Assert.Contains("Header=\"Houses\"", inventory);
         Assert.Contains("Header=\"Farmland\"", inventory);
         Assert.Contains("Header=\"Heirlooms\"", inventory);
+        Assert.DoesNotContain("Text=\"Houses\"", inventory);
+        Assert.DoesNotContain("Text=\"Farmland\"", inventory);
+        Assert.DoesNotContain("Text=\"Heirlooms\"", inventory);
+        Assert.Contains("<Setter Property=\"FontSize\" Value=\"14.5\" />", inventory);
+        Assert.True(inventory.Split("Classes=\"inventoryEmpty\"").Length - 1 >= 3);
         Assert.True(inventory.Split("primitives:UniformGrid Columns=\"4\"").Length - 1 >= 3);
         Assert.True(inventory.Split("Text=\"Inheritance:\"").Length - 1 >= 3);
         Assert.DoesNotContain("ToolTip.Tip=\"{Binding OriginText}\"", inventory);
@@ -285,7 +290,7 @@ public sealed class Development11TownAffairsPresentationTests
         Assert.Contains("<StackPanel Spacing=\"12\">", window);
         Assert.Contains("Foreground=\"{Binding ProsperityBrush}\" Text=\"{Binding Snapshot.Prosperity.Index}\"", window);
         Assert.Contains("Text=\"Current Shocks\"", window);
-        Assert.Contains("FontSize=\"25\" Text=\"{Binding Emoji}\"", window);
+        Assert.Contains("FontSize=\"32\" Text=\"{Binding Emoji}\"", window);
         Assert.Contains("tiers[\"administration\"] = Math.Max(1, tiers[\"administration\"]);", institutionService);
         Assert.Contains("institution.Tier > 0", townLife);
         Assert.Contains("institution.InstitutionId.Equals(\"medical\"", townLife);

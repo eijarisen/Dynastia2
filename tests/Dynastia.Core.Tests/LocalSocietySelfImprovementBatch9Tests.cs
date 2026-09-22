@@ -114,10 +114,13 @@ public sealed class LocalSocietySelfImprovementBatch9Tests
         Assert.Contains("MedicalImprovementActions", hub);
         Assert.Contains("TreatmentHealthActions", hub);
         Assert.Contains("TherapyHealthActions", hub);
-        Assert.Contains("Text=\"Current Health / Conditions\"", window);
+        Assert.DoesNotContain("Text=\"Current Health / Conditions\"", window);
         Assert.Contains("Text=\"Treatment / Heal\"", window);
+        Assert.Contains("IsVisible=\"{Binding HasTherapyHealthActions}\"", window);
         Assert.Contains("Text=\"Therapy\"", window);
+        Assert.Contains("IsVisible=\"{Binding HasMedicalImprovementActions}\"", window);
         Assert.Contains("Text=\"Medical Improvements\"", window);
+        Assert.DoesNotContain("TreatmentCostMultiplier:0.##", hub);
     }
 
     [Fact]

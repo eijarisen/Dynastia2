@@ -1,3 +1,4 @@
+using Avalonia.Media;
 using Dynastia.Contracts;
 
 namespace Dynastia.App.ViewModels;
@@ -12,6 +13,13 @@ public sealed record LoanSelectionResult(
 
 public sealed class LoanOfferCardViewModel
 {
+    private static readonly IBrush FavorableBrush =
+        new SolidColorBrush(Color.Parse("#2F6F3E"));
+    private static readonly IBrush FairBrush =
+        new SolidColorBrush(Color.Parse("#806633"));
+    private static readonly IBrush UnfavorableBrush =
+        new SolidColorBrush(Color.Parse("#A13A2B"));
+
     public LoanOfferCardViewModel(
         LoanOfferInfo offer,
         bool isGivingLoan)
@@ -28,8 +36,6 @@ public sealed class LoanOfferCardViewModel
     public string Heading =>
         $"{Offer.CounterpartyName}, {Offer.CounterpartyAge}";
 
-    public string RoleText =>
-        IsGivingLoan ? "Borrower" : "Lender";
 
     public string OriginNationalityText =>
         $"Birthplace: {Offer.OriginTownDisplayName} · Nationality: {Offer.DisplayNationality}";
@@ -44,6 +50,17 @@ public sealed class LoanOfferCardViewModel
     public string InterestText =>
         $"Interest: {Offer.Terms.TotalInterestRate:P1}";
 
+    public string FavorabilityText =>
+        $"Favorability: {GetFavorabilityLabel()}";
+
+    public IBrush FavorabilityBrush =>
+        GetFavorabilityScore() switch
+        {
+            > 0 => FavorableBrush,
+            < 0 => UnfavorableBrush,
+            _ => FairBrush
+        };
+
     public string AnnualPaymentText =>
         IsGivingLoan
             ? $"Yearly repayment: {Offer.Terms.AnnualPayment:N0} zł"
@@ -56,6 +73,33 @@ public sealed class LoanOfferCardViewModel
 
     public string ActionText =>
         IsGivingLoan ? "Lend" : "Borrow";
+
+    private int GetFavorabilityScore()
+    {
+        var multiplier = Offer.Terms.InterestMultiplier;
+        if (IsGivingLoan)
+        {
+            if (multiplier >= 1.05m)
+                return 1;
+            if (multiplier < 0.95m)
+                return -1;
+            return 0;
+        }
+
+        if (multiplier <= 0.95m)
+            return 1;
+        if (multiplier > 1.05m)
+            return -1;
+        return 0;
+    }
+
+    private string GetFavorabilityLabel() =>
+        GetFavorabilityScore() switch
+        {
+            > 0 => "Favorable",
+            < 0 => "Unfavorable",
+            _ => "Fair"
+        };
 
     public LoanSelectionResult ToSelection() =>
         new(

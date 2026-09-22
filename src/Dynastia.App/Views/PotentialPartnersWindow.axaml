@@ -2,6 +2,7 @@
     xmlns="https://github.com/avaloniaui"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:ui="using:Dynastia.App.Controls"
+    xmlns:primitives="using:Avalonia.Controls.Primitives"
     xmlns:vm="using:Dynastia.App.ViewModels"
     xmlns:conv="using:Dynastia.App.Converters"
     xmlns:contracts="using:Dynastia.Contracts"
@@ -22,32 +23,14 @@
         <conv:StatValueBrushConverter x:Key="StatValueBrushConverter" />
     </Window.Resources>
 
-    <Window.Styles>
-        <Style Selector="Button.paperAction">
-            <Setter Property="MinWidth" Value="142" />
-            <Setter Property="Padding" Value="12,7" />
-            <Setter Property="Foreground" Value="#3F2714" />
-            <Setter Property="Background" Value="#E8D5AF" />
-            <Setter Property="BorderBrush" Value="#9D6F35" />
-            <Setter Property="BorderThickness" Value="1.5" />
-            <Setter Property="FontFamily" Value="Georgia" />
-            <Setter Property="FontSize" Value="12.5" />
-            <Setter Property="FontWeight" Value="Bold" />
-        </Style>
-        <Style Selector="Button.paperAction:pointerover">
-            <Setter Property="Background" Value="#D4B178" />
-            <Setter Property="Foreground" Value="#2D1A0E" />
-        </Style>
-    </Window.Styles>
-
     <Grid>
         <Image Source="/Assets/UI/instructions_paper.png" Stretch="Fill" />
 
-        <Grid Margin="70,50,70,42" RowDefinitions="Auto,Auto,*,Auto" RowSpacing="8">
+        <Grid Margin="62,42,62,38" RowDefinitions="Auto,Auto,*,Auto" RowSpacing="7">
             <TextBlock
                 HorizontalAlignment="Center"
                 FontFamily="avares://Dynastia.App/Assets/Fonts#Pirata One"
-                FontSize="40"
+                FontSize="38"
                 Foreground="#2F1D0E"
                 Text="Potential Partners" />
 
@@ -55,7 +38,7 @@
                 Grid.Row="1"
                 HorizontalAlignment="Center"
                 FontFamily="Georgia"
-                FontSize="13.5"
+                FontSize="13"
                 Foreground="#5B4024"
                 Text="{Binding IntroText}" />
 
@@ -63,158 +46,157 @@
                 Grid.Row="2"
                 VerticalAlignment="Center"
                 ItemsSource="{Binding Candidates}">
+                <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <primitives:UniformGrid Columns="2" Rows="2" />
+                    </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
                 <ItemsControl.ItemTemplate>
                     <DataTemplate x:DataType="vm:PotentialPartnerCardViewModel">
                         <Border
-                            Height="184"
-                            Margin="4,4"
-                            Padding="12,9"
+                            Height="258"
+                            Margin="5"
+                            Padding="10,9"
                             Background="#35FFF4D9"
                             BorderBrush="#A17A43"
                             BorderThickness="1"
-                            CornerRadius="4">
-                            <Grid ColumnDefinitions="130,*" ColumnSpacing="13">
-                                <Border
-                                    Width="120"
-                                    Height="142"
-                                    HorizontalAlignment="Left"
-                                    VerticalAlignment="Center"
-                                    Background="#54000000"
-                                    BorderBrush="#9D772E"
-                                    BorderThickness="1.5"
-                                    CornerRadius="4">
-                                    <TextBlock
-                                        Margin="4"
-                                        HorizontalAlignment="Center"
-                                        VerticalAlignment="Center"
-                                        TextAlignment="Center"
-                                        TextWrapping="Wrap"
-                                        FontSize="84"
-                                        Text="{Binding PortraitEmoji}" />
-                                </Border>
+                            CornerRadius="4"
+                            Cursor="Hand"
+                            PointerPressed="OnCandidatePointerPressed">
+                            <Grid RowDefinitions="*,Auto" RowSpacing="7">
+                                <Grid ColumnDefinitions="104,*" ColumnSpacing="10">
+                                    <Border
+                                        Width="96"
+                                        Height="116"
+                                        HorizontalAlignment="Left"
+                                        VerticalAlignment="Top"
+                                        Background="#54000000"
+                                        BorderBrush="#9D772E"
+                                        BorderThickness="1.5"
+                                        CornerRadius="4">
+                                        <TextBlock
+                                            Margin="3"
+                                            HorizontalAlignment="Center"
+                                            VerticalAlignment="Center"
+                                            TextAlignment="Center"
+                                            TextWrapping="Wrap"
+                                            FontSize="64"
+                                            Text="{Binding PortraitEmoji}" />
+                                    </Border>
 
-                                <Grid
-                                    Grid.Column="1"
-                                    VerticalAlignment="Center"
-                                    RowDefinitions="Auto,*"
-                                    RowSpacing="7">
-                                    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="10">
-                                        <StackPanel VerticalAlignment="Center" Spacing="0">
-                                            <TextBlock
-                                                FontFamily="Georgia"
-                                                FontSize="17"
-                                                FontWeight="Bold"
-                                                Foreground="#352110"
-                                                TextTrimming="CharacterEllipsis"
-                                                Text="{Binding Heading}" />
-                                            <TextBlock
-                                                FontFamily="Georgia"
-                                                FontSize="11.5"
-                                                FontStyle="Italic"
-                                                FontWeight="Bold"
-                                                Foreground="#6A451A"
-                                                Text="{Binding PersonalityText}" />
-                                        </StackPanel>
-
-                                        <Border
-                                            Grid.Column="1"
-                                            HorizontalAlignment="Right"
-                                            Padding="6,4"
-                                            Background="#D00A0705"
-                                            BorderBrush="#765028"
-                                            BorderThickness="1"
-                                            CornerRadius="3">
-                                            <ItemsControl ItemsSource="{Binding Stats}">
-                                                <ItemsControl.ItemsPanel>
-                                                    <ItemsPanelTemplate>
-                                                        <StackPanel Orientation="Horizontal" />
-                                                    </ItemsPanelTemplate>
-                                                </ItemsControl.ItemsPanel>
-                                                <ItemsControl.ItemTemplate>
-                                                    <DataTemplate x:DataType="contracts:StatValue">
-                                                        <StackPanel Width="47" Spacing="0">
-                                                            <TextBlock
-                                                                HorizontalAlignment="Center"
-                                                                TextAlignment="Center"
-                                                                FontSize="7.5"
-                                                                FontWeight="SemiBold"
-                                                                Foreground="{Binding Value, Converter={StaticResource StatValueBrushConverter}}"
-                                                                Text="{Binding Name}" />
-                                                            <TextBlock
-                                                                HorizontalAlignment="Center"
-                                                                FontFamily="Georgia"
-                                                                FontSize="15"
-                                                                FontWeight="Bold"
-                                                                Foreground="{Binding Value, Converter={StaticResource StatValueBrushConverter}}"
-                                                                Text="{Binding Value}" />
-                                                        </StackPanel>
-                                                    </DataTemplate>
-                                                </ItemsControl.ItemTemplate>
-                                            </ItemsControl>
-                                        </Border>
-                                    </Grid>
-
-                                    <Grid
-                                        Grid.Row="1"
-                                        ColumnDefinitions="*,Auto"
-                                        ColumnSpacing="12"
-                                        VerticalAlignment="Center">
+                                    <StackPanel Grid.Column="1" Spacing="2">
+                                        <TextBlock
+                                            FontFamily="Georgia"
+                                            FontSize="16"
+                                            FontWeight="Bold"
+                                            Foreground="#352110"
+                                            TextTrimming="CharacterEllipsis"
+                                            Text="{Binding Heading}" />
+                                        <TextBlock
+                                            FontFamily="Georgia"
+                                            FontSize="11"
+                                            FontStyle="Italic"
+                                            FontWeight="Bold"
+                                            Foreground="#6A451A"
+                                            Text="{Binding PersonalityText}" />
+                                        <TextBlock
+                                            FontFamily="Georgia"
+                                            FontSize="10.5"
+                                            FontWeight="SemiBold"
+                                            Foreground="#5A3A18"
+                                            TextWrapping="Wrap"
+                                            Text="{Binding OriginNationalityText}" />
+                                        <TextBlock
+                                            FontFamily="Georgia"
+                                            FontSize="10.8"
+                                            Foreground="#3F2B19"
+                                            TextWrapping="Wrap"
+                                            Text="{Binding OccupationText}" />
+                                        <TextBlock
+                                            FontFamily="Georgia"
+                                            FontSize="10.8"
+                                            Foreground="#3F2B19"
+                                            Text="{Binding EducationText}" />
+                                        <TextBlock
+                                            FontFamily="Georgia"
+                                            FontSize="10.8"
+                                            Foreground="#3F2B19"
+                                            TextWrapping="Wrap"
+                                            Text="{Binding CraftsText}" />
+                                        <TextBlock
+                                            IsVisible="{Binding HasFinancialEstimate}"
+                                            FontFamily="Georgia"
+                                            FontSize="10.3"
+                                            FontWeight="SemiBold"
+                                            Foreground="#5A3A18"
+                                            TextWrapping="Wrap"
+                                            Text="{Binding FinancialText}" />
                                         <StackPanel
-                                            VerticalAlignment="Center"
-                                            Spacing="2">
+                                            IsVisible="{Binding HasStatus}"
+                                            Orientation="Horizontal"
+                                            Spacing="8">
                                             <TextBlock
                                                 FontFamily="Georgia"
-                                                FontSize="11.2"
-                                                FontWeight="SemiBold"
+                                                FontSize="11"
                                                 Foreground="#5A3A18"
-                                                TextTrimming="CharacterEllipsis"
-                                                Text="{Binding OriginNationalityText}" />
+                                                Text="Status:" />
                                             <TextBlock
                                                 FontFamily="Georgia"
-                                                FontSize="11.5"
-                                                Foreground="#3F2B19"
-                                                TextWrapping="Wrap"
-                                                Text="{Binding OccupationText}" />
-                                            <TextBlock
-                                                FontFamily="Georgia"
-                                                FontSize="11.5"
-                                                Foreground="#3F2B19"
-                                                Text="{Binding EducationText}" />
-                                            <TextBlock
-                                                FontFamily="Georgia"
-                                                FontSize="11.5"
-                                                Foreground="#3F2B19"
-                                                Text="{Binding CraftsText}" />
-                                            <TextBlock
-                                                IsVisible="{Binding HasFinancialEstimate}"
-                                                FontFamily="Georgia"
-                                                FontSize="11.2"
-                                                FontWeight="SemiBold"
-                                                Foreground="#5A3A18"
-                                                Text="{Binding FinancialText}" />
-                                            <TextBlock
-                                                IsVisible="{Binding HasStatus}"
-                                                FontFamily="Georgia"
-                                                FontSize="11.2"
-                                                FontWeight="SemiBold"
-                                                Foreground="#5A3A18"
-                                                Text="{Binding StatusText}" />
-                                            <TextBlock
-                                                FontFamily="Georgia"
-                                                FontSize="11.5"
+                                                FontSize="11"
                                                 FontWeight="Bold"
-                                                Foreground="{Binding SuccessChanceBrush}"
-                                                Text="{Binding SuccessChanceText}" />
+                                                Foreground="{Binding RenownStatusBrush}"
+                                                Text="{Binding RenownStatusText}" />
+                                            <TextBlock
+                                                FontFamily="Georgia"
+                                                FontSize="11"
+                                                FontWeight="Bold"
+                                                Foreground="{Binding ReputationStatusBrush}"
+                                                Text="{Binding ReputationStatusText}" />
                                         </StackPanel>
-
-                                        <Button
-                                            Grid.Column="1"
-                                            Classes="paperAction"
-                                            VerticalAlignment="Center"
-                                            Content="{Binding ApproachText}"
-                                            Click="OnApproachClick" />
-                                    </Grid>
+                                        <TextBlock
+                                            FontFamily="Georgia"
+                                            FontSize="10.8"
+                                            FontWeight="Bold"
+                                            Foreground="{Binding SuccessChanceBrush}"
+                                            Text="{Binding SuccessChanceText}" />
+                                    </StackPanel>
                                 </Grid>
+
+                                <Border
+                                    Grid.Row="1"
+                                    Padding="5,4"
+                                    Background="#D00A0705"
+                                    BorderBrush="#765028"
+                                    BorderThickness="1"
+                                    CornerRadius="3">
+                                    <ItemsControl ItemsSource="{Binding Stats}">
+                                        <ItemsControl.ItemsPanel>
+                                            <ItemsPanelTemplate>
+                                                <primitives:UniformGrid Columns="6" Rows="1" />
+                                            </ItemsPanelTemplate>
+                                        </ItemsControl.ItemsPanel>
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate x:DataType="contracts:StatValue">
+                                                <StackPanel Spacing="0">
+                                                    <TextBlock
+                                                        HorizontalAlignment="Center"
+                                                        TextAlignment="Center"
+                                                        FontSize="7.2"
+                                                        FontWeight="SemiBold"
+                                                        Foreground="{Binding Value, Converter={StaticResource StatValueBrushConverter}}"
+                                                        Text="{Binding Name}" />
+                                                    <TextBlock
+                                                        HorizontalAlignment="Center"
+                                                        FontFamily="Georgia"
+                                                        FontSize="14"
+                                                        FontWeight="Bold"
+                                                        Foreground="{Binding Value, Converter={StaticResource StatValueBrushConverter}}"
+                                                        Text="{Binding Value}" />
+                                                </StackPanel>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                </Border>
                             </Grid>
                         </Border>
                     </DataTemplate>
@@ -224,7 +206,7 @@
             <ui:ImageStateButton
                 Grid.Row="3"
                 Width="170"
-                Height="62"
+                Height="60"
                 HorizontalAlignment="Center"
                 IdleSource="avares://Dynastia.App/Assets/UI/b_close_idle.png"
                 HoverSource="avares://Dynastia.App/Assets/UI/b_close_hover.png"

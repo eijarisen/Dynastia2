@@ -167,6 +167,10 @@ public sealed class LocalSocietyCommunityBatch3Tests
         Assert.Contains("HistoricalWealthLossMultiplier", historical);
         Assert.Contains("FloodLossMultiplier", historical);
         Assert.Contains("Header=\"Community\"", window);
+        Assert.Contains("ColumnDefinitions=\"3*,4*\"", window);
+        Assert.Contains("Text=\"{Binding CivicOfficePortrait}\"", window);
+        Assert.Contains("Text=\"{Binding ProposerPortrait}\"", window);
+        Assert.DoesNotContain("Text=\"Community\"", window);
         Assert.Contains("OnCommunityLobbyClick", window);
     }
 
@@ -182,7 +186,9 @@ public sealed class LocalSocietyCommunityBatch3Tests
         Assert.Contains("After => [\"actions.queued.early\"]", yearSystem);
         Assert.Contains("proposal.BaseSupport", service);
         Assert.Contains("lobbies.Where", service);
-        Assert.Contains("locations.GetTowns()", service);
+        Assert.DoesNotContain("locations.GetTowns()", service);
+        Assert.Contains("var townsToResolve = playableHeadsByTown.Keys", service);
+        Assert.Contains("proposalLobbies.Select(lobby => lobby.TownId)", service);
         Assert.Contains("playableHeadsByTown.TryGetValue", service);
         Assert.Contains("\"atMostOnePolicyImplementedPerTownPerYear\": true", Read("data", "LocalSociety", "community_policy_rules.json"));
         Assert.Contains("community.policy_enacted", service);

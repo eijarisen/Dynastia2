@@ -13,8 +13,22 @@ public sealed class Development9UiRegressionTests
             "Views",
             "PotentialPartnersWindow.axaml"));
 
-        Assert.Contains("Height=\"170\"", xaml);
+        var opportunities = File.ReadAllText(Path.Combine(
+            root,
+            "src",
+            "Dynastia.App",
+            "ViewModels",
+            "MainWindowViewModel.Opportunities.cs"));
+
+        Assert.Contains("<primitives:UniformGrid Columns=\"2\" Rows=\"2\" />", xaml);
+        Assert.Contains("PointerPressed=\"OnCandidatePointerPressed\"", xaml);
+        Assert.Contains("Grid.Row=\"1\"", xaml);
+        Assert.Contains("RenownStatusText", xaml);
+        Assert.Contains("ReputationStatusText", xaml);
+        Assert.DoesNotContain("StatusText", xaml.Replace("RenownStatusText", string.Empty).Replace("ReputationStatusText", string.Empty));
+        Assert.DoesNotContain("ApproachText", xaml);
         Assert.DoesNotContain("HobbiesText", xaml);
+        Assert.Contains("count: 4", opportunities);
     }
 
     [Fact]

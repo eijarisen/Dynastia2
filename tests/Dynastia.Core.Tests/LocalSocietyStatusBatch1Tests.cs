@@ -42,13 +42,22 @@ public sealed class LocalSocietyStatusBatch1Tests
     }
 
     [Fact]
+    public void StatusNetWorthIncludesOutstandingPrivateLoanReceivables()
+    {
+        var source = Read("plugins", "Dynastia.Mechanics.Status", "StandardStatusService.cs");
+
+        Assert.Contains("_loans.GetLoansGiven(person).Sum(item => item.RemainingAmount)", source);
+        Assert.Contains("+ receivables - debt", source);
+    }
+
+    [Fact]
     public void PublicCrimeAffairDivorceAndHistoricalEventsFeedPersistentStatus()
     {
         var source = Read("plugins", "Dynastia.Mechanics.Status", "StatusPlugin.cs");
         Assert.Contains("justice.crime", source);
         Assert.DoesNotContain("justice.crime_uncaught", source);
         Assert.Contains("relationship.affair", Read("data", "LocalSociety", "status_event_effects.csv"));
-        Assert.Contains("relationship.divorce", source);
+        Assert.Contains("relationship.divorce", Read("data", "LocalSociety", "status_event_effects.csv"));
         Assert.Contains("historical.household_impact", source);
         Assert.Contains("historicalId", source);
         Assert.Contains("statusRenownDelta", source);

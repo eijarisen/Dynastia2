@@ -117,7 +117,7 @@ public sealed class LocalSocietyCivicOfficeBatch4Tests
         Assert.Contains("community.civic_office_lost", civic);
         Assert.Contains("!actionContext.Actor.Tags.Has(\"civic.office.town_head\")", careerActions);
         Assert.Contains("_civicOfficeResolver()?.GetTownHead", townLife);
-        Assert.Contains("CivicOffice.OfficeTitle", window);
+        Assert.Contains("CivicOfficeTitleText", window);
         Assert.Contains("Approval", viewModel);
         Assert.Contains("OnOfficeDutiesClick", window);
     }

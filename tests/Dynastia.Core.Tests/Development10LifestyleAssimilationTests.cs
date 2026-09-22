@@ -47,7 +47,7 @@ public sealed class Development10LifestyleAssimilationTests
         Assert.Contains("target.Age < 18", viewModel);
         Assert.Contains("GetHouseholdMemberIds(actor)", viewModel);
         Assert.DoesNotContain("_succession.IsControllable(target)", viewModel);
-        Assert.Contains("UniformGrid Columns=\"4\" Rows=\"2\"", window);
+        Assert.Contains("primitives:UniformGrid Columns=\"3\"", window);
         Assert.Contains("<TabControl", window);
         Assert.Contains("<ScrollViewer", window);
     }

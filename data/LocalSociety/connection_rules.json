@@ -111,8 +111,9 @@
     "requestCausedPoorPersistentReputationPenalty": -3
   },
   "poorConnection": {
-    "removeFromActiveViewAtYearEnd": true,
-    "keepOnlyHistoricalConnectionRecord": true
+    "removeFromActiveViewAtYearEndWhenBelowWarm": true,
+    "preserveWarmOrCloseConnections": true,
+    "keepOnlyHistoricalConnectionRecordWhenRemoved": true
   },
   "networkStatus": {
     "prominentConnectionThreshold": 50,

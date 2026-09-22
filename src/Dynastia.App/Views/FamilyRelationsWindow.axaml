@@ -15,9 +15,13 @@
     TransparencyLevelHint="Transparent"
     WindowStartupLocation="CenterOwner"
     Background="#00000000"
-    Title="Relations">
+    Title="Family Relations">
 
     <Window.Styles>
+        <Style Selector="TabItem">
+            <Setter Property="FontFamily" Value="Georgia" />
+            <Setter Property="FontSize" Value="11.5" />
+        </Style>
         <Style Selector="Button.relationAction">
             <Setter Property="Width" Value="170" />
             <Setter Property="Padding" Value="12,7" />
@@ -59,7 +63,7 @@
                 FontFamily="avares://Dynastia.App/Assets/Fonts#Pirata One"
                 FontSize="42"
                 Foreground="#2F1D0E"
-                Text="Relations" />
+                Text="Family Relations" />
 
             <StackPanel
                 Grid.Row="1"
@@ -84,70 +88,6 @@
                         CornerRadius="6">
                         <ScrollViewer VerticalScrollBarVisibility="Auto">
                             <StackPanel Spacing="8">
-                                <Border
-                                    IsVisible="{Binding HasJusticeActions}"
-                                    Margin="6,5"
-                                    Padding="14,11"
-                                    Background="#35FFF4D9"
-                                    BorderBrush="#A17A43"
-                                    BorderThickness="1"
-                                    CornerRadius="4">
-                                    <StackPanel Spacing="8">
-                                        <TextBlock
-                                            FontFamily="Georgia"
-                                            FontSize="16"
-                                            FontWeight="Bold"
-                                            Foreground="#352110"
-                                            Text="Imprisoned Household Members" />
-                                        <ItemsControl ItemsSource="{Binding JusticeActions}">
-                                            <ItemsControl.ItemTemplate>
-                                                <DataTemplate x:DataType="vm:FamilyRelationJusticeActionViewModel">
-                                                    <Grid Margin="0,3" ColumnDefinitions="*,Auto" ColumnSpacing="12">
-                                                        <StackPanel Spacing="2">
-                                                            <TextBlock
-                                                                FontFamily="Georgia"
-                                                                FontSize="14"
-                                                                FontWeight="Bold"
-                                                                Foreground="#46321C"
-                                                                Text="{Binding TargetName}" />
-                                                            <TextBlock
-                                                                FontFamily="Georgia"
-                                                                FontSize="12"
-                                                                Foreground="#5A4630"
-                                                                Text="{Binding CostText}" />
-                                                            <TextBlock
-                                                                FontFamily="Georgia"
-                                                                FontSize="11"
-                                                                Foreground="#7A3528"
-                                                                TextWrapping="Wrap"
-                                                                Text="{Binding UnavailableReason}" />
-                                                        </StackPanel>
-                                                        <Button
-                                                            Grid.Column="1"
-                                                            Classes="relationAction"
-                                                            IsEnabled="{Binding IsAvailable}"
-                                                            Opacity="{Binding DisplayOpacity}"
-                                                            Content="{Binding Label}"
-                                                            Click="OnJusticeActionClick">
-                                                            <ToolTip.Tip>
-                                                                <Border Padding="8" Background="#332719">
-                                                                    <TextBlock
-                                                                        MaxWidth="300"
-                                                                        FontFamily="Georgia"
-                                                                        FontSize="10.5"
-                                                                        LineHeight="17"
-                                                                        Foreground="#F5E6C6"
-                                                                        TextWrapping="Wrap"
-                                                                        Text="{Binding Description}" />
-                                                                </Border>
-                                                            </ToolTip.Tip>
-                                                        </Button>
-                                                    </Grid>
-                                                </DataTemplate>
-                                            </ItemsControl.ItemTemplate>
-                                        </ItemsControl>
-                                    </StackPanel>
-                                </Border>
                                 <ItemsControl ItemsSource="{Binding Households}">
                                 <ItemsControl.ItemTemplate>
                                     <DataTemplate x:DataType="vm:FamilyRelationHouseholdViewModel">
@@ -205,7 +145,7 @@
                                                             Foreground="#352110"
                                                             Text=")" />
                                                     </StackPanel>
-                    
+
                                                     <StackPanel Orientation="Horizontal" Spacing="18">
                                                         <TextBlock
                                                             FontFamily="Georgia"
@@ -232,7 +172,7 @@
                                                             Foreground="#5A3A18"
                                                             Text="{Binding FarmlandText}" />
                                                     </StackPanel>
-                    
+
                                                     <ItemsControl
                                                         Margin="0,3,0,0"
                                                         ItemsSource="{Binding Members}">
@@ -268,9 +208,9 @@
                                                         </ItemsControl.ItemTemplate>
                                                     </ItemsControl>
                                                 </StackPanel>
-                    
+
                                                 <ItemsControl
-                                                    Grid.Column="1"
+                                                    Grid.Column="2"
                                                     HorizontalAlignment="Right"
                                                     VerticalAlignment="Center"
                                                     ItemsSource="{Binding Actions}">
@@ -338,8 +278,20 @@
                         BorderThickness="1.5"
                         CornerRadius="6">
                         <ScrollViewer VerticalScrollBarVisibility="Auto">
-                            <ItemsControl ItemsSource="{Binding Connections}">
-                                <ItemsControl.ItemTemplate>
+                            <StackPanel Spacing="8">
+                                <TextBlock
+                                    IsVisible="{Binding ShowNoConnections}"
+                                    Margin="0,28,0,0"
+                                    HorizontalAlignment="Center"
+                                    FontFamily="Georgia"
+                                    FontSize="14"
+                                    FontStyle="Italic"
+                                    Foreground="#6B4521"
+                                    TextAlignment="Center"
+                                    TextWrapping="Wrap"
+                                    Text="No acquaintances are currently known to this household." />
+                                <ItemsControl IsVisible="{Binding HasConnections}" ItemsSource="{Binding Connections}">
+                                    <ItemsControl.ItemTemplate>
                                     <DataTemplate x:DataType="vm:HouseholdConnectionViewModel">
                                         <Border
                                             Margin="6,5"
@@ -348,8 +300,23 @@
                                             BorderBrush="#A17A43"
                                             BorderThickness="1"
                                             CornerRadius="4">
-                                            <Grid ColumnDefinitions="*,190" ColumnSpacing="18">
-                                                <StackPanel Spacing="6">
+                                            <Grid ColumnDefinitions="100,*,190" ColumnSpacing="14">
+                                                <Border
+                                                    Width="88"
+                                                    Height="112"
+                                                    VerticalAlignment="Top"
+                                                    Background="#54000000"
+                                                    BorderBrush="#9D772E"
+                                                    BorderThickness="1.5"
+                                                    CornerRadius="4">
+                                                    <TextBlock
+                                                        HorizontalAlignment="Center"
+                                                        VerticalAlignment="Center"
+                                                        TextAlignment="Center"
+                                                        FontSize="62"
+                                                        Text="{Binding PortraitEmoji}" />
+                                                </Border>
+                                                <StackPanel Grid.Column="1" Spacing="6">
                                                     <StackPanel Orientation="Horizontal" Spacing="0">
                                                         <TextBlock
                                                             FontFamily="Georgia"
@@ -385,7 +352,7 @@
                                                     <TextBlock FontFamily="Georgia" FontSize="12.5" Foreground="#5A4630" TextWrapping="Wrap" Text="{Binding AssetsText}" />
                                                 </StackPanel>
                                                 <ItemsControl
-                                                    Grid.Column="1"
+                                                    Grid.Column="2"
                                                     HorizontalAlignment="Right"
                                                     VerticalAlignment="Center"
                                                     ItemsSource="{Binding Actions}">
@@ -423,8 +390,9 @@
                                             </Grid>
                                         </Border>
                                     </DataTemplate>
-                                </ItemsControl.ItemTemplate>
-                            </ItemsControl>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </StackPanel>
                         </ScrollViewer>
                     </Border>
                 </TabItem>

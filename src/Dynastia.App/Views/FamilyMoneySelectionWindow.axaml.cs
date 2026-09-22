@@ -7,6 +7,8 @@ namespace Dynastia.App.Views;
 
 public partial class FamilyMoneySelectionWindow : Window
 {
+    private readonly decimal _stepAmount;
+
     public FamilyMoneySelectionWindow()
         : this("Give Money", 1000m)
     {
@@ -14,29 +16,41 @@ public partial class FamilyMoneySelectionWindow : Window
 
     public FamilyMoneySelectionWindow(
         string actionLabel,
-        decimal maximumAmount)
+        decimal maximumAmount,
+        decimal minimumAmount = 1000m,
+        decimal stepAmount = 1000m,
+        string? explanation = null)
     {
         InitializeComponent();
 
-        var maximumThousands =
-            Math.Max(
-                1m,
-                Math.Floor(maximumAmount / 1000m));
+        _stepAmount = Math.Max(1m, stepAmount);
+        var minimumUnits = Math.Max(
+            1m,
+            Math.Ceiling(Math.Max(_stepAmount, minimumAmount) / _stepAmount));
+        var maximumUnits = Math.Max(
+            minimumUnits,
+            Math.Floor(Math.Max(maximumAmount, minimumAmount) / _stepAmount));
 
         Title = actionLabel;
         TitleText.Text = actionLabel;
         ConfirmButton.Content = actionLabel;
-        AmountSlider.Maximum =
-            (double)maximumThousands;
-        MaximumText.Text =
-            $"{maximumThousands * 1000m:N0} zł";
+        AmountSlider.Minimum = (double)minimumUnits;
+        AmountSlider.Maximum = (double)maximumUnits;
+        AmountSlider.Value = (double)minimumUnits;
+        AmountSlider.SmallChange = 1;
+        AmountSlider.LargeChange = Math.Max(1, (double)Math.Round(1000m / _stepAmount));
+        AmountSlider.TickFrequency = 1;
+        AmountSlider.IsSnapToTickEnabled = true;
 
-        ExplanationText.Text =
-            actionLabel.StartsWith(
-                "Request",
-                StringComparison.OrdinalIgnoreCase)
+        MinimumText.Text = $"{minimumUnits * _stepAmount:N0} zł";
+        MaximumText.Text = $"{maximumUnits * _stepAmount:N0} zł";
+
+        ExplanationText.Text = explanation
+            ?? (actionLabel.StartsWith(
+                    "Request",
+                    StringComparison.OrdinalIgnoreCase)
                 ? "Whether the other household agrees depends on the family relationship. The amount is rechecked when the action resolves."
-                : "The gift is paid when the queued action resolves. The amount is rechecked against household wealth at that time.";
+                : "The gift is paid when the queued action resolves. The amount is rechecked against household wealth at that time.");
 
         RefreshAmount();
     }
@@ -45,7 +59,7 @@ public partial class FamilyMoneySelectionWindow : Window
         (decimal)Math.Round(
             AmountSlider.Value,
             MidpointRounding.AwayFromZero)
-        * 1000m;
+        * _stepAmount;
 
     private void OnAmountChanged(
         object? sender,

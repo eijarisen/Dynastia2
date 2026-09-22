@@ -44,6 +44,56 @@
             <Setter Property="Background" Value="#F2E2BD" />
             <Setter Property="BorderBrush" Value="#93662F" />
         </Style>
+        <Style Selector="TextBlock.inventoryEmpty">
+            <Setter Property="Margin" Value="4,0" />
+            <Setter Property="FontFamily" Value="Georgia" />
+            <Setter Property="FontSize" Value="14.5" />
+            <Setter Property="FontStyle" Value="Italic" />
+            <Setter Property="Foreground" Value="#6B5131" />
+        </Style>
+        <Style Selector="Border.inventoryAssetCard">
+            <Setter Property="MinHeight" Value="238" />
+            <Setter Property="Margin" Value="4" />
+            <Setter Property="Padding" Value="11" />
+            <Setter Property="Background" Value="#44F8EDD1" />
+            <Setter Property="BorderBrush" Value="#A17A43" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="4" />
+        </Style>
+        <Style Selector="Border.inventoryAssetIcon">
+            <Setter Property="Width" Value="48" />
+            <Setter Property="Height" Value="48" />
+            <Setter Property="VerticalAlignment" Value="Top" />
+            <Setter Property="Background" Value="#55F4E4BC" />
+            <Setter Property="BorderBrush" Value="#9C7440" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="4" />
+        </Style>
+        <Style Selector="TextBlock.inventoryAssetTitle">
+            <Setter Property="FontFamily" Value="Georgia" />
+            <Setter Property="FontSize" Value="12.5" />
+            <Setter Property="FontWeight" Value="Bold" />
+            <Setter Property="Foreground" Value="#46321C" />
+            <Setter Property="TextWrapping" Value="Wrap" />
+        </Style>
+        <Style Selector="TextBlock.inventoryAssetDetail">
+            <Setter Property="FontFamily" Value="Georgia" />
+            <Setter Property="FontSize" Value="11.5" />
+            <Setter Property="Foreground" Value="#6B5131" />
+            <Setter Property="TextWrapping" Value="Wrap" />
+        </Style>
+        <Style Selector="TextBlock.inventoryAssetValue">
+            <Setter Property="FontFamily" Value="Georgia" />
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="FontWeight" Value="Bold" />
+            <Setter Property="Foreground" Value="#46321C" />
+        </Style>
+        <Style Selector="TextBlock.inventoryInheritanceLabel">
+            <Setter Property="FontFamily" Value="Georgia" />
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="FontWeight" Value="Bold" />
+            <Setter Property="Foreground" Value="#46321C" />
+        </Style>
         <Style Selector="TabItem">
             <Setter Property="FontFamily" Value="Georgia" />
             <Setter Property="FontSize" Value="15" />
@@ -328,15 +378,7 @@
                         HorizontalScrollBarVisibility="Disabled"
                         VerticalScrollBarVisibility="Auto">
                         <StackPanel Spacing="12">
-                            <Grid Margin="4" ColumnDefinitions="*,Auto" ColumnSpacing="12">
-                                <TextBlock
-                                    VerticalAlignment="Center"
-                                    FontFamily="Georgia"
-                                    FontSize="20"
-                                    FontWeight="Bold"
-                                    Foreground="#352110"
-                                    Text="Houses" />
-                                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8">
+                            <StackPanel Height="34" Margin="4" HorizontalAlignment="Right" Orientation="Horizontal" Spacing="8">
                                     <Button
                                         Classes="inventoryAction"
                                         IsEnabled="{Binding CanBuyHouse}"
@@ -347,15 +389,10 @@
                                         IsEnabled="{Binding CanSellHouse}"
                                         Content="Sell a House"
                                         Click="OnSellHouseClick" />
-                                </StackPanel>
-                            </Grid>
+                            </StackPanel>
 
                             <TextBlock
-                                Margin="4,0"
-                                FontFamily="Georgia"
-                                FontSize="12"
-                                FontStyle="Italic"
-                                Foreground="#6B5131"
+                                Classes="inventoryEmpty"
                                 Text="{Binding HouseEmptyText}" />
 
                             <ItemsControl ItemsSource="{Binding Houses}">
@@ -366,24 +403,10 @@
                                 </ItemsControl.ItemsPanel>
                                 <ItemsControl.ItemTemplate>
                                     <DataTemplate x:DataType="vm:InventoryHouseViewModel">
-                                        <Border
-                                            MinHeight="214"
-                                            Margin="4"
-                                            Padding="11"
-                                            Background="#44F8EDD1"
-                                            BorderBrush="#A17A43"
-                                            BorderThickness="1"
-                                            CornerRadius="4">
-                                            <Grid RowDefinitions="Auto,Auto,Auto" RowSpacing="9">
+                                        <Border Classes="inventoryAssetCard">
+                                            <Grid RowDefinitions="108,Auto,Auto" RowSpacing="9">
                                                 <Grid ColumnDefinitions="54,*" ColumnSpacing="10">
-                                                    <Border
-                                                        Width="48"
-                                                        Height="48"
-                                                        VerticalAlignment="Top"
-                                                        Background="#55F4E4BC"
-                                                        BorderBrush="#9C7440"
-                                                        BorderThickness="1"
-                                                        CornerRadius="4">
+                                                    <Border Classes="inventoryAssetIcon">
                                                         <TextBlock
                                                             HorizontalAlignment="Center"
                                                             VerticalAlignment="Center"
@@ -391,24 +414,9 @@
                                                             Text="{Binding Emoji}" />
                                                     </Border>
                                                     <StackPanel Grid.Column="1" Spacing="3">
-                                                        <TextBlock
-                                                            FontFamily="Georgia"
-                                                            FontSize="12.5"
-                                                            FontWeight="Bold"
-                                                            Foreground="#46321C"
-                                                            TextWrapping="Wrap"
-                                                            Text="{Binding TownText}" />
-                                                        <TextBlock
-                                                            FontFamily="Georgia"
-                                                            FontSize="11.5"
-                                                            Foreground="#6B5131"
-                                                            Text="{Binding CapacityText}" />
-                                                        <TextBlock
-                                                            FontFamily="Georgia"
-                                                            FontSize="12"
-                                                            FontWeight="Bold"
-                                                            Foreground="#46321C"
-                                                            Text="{Binding ValueText}" />
+                                                        <TextBlock Classes="inventoryAssetTitle" Text="{Binding TownText}" />
+                                                        <TextBlock Classes="inventoryAssetDetail" Text="{Binding CapacityText}" />
+                                                        <TextBlock Classes="inventoryAssetValue" Text="{Binding ValueText}" />
                                                     </StackPanel>
                                                 </Grid>
 
@@ -423,12 +431,7 @@
                                                 </StackPanel>
 
                                                 <StackPanel Grid.Row="2" Spacing="4">
-                                                    <TextBlock
-                                                        FontFamily="Georgia"
-                                                        FontSize="12"
-                                                        FontWeight="Bold"
-                                                        Foreground="#46321C"
-                                                        Text="Inheritance:" />
+                                                    <TextBlock Classes="inventoryInheritanceLabel" Text="Inheritance:" />
                                                     <ComboBox
                                                         Classes="houseHeir"
                                                         HorizontalAlignment="Left"
@@ -460,15 +463,7 @@
                         HorizontalScrollBarVisibility="Disabled"
                         VerticalScrollBarVisibility="Auto">
                         <StackPanel Spacing="12">
-                            <Grid Margin="4" ColumnDefinitions="*,Auto" ColumnSpacing="12">
-                                <TextBlock
-                                    VerticalAlignment="Center"
-                                    FontFamily="Georgia"
-                                    FontSize="20"
-                                    FontWeight="Bold"
-                                    Foreground="#352110"
-                                    Text="Farmland" />
-                                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8">
+                            <StackPanel Height="34" Margin="4" HorizontalAlignment="Right" Orientation="Horizontal" Spacing="8">
                                     <Button
                                         Classes="inventoryAction"
                                         IsEnabled="{Binding CanBuyFarmland}"
@@ -479,15 +474,10 @@
                                         IsEnabled="{Binding CanSellFarmland}"
                                         Content="{Binding SellFarmlandActionText}"
                                         Click="OnSellFarmlandClick" />
-                                </StackPanel>
-                            </Grid>
+                            </StackPanel>
 
                             <TextBlock
-                                Margin="4,0"
-                                FontFamily="Georgia"
-                                FontSize="12"
-                                FontStyle="Italic"
-                                Foreground="#6B5131"
+                                Classes="inventoryEmpty"
                                 Text="{Binding FarmlandEmptyText}" />
 
                             <ItemsControl ItemsSource="{Binding Farmland}">
@@ -498,24 +488,10 @@
                                 </ItemsControl.ItemsPanel>
                                 <ItemsControl.ItemTemplate>
                                     <DataTemplate x:DataType="vm:InventoryFarmlandViewModel">
-                                        <Border
-                                            MinHeight="214"
-                                            Margin="4"
-                                            Padding="11"
-                                            Background="#44F8EDD1"
-                                            BorderBrush="#A17A43"
-                                            BorderThickness="1"
-                                            CornerRadius="4">
-                                            <Grid RowDefinitions="Auto,Auto,Auto" RowSpacing="9">
+                                        <Border Classes="inventoryAssetCard">
+                                            <Grid RowDefinitions="108,Auto,Auto" RowSpacing="9">
                                                 <Grid ColumnDefinitions="54,*" ColumnSpacing="10">
-                                                    <Border
-                                                        Width="48"
-                                                        Height="48"
-                                                        VerticalAlignment="Top"
-                                                        Background="#55F4E4BC"
-                                                        BorderBrush="#9C7440"
-                                                        BorderThickness="1"
-                                                        CornerRadius="4">
+                                                    <Border Classes="inventoryAssetIcon">
                                                         <TextBlock
                                                             HorizontalAlignment="Center"
                                                             VerticalAlignment="Center"
@@ -523,25 +499,9 @@
                                                             Text="{Binding Emoji}" />
                                                     </Border>
                                                     <StackPanel Grid.Column="1" Spacing="3">
-                                                        <TextBlock
-                                                            FontFamily="Georgia"
-                                                            FontSize="12.5"
-                                                            FontWeight="Bold"
-                                                            Foreground="#46321C"
-                                                            TextWrapping="Wrap"
-                                                            Text="{Binding FarmTypeText}" />
-                                                        <TextBlock
-                                                            FontFamily="Georgia"
-                                                            FontSize="11.5"
-                                                            Foreground="#6B5131"
-                                                            TextWrapping="Wrap"
-                                                            Text="{Binding LivestockText}" />
-                                                        <TextBlock
-                                                            FontFamily="Georgia"
-                                                            FontSize="12"
-                                                            FontWeight="Bold"
-                                                            Foreground="#46321C"
-                                                            Text="{Binding ValueText}" />
+                                                        <TextBlock Classes="inventoryAssetTitle" Text="{Binding FarmTypeText}" />
+                                                        <TextBlock Classes="inventoryAssetDetail" Text="{Binding LivestockText}" />
+                                                        <TextBlock Classes="inventoryAssetValue" Text="{Binding ValueText}" />
                                                     </StackPanel>
                                                 </Grid>
 
@@ -556,12 +516,7 @@
                                                 </StackPanel>
 
                                                 <StackPanel Grid.Row="2" Spacing="4">
-                                                    <TextBlock
-                                                        FontFamily="Georgia"
-                                                        FontSize="12"
-                                                        FontWeight="Bold"
-                                                        Foreground="#46321C"
-                                                        Text="Inheritance:" />
+                                                    <TextBlock Classes="inventoryInheritanceLabel" Text="Inheritance:" />
                                                     <ComboBox
                                                         Classes="houseHeir"
                                                         HorizontalAlignment="Left"
@@ -593,20 +548,10 @@
                         HorizontalScrollBarVisibility="Disabled"
                         VerticalScrollBarVisibility="Auto">
                         <StackPanel Spacing="12">
-                            <TextBlock
-                                Margin="4"
-                                FontFamily="Georgia"
-                                FontSize="20"
-                                FontWeight="Bold"
-                                Foreground="#352110"
-                                Text="Heirlooms" />
+                            <Grid Height="34" Margin="4" />
 
                             <TextBlock
-                                Margin="4,0"
-                                FontFamily="Georgia"
-                                FontSize="12"
-                                FontStyle="Italic"
-                                Foreground="#6B5131"
+                                Classes="inventoryEmpty"
                                 Text="{Binding HeirloomEmptyText}" />
 
                             <ItemsControl ItemsSource="{Binding Heirlooms}">
@@ -617,24 +562,10 @@
                                 </ItemsControl.ItemsPanel>
                                 <ItemsControl.ItemTemplate>
                                     <DataTemplate x:DataType="vm:InventoryHeirloomViewModel">
-                                        <Border
-                                            MinHeight="230"
-                                            Margin="4"
-                                            Padding="11"
-                                            Background="#44F8EDD1"
-                                            BorderBrush="#A17A43"
-                                            BorderThickness="1"
-                                            CornerRadius="4">
-                                            <Grid RowDefinitions="Auto,Auto,Auto" RowSpacing="9">
+                                        <Border Classes="inventoryAssetCard">
+                                            <Grid RowDefinitions="108,Auto,Auto" RowSpacing="9">
                                                 <Grid ColumnDefinitions="54,*" ColumnSpacing="10">
-                                                    <Border
-                                                        Width="48"
-                                                        Height="48"
-                                                        VerticalAlignment="Top"
-                                                        Background="#55F4E4BC"
-                                                        BorderBrush="#9C7440"
-                                                        BorderThickness="1"
-                                                        CornerRadius="4">
+                                                    <Border Classes="inventoryAssetIcon">
                                                         <TextBlock
                                                             HorizontalAlignment="Center"
                                                             VerticalAlignment="Center"
@@ -642,31 +573,10 @@
                                                             Text="{Binding Emoji}" />
                                                     </Border>
                                                     <StackPanel Grid.Column="1" Spacing="3">
-                                                        <TextBlock
-                                                            FontFamily="Georgia"
-                                                            FontSize="12.5"
-                                                            FontWeight="Bold"
-                                                            Foreground="#46321C"
-                                                            TextWrapping="Wrap"
-                                                            Text="{Binding DisplayName}" />
-                                                        <TextBlock
-                                                            FontFamily="Georgia"
-                                                            FontSize="10.8"
-                                                            Foreground="#6B5131"
-                                                            TextWrapping="Wrap"
-                                                            MaxHeight="48"
-                                                            Text="{Binding OriginText}" />
-                                                        <TextBlock
-                                                            FontFamily="Georgia"
-                                                            FontSize="11.5"
-                                                            Foreground="#6B5131"
-                                                            Text="{Binding AcquiredText}" />
-                                                        <TextBlock
-                                                            FontFamily="Georgia"
-                                                            FontSize="12"
-                                                            FontWeight="Bold"
-                                                            Foreground="#46321C"
-                                                            Text="{Binding ValueText}" />
+                                                        <TextBlock Classes="inventoryAssetTitle" Text="{Binding DisplayName}" />
+                                                        <TextBlock Classes="inventoryAssetDetail" MaxHeight="44" Text="{Binding OriginText}" />
+                                                        <TextBlock Classes="inventoryAssetDetail" Text="{Binding AcquiredText}" />
+                                                        <TextBlock Classes="inventoryAssetValue" Text="{Binding ValueText}" />
                                                     </StackPanel>
                                                 </Grid>
 
@@ -681,12 +591,7 @@
                                                 </StackPanel>
 
                                                 <StackPanel Grid.Row="2" Spacing="4">
-                                                    <TextBlock
-                                                        FontFamily="Georgia"
-                                                        FontSize="12"
-                                                        FontWeight="Bold"
-                                                        Foreground="#46321C"
-                                                        Text="Inheritance:" />
+                                                    <TextBlock Classes="inventoryInheritanceLabel" Text="Inheritance:" />
                                                     <ComboBox
                                                         Classes="houseHeir"
                                                         HorizontalAlignment="Left"

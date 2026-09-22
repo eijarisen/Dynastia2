@@ -106,7 +106,7 @@ public sealed class LocalSocietyCourtJusticeBatch7Tests
             "data", "LocalSociety", "status_extension_event_effects.csv");
 
         Assert.True(rules.StolenHeirloomSale.KeepingIsHarmless);
-        Assert.Contains("if (sold.IsStolen)", heirlooms);
+        Assert.Contains("if (sold.IsStolen && justice is not null)", heirlooms);
         Assert.Contains("GetStolenHeirloomSaleDetectionChance", heirlooms);
         Assert.Contains("selling_stolen_property", heirlooms);
         Assert.Contains("justice.stolen_heirloom_sale_caught", heirlooms);
@@ -165,17 +165,25 @@ public sealed class LocalSocietyCourtJusticeBatch7Tests
         Assert.Contains("GetTownAffairsCourtModel", model);
         Assert.Contains("No local court. Criminal matters are handled by outside authorities.", model);
         Assert.Contains("GetCourtProtection(subject)", model);
-        Assert.Contains("GetBailCost(subject)", model);
-        Assert.Contains("GetStolenHeirloomSaleDetectionChance(subject)", model);
+        Assert.Contains("GetCourtProtectionRelatives(subject)", model);
+        Assert.Contains("1m - protection.SentenceMultiplier", model);
+        Assert.DoesNotContain("GetBailCost(subject)", model);
+        Assert.DoesNotContain("GetStolenHeirloomSaleDetectionChance(subject)", model);
         Assert.Contains("Header=\"Court\"", window);
         Assert.Contains("Known Criminal Record", window);
-        Assert.Contains("CourtModel.Actions", window);
-        Assert.Contains("justice.bail_out", relations);
-        Assert.Contains("GetFamilyRelationsJusticeActions", relations);
+        Assert.Contains("Relatives in court / law enforcement", window);
+        Assert.DoesNotContain("CourtModel.Actions", window);
+        Assert.DoesNotContain("Not imprisoned.", window);
+        Assert.DoesNotContain("Selling a stolen Heirloom", window);
+        Assert.DoesNotContain("GetFamilyRelationsJusticeActions", relations);
         var familyWindow = Read(
             "src", "Dynastia.App", "Views", "FamilyRelationsWindow.axaml");
-        Assert.Contains("Imprisoned Household Members", familyWindow);
-        Assert.Contains("JusticeActions", familyWindow);
+        Assert.DoesNotContain("Imprisoned Household Members", familyWindow);
+        Assert.DoesNotContain("JusticeActions", familyWindow);
+        var actions = Read(
+            "plugins", "Dynastia.Mechanics.Justice", "JusticePlugin.Court.cs");
+        Assert.Contains("Id = rules.Bail.ActionId", actions);
+        Assert.Contains("Id = rules.Escape.ActionId", actions);
     }
 
     private static string Read(params string[] parts) =>

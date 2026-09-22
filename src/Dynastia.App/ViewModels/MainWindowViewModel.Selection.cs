@@ -356,8 +356,12 @@ public sealed partial class MainWindowViewModel
                             ? "Yes"
                             : "No",
 
-                Renown = socialStatus?.RenownText ?? string.Empty,
-                Reputation = socialStatus?.ReputationText ?? string.Empty
+                Renown = socialStatus is null
+                    ? string.Empty
+                    : $"Renown: {socialStatus.RenownLabel}",
+                Reputation = socialStatus is null
+                    ? string.Empty
+                    : $"Reputation: {socialStatus.ReputationLabel}"
             };
     }
 

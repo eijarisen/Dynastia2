@@ -343,7 +343,7 @@ internal sealed class CommunityPolicyService : ICommunityPolicyService
             .Select(household => people.TryGetValue(household.HeadId, out var head)
                 ? head
                 : null)
-            .Where(head => head is not null)
+            .Where(head => head is not null && head.Tags.Has("control.playable"))
             .Select(head => head!)
             .GroupBy(head => economy.GetResidenceTown(head).Id, StringComparer.OrdinalIgnoreCase)
             .ToDictionary(
@@ -355,12 +355,24 @@ internal sealed class CommunityPolicyService : ICommunityPolicyService
         if (world is null)
             return;
 
-        // Town policy decisions are autonomous. Resolve every town that still
-        // exists in the current year and also existed in the proposal year;
-        // only playable-household towns publish News.
-        foreach (var currentTown in locations.GetTowns())
+        // Policy simulation is player-local. Running full eligibility,
+        // institution, opportunity and prosperity resolution for every town in
+        // the historical catalog made this phase dominate Next Year. Towns
+        // without a playable lineage household have no player-facing policy
+        // interaction, so leave their policy state dormant until a household
+        // actually lives there. Keep any town with a pending player lobby in
+        // the set as a safety net for same-year relocation edge cases.
+        var proposalLobbies = world.Lobbies
+            .Where(lobby => lobby.ProposalYear == proposalYear)
+            .ToArray();
+        var townsToResolve = playableHeadsByTown.Keys
+            .Concat(proposalLobbies.Select(lobby => lobby.TownId))
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToArray();
+
+        foreach (var townId in townsToResolve)
         {
-            var town = locations.FindTownAtYear(currentTown.Id, proposalYear);
+            var town = locations.FindTownAtYear(townId, proposalYear);
             if (town is null)
                 continue;
 
@@ -375,9 +387,8 @@ internal sealed class CommunityPolicyService : ICommunityPolicyService
                 continue;
             }
 
-            var lobbies = world.Lobbies
-                .Where(lobby => lobby.ProposalYear == proposalYear
-                    && lobby.TownId.Equals(town.Id, StringComparison.OrdinalIgnoreCase))
+            var lobbies = proposalLobbies
+                .Where(lobby => lobby.TownId.Equals(town.Id, StringComparison.OrdinalIgnoreCase))
                 .ToArray();
             var support = proposals.ToDictionary(
                 proposal => proposal.PolicyId,

@@ -21,6 +21,9 @@ public interface IJusticeService
     CourtProtectionSnapshot GetCourtProtection(
         IPerson person);
 
+    IReadOnlyList<CourtProtectionRelativeInfo> GetCourtProtectionRelatives(
+        IPerson person) => Array.Empty<CourtProtectionRelativeInfo>();
+
     int ConvictKnownOffense(
         IPerson person,
         int originalSentence,

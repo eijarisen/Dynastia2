@@ -136,17 +136,17 @@ public sealed class LocalSocietyReligiousCallingsBatch12Tests
 
         Assert.Contains(bonuses, item =>
             item.GetProperty("relationship").GetString() == "Child"
-            && item.GetProperty("activeVocationLevelMax").GetInt32() == 4
+            && TryGetInt(item, "activeVocationLevelMax") == 4
             && item.GetProperty("renown").GetDouble() == 2
             && item.GetProperty("reputation").GetDouble() == 0.5);
         Assert.Contains(bonuses, item =>
             item.GetProperty("relationship").GetString() == "Child"
-            && item.GetProperty("activeVocationLevelMin").GetInt32() == 5
+            && TryGetInt(item, "activeVocationLevelMin") == 5
             && item.GetProperty("renown").GetDouble() == 4
             && item.GetProperty("reputation").GetDouble() == 1);
         Assert.Contains(bonuses, item =>
             item.GetProperty("relationship").GetString() == "Sibling"
-            && item.GetProperty("activeVocationLevelMax").GetInt32() == 4
+            && TryGetInt(item, "activeVocationLevelMax") == 4
             && item.GetProperty("renown").GetDouble() == 1
             && item.GetProperty("reputation").GetDouble() == 0.25);
         Assert.False(root.GetProperty("formerVocationCounts").GetBoolean());
@@ -162,6 +162,11 @@ public sealed class LocalSocietyReligiousCallingsBatch12Tests
         Assert.Contains("Math.Min(_clericalRelativeStatus.RenownCap, renown)", status);
         Assert.Contains("Math.Min(_clericalRelativeStatus.ReputationCap, reputation)", status);
     }
+
+    private static int? TryGetInt(JsonElement item, string propertyName) =>
+        item.TryGetProperty(propertyName, out var value)
+            ? value.GetInt32()
+            : null;
 
     private static void AssertTagGuard(params string[] parts) =>
         Assert.Contains("vocation.religious.active", Read(parts));

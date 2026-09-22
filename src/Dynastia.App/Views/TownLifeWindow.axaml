@@ -46,6 +46,10 @@
             <Setter Property="BorderThickness" Value="1" />
             <Setter Property="CornerRadius" Value="4" />
         </Style>
+        <Style Selector="TabItem">
+            <Setter Property="FontFamily" Value="Georgia" />
+            <Setter Property="FontSize" Value="14.5" />
+        </Style>
         <Style Selector="Button.paperAction">
             <Setter Property="MinWidth" Value="105" />
             <Setter Property="Padding" Value="12,6" />
@@ -95,7 +99,7 @@
                             FontWeight="Bold"
                             Foreground="#5A3A18"
                             Text="{Binding Snapshot.Town.Town}" />
-                        <Grid ColumnDefinitions="104,*" RowDefinitions="Auto,Auto,Auto,Auto" RowSpacing="4">
+                        <Grid ColumnDefinitions="104,*" RowDefinitions="Auto,Auto,Auto,Auto,Auto" RowSpacing="4">
                             <TextBlock Classes="label" FontSize="14.5" Text="Polity" />
                             <TextBlock Grid.Column="1" Classes="value" FontSize="14.5" Text="{Binding Snapshot.Town.PolityName}" />
                             <TextBlock Grid.Row="1" Classes="label" FontSize="14.5" Text="Region" />
@@ -104,6 +108,8 @@
                             <TextBlock Grid.Row="2" Grid.Column="1" Classes="value" FontSize="14.5" Text="{Binding Snapshot.Town.SettlementClassDisplayName}" />
                             <TextBlock Grid.Row="3" Classes="label" FontSize="14.5" Text="Population" />
                             <TextBlock Grid.Row="3" Grid.Column="1" Classes="value" FontSize="14.5" Text="{Binding Snapshot.PopulationText}" />
+                            <TextBlock Grid.Row="4" Classes="label" FontSize="14.5" Text="Mayor" />
+                            <TextBlock Grid.Row="4" Grid.Column="1" Classes="value" FontSize="14.5" Text="{Binding MayorSummaryText}" />
                         </Grid>
                     </StackPanel>
                 </Border>
@@ -135,53 +141,103 @@
                 <TabItem Header="Institutions">
                     <ScrollViewer VerticalScrollBarVisibility="Auto">
                         <StackPanel>
-                            <ContentControl Content="{Binding Snapshot.ChurchCard}">
-                                <ContentControl.ContentTemplate>
-                                    <DataTemplate x:DataType="contracts:TownInstitutionAffairsInfo">
-                                        <Border Margin="4" Padding="7" Background="#25FFF4D9" BorderBrush="#7E623D" BorderThickness="1" CornerRadius="4" Cursor="Hand" PointerPressed="OnInstitutionPointerPressed">
-                                            <Grid ColumnDefinitions="42,*,Auto" ColumnSpacing="10">
-                                                <Border Width="38" Height="38" HorizontalAlignment="Left" VerticalAlignment="Center" Background="#54000000" BorderBrush="#8A6435" BorderThickness="1.5" CornerRadius="4">
-                                                    <TextBlock HorizontalAlignment="Center" VerticalAlignment="Center" TextAlignment="Center" FontSize="25" Text="{Binding Emoji}" />
-                                                </Border>
-                                                <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="1">
-                                                    <TextBlock HorizontalAlignment="Left" TextAlignment="Left" FontSize="13" FontWeight="Bold" TextWrapping="Wrap" Text="{Binding DisplayName}" />
-                                                    <TextBlock HorizontalAlignment="Left" TextAlignment="Left" FontSize="10.5" Foreground="#654621" TextWrapping="Wrap" Text="{Binding Summary}" />
-                                                    <TextBlock IsVisible="{Binding HasServiceText}" Classes="value" FontSize="10.5" TextAlignment="Left" TextWrapping="Wrap" Text="{Binding ServiceText}" />
-                                                </StackPanel>
-                                                <TextBlock Grid.Column="2" Margin="12,0,0,0" VerticalAlignment="Center" Classes="value" FontSize="10.5" Text="{Binding CareerText}" />
-                                            </Grid>
-                                        </Border>
-                                    </DataTemplate>
-                                </ContentControl.ContentTemplate>
-                            </ContentControl>
-
                             <ItemsControl ItemsSource="{Binding Snapshot.InstitutionCards}">
                                 <ItemsControl.ItemsPanel>
                                     <ItemsPanelTemplate>
-                                        <primitives:UniformGrid Columns="4" Rows="2" />
+                                        <primitives:UniformGrid Columns="3" />
                                     </ItemsPanelTemplate>
                                 </ItemsControl.ItemsPanel>
                                 <ItemsControl.ItemTemplate>
                                     <DataTemplate x:DataType="contracts:TownInstitutionAffairsInfo">
                                         <Border Margin="4" Padding="7" Background="#25FFF4D9" BorderBrush="#7E623D" BorderThickness="1" CornerRadius="4" Cursor="Hand" PointerPressed="OnInstitutionPointerPressed">
                                             <StackPanel Spacing="5">
-                                                <Grid ColumnDefinitions="42,*" ColumnSpacing="10">
-                                                    <Border Width="38" Height="38" HorizontalAlignment="Left" VerticalAlignment="Top" Background="#54000000" BorderBrush="#8A6435" BorderThickness="1.5" CornerRadius="4">
-                                                        <TextBlock HorizontalAlignment="Center" VerticalAlignment="Center" TextAlignment="Center" FontSize="25" Text="{Binding Emoji}" />
+                                                <Grid ColumnDefinitions="52,*" ColumnSpacing="11">
+                                                    <Border Width="48" Height="48" HorizontalAlignment="Left" VerticalAlignment="Top" Background="#54000000" BorderBrush="#8A6435" BorderThickness="1.5" CornerRadius="4">
+                                                        <TextBlock HorizontalAlignment="Center" VerticalAlignment="Center" TextAlignment="Center" FontSize="32" Text="{Binding Emoji}" />
                                                     </Border>
-                                                    <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="1">
-                                                        <TextBlock HorizontalAlignment="Left" TextAlignment="Left" FontSize="13" FontWeight="Bold" TextWrapping="Wrap" Text="{Binding DisplayName}" />
-                                                        <TextBlock HorizontalAlignment="Left" TextAlignment="Left" FontSize="10.5" Foreground="#654621" TextWrapping="Wrap" Text="{Binding Summary}" />
+                                                    <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="2">
+                                                        <TextBlock HorizontalAlignment="Left" TextAlignment="Left" FontSize="14.5" FontWeight="Bold" TextWrapping="Wrap" Text="{Binding DisplayName}" />
+                                                        <TextBlock HorizontalAlignment="Left" TextAlignment="Left" FontSize="11.5" Foreground="#654621" TextWrapping="Wrap" Text="{Binding Summary}" />
                                                     </StackPanel>
                                                 </Grid>
-                                                <TextBlock IsVisible="{Binding HasServiceText}" Classes="value" FontSize="10.5" TextAlignment="Left" TextWrapping="Wrap" Text="{Binding ServiceText}" />
-                                                <TextBlock Classes="value" FontSize="10.5" TextAlignment="Left" TextWrapping="Wrap" Text="{Binding CareerText}" />
+                                                <TextBlock IsVisible="{Binding HasServiceText}" Classes="value" FontSize="11.5" TextAlignment="Left" TextWrapping="Wrap" Text="{Binding ServiceText}" />
+                                                <TextBlock Classes="value" FontSize="11.5" TextAlignment="Left" TextWrapping="Wrap" Text="{Binding CareerText}" />
                                             </StackPanel>
                                         </Border>
                                     </DataTemplate>
                                 </ItemsControl.ItemTemplate>
                             </ItemsControl>
                         </StackPanel>
+                    </ScrollViewer>
+                </TabItem>
+
+                <TabItem Header="Community" IsVisible="{Binding ShowCommunityTab}">
+                    <ScrollViewer VerticalScrollBarVisibility="Auto">
+                        <Grid Margin="6" ColumnDefinitions="3*,4*" ColumnSpacing="12">
+                            <StackPanel Spacing="8">
+                                <Border IsVisible="{Binding HasCivicOffice}" Padding="10,8" Background="#20FFF4D9" BorderBrush="#A17A43" BorderThickness="1" CornerRadius="4">
+                                    <StackPanel Spacing="7">
+                                        <Grid ColumnDefinitions="80,*" ColumnSpacing="9">
+                                            <Border Width="72" Height="88" Background="#54000000" BorderBrush="#9D772E" BorderThickness="1.5" CornerRadius="4">
+                                                <TextBlock HorizontalAlignment="Center" VerticalAlignment="Center" TextAlignment="Center" FontSize="50" Text="{Binding CivicOfficePortrait}" />
+                                            </Border>
+                                            <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="2">
+                                                <TextBlock FontSize="15.5" FontWeight="Bold" TextWrapping="Wrap" Text="{Binding CivicOfficeNameText}" />
+                                                <TextBlock FontSize="12.5" FontWeight="SemiBold" TextWrapping="Wrap" Text="{Binding CivicOfficeTitleText}" />
+                                                <TextBlock FontSize="11.5" Foreground="#654621" Text="{Binding CivicOfficeAgeText}" />
+                                                <TextBlock FontSize="11" Foreground="#654621" Text="{Binding CivicOfficeRenownText}" />
+                                                <TextBlock FontSize="11" Foreground="#654621" Text="{Binding CivicOfficeReputationText}" />
+                                                <TextBlock FontSize="11" FontWeight="Bold" Foreground="#654621" Text="{Binding CivicOfficeApprovalText}" />
+                                                <TextBlock FontSize="10.5" Foreground="#654621" Text="{Binding CivicOfficeTermText}" />
+                                            </StackPanel>
+                                        </Grid>
+                                        <Button IsVisible="{Binding HasOfficeDutiesAction}" Classes="paperAction" HorizontalAlignment="Stretch" IsEnabled="{Binding CanPerformOfficeDuties}" Content="Perform Duties" ToolTip.Tip="{Binding OfficeDutiesUnavailableReason}" Click="OnOfficeDutiesClick" />
+                                    </StackPanel>
+                                </Border>
+
+                                <TextBlock FontSize="12" FontWeight="Bold" Text="Active policies" />
+                                <TextBlock IsVisible="{Binding ShowNoActiveCommunityPolicies}" FontSize="10.5" FontStyle="Italic" TextWrapping="Wrap" Text="No temporary policy is currently active." />
+                                <ItemsControl ItemsSource="{Binding ActiveCommunityPolicies}">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate x:DataType="vm:TownAffairsActivePolicyViewModel">
+                                            <Border Margin="1" Padding="7,5" Background="#18FFF4D9" BorderBrush="#B18C59" BorderThickness="1" CornerRadius="4">
+                                                <StackPanel Spacing="1">
+                                                    <TextBlock FontSize="11.5" FontWeight="Bold" TextWrapping="Wrap" Text="{Binding Policy.DisplayName}" />
+                                                    <TextBlock FontSize="10" TextWrapping="Wrap" Text="{Binding Policy.Description}" />
+                                                    <TextBlock FontSize="10" Foreground="#654621" Text="{Binding DurationText}" />
+                                                </StackPanel>
+                                            </Border>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </StackPanel>
+
+                            <StackPanel Grid.Column="1" Spacing="7">
+                                <TextBlock FontSize="13" FontWeight="Bold" Text="This year's proposals" />
+                                <TextBlock IsVisible="{Binding ShowCommunityEmpty}" Margin="0,12,0,0" HorizontalAlignment="Center" TextAlignment="Center" FontStyle="Italic" Text="No eligible community proposals are available this year." />
+                                <ItemsControl ItemsSource="{Binding CommunityProposals}">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate x:DataType="vm:TownAffairsCommunityProposalViewModel">
+                                            <Border Margin="2" Padding="9,7" Background="#25FFF4D9" BorderBrush="#A17A43" BorderThickness="1" CornerRadius="4" Opacity="{Binding DisplayOpacity}" ToolTip.Tip="{Binding UnavailableReason}">
+                                                <Grid ColumnDefinitions="66,*,Auto" ColumnSpacing="9">
+                                                    <Border Width="58" Height="70" VerticalAlignment="Top" Background="#54000000" BorderBrush="#9D772E" BorderThickness="1.3" CornerRadius="4">
+                                                        <TextBlock HorizontalAlignment="Center" VerticalAlignment="Center" TextAlignment="Center" FontSize="40" Text="{Binding ProposerPortrait}" />
+                                                    </Border>
+                                                    <StackPanel Grid.Column="1" Spacing="2">
+                                                        <TextBlock FontSize="13.5" FontWeight="Bold" TextWrapping="Wrap" Text="{Binding Proposal.DisplayName}" />
+                                                        <TextBlock FontSize="11" TextWrapping="Wrap" Text="{Binding Proposal.Description}" />
+                                                        <TextBlock FontSize="10.5" Foreground="#654621" TextWrapping="Wrap" Text="{Binding ProposerText}" />
+                                                        <TextBlock FontSize="10.5" Foreground="#654621" TextWrapping="Wrap" Text="{Binding DetailText}" />
+                                                        <TextBlock IsVisible="{Binding HasLobbyBonus}" FontSize="11" FontWeight="Bold" Text="{Binding LobbyBonusText}" />
+                                                    </StackPanel>
+                                                    <Button Grid.Column="2" Classes="paperAction" VerticalAlignment="Center" IsEnabled="{Binding IsAvailable}" Content="Lobby" Click="OnCommunityLobbyClick" />
+                                                </Grid>
+                                            </Border>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </StackPanel>
+                        </Grid>
                     </ScrollViewer>
                 </TabItem>
 
@@ -265,7 +321,6 @@
                                 </ItemsControl.ItemTemplate>
                             </ItemsControl>
 
-                            <TextBlock Classes="sectionHeader" Text="Current Health / Conditions" />
                             <Border Padding="10,7" Background="#20FFF4D9" BorderBrush="#A17A43" BorderThickness="1" CornerRadius="4">
                                 <StackPanel Spacing="2">
                                     <TextBlock FontWeight="Bold" Text="{Binding HealthSummary.HealthText}" />
@@ -273,61 +328,88 @@
                                 </StackPanel>
                             </Border>
 
-                            <TextBlock Classes="sectionHeader" Margin="0,6,0,0" Text="Treatment / Heal" />
-                            <TextBlock IsVisible="{Binding ShowTreatmentEmpty}" FontSize="11.5" FontStyle="Italic" Text="No treatment or healing action is currently available." />
-                            <ItemsControl ItemsSource="{Binding TreatmentHealthActions}">
-                                <ItemsControl.ItemTemplate>
-                                    <DataTemplate x:DataType="vm:TownAffairsHealthActionViewModel">
-                                        <Border Margin="2" Padding="10,7" Background="#25FFF4D9" BorderBrush="#A17A43" BorderThickness="1" CornerRadius="4" Opacity="{Binding DisplayOpacity}" ToolTip.Tip="{Binding UnavailableReason}">
-                                            <Grid ColumnDefinitions="54,*,Auto" ColumnSpacing="10">
-                                                <TextBlock HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="28" Text="{Binding Emoji}" />
-                                                <StackPanel Grid.Column="1" Spacing="2">
-                                                    <TextBlock FontSize="14" FontWeight="Bold" Text="{Binding Label}" />
-                                                    <TextBlock FontSize="11.5" TextWrapping="Wrap" Text="{Binding Description}" />
-                                                    <TextBlock IsVisible="{Binding HasCost}" FontSize="11.5" FontWeight="Bold" Text="{Binding CostText}" />
-                                                </StackPanel>
-                                                <Button Grid.Column="2" Classes="paperAction" VerticalAlignment="Center" IsEnabled="{Binding IsAvailable}" Content="Queue" Click="OnHealthActionClick" />
-                                            </Grid>
-                                        </Border>
-                                    </DataTemplate>
-                                </ItemsControl.ItemTemplate>
-                            </ItemsControl>
+                            <StackPanel IsVisible="{Binding HasTreatmentHealthActions}" Spacing="4">
+                                <TextBlock Classes="sectionHeader" Margin="0,6,0,0" Text="Treatment / Heal" />
+                                <ItemsControl ItemsSource="{Binding TreatmentHealthActions}">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate x:DataType="vm:TownAffairsHealthActionViewModel">
+                                            <Border Margin="2" Padding="10,7" Background="#25FFF4D9" BorderBrush="#A17A43" BorderThickness="1" CornerRadius="4" Opacity="{Binding DisplayOpacity}" ToolTip.Tip="{Binding UnavailableReason}">
+                                                <Grid ColumnDefinitions="54,*,Auto" ColumnSpacing="10">
+                                                    <TextBlock HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="28" Text="{Binding Emoji}" />
+                                                    <StackPanel Grid.Column="1" Spacing="2">
+                                                        <TextBlock FontSize="14" FontWeight="Bold" Text="{Binding Label}" />
+                                                        <TextBlock FontSize="11.5" TextWrapping="Wrap" Text="{Binding Description}" />
+                                                        <TextBlock IsVisible="{Binding HasCost}" FontSize="11.5" FontWeight="Bold" Text="{Binding CostText}" />
+                                                    </StackPanel>
+                                                    <Button Grid.Column="2" Classes="paperAction" VerticalAlignment="Center" IsEnabled="{Binding IsAvailable}" Content="Queue" Click="OnHealthActionClick" />
+                                                </Grid>
+                                            </Border>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </StackPanel>
 
-                            <TextBlock Classes="sectionHeader" Margin="0,6,0,0" Text="Therapy" />
-                            <TextBlock IsVisible="{Binding ShowTherapyEmpty}" FontSize="11.5" FontStyle="Italic" Text="No Therapy action is currently relevant or available." />
-                            <ItemsControl ItemsSource="{Binding TherapyHealthActions}">
-                                <ItemsControl.ItemTemplate>
-                                    <DataTemplate x:DataType="vm:TownAffairsHealthActionViewModel">
-                                        <Border Margin="2" Padding="10,7" Background="#25FFF4D9" BorderBrush="#A17A43" BorderThickness="1" CornerRadius="4" Opacity="{Binding DisplayOpacity}" ToolTip.Tip="{Binding UnavailableReason}">
-                                            <Grid ColumnDefinitions="54,*,Auto" ColumnSpacing="10">
-                                                <TextBlock HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="28" Text="{Binding Emoji}" />
-                                                <StackPanel Grid.Column="1" Spacing="2">
-                                                    <TextBlock FontSize="14" FontWeight="Bold" Text="{Binding Label}" />
-                                                    <TextBlock FontSize="11.5" TextWrapping="Wrap" Text="{Binding Description}" />
-                                                    <TextBlock IsVisible="{Binding HasCost}" FontSize="11.5" FontWeight="Bold" Text="{Binding CostText}" />
-                                                </StackPanel>
-                                                <Button Grid.Column="2" Classes="paperAction" VerticalAlignment="Center" IsEnabled="{Binding IsAvailable}" Content="Queue" Click="OnHealthActionClick" />
-                                            </Grid>
-                                        </Border>
-                                    </DataTemplate>
-                                </ItemsControl.ItemTemplate>
-                            </ItemsControl>
+                            <StackPanel IsVisible="{Binding HasTherapyHealthActions}" Spacing="4">
+                                <TextBlock Classes="sectionHeader" Margin="0,6,0,0" Text="Therapy" />
+                                <ItemsControl ItemsSource="{Binding TherapyHealthActions}">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate x:DataType="vm:TownAffairsHealthActionViewModel">
+                                            <Border Margin="2" Padding="10,7" Background="#25FFF4D9" BorderBrush="#A17A43" BorderThickness="1" CornerRadius="4" Opacity="{Binding DisplayOpacity}" ToolTip.Tip="{Binding UnavailableReason}">
+                                                <Grid ColumnDefinitions="54,*,Auto" ColumnSpacing="10">
+                                                    <TextBlock HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="28" Text="{Binding Emoji}" />
+                                                    <StackPanel Grid.Column="1" Spacing="2">
+                                                        <TextBlock FontSize="14" FontWeight="Bold" Text="{Binding Label}" />
+                                                        <TextBlock FontSize="11.5" TextWrapping="Wrap" Text="{Binding Description}" />
+                                                        <TextBlock IsVisible="{Binding HasCost}" FontSize="11.5" FontWeight="Bold" Text="{Binding CostText}" />
+                                                    </StackPanel>
+                                                    <Button Grid.Column="2" Classes="paperAction" VerticalAlignment="Center" IsEnabled="{Binding IsAvailable}" Content="Queue" Click="OnHealthActionClick" />
+                                                </Grid>
+                                            </Border>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </StackPanel>
 
-                            <TextBlock Classes="sectionHeader" Margin="0,6,0,0" Text="Medical Improvements" />
-                            <TextBlock FontSize="11.5" TextWrapping="Wrap" Text="{Binding MedicalQualityText}" />
-                            <TextBlock IsVisible="{Binding ShowMedicalImprovementEmpty}" FontSize="11.5" FontStyle="Italic" TextWrapping="Wrap" Text="No Medical Improvement is currently available for this adult at the local facility." />
-                            <ItemsControl ItemsSource="{Binding MedicalImprovementActions}">
+                            <StackPanel IsVisible="{Binding HasMedicalImprovementActions}" Spacing="4">
+                                <TextBlock Classes="sectionHeader" Margin="0,6,0,0" Text="Medical Improvements" />
+                                <TextBlock FontSize="11.5" TextWrapping="Wrap" Text="{Binding MedicalQualityText}" />
+                                <ItemsControl ItemsSource="{Binding MedicalImprovementActions}">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate x:DataType="vm:TownAffairsHealthActionViewModel">
+                                            <Border Margin="2" Padding="10,7" Background="#25FFF4D9" BorderBrush="#A17A43" BorderThickness="1" CornerRadius="4" Opacity="{Binding DisplayOpacity}" ToolTip.Tip="{Binding UnavailableReason}">
+                                                <Grid ColumnDefinitions="54,*,Auto" ColumnSpacing="10">
+                                                    <TextBlock HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="28" Text="{Binding Emoji}" />
+                                                    <StackPanel Grid.Column="1" Spacing="2">
+                                                        <TextBlock FontSize="14" FontWeight="Bold" Text="{Binding Label}" />
+                                                        <TextBlock FontSize="11.5" TextWrapping="Wrap" Text="{Binding Description}" />
+                                                        <TextBlock IsVisible="{Binding HasCost}" FontSize="11.5" FontWeight="Bold" Text="{Binding CostText}" />
+                                                    </StackPanel>
+                                                    <Button Grid.Column="2" Classes="paperAction" VerticalAlignment="Center" IsEnabled="{Binding IsAvailable}" Content="Queue" Click="OnHealthActionClick" />
+                                                </Grid>
+                                            </Border>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </StackPanel>
+                        </StackPanel>
+                    </ScrollViewer>
+                </TabItem>
+
+                <TabItem Header="Church" IsVisible="{Binding ShowChurchTab}">
+                    <ScrollViewer VerticalScrollBarVisibility="Auto">
+                        <StackPanel Margin="6" Spacing="8">
+                            <TextBlock IsVisible="{Binding ShowChurchEmpty}" Margin="0,18,0,0" HorizontalAlignment="Center" TextAlignment="Center" FontStyle="Italic" Text="No Church action is currently available." />
+                            <ItemsControl ItemsSource="{Binding ChurchActions}">
                                 <ItemsControl.ItemTemplate>
-                                    <DataTemplate x:DataType="vm:TownAffairsHealthActionViewModel">
+                                    <DataTemplate x:DataType="vm:TownAffairsChurchActionViewModel">
                                         <Border Margin="2" Padding="10,7" Background="#25FFF4D9" BorderBrush="#A17A43" BorderThickness="1" CornerRadius="4" Opacity="{Binding DisplayOpacity}" ToolTip.Tip="{Binding UnavailableReason}">
                                             <Grid ColumnDefinitions="54,*,Auto" ColumnSpacing="10">
                                                 <TextBlock HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="28" Text="{Binding Emoji}" />
-                                                <StackPanel Grid.Column="1" Spacing="2">
-                                                    <TextBlock FontSize="14" FontWeight="Bold" Text="{Binding Label}" />
-                                                    <TextBlock FontSize="11.5" TextWrapping="Wrap" Text="{Binding Description}" />
-                                                    <TextBlock IsVisible="{Binding HasCost}" FontSize="11.5" FontWeight="Bold" Text="{Binding CostText}" />
+                                                <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="2">
+                                                    <TextBlock FontSize="14" FontWeight="Bold" TextWrapping="Wrap" Text="{Binding Label}" />
+                                                    <TextBlock IsVisible="{Binding HasAmount}" FontSize="11.5" FontWeight="Bold" Text="{Binding AmountText}" />
                                                 </StackPanel>
-                                                <Button Grid.Column="2" Classes="paperAction" VerticalAlignment="Center" IsEnabled="{Binding IsAvailable}" Content="Queue" Click="OnHealthActionClick" />
+                                                <Button Grid.Column="2" Classes="paperAction" VerticalAlignment="Center" IsEnabled="{Binding IsAvailable}" Content="Queue" Click="OnChurchActionClick" ToolTip.Tip="{Binding Description}" />
                                             </Grid>
                                         </Border>
                                     </DataTemplate>
@@ -382,7 +464,6 @@
                 <TabItem Header="Bank" IsVisible="{Binding ShowBankTab}">
                     <ScrollViewer VerticalScrollBarVisibility="Auto">
                         <StackPanel Margin="6" Spacing="10">
-                            <TextBlock Classes="sectionHeader" Text="{Binding Snapshot.Bank.DisplayName}" />
                             <TextBlock FontSize="12.5" TextWrapping="Wrap" Text="{Binding BankStatusText}" />
 
                             <Border Padding="12,9" Background="#25FFF4D9" BorderBrush="#A17A43" BorderThickness="1" CornerRadius="4">
@@ -410,39 +491,6 @@
                     </ScrollViewer>
                 </TabItem>
 
-                <TabItem Header="Church" IsVisible="{Binding ShowChurchTab}">
-                    <ScrollViewer VerticalScrollBarVisibility="Auto">
-                        <StackPanel Margin="6" Spacing="8">
-                            <Grid ColumnDefinitions="Auto,*" ColumnSpacing="10">
-                                <TextBlock VerticalAlignment="Center" FontSize="30" Text="⛪" />
-                                <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="1">
-                                    <TextBlock Classes="sectionHeader" Text="{Binding Snapshot.Church.DisplayName}" />
-                                    <TextBlock FontSize="12" Foreground="#654621" Text="{Binding Snapshot.Church.Summary}" />
-                                </StackPanel>
-                            </Grid>
-                            <TextBlock FontSize="11.5" TextWrapping="Wrap" Text="Church actions are queued for the next year. Religious Study costs 3,000 zł and has a 45–65% success chance based on Church tier; attendance has only a small Morals effect, while charity and donations primarily affect local Status." />
-                            <TextBlock IsVisible="{Binding ShowChurchEmpty}" Margin="0,18,0,0" HorizontalAlignment="Center" TextAlignment="Center" FontStyle="Italic" Text="No Church action is currently available." />
-                            <ItemsControl ItemsSource="{Binding ChurchActions}">
-                                <ItemsControl.ItemTemplate>
-                                    <DataTemplate x:DataType="vm:TownAffairsChurchActionViewModel">
-                                        <Border Margin="2" Padding="10,7" Background="#25FFF4D9" BorderBrush="#A17A43" BorderThickness="1" CornerRadius="4" Opacity="{Binding DisplayOpacity}" ToolTip.Tip="{Binding UnavailableReason}">
-                                            <Grid ColumnDefinitions="54,*,Auto" ColumnSpacing="10">
-                                                <TextBlock HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="28" Text="{Binding Emoji}" />
-                                                <StackPanel Grid.Column="1" Spacing="2">
-                                                    <TextBlock FontSize="14" FontWeight="Bold" TextWrapping="Wrap" Text="{Binding Label}" />
-                                                    <TextBlock FontSize="11.5" TextWrapping="Wrap" Text="{Binding Description}" />
-                                                    <TextBlock IsVisible="{Binding HasAmount}" FontSize="11.5" FontWeight="Bold" Text="{Binding AmountText}" />
-                                                </StackPanel>
-                                                <Button Grid.Column="2" Classes="paperAction" VerticalAlignment="Center" IsEnabled="{Binding IsAvailable}" Content="Queue" Click="OnChurchActionClick" />
-                                            </Grid>
-                                        </Border>
-                                    </DataTemplate>
-                                </ItemsControl.ItemTemplate>
-                            </ItemsControl>
-                        </StackPanel>
-                    </ScrollViewer>
-                </TabItem>
-
                 <TabItem Header="Court" IsVisible="{Binding ShowCourtTab}">
                     <ScrollViewer VerticalScrollBarVisibility="Auto">
                         <StackPanel Margin="6" Spacing="8">
@@ -464,117 +512,51 @@
                                 <StackPanel Grid.Column="1" Spacing="1">
                                     <TextBlock Classes="sectionHeader" Text="Court / Justice" />
                                     <TextBlock FontSize="12" TextWrapping="Wrap" Text="{Binding CourtModel.CourtText}" />
-                                    <TextBlock IsVisible="{Binding CourtModel.ShowNoLocalCourt}" FontSize="11.5" FontStyle="Italic" TextWrapping="Wrap" Text="Court actions still function through outside authorities." />
                                 </StackPanel>
                             </Grid>
 
                             <Border Padding="10,8" Background="#20FFF4D9" BorderBrush="#A17A43" BorderThickness="1" CornerRadius="4">
-                                <StackPanel Spacing="3">
-                                    <TextBlock FontWeight="Bold" Text="{Binding CourtModel.ProtectionText}" />
-                                    <TextBlock IsVisible="{Binding CourtModel.HasProtectionHelper}" FontSize="11.5" TextWrapping="Wrap" Text="{Binding CourtModel.ProtectionHelperText}" />
-                                    <TextBlock FontSize="11.5" Text="{Binding CourtModel.ImprisonmentText}" />
-                                    <TextBlock IsVisible="{Binding CourtModel.HasBailCost}" FontSize="11.5" FontWeight="Bold" Text="{Binding CourtModel.BailCostText}" />
-                                    <TextBlock FontSize="11.5" TextWrapping="Wrap" Text="{Binding CourtModel.StolenSaleRiskText}" />
+                                <StackPanel Spacing="6">
+                                    <TextBlock FontSize="13" FontWeight="Bold" Text="{Binding CourtModel.ProtectionText}" />
+                                    <TextBlock FontSize="12" FontWeight="Bold" Text="Relatives in court / law enforcement" />
+                                    <TextBlock IsVisible="{Binding CourtModel.ShowNoProtectionRelatives}" FontSize="11.5" FontStyle="Italic" Text="None." />
+                                    <ItemsControl ItemsSource="{Binding CourtModel.ProtectionRelatives}">
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate x:DataType="contracts:CourtProtectionRelativeInfo">
+                                                <Grid Margin="0,2" ColumnDefinitions="*,Auto" ColumnSpacing="12">
+                                                    <StackPanel>
+                                                        <TextBlock FontSize="12" FontWeight="Bold" Text="{Binding Name}" />
+                                                        <TextBlock FontSize="11" Foreground="#654621" Text="{Binding JobTitle}" />
+                                                    </StackPanel>
+                                                    <StackPanel Grid.Column="1" HorizontalAlignment="Right">
+                                                        <TextBlock HorizontalAlignment="Right" FontSize="11" FontWeight="Bold" Text="{Binding CareerName}" />
+                                                        <TextBlock HorizontalAlignment="Right" FontSize="10.5" Foreground="#654621" Text="{Binding JobLevel, StringFormat='Level {0}'}" />
+                                                    </StackPanel>
+                                                </Grid>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
                                 </StackPanel>
                             </Border>
 
-                            <ItemsControl ItemsSource="{Binding CourtModel.Actions}">
-                                <ItemsControl.ItemTemplate>
-                                    <DataTemplate x:DataType="vm:TownAffairsCourtActionViewModel">
-                                        <Border Margin="2" Padding="10,7" Background="#25FFF4D9" BorderBrush="#A17A43" BorderThickness="1" CornerRadius="4" Opacity="{Binding DisplayOpacity}" ToolTip.Tip="{Binding UnavailableReason}">
-                                            <Grid ColumnDefinitions="54,*,Auto" ColumnSpacing="10">
-                                                <TextBlock HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="28" Text="{Binding Emoji}" />
-                                                <StackPanel Grid.Column="1" Spacing="2">
-                                                    <TextBlock FontSize="14" FontWeight="Bold" Text="{Binding Label}" />
-                                                    <TextBlock FontSize="11.5" TextWrapping="Wrap" Text="{Binding Description}" />
+                            <Border Padding="10,8" Background="#20FFF4D9" BorderBrush="#A17A43" BorderThickness="1" CornerRadius="4">
+                                <StackPanel Spacing="6">
+                                    <TextBlock FontSize="13" FontWeight="Bold" Text="Known Criminal Record" />
+                                    <TextBlock IsVisible="{Binding CourtModel.ShowNoCriminalRecord}" FontSize="11.5" FontStyle="Italic" Text="No known criminal offenses." />
+                                    <ItemsControl ItemsSource="{Binding CourtModel.CriminalRecord}">
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate x:DataType="contracts:CriminalRecordEntryInfo">
+                                                <StackPanel Margin="0,2" Spacing="1">
+                                                    <TextBlock FontSize="12.5" FontWeight="Bold" Text="{Binding CrimeName}" />
+                                                    <TextBlock FontSize="11.5" Text="{Binding Year, StringFormat='Year {0}'}" />
+                                                    <TextBlock FontSize="11.5" Text="{Binding OriginalSentence, StringFormat='Sentence: {0} years originally'}" />
+                                                    <TextBlock FontSize="11.5" Text="{Binding FinalSentence, StringFormat='Final sentence: {0} years'}" />
                                                 </StackPanel>
-                                                <Button Grid.Column="2" Classes="paperAction" VerticalAlignment="Center" IsEnabled="{Binding IsAvailable}" Content="Queue" Click="OnCourtActionClick" />
-                                            </Grid>
-                                        </Border>
-                                    </DataTemplate>
-                                </ItemsControl.ItemTemplate>
-                            </ItemsControl>
-
-                            <TextBlock Margin="0,4,0,0" FontSize="13" FontWeight="Bold" Text="Known Criminal Record" />
-                            <TextBlock IsVisible="{Binding CourtModel.ShowNoCriminalRecord}" FontSize="11.5" FontStyle="Italic" Text="No known criminal offenses." />
-                            <ItemsControl ItemsSource="{Binding CourtModel.CriminalRecord}">
-                                <ItemsControl.ItemTemplate>
-                                    <DataTemplate x:DataType="contracts:CriminalRecordEntryInfo">
-                                        <Border Margin="2" Padding="9,6" Background="#18FFF4D9" BorderBrush="#B18C59" BorderThickness="1" CornerRadius="4">
-                                            <StackPanel>
-                                                <TextBlock FontSize="12.5" FontWeight="Bold" Text="{Binding CrimeName}" />
-                                                <TextBlock FontSize="11.5" Text="{Binding Year, StringFormat='Year {0}'}" />
-                                                <TextBlock FontSize="11.5" Text="{Binding OriginalSentence, StringFormat='Sentence: {0} years originally'}" />
-                                                <TextBlock FontSize="11.5" Text="{Binding FinalSentence, StringFormat='Final sentence: {0} years'}" />
-                                            </StackPanel>
-                                        </Border>
-                                    </DataTemplate>
-                                </ItemsControl.ItemTemplate>
-                            </ItemsControl>
-                        </StackPanel>
-                    </ScrollViewer>
-                </TabItem>
-
-                <TabItem Header="Community" IsVisible="{Binding ShowCommunityTab}">
-                    <ScrollViewer VerticalScrollBarVisibility="Auto">
-                        <StackPanel Margin="6" Spacing="10">
-                            <Grid ColumnDefinitions="Auto,*" ColumnSpacing="10">
-                                <TextBlock VerticalAlignment="Center" FontSize="30" Text="🏛️" />
-                                <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="1">
-                                    <TextBlock Classes="sectionHeader" Text="Community" />
-                                    <TextBlock FontSize="11.5" TextWrapping="Wrap" Text="Each year the town considers three deterministic local proposals. You may spend the household's annual action lobbying one proposal; passage is never guaranteed." />
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
                                 </StackPanel>
-                            </Grid>
-
-                            <Border IsVisible="{Binding HasCivicOffice}" Padding="10,8" Background="#20FFF4D9" BorderBrush="#A17A43" BorderThickness="1" CornerRadius="4">
-                                <Grid RowDefinitions="Auto,Auto" ColumnDefinitions="*,Auto" ColumnSpacing="10" RowSpacing="5">
-                                    <StackPanel Spacing="2">
-                                        <TextBlock FontSize="13" FontWeight="Bold" Text="{Binding CivicOffice.OfficeTitle}" />
-                                        <TextBlock FontSize="12" FontWeight="SemiBold" Text="{Binding CivicOfficePersonText}" />
-                                        <TextBlock FontSize="11" Foreground="#654621" Text="{Binding CivicOfficeStandingText}" />
-                                        <TextBlock FontSize="11" Foreground="#654621" Text="{Binding CivicOfficeTermText}" />
-                                    </StackPanel>
-                                    <Button Grid.Column="1" IsVisible="{Binding HasOfficeDutiesAction}" Classes="paperAction" VerticalAlignment="Center" IsEnabled="{Binding CanPerformOfficeDuties}" Content="Perform Duties" ToolTip.Tip="{Binding OfficeDutiesUnavailableReason}" Click="OnOfficeDutiesClick" />
-                                </Grid>
                             </Border>
-
-                            <TextBlock Margin="0,3,0,0" FontSize="13" FontWeight="Bold" Text="Active policies" />
-                            <TextBlock IsVisible="{Binding ShowNoActiveCommunityPolicies}" FontSize="11.5" FontStyle="Italic" Text="No temporary community policy is currently active." />
-                            <ItemsControl ItemsSource="{Binding ActiveCommunityPolicies}">
-                                <ItemsControl.ItemTemplate>
-                                    <DataTemplate x:DataType="vm:TownAffairsActivePolicyViewModel">
-                                        <Border Margin="2" Padding="9,6" Background="#18FFF4D9" BorderBrush="#B18C59" BorderThickness="1" CornerRadius="4">
-                                            <StackPanel Spacing="2">
-                                                <TextBlock FontSize="13" FontWeight="Bold" Text="{Binding Policy.DisplayName}" />
-                                                <TextBlock FontSize="11.5" TextWrapping="Wrap" Text="{Binding Policy.Description}" />
-                                                <TextBlock FontSize="11" Foreground="#654621" Text="{Binding DurationText}" />
-                                            </StackPanel>
-                                        </Border>
-                                    </DataTemplate>
-                                </ItemsControl.ItemTemplate>
-                            </ItemsControl>
-
-                            <TextBlock Margin="0,4,0,0" FontSize="13" FontWeight="Bold" Text="This year's proposals" />
-                            <TextBlock IsVisible="{Binding ShowCommunityEmpty}" Margin="0,12,0,0" HorizontalAlignment="Center" TextAlignment="Center" FontStyle="Italic" Text="No eligible community proposals are available this year." />
-                            <ItemsControl ItemsSource="{Binding CommunityProposals}">
-                                <ItemsControl.ItemTemplate>
-                                    <DataTemplate x:DataType="vm:TownAffairsCommunityProposalViewModel">
-                                        <Border Margin="2" Padding="10,8" Background="#25FFF4D9" BorderBrush="#A17A43" BorderThickness="1" CornerRadius="4" Opacity="{Binding DisplayOpacity}" ToolTip.Tip="{Binding UnavailableReason}">
-                                            <Grid ColumnDefinitions="54,*,Auto" ColumnSpacing="10">
-                                                <TextBlock HorizontalAlignment="Center" VerticalAlignment="Top" FontSize="28" Text="{Binding Emoji}" />
-                                                <StackPanel Grid.Column="1" Spacing="2">
-                                                    <TextBlock FontSize="14" FontWeight="Bold" TextWrapping="Wrap" Text="{Binding Proposal.DisplayName}" />
-                                                    <TextBlock FontSize="11.5" TextWrapping="Wrap" Text="{Binding Proposal.Description}" />
-                                                    <TextBlock FontSize="11" Foreground="#654621" TextWrapping="Wrap" Text="{Binding ProposerText}" />
-                                                    <TextBlock FontSize="11" Foreground="#654621" TextWrapping="Wrap" Text="{Binding DetailText}" />
-                                                    <TextBlock IsVisible="{Binding HasLobbyBonus}" FontSize="11.5" FontWeight="Bold" Text="{Binding LobbyBonusText}" />
-                                                </StackPanel>
-                                                <Button Grid.Column="2" Classes="paperAction" VerticalAlignment="Center" IsEnabled="{Binding IsAvailable}" Content="Lobby" Click="OnCommunityLobbyClick" />
-                                            </Grid>
-                                        </Border>
-                                    </DataTemplate>
-                                </ItemsControl.ItemTemplate>
-                            </ItemsControl>
                         </StackPanel>
                     </ScrollViewer>
                 </TabItem>

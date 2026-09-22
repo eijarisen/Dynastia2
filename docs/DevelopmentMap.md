@@ -2,6 +2,8 @@
 
 This map points maintenance work toward the smallest relevant files. It describes the current repository rather than the original Dynasty 4 implementation.
 
+For gameplay intent and current implemented rules, begin with `docs/GameDesign/00-Index.md`; use this map after that to find the owning code/data/tests.
+
 ## Application coordinator
 
 `MainWindowViewModel` remains one runtime type but is split by responsibility:

@@ -76,12 +76,10 @@ public sealed class PotentialPartnerCardViewModel
 
     public PotentialPartnerCardViewModel(
         PartnerCandidateInfo candidate,
-        string careerEmoji,
-        string actionVerb = "Approach")
+        string careerEmoji)
     {
         Candidate = candidate;
         CareerEmoji = careerEmoji;
-        ActionVerb = actionVerb;
 
         Stats = StatOrder
             .Select(definition =>
@@ -99,7 +97,6 @@ public sealed class PotentialPartnerCardViewModel
 
     public string CareerEmoji { get; }
 
-    public string ActionVerb { get; }
 
     public string PortraitEmoji =>
         Candidate.PortraitEmoji;
@@ -111,12 +108,12 @@ public sealed class PotentialPartnerCardViewModel
         Candidate.Personality.DisplayName;
 
     public string OriginNationalityText =>
-        $"Birthplace: {Candidate.OriginTownDisplayName} · Nationality: {Candidate.DisplayNationality}";
+        $"Nationality: {Candidate.DisplayNationality}";
 
     public string OccupationText =>
         Candidate.JobLevel <= 0
             ? "🔎 Unemployed"
-            : $"{CareerEmoji} {Candidate.JobTitle} — {Candidate.CareerName}, Level {Candidate.JobLevel}";
+            : $"{CareerEmoji} {Candidate.JobTitle}, Level {Candidate.JobLevel}";
 
     public string EducationText =>
         $"Education: {Candidate.EducationLevel}";
@@ -134,10 +131,17 @@ public sealed class PotentialPartnerCardViewModel
     public string FinancialText =>
         $"Estimated wealth: {Candidate.EstimatedWealth:N0} zł · Houses: {Candidate.EstimatedHouses} · Farmland: {Candidate.EstimatedFarmland}";
 
-    public string StatusText =>
-        Candidate.Status is null
-            ? string.Empty
-            : $"Status: {Candidate.Status.RenownLabel} ({Candidate.Status.Renown:0.#}) · {Candidate.Status.ReputationLabel} ({Candidate.Status.Reputation:0.#})";
+    public string RenownStatusText =>
+        Candidate.Status?.RenownLabel ?? string.Empty;
+
+    public string ReputationStatusText =>
+        Candidate.Status?.ReputationLabel ?? string.Empty;
+
+    public IBrush RenownStatusBrush =>
+        StatusBrush(RenownStatusText);
+
+    public IBrush ReputationStatusBrush =>
+        StatusBrush(ReputationStatusText);
 
     public bool HasStatus => Candidate.Status is not null;
 
@@ -148,8 +152,24 @@ public sealed class PotentialPartnerCardViewModel
         ChancePresentation.ForProbability(
             Candidate.AcceptanceChance);
 
-    public string ApproachText =>
-        $"{ActionVerb} {Candidate.Name}";
+
+    private static IBrush StatusBrush(string label) => label switch
+    {
+        "Disgraced" => new SolidColorBrush(Color.Parse("#A33636")),
+        "Bad" => new SolidColorBrush(Color.Parse("#B95736")),
+        "Questionable" => new SolidColorBrush(Color.Parse("#B57A33")),
+        "Neutral" => new SolidColorBrush(Color.Parse("#806633")),
+        "Good" => new SolidColorBrush(Color.Parse("#5F7C3B")),
+        "Respected" => new SolidColorBrush(Color.Parse("#3E713A")),
+        "Esteemed" => new SolidColorBrush(Color.Parse("#2F6938")),
+        "Obscure" => new SolidColorBrush(Color.Parse("#7A7062")),
+        "Known" => new SolidColorBrush(Color.Parse("#8A7041")),
+        "Established" => new SolidColorBrush(Color.Parse("#806633")),
+        "Prominent" => new SolidColorBrush(Color.Parse("#587640")),
+        "Notable" => new SolidColorBrush(Color.Parse("#46703A")),
+        "Eminent" => new SolidColorBrush(Color.Parse("#8A5D18")),
+        _ => new SolidColorBrush(Color.Parse("#806633"))
+    };
 
     private int Stat(string id) =>
         Candidate.Stats.TryGetValue(id, out var value)

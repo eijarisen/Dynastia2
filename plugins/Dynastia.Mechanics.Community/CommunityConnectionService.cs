@@ -274,6 +274,7 @@ internal sealed class CommunityConnectionService : IHouseholdConnectionService
         connection.HasSpareHouse = false;
         AdjustRelation(connection, _rules.AcceptedAssetFamiliarityCost, _rules.AcceptedAssetSympathyCost);
         LowerWealthForRequest(actor, connection, _rules.AssetRequestWealthBandLoss);
+        EnsureWarmRelation(connection);
         Publish(actor, connection, "connection.request_accepted",
             $"{connection.Name} agreed to transfer a house to the household.");
         return true;
@@ -303,6 +304,7 @@ internal sealed class CommunityConnectionService : IHouseholdConnectionService
         connection.HasSpareFarmland = false;
         AdjustRelation(connection, _rules.AcceptedAssetFamiliarityCost, _rules.AcceptedAssetSympathyCost);
         LowerWealthForRequest(actor, connection, _rules.AssetRequestWealthBandLoss);
+        EnsureWarmRelation(connection);
         Publish(actor, connection, "connection.request_accepted",
             $"{connection.Name} agreed to transfer farmland to the household.");
         return true;
@@ -335,8 +337,13 @@ internal sealed class CommunityConnectionService : IHouseholdConnectionService
             else if (connection.Sympathy < 0)
                 connection.Sympathy = Math.Min(0, connection.Sympathy + _rules.SympathyDriftTowardNeutralPerYear);
 
-            if (connection.WealthBand.Equals("Poor", StringComparison.OrdinalIgnoreCase)
-                || connection.Familiarity <= 0)
+            var relationState = GetRelationState(connection);
+            var weakPoorConnection = connection.WealthBand.Equals(
+                    "Poor",
+                    StringComparison.OrdinalIgnoreCase)
+                && !relationState.Equals("Warm", StringComparison.OrdinalIgnoreCase)
+                && !relationState.Equals("Close", StringComparison.OrdinalIgnoreCase);
+            if (weakPoorConnection || connection.Familiarity <= 0)
             {
                 connection.IsActive = false;
                 if (representative is not null)
@@ -393,6 +400,15 @@ internal sealed class CommunityConnectionService : IHouseholdConnectionService
     {
         connection.Familiarity = Math.Clamp(connection.Familiarity + familiarityDelta, 0, 100);
         connection.Sympathy = Math.Clamp(connection.Sympathy + sympathyDelta, -100, 100);
+    }
+
+    private static void EnsureWarmRelation(CommunityConnectionState connection)
+    {
+        // Giving away a major asset is strong evidence of trust. Keep a small
+        // buffer above the Warm thresholds so the normal same-year annual
+        // familiarity/sympathy drift does not immediately erase that result.
+        connection.Familiarity = Math.Max(connection.Familiarity, 30);
+        connection.Sympathy = Math.Max(connection.Sympathy, 15);
     }
 
     private void LowerWealthForRequest(IPerson actor, CommunityConnectionState connection, int bands)

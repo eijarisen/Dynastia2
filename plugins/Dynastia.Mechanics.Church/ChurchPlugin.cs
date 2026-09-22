@@ -479,12 +479,13 @@ public sealed class ChurchPlugin : IGamePlugin
         tier = null!;
         if (!parameters.TryGetValue(TierParameter, out var raw)
             || string.IsNullOrWhiteSpace(raw)
-            || !tiers.TryGetValue(raw.Trim(), out tier))
+            || !tiers.TryGetValue(raw.Trim(), out var resolvedTier))
         {
             return false;
         }
 
         tierId = raw.Trim().ToLowerInvariant();
+        tier = resolvedTier;
         return true;
     }
 

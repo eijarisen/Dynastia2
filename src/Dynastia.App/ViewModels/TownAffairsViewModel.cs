@@ -6,14 +6,14 @@ namespace Dynastia.App.ViewModels;
 public enum TownAffairsTab
 {
     Institutions = 0,
-    Housing = 1,
-    Jobs = 2,
-    Health = 3,
-    Education = 4,
-    Bank = 5,
-    Church = 6,
-    Court = 7,
-    Community = 8
+    Community = 1,
+    Housing = 2,
+    Jobs = 3,
+    Health = 4,
+    Church = 5,
+    Education = 6,
+    Bank = 7,
+    Court = 8
 }
 
 public enum TownAffairsMode
@@ -132,7 +132,7 @@ public sealed class TownAffairsViewModel : ViewModelBase
             var normalized = Math.Clamp(
                 value,
                 (int)TownAffairsTab.Institutions,
-                (int)TownAffairsTab.Community);
+                (int)TownAffairsTab.Court);
             var tab = (TownAffairsTab)normalized;
             if (!IsTabVisible(tab) || _selectedTabIndex == normalized)
                 return;
@@ -173,7 +173,7 @@ public sealed class TownAffairsViewModel : ViewModelBase
         !IsRemote && Snapshot.Church.IsAvailable;
 
     public bool ShowCourtTab =>
-        !IsRemote && Subject is { Age: >= 18 };
+        !IsRemote && _householdPeople.Any(person => person.Age >= 18);
 
     public bool ShowCommunityTab => !IsRemote;
 
@@ -181,13 +181,32 @@ public sealed class TownAffairsViewModel : ViewModelBase
 
     public bool HasCivicOffice => CivicOffice is not null;
 
-    public string CivicOfficePersonText => CivicOffice is null
-        ? string.Empty
-        : $"{CivicOffice.Name} · age {CivicOffice.Age(Snapshot.Year)}";
+    public string MayorSummaryText => CivicOffice is null
+        ? "No mayor is currently recorded."
+        : $"{CivicOffice.Name} · Approval {CivicOffice.Approval:0.#}%";
 
-    public string CivicOfficeStandingText => CivicOffice is null
+    public string CivicOfficeNameText => CivicOffice?.Name ?? string.Empty;
+
+    public string CivicOfficeTitleText => CivicOffice?.OfficeTitle ?? string.Empty;
+
+    public string CivicOfficeAgeText => CivicOffice is null
         ? string.Empty
-        : $"Renown {CivicOffice.Renown:0.#} · Reputation {CivicOffice.Reputation:0.#} · Approval {CivicOffice.Approval:0.#}%";
+        : $"Age: {CivicOffice.Age(_owner.Year)}";
+
+    public string CivicOfficePortrait =>
+        _owner.GetTownAffairsCivicOfficePortrait(CivicOffice);
+
+    public string CivicOfficeRenownText => CivicOffice is null
+        ? string.Empty
+        : $"Renown: {CivicOffice.Renown:0.#}";
+
+    public string CivicOfficeReputationText => CivicOffice is null
+        ? string.Empty
+        : $"Reputation: {CivicOffice.Reputation:0.#}";
+
+    public string CivicOfficeApprovalText => CivicOffice is null
+        ? string.Empty
+        : $"Approval: {CivicOffice.Approval:0.#}%";
 
     public string CivicOfficeTermText => CivicOffice is null
         ? string.Empty
@@ -279,16 +298,16 @@ public sealed class TownAffairsViewModel : ViewModelBase
 
     public string MedicalQualityText =>
         Snapshot.MedicalQuality.IsAvailable
-            ? $"Local medical care: {Snapshot.MedicalQuality.DisplayName} · Tier {Snapshot.MedicalQuality.Tier} · Cost ×{Snapshot.MedicalQuality.TreatmentCostMultiplier:0.##}"
+            ? $"Local medical care: {Snapshot.MedicalQuality.DisplayName} · Tier {Snapshot.MedicalQuality.Tier}"
             : "No local medical facility is available.";
 
     public bool HasHealthActions => HealthActions.Count > 0;
 
-    public bool ShowTreatmentEmpty => TreatmentHealthActions.Count == 0;
+    public bool HasTreatmentHealthActions => TreatmentHealthActions.Count > 0;
 
-    public bool ShowTherapyEmpty => TherapyHealthActions.Count == 0;
+    public bool HasTherapyHealthActions => TherapyHealthActions.Count > 0;
 
-    public bool ShowMedicalImprovementEmpty => MedicalImprovementActions.Count == 0;
+    public bool HasMedicalImprovementActions => MedicalImprovementActions.Count > 0;
 
     public IReadOnlyList<TownAffairsChurchActionViewModel> ChurchActions { get; private set; }
         = Array.Empty<TownAffairsChurchActionViewModel>();
@@ -327,6 +346,7 @@ public sealed class TownAffairsViewModel : ViewModelBase
     {
         var tab = institutionId.ToLowerInvariant() switch
         {
+            "administration" => TownAffairsTab.Community,
             "school" => TownAffairsTab.Education,
             "bank" => TownAffairsTab.Bank,
             "medical" => TownAffairsTab.Health,
@@ -415,20 +435,14 @@ public sealed class TownAffairsViewModel : ViewModelBase
         _owner.QueueTownAffairsHealthAction(actionId, Subject);
     }
 
-    public void QueueChurch(TownAffairsChurchActionViewModel action)
+    public void QueueChurch(
+        TownAffairsChurchActionViewModel action,
+        decimal? selectedAmount = null)
     {
         if (!ShowChurchTab || !action.IsAvailable)
             return;
 
-        _owner.QueueTownAffairsChurchAction(action);
-    }
-
-    public void QueueCourt(string actionId)
-    {
-        if (!ShowCourtTab || Subject is null)
-            return;
-
-        _owner.QueueTownAffairsCourtAction(actionId, Subject);
+        _owner.QueueTownAffairsChurchAction(action, selectedAmount);
     }
 
     public void QueueCommunity(TownAffairsCommunityProposalViewModel proposal)
@@ -547,9 +561,9 @@ public sealed class TownAffairsViewModel : ViewModelBase
         OnPropertyChanged(nameof(HealthSummary));
         OnPropertyChanged(nameof(MedicalQualityText));
         OnPropertyChanged(nameof(HasHealthActions));
-        OnPropertyChanged(nameof(ShowTreatmentEmpty));
-        OnPropertyChanged(nameof(ShowTherapyEmpty));
-        OnPropertyChanged(nameof(ShowMedicalImprovementEmpty));
+        OnPropertyChanged(nameof(HasTreatmentHealthActions));
+        OnPropertyChanged(nameof(HasTherapyHealthActions));
+        OnPropertyChanged(nameof(HasMedicalImprovementActions));
         OnPropertyChanged(nameof(ShowHealthEmpty));
         OnPropertyChanged(nameof(ChurchActions));
         OnPropertyChanged(nameof(HasChurchActions));
@@ -612,55 +626,46 @@ public sealed record TownAffairsChurchActionViewModel(
     bool IsBenefit,
     bool IsAvailable,
     string? UnavailableReason,
-    IReadOnlyDictionary<string, string> Parameters)
+    IReadOnlyDictionary<string, string> Parameters,
+    bool RequiresMoneySelection = false,
+    decimal MinimumAmount = 0m,
+    decimal MaximumAmount = 0m)
 {
     public string Emoji => ActionEmojiMap.GetEmoji(ActionId);
 
     public double DisplayOpacity =>
         IsAvailable ? 1.0 : 0.42;
 
-    public bool HasAmount => Amount.HasValue;
+    public bool HasAmount => RequiresMoneySelection || Amount.HasValue;
 
     public string AmountText =>
-        Amount is decimal amount
-            ? ActionId.Equals(
-                "personality.religious_study",
-                StringComparison.OrdinalIgnoreCase)
-                    ? $"Cost: {amount:N0} zł"
-                    : IsBenefit
-                        ? $"Relief: {amount:N0} zł"
-                        : $"Amount: {amount:N0} zł"
-            : string.Empty;
-}
-
-public sealed record TownAffairsCourtActionViewModel(
-    string ActionId,
-    string Label,
-    string Description,
-    bool IsAvailable,
-    string? UnavailableReason)
-{
-    public string Emoji => ActionEmojiMap.GetEmoji(ActionId);
-    public double DisplayOpacity => IsAvailable ? 1.0 : 0.42;
+        RequiresMoneySelection
+            ? $"Choose amount: {MinimumAmount:N0}–{MaximumAmount:N0} zł"
+            : Amount is decimal amount
+                ? ActionId.Equals(
+                    "personality.religious_study",
+                    StringComparison.OrdinalIgnoreCase)
+                        ? $"Cost: {amount:N0} zł"
+                        : IsBenefit
+                            ? $"Relief: {amount:N0} zł"
+                            : $"Amount: {amount:N0} zł"
+                : string.Empty;
 }
 
 public sealed record TownAffairsCourtViewModel(
     string CourtText,
     bool HasLocalCourt,
     string ProtectionText,
-    string ProtectionHelperText,
-    string ImprisonmentText,
-    string BailCostText,
-    string StolenSaleRiskText,
-    IReadOnlyList<CriminalRecordEntryInfo> CriminalRecord,
-    IReadOnlyList<TownAffairsCourtActionViewModel> Actions)
+    IReadOnlyList<CourtProtectionRelativeInfo> ProtectionRelatives,
+    IReadOnlyList<CriminalRecordEntryInfo> CriminalRecord)
 {
     public bool ShowNoLocalCourt => !HasLocalCourt;
-    public bool HasProtectionHelper => !string.IsNullOrWhiteSpace(ProtectionHelperText);
-    public bool HasBailCost => !string.IsNullOrWhiteSpace(BailCostText);
+    public bool HasProtectionRelatives => ProtectionRelatives.Count > 0;
+    public bool ShowNoProtectionRelatives => !HasProtectionRelatives;
     public bool HasCriminalRecord => CriminalRecord.Count > 0;
     public bool ShowNoCriminalRecord => !HasCriminalRecord;
 }
+
 
 public sealed record TownAffairsCivicOfficeActionViewModel(
     string ActionId,
@@ -676,6 +681,7 @@ public sealed record TownAffairsCivicOfficeActionViewModel(
 
 public sealed record TownAffairsCommunityProposalViewModel(
     CommunityPolicyProposalInfo Proposal,
+    string ProposerPortrait,
     bool IsAvailable,
     string? UnavailableReason,
     double? LobbySupportBonus,

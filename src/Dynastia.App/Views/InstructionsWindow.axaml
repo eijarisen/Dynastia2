@@ -23,7 +23,7 @@
         <Style Selector="TabControl.instructionsTabs TabStrip">
             <Setter Property="Background" Value="Transparent" />
             <Setter Property="HorizontalAlignment" Value="Center" />
-            <Setter Property="Margin" Value="0,0,0,10" />
+            <Setter Property="Margin" Value="0,0,0,8" />
         </Style>
 
         <Style Selector="TabControl.instructionsTabs TabItem">
@@ -31,10 +31,10 @@
             <Setter Property="Background" Value="#E8D5AF" />
             <Setter Property="BorderBrush" Value="#9D6F35" />
             <Setter Property="BorderThickness" Value="1.5" />
-            <Setter Property="Padding" Value="12,8" />
+            <Setter Property="Padding" Value="10,7" />
             <Setter Property="Margin" Value="2,0" />
             <Setter Property="FontFamily" Value="Georgia" />
-            <Setter Property="FontSize" Value="14" />
+            <Setter Property="FontSize" Value="13" />
             <Setter Property="FontWeight" Value="Bold" />
         </Style>
 
@@ -47,12 +47,28 @@
             <Setter Property="Background" Value="#00FFFFFF" />
         </Style>
 
-        <Style Selector="TextBlock.guideParagraph">
+        <Style Selector="TextBlock.guideIntro">
+            <Setter Property="TextWrapping" Value="Wrap" />
+            <Setter Property="TextAlignment" Value="Center" />
+            <Setter Property="FontFamily" Value="Georgia" />
+            <Setter Property="FontSize" Value="15" />
+            <Setter Property="Foreground" Value="#3A2615" />
+            <Setter Property="LineHeight" Value="21" />
+        </Style>
+
+        <Style Selector="TextBlock.guideTip">
             <Setter Property="TextWrapping" Value="Wrap" />
             <Setter Property="FontFamily" Value="Georgia" />
-            <Setter Property="FontSize" Value="16" />
+            <Setter Property="FontSize" Value="14.5" />
             <Setter Property="Foreground" Value="#352110" />
-            <Setter Property="LineHeight" Value="24" />
+            <Setter Property="LineHeight" Value="21" />
+        </Style>
+
+        <Style Selector="Border.tipCard">
+            <Setter Property="Padding" Value="10,7" />
+            <Setter Property="Background" Value="#12FFF4D9" />
+            <Setter Property="BorderBrush" Value="#5E8F6A34" />
+            <Setter Property="BorderThickness" Value="0,0,0,1" />
         </Style>
     </Window.Styles>
 
@@ -64,7 +80,7 @@
         <Grid
             Margin="80,72,80,58"
             RowDefinitions="Auto,Auto,*,Auto"
-            RowSpacing="14">
+            RowSpacing="12">
 
             <TextBlock
                 HorizontalAlignment="Center"
@@ -75,13 +91,11 @@
 
             <TextBlock
                 Grid.Row="1"
-                TextWrapping="Wrap"
-                TextAlignment="Center"
-                FontFamily="Georgia"
-                FontSize="16"
-                Foreground="#3A2615"
-                LineHeight="23"
-                Text="Dynastia is a year-by-year family dynasty simulation set in a changing historical world. You begin with one Polish family and guide its playable male-line households through work, marriage, children, health, money, property and relationships while the wider bloodline continues living on its own. Your central goal is to keep the direct male lineage alive, but long-term success comes from building households that can survive bad health, poor finances, family conflict and unexpected events. Traits pass between generations, towns and eras shape opportunities, and every annual choice becomes part of the family’s Chronicle and biographies." />
+                Classes="guideIntro">
+                <Run Text="Guide the dynasty year by year, keep its " />
+                <Run FontWeight="Bold" Text="playable male line" />
+                <Run Text=" alive and in Poland, and adapt to changing family, town and historical circumstances. Use action descriptions and tooltips for current costs, requirements and chances." />
+            </TextBlock>
 
             <Border
                 Grid.Row="2"
@@ -95,128 +109,429 @@
                     Classes="instructionsTabs"
                     SelectedIndex="0">
 
-                    <TabItem Header="Playing">
-                        <ScrollViewer>
-                            <StackPanel Margin="12,8,12,6" Spacing="12">
-                                <TextBlock
-                                    Classes="guideParagraph"
-                                    Text="Choose a surname and a starting year, then guide the dynasty one year at a time. The chosen period matters: names, careers, education, medicine, loans, local opportunities and some event or action wording change with history. The main screen is centered on Households, Actions, Personal Details and the Family Chronicle. Selecting a person changes whom you are inspecting or targeting; switching the active lineage household changes which adult male heir you are currently directing." />
-
-                                <TextBlock
-                                    Classes="guideParagraph"
-                                    Text="Every playable adult male heir needs one annual action before Next Year can be used. Pass is a valid choice. Actions are grouped into Personal, Career, Family, Finances and Skills filters, and some open a dedicated selector for property, loans, family relations or self-improvement. Many choices are queued for the coming year, so review the target and description before committing. Independent bloodline households make their own decisions rather than waiting for the player." />
-
-                                <TextBlock
-                                    Classes="guideParagraph"
-                                    Text="When the year advances, the game resolves everyone’s aging, household finances, health, relationships, careers, family events and other systems in sequence. The year summary and Family Chronicle show notable outcomes, while the person panels reveal quieter changes. Use the genealogy view to follow the wider bloodline, and the Map beside the Chronicle year controls to see towns, dynasty presence and property across Poland; scroll to zoom, drag to pan, or search for a town. Export preserves the current game in a save file; Load restores it later." />
+                    <TabItem Header="Basics">
+                        <ScrollViewer VerticalScrollBarVisibility="Auto">
+                            <StackPanel Margin="10,6" Spacing="2">
+                                <Border Classes="tipCard">
+                                    <TextBlock Classes="guideTip">
+                                        <Run Text="• " />
+                                        <Run FontWeight="Bold" Text="Annual turn. " />
+                                        <Run Text="Choose one action for every playable adult male household before advancing the year. Pass is always a valid choice." />
+                                    </TextBlock>
+                                </Border>
+                                <Border Classes="tipCard">
+                                    <TextBlock Classes="guideTip">
+                                        <Run Text="• " />
+                                        <Run FontWeight="Bold" Text="Control and selection. " />
+                                        <Run Text="The active household determines who you direct; selecting another person changes the details and action target you are viewing." />
+                                    </TextBlock>
+                                </Border>
+                                <Border Classes="tipCard">
+                                    <TextBlock Classes="guideTip">
+                                        <Run Text="• " />
+                                        <Run FontWeight="Bold" Text="Autonomous family. " />
+                                        <Run Text="Other bloodline households continue making their own work, family and household decisions without player orders." />
+                                    </TextBlock>
+                                </Border>
+                                <Border Classes="tipCard">
+                                    <TextBlock Classes="guideTip">
+                                        <Run Text="• " />
+                                        <Run FontWeight="Bold" Text="Time and place matter. " />
+                                        <Run Text="The starting year, town and region shape names, careers, education, medicine, institutions, finance, events and local opportunities." />
+                                    </TextBlock>
+                                </Border>
+                                <Border Classes="tipCard">
+                                    <TextBlock Classes="guideTip">
+                                        <Run Text="• " />
+                                        <Run FontWeight="Bold" Text="Town Affairs. " />
+                                        <Run Text="Use it to inspect local institutions, housing, jobs, healthcare, education, banking, Church, Court and Community life." />
+                                    </TextBlock>
+                                </Border>
+                                <Border Classes="tipCard">
+                                    <TextBlock Classes="guideTip">
+                                        <Run Text="• " />
+                                        <Run FontWeight="Bold" Text="Family records. " />
+                                        <Run Text="The Chronicle records major events, biographies follow individual lives, Thoughts show current concerns, and Genealogy follows the wider bloodline." />
+                                    </TextBlock>
+                                </Border>
+                                <Border Classes="tipCard">
+                                    <TextBlock Classes="guideTip">
+                                        <Run Text="• " />
+                                        <Run FontWeight="Bold" Text="Map and saves. " />
+                                        <Run Text="Use the Map to browse towns, dynasty presence and property. Export saves the game; Load restores it later." />
+                                    </TextBlock>
+                                </Border>
                             </StackPanel>
                         </ScrollViewer>
                     </TabItem>
 
-                    <TabItem Header="Dynasty">
-                        <ScrollViewer>
-                            <StackPanel Margin="12,8,12,6" Spacing="12">
-                                <TextBlock
-                                    Classes="guideParagraph"
-                                    Text="Dynastia follows two related ideas: the direct male lineage and the wider bloodline. Adult men in the direct male lineage form the households you control and receive annual actions. Daughters and their descendants remain part of the bloodline, appear in genealogy and family history, and continue living in independently simulated households. The dynasty survives while at least one living male of the direct line remains, including boys who are not yet old enough to control." />
-
-                                <TextBlock
-                                    Classes="guideParagraph"
-                                    Text="Households can contain several generations and different family branches. Adult relatives may remain together, work, marry and raise children under the same roof, and the household head does not need to be everyone’s husband or father. Adult sons do not automatically leave at 18; they remain residents until they explicitly move out or succession/another household transition changes their status. The active head can direct close resident relatives such as parents, siblings, cousins, children, grandchildren, nephews and nieces. Any adult resident can be asked to move out: providing a spare house guarantees the move, while asking them to rent may be refused and damages the relationship. Succession, death, remarriage, divorce and orphaning can also reorganize where people live. More than eight residents creates Overcrowding, with Health and Stress penalties increasing for each resident above capacity." />
-
-                                <TextBlock
-                                    Classes="guideParagraph"
-                                    Text="Relatives in different households also have persistent family relations. Familiarity and sympathy can improve or deteriorate, affecting whether relatives are willing to cooperate. Requests for money, Houses or Farmland also consider the other household's relative wealth and spare assets: prosperous relatives with genuine surplus are more willing to help, while households near poverty keep essential reserves, their final home and their final farmland parcel. Family career connections require a Warm or Close relation and remain powerful, but any placement is capped two Career levels below the strongest helper, so repeated requests cannot leapfrog that ceiling. Inheritance moves wealth and property between generations, while existing debts or financial claims can also outlive the person who created them." />
+                    <TabItem Header="Family">
+                        <ScrollViewer VerticalScrollBarVisibility="Auto">
+                            <StackPanel Margin="10,6" Spacing="2">
+                                <Border Classes="tipCard">
+                                    <TextBlock Classes="guideTip">
+                                        <Run Text="• " />
+                                        <Run FontWeight="Bold" Text="Lineage and bloodline. " />
+                                        <Run Text="Direct male descendants determine playable succession; daughters and their descendants remain part of the wider family history and simulation." />
+                                    </TextBlock>
+                                </Border>
+                                <Border Classes="tipCard">
+                                    <TextBlock Classes="guideTip">
+                                        <Run Text="• " />
+                                        <Run FontWeight="Bold" Text="Households. " />
+                                        <Run Text="Several generations and branches can live together. Marriage, moving out, death, divorce, orphaning and succession can reorganize who shares a home." />
+                                    </TextBlock>
+                                </Border>
+                                <Border Classes="tipCard">
+                                    <TextBlock Classes="guideTip">
+                                        <Run Text="• " />
+                                        <Run FontWeight="Bold" Text="Marriage. " />
+                                        <Run Text="Seek a spouse or help resident relatives find one. Couples develop Marriage Satisfaction and may reconcile, have affairs, divorce or remarry." />
+                                    </TextBlock>
+                                </Border>
+                                <Border Classes="tipCard">
+                                    <TextBlock Classes="guideTip">
+                                        <Run Text="• " />
+                                        <Run FontWeight="Bold" Text="Children. " />
+                                        <Run Text="Couples may have children, and nonmarital births can also occur. Children inherit family traits, appearance and identity with variation, and may have birth conditions." />
+                                    </TextBlock>
+                                </Border>
+                                <Border Classes="tipCard">
+                                    <TextBlock Classes="guideTip">
+                                        <Run Text="• " />
+                                        <Run FontWeight="Bold" Text="Childhood and care. " />
+                                        <Run Text="Children have Happiness and can be actively raised. Nannies or resident family caregivers help with childcare, while crowding and family disruption can make childhood harder." />
+                                    </TextBlock>
+                                </Border>
+                                <Border Classes="tipCard">
+                                    <TextBlock Classes="guideTip">
+                                        <Run Text="• " />
+                                        <Run FontWeight="Bold" Text="Orphans and adoption. " />
+                                        <Run Text="Children who lose parents may remain with family, be taken in by another bloodline household, or enter orphan care depending on circumstances." />
+                                    </TextBlock>
+                                </Border>
+                                <Border Classes="tipCard">
+                                    <TextBlock Classes="guideTip">
+                                        <Run Text="• " />
+                                        <Run FontWeight="Bold" Text="Family Relations. " />
+                                        <Run Text="Relations persist between households. Relatives can improve ties, exchange money, houses or farmland, use career connections, and ask resident adults to move out." />
+                                    </TextBlock>
+                                </Border>
+                                <Border Classes="tipCard">
+                                    <TextBlock Classes="guideTip">
+                                        <Run Text="• " />
+                                        <Run FontWeight="Bold" Text="Succession and estates. " />
+                                        <Run Text="Household leadership changes across generations. Wealth, houses, farmland, heirlooms, debts and financial claims can continue through inheritance." />
+                                    </TextBlock>
+                                </Border>
                             </StackPanel>
                         </ScrollViewer>
                     </TabItem>
 
                     <TabItem Header="People">
-                        <ScrollViewer>
-                            <StackPanel Margin="12,8,12,6" Spacing="12">
-                                <TextBlock
-                                    Classes="guideParagraph"
-                                    Text="Each person is more than an age and occupation. Six core traits—Immunity, Longevity, Fertility, Appeal, Strength and Intellect—shape different parts of life. Children inherit these traits with variation, so strong and weak tendencies can run through a family without producing identical descendants. People also develop a temperament and Morals, which influence behavior, relationships and some decisions. Paid Medical Improvements in Town Affairs → Health can strengthen an adult’s effective traits when the current era and local Medical facility permit them. Religious Study is available through the local Church, with success improving as Church tier rises." />
-
-                                <TextBlock
-                                    Classes="guideParagraph"
-                                    Text="Health changes over time through illness, injury, stress, work, poverty, family circumstances and recovery. Immunity and Longevity help people withstand those pressures, while some conditions can be temporary, chronic or serious. Very low Job Satisfaction and repeated overwork increase Stress and can contribute to Burnout. Medical treatment, recovery and psychotherapy can help in appropriate situations. Aging and mortality continue regardless of the player’s plans, so a prosperous household can still be disrupted by sickness or an early death." />
-
-                                <TextBlock
-                                    Classes="guideParagraph"
-                                    Text="Children have their own Happiness, affected by health, home conditions and personality, and a parent can devote a year to raising a child more closely. A child's final Happiness matters after adulthood: when they establish a separate household it adjusts the relationship foundation they carry with parents and siblings. Older children and adults also have thoughts that reflect what currently matters to them; the emoji beside a person comes from that thought. Hobbies and pastimes add personal flavor and can appear in thoughts, helping different relatives feel distinct even when their statistics are similar." />
+                        <ScrollViewer VerticalScrollBarVisibility="Auto">
+                            <StackPanel Margin="10,6" Spacing="2">
+                                <Border Classes="tipCard">
+                                    <TextBlock Classes="guideTip">
+                                        <Run Text="• " />
+                                        <Run FontWeight="Bold" Text="Core traits. " />
+                                        <Run Text="Immunity, Longevity, Fertility, Appeal, Strength and Intellect shape different parts of life and pass between generations with variation." />
+                                    </TextBlock>
+                                </Border>
+                                <Border Classes="tipCard">
+                                    <TextBlock Classes="guideTip">
+                                        <Run Text="• " />
+                                        <Run FontWeight="Bold" Text="Acquired improvement. " />
+                                        <Run Text="Some traits can be improved through costly training or medical opportunities when the era, person and local facilities allow it." />
+                                    </TextBlock>
+                                </Border>
+                                <Border Classes="tipCard">
+                                    <TextBlock Classes="guideTip">
+                                        <Run Text="• " />
+                                        <Run FontWeight="Bold" Text="Personality and Morals. " />
+                                        <Run Text="Temperament and moral character influence relationships, behavior, support, religion and some life choices; Morals can also change over time." />
+                                    </TextBlock>
+                                </Border>
+                                <Border Classes="tipCard">
+                                    <TextBlock Classes="guideTip">
+                                        <Run Text="• " />
+                                        <Run FontWeight="Bold" Text="Health and Stress. " />
+                                        <Run Text="Illness, injury, mental health, work, poverty, family circumstances and imprisonment can affect wellbeing. Treatment, recovery and psychotherapy can help." />
+                                    </TextBlock>
+                                </Border>
+                                <Border Classes="tipCard">
+                                    <TextBlock Classes="guideTip">
+                                        <Run Text="• " />
+                                        <Run FontWeight="Bold" Text="Wellbeing choices. " />
+                                        <Run Text="Recover can trade work output for rest, while alcohol may relieve immediate Stress but carries health and addiction risks. Burnout can emerge from sustained pressure." />
+                                    </TextBlock>
+                                </Border>
+                                <Border Classes="tipCard">
+                                    <TextBlock Classes="guideTip">
+                                        <Run Text="• " />
+                                        <Run FontWeight="Bold" Text="Renown and Reputation. " />
+                                        <Run Text="Social Status reflects a person's household, education, work, crafts, farming, civic activity and major events, and can matter in local opportunities." />
+                                    </TextBlock>
+                                </Border>
+                                <Border Classes="tipCard">
+                                    <TextBlock Classes="guideTip">
+                                        <Run Text="• " />
+                                        <Run FontWeight="Bold" Text="Identity and appearance. " />
+                                        <Run Text="People have nationality, name culture and birthplace. Appearance is partly inherited and portraits change with age; some assimilated dynasties may adopt a Polish surname." />
+                                    </TextBlock>
+                                </Border>
+                                <Border Classes="tipCard">
+                                    <TextBlock Classes="guideTip">
+                                        <Run Text="• " />
+                                        <Run FontWeight="Bold" Text="Hobbies, Thoughts and aging. " />
+                                        <Run Text="Pastimes and current concerns give people individual flavor. Everyone ages, and illness, accidents, historical events and ordinary mortality can end a life." />
+                                    </TextBlock>
+                                </Border>
                             </StackPanel>
                         </ScrollViewer>
                     </TabItem>
 
-                    <TabItem Header="Work &amp; Learning">
-                        <ScrollViewer>
-                            <StackPanel Margin="12,8,12,6" Spacing="12">
-                                <TextBlock
-                                    Classes="guideParagraph"
-                                    Text="Education and work form a long-term path rather than a single promotion ladder. Children can learn as they grow, and family members can sometimes spend an annual action helping with their studies. Adults may pursue further education when it is available and affordable. Intellect matters strongly for learning and many skilled or professional careers, while Strength matters more for physical work. The opportunities appropriate to an early eighteenth-century town are intentionally different from those found in later eras." />
-
-                                <TextBlock
-                                    Classes="guideParagraph"
-                                    Text="Employment is also local. Every person lives in a town, and towns and regions have different kinds of work. Seeking employment opens a small board of concrete vacancies appropriate to the current year and location; you choose which post to pursue rather than searching blindly. Relevant Strength or Intellect, education and a person’s accumulated work experience all matter, and experienced workers can look for better-paying positions without first resigning. A household head can use the same process to help an adult close relative who still lives in the household. Relocation can therefore matter to a family’s prospects as much as personal ability." />
-
-                                <TextBlock
-                                    Classes="guideParagraph"
-                                    Text="Once employed, people can advance, lose jobs, become dissatisfied, retire, or deliberately work harder. Education can limit or enable higher career levels; Career Level 5 requires Education 5 and an exceptionally difficult final promotion. Promotions improve Job Satisfaction, and a successful Recover action improves it strongly. Work Harder keeps its strong salary and promotion upside, but costs Health, Marriage Satisfaction and underage children's Happiness; repeated unsuccessful overwork can also lower Job Satisfaction, raise Stress and contribute to Burnout. Retirement pensions are based on total lifetime career earnings rather than only the final salary, so long and successful careers produce better pensions. A playable head can also help a resident adult relative seek work, recover from an unhappy job, look for better work, or quit when the relevant action is available." />
+                    <TabItem Header="Work &amp; Skills">
+                        <ScrollViewer VerticalScrollBarVisibility="Auto">
+                            <StackPanel Margin="10,6" Spacing="2">
+                                <Border Classes="tipCard">
+                                    <TextBlock Classes="guideTip">
+                                        <Run Text="• " />
+                                        <Run FontWeight="Bold" Text="Education. " />
+                                        <Run Text="Children can learn as they grow, while household members can pursue or support further study. Local schools and the historical era limit what can be learned nearby." />
+                                    </TextBlock>
+                                </Border>
+                                <Border Classes="tipCard">
+                                    <TextBlock Classes="guideTip">
+                                        <Run Text="• " />
+                                        <Run FontWeight="Bold" Text="Employment. " />
+                                        <Run Text="Jobs come from the local labour market. Education, abilities, experience, town institutions, regional strengths and social standing can all shape career opportunities." />
+                                    </TextBlock>
+                                </Border>
+                                <Border Classes="tipCard">
+                                    <TextBlock Classes="guideTip">
+                                        <Run Text="• " />
+                                        <Run FontWeight="Bold" Text="Career life. " />
+                                        <Run Text="Workers can gain experience, seek better jobs, advance, lose employment, become dissatisfied, retire and receive pensions based on their working lives." />
+                                    </TextBlock>
+                                </Border>
+                                <Border Classes="tipCard">
+                                    <TextBlock Classes="guideTip">
+                                        <Run Text="• " />
+                                        <Run FontWeight="Bold" Text="Work choices. " />
+                                        <Run Text="Work Harder, Recover, Quit and job-search actions let you trade health, satisfaction, income and career progress. Resident relatives can receive similar help." />
+                                    </TextBlock>
+                                </Border>
+                                <Border Classes="tipCard">
+                                    <TextBlock Classes="guideTip">
+                                        <Run Text="• " />
+                                        <Run FontWeight="Bold" Text="Crafts. " />
+                                        <Run Text="People can learn crafts, practice toward higher Mastery, teach relatives and work independently in a profession when their craft and local conditions permit it." />
+                                    </TextBlock>
+                                </Border>
+                                <Border Classes="tipCard">
+                                    <TextBlock Classes="guideTip">
+                                        <Run Text="• " />
+                                        <Run FontWeight="Bold" Text="Artistic work. " />
+                                        <Run Text="Artistic crafts can produce notable works that become family assets, build Status and may continue generating income." />
+                                    </TextBlock>
+                                </Border>
+                                <Border Classes="tipCard">
+                                    <TextBlock Classes="guideTip">
+                                        <Run Text="• " />
+                                        <Run FontWeight="Bold" Text="Farming work. " />
+                                        <Run Text="Local farmland can employ eligible household members. Farm output depends on land, available labour and the surrounding economy; parcels also carry historical farm and livestock character." />
+                                    </TextBlock>
+                                </Border>
+                                <Border Classes="tipCard">
+                                    <TextBlock Classes="guideTip">
+                                        <Run Text="• " />
+                                        <Run FontWeight="Bold" Text="Religious vocation. " />
+                                        <Run Text="Some unmarried young adults may enter religious life where a Church exists. A vocation replaces ordinary employment and changes normal marriage and family options." />
+                                    </TextBlock>
+                                </Border>
                             </StackPanel>
                         </ScrollViewer>
                     </TabItem>
 
-                    <TabItem Header="Wealth &amp; Homes">
-                        <ScrollViewer>
-                            <StackPanel Margin="12,8,12,6" Spacing="12">
-                                <TextBlock
-                                    Classes="guideParagraph"
-                                    Text="Money belongs to households, so the fortunes of a head, spouse, dependent children and other household members are tied together. Income can come from employment, pensions, property and financial contracts, while living costs, dependents, hired childcare and other obligations reduce what remains. The budget panel shows the household’s current position and recent income and expenses. A household with little or no money has fewer options and can also suffer wider health and relationship pressure." />
-
-                                <TextBlock
-                                    Classes="guideParagraph"
-                                    Text="Houses are both homes and assets. Buying property can give a family security, additional houses can support rental income, and property can be sold or assigned to heirs. Buying in another town creates an investment rather than an automatic move; owning a house there can later create the option to relocate, with consequences for employment and local opportunities. Family Relations can also move money or property between related households, making strong family ties economically useful in difficult years." />
-
-                                <TextBlock
-                                    Classes="guideParagraph"
-                                    Text="Loans add another layer of planning. A household can borrow money under terms appropriate to the historical period, or lend spare cash to an outside borrower and receive repayments over time. Repayment commitments reduce future flexibility, while receivables create future income; both can matter during inheritance. Estates distribute wealth, houses and farmland after deaths. Deliberately favoring one heir with designated property can damage the disadvantaged heirs' relations with the deceased parent and favored siblings. Building reserves is useful because rare events, illness, unemployment and family crises can all create sudden costs." />
+                    <TabItem Header="Wealth &amp; Property">
+                        <ScrollViewer VerticalScrollBarVisibility="Auto">
+                            <StackPanel Margin="10,6" Spacing="2">
+                                <Border Classes="tipCard">
+                                    <TextBlock Classes="guideTip">
+                                        <Run Text="• " />
+                                        <Run FontWeight="Bold" Text="Household budget. " />
+                                        <Run Text="Wealth is managed at household level. Jobs, crafts, farming, pensions, rents, royalties and loans can bring money in while living costs and obligations take it out." />
+                                    </TextBlock>
+                                </Border>
+                                <Border Classes="tipCard">
+                                    <TextBlock Classes="guideTip">
+                                        <Run Text="• " />
+                                        <Run FontWeight="Bold" Text="Lifestyle. " />
+                                        <Run Text="A household can live lavishly, balance its spending or be thrifty, trading living costs against comfort, wellbeing and opportunity." />
+                                    </TextBlock>
+                                </Border>
+                                <Border Classes="tipCard">
+                                    <TextBlock Classes="guideTip">
+                                        <Run Text="• " />
+                                        <Run FontWeight="Bold" Text="Housing. " />
+                                        <Run Text="Buy and sell individual houses, extend owned homes, or move to another owned property. A household without a local home rents instead." />
+                                    </TextBlock>
+                                </Border>
+                                <Border Classes="tipCard">
+                                    <TextBlock Classes="guideTip">
+                                        <Run Text="• " />
+                                        <Run FontWeight="Bold" Text="Investment property. " />
+                                        <Run Text="Houses owned outside the household's residence can earn rent and later provide a destination for relocation rather than moving the family automatically." />
+                                    </TextBlock>
+                                </Border>
+                                <Border Classes="tipCard">
+                                    <TextBlock Classes="guideTip">
+                                        <Run Text="• " />
+                                        <Run FontWeight="Bold" Text="Farmland and livestock. " />
+                                        <Run Text="Households can buy, sell, receive and inherit farmland, add livestock, and use local parcels as productive family assets." />
+                                    </TextBlock>
+                                </Border>
+                                <Border Classes="tipCard">
+                                    <TextBlock Classes="guideTip">
+                                        <Run Text="• " />
+                                        <Run FontWeight="Bold" Text="Loans. " />
+                                        <Run Text="Borrowing and lending depend on the period and local financial institutions. Repayments and receivables remain part of the household's future finances and estate." />
+                                    </TextBlock>
+                                </Border>
+                                <Border Classes="tipCard">
+                                    <TextBlock Classes="guideTip">
+                                        <Run Text="• " />
+                                        <Run FontWeight="Bold" Text="Heirlooms. " />
+                                        <Run Text="Family objects can arise from achievements, wealth, hobbies, artistic work, historical events and deaths. They can be inherited, appraised, sold and sometimes produce income." />
+                                    </TextBlock>
+                                </Border>
+                                <Border Classes="tipCard">
+                                    <TextBlock Classes="guideTip">
+                                        <Run Text="• " />
+                                        <Run FontWeight="Bold" Text="Family Inventory. " />
+                                        <Run Text="Use it to review assets, debts, income, expenses and lifestyle choices without searching through individual character panels." />
+                                    </TextBlock>
+                                </Border>
                             </StackPanel>
                         </ScrollViewer>
                     </TabItem>
 
-                    <TabItem Header="Family Life">
-                        <ScrollViewer>
-                            <StackPanel Margin="12,8,12,6" Spacing="12">
-                                <TextBlock
-                                    Classes="guideParagraph"
-                                    Text="Marriage and children are central to the dynasty, but neither is automatic. When an unmarried playable man seeks a spouse, the game presents a small set of potential partners with their personality, education, traits, hobbies and occupation. You choose whom to approach, and a particularly ambitious match may reject the courtship. Appeal still matters, but education, abilities, age, career, Personality, Morals and the historical setting all shape marriage prospects. A playable head can also help an eligible unmarried adult relative in the household find a spouse; accepted partners normally join or reorganize the existing household according to the family’s residence rules. Once married, couples develop Satisfaction over time. Passive recovery is slow; personality incompatibility, low attraction, unemployment, financial stress, imprisonment or crime, affairs, poor family relations, serious illness and repeated Work Harder use can accumulate into lasting marital pressure. Deliberate reconciliation is the main active way to repair a damaged marriage before it collapses." />
-
-                                <TextBlock
-                                    Classes="guideParagraph"
-                                    Text="Couples may have children when their circumstances allow. Fertility matters for both partners, the mother’s age matters, and a playable husband can make having a child a priority for the year. Children inherit family traits, may be born with health conditions, and become part of the household economy immediately. Large-family strain scales with each child above the household's supported childcare capacity; a nanny raises that capacity but does not remove strain without limit. Separately, each resident above the eight-person household capacity adds progressively more overcrowding Stress and Health loss." />
-
-                                <TextBlock
-                                    Classes="guideParagraph"
-                                    Text="Family life can also go wrong. Affairs sharply damage Marriage Satisfaction and family relations, and may contribute to a later divorce rather than automatically ending the marriage on the spot. Divorce and remarriage change households and can hurt spouses and children. Children of divorced parents carry the effects of that disruption while growing up. Orphans may remain with a surviving mother, be taken in by another bloodline household, or enter an orphanage. The game therefore rewards thinking about family stability as well as simply producing heirs." />
+                    <TabItem Header="Town &amp; Society">
+                        <ScrollViewer VerticalScrollBarVisibility="Auto">
+                            <StackPanel Margin="10,6" Spacing="2">
+                                <Border Classes="tipCard">
+                                    <TextBlock Classes="guideTip">
+                                        <Run Text="• " />
+                                        <Run FontWeight="Bold" Text="Institutions and prosperity. " />
+                                        <Run Text="Towns have changing institutions, prosperity and economic strengths. These shape services, jobs, education, healthcare, housing and other local opportunities." />
+                                    </TextBlock>
+                                </Border>
+                                <Border Classes="tipCard">
+                                    <TextBlock Classes="guideTip">
+                                        <Run Text="• " />
+                                        <Run FontWeight="Bold" Text="Regional support. " />
+                                        <Run Text="A region can favor particular industries, careers or crafts, so relocating may open opportunities that do not exist in the current town." />
+                                    </TextBlock>
+                                </Border>
+                                <Border Classes="tipCard">
+                                    <TextBlock Classes="guideTip">
+                                        <Run Text="• " />
+                                        <Run FontWeight="Bold" Text="Church. " />
+                                        <Run Text="Local Church life can include attendance, donations, direct charity, emergency welfare and Religious Study, with options depending on the person and institution." />
+                                    </TextBlock>
+                                </Border>
+                                <Border Classes="tipCard">
+                                    <TextBlock Classes="guideTip">
+                                        <Run Text="• " />
+                                        <Run FontWeight="Bold" Text="Court and justice. " />
+                                        <Run Text="The Court shows criminal records and local legal protection. Court quality and relatives in legal careers can matter when the family encounters the justice system." />
+                                    </TextBlock>
+                                </Border>
+                                <Border Classes="tipCard">
+                                    <TextBlock Classes="guideTip">
+                                        <Run Text="• " />
+                                        <Run FontWeight="Bold" Text="Community policy. " />
+                                        <Run Text="Towns generate temporary proposals and policies. The household can lobby a proposal, and successful policies can change local conditions for several years." />
+                                    </TextBlock>
+                                </Border>
+                                <Border Classes="tipCard">
+                                    <TextBlock Classes="guideTip">
+                                        <Run Text="• " />
+                                        <Run FontWeight="Bold" Text="Civic office. " />
+                                        <Run Text="Suitable residents may hold local office. Performing duties affects civic life and the officeholder's standing, while the office itself changes with the historical setting." />
+                                    </TextBlock>
+                                </Border>
+                                <Border Classes="tipCard">
+                                    <TextBlock Classes="guideTip">
+                                        <Run Text="• " />
+                                        <Run FontWeight="Bold" Text="Community connections. " />
+                                        <Run Text="Households can build relationships with local acquaintances, exchange gifts or assistance, and sometimes request money, housing or farmland outside the bloodline." />
+                                    </TextBlock>
+                                </Border>
+                                <Border Classes="tipCard">
+                                    <TextBlock Classes="guideTip">
+                                        <Run Text="• " />
+                                        <Run FontWeight="Bold" Text="Local Status. " />
+                                        <Run Text="Renown is partly local: moving can reduce immediate recognition, while time, achievements, family networks and civic life can establish a household in its new community." />
+                                    </TextBlock>
+                                </Border>
                             </StackPanel>
                         </ScrollViewer>
                     </TabItem>
 
-                    <TabItem Header="Events &amp; Risks">
-                        <ScrollViewer>
-                            <StackPanel Margin="12,8,12,6" Spacing="12">
-                                <TextBlock
-                                    Classes="guideParagraph"
-                                    Text="Not every year is controlled by the player. Crime, illness, accidents, household disasters and other rare events can interrupt even a carefully managed plan. Adults may commit crimes and receive prison sentences, losing freedom to act and often damaging work or family life. The kinds of crimes and the way they are described can vary by historical period. Imprisonment also affects relationships and household responsibilities until the person is released." />
-
-                                <TextBlock
-                                    Classes="guideParagraph"
-                                    Text="Rare life events are deliberately uncommon but broad in effect. A household can face events such as fire, burglary, flooding or structural accidents, while individuals may encounter assault, workplace accidents, serious falls, unexpected windfalls, distant inheritances or wrongful arrest. Which events make sense can depend on the year, the person’s age, work and household situation. Some events cost money or health; others unexpectedly improve a family’s fortunes. Mortality also includes ordinary aging and serious health conditions, so death can arrive without a dramatic event." />
-
-                                <TextBlock
-                                    Classes="guideParagraph"
-                                    Text="The Family Chronicle is the main record of important developments, organized by year and household. Biographies preserve major events from an individual life, including family milestones that matter to close relatives. Thoughts give a more immediate view of what a person currently cares about. Read these together: the Chronicle explains what happened to the dynasty, the biography explains one life, and the thought often explains what feels important right now." />
+                    <TabItem Header="Risks &amp; History">
+                        <ScrollViewer VerticalScrollBarVisibility="Auto">
+                            <StackPanel Margin="10,6" Spacing="2">
+                                <Border Classes="tipCard">
+                                    <TextBlock Classes="guideTip">
+                                        <Run Text="• " />
+                                        <Run FontWeight="Bold" Text="Crime. " />
+                                        <Run Text="Adults can become involved in crime, and some can deliberately enter a persistent Life of Crime. Criminal choices can bring income, danger, records and imprisonment." />
+                                    </TextBlock>
+                                </Border>
+                                <Border Classes="tipCard">
+                                    <TextBlock Classes="guideTip">
+                                        <Run Text="• " />
+                                        <Run FontWeight="Bold" Text="Prison. " />
+                                        <Run Text="Imprisonment restricts ordinary actions, work and family life. Depending on circumstances, bail, escape attempts and eventual release may become relevant." />
+                                    </TextBlock>
+                                </Border>
+                                <Border Classes="tipCard">
+                                    <TextBlock Classes="guideTip">
+                                        <Run Text="• " />
+                                        <Run FontWeight="Bold" Text="Rare events. " />
+                                        <Run Text="Uncommon personal and household events can change health, wealth, property, careers or family circumstances, with eligibility depending on the current situation." />
+                                    </TextBlock>
+                                </Border>
+                                <Border Classes="tipCard">
+                                    <TextBlock Classes="guideTip">
+                                        <Run Text="• " />
+                                        <Run FontWeight="Bold" Text="Historical events. " />
+                                        <Run Text="Wars, political upheaval and other historical shocks can affect particular places and households, including health, finances, work, property and migration." />
+                                    </TextBlock>
+                                </Border>
+                                <Border Classes="tipCard">
+                                    <TextBlock Classes="guideTip">
+                                        <Run Text="• " />
+                                        <Run FontWeight="Bold" Text="A changing map. " />
+                                        <Run Text="Towns can change name, status, population or political setting over time. Historical geography also influences nationalities, outsider origins and local opportunities." />
+                                    </TextBlock>
+                                </Border>
+                                <Border Classes="tipCard">
+                                    <TextBlock Classes="guideTip">
+                                        <Run Text="• " />
+                                        <Run FontWeight="Bold" Text="Migration. " />
+                                        <Run Text="Households may relocate within Poland or leave it because of historical circumstances. Relocation can cost property or work and changes the local world around the family." />
+                                    </TextBlock>
+                                </Border>
+                                <Border Classes="tipCard">
+                                    <TextBlock Classes="guideTip">
+                                        <Run Text="• " />
+                                        <Run FontWeight="Bold" Text="Dynasty end. " />
+                                        <Run Text="The run ends if the playable male line disappears or no longer remains in Poland, even though other bloodline descendants may still be alive elsewhere." />
+                                    </TextBlock>
+                                </Border>
                             </StackPanel>
                         </ScrollViewer>
                     </TabItem>

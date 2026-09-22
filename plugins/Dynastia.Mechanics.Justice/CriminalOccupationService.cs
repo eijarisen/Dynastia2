@@ -139,8 +139,13 @@ internal sealed class CriminalOccupationService :
     public decimal GetExpectedAnnualIncome(IPerson person)
     {
         var component = GetMutable(person);
-        if (!component.IsActive || _justice.IsImprisoned(person) || !person.Tags.Has("state.alive"))
+        if (!component.IsActive
+            || _justice.IsImprisoned(person)
+            || !person.Tags.Has("state.alive")
+            || _economy.GetHouseholdId(person) is null)
+        {
             return 0m;
+        }
 
         var mastery = _catalog.ResolveMastery(component.ActiveHeistYears);
         return CalculateExpectedIncome(person, mastery.Level, ResolveArchetype(person));
@@ -151,7 +156,8 @@ internal sealed class CriminalOccupationService :
         var component = GetMutable(person);
         if (!component.IsActive
             || !person.Tags.Has("state.alive")
-            || _justice.IsImprisoned(person))
+            || _justice.IsImprisoned(person)
+            || _economy.GetHouseholdId(person) is null)
         {
             component.PendingHeistYear = 0;
             component.PendingHeistProceeds = 0m;
@@ -175,7 +181,8 @@ internal sealed class CriminalOccupationService :
         var component = GetMutable(person);
         if (!component.IsActive
             || component.LastHeistYear == _gameState.Year
-            || _justice.IsImprisoned(person))
+            || _justice.IsImprisoned(person)
+            || _economy.GetHouseholdId(person) is null)
         {
             return false;
         }
@@ -193,7 +200,8 @@ internal sealed class CriminalOccupationService :
         if (!component.IsActive
             || component.LastHeistYear == _gameState.Year
             || !person.Tags.Has("state.alive")
-            || _justice.IsImprisoned(person))
+            || _justice.IsImprisoned(person)
+            || _economy.GetHouseholdId(person) is null)
         {
             return;
         }

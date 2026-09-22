@@ -8,7 +8,7 @@ public sealed class Development10MapTownAffairsInventoryTests
         var xaml = ReadRepositoryFile(
             "src", "Dynastia.App", "Views", "TownLifeWindow.axaml");
 
-        Assert.Contains("ColumnDefinitions=\"42,*\"", xaml);
+        Assert.Contains("ColumnDefinitions=\"52,*\"", xaml);
         Assert.Contains("HorizontalAlignment=\"Left\"", xaml);
         Assert.Contains("TextAlignment=\"Left\"", xaml);
         Assert.Contains("Text=\"{Binding Summary}\"", xaml);

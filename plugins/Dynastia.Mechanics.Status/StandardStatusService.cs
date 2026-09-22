@@ -308,8 +308,9 @@ internal sealed class StandardStatusService : IStatusService
                 ? 0m
                 : _farming.LivestockPurchasePrice));
         var heirloomValue = _heirlooms.GetHeirlooms(person).Sum(item => item.AppraisedValue);
+        var receivables = _loans.GetLoansGiven(person).Sum(item => item.RemainingAmount);
         var debt = _loans.GetDebts(person).Sum(item => item.RemainingAmount);
-        return wealth + houseValue + farmlandValue + heirloomValue - debt;
+        return wealth + houseValue + farmlandValue + heirloomValue + receivables - debt;
     }
 
     private int GetCraftMastery(IPerson person)

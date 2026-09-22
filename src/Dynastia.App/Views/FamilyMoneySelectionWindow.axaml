@@ -80,6 +80,7 @@
 
                     <Grid ColumnDefinitions="Auto,*,Auto">
                         <TextBlock
+                            x:Name="MinimumText"
                             FontFamily="Georgia"
                             FontSize="11"
                             Foreground="#745A38"

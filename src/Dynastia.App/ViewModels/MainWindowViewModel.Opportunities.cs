@@ -136,8 +136,9 @@ public sealed partial class MainWindowViewModel
             ? _partnerSearchService.GetCandidatesFor(
                 seeker,
                 arrangedSon ? Sex.Female : Sex.Male,
-                arrangedSon ? "arranged-marriage-son" : "arranged-marriage")
-            : _partnerSearchService.GetCandidates(seeker);
+                arrangedSon ? "arranged-marriage-son" : "arranged-marriage",
+                count: 4)
+            : _partnerSearchService.GetCandidates(seeker, count: 4);
 
         var candidates = candidateProfiles
             .Select(candidate =>
@@ -147,8 +148,7 @@ public sealed partial class MainWindowViewModel
                         ? _careerPresentationService?
                             .GetCareerEmoji(candidate.CareerId)
                             ?? CareerPresentationDefaults.DefaultCareerEmoji
-                        : "🔎",
-                    arrangedMarriage ? "Choose" : "Approach"))
+                        : "🔎"))
             .ToList();
 
         return new PotentialPartnerDialogViewModel(

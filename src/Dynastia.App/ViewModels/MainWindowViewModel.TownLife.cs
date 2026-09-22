@@ -1,3 +1,5 @@
+using System.Security.Cryptography;
+using System.Text;
 using Dynastia.Contracts;
 
 namespace Dynastia.App.ViewModels;
@@ -41,13 +43,6 @@ public sealed partial class MainWindowViewModel
 
     private static readonly string[] ChurchDonationTiers =
         ["modest", "generous", "major"];
-
-    private static readonly HashSet<string> TownAffairsCourtActionIds =
-        new(StringComparer.OrdinalIgnoreCase)
-        {
-            "justice.bail_out",
-            "justice.attempt_escape"
-        };
 
     private const string TownAffairsCommunityLobbyActionId =
         "community.lobby_policy";
@@ -101,6 +96,8 @@ public sealed partial class MainWindowViewModel
                 || _economyService is null
                 || actor is null
                 || target is null
+                || _justiceService?.IsImprisoned(actor) == true
+                || _justiceService?.IsImprisoned(target) == true
                 || target.Age < 18
                 || !target.Tags.Has("state.alive"))
             {
@@ -375,7 +372,7 @@ public sealed partial class MainWindowViewModel
                 health.Conditions.Select(condition => condition.Name));
 
         return new TownAffairsHealthSummaryViewModel(
-            $"Health: {health.Current:N0} / {health.Maximum:N0} ({health.Percentage:N0}%)",
+            $"Health: {health.Current:N0} / {health.Maximum:N0}",
             conditions);
     }
 
@@ -401,13 +398,7 @@ public sealed partial class MainWindowViewModel
                 item.Evaluation.Available
                 || item.Evaluation.ReasonCode.Equals(
                     ActionReasonCodes.InsufficientFunds,
-                    StringComparison.OrdinalIgnoreCase)
-                || (item.Action.Id.StartsWith(
-                        "stats.improve_",
-                        StringComparison.OrdinalIgnoreCase)
-                    && item.Evaluation.ReasonCode.Equals(
-                        ActionReasonCodes.ResourceUnavailable,
-                        StringComparison.OrdinalIgnoreCase)))
+                    StringComparison.OrdinalIgnoreCase))
             .Select(item => new TownAffairsHealthActionViewModel(
                 item.Action.Id,
                 item.Action.Label,
@@ -431,29 +422,67 @@ public sealed partial class MainWindowViewModel
             .ToDictionary(action => action.Id, StringComparer.OrdinalIgnoreCase);
         var result = new List<TownAffairsChurchActionViewModel>();
 
-        AddChurchAction("church.attend", null, null, isBenefit: false);
-        AddChurchAction("personality.religious_study", null, null, isBenefit: false);
-        foreach (var tier in ChurchDonationTiers)
-            AddChurchAction("church.donate", tier, TitleCaseTier(tier), isBenefit: false);
-        foreach (var tier in ChurchDonationTiers)
-            AddChurchAction("church.aid_poor_family", tier, TitleCaseTier(tier), isBenefit: false);
-        AddChurchAction("church.ask_welfare", null, null, isBenefit: true);
+        AddChurchAction("church.attend", isBenefit: false);
+        AddChurchAction("personality.religious_study", isBenefit: false);
+        AddChurchMoneyAction("church.donate");
+        AddChurchMoneyAction("church.aid_poor_family");
+        AddChurchAction("church.ask_welfare", isBenefit: true);
 
         return result;
 
+        void AddChurchMoneyAction(string actionId)
+        {
+            if (!definitions.TryGetValue(actionId, out var action))
+                return;
+
+            var parameters = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+            {
+                ["churchTier"] = ChurchDonationTiers[0]
+            };
+            var evaluation = _actionRegistry.Evaluate(
+                actionId,
+                actor,
+                actor,
+                parameters);
+
+            var minimum = 100m;
+            if (evaluation.PresentationMetadata.TryGetValue("amount", out var rawMinimum)
+                && decimal.TryParse(
+                    rawMinimum,
+                    System.Globalization.NumberStyles.Number,
+                    System.Globalization.CultureInfo.InvariantCulture,
+                    out var parsedMinimum))
+            {
+                minimum = parsedMinimum;
+            }
+
+            var rawMaximum = _economyService?.GetHousehold(actor)?.Wealth ?? 0m;
+            var maximum = Math.Floor(Math.Max(0m, rawMaximum) / 100m) * 100m;
+            var description = action.Description
+                + " Choose the amount with the money slider; larger gifts qualify for stronger donation effects.";
+
+            result.Add(new TownAffairsChurchActionViewModel(
+                action.Id,
+                action.Label,
+                description,
+                null,
+                false,
+                evaluation.Available,
+                evaluation.Reason,
+                new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase),
+                RequiresMoneySelection: true,
+                MinimumAmount: minimum,
+                MaximumAmount: Math.Max(0m, maximum)));
+        }
+
         void AddChurchAction(
             string actionId,
-            string? tier,
-            string? optionLabel,
             bool isBenefit)
         {
             if (!definitions.TryGetValue(actionId, out var action))
                 return;
 
             var parameters = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
-            if (!string.IsNullOrWhiteSpace(tier))
-                parameters["churchTier"] = tier;
-
             var evaluation = _actionRegistry.Evaluate(
                 actionId,
                 actor,
@@ -490,9 +519,7 @@ public sealed partial class MainWindowViewModel
 
             result.Add(new TownAffairsChurchActionViewModel(
                 action.Id,
-                string.IsNullOrWhiteSpace(optionLabel)
-                    ? action.Label
-                    : $"{action.Label} — {optionLabel}",
+                action.Label,
                 description,
                 amount,
                 isBenefit,
@@ -516,82 +543,25 @@ public sealed partial class MainWindowViewModel
             ? $"{court!.TierName} (Tier {court.Tier})"
             : "No local court. Criminal matters are handled by outside authorities.";
         var protection = _justiceService.GetCourtProtection(subject);
+        var protectionPercent = Math.Clamp(
+            1m - protection.SentenceMultiplier,
+            0m,
+            1m);
+        var protectionText = $"Court protection: {protectionPercent:P0}";
+        var relatives = _justiceService.GetCourtProtectionRelatives(subject);
         var status = _justiceService.GetStatus(subject);
-        var protectionText =
-            $"Court Protection: {protection.DisplayName} · sentence ×{protection.SentenceMultiplier:0.00}";
-        var helperText = protection.HelperPersonId.HasValue
-            ? $"Protected by {protection.HelperName} — {protection.HelperCareerName}, Level {protection.HelperJobLevel}"
-            : string.Empty;
-        var imprisonmentText = !status.IsImprisoned
-            ? "Not imprisoned."
-            : status.IsLifeSentence
-                ? $"Imprisoned · {status.RemainingYears} years remaining (Life)."
-                : $"Imprisoned · {status.RemainingYears} {(status.RemainingYears == 1 ? "year" : "years")} remaining.";
-        var bailCostText = status.IsImprisoned
-            ? $"Bail: {_justiceService.GetBailCost(subject):N0} zł"
-            : string.Empty;
-        var stolenRisk =
-            $"Selling a stolen Heirloom: {_justiceService.GetStolenHeirloomSaleDetectionChance(subject):P0} detection risk. Keeping it is harmless.";
-
-        var actor = _succession.ActiveController;
-        var actions = new List<TownAffairsCourtActionViewModel>();
-        if (actor is not null)
-        {
-            foreach (var definition in _actionRegistry
-                .GetCandidateActions(actor, subject)
-                .Where(action => TownAffairsCourtActionIds.Contains(action.Id)))
-            {
-                var evaluation = _actionRegistry.Evaluate(
-                    definition.Id,
-                    actor,
-                    subject);
-                actions.Add(new TownAffairsCourtActionViewModel(
-                    definition.Id,
-                    definition.Label,
-                    definition.Description,
-                    evaluation.Available,
-                    evaluation.Reason));
-            }
-        }
 
         return new TownAffairsCourtViewModel(
             courtText,
             hasLocalCourt,
             protectionText,
-            helperText,
-            imprisonmentText,
-            bailCostText,
-            stolenRisk,
-            status.KnownCriminalRecord,
-            actions);
+            relatives,
+            status.KnownCriminalRecord);
     }
 
-    internal void QueueTownAffairsCourtAction(
-        string actionId,
-        IPerson target)
-    {
-        if (!TownAffairsCourtActionIds.Contains(actionId))
-            return;
 
-        var actor = _succession.ActiveController;
-        if (actor is null || _succession.IsGameOver)
-            return;
-
-        var result = _actionRegistry.Execute(actionId, actor, target);
-        if (!result.Success && !string.IsNullOrWhiteSpace(result.Message))
-            PersistenceStatusText = result.Message;
-
-        RefreshPeople();
-        RefreshAlbum();
-        RefreshEconomy();
-        RefreshCareer();
-        RefreshJustice();
-        RefreshNarrative();
-        RefreshActions();
-    }
-
-    internal TownAffairsCivicOfficeActionViewModel?
-        GetTownAffairsCivicOfficeAction(TownLifeSnapshot snapshot)
+    internal TownAffairsCivicOfficeActionViewModel? GetTownAffairsCivicOfficeAction(
+        TownLifeSnapshot snapshot)
     {
         var actor = _succession.ActiveController;
         if (actor is null
@@ -612,6 +582,7 @@ public sealed partial class MainWindowViewModel
             TownAffairsOfficeDutiesActionId,
             actor,
             actor);
+
         return new TownAffairsCivicOfficeActionViewModel(
             definition.Id,
             definition.Label,
@@ -619,6 +590,7 @@ public sealed partial class MainWindowViewModel
             evaluation.Available,
             evaluation.Reason);
     }
+
 
     internal void QueueTownAffairsOfficeDuties(
         TownAffairsCivicOfficeActionViewModel action)
@@ -688,12 +660,62 @@ public sealed partial class MainWindowViewModel
 
                 return new TownAffairsCommunityProposalViewModel(
                     proposal,
+                    GetTownAffairsCommunityProposerPortrait(proposal.Proposer),
                     evaluation.Available,
                     evaluation.Reason,
                     bonus,
                     parameters);
             })
             .ToArray();
+    }
+
+    internal string GetTownAffairsCivicOfficePortrait(
+        CivicOfficeHeadInfo? office)
+    {
+        if (office is null)
+            return string.Empty;
+
+        if (office.PersonId is Guid personId
+            && _gameState.People.FirstOrDefault(person => person.Id == personId) is { } person)
+        {
+            return _appearanceService?.GetPortrait(person)
+                ?? (office.Sex == Sex.Male ? "👨🏻" : "👩🏻");
+        }
+
+        if (_appearanceService is null)
+            return office.Sex == Sex.Male ? "👨🏻" : "👩🏻";
+
+        var seed = StablePortraitGuid(
+            $"civic|{office.TownId}|{office.Name}|{office.BirthYear}|{office.OfficeStartYear}");
+        var appearance = _appearanceService.GenerateCandidateAppearance(seed, office.Sex);
+        return _appearanceService.GetPortrait(
+            appearance,
+            office.Sex,
+            office.Age(_gameState.Year),
+            seed);
+    }
+
+    private string GetTownAffairsCommunityProposerPortrait(
+        CommunityPolicyProposerInfo proposer)
+    {
+        if (_appearanceService is null)
+            return proposer.Sex == Sex.Male ? "👨🏻" : "👩🏻";
+
+        var seed = Guid.TryParse(proposer.Id, out var parsed)
+            ? parsed
+            : StablePortraitGuid(proposer.Id);
+        var appearance = _appearanceService.GenerateCandidateAppearance(seed, proposer.Sex);
+        return _appearanceService.GetPortrait(
+            appearance,
+            proposer.Sex,
+            proposer.Age,
+            seed);
+    }
+
+    private static Guid StablePortraitGuid(string key)
+    {
+        var bytes = SHA256.HashData(Encoding.UTF8.GetBytes(key));
+        return new Guid(bytes.AsSpan(0, 16));
     }
 
     internal IReadOnlyList<TownAffairsActivePolicyViewModel>
@@ -731,7 +753,8 @@ public sealed partial class MainWindowViewModel
     }
 
     internal void QueueTownAffairsChurchAction(
-        TownAffairsChurchActionViewModel action)
+        TownAffairsChurchActionViewModel action,
+        decimal? selectedAmount = null)
     {
         if (!TownAffairsChurchActionIds.Contains(action.ActionId)
             || !action.IsAvailable)
@@ -743,11 +766,47 @@ public sealed partial class MainWindowViewModel
         if (actor is null || _succession.IsGameOver)
             return;
 
+        var parameters = new Dictionary<string, string>(
+            action.Parameters,
+            StringComparer.OrdinalIgnoreCase);
+
+        if (action.RequiresMoneySelection)
+        {
+            if (selectedAmount is not decimal amount
+                || amount < action.MinimumAmount
+                || amount > action.MaximumAmount)
+            {
+                return;
+            }
+
+            var tier = ResolveChurchDonationTier(
+                action.ActionId,
+                actor,
+                amount);
+            if (tier is null)
+                return;
+
+            parameters["churchTier"] = tier;
+            parameters["churchAmount"] = amount.ToString(
+                System.Globalization.CultureInfo.InvariantCulture);
+
+            var evaluation = _actionRegistry.Evaluate(
+                action.ActionId,
+                actor,
+                actor,
+                parameters);
+            if (!evaluation.Available)
+            {
+                PersistenceStatusText = evaluation.Reason ?? "The Church action is no longer available.";
+                return;
+            }
+        }
+
         var result = _actionRegistry.Execute(
             action.ActionId,
             actor,
             actor,
-            action.Parameters);
+            parameters);
         if (!result.Success && !string.IsNullOrWhiteSpace(result.Message))
             PersistenceStatusText = result.Message;
 
@@ -762,10 +821,40 @@ public sealed partial class MainWindowViewModel
         RefreshActions();
     }
 
-    private static string TitleCaseTier(string tier) =>
-        System.Globalization.CultureInfo.CurrentCulture.TextInfo
-            .ToTitleCase(tier);
 
+    private string? ResolveChurchDonationTier(
+        string actionId,
+        IPerson actor,
+        decimal selectedAmount)
+    {
+        string? chosen = null;
+        foreach (var tier in ChurchDonationTiers)
+        {
+            var parameters = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+            {
+                ["churchTier"] = tier
+            };
+            var evaluation = _actionRegistry.Evaluate(
+                actionId,
+                actor,
+                actor,
+                parameters);
+            if (!evaluation.PresentationMetadata.TryGetValue("amount", out var raw)
+                || !decimal.TryParse(
+                    raw,
+                    System.Globalization.NumberStyles.Number,
+                    System.Globalization.CultureInfo.InvariantCulture,
+                    out var threshold))
+            {
+                continue;
+            }
+
+            if (selectedAmount >= threshold)
+                chosen = tier;
+        }
+
+        return chosen;
+    }
     internal void QueueTownAffairsHealthAction(
         string actionId,
         IPerson target)

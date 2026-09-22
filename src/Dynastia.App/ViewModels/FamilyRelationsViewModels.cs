@@ -69,19 +69,6 @@ public sealed record FamilyRelationHouseholdViewModel(
 }
 
 
-public sealed record FamilyRelationJusticeActionViewModel(
-    Guid TargetId,
-    string TargetName,
-    string ActionId,
-    string Label,
-    string Description,
-    string CostText,
-    bool IsAvailable,
-    string? UnavailableReason)
-{
-    public double DisplayOpacity => IsAvailable ? 1.0 : 0.42;
-}
-
 public sealed class HouseholdConnectionActionViewModel
 {
     public HouseholdConnectionActionViewModel(
@@ -111,6 +98,7 @@ public sealed class HouseholdConnectionActionViewModel
 public sealed record HouseholdConnectionViewModel(
     Guid Id,
     string Name,
+    string PortraitEmoji,
     string RelationState,
     string ProfileText,
     string WealthText,
@@ -142,9 +130,11 @@ public sealed class FamilyRelationsWindowViewModel : ViewModelBase
     }
 
     public ObservableCollection<FamilyRelationHouseholdViewModel> Households { get; } = [];
-    public ObservableCollection<FamilyRelationJusticeActionViewModel> JusticeActions { get; } = [];
-    public bool HasJusticeActions => JusticeActions.Count > 0;
     public ObservableCollection<HouseholdConnectionViewModel> Connections { get; } = [];
+
+    public bool HasConnections => Connections.Count > 0;
+
+    public bool ShowNoConnections => !HasConnections;
 
     public string StatusText
     {
@@ -177,16 +167,13 @@ public sealed class FamilyRelationsWindowViewModel : ViewModelBase
         Households.Clear();
         foreach (var household in _main.GetFamilyRelationsHouseholds())
             Households.Add(household);
-        JusticeActions.Clear();
-        foreach (var action in _main.GetFamilyRelationsJusticeActions())
-            JusticeActions.Add(action);
         Connections.Clear();
         foreach (var connection in _main.GetHouseholdConnections())
             Connections.Add(connection);
         OnPropertyChanged(nameof(Households));
-        OnPropertyChanged(nameof(JusticeActions));
-        OnPropertyChanged(nameof(HasJusticeActions));
         OnPropertyChanged(nameof(Connections));
+        OnPropertyChanged(nameof(HasConnections));
+        OnPropertyChanged(nameof(ShowNoConnections));
     }
 
     public IReadOnlyList<PropertySelectionOption> GetGiveHouseOptions(Guid relativeId) =>
@@ -226,15 +213,7 @@ public sealed class FamilyRelationsWindowViewModel : ViewModelBase
         return result.Success;
     }
 
-    public bool QueueJustice(FamilyRelationJusticeActionViewModel action)
-    {
-        var result = _main.QueueFamilyRelationsJusticeAction(action);
-        StatusText = result.Message
-            ?? (result.Success ? "Action queued." : "The action could not be queued.");
-        if (!result.Success)
-            Refresh();
-        return result.Success;
-    }
+
 
     public IReadOnlyList<PropertySelectionOption> GetConnectionPropertyOptions(
         HouseholdConnectionActionViewModel action) =>

@@ -21,7 +21,8 @@ public sealed class CareerInstitutionRequirementCatalog
                 "administration",
                 "post_office",
                 "railway_station",
-                "port"
+                "port",
+                "church"
             ],
             StringComparer.OrdinalIgnoreCase);
 

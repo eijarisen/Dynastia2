@@ -277,9 +277,12 @@ internal static class CommunityConnectionActions
     private static Guid ReadConnectionId(GameActionContext context) =>
         TryConnectionId(context, out var id) ? id : Guid.Empty;
 
-    private static bool TryConnectionId(GameActionContext context, out Guid id) =>
-        context.Parameters.TryGetValue(ConnectionIdParameter, out var raw)
-        && Guid.TryParse(raw, out id);
+    private static bool TryConnectionId(GameActionContext context, out Guid id)
+    {
+        id = Guid.Empty;
+        return context.Parameters.TryGetValue(ConnectionIdParameter, out var raw)
+            && Guid.TryParse(raw, out id);
+    }
 
     private static bool TryAmount(GameActionContext context, out decimal amount)
     {
@@ -288,9 +291,12 @@ internal static class CommunityConnectionActions
             && decimal.TryParse(raw, NumberStyles.Number, CultureInfo.InvariantCulture, out amount);
     }
 
-    private static bool TryPropertyId(GameActionContext context, out Guid id) =>
-        context.Parameters.TryGetValue("propertyId", out var raw)
-        && Guid.TryParse(raw, out id);
+    private static bool TryPropertyId(GameActionContext context, out Guid id)
+    {
+        id = Guid.Empty;
+        return context.Parameters.TryGetValue("propertyId", out var raw)
+            && Guid.TryParse(raw, out id);
+    }
 
     private static void Publish(
         GameActionContext context,

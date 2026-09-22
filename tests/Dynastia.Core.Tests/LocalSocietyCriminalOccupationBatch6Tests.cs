@@ -91,7 +91,8 @@ public sealed class LocalSocietyCriminalOccupationBatch6Tests
         Assert.Contains("Math.Clamp(1m + 0.05m * (average - 3m), 0.90m, 1.10m)", service);
         Assert.Contains("archetype.IncomeMultiplier", service);
         Assert.Contains("Math.Floor(proceeds / 2m)", service);
-        Assert.Contains("originalSentence * sentenceMultiplier", service);
+        Assert.Contains("_justice.ConvictKnownOffense(", service);
+        Assert.Contains("sentenceMultiplier", service);
     }
 
     [Fact]

@@ -35,6 +35,13 @@ public sealed partial class MainWindowViewModel
     private static readonly string[] ChurchDonationTiers =
         ["modest", "generous", "major"];
 
+    private static readonly HashSet<string> TownAffairsCourtActionIds =
+        new(StringComparer.OrdinalIgnoreCase)
+        {
+            "justice.bail_out",
+            "justice.attempt_escape"
+        };
+
     private const string TownAffairsCommunityLobbyActionId =
         "community.lobby_policy";
 
@@ -437,6 +444,93 @@ public sealed partial class MainWindowViewModel
         }
     }
 
+
+    internal TownAffairsCourtViewModel? GetTownAffairsCourtModel(
+        TownLifeSnapshot snapshot,
+        IPerson subject)
+    {
+        if (_justiceService is null || subject.Age < 18)
+            return null;
+
+        var court = snapshot.Institutions.Find("court");
+        var hasLocalCourt = court?.IsAvailable == true;
+        var courtText = hasLocalCourt
+            ? $"{court!.TierName} (Tier {court.Tier})"
+            : "No local court. Criminal matters are handled by outside authorities.";
+        var protection = _justiceService.GetCourtProtection(subject);
+        var status = _justiceService.GetStatus(subject);
+        var protectionText =
+            $"Court Protection: {protection.DisplayName} · sentence ×{protection.SentenceMultiplier:0.00}";
+        var helperText = protection.HelperPersonId.HasValue
+            ? $"Protected by {protection.HelperName} — {protection.HelperCareerName}, Level {protection.HelperJobLevel}"
+            : string.Empty;
+        var imprisonmentText = !status.IsImprisoned
+            ? "Not imprisoned."
+            : status.IsLifeSentence
+                ? $"Imprisoned · {status.RemainingYears} years remaining (Life)."
+                : $"Imprisoned · {status.RemainingYears} {(status.RemainingYears == 1 ? "year" : "years")} remaining.";
+        var bailCostText = status.IsImprisoned
+            ? $"Bail: {_justiceService.GetBailCost(subject):N0} zł"
+            : string.Empty;
+        var stolenRisk =
+            $"Selling a stolen Heirloom: {_justiceService.GetStolenHeirloomSaleDetectionChance(subject):P0} detection risk. Keeping it is harmless.";
+
+        var actor = _succession.ActiveController;
+        var actions = new List<TownAffairsCourtActionViewModel>();
+        if (actor is not null)
+        {
+            foreach (var definition in _actionRegistry
+                .GetCandidateActions(actor, subject)
+                .Where(action => TownAffairsCourtActionIds.Contains(action.Id)))
+            {
+                var evaluation = _actionRegistry.Evaluate(
+                    definition.Id,
+                    actor,
+                    subject);
+                actions.Add(new TownAffairsCourtActionViewModel(
+                    definition.Id,
+                    definition.Label,
+                    definition.Description,
+                    evaluation.Available,
+                    evaluation.Reason));
+            }
+        }
+
+        return new TownAffairsCourtViewModel(
+            courtText,
+            hasLocalCourt,
+            protectionText,
+            helperText,
+            imprisonmentText,
+            bailCostText,
+            stolenRisk,
+            status.KnownCriminalRecord,
+            actions);
+    }
+
+    internal void QueueTownAffairsCourtAction(
+        string actionId,
+        IPerson target)
+    {
+        if (!TownAffairsCourtActionIds.Contains(actionId))
+            return;
+
+        var actor = _succession.ActiveController;
+        if (actor is null || _succession.IsGameOver)
+            return;
+
+        var result = _actionRegistry.Execute(actionId, actor, target);
+        if (!result.Success && !string.IsNullOrWhiteSpace(result.Message))
+            PersistenceStatusText = result.Message;
+
+        RefreshPeople();
+        RefreshAlbum();
+        RefreshEconomy();
+        RefreshCareer();
+        RefreshJustice();
+        RefreshNarrative();
+        RefreshActions();
+    }
 
     internal TownAffairsCivicOfficeActionViewModel?
         GetTownAffairsCivicOfficeAction(TownLifeSnapshot snapshot)

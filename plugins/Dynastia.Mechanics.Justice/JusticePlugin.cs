@@ -65,12 +65,18 @@ public sealed partial class JusticePlugin : IGamePlugin
             data,
             crimes.Select(crime => crime.Id));
         var criminalCatalog = CriminalOccupationCatalog.Load(data);
+        var courtRules = CourtJusticeRules.Load(data);
         var attemptContext = contextWeights.LoadGlobalCatalog(AttemptContextPath);
         var crimeContext = contextWeights.LoadCatalog(
             CrimeContextPath,
             crimes.Select(crime => crime.Id));
 
-        var justice = new StandardJusticeService();
+        var justice = new StandardJusticeService(
+            context.GetService<IGameState>()!,
+            family,
+            career,
+            courtRules,
+            () => context.GetService<IFamilyRelationService>());
         var criminalOccupation = new CriminalOccupationService(
             context.GetService<IGameState>()!,
             family,
@@ -109,6 +115,14 @@ public sealed partial class JusticePlugin : IGamePlugin
             economy,
             personality,
             criminalCatalog.Rules);
+        RegisterCourtActions(
+            actions,
+            justice,
+            criminalOccupation,
+            family,
+            economy,
+            stats,
+            courtRules);
         systems.Register(new PrisonStatusYearSystem(justice, family, events));
         systems.Register(new CriminalOccupationYearSystem(criminalOccupation));
         systems.Register(new CrimeYearSystem(

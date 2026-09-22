@@ -148,6 +148,19 @@ public partial class TownLifeWindow : Window
         CloseIfQueued(model);
     }
 
+    private void OnCourtActionClick(object? sender, RoutedEventArgs e)
+    {
+        if (DataContext is not TownAffairsViewModel model
+            || sender is not Button { DataContext: TownAffairsCourtActionViewModel action }
+            || !action.IsAvailable)
+        {
+            return;
+        }
+
+        model.QueueCourt(action.ActionId);
+        CloseIfQueued(model);
+    }
+
     private void OnOfficeDutiesClick(object? sender, RoutedEventArgs e)
     {
         if (DataContext is not TownAffairsViewModel model

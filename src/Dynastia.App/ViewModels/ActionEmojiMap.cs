@@ -91,7 +91,9 @@ public static class ActionEmojiMap
                 ["community.connection.give_farmland"] = "🎁",
                 ["community.connection.request_money"] = "🙏",
                 ["community.connection.request_house"] = "🙏",
-                ["community.connection.request_farmland"] = "🙏"
+                ["community.connection.request_farmland"] = "🙏",
+                ["justice.bail_out"] = "💵",
+                ["justice.attempt_escape"] = "🔓"
             };
 
     public static string GetEmoji(string actionId)

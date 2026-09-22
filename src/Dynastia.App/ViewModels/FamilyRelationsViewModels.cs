@@ -69,6 +69,19 @@ public sealed record FamilyRelationHouseholdViewModel(
 }
 
 
+public sealed record FamilyRelationJusticeActionViewModel(
+    Guid TargetId,
+    string TargetName,
+    string ActionId,
+    string Label,
+    string Description,
+    string CostText,
+    bool IsAvailable,
+    string? UnavailableReason)
+{
+    public double DisplayOpacity => IsAvailable ? 1.0 : 0.42;
+}
+
 public sealed class HouseholdConnectionActionViewModel
 {
     public HouseholdConnectionActionViewModel(
@@ -129,6 +142,8 @@ public sealed class FamilyRelationsWindowViewModel : ViewModelBase
     }
 
     public ObservableCollection<FamilyRelationHouseholdViewModel> Households { get; } = [];
+    public ObservableCollection<FamilyRelationJusticeActionViewModel> JusticeActions { get; } = [];
+    public bool HasJusticeActions => JusticeActions.Count > 0;
     public ObservableCollection<HouseholdConnectionViewModel> Connections { get; } = [];
 
     public string StatusText
@@ -162,10 +177,15 @@ public sealed class FamilyRelationsWindowViewModel : ViewModelBase
         Households.Clear();
         foreach (var household in _main.GetFamilyRelationsHouseholds())
             Households.Add(household);
+        JusticeActions.Clear();
+        foreach (var action in _main.GetFamilyRelationsJusticeActions())
+            JusticeActions.Add(action);
         Connections.Clear();
         foreach (var connection in _main.GetHouseholdConnections())
             Connections.Add(connection);
         OnPropertyChanged(nameof(Households));
+        OnPropertyChanged(nameof(JusticeActions));
+        OnPropertyChanged(nameof(HasJusticeActions));
         OnPropertyChanged(nameof(Connections));
     }
 
@@ -201,6 +221,16 @@ public sealed class FamilyRelationsWindowViewModel : ViewModelBase
             propertyId,
             moneyAmount);
         StatusText = result.Message ?? (result.Success ? "Action queued." : "The action could not be queued.");
+        if (!result.Success)
+            Refresh();
+        return result.Success;
+    }
+
+    public bool QueueJustice(FamilyRelationJusticeActionViewModel action)
+    {
+        var result = _main.QueueFamilyRelationsJusticeAction(action);
+        StatusText = result.Message
+            ?? (result.Success ? "Action queued." : "The action could not be queued.");
         if (!result.Success)
             Refresh();
         return result.Success;

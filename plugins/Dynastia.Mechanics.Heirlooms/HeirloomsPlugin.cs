@@ -13,6 +13,7 @@ public sealed class HeirloomsPlugin : IGamePlugin
         var random = Require<IGameRandom>(context, "Game random");
         var events = Require<IGameEventBus>(context, "Game event bus");
         var actions = Require<IActionRegistry>(context, "Action registry");
+        var justice = Require<IJusticeService>(context, "Justice service");
         var data = Require<IGameDataService>(context, "Game data service");
 
         var catalog = HeirloomCatalog.Load(data);
@@ -33,7 +34,7 @@ public sealed class HeirloomsPlugin : IGamePlugin
             eventCatalog);
 
         context.AddService<IHeirloomService>(service);
-        RegisterSaleAction(actions, economy, service, events);
+        RegisterSaleAction(actions, economy, service, justice, events);
 
         var education = context.GetService<IEducationService>();
         var career = context.GetService<ICareerService>();
@@ -104,6 +105,7 @@ public sealed class HeirloomsPlugin : IGamePlugin
         IActionRegistry actions,
         IEconomyService economy,
         IHeirloomService heirlooms,
+        IJusticeService justice,
         IGameEventBus events)
     {
         actions.Register(
@@ -173,6 +175,40 @@ public sealed class HeirloomsPlugin : IGamePlugin
                             false,
                             "The selected heirloom is no longer owned.",
                             ActionReasonCodes.AssetNoLongerOwned);
+                    }
+
+                    if (sold.IsStolen)
+                    {
+                        var detectionChance = justice.GetStolenHeirloomSaleDetectionChance(context.Actor);
+                        if (context.Random.NextDouble() < detectionChance)
+                        {
+                            var originalSentence = context.Random.NextInt(2, 5);
+                            var finalSentence = justice.ConvictKnownOffense(
+                                context.Actor,
+                                originalSentence,
+                                "selling_stolen_property",
+                                "selling stolen property",
+                                $"Caught trying to sell stolen heirloom: {sold.DisplayName}.");
+
+                            events.Publish(
+                                new GameEvent
+                                {
+                                    Type = "justice.stolen_heirloom_sale_caught",
+                                    Year = context.GameState.Year,
+                                    SubjectId = context.Actor.Id,
+                                    Data = new Dictionary<string, string>
+                                    {
+                                        ["heirloomId"] = sold.Id.ToString(),
+                                        ["item"] = sold.DisplayName,
+                                        ["detectionChance"] = detectionChance.ToString(CultureInfo.InvariantCulture),
+                                        ["sentence"] = finalSentence.ToString(CultureInfo.InvariantCulture),
+                                        ["familyNews"] = "true",
+                                        ["text"] = $"{context.Actor.Name} was caught trying to sell {sold.DisplayName}; the item was confiscated."
+                                    }
+                                });
+
+                            return new GameActionResult(true);
+                        }
                     }
 
                     var saleValue = heirlooms.GetSaleValue(sold);

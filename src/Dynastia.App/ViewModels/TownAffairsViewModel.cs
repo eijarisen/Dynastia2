@@ -12,7 +12,8 @@ public enum TownAffairsTab
     Education = 4,
     Bank = 5,
     Church = 6,
-    Community = 7
+    Court = 7,
+    Community = 8
 }
 
 public enum TownAffairsMode
@@ -69,7 +70,8 @@ public sealed class TownAffairsViewModel : ViewModelBase
                 ? subject
                 : _householdPeople.FirstOrDefault();
 
-        if (request.InitialTab == TownAffairsTab.Jobs
+        if ((request.InitialTab == TownAffairsTab.Jobs
+                || request.InitialTab == TownAffairsTab.Court)
             && Subject is { Age: < 18 })
         {
             Subject = _householdPeople.FirstOrDefault(person => person.Age >= 18)
@@ -135,7 +137,8 @@ public sealed class TownAffairsViewModel : ViewModelBase
             if (!IsTabVisible(tab) || _selectedTabIndex == normalized)
                 return;
 
-            if (tab == TownAffairsTab.Jobs
+            if ((tab == TownAffairsTab.Jobs
+                    || tab == TownAffairsTab.Court)
                 && Subject is { Age: < 18 })
             {
                 var adult = _householdPeople.FirstOrDefault(person => person.Age >= 18);
@@ -168,6 +171,9 @@ public sealed class TownAffairsViewModel : ViewModelBase
 
     public bool ShowChurchTab =>
         !IsRemote && Snapshot.Church.IsAvailable;
+
+    public bool ShowCourtTab =>
+        !IsRemote && Subject is { Age: >= 18 };
 
     public bool ShowCommunityTab => !IsRemote;
 
@@ -273,6 +279,10 @@ public sealed class TownAffairsViewModel : ViewModelBase
     public string HealthEmptyText =>
         "No health actions are currently available.";
 
+    public TownAffairsCourtViewModel? CourtModel { get; private set; }
+
+    public bool HasCourtModel => CourtModel is not null;
+
     public bool HasQueuedAction => _owner.HasQueuedAction;
 
     public bool IsTabVisible(TownAffairsTab tab) =>
@@ -285,6 +295,7 @@ public sealed class TownAffairsViewModel : ViewModelBase
             TownAffairsTab.Education => ShowEducationTab,
             TownAffairsTab.Bank => ShowBankTab,
             TownAffairsTab.Church => ShowChurchTab,
+            TownAffairsTab.Court => ShowCourtTab,
             TownAffairsTab.Community => ShowCommunityTab,
             _ => false
         };
@@ -297,6 +308,7 @@ public sealed class TownAffairsViewModel : ViewModelBase
             "bank" => TownAffairsTab.Bank,
             "medical" => TownAffairsTab.Health,
             "church" => TownAffairsTab.Church,
+            "court" => TownAffairsTab.Court,
             _ => (TownAffairsTab?)null
         };
 
@@ -388,6 +400,14 @@ public sealed class TownAffairsViewModel : ViewModelBase
         _owner.QueueTownAffairsChurchAction(action);
     }
 
+    public void QueueCourt(string actionId)
+    {
+        if (!ShowCourtTab || Subject is null)
+            return;
+
+        _owner.QueueTownAffairsCourtAction(actionId, Subject);
+    }
+
     public void QueueCommunity(TownAffairsCommunityProposalViewModel proposal)
     {
         if (!ShowCommunityTab || !proposal.IsAvailable)
@@ -435,6 +455,7 @@ public sealed class TownAffairsViewModel : ViewModelBase
         EducationContextText = string.Empty;
         HealthActions = Array.Empty<TownAffairsHealthActionViewModel>();
         ChurchActions = Array.Empty<TownAffairsChurchActionViewModel>();
+        CourtModel = null;
 
         if (!IsRemote)
             ChurchActions = _owner.GetTownAffairsChurchActions();
@@ -460,6 +481,8 @@ public sealed class TownAffairsViewModel : ViewModelBase
             EducationOptions = _owner.GetEducationSelectionOptions(Subject);
             EducationContextText = _owner.GetEducationSelectionContextText(Subject);
             HealthActions = _owner.GetTownAffairsHealthActions(Subject);
+            if (Subject.Age >= 18)
+                CourtModel = _owner.GetTownAffairsCourtModel(Snapshot, Subject);
         }
 
         OnPropertyChanged(nameof(JobActionId));
@@ -478,6 +501,9 @@ public sealed class TownAffairsViewModel : ViewModelBase
         OnPropertyChanged(nameof(ChurchActions));
         OnPropertyChanged(nameof(HasChurchActions));
         OnPropertyChanged(nameof(ShowChurchEmpty));
+        OnPropertyChanged(nameof(CourtModel));
+        OnPropertyChanged(nameof(HasCourtModel));
+        OnPropertyChanged(nameof(ShowCourtTab));
     }
 }
 
@@ -544,6 +570,35 @@ public sealed record TownAffairsChurchActionViewModel(
                 ? $"Relief: {amount:N0} zł"
                 : $"Amount: {amount:N0} zł"
             : string.Empty;
+}
+
+public sealed record TownAffairsCourtActionViewModel(
+    string ActionId,
+    string Label,
+    string Description,
+    bool IsAvailable,
+    string? UnavailableReason)
+{
+    public string Emoji => ActionEmojiMap.GetEmoji(ActionId);
+    public double DisplayOpacity => IsAvailable ? 1.0 : 0.42;
+}
+
+public sealed record TownAffairsCourtViewModel(
+    string CourtText,
+    bool HasLocalCourt,
+    string ProtectionText,
+    string ProtectionHelperText,
+    string ImprisonmentText,
+    string BailCostText,
+    string StolenSaleRiskText,
+    IReadOnlyList<CriminalRecordEntryInfo> CriminalRecord,
+    IReadOnlyList<TownAffairsCourtActionViewModel> Actions)
+{
+    public bool ShowNoLocalCourt => !HasLocalCourt;
+    public bool HasProtectionHelper => !string.IsNullOrWhiteSpace(ProtectionHelperText);
+    public bool HasBailCost => !string.IsNullOrWhiteSpace(BailCostText);
+    public bool HasCriminalRecord => CriminalRecord.Count > 0;
+    public bool ShowNoCriminalRecord => !HasCriminalRecord;
 }
 
 public sealed record TownAffairsCivicOfficeActionViewModel(

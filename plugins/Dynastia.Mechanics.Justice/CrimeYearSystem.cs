@@ -135,11 +135,11 @@ public sealed class CrimeYearSystem : IYearSystem
 
         if (detected)
         {
-            var sentence = _random.NextInt(crime.SentenceMin, crime.SentenceMax);
+            var originalSentence = _random.NextInt(crime.SentenceMin, crime.SentenceMax);
             _career.SetJobLevel(person, 0);
-            _justice.Imprison(
+            var finalSentence = _justice.ConvictKnownOffense(
                 person,
-                sentence,
+                originalSentence,
                 crime.Id,
                 presentation.DisplayName,
                 presentation.Description);
@@ -148,7 +148,7 @@ public sealed class CrimeYearSystem : IYearSystem
                 person,
                 crime,
                 presentation,
-                sentence,
+                finalSentence,
                 success,
                 proceeds,
                 confiscated);

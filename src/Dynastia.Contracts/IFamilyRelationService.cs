@@ -37,5 +37,17 @@ public interface IFamilyRelationService
 
     double EvaluateOfferWillingness(IPerson giver, IPerson relative);
 
+    bool HasStrongCareerConnectionRelation(
+        IPerson first,
+        IPerson second)
+    {
+        var relation = GetRelation(first, second);
+        if (relation is null)
+            return false;
+
+        return relation.Sympathy >= 60
+            || relation.Familiarity >= 75;
+    }
+
     void ReconcileAll();
 }

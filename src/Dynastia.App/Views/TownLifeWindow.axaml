@@ -392,6 +392,78 @@
                     </ScrollViewer>
                 </TabItem>
 
+                <TabItem Header="Court" IsVisible="{Binding ShowCourtTab}">
+                    <ScrollViewer VerticalScrollBarVisibility="Auto">
+                        <StackPanel Margin="6" Spacing="8">
+                            <ItemsControl IsVisible="{Binding ShowJobHouseholdMemberTabs}" ItemsSource="{Binding JobHouseholdMembers}">
+                                <ItemsControl.ItemsPanel>
+                                    <ItemsPanelTemplate>
+                                        <StackPanel Orientation="Horizontal" Spacing="4" />
+                                    </ItemsPanelTemplate>
+                                </ItemsControl.ItemsPanel>
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate x:DataType="vm:TownAffairsMemberTabViewModel">
+                                        <Button Classes="memberTab" Content="{Binding DisplayName}" IsEnabled="{Binding CanSelect}" Click="OnMemberTabClick" />
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+
+                            <Grid ColumnDefinitions="Auto,*" ColumnSpacing="10">
+                                <TextBlock VerticalAlignment="Center" FontSize="30" Text="⚖️" />
+                                <StackPanel Grid.Column="1" Spacing="1">
+                                    <TextBlock Classes="sectionHeader" Text="Court / Justice" />
+                                    <TextBlock FontSize="12" TextWrapping="Wrap" Text="{Binding CourtModel.CourtText}" />
+                                    <TextBlock IsVisible="{Binding CourtModel.ShowNoLocalCourt}" FontSize="11.5" FontStyle="Italic" TextWrapping="Wrap" Text="Court actions still function through outside authorities." />
+                                </StackPanel>
+                            </Grid>
+
+                            <Border Padding="10,8" Background="#20FFF4D9" BorderBrush="#A17A43" BorderThickness="1" CornerRadius="4">
+                                <StackPanel Spacing="3">
+                                    <TextBlock FontWeight="Bold" Text="{Binding CourtModel.ProtectionText}" />
+                                    <TextBlock IsVisible="{Binding CourtModel.HasProtectionHelper}" FontSize="11.5" TextWrapping="Wrap" Text="{Binding CourtModel.ProtectionHelperText}" />
+                                    <TextBlock FontSize="11.5" Text="{Binding CourtModel.ImprisonmentText}" />
+                                    <TextBlock IsVisible="{Binding CourtModel.HasBailCost}" FontSize="11.5" FontWeight="Bold" Text="{Binding CourtModel.BailCostText}" />
+                                    <TextBlock FontSize="11.5" TextWrapping="Wrap" Text="{Binding CourtModel.StolenSaleRiskText}" />
+                                </StackPanel>
+                            </Border>
+
+                            <ItemsControl ItemsSource="{Binding CourtModel.Actions}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate x:DataType="vm:TownAffairsCourtActionViewModel">
+                                        <Border Margin="2" Padding="10,7" Background="#25FFF4D9" BorderBrush="#A17A43" BorderThickness="1" CornerRadius="4" Opacity="{Binding DisplayOpacity}" ToolTip.Tip="{Binding UnavailableReason}">
+                                            <Grid ColumnDefinitions="54,*,Auto" ColumnSpacing="10">
+                                                <TextBlock HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="28" Text="{Binding Emoji}" />
+                                                <StackPanel Grid.Column="1" Spacing="2">
+                                                    <TextBlock FontSize="14" FontWeight="Bold" Text="{Binding Label}" />
+                                                    <TextBlock FontSize="11.5" TextWrapping="Wrap" Text="{Binding Description}" />
+                                                </StackPanel>
+                                                <Button Grid.Column="2" Classes="paperAction" VerticalAlignment="Center" IsEnabled="{Binding IsAvailable}" Content="Queue" Click="OnCourtActionClick" />
+                                            </Grid>
+                                        </Border>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+
+                            <TextBlock Margin="0,4,0,0" FontSize="13" FontWeight="Bold" Text="Known Criminal Record" />
+                            <TextBlock IsVisible="{Binding CourtModel.ShowNoCriminalRecord}" FontSize="11.5" FontStyle="Italic" Text="No known criminal offenses." />
+                            <ItemsControl ItemsSource="{Binding CourtModel.CriminalRecord}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate x:DataType="contracts:CriminalRecordEntryInfo">
+                                        <Border Margin="2" Padding="9,6" Background="#18FFF4D9" BorderBrush="#B18C59" BorderThickness="1" CornerRadius="4">
+                                            <StackPanel>
+                                                <TextBlock FontSize="12.5" FontWeight="Bold" Text="{Binding CrimeName}" />
+                                                <TextBlock FontSize="11.5" Text="{Binding Year, StringFormat='Year {0}'}" />
+                                                <TextBlock FontSize="11.5" Text="{Binding OriginalSentence, StringFormat='Sentence: {0} years originally'}" />
+                                                <TextBlock FontSize="11.5" Text="{Binding FinalSentence, StringFormat='Final sentence: {0} years'}" />
+                                            </StackPanel>
+                                        </Border>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </StackPanel>
+                    </ScrollViewer>
+                </TabItem>
+
                 <TabItem Header="Community" IsVisible="{Binding ShowCommunityTab}">
                     <ScrollViewer VerticalScrollBarVisibility="Auto">
                         <StackPanel Margin="6" Spacing="10">

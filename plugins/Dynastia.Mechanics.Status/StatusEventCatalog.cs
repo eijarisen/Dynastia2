@@ -19,11 +19,23 @@ internal sealed class StatusEventCatalog
         _historical = historical;
     }
 
-    public static StatusEventCatalog Load(IGameDataService data) =>
-        new(
-            Parse(data.ReadText("LocalSociety/status_event_effects.csv"), "EventType"),
+    public static StatusEventCatalog Load(IGameDataService data)
+    {
+        var events = Parse(
+            data.ReadText("LocalSociety/status_event_effects.csv"),
+            "EventType");
+        foreach (var entry in Parse(
+            data.ReadText("LocalSociety/status_extension_event_effects.csv"),
+            "EventType"))
+        {
+            events[entry.Key] = entry.Value;
+        }
+
+        return new StatusEventCatalog(
+            events,
             Parse(data.ReadText("LocalSociety/crime_status_effects.csv"), "CrimeCategory"),
             Parse(data.ReadText("LocalSociety/historical_status_effects.csv"), "HistoricalEventId"));
+    }
 
     public bool TryGetEvent(string id, out (double Renown, double Reputation) delta) => _events.TryGetValue(id, out delta);
     public bool TryGetCrime(string id, out (double Renown, double Reputation) delta) => _crimes.TryGetValue(id, out delta);

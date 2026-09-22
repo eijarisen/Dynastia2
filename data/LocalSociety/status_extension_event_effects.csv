@@ -1,0 +1,6 @@
+﻿EventType,RenownDelta,ReputationDelta,TargetRule,Notes
+reproduction.unknown_father_birth,2,-6,mother,Unknown father makes the birth locally notable and harms Reputation.
+reproduction.teen_birth,3,-8,mother,Teenage birth is highly conspicuous and harms Reputation.
+reproduction.teen_marriage,2,-5,mother,Teenage marriage increases Renown and lowers Reputation.
+reproduction.teen_marriage,1,-2,husband,The husband also receives a smaller local-status effect.
+justice.stolen_heirloom_sale_caught,0,-8,seller,Caught sale of stolen property damages Reputation.

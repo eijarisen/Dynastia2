@@ -41,7 +41,7 @@ public sealed partial class MainWindowViewModel
             ["familyRelations"] = "true"
         };
 
-        return _familyRelationService.GetRelatedHouseholds(actor)
+        var households = _familyRelationService.GetRelatedHouseholds(actor)
             .Select(info =>
             {
                 var primary = info.PrimaryRelation;
@@ -123,6 +123,78 @@ public sealed partial class MainWindowViewModel
             .Where(item => item is not null)
             .Cast<FamilyRelationHouseholdViewModel>()
             .ToList();
+
+        return households;
+    }
+
+
+    internal IReadOnlyList<FamilyRelationJusticeActionViewModel> GetFamilyRelationsJusticeActions()
+    {
+        var actor = _succession.ActiveController;
+        if (actor is null
+            || _economyService is null
+            || _justiceService is null
+            || _familyService is null)
+        {
+            return [];
+        }
+
+        return _economyService.GetHouseholdMemberIds(actor)
+            .Select(id => _gameState.People.FirstOrDefault(person => person.Id == id))
+            .Where(person => person is not null
+                && person.Tags.Has("state.alive")
+                && _justiceService.IsImprisoned(person))
+            .Cast<IPerson>()
+            .Select(person =>
+            {
+                var definition = _actionRegistry
+                    .GetCandidateActions(actor, person)
+                    .FirstOrDefault(action => action.Id.Equals(
+                        "justice.bail_out",
+                        StringComparison.OrdinalIgnoreCase));
+                if (definition is null)
+                    return null;
+
+                var evaluation = _actionRegistry.Evaluate(
+                    definition.Id,
+                    actor,
+                    person);
+                return new FamilyRelationJusticeActionViewModel(
+                    person.Id,
+                    _familyService.GetDisplayName(person),
+                    definition.Id,
+                    definition.Label,
+                    definition.Description,
+                    $"Bail: {_justiceService.GetBailCost(person):N0} zł",
+                    evaluation.Available,
+                    evaluation.Reason);
+            })
+            .Where(item => item is not null)
+            .Cast<FamilyRelationJusticeActionViewModel>()
+            .ToArray();
+    }
+
+    internal GameActionResult QueueFamilyRelationsJusticeAction(
+        FamilyRelationJusticeActionViewModel action)
+    {
+        var actor = _succession.ActiveController;
+        var target = _gameState.People.FirstOrDefault(person => person.Id == action.TargetId);
+        if (actor is null || target is null)
+        {
+            return new GameActionResult(
+                false,
+                "The imprisoned household member is no longer available.",
+                ActionReasonCodes.NoLongerEligible);
+        }
+
+        var result = _actionRegistry.Execute(action.ActionId, actor, target);
+        RefreshActions();
+        RefreshFamilySection();
+        RefreshEconomy();
+        RefreshJustice();
+        OnPropertyChanged(nameof(HasQueuedAction));
+        OnPropertyChanged(nameof(QueuedActionText));
+        return result;
     }
 
 

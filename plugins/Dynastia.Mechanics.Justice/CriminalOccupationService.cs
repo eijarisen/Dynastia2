@@ -287,17 +287,15 @@ internal sealed class CriminalOccupationService :
             var sentenceMultiplier = archetype.ArchetypeId.Equals("mastermind", StringComparison.OrdinalIgnoreCase)
                 ? _catalog.Rules.Heist.MastermindSentenceMultiplier
                 : 1m;
-            finalSentence = Math.Max(
-                1,
-                (int)Math.Ceiling(originalSentence * sentenceMultiplier));
 
             _career.SetJobLevel(person, 0);
-            _justice.Imprison(
+            finalSentence = _justice.ConvictKnownOffense(
                 person,
-                finalSentence,
+                originalSentence,
                 crime.Id,
                 presentation.DisplayName,
-                presentation.Description);
+                presentation.Description,
+                sentenceMultiplier);
 
             PublishCrimeEvent(
                 person,

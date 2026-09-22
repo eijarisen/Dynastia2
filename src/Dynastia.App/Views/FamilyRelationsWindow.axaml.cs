@@ -108,6 +108,22 @@ public partial class FamilyRelationsWindow : Window
     }
 
 
+    private void OnJusticeActionClick(object? sender, RoutedEventArgs e)
+    {
+        if (sender is not Button
+            {
+                DataContext: FamilyRelationJusticeActionViewModel action,
+                IsEnabled: true
+            })
+        {
+            return;
+        }
+
+        if (_viewModel.QueueJustice(action))
+            Close();
+    }
+
+
     private async void OnConnectionActionClick(object? sender, RoutedEventArgs e)
     {
         if (sender is not Button { DataContext: HouseholdConnectionActionViewModel action })

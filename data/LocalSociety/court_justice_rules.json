@@ -1,0 +1,101 @@
+{
+  "schemaVersion": "1.0",
+  "courtTabId": "court",
+  "protection": {
+    "qualifyingCareerWeights": {
+      "legal_services": 1.0,
+      "law_enforcement": 0.9
+    },
+    "relationRequirement": "Warm sympathy OR Close familiarity, using FamilySupportAbilityRules.HasStrongCareerConnectionRelation",
+    "bestQualifyingRelativeOnly": true,
+    "scoreFormula": "JobLevel * CareerWeight * RelationMultiplier",
+    "relationMultipliers": {
+      "Warm": 0.75,
+      "Close": 1.0
+    },
+    "tiers": [
+      {
+        "id": "none",
+        "minScore": 0.0,
+        "maxScore": 0.74,
+        "display": "None",
+        "sentenceMultiplier": 1.0,
+        "stolenSaleDetectionChance": 0.3
+      },
+      {
+        "id": "minor",
+        "minScore": 0.75,
+        "maxScore": 1.74,
+        "display": "Minor",
+        "sentenceMultiplier": 0.9,
+        "stolenSaleDetectionChance": 0.25
+      },
+      {
+        "id": "moderate",
+        "minScore": 1.75,
+        "maxScore": 2.99,
+        "display": "Moderate",
+        "sentenceMultiplier": 0.8,
+        "stolenSaleDetectionChance": 0.18
+      },
+      {
+        "id": "strong",
+        "minScore": 3.0,
+        "maxScore": 4.24,
+        "display": "Strong",
+        "sentenceMultiplier": 0.7,
+        "stolenSaleDetectionChance": 0.12
+      },
+      {
+        "id": "exceptional",
+        "minScore": 4.25,
+        "display": "Exceptional",
+        "sentenceMultiplier": 0.6,
+        "stolenSaleDetectionChance": 0.06
+      }
+    ],
+    "combinedSentenceMultiplierFloor": 0.5,
+    "appliedAtConviction": true
+  },
+  "criminalRecord": {
+    "recordOnlyKnownAuthorityOffenses": true,
+    "storeYear": true,
+    "storeCrimeId": true,
+    "storeDisplayName": true,
+    "storeOriginalSentence": true,
+    "storeFinalSentence": true,
+    "bailOrEscapeDoesNotEraseRecord": true
+  },
+  "bail": {
+    "actionId": "justice.bail_out",
+    "minimumCost": 20000,
+    "costFormula": "max(20000, 20000 + 7500 * remainingSentenceYears)",
+    "lifeSentenceUsesStoredRemainingYears": true,
+    "guaranteedIfAffordable": true,
+    "releaseImmediatelyAtQueuedExecution": true,
+    "criminalRecordPersists": true
+  },
+  "escape": {
+    "actionId": "justice.attempt_escape",
+    "requiresIntellect": 5,
+    "oncePerCurrentImprisonment": true,
+    "baseSuccessChance": 0.2,
+    "mastermindSuccessChance": 0.3,
+    "failureSentenceExtensionYears": 3,
+    "successReleasesImmediately": true
+  },
+  "stolenHeirloomSale": {
+    "keepingIsHarmless": true,
+    "normalSaleValueMultiplierUnchanged": true,
+    "detectionChanceFromProtectionTier": true,
+    "caught": {
+      "saleProceeds": 0,
+      "heirloomConfiscated": true,
+      "sentenceYearsMin": 2,
+      "sentenceYearsMax": 5,
+      "reasonId": "selling_stolen_property",
+      "displayName": "selling stolen property",
+      "reputationDelta": -8
+    }
+  }
+}

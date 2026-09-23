@@ -117,6 +117,8 @@ public sealed partial class JusticePlugin : IGamePlugin
             family,
             economy,
             personality,
+            random,
+            events,
             criminalCatalog.Rules);
         RegisterCourtActions(
             actions,

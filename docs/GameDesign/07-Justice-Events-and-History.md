@@ -18,13 +18,15 @@ Regression tests: `ContentReworkBatch2CareerCrimeTests.cs`, `LocalSocietyCourtJu
 Status: **Implemented**  
 Owner: `dynastia.justice`
 
-Stable action IDs are data-defined:
+Stable/self action IDs are:
 - `justice.commit_crime`
 - `justice.leave_life_of_crime`
+- `justice.ask_to_quit_crime` (spouse support action)
 
 Rules:
-- Minimum age 18 and Evil Morals are required to enter.
+- Minimum age 18 and Evil Morals are required to enter. The player may only use Commit a Crime on the controlled person, never to order a spouse into criminal life.
 - First entry starts the occupation and performs an immediate heist; once the occupation has ever started, the “start” action is not offered again.
+- Leave Life of Crime is likewise a self action. If the current spouse is already living a Life of Crime, the controlled spouse instead receives Ask to Quit Crime; it uses the same 50% success/refusal roll as Ask to Quit Job.
 - Criminal occupation is exclusive with ordinary career, craft self-employment and farm labor.
 - It does not automatically retire and resumes after prison release.
 - One heist attempt per active calendar year; imprisonment suppresses heists.

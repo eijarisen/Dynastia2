@@ -111,9 +111,26 @@ internal sealed class StatusRules
     public string RenownLabel(double value) => FindLabel(RenownLabels, value);
     public string ReputationLabel(double value) => FindLabel(ReputationLabels, value);
 
-    private static string FindLabel(IReadOnlyList<LabelBand> bands, double value) =>
-        bands.FirstOrDefault(band => value >= band.Minimum && value <= band.Maximum)?.Label
-        ?? string.Empty;
+    private static string FindLabel(IReadOnlyList<LabelBand> bands, double value)
+    {
+        if (bands.Count == 0)
+            return string.Empty;
+
+        var ordered = bands
+            .OrderBy(band => band.Minimum)
+            .ToList();
+
+        var exact = ordered.FirstOrDefault(
+            band => value >= band.Minimum && value <= band.Maximum);
+        if (exact is not null)
+            return exact.Label;
+
+        // Status values are fractional, while authored display bands use integer
+        // thresholds. Values such as 14.5 must still resolve to the lower band
+        // instead of producing a blank label.
+        return ordered.LastOrDefault(band => value >= band.Minimum)?.Label
+            ?? ordered[0].Label;
+    }
 
     private static CareerFormula ParseCareerFormula(string formula)
     {

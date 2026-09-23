@@ -159,18 +159,21 @@ public sealed partial class MainWindowViewModel
                     tutorDefinition.Id,
                     actor,
                     target);
-                var ceiling = _educationService.GetHelpedEducationCeiling(_gameState.Year);
-                var chance = _educationService.GetPrivateTutorSuccessChance(target);
-                childOptions.Add(new PropertySelectionOption(
-                    "private_tutor",
-                    tutorDefinition.Label,
-                    $"Current Education: Level {currentLevel} · Tutoring cap: Level {ceiling}",
-                    "Private tutoring is independent of local School quality and the parent's Education.",
-                    $"{PrivateTutorUiCost:N0} zł",
-                    "private tutor child education school",
-                    evaluation.Available,
-                    chance,
-                    "🧑‍🏫"));
+                if (evaluation.Available)
+                {
+                    var ceiling = _educationService.GetHelpedEducationCeiling(_gameState.Year);
+                    var chance = _educationService.GetPrivateTutorSuccessChance(target);
+                    childOptions.Add(new PropertySelectionOption(
+                        "private_tutor",
+                        tutorDefinition.Label,
+                        $"Current Education: Level {currentLevel} · Tutoring cap: Level {ceiling}",
+                        "Private tutoring is independent of local School quality and the parent's Education.",
+                        $"{PrivateTutorUiCost:N0} zł",
+                        "private tutor child education school",
+                        true,
+                        chance,
+                        "🧑‍🏫"));
+                }
             }
 
             return childOptions;

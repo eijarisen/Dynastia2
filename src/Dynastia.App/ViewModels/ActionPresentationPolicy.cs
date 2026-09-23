@@ -115,9 +115,18 @@ internal static class ActionPresentationPolicy
                 StringComparison.OrdinalIgnoreCase)
             || actionId.Equals(
                 "justice.leave_life_of_crime",
+                StringComparison.OrdinalIgnoreCase)
+            || actionId.Equals(
+                "justice.ask_to_quit_crime",
                 StringComparison.OrdinalIgnoreCase))
         {
             categories.Add(ActionCategory.Career);
+            if (actionId.Equals(
+                    "justice.ask_to_quit_crime",
+                    StringComparison.OrdinalIgnoreCase))
+            {
+                categories.Add(ActionCategory.Family);
+            }
             return categories;
         }
 
@@ -282,7 +291,8 @@ internal static class ActionPresentationPolicy
             "career.find_another_job",
             "career.quit_job",
             "justice.commit_crime",
-            "justice.leave_life_of_crime");
+            "justice.leave_life_of_crime",
+            "justice.ask_to_quit_crime");
 
         GroupTogether(
             actions,

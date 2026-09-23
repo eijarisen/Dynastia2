@@ -102,8 +102,9 @@ Craft IDs are data-driven, so some action IDs are patterns rather than a finite 
 | `craft.start.<craftId>` | Work in a Profession | eligible adult resident/self | Queued / LifeEvents | Crafts/person details |
 | `craft.teach.<craftId>` | Teach Craft | young household relative | Queued / LifeEvents | Crafts/person details |
 | `craft.stop_occupation` | Quit Profession | craft self-employed person | Queued / LifeEvents | Actions/person details |
-| `justice.commit_crime` | Commit a Crime | eligible Evil adult | Queued / LifeEvents | Actions/person details |
-| `justice.leave_life_of_crime` | Leave Life of Crime | active criminal | Queued / LifeEvents | Actions/person details |
+| `justice.commit_crime` | Commit a Crime | controlled eligible Evil adult only | Queued / LifeEvents | Actions/person details |
+| `justice.leave_life_of_crime` | Leave Life of Crime | controlled active criminal only | Queued / LifeEvents | Actions/person details |
+| `justice.ask_to_quit_crime` | Ask to Quit Crime | current spouse with active Life of Crime | Queued / Early | Actions/person details |
 
 ## Town, Church, Court and Community actions
 

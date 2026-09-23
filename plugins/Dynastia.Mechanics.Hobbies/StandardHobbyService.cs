@@ -42,9 +42,18 @@ public sealed class StandardHobbyService : IHobbyService
         if (person.Age < 5)
             return new HobbyPersonSnapshot(0, []);
 
-        var component = person.Components.Get<HobbyComponent>()
-            ?? throw new InvalidOperationException(
-                "Hobby state is missing. Run state reconciliation before reading it.");
+        var component = person.Components.Get<HobbyComponent>();
+        if (component is null)
+        {
+            // A child can cross the age-five hobby threshold during Aging after
+            // the BeforeYear reconciliation has already run. Reconcile lazily
+            // so later LifeEvents consumers never observe an invalid gap.
+            EnsureCurrent(person);
+            component = person.Components.Get<HobbyComponent>();
+        }
+
+        if (component is null)
+            return new HobbyPersonSnapshot(HobbyBalanceRules.MaximumHobbies, []);
 
         var hobbies = component.HobbyIds
             .Select(_catalog.Find)

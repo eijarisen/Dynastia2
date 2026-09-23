@@ -26,6 +26,7 @@ public static class ActionEmojiMap
                 ["career.help_find_better_job"] = "🔎",
                 ["career.ask_to_recover"] = "🧘",
                 ["career.ask_to_quit"] = "🚶",
+                ["justice.ask_to_quit_crime"] = "🛑",
 
                 ["wellbeing.drink"] = "🍺",
                 ["wellbeing.therapy"] = "😊",

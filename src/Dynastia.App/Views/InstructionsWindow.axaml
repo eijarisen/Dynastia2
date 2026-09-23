@@ -494,7 +494,7 @@
                                     <TextBlock Classes="guideTip">
                                         <Run Text="• " />
                                         <Run FontWeight="Bold" Text="Crime. " />
-                                        <Run Text="Adults can become involved in crime, and some can deliberately enter a persistent Life of Crime. Criminal choices can bring income, danger, records and imprisonment." />
+                                        <Run Text="Adults can become involved in crime, and a controlled adult can deliberately enter a persistent Life of Crime. A spouse cannot be ordered into crime; if they take up a Life of Crime, you can ask them to quit, with a chance that they refuse. Criminal choices can bring income, danger, records and imprisonment." />
                                     </TextBlock>
                                 </Border>
                                 <Border Classes="tipCard">

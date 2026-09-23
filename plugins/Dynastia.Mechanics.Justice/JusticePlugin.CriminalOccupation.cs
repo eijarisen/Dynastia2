@@ -10,6 +10,8 @@ public sealed partial class JusticePlugin
         IFamilyService family,
         IEconomyService economy,
         IPersonalityService personality,
+        IGameRandom random,
+        IGameEventBus events,
         CriminalOccupationRules rules)
     {
         actions.Register(new GameActionDefinition
@@ -23,7 +25,7 @@ public sealed partial class JusticePlugin
             QueuePhase = YearPhase.LifeEvents,
             EvaluateAvailability = context =>
             {
-                if (!CanDirectOccupation(context, family, economy)
+                if (!CanDirectOwnOccupation(context)
                     || !context.Target.Tags.Has("state.alive")
                     || context.Target.Age < rules.MinimumAge
                     || context.Target.Tags.Has("state.imprisoned")
@@ -31,7 +33,7 @@ public sealed partial class JusticePlugin
                 {
                     return ActionEvaluationResult.Denied(
                         ActionReasonCodes.NoLongerEligible,
-                        "Life of Crime can only be started once by an eligible adult in the household.");
+                        "Life of Crime can only be started once by the controlled adult themself.");
                 }
 
                 var morals = personality.GetPersonality(context.Target)?.Morals;
@@ -46,6 +48,19 @@ public sealed partial class JusticePlugin
             },
             Execute = context =>
             {
+                if (!CanDirectOwnOccupation(context)
+                    || !context.Target.Tags.Has("state.alive")
+                    || context.Target.Age < rules.MinimumAge
+                    || context.Target.Tags.Has("state.imprisoned")
+                    || crime.HasStartedLifeOfCrime(context.Target))
+                {
+                    return new GameActionResult(false, "Life of Crime is no longer available.", ActionReasonCodes.NoLongerEligible);
+                }
+
+                var morals = personality.GetPersonality(context.Target)?.Morals;
+                if (!string.Equals(morals, rules.RequiredMorals, StringComparison.OrdinalIgnoreCase))
+                    return new GameActionResult(false, "Only a person with Evil morals can deliberately begin a Life of Crime.", ActionReasonCodes.NoLongerEligible);
+
                 if (!crime.StartLifeOfCrime(context.Target))
                     return new GameActionResult(false, "Life of Crime could not be started.");
 
@@ -64,7 +79,7 @@ public sealed partial class JusticePlugin
             Mode = ActionExecutionMode.Queued,
             QueuePhase = YearPhase.LifeEvents,
             EvaluateAvailability = context =>
-                CanDirectOccupation(context, family, economy)
+                CanDirectOwnOccupation(context)
                 && context.Target.Tags.Has("state.alive")
                 && !context.Target.Tags.Has("state.imprisoned")
                 && crime.IsActive(context.Target)
@@ -73,30 +88,89 @@ public sealed partial class JusticePlugin
                         ActionReasonCodes.NoLongerEligible,
                         "The selected person is not currently living a Life of Crime."),
             Execute = context =>
-                new GameActionResult(
-                    crime.EndLifeOfCrime(context.Target, "left voluntarily"))
+                CanDirectOwnOccupation(context)
+                && context.Target.Tags.Has("state.alive")
+                && !context.Target.Tags.Has("state.imprisoned")
+                && crime.IsActive(context.Target)
+                    ? new GameActionResult(
+                        crime.EndLifeOfCrime(context.Target, "left voluntarily"))
+                    : new GameActionResult(
+                        false,
+                        "Life of Crime is no longer active for the controlled person.",
+                        ActionReasonCodes.NoLongerEligible)
+        });
+
+        actions.Register(new GameActionDefinition
+        {
+            Id = "justice.ask_to_quit_crime",
+            Label = "Ask to Quit Crime",
+            Description =
+                "Ask your spouse to leave their Life of Crime. They may refuse; the success chance is the same as Ask to Quit Job.",
+            Mode = ActionExecutionMode.Queued,
+            QueuePhase = YearPhase.QueuedActionsEarly,
+            EvaluateAvailability = context =>
+                CanAskSpouseToQuitCrime(context, family, economy)
+                && crime.IsActive(context.Target)
+                    ? ActionEvaluationResult.Allowed(economy.GetHouseholdId(context.Actor))
+                    : ActionEvaluationResult.Denied(
+                        ActionReasonCodes.NoLongerEligible,
+                        "Only a spouse who is currently living a Life of Crime can be asked to quit."),
+            Execute = context =>
+            {
+                if (!CanAskSpouseToQuitCrime(context, family, economy)
+                    || !crime.IsActive(context.Target))
+                {
+                    return new GameActionResult(false);
+                }
+
+                if (random.NextDouble() > 0.5)
+                {
+                    return new GameActionResult(
+                        crime.EndLifeOfCrime(
+                            context.Target,
+                            "quit at spouse's request"));
+                }
+
+                events.Publish(new GameEvent
+                {
+                    Type = "justice.ask_quit_crime_failure",
+                    Year = context.GameState.Year,
+                    SubjectId = context.Actor.Id,
+                    RelatedPersonIds = [context.Target.Id],
+                    Data = new Dictionary<string, string>
+                    {
+                        ["text"] =
+                            $"{family.GetDisplayName(context.Actor)} asked " +
+                            $"{family.GetDisplayName(context.Target)} to leave their Life of Crime, but they refused."
+                    }
+                });
+
+                return new GameActionResult(true);
+            }
         });
     }
 
-    private static bool CanDirectOccupation(
+    private static bool CanDirectOwnOccupation(GameActionContext context) =>
+        context.ActorHasControl
+        && context.Actor.Tags.Has("state.alive")
+        && context.Actor.Id == context.Target.Id;
+
+    private static bool CanAskSpouseToQuitCrime(
         GameActionContext context,
         IFamilyService family,
         IEconomyService economy)
     {
         if (!context.ActorHasControl
-            || !context.Actor.Tags.Has("state.alive"))
+            || !context.Actor.Tags.Has("state.alive")
+            || !context.Target.Tags.Has("state.alive")
+            || context.Actor.Id == context.Target.Id
+            || family.GetSpouse(context.Actor)?.Id != context.Target.Id)
         {
             return false;
         }
 
-        if (context.Actor.Id == context.Target.Id)
-            return true;
-
-        return HouseholdKinshipRules.IsSupportedResidentRelative(
-            context.Actor,
-            context.Target,
-            family,
-            economy,
-            requireAdult: true);
+        var actorHouseholdId = economy.GetHouseholdId(context.Actor);
+        return actorHouseholdId.HasValue
+            && economy.GetHouseholdId(context.Target) == actorHouseholdId;
     }
 }

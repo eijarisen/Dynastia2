@@ -1356,9 +1356,6 @@
                                             Grid.Column="0"
                                             Spacing="4">
 
-                                            <TextBlock FontSize="12" TextWrapping="Wrap" Text="{Binding SelectedPerson.AgeText}" />
-                                            <TextBlock FontSize="12" TextWrapping="Wrap" Text="{Binding SelectedFamily.Sex, StringFormat='Sex: {0}'}" />
-                                            <TextBlock FontSize="12" TextWrapping="Wrap" Text="{Binding SelectedPerson.NationalityText}" />
                                             <TextBlock IsVisible="{Binding SelectedFamily.HasStatus}" FontSize="12" TextWrapping="Wrap" Text="{Binding SelectedFamily.Renown}" />
                                             <TextBlock IsVisible="{Binding SelectedFamily.HasStatus}" FontSize="12" TextWrapping="Wrap" Text="{Binding SelectedFamily.Reputation}" />
                                             <TextBlock IsVisible="{Binding SelectedPerson.ShowLearningDetails}" FontSize="12" TextWrapping="Wrap" Text="{Binding SelectedEducation.EducationText}" />
@@ -1419,6 +1416,10 @@
                                             Grid.Row="0"
                                             Grid.Column="1"
                                             Spacing="2">
+
+                                            <TextBlock FontSize="12" TextWrapping="Wrap" Text="{Binding SelectedPerson.AgeText}" />
+                                            <TextBlock FontSize="12" TextWrapping="Wrap" Text="{Binding SelectedFamily.Sex, StringFormat='Sex: {0}'}" />
+                                            <TextBlock FontSize="12" TextWrapping="Wrap" Text="{Binding SelectedPerson.NationalityText}" />
 
                                             <TextBlock
                                                 FontSize="12"

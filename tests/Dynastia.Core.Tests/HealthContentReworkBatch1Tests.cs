@@ -279,19 +279,8 @@ public sealed class HealthContentReworkBatch1Tests
             data.ReadText("Common/birth_conditions.json"),
             new JsonSerializerOptions { PropertyNameCaseInsensitive = true })!;
 
-    private static IGameDataService CreateRepositoryData()
-    {
-        var directory = new DirectoryInfo(AppContext.BaseDirectory);
-        while (directory is not null)
-        {
-            var dataPath = Path.Combine(directory.FullName, "data");
-            if (File.Exists(Path.Combine(dataPath, "Common", "health_conditions.json")))
-                return new JsonGameDataService(dataPath);
-            directory = directory.Parent;
-        }
-
-        throw new DirectoryNotFoundException("Could not locate repository data directory from test output.");
-    }
+    private static IGameDataService CreateRepositoryData() =>
+        new JsonGameDataService(RepositoryFiles.Path("data"));
 
     private sealed class InlineDataService : IGameDataService
     {

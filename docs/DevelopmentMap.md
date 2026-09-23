@@ -15,15 +15,44 @@ For gameplay intent and current implemented rules, begin with `docs/GameDesign/0
 - `MainWindowViewModel.Selection.cs` — selected-person refresh/projection behavior.
 - `MainWindowViewModel.SelectionPresentation.cs` — selected-person bindable state.
 - `MainWindowViewModel.HouseholdPresentation.cs` — budget, income, expenses, property and household-warning projections.
-- `MainWindowViewModel.Collections.cs` — observable collections exposed to the UI.
-- `MainWindowViewModel.Actions.cs` — action refresh/filter execution.
+- `MainWindowViewModel.Collections.cs` — non-action observable collections exposed to the UI.
+- `MainWindowViewModel.Actions.cs` — action binding/selection forwarding, status feedback and the single broad post-action refresh.
+- `Actions/ActionPanelCoordinator.cs` — available actions, category state, Pass/shortcuts, queued summaries, contextual labels and dispatch requests/results.
+- `Actions/ActionSelectionOptionService.cs` — property/town options, loan presentation and selected-parameter submissions.
+- `Actions/ActionSurfaceDefinitions.cs` — App-only navigation definitions, aggregation, secondary-selection routing and Town Affairs access/labels.
 - `MainWindowViewModel.TownLife.cs` — Town Affairs routing for Medical Improvements, Therapy and Religious Study.
 - `MainWindowViewModel.Relations.cs` — Family Relations window projections/interactions.
-- `ActionPresentationPolicy.cs` — action categories and display ordering.
+- `ActionPresentationPolicy.cs` — metadata-first category/visibility/group resolver with legacy ID fallback.
 - `MainWindowViewModel.Events.cs` — album refresh and application event callbacks.
 - `MainWindowViewModel.Formatting.cs` — display-name and relationship-history formatting.
 
-When adding a mechanic action, prefer changing the owning mechanic plugin. Only touch `ActionPresentationPolicy` when its UI category/order needs explicit presentation metadata.
+Mechanics own action presentation through `GameActionDefinition.Presentation` in Contracts.
+Use `ActionPresentationCategories` and `ActionPresentationGroups` (or plugin-local group IDs)
+for category filters, adjacency order, anchors and primary-list visibility. Related groups
+stay at their first source occurrence; `PlaceLast` items move last stably. Family Connections
+uses `PlaceAfterAnchor` to follow the first employment search without breaking its work group.
+An explicitly empty category list is unfiltered; unknown category IDs fall back to Personal.
+
+New metadata-enabled actions do not need edits to `ActionPresentationPolicy` or `ActionEmojiMap`.
+Their ID/prefix tables remain only for legacy definitions; queued displays with only an ID
+continue to use the emoji fallback. Copy `Presentation` when wrapping a definition for historical
+labels. Town Affairs, Manage Properties, Manage Finances and Work in a Profession remain
+App-owned pseudo-actions with explicit metadata. Presentation is not serialized into queued saves.
+
+`App.axaml.cs` composes the action option and surface collaborators. MainWindow wires its action
+coordinator to the live selected-person resolver; the existing public constructor builds the same
+collaborators for other callers. The coordinator publishes selection requests without submitting
+an action, or one `ActionUiExecutionResult` after a registry submission. It never refreshes the
+whole UI. MainWindow handles that result once, preserving the ordinary-action versus selection
+failure-message policy. Property and loan submissions still target the active household; Move Out
+keeps the selected resident. Town Affairs, Inventory and Craft/Education window content stays in
+its existing feature partials. Household-card queue details reuse the coordinator's formatter.
+
+`Dynastia.App.Tests` covers coordinator dispatch/result counts, MainWindow refresh forwarding,
+Move Out's zero/one/many-property paths, exact parameter summaries, filter unions, legacy queue
+fallbacks, contextual sibling labels and navigation guards. The older XAML/layout assertions remain;
+source-location assertions for moved navigation behavior have been replaced by these behavior tests.
+
 
 ## Career and historical availability
 
@@ -54,6 +83,24 @@ Historical Education access lives in `data/Education/education_eras.csv` and is 
 - `.Succession.cs` — household-head succession and shared helpers.
 
 `HouseholdsPlugin` keeps initialization separate from property and nanny actions.
+
+Autonomous decisions use `AdvancedAutonomousHouseholdStrategy` as a small facade. It
+owns the single-scorer dispatch check, personality adjustment, score clamp, weighted
+choice and queue submission. `AutonomousHouseholdDecisionService` still owns which
+households are processed and whether existing queues are retained or replaced.
+
+`Autonomy/AutonomousSnapshotBuilder` preserves live-member and service-read order;
+`AutonomousActionCandidateBuilder` owns mechanical availability, parameter selection
+and first-occurrence deduplication. The six named domain scorers consume candidates
+without rediscovering availability. Shared pure calculations live in
+`AutonomousScoringHelpers`; the narrow `AutonomousReproductiveEligibility` query is
+shared by snapshot construction and continuity scoring. Optional plugin services
+are still resolved at the original point of use, not cached at construction.
+
+`HouseholdsPlugin` explicitly constructs these internal collaborators in a fixed
+order. Every supported ID/prefix must have exactly one owner; overlapping owners
+throw before either scorer runs, and unsupported actions remain unscored. These
+collaborators add no Contracts services or persistent state.
 
 ## Economy, property and loans
 
@@ -119,26 +166,70 @@ Preserve save field names and `CurrentFormatVersion` unless a deliberate migrati
 
 ## Build and repository hygiene
 
-Development build:
+Routine incremental development:
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File build\build-dev.ps1
 ```
 
-Repository cleanup:
+Only installed runtime plugin copies are removed. Project `bin/obj` outputs remain available for MSBuild incrementality and project-reference tracking. A missing plugin output or a plugin absent from the solution triggers a direct incremental project build. The manifest's assembly is verified before and after installation; plugin-local `Dynastia.Contracts.dll` is not installed.
+
+Authoritative clean verification:
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File build\cleanup-repo.ps1
+powershell -ExecutionPolicy Bypass -File build\build-dev.ps1 -Clean
 ```
 
-Source-only handoff:
+`-Clean` removes the shared policy's build-output directories before running the normal build/test/install path. Source, data, saves and Git metadata are preserved. Unless `-SkipTests` is supplied, repository-tooling checks run and every source `*Tests.csproj` under `tests/` is tested in full-path order, with incremental build/restore enabled for projects not yet in the solution.
+
+Source-only handoff (no cleanup prerequisite):
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File build\pack-source.ps1
 ```
 
-The repository should not track `bin`, `obj`, IDE caches, test-result directories, logs, local saves or generated archives.
+`build/repository-artifact-policy.ps1` owns separate build-output directories, source-package-only exclusions, generated-file patterns and archive exclusions. Packaging prunes excluded directories, validates the unfiltered stage before compression, and reports its file count and byte size. Required stage items are `Dynastia.slnx`, `global.json`, `src/`, `plugins/`, `data/`, `tests/` and `build/`; docs and legitimate hidden source files are also retained. Keep `.gitignore` categories synchronized; it is never parsed as production policy.
 
-## Refactoring rule
+Optional local cleanup:
 
-Prefer moving existing behavior into smaller responsibility files before changing that behavior. Do not combine a broad structural refactor with balance changes, save-schema changes, action-ID changes or year-phase reordering unless the functional change explicitly requires it.
+```powershell
+powershell -ExecutionPolicy Bypass -File build\cleanup-repo.ps1
+```
+
+Cleanup reports removed directory/file counts and preserves Git metadata and saves, including generated-looking files inside them. `-IncludeArchives` opts into local ZIP deletion. Cleanup is not required for routine builds or source packaging.
+
+`build/test-repository-tooling.ps1` runs dependency-free temporary-fixture checks for policy/.gitignore coverage, packaging validation, save preservation and mocked build orchestration. It runs automatically in development builds unless tests are skipped, and can be invoked independently. Mocked tooling checks do not establish C# compilation or gameplay correctness; the real `-Clean` build and full test run remain the verification gate. Both Windows PowerShell 5.1 and PowerShell 7 are supported.
+
+
+## Regression tests and refactoring
+
+`tests/Dynastia.TestSupport` supplies cached repository paths (`RepositoryFiles`) and
+strict scripted randomness (`SequenceGameRandom`). Use it for source-artifact reads
+and deterministic fixtures instead of adding another root locator or permissive RNG.
+
+`tests/Dynastia.App.Tests` references the application and tests action categories,
+ordering, emoji fallbacks, selector output, queued labels and routing without opening
+a window. App internals are visible only to this test assembly.
+`ActionPresentationMetadataTests` covers metadata precedence, stable groups/anchors and primary-list
+filtering. `ProductionActionPresentationTests` invokes the compiled registration/factory boundaries
+without evaluating gameplay delegates and compares first-party/dynamic metadata against legacy
+presentation, including historical loan/nanny wrappers and catalog-driven craft/stat actions.
+
+Core characterization coverage lives in `AutonomousStrategyCharacterizationTests`,
+`EstateInheritanceCharacterizationTests` and `TurnStartActionCharacterizationTests`.
+These execute the existing implementations and protect priority/RNG behavior, signed
+inheritance, asset identities, event output and pre-aging execution. Household internals
+are visible to `Dynastia.Core.Tests`; no gameplay implementation is duplicated in tests.
+
+REF-01 migrates logic assertions tied to the action presentation, autonomous strategy
+and estate source files into these suites. XAML/layout, composition and data-artifact
+checks remain in the existing Core test project. New refactors should update fixture
+construction as necessary while preserving these observable behavior assertions.
+`AutonomousStrategyDecompositionTests.cs` extends the same characterization fixture
+with exact ID/prefix ownership, overlap rejection, personality/clamp, cross-domain
+choice/queue, snapshot read order, conservative forecast and candidate parameter
+checks. Its read-only service probes throw on unexpected calls. Score comparisons
+are exact; scripted randomness must be fully consumed without extra draws.
+
+Both `*Tests.csproj` projects are included in the solution and automatically discovered
+by `build-dev.ps1`; the shared support library is not a test project.

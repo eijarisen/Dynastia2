@@ -5,7 +5,7 @@ public sealed class Development13PersonalCrimeHobbyFixesTests
     [Fact]
     public void PersonalDetailsPutDemographicsAtTopOfRightColumn()
     {
-        var xaml = Read("src", "Dynastia.App", "Views", "MainWindow.axaml");
+        var xaml = RepositoryFiles.ReadText("src", "Dynastia.App", "Views", "MainWindow.axaml");
         Assert.Equal(1, Count(xaml, "Text=\"{Binding SelectedPerson.AgeText}\""));
         Assert.Equal(1, Count(xaml, "StringFormat='Sex: {0}'"));
         Assert.Equal(1, Count(xaml, "Text=\"{Binding SelectedPerson.NationalityText}\""));
@@ -25,7 +25,7 @@ public sealed class Development13PersonalCrimeHobbyFixesTests
     [Fact]
     public void FractionalStatusValuesAlwaysResolveToAWordLabel()
     {
-        var source = Read("plugins", "Dynastia.Mechanics.Status", "StatusRules.cs");
+        var source = RepositoryFiles.ReadText("plugins", "Dynastia.Mechanics.Status", "StatusRules.cs");
         Assert.Contains("var exact = ordered.FirstOrDefault", source);
         Assert.Contains("ordered.LastOrDefault(band => value >= band.Minimum)?.Label", source);
         Assert.Contains("?? ordered[0].Label", source);
@@ -34,7 +34,7 @@ public sealed class Development13PersonalCrimeHobbyFixesTests
     [Fact]
     public void UnavailablePrivateTutorChoiceIsNotAddedToPaperSelector()
     {
-        var source = Read(
+        var source = RepositoryFiles.ReadText(
             "src", "Dynastia.App", "ViewModels",
             "MainWindowViewModel.CraftsEducation.cs");
 
@@ -46,12 +46,9 @@ public sealed class Development13PersonalCrimeHobbyFixesTests
     [Fact]
     public void SpouseCannotBeOrderedIntoCrimeAndCanBeAskedToQuit()
     {
-        var source = Read(
+        var source = RepositoryFiles.ReadText(
             "plugins", "Dynastia.Mechanics.Justice",
             "JusticePlugin.CriminalOccupation.cs");
-        var presentation = Read(
-            "src", "Dynastia.App", "ViewModels",
-            "ActionPresentationPolicy.cs");
 
         Assert.Contains("CanDirectOwnOccupation(context)", source);
         Assert.Contains("context.Actor.Id == context.Target.Id", source);
@@ -59,14 +56,12 @@ public sealed class Development13PersonalCrimeHobbyFixesTests
         Assert.Contains("family.GetSpouse(context.Actor)?.Id != context.Target.Id", source);
         Assert.Contains("if (random.NextDouble() > 0.5)", source);
         Assert.Contains("crime.EndLifeOfCrime", source);
-        Assert.Contains("justice.ask_to_quit_crime", presentation);
-        Assert.Contains("ActionCategory.Family", presentation);
     }
 
     [Fact]
     public void HobbyReadsLazilyReconcileNewlyAgeEligiblePeople()
     {
-        var service = Read(
+        var service = RepositoryFiles.ReadText(
             "plugins", "Dynastia.Mechanics.Hobbies",
             "StandardHobbyService.cs");
 
@@ -96,19 +91,4 @@ public sealed class Development13PersonalCrimeHobbyFixesTests
         return source[startIndex..endIndex];
     }
 
-    private static string Read(params string[] parts) =>
-        File.ReadAllText(Path.Combine(new[] { RepositoryRoot() }.Concat(parts).ToArray()));
-
-    private static string RepositoryRoot()
-    {
-        var current = new DirectoryInfo(AppContext.BaseDirectory);
-        while (current is not null)
-        {
-            if (File.Exists(Path.Combine(current.FullName, "Dynastia.slnx")))
-                return current.FullName;
-            current = current.Parent;
-        }
-
-        throw new DirectoryNotFoundException("Could not locate repository root.");
-    }
 }

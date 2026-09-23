@@ -19,6 +19,12 @@ public sealed partial class CareerPlugin
             new GameActionDefinition
             {
                 Id = "career.help_seek_employment",
+                Presentation = new()
+                {
+                    Emoji = "✅",
+                    Categories = [ActionPresentationCategories.Career, ActionPresentationCategories.Family],
+                    PlacementAnchor = ActionPresentationGroups.EmploymentSearch
+                },
                 Label = "Help to Seek Employment",
                 Description =
                     "Browse vacancies for an unemployed adult relative living in this household " +
@@ -132,6 +138,12 @@ public sealed partial class CareerPlugin
             new GameActionDefinition
             {
                 Id = "career.help_find_better_job",
+                Presentation = new()
+                {
+                    Emoji = "🔎",
+                    Categories = [ActionPresentationCategories.Career, ActionPresentationCategories.Family],
+                    PlacementAnchor = ActionPresentationGroups.EmploymentSearch
+                },
                 Label = "Find a Better Job",
                 Description =
                     "Browse better-paying vacancies for an employed adult relative living in this household.",
@@ -212,6 +224,11 @@ public sealed partial class CareerPlugin
             new GameActionDefinition
             {
                 Id = "career.ask_to_recover",
+                Presentation = new()
+                {
+                    Emoji = "🧘",
+                    Categories = [ActionPresentationCategories.Personal, ActionPresentationCategories.Career, ActionPresentationCategories.Family, ActionPresentationCategories.Finances]
+                },
                 Label = "Ask to Recover",
                 Description =
                     "Ask a working adult relative in this household to take the year easier. " +
@@ -347,6 +364,11 @@ public sealed partial class CareerPlugin
             new GameActionDefinition
             {
                 Id = "career.ask_to_quit",
+                Presentation = new()
+                {
+                    Emoji = "🚶",
+                    Categories = [ActionPresentationCategories.Career, ActionPresentationCategories.Family]
+                },
                 Label = "Ask to Quit Job",
                 Description =
                     "Ask an employed adult relative living in this household to quit so they can focus on the household, including farm work. " +

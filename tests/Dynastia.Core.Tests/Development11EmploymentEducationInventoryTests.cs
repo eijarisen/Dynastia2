@@ -7,9 +7,9 @@ public sealed class Development11EmploymentEducationInventoryTests
     [Fact]
     public void FarmWorkAndCraftSelfEmploymentCountAsEmploymentWhereItMatters()
     {
-        var marriage = Read(
+        var marriage = RepositoryFiles.ReadText(
             "plugins", "Dynastia.Mechanics.Relationships", "MarriageSatisfactionYearSystem.cs");
-        var career = Read(
+        var career = RepositoryFiles.ReadText(
             "plugins", "Dynastia.Mechanics.Career", "StandardCareerService.cs");
 
         Assert.Contains("IsEconomicallyEmployed", marriage);
@@ -23,9 +23,9 @@ public sealed class Development11EmploymentEducationInventoryTests
     [Fact]
     public void FarmWorkSuppressesUnemploymentThoughtsAndStaleMarriageIssueText()
     {
-        var careerThoughts = Read(
+        var careerThoughts = RepositoryFiles.ReadText(
             "plugins", "Dynastia.Mechanics.Thoughts", "CareerThoughtProvider.cs");
-        var relationshipThoughts = Read(
+        var relationshipThoughts = RepositoryFiles.ReadText(
             "plugins", "Dynastia.Mechanics.Thoughts", "RelationshipThoughtProvider.cs");
 
         var farmWork = careerThoughts.IndexOf(
@@ -46,7 +46,7 @@ public sealed class Development11EmploymentEducationInventoryTests
     [Fact]
     public void EducationKeepsStandardFirstAndPrioritizesLocallySupportedCrafts()
     {
-        var education = Read(
+        var education = RepositoryFiles.ReadText(
             "src", "Dynastia.App", "ViewModels", "MainWindowViewModel.CraftsEducation.cs");
 
         var standard = education.IndexOf("\"Standard Education\"", StringComparison.Ordinal);
@@ -60,12 +60,10 @@ public sealed class Development11EmploymentEducationInventoryTests
     [Fact]
     public void InventoryUsesCompactInheritanceFarmlandSelectorAndCenteredLifestyleButtons()
     {
-        var xaml = Read(
+        var xaml = RepositoryFiles.ReadText(
             "src", "Dynastia.App", "Views", "FamilyInventoryWindow.axaml");
-        var code = Read(
+        var code = RepositoryFiles.ReadText(
             "src", "Dynastia.App", "Views", "FamilyInventoryWindow.axaml.cs");
-        var actions = Read(
-            "src", "Dynastia.App", "ViewModels", "MainWindowViewModel.Actions.cs");
 
         Assert.Contains("<Setter Property=\"Width\" Value=\"180\" />", xaml);
         Assert.Contains("Content=\"💎 Lavish\"", xaml);
@@ -80,7 +78,6 @@ public sealed class Development11EmploymentEducationInventoryTests
         Assert.Contains("Close();", code);
         Assert.Contains("\"farming.sell_farmland\"", code);
         Assert.Contains("\"Select Farmland\"", code);
-        Assert.Contains("_farmingService.GetSnapshot(actor).Farmland", actions);
     }
 
     [Fact]
@@ -97,19 +94,4 @@ public sealed class Development11EmploymentEducationInventoryTests
         Assert.False(MarriageBalanceRules.ShouldApplyLowIntellectPenalty(2));
     }
 
-    private static string Read(params string[] parts) =>
-        File.ReadAllText(Path.Combine(new[] { RepositoryRoot() }.Concat(parts).ToArray()));
-
-    private static string RepositoryRoot()
-    {
-        var current = new DirectoryInfo(AppContext.BaseDirectory);
-        while (current is not null)
-        {
-            if (File.Exists(Path.Combine(current.FullName, "Dynastia.slnx")))
-                return current.FullName;
-            current = current.Parent;
-        }
-
-        throw new DirectoryNotFoundException("Could not locate repository root.");
-    }
 }

@@ -144,6 +144,13 @@ public sealed class LoansPlugin :
                         new GameActionDefinition
             {
                 Id = "loan.take",
+                Presentation = new()
+                {
+                    Emoji = "🏦",
+                    Categories = [ActionPresentationCategories.Finances],
+                    AdjacencyGroup = ActionPresentationGroups.Loans,
+                    GroupOrder = 10
+                },
                 Label = "Take a Loan",
                 Description =
                     "Borrow 1,000-10,000 zł from a bank for 1-50 years. " +
@@ -253,6 +260,13 @@ public sealed class LoansPlugin :
                         new GameActionDefinition
             {
                 Id = "loan.give",
+                Presentation = new()
+                {
+                    Emoji = "🤝",
+                    Categories = [ActionPresentationCategories.Finances],
+                    AdjacencyGroup = ActionPresentationGroups.Loans,
+                    GroupOrder = 20
+                },
                 Label = "Give a Loan",
                 Description =
                     "Lend a whole-thousand amount to an outside customer for 1-50 years, up to 10,000 zł or the cash currently available to the household. " +
@@ -399,6 +413,7 @@ public sealed class LoansPlugin :
         return new GameActionDefinition
         {
             Id = action.Id,
+            Presentation = action.Presentation,
             Label = variant.Label,
             Description = variant.Description,
             Mode = action.Mode,

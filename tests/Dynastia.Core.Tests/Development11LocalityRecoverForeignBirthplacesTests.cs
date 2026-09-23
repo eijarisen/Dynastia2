@@ -8,7 +8,7 @@ public sealed class Development11LocalityRecoverForeignBirthplacesTests
     [Fact]
     public void LocalServiceClustersUseHistoricalProxyRelationships()
     {
-        var root = RepositoryRoot();
+        var root = RepositoryFiles.Root;
         var resolver = File.ReadAllText(Path.Combine(root,
             "plugins", "Dynastia.Mechanics.Locations", "StandardLocalServiceTownResolver.cs"));
         var catalog = File.ReadAllText(Path.Combine(root,
@@ -23,7 +23,7 @@ public sealed class Development11LocalityRecoverForeignBirthplacesTests
     [Fact]
     public void AskToRecoverSupportsCareerCraftAndFarmWork()
     {
-        var source = File.ReadAllText(Path.Combine(RepositoryRoot(),
+        var source = File.ReadAllText(Path.Combine(RepositoryFiles.Root,
             "plugins", "Dynastia.Mechanics.Career", "CareerPlugin.FamilySupportActions.cs"));
 
         Assert.Contains("craftResolver()?.IsSelfEmployed(target)", source);
@@ -35,7 +35,7 @@ public sealed class Development11LocalityRecoverForeignBirthplacesTests
     [Fact]
     public void ForeignBirthplaceDataRemainPresentationOnly()
     {
-        var root = RepositoryRoot();
+        var root = RepositoryFiles.Root;
         var dataRoot = Path.Combine(root, "data", "Locations");
         Assert.True(File.Exists(Path.Combine(dataRoot, "foreign_cities.csv")));
         Assert.True(File.Exists(Path.Combine(dataRoot, "nationality_country_weights.csv")));
@@ -56,7 +56,7 @@ public sealed class Development11LocalityRecoverForeignBirthplacesTests
     [Fact]
     public void OverlapLocationPickerWaitsHalfSecondForDoubleClick()
     {
-        var source = File.ReadAllText(Path.Combine(RepositoryRoot(),
+        var source = File.ReadAllText(Path.Combine(RepositoryFiles.Root,
             "src", "Dynastia.App", "Map", "Views", "TownMapPanel.cs"));
 
         Assert.Contains("button.Click +=", source);
@@ -64,16 +64,4 @@ public sealed class Development11LocalityRecoverForeignBirthplacesTests
         Assert.Contains("Task.Delay(500)", source);
     }
 
-    private static string RepositoryRoot()
-    {
-        var directory = new DirectoryInfo(AppContext.BaseDirectory);
-        while (directory is not null)
-        {
-            if (File.Exists(Path.Combine(directory.FullName, "Dynastia.slnx")))
-                return directory.FullName;
-            directory = directory.Parent;
-        }
-
-        throw new DirectoryNotFoundException("Repository root not found.");
-    }
 }

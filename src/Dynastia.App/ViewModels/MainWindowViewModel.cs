@@ -1,4 +1,5 @@
 using Dynastia.App.Persistence;
+using Dynastia.App.ViewModels.Actions;
 using Dynastia.Contracts;
 using Dynastia.Core.Simulation;
 
@@ -69,8 +70,6 @@ public sealed partial class MainWindowViewModel : ViewModelBase
     private double _selectedStartYear =
         GameCalendarConfiguration.GameStartYear;
     private bool _isGameStarted;
-    private string _queuedActionText = string.Empty;
-    private bool _hasQueuedAction;
     private bool _isGameOverOverlayVisible;
     private bool _isMainMenuPromptVisible;
     private bool _isYearSummaryVisible;
@@ -84,12 +83,9 @@ public sealed partial class MainWindowViewModel : ViewModelBase
     private int _detailsTabIndex;
     private string _persistenceStatusText = string.Empty;
 
-    private readonly List<AvailableActionViewModel>
-        _allAvailableActions = [];
-
-    private readonly HashSet<ActionCategory>
-        _activeActionCategories =
-            new(Enum.GetValues<ActionCategory>());
+    private readonly ActionPanelCoordinator _actionPanel;
+    private readonly ActionSelectionOptionService _actionSelectionOptions;
+    private readonly ActionSurfaceDefinitions _actionSurfaces;
 
     public MainWindowViewModel(
         IGameState gameState,
@@ -134,6 +130,101 @@ public sealed partial class MainWindowViewModel : ViewModelBase
         IActionRegistry actionRegistry,
         GameSaveService saveService,
         IStateReconciliationLifecycle reconciliation)
+        : this(
+            gameState,
+            newGameService,
+            yearProcessor,
+            selectionService,
+            statsService,
+            familyService,
+            nationalityService,
+            healthService,
+            stressService,
+            economyService,
+            houseMarketService,
+            townProsperityService,
+            farmingService,
+            craftService,
+            loanService,
+            heirloomService,
+            statusService,
+            householdService,
+            autonomousHouseholdDecisionService,
+            adoptionService,
+            locationService,
+            localCareerOpportunityService,
+            marriageSatisfactionService,
+            familyRelationService,
+            householdConnectionService,
+            thoughtService,
+            hobbyService,
+            personalityService,
+            appearanceService,
+            childHappinessService,
+            educationService,
+            careerService,
+            careerPresentationService,
+            partnerSearchService,
+            justiceService,
+            biographyService,
+            historicalEventService,
+            succession,
+            eventBus,
+            actionRegistry,
+            saveService,
+            reconciliation,
+            new ActionSelectionOptionService(
+                succession, actionRegistry, economyService, farmingService, heirloomService,
+                loanService, locationService, townProsperityService, localCareerOpportunityService),
+            new ActionSurfaceDefinitions(locationService, economyService, justiceService))
+    {
+    }
+
+    internal MainWindowViewModel(
+        IGameState gameState,
+        INewGameService newGameService,
+        YearProcessor yearProcessor,
+        ISelectionService selectionService,
+        IStatsService? statsService,
+        IFamilyService? familyService,
+        INationalityService? nationalityService,
+        IHealthService? healthService,
+        IStressService? stressService,
+        IEconomyService? economyService,
+        IHouseMarketService? houseMarketService,
+        ITownProsperityService? townProsperityService,
+        IFarmingService? farmingService,
+        ICraftService? craftService,
+        ILoanService? loanService,
+        IHeirloomService? heirloomService,
+        IStatusService? statusService,
+        IHouseholdService? householdService,
+        IAutonomousHouseholdDecisionService? autonomousHouseholdDecisionService,
+        IAdoptionService? adoptionService,
+        ILocationService? locationService,
+        ILocalCareerOpportunityService? localCareerOpportunityService,
+        IMarriageSatisfactionService? marriageSatisfactionService,
+        IFamilyRelationService? familyRelationService,
+        IHouseholdConnectionService? householdConnectionService,
+        IThoughtService? thoughtService,
+        IHobbyService? hobbyService,
+        IPersonalityService? personalityService,
+        IAppearanceService? appearanceService,
+        IChildHappinessService? childHappinessService,
+        IEducationService? educationService,
+        ICareerService? careerService,
+        ICareerPresentationService? careerPresentationService,
+        IPartnerSearchService? partnerSearchService,
+        IJusticeService? justiceService,
+        IBiographyService? biographyService,
+        IHistoricalEventService? historicalEventService,
+        ISuccessionService succession,
+        IGameEventBus eventBus,
+        IActionRegistry actionRegistry,
+        GameSaveService saveService,
+        IStateReconciliationLifecycle reconciliation,
+        ActionSelectionOptionService actionSelectionOptions,
+        ActionSurfaceDefinitions actionSurfaces)
     {
         _gameState = gameState;
         _newGameService = newGameService;
@@ -187,6 +278,16 @@ public sealed partial class MainWindowViewModel : ViewModelBase
         _actionRegistry = actionRegistry;
         _saveService = saveService;
         _reconciliation = reconciliation;
+        _actionSelectionOptions = actionSelectionOptions;
+        _actionSurfaces = actionSurfaces;
+        _actionPanel = new ActionPanelCoordinator(
+            gameState, succession, actionRegistry, familyService, economyService, farmingService,
+            locationService, actionSelectionOptions, actionSurfaces, FindSelectedPerson);
+        _actionPanel.ActionSelectionRequested += (_, request) => ActionSelectionRequested?.Invoke(this, request);
+        _actionPanel.ActionExecuted += OnActionUiExecuted;
+        _actionPanel.PropertyChanged += (_, change) => OnPropertyChanged(change.PropertyName);
+        _actionPanel.FiltersOrActionsChanged += (_, _) => OnPropertyChanged(nameof(ActionsEmptyText));
+
 
         _albumYear =
             GameCalendarConfiguration.GameStartYear;
@@ -587,72 +688,6 @@ public sealed partial class MainWindowViewModel : ViewModelBase
         YearSummaryHouseholds.Count == 0
             ? "Nothing of note happened this year."
             : string.Empty;
-
-    public string ActionsEmptyText
-    {
-        get
-        {
-            if (IsBloodlineFamilyView)
-            {
-                return GetDisplayedHouseholdHead()
-                    is null
-                        ? "No autonomous bloodline households."
-                        : "This household lives independently.";
-            }
-
-            if (AvailableActions.Count > 0
-                || PassActions.Count > 0
-                || HasQueuedAction)
-            {
-                return string.Empty;
-            }
-
-            var actor =
-                _succession.ActiveController;
-
-            if (actor is not null)
-            {
-                var blockedReason =
-                    _actionRegistry.GetBlockedReason(
-                        actor);
-
-                if (!string.IsNullOrWhiteSpace(
-                    blockedReason))
-                {
-                    return blockedReason;
-                }
-            }
-
-            return
-                "No actions available for the selected person.";
-        }
-    }
-
-    public string QueuedActionText
-    {
-        get => _queuedActionText;
-        private set
-        {
-            if (_queuedActionText == value)
-                return;
-
-            _queuedActionText = value;
-            OnPropertyChanged();
-        }
-    }
-
-    public bool HasQueuedAction
-    {
-        get => _hasQueuedAction;
-        private set
-        {
-            if (_hasQueuedAction == value)
-                return;
-
-            _hasQueuedAction = value;
-            OnPropertyChanged();
-        }
-    }
 
     public RelayCommand StartGameCommand { get; }
     public RelayCommand NextYearCommand { get; }

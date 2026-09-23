@@ -10,7 +10,7 @@ public sealed class Development9KeyboardBalanceRegressionTests
         Assert.Equal(2000, GameCalendarConfiguration.MaximumSelectableStartYear);
         Assert.Equal(2000, GameCalendarConfiguration.NormalizeSelectableStartYear(2004));
 
-        var root = RepositoryRoot();
+        var root = RepositoryFiles.Root;
         var xaml = File.ReadAllText(Path.Combine(
             root,
             "src",
@@ -24,7 +24,7 @@ public sealed class Development9KeyboardBalanceRegressionTests
     [Fact]
     public void SharedSelectionWindowAcceptsEnterAndClosesOnEscape()
     {
-        var root = RepositoryRoot();
+        var root = RepositoryFiles.Root;
         var code = File.ReadAllText(Path.Combine(
             root,
             "src",
@@ -42,7 +42,7 @@ public sealed class Development9KeyboardBalanceRegressionTests
     [Fact]
     public void MainWindowRegistersRequestedGameplayShortcuts()
     {
-        var root = RepositoryRoot();
+        var root = RepositoryFiles.Root;
         var code = File.ReadAllText(Path.Combine(
             root,
             "src",
@@ -72,7 +72,7 @@ public sealed class Development9KeyboardBalanceRegressionTests
     [Fact]
     public void FirstParallaxLayerMovesMoreSlowly()
     {
-        var root = RepositoryRoot();
+        var root = RepositoryFiles.Root;
         var menu = File.ReadAllText(Path.Combine(
             root,
             "src",
@@ -94,7 +94,7 @@ public sealed class Development9KeyboardBalanceRegressionTests
     [Fact]
     public void HistoricalNannyLabelReflectsTripledAnnualCost()
     {
-        var root = RepositoryRoot();
+        var root = RepositoryFiles.Root;
         var historical = File.ReadAllText(Path.Combine(
             root,
             "data",
@@ -106,18 +106,4 @@ public sealed class Development9KeyboardBalanceRegressionTests
         Assert.DoesNotContain("(250 zł/year)", historical);
     }
 
-    private static string RepositoryRoot()
-    {
-        var current = new DirectoryInfo(AppContext.BaseDirectory);
-        while (current is not null)
-        {
-            if (File.Exists(Path.Combine(current.FullName, "Dynastia.slnx")))
-                return current.FullName;
-
-            current = current.Parent;
-        }
-
-        throw new DirectoryNotFoundException(
-            "Could not locate repository root.");
-    }
 }

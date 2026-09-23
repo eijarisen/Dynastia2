@@ -66,17 +66,22 @@ public sealed class CareerAdvancementYearSystem :
                             "state.alive"))
                 .ToList();
 
+        var retirementRule =
+            _retirementRules.GetRule(gameState.Year);
+
         foreach (var person in living)
         {
             ProcessPerson(
                 gameState,
-                person);
+                person,
+                retirementRule);
         }
     }
 
     private void ProcessPerson(
         IGameState gameState,
-        IPerson person)
+        IPerson person,
+        RetirementRule retirementRule)
     {
         if (person.Tags.Has(
                 "simulation.peripheral_inactive"))
@@ -92,7 +97,7 @@ public sealed class CareerAdvancementYearSystem :
             || (!person.Tags.Has("vocation.religious.active")
                 && IsAtOrPastRetirementAge(
                     person,
-                    gameState.Year))
+                    retirementRule))
             || career.JobLevel <= 0
             || career.JobLevel >= 5)
         {
@@ -318,14 +323,11 @@ public sealed class CareerAdvancementYearSystem :
 
     private bool IsAtOrPastRetirementAge(
         IPerson person,
-        int gameYear)
+        RetirementRule retirementRule)
     {
         var retirementAge =
-            _retirementRules
-                .GetRule(
-                    gameYear)
-                .GetRetirementAge(
-                    _family.GetSex(person));
+            retirementRule.GetRetirementAge(
+                _family.GetSex(person));
 
         return person.Age >= retirementAge;
     }

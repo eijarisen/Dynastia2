@@ -70,6 +70,13 @@ public sealed class FarmingPlugin : IGamePlugin
             new GameActionDefinition
             {
                 Id = "farming.buy_farmland",
+                Presentation = new()
+                {
+                    Emoji = "🌾",
+                    Categories = [ActionPresentationCategories.Finances],
+                    AdjacencyGroup = ActionPresentationGroups.PropertyMarket,
+                    GroupOrder = 30
+                },
                 Label = $"Buy Farmland ({farming.PurchasePrice:N0} zł)",
                 Description =
                     $"Queue the purchase of one farmland parcel in the household's current town for {farming.PurchasePrice:N0} zł. The household must own a house in that town.",
@@ -133,6 +140,13 @@ public sealed class FarmingPlugin : IGamePlugin
             new GameActionDefinition
             {
                 Id = "farming.sell_farmland",
+                Presentation = new()
+                {
+                    Emoji = "🌾",
+                    Categories = [ActionPresentationCategories.Finances],
+                    AdjacencyGroup = ActionPresentationGroups.PropertyMarket,
+                    GroupOrder = 40
+                },
                 Label = $"Sell Farmland ({farming.SalePrice:N0}+ zł)",
                 Description =
                     $"Queue the sale of a selected farmland parcel for {farming.SalePrice:N0} zł, plus {farming.LivestockSalePrice:N0} zł when it has Livestock.",
@@ -186,6 +200,11 @@ public sealed class FarmingPlugin : IGamePlugin
             new GameActionDefinition
             {
                 Id = "farming.add_livestock",
+                Presentation = new()
+                {
+                    Emoji = "🌾",
+                    Categories = [ActionPresentationCategories.Finances]
+                },
                 Label = $"Add Livestock ({farming.LivestockPurchasePrice:N0} zł)",
                 Description =
                     $"Queue one Livestock upgrade for a selected farmland parcel in the current town for {farming.LivestockPurchasePrice:N0} zł. The animal type is chosen automatically from the local historical pool.",

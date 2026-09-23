@@ -12,6 +12,7 @@ public sealed class StandardMarriageSatisfactionService :
         10;
 
     private readonly IGameState _gameState;
+    private readonly IPersonLookup? _people;
     private readonly IFamilyService _family;
     private readonly IStatsService _stats;
 
@@ -20,8 +21,24 @@ public sealed class StandardMarriageSatisfactionService :
         IFamilyService family,
         IStatsService stats,
         IGameEventBus events)
+        : this(
+            gameState,
+            gameState as IPersonLookup,
+            family,
+            stats,
+            events)
+    {
+    }
+
+    public StandardMarriageSatisfactionService(
+        IGameState gameState,
+        IPersonLookup? people,
+        IFamilyService family,
+        IStatsService stats,
+        IGameEventBus events)
     {
         _gameState = gameState;
+        _people = people;
         _family = family;
         _stats = stats;
 
@@ -543,11 +560,10 @@ public sealed class StandardMarriageSatisfactionService :
         if (id is null)
             return null;
 
-        return _gameState.People
-            .FirstOrDefault(
-                person =>
-                    person.Id
-                    == id.Value);
+        return _people?.FindPerson(
+                id.Value)
+            ?? _gameState.People.FirstOrDefault(
+                person => person.Id == id.Value);
     }
 
     private IPerson? FindRelatedPerson(

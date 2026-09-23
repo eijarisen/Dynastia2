@@ -1,6 +1,7 @@
 using System.Collections.ObjectModel;
 using Avalonia.Threading;
 using Dynastia.App.Persistence;
+using Dynastia.App.ViewModels.Actions;
 using Dynastia.Contracts;
 using Dynastia.Core.Simulation;
 
@@ -547,12 +548,12 @@ public sealed partial class MainWindowViewModel
             ActionEmojiMap.Format(queued.ActionId, queued.Label);
 
         var detail =
-            BuildQueuedActionDetail(queued);
+            _actionPanel.BuildQueuedActionDetail(queued);
 
         if (!string.IsNullOrWhiteSpace(detail))
             title += $" -- {detail}";
 
-        if (SuppressQueuedActionPersonName(queued.ActionId))
+        if (ActionPanelCoordinator.SuppressQueuedActionPersonName(queued.ActionId))
         {
             return
                 title +

@@ -120,6 +120,14 @@ public sealed class PersonalityPlugin : IGamePlugin
         new()
         {
             Id = "personality.religious_study",
+            Presentation = new()
+            {
+                Emoji = "📖",
+                Categories = [ActionPresentationCategories.Personal],
+                AdjacencyGroup = ActionPresentationGroups.TreatmentGrowth,
+                GroupOrder = 100,
+                ShowInPrimaryActionList = false
+            },
             Label = "Religious Study",
             Description =
                 "Spend the year in deliberate religious or moral reflection for 3,000 zł. Success depends on the local Church tier (45–65%); a Good person instead gains protection against the next downward Morals shift.",

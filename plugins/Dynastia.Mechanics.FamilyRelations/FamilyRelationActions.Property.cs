@@ -17,6 +17,11 @@ internal static partial class FamilyRelationActions
         IGameState gameState) => new()
     {
         Id = "family_relations.ask_house",
+        Presentation = new()
+        {
+            Emoji = "🙏",
+            Categories = [ActionPresentationCategories.Personal]
+        },
         Label = "Request a House",
         Description = "Request property from this relative's household. Acceptance depends on Familiarity, Sympathy and the donor's wealth/assets; a household will not surrender its only essential home.",
         Mode = ActionExecutionMode.Queued,
@@ -91,6 +96,11 @@ internal static partial class FamilyRelationActions
         IGameState gameState) => new()
     {
         Id = "family_relations.give_house",
+        Presentation = new()
+        {
+            Emoji = "🎁",
+            Categories = [ActionPresentationCategories.Personal]
+        },
         Label = "Transfer a House",
         Description = "Offer one non-residence property to this relative's household. Very hostile relatives may refuse. If accepted and they own no home, they relocate to the property when it is elsewhere.",
         Mode = ActionExecutionMode.Queued,
@@ -210,6 +220,11 @@ internal static partial class FamilyRelationActions
         IFamilyService family) => new()
     {
         Id = "family_relations.ask_farmland",
+        Presentation = new()
+        {
+            Emoji = "🙏",
+            Categories = [ActionPresentationCategories.Personal]
+        },
         Label = "Ask for Farmland",
         Description = "Request farmland from this relative's household. Acceptance depends on Familiarity, Sympathy, relative wealth and how much land the household can truly spare; its final essential parcel is protected.",
         Mode = ActionExecutionMode.Queued,
@@ -301,6 +316,11 @@ internal static partial class FamilyRelationActions
         IFamilyService family) => new()
     {
         Id = "family_relations.give_farmland",
+        Presentation = new()
+        {
+            Emoji = "🎁",
+            Categories = [ActionPresentationCategories.Personal]
+        },
         Label = "Give Farmland",
         Description = "Transfer one farmland parcel located in this relative's current town. The oldest matching parcel is used automatically; the transfer is unconditional and never causes relocation.",
         Mode = ActionExecutionMode.Queued,

@@ -7,35 +7,17 @@ namespace Dynastia.Core.Tests;
 public sealed class TownAffairsHousingFarmingTa2Tests
 {
     [Fact]
-    public void TownPickerOrdersResidenceThenOwnedTownsThenAlphabeticallyAndShowsNoPrices()
+    public void TownPickerKeepsItsViewHousingEntryPoint()
     {
-        var code = Read("src", "Dynastia.App", "ViewModels", "MainWindowViewModel.Actions.cs");
-        var window = Read("src", "Dynastia.App", "Views", "MainWindow.axaml.cs");
-
-        Assert.Contains("currentTown.Id", code);
-        Assert.Contains("ownedTownIds.Contains", code);
-        Assert.Contains(".OrderBy(item => item.Category)", code);
-        Assert.Contains(".ThenBy(item => item.Option.PrimaryText", code);
+        var window = RepositoryFiles.ReadText("src", "Dynastia.App", "Views", "MainWindow.axaml.cs");
         Assert.Contains("View Housing", window);
-
-        var buyStart = code.IndexOf(
-            "actionId.Equals(\"household.buy_house\"",
-            StringComparison.Ordinal);
-        var nextBranch = code.IndexOf(
-            "actionId.Equals(\"household.sell_house\"",
-            buyStart,
-            StringComparison.Ordinal);
-        Assert.True(buyStart >= 0 && nextBranch > buyStart);
-        var buyPicker = code[buyStart..nextBranch];
-        Assert.DoesNotContain("GetHousePrice", buyPicker);
-        Assert.DoesNotContain("summaryPrice", buyPicker);
     }
 
     [Fact]
     public void PropertySelectorRetainsTownSearch()
     {
-        var xaml = Read("src", "Dynastia.App", "Views", "PropertySelectionWindow.axaml");
-        var code = Read("src", "Dynastia.App", "Views", "PropertySelectionWindow.axaml.cs");
+        var xaml = RepositoryFiles.ReadText("src", "Dynastia.App", "Views", "PropertySelectionWindow.axaml");
+        var code = RepositoryFiles.ReadText("src", "Dynastia.App", "Views", "PropertySelectionWindow.axaml.cs");
 
         Assert.Contains("Search", xaml);
         Assert.Contains("TextChanged", xaml);
@@ -46,7 +28,7 @@ public sealed class TownAffairsHousingFarmingTa2Tests
     public void MarketRulesMatchBatchTwoCapacityCountAndPricingTargets()
     {
         using var document = JsonDocument.Parse(
-            File.ReadAllText(Path.Combine(RepositoryRoot(), "data", "Housing", "house_market_rules.json")));
+            File.ReadAllText(Path.Combine(RepositoryFiles.Root, "data", "Housing", "house_market_rules.json")));
         var root = document.RootElement;
 
         Assert.Equal(6, root.GetProperty("standardCapacity").GetInt32());
@@ -91,7 +73,7 @@ public sealed class TownAffairsHousingFarmingTa2Tests
     [Fact]
     public void HouseOffersAreDeterministicWithoutUsingGlobalGameRandom()
     {
-        var code = Read("plugins", "Dynastia.Mechanics.Economy", "StandardHouseMarketService.cs");
+        var code = RepositoryFiles.ReadText("plugins", "Dynastia.Mechanics.Economy", "StandardHouseMarketService.cs");
 
         Assert.Contains("SHA256.HashData", code);
         Assert.Contains("BuildKey(town.Id, year", code);
@@ -103,8 +85,8 @@ public sealed class TownAffairsHousingFarmingTa2Tests
     [Fact]
     public void QueuedPurchaseStoresAndStrictlyRevalidatesExactOfferSnapshot()
     {
-        var app = Read("src", "Dynastia.App", "ViewModels", "MainWindowViewModel.TownLife.cs");
-        var action = Read("plugins", "Dynastia.Mechanics.Households", "HouseholdsPlugin.PropertyActions.cs");
+        var app = RepositoryFiles.ReadText("src", "Dynastia.App", "ViewModels", "MainWindowViewModel.TownLife.cs");
+        var action = RepositoryFiles.ReadText("plugins", "Dynastia.Mechanics.Households", "HouseholdsPlugin.PropertyActions.cs");
 
         foreach (var field in new[]
                  {
@@ -133,8 +115,8 @@ public sealed class TownAffairsHousingFarmingTa2Tests
     [Fact]
     public void PropertyEconomicsUseCapacityProsperityAndSpecificHouseForRent()
     {
-        var assets = Read("plugins", "Dynastia.Mechanics.Economy", "StandardEconomyService.Assets.cs");
-        var finance = Read("plugins", "Dynastia.Mechanics.Economy", "StandardEconomyService.AnnualFinance.cs");
+        var assets = RepositoryFiles.ReadText("plugins", "Dynastia.Mechanics.Economy", "StandardEconomyService.Assets.cs");
+        var finance = RepositoryFiles.ReadText("plugins", "Dynastia.Mechanics.Economy", "StandardEconomyService.AnnualFinance.cs");
 
         Assert.Contains("GetCapacityMultiplier", assets);
         Assert.Contains("GetProsperityMultiplier", assets);
@@ -148,10 +130,10 @@ public sealed class TownAffairsHousingFarmingTa2Tests
     [Fact]
     public void HousingTabSupportsRemotePurchaseWithoutRelocatingAndShowsEmptyMarketMessage()
     {
-        var hub = Read("src", "Dynastia.App", "ViewModels", "TownAffairsViewModel.cs");
-        var owner = Read("src", "Dynastia.App", "ViewModels", "MainWindowViewModel.TownLife.cs");
-        var window = Read("src", "Dynastia.App", "Views", "TownLifeWindow.axaml");
-        var action = Read("plugins", "Dynastia.Mechanics.Households", "HouseholdsPlugin.PropertyActions.cs");
+        var hub = RepositoryFiles.ReadText("src", "Dynastia.App", "ViewModels", "TownAffairsViewModel.cs");
+        var owner = RepositoryFiles.ReadText("src", "Dynastia.App", "ViewModels", "MainWindowViewModel.TownLife.cs");
+        var window = RepositoryFiles.ReadText("src", "Dynastia.App", "Views", "TownLifeWindow.axaml");
+        var action = RepositoryFiles.ReadText("plugins", "Dynastia.Mechanics.Households", "HouseholdsPlugin.PropertyActions.cs");
 
         Assert.Contains("RemoteHousingBrowse", hub);
         Assert.Contains("No houses are currently offered for sale in this town.", hub);
@@ -168,19 +150,4 @@ public sealed class TownAffairsHousingFarmingTa2Tests
     private static int[] ReadPair(JsonElement element) =>
         element.EnumerateArray().Select(value => value.GetInt32()).ToArray();
 
-    private static string Read(params string[] parts) =>
-        File.ReadAllText(Path.Combine(new[] { RepositoryRoot() }.Concat(parts).ToArray()));
-
-    private static string RepositoryRoot()
-    {
-        var current = new DirectoryInfo(AppContext.BaseDirectory);
-        while (current is not null)
-        {
-            if (File.Exists(Path.Combine(current.FullName, "Dynastia.slnx")))
-                return current.FullName;
-            current = current.Parent;
-        }
-
-        throw new DirectoryNotFoundException("Could not locate repository root.");
-    }
 }

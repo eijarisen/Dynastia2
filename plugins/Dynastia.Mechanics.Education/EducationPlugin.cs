@@ -290,6 +290,13 @@ public sealed class EducationPlugin : IGamePlugin
         return new GameActionDefinition
         {
             Id = "education.get_education",
+            Presentation = new()
+            {
+                Emoji = "🎓",
+                Categories = [ActionPresentationCategories.Career],
+                AdjacencyGroup = ActionPresentationGroups.TreatmentGrowth,
+                GroupOrder = 30
+            },
             Label = "Get Education",
             Description =
                 "Choose standard education or study a Craft for 5,000 zł. The cost is charged when the attempt is made.",
@@ -504,6 +511,11 @@ public sealed class EducationPlugin : IGamePlugin
         return new GameActionDefinition
         {
             Id = "education.private_tutor",
+            Presentation = new()
+            {
+                Emoji = "🧑‍🏫",
+                Categories = [ActionPresentationCategories.Career, ActionPresentationCategories.Family]
+            },
             Label = "Hire Private Tutor",
             Description =
                 "Hire a private tutor for a child. Tutoring is not limited by the local School or the parent's Education, but it still respects the historical education ceiling.",
@@ -589,6 +601,11 @@ public sealed class EducationPlugin : IGamePlugin
         {
             Id =
                 "education.help_learning",
+            Presentation = new()
+            {
+                Emoji = "📚",
+                Categories = [ActionPresentationCategories.Career, ActionPresentationCategories.Family]
+            },
 
             Label =
                 "Help in Learning",

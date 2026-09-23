@@ -12,6 +12,10 @@ public sealed class FamilyPlugin : IGamePlugin
             ?? throw new InvalidOperationException(
                 "Game state is unavailable.");
 
+        var personLookup =
+            context.GetService<IPersonLookup>()
+            ?? gameState as IPersonLookup;
+
         var selection =
             context.GetService<ISelectionService>()
             ?? throw new InvalidOperationException(
@@ -53,6 +57,7 @@ public sealed class FamilyPlugin : IGamePlugin
         var familyService =
             new StandardFamilyService(
                 gameState,
+                personLookup,
                 data,
                 historicalNames,
                 nationalities);

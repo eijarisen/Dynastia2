@@ -89,6 +89,13 @@ public sealed partial class RelationshipsPlugin
         {
             Id =
                 "relationship.repair_marriage",
+            Presentation = new()
+            {
+                Emoji = "❤️‍🩹",
+                Categories = [ActionPresentationCategories.Family],
+                AdjacencyGroup = ActionPresentationGroups.MarriageFamily,
+                GroupOrder = 20
+            },
 
             Label =
                 variant.Label,
@@ -213,6 +220,13 @@ public sealed partial class RelationshipsPlugin
         {
             Id =
                 "relationship.divorce_spouse",
+            Presentation = new()
+            {
+                Emoji = "💔",
+                Categories = [ActionPresentationCategories.Family],
+                AdjacencyGroup = ActionPresentationGroups.MarriageFamily,
+                GroupOrder = 30
+            },
 
             Label =
                 "Divorce the Spouse",

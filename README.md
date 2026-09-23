@@ -48,17 +48,27 @@ Then run:
 dotnet run --project src\Dynastia.App\Dynastia.App.csproj
 ```
 
-The development build removes stale dynamically loaded plugin binaries, builds the solution, runs tests unless `-SkipTests` is supplied, and installs fresh plugin outputs into the app build directory.
+The routine build is incremental: it retains project `bin/obj` directories and removes only installed runtime plugin copies before building. MSBuild follows project references, including Contracts changes. Missing plugin outputs and plugins omitted from the solution receive an incremental direct-project build. Plugin installation continues to exclude plugin-local `Dynastia.Contracts.dll` copies.
+
+Unless `-SkipTests` is supplied, the build runs the repository-tooling regression checks and every `*Tests.csproj` under `tests/`, sorted by full path. Discovered test projects may build/restore even when they are not yet listed in the solution.
+
+For authoritative clean verification, including after applying a refactoring patch:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File build\build-dev.ps1 -Clean
+```
+
+`-Clean` removes repository build-output directories before the same build, tests and installation. It preserves source, data, Git metadata and saves. `-SkipTests` is for iteration, not final verification.
 
 ## Repository cleanup
 
-Generated development output can be removed with:
+Optional local cleanup of generated development output:
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File build\cleanup-repo.ps1
 ```
 
-This only removes generated/local development artifacts. It does not delete source, gameplay data, documentation or saves.
+Cleanup is not a prerequisite for a build or source package. It removes build-output directories and generated diagnostics/user/temporary files, reports removal counts, and preserves source, gameplay data, documentation, Git metadata and saves. Add `-IncludeArchives` to delete local ZIPs as well; ZIPs inside saves and Git metadata remain protected.
 
 ## Source-only handoff
 
@@ -68,7 +78,17 @@ For a clean source archive:
 powershell -ExecutionPolicy Bypass -File build\pack-source.ps1
 ```
 
-The archive excludes Git metadata, build outputs, logs, saves and existing archives.
+Packaging uses `build/repository-artifact-policy.ps1`, shared with cleanup and clean builds. It excludes Git/IDE metadata, build/publish/benchmark outputs, test results, releases, logs, saves, package caches, generated diagnostics and existing ZIPs. Shared `.vscode` settings allowed by `.gitignore` remain included.
+
+The staged tree is validated for forbidden entries and required repository files/directories before compression. File count and byte size are reported without imposing an archive-size cap. Source, plugins, data, tests, docs and build scripts are retained, including legitimate hidden files such as `.gitignore`. The default output is `<repository-name>-source.zip` beside the repository; `-OutputPath` accepts a custom ZIP path.
+
+The dependency-free tooling checks can also run on their own:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File build\test-repository-tooling.ps1
+```
+
+These checks exercise cleanup and packaging on temporary fixtures, verify `.gitignore` policy coverage, reject injected artifacts, and check build modes and failure handling using a mocked `dotnet` command. They do not replace a real clean build and gameplay test run. The scripts support Windows PowerShell 5.1 and PowerShell 7 (`pwsh`).
 
 ## Development rule
 

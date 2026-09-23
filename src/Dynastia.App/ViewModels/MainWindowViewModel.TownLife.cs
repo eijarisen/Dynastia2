@@ -1,46 +1,12 @@
 using System.Security.Cryptography;
 using System.Text;
 using Dynastia.Contracts;
+using static Dynastia.App.ViewModels.Actions.ActionSurfaceDefinitions;
 
 namespace Dynastia.App.ViewModels;
 
 public sealed partial class MainWindowViewModel
 {
-    private const string TownAffairsUiActionId =
-        "ui.town_affairs";
-
-    private static readonly HashSet<string> TownAffairsJobActionIds =
-        new(StringComparer.OrdinalIgnoreCase)
-        {
-            "career.seek_employment",
-            "career.find_another_job",
-            "career.help_seek_employment",
-            "career.help_find_better_job"
-        };
-
-    private static readonly HashSet<string> TownAffairsHealthActionIds =
-        new(StringComparer.OrdinalIgnoreCase)
-        {
-            "wellbeing.heal_relative",
-            "wellbeing.therapy",
-            "stats.improve_strength",
-            "stats.improve_intellect",
-            "stats.improve_immunity",
-            "stats.improve_appeal",
-            "stats.improve_longevity",
-            "stats.improve_fertility"
-        };
-
-    private static readonly HashSet<string> TownAffairsChurchActionIds =
-        new(StringComparer.OrdinalIgnoreCase)
-        {
-            "church.attend",
-            "church.donate",
-            "church.aid_poor_family",
-            "church.ask_welfare",
-            "personality.religious_study"
-        };
-
     private static readonly string[] ChurchDonationTiers =
         ["modest", "generous", "major"];
 
@@ -50,66 +16,11 @@ public sealed partial class MainWindowViewModel
     private const string TownAffairsOfficeDutiesActionId =
         "community.perform_office_duties";
 
-    public string TownLifeNavigationLabel
-    {
-        get
-        {
-            var representative = FindSelectedPerson()
-                ?? GetDisplayedHouseholdHead();
-            if (representative is null || _locationService is null)
-                return "Town Affairs";
+    public string TownLifeNavigationLabel =>
+        _actionSurfaces.GetTownLifeNavigationLabel(FindSelectedPerson() ?? GetDisplayedHouseholdHead());
 
-            try
-            {
-                var town = _locationService.GetLocation(representative).HomeTown;
-                return town.SettlementClass is SettlementClass.City
-                    or SettlementClass.MajorCity
-                        ? "City Affairs"
-                        : "Town Affairs";
-            }
-            catch (InvalidOperationException)
-            {
-                return "Town Affairs";
-            }
-        }
-    }
-
-    private GameActionDefinition CreateTownAffairsPresentationAction() =>
-        new()
-        {
-            Id = TownAffairsUiActionId,
-            Label = TownLifeNavigationLabel,
-            Description =
-                "Inspect the selected adult household member's town, institutions and local services.",
-            Mode = ActionExecutionMode.Immediate,
-            IsAvailable = _ => true,
-            Execute = _ => new GameActionResult(false)
-        };
-
-    internal bool CanOpenTownAffairs
-    {
-        get
-        {
-            var actor = _succession.ActiveController;
-            var target = FindSelectedPerson();
-            if (_locationService is null
-                || _economyService is null
-                || actor is null
-                || target is null
-                || _justiceService?.IsImprisoned(actor) == true
-                || _justiceService?.IsImprisoned(target) == true
-                || target.Age < 18
-                || !target.Tags.Has("state.alive"))
-            {
-                return false;
-            }
-
-            return target.Id == actor.Id
-                || _economyService
-                    .GetHouseholdMemberIds(actor)
-                    .Contains(target.Id);
-        }
-    }
+    internal bool CanOpenTownAffairs =>
+        _actionSurfaces.CanOpenTownAffairs(_succession.ActiveController, FindSelectedPerson());
 
     internal TownAffairsRequest? CreateTownAffairsRequest(
         string actionId)

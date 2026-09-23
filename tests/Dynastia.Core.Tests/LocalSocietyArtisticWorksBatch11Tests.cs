@@ -315,19 +315,8 @@ public sealed class LocalSocietyArtisticWorksBatch11Tests
         head.Components.Set(household);
     }
 
-    private static IGameDataService RepositoryData()
-    {
-        var directory = new DirectoryInfo(AppContext.BaseDirectory);
-        while (directory is not null)
-        {
-            var path = Path.Combine(directory.FullName, "data");
-            if (File.Exists(Path.Combine(path, "Heirlooms", "artistic_work_rules.json")))
-                return new JsonGameDataService(path);
-            directory = directory.Parent;
-        }
-
-        throw new DirectoryNotFoundException("Could not locate repository data directory.");
-    }
+    private static IGameDataService RepositoryData() =>
+        new JsonGameDataService(RepositoryFiles.Path("data"));
 
     private sealed record Fixture(
         GameState State,

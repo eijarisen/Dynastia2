@@ -12,6 +12,10 @@ public sealed partial class RelationshipsPlugin : IGamePlugin
             ?? throw new InvalidOperationException(
                 "Game state is unavailable.");
 
+        var personLookup =
+            context.GetService<IPersonLookup>()
+            ?? gameState as IPersonLookup;
+
         var family =
             context.GetService<IFamilyService>()
             ?? throw new InvalidOperationException(
@@ -171,6 +175,7 @@ public sealed partial class RelationshipsPlugin : IGamePlugin
         var marriageSatisfaction =
             new StandardMarriageSatisfactionService(
                 gameState,
+                personLookup,
                 family,
                 stats,
                 events);
@@ -339,6 +344,11 @@ public sealed partial class RelationshipsPlugin : IGamePlugin
         {
             Id =
                 "relationship.find_spouse",
+            Presentation = new()
+            {
+                Emoji = "💍",
+                Categories = [ActionPresentationCategories.Family]
+            },
 
             Label =
                 variant.Label,
@@ -412,6 +422,11 @@ public sealed partial class RelationshipsPlugin : IGamePlugin
         {
             Id =
                 "relationship.marry_off_daughter",
+            Presentation = new()
+            {
+                Emoji = "💒",
+                Categories = [ActionPresentationCategories.Family]
+            },
 
             Label =
                 variant.EndYear == 1945
@@ -483,6 +498,11 @@ public sealed partial class RelationshipsPlugin : IGamePlugin
         {
             Id =
                 "relationship.marry_off_son",
+            Presentation = new()
+            {
+                Emoji = "💒",
+                Categories = [ActionPresentationCategories.Family]
+            },
 
             Label =
                 variant.EndYear == 1945

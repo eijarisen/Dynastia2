@@ -30,6 +30,11 @@ public sealed partial class HouseholdsPlugin
                         new GameActionDefinition
             {
                 Id = "household.hire_nanny",
+                Presentation = new()
+                {
+                    Emoji = "🧑‍🍼",
+                    Categories = [ActionPresentationCategories.Family]
+                },
                 Label = $"Hire a Nanny ({economyBalance.NannyAnnualCost:N0} zł/year)",
                 Description =
                     "Hire help for an oversized household. " +
@@ -183,6 +188,11 @@ public sealed partial class HouseholdsPlugin
             {
                 Id =
                     "household.ask_daughter_nanny",
+                Presentation = new()
+                {
+                    Emoji = "🧑‍🍼",
+                    Categories = [ActionPresentationCategories.Family]
+                },
 
                 Label =
                     "Ask to Help with Children",
@@ -353,6 +363,11 @@ public sealed partial class HouseholdsPlugin
                         new GameActionDefinition
             {
                 Id = "household.fire_nanny",
+                Presentation = new()
+                {
+                    Emoji = "👋",
+                    Categories = [ActionPresentationCategories.Family]
+                },
                 Label = "Fire Nanny",
                 Description =
                     "Dismiss the current nanny before this year's " +
@@ -469,6 +484,7 @@ public sealed partial class HouseholdsPlugin
         return new GameActionDefinition
         {
             Id = action.Id,
+            Presentation = action.Presentation,
             Label = variant.Label,
             Description = variant.Description,
             Mode = action.Mode,

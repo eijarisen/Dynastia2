@@ -17,6 +17,11 @@ public sealed partial class JusticePlugin
         actions.Register(new GameActionDefinition
         {
             Id = rules.Bail.ActionId,
+            Presentation = new()
+            {
+                Emoji = "💵",
+                Categories = [ActionPresentationCategories.Personal]
+            },
             Label = "Bail Out",
             Description = "Pay the household's expensive bail cost to release the selected imprisoned household member. The criminal record remains.",
             Mode = ActionExecutionMode.Queued,
@@ -63,6 +68,11 @@ public sealed partial class JusticePlugin
         actions.Register(new GameActionDefinition
         {
             Id = rules.Escape.ActionId,
+            Presentation = new()
+            {
+                Emoji = "🔓",
+                Categories = [ActionPresentationCategories.Personal]
+            },
             Label = "Attempt Escape",
             Description = "An imprisoned person with Intellect 5 may attempt one escape per imprisonment. Failure adds 3 years to the sentence.",
             Mode = ActionExecutionMode.Queued,

@@ -1,3 +1,5 @@
+using Dynastia.Contracts;
+
 namespace Dynastia.App.ViewModels;
 
 public static class ActionEmojiMap
@@ -96,6 +98,14 @@ public static class ActionEmojiMap
                 ["justice.bail_out"] = "💵",
                 ["justice.attempt_escape"] = "🔓"
             };
+
+    public static string GetEmoji(GameActionDefinition definition) =>
+        definition.Presentation?.Emoji is string emoji && !string.IsNullOrWhiteSpace(emoji)
+            ? emoji
+            : GetEmoji(definition.Id);
+
+    public static string Format(GameActionDefinition definition, string label) =>
+        $"{GetEmoji(definition)} {label}";
 
     public static string GetEmoji(string actionId)
     {

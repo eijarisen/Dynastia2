@@ -7,7 +7,7 @@ public sealed class LocalSocietyCommunityBatch3Tests
     [Fact]
     public void ProposalGenerationIsDeterministicAndConstrained()
     {
-        using var rules = JsonDocument.Parse(Read(
+        using var rules = JsonDocument.Parse(RepositoryFiles.ReadText(
             "data", "LocalSociety", "community_policy_rules.json"));
         var root = rules.RootElement;
         var generation = root.GetProperty("generation");
@@ -20,7 +20,7 @@ public sealed class LocalSocietyCommunityBatch3Tests
         Assert.Equal(1, generation.GetProperty("maximumNoEffectPerSet").GetInt32());
         Assert.True(generation.GetProperty("preferAtLeastOneFavorableSubstantive").GetBoolean());
 
-        var service = Read(
+        var service = RepositoryFiles.ReadText(
             "plugins", "Dynastia.Mechanics.Community", "CommunityPolicyService.cs");
         Assert.Contains("StableUnit(BuildKey(town.Id, year", service);
         Assert.Contains("eligible.Remove(chosen)", service);
@@ -32,7 +32,7 @@ public sealed class LocalSocietyCommunityBatch3Tests
     [Fact]
     public void RareStrongPoliciesHaveLowSelectionWeight()
     {
-        var lines = Read(
+        var lines = RepositoryFiles.ReadText(
                 "data", "LocalSociety", "community_policies.csv")
             .TrimStart('\uFEFF')
             .Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
@@ -93,7 +93,7 @@ public sealed class LocalSocietyCommunityBatch3Tests
     [Fact]
     public void LobbyingAddsSupportButCannotGuaranteePassage()
     {
-        using var rules = JsonDocument.Parse(Read(
+        using var rules = JsonDocument.Parse(RepositoryFiles.ReadText(
             "data", "LocalSociety", "community_policy_rules.json"));
         var lobby = rules.RootElement.GetProperty("lobby");
         var resolution = rules.RootElement.GetProperty("resolution");
@@ -105,7 +105,7 @@ public sealed class LocalSocietyCommunityBatch3Tests
         Assert.Contains("0.65", resolution.GetProperty("overallImplementationChance").GetString());
         Assert.True(resolution.GetProperty("atMostOnePolicyImplementedPerTownPerYear").GetBoolean());
 
-        var service = Read(
+        var service = RepositoryFiles.ReadText(
             "plugins", "Dynastia.Mechanics.Community", "CommunityPolicyService.cs");
         Assert.Contains("_rules.OverallImplementationChanceCap", service);
         Assert.Contains("random.NextDouble() < implementationChance", service);
@@ -118,7 +118,7 @@ public sealed class LocalSocietyCommunityBatch3Tests
     [Fact]
     public void ActivePoliciesExpireAndAllModifierFamiliesAreCapped()
     {
-        using var rules = JsonDocument.Parse(Read(
+        using var rules = JsonDocument.Parse(RepositoryFiles.ReadText(
             "data", "LocalSociety", "community_policy_rules.json"));
         var caps = rules.RootElement.GetProperty("activePolicyCaps");
         Assert.Equal(4, caps.GetProperty("prosperityFlatTotal").GetInt32());
@@ -129,7 +129,7 @@ public sealed class LocalSocietyCommunityBatch3Tests
         Assert.Equal(1, caps.GetProperty("serviceTierBonusMax").GetInt32());
         Assert.Equal(0.80m, caps.GetProperty("historicalLossMultiplierMin").GetDecimal());
 
-        var service = Read(
+        var service = RepositoryFiles.ReadText(
             "plugins", "Dynastia.Mechanics.Community", "CommunityPolicyService.cs");
         Assert.Contains("policy.EnactedYear <= year", service);
         Assert.Contains("policy.ExpiresAfterYear >= year", service);
@@ -142,19 +142,19 @@ public sealed class LocalSocietyCommunityBatch3Tests
     [Fact]
     public void CommunityPoliciesAreIntegratedWithoutGrantingCareerInstitutionEligibility()
     {
-        var career = Read(
+        var career = RepositoryFiles.ReadText(
             "plugins", "Dynastia.Mechanics.Career", "StandardCareerService.Opportunities.cs");
-        var education = Read(
+        var education = RepositoryFiles.ReadText(
             "plugins", "Dynastia.Mechanics.Education", "StandardEducationService.cs");
-        var townFacilities = Read(
+        var townFacilities = RepositoryFiles.ReadText(
             "plugins", "Dynastia.Mechanics.TownLife", "StandardTownFacilityQualityService.cs");
-        var economy = Read(
+        var economy = RepositoryFiles.ReadText(
             "plugins", "Dynastia.Mechanics.Economy", "StandardHouseMarketService.cs");
-        var church = Read(
+        var church = RepositoryFiles.ReadText(
             "plugins", "Dynastia.Mechanics.Church", "ChurchPlugin.cs");
-        var historical = Read(
+        var historical = RepositoryFiles.ReadText(
             "plugins", "Dynastia.Mechanics.Historical", "HistoricalEventYearSystem.cs");
-        var window = Read(
+        var window = RepositoryFiles.ReadText(
             "src", "Dynastia.App", "Views", "TownLifeWindow.axaml");
 
         Assert.Contains("JobApplicationAdd", career);
@@ -177,9 +177,9 @@ public sealed class LocalSocietyCommunityBatch3Tests
     [Fact]
     public void PolicyResolutionRunsAfterQueuedLobbyActionsAndCanPassAutonomously()
     {
-        var yearSystem = Read(
+        var yearSystem = RepositoryFiles.ReadText(
             "plugins", "Dynastia.Mechanics.Community", "CommunityPolicyYearSystem.cs");
-        var service = Read(
+        var service = RepositoryFiles.ReadText(
             "plugins", "Dynastia.Mechanics.Community", "CommunityPolicyService.cs");
 
         Assert.Contains("YearPhase.QueuedActionsEarly", yearSystem);
@@ -190,23 +190,8 @@ public sealed class LocalSocietyCommunityBatch3Tests
         Assert.Contains("var townsToResolve = playableHeadsByTown.Keys", service);
         Assert.Contains("proposalLobbies.Select(lobby => lobby.TownId)", service);
         Assert.Contains("playableHeadsByTown.TryGetValue", service);
-        Assert.Contains("\"atMostOnePolicyImplementedPerTownPerYear\": true", Read("data", "LocalSociety", "community_policy_rules.json"));
+        Assert.Contains("\"atMostOnePolicyImplementedPerTownPerYear\": true", RepositoryFiles.ReadText("data", "LocalSociety", "community_policy_rules.json"));
         Assert.Contains("community.policy_enacted", service);
     }
 
-    private static string Read(params string[] parts) =>
-        File.ReadAllText(Path.Combine(new[] { RepositoryRoot() }.Concat(parts).ToArray()));
-
-    private static string RepositoryRoot()
-    {
-        var current = new DirectoryInfo(AppContext.BaseDirectory);
-        while (current is not null)
-        {
-            if (File.Exists(Path.Combine(current.FullName, "Dynastia.slnx")))
-                return current.FullName;
-            current = current.Parent;
-        }
-
-        throw new DirectoryNotFoundException("Could not locate repository root.");
-    }
 }

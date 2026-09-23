@@ -139,7 +139,7 @@ public sealed class TownsNationalitiesBatch4Tests
     [Fact]
     public void CandidateAndLoanPresentationExposeOriginAndNationality()
     {
-        var root = RepositoryRoot();
+        var root = RepositoryFiles.Root;
         var partnerXaml = File.ReadAllText(Path.Combine(root, "src", "Dynastia.App", "Views", "PotentialPartnersWindow.axaml"));
         var loanXaml = File.ReadAllText(Path.Combine(root, "src", "Dynastia.App", "Views", "LoanSelectionWindow.axaml"));
         var partnerSource = File.ReadAllText(Path.Combine(root, "plugins", "Dynastia.Mechanics.Relationships", "StandardPartnerSearchService.cs"));
@@ -159,7 +159,7 @@ public sealed class TownsNationalitiesBatch4Tests
     [Fact]
     public void NationalityIsNotAStandaloneMechanicalModifier()
     {
-        var root = RepositoryRoot();
+        var root = RepositoryFiles.Root;
         var partnerRules = File.ReadAllText(Path.Combine(root, "plugins", "Dynastia.Mechanics.Relationships", "PartnerSearchRules.cs"));
 
         Assert.False(partnerRules.Contains("nationality", StringComparison.OrdinalIgnoreCase));
@@ -187,22 +187,10 @@ public sealed class TownsNationalitiesBatch4Tests
 
     private static (JsonGameDataService Data, StandardHistoricalNameService Names, StandardNationalityService Nationalities) CreateServices()
     {
-        var data = new JsonGameDataService(Path.Combine(RepositoryRoot(), "data"));
+        var data = new JsonGameDataService(Path.Combine(RepositoryFiles.Root, "data"));
         var names = StandardHistoricalNameService.Load(data);
         var nationalities = StandardNationalityService.Load(data, names);
         return (data, names, nationalities);
-    }
-
-    private static string RepositoryRoot()
-    {
-        var current = new DirectoryInfo(AppContext.BaseDirectory);
-        while (current is not null)
-        {
-            if (File.Exists(Path.Combine(current.FullName, "Dynastia.slnx")))
-                return current.FullName;
-            current = current.Parent;
-        }
-        throw new DirectoryNotFoundException("Could not locate repository root.");
     }
 
     private sealed class ConstantRandom(double value) : IGameRandom

@@ -186,6 +186,13 @@ public sealed class ReproductionPlugin : IGamePlugin
         {
             Id =
                 "reproduction.try_for_baby",
+            Presentation = new()
+            {
+                Emoji = "👶",
+                Categories = [ActionPresentationCategories.Family],
+                AdjacencyGroup = ActionPresentationGroups.MarriageFamily,
+                GroupOrder = 10
+            },
 
             Label =
                 variant.Label,

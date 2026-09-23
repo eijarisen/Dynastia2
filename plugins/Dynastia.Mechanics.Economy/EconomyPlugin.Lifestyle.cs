@@ -55,6 +55,11 @@ public sealed partial class EconomyPlugin
             new GameActionDefinition
             {
                 Id = id,
+                Presentation = new()
+                {
+                    Emoji = "⚙️",
+                    Categories = [ActionPresentationCategories.Personal]
+                },
                 Label = label,
                 Description = description,
                 Mode = ActionExecutionMode.Queued,

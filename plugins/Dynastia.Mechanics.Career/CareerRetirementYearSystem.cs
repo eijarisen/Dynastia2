@@ -29,6 +29,9 @@ public sealed class CareerRetirementYearSystem : IYearSystem
 
     public void Execute(IGameState gameState)
     {
+        var retirementRule =
+            _retirementRules.GetRule(gameState.Year);
+
         foreach (var person in gameState.People)
         {
             if (person.Tags.Has("state.dead")
@@ -39,11 +42,8 @@ public sealed class CareerRetirementYearSystem : IYearSystem
             }
 
             var retirementAge =
-                _retirementRules
-                    .GetRule(
-                        gameState.Year)
-                    .GetRetirementAge(
-                        _family.GetSex(person));
+                retirementRule.GetRetirementAge(
+                    _family.GetSex(person));
 
             var career = _career.GetCareer(person);
 

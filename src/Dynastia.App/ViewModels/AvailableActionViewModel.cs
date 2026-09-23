@@ -8,6 +8,14 @@ public sealed class AvailableActionViewModel
 
     public AvailableActionViewModel(
         GameActionDefinition definition,
+        Action execute,
+        string? labelOverride = null)
+        : this(definition, ActionPresentationPolicy.GetCategories(definition), execute, labelOverride)
+    {
+    }
+
+    public AvailableActionViewModel(
+        GameActionDefinition definition,
         IReadOnlySet<ActionCategory> categories,
         Action execute,
         string? labelOverride = null)
@@ -21,7 +29,7 @@ public sealed class AvailableActionViewModel
 
         Label =
             ActionEmojiMap.Format(
-                definition.Id,
+                definition,
                 RawLabel);
 
         Description =

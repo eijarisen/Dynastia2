@@ -5,7 +5,7 @@ public sealed class TownAffairsHousingFarmingTa1Tests
     [Fact]
     public void TownAffairsHubDefinesRequestedTabsContextAndRemoteMode()
     {
-        var root = RepositoryRoot();
+        var root = RepositoryFiles.Root;
         var context = File.ReadAllText(Path.Combine(
             root, "src", "Dynastia.App", "ViewModels", "TownAffairsViewModel.cs"));
         var window = File.ReadAllText(Path.Combine(
@@ -33,67 +33,19 @@ public sealed class TownAffairsHousingFarmingTa1Tests
         Assert.DoesNotContain("Instructions =", context);
     }
 
-    [Fact]
-    public void DirectAccessUsesLivingAdultActiveHouseholdMembershipRatherThanControllability()
-    {
-        var root = RepositoryRoot();
-        var townAffairs = File.ReadAllText(Path.Combine(
-            root, "src", "Dynastia.App", "ViewModels", "MainWindowViewModel.TownLife.cs"));
-
-        Assert.Contains("target.Age < 18", townAffairs);
-        Assert.Contains("target.Tags.Has(\"state.alive\")", townAffairs);
-        Assert.Contains("GetHouseholdMemberIds(actor)", townAffairs);
-        Assert.DoesNotContain("_succession.IsControllable(target)", townAffairs);
-    }
 
     [Fact]
-    public void ExistingLocalServiceActionsRouteToTheirTownAffairsTabs()
+    public void MainWindowUsesTheTownAffairsActionRouter()
     {
-        var root = RepositoryRoot();
-        var townAffairs = File.ReadAllText(Path.Combine(
-            root, "src", "Dynastia.App", "ViewModels", "MainWindowViewModel.TownLife.cs"));
-        var mainWindow = File.ReadAllText(Path.Combine(
-            root, "src", "Dynastia.App", "Views", "MainWindow.axaml.cs"));
-        var actions = File.ReadAllText(Path.Combine(
-            root, "src", "Dynastia.App", "ViewModels", "MainWindowViewModel.Actions.cs"));
-
-        Assert.Contains("career.seek_employment\" => TownAffairsTab.Jobs", townAffairs);
-        Assert.Contains("career.find_another_job\" => TownAffairsTab.Jobs", townAffairs);
-        Assert.Contains("career.help_seek_employment\" => TownAffairsTab.Jobs", townAffairs);
-        Assert.Contains("career.help_find_better_job\" => TownAffairsTab.Jobs", townAffairs);
-        Assert.Contains("education.get_education\" => TownAffairsTab.Education", townAffairs);
-        Assert.Contains("wellbeing.heal_relative\" => TownAffairsTab.Health", townAffairs);
-        Assert.Contains("wellbeing.therapy\" => TownAffairsTab.Health", townAffairs);
+        var mainWindow = RepositoryFiles.ReadText("src", "Dynastia.App", "Views", "MainWindow.axaml.cs");
         Assert.Contains("CreateTownAffairsRequest(e.ActionId)", mainWindow);
-        Assert.Contains("wellbeing.heal_relative", actions);
-        Assert.Contains("wellbeing.therapy", actions);
     }
 
-    [Fact]
-    public void HealthShortcutCanRouteAChildWithoutRelaxingDirectTownAffairsAgeRule()
-    {
-        var root = RepositoryRoot();
-        var code = File.ReadAllText(Path.Combine(
-            root, "src", "Dynastia.App", "ViewModels", "MainWindowViewModel.TownLife.cs"));
-
-        var directGate = code.IndexOf(
-            "actionId.Equals(TownAffairsUiActionId",
-            StringComparison.Ordinal);
-        var ageGate = code.IndexOf("target.Age < 18", StringComparison.Ordinal);
-        var healthRoute = code.IndexOf(
-            "\"wellbeing.heal_relative\" => TownAffairsTab.Health",
-            StringComparison.Ordinal);
-
-        Assert.True(ageGate >= 0);
-        Assert.True(healthRoute >= 0);
-        Assert.True(directGate >= 0);
-        Assert.Contains("&& !CanOpenTownAffairs", code);
-    }
 
     [Fact]
     public void TabActionsPreserveExistingActionIdsAndRemoteModeCannotQueueThem()
     {
-        var root = RepositoryRoot();
+        var root = RepositoryFiles.Root;
         var hub = File.ReadAllText(Path.Combine(
             root, "src", "Dynastia.App", "ViewModels", "TownAffairsViewModel.cs"));
         var education = File.ReadAllText(Path.Combine(
@@ -112,15 +64,12 @@ public sealed class TownAffairsHousingFarmingTa1Tests
     [Fact]
     public void SelfImprovementSelectorIsRetiredAndServicesRouteThroughTownAffairs()
     {
-        var root = RepositoryRoot();
-        var actions = File.ReadAllText(Path.Combine(
-            root, "src", "Dynastia.App", "ViewModels", "MainWindowViewModel.Actions.cs"));
+        var root = RepositoryFiles.Root;
         var townAffairs = File.ReadAllText(Path.Combine(
             root, "src", "Dynastia.App", "ViewModels", "MainWindowViewModel.TownLife.cs"));
         var mainWindow = File.ReadAllText(Path.Combine(
             root, "src", "Dynastia.App", "Views", "MainWindow.axaml.cs"));
 
-        Assert.DoesNotContain("SelfImprovementUiActionId", actions);
         Assert.DoesNotContain("ui.self_improvement", mainWindow);
         Assert.Contains("wellbeing.therapy", townAffairs);
         Assert.Contains("personality.religious_study", townAffairs);
@@ -130,7 +79,7 @@ public sealed class TownAffairsHousingFarmingTa1Tests
     [Fact]
     public void ShortcutRouteMatrixIsInstalledForBatchOne()
     {
-        var root = RepositoryRoot();
+        var root = RepositoryFiles.Root;
         var path = Path.Combine(
             root, "data", "TownAffairs", "shortcut_routes.csv");
         var csv = File.ReadAllText(path);
@@ -147,7 +96,7 @@ public sealed class TownAffairsHousingFarmingTa1Tests
     [Fact]
     public void TownLifeSnapshotRemainsReadOnlyDomainInputToAppHub()
     {
-        var root = RepositoryRoot();
+        var root = RepositoryFiles.Root;
         var hub = File.ReadAllText(Path.Combine(
             root, "src", "Dynastia.App", "ViewModels", "TownAffairsViewModel.cs"));
         var townLife = File.ReadAllText(Path.Combine(
@@ -159,16 +108,4 @@ public sealed class TownAffairsHousingFarmingTa1Tests
         Assert.DoesNotContain("IActionRegistry", townLife);
     }
 
-    private static string RepositoryRoot()
-    {
-        var current = new DirectoryInfo(AppContext.BaseDirectory);
-        while (current is not null)
-        {
-            if (File.Exists(Path.Combine(current.FullName, "Dynastia.slnx")))
-                return current.FullName;
-            current = current.Parent;
-        }
-
-        throw new DirectoryNotFoundException("Could not locate repository root.");
-    }
 }

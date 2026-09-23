@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using Dynastia.Contracts;
 
 namespace Dynastia.Core.Simulation;
@@ -9,6 +10,8 @@ public sealed class YearProcessor
     private readonly IYearExecutionBoundary? _boundary;
     private readonly IStateReconciliationLifecycle? _reconciliation;
     private readonly IActionRegistry? _actions;
+    private long _orderedSystemsVersion = long.MinValue;
+    private IReadOnlyList<IYearSystem>? _orderedSystems;
 
     public YearProcessor(
         IGameState gameState,
@@ -26,18 +29,83 @@ public sealed class YearProcessor
 
     public void AdvanceYear()
     {
+        var profileEnabled =
+            YearPerformanceProfiler.IsEnabled;
+
+        var targetYear =
+            _gameState.Year + 1;
+
+        var advanceStartedAt =
+            profileEnabled
+                ? YearPerformanceProfiler.StartTimestamp()
+                : 0;
+
         // Validate and fully order the graph before mutating any game state.
-        var systems = OrderSystems(_registry.Systems);
+        var orderingStartedAt =
+            profileEnabled
+                ? YearPerformanceProfiler.StartTimestamp()
+                : 0;
+
+        var systems = GetOrderedSystems();
+
+        if (profileEnabled)
+        {
+            YearPerformanceProfiler.LogDuration(
+                targetYear,
+                "year.graph_ordering",
+                orderingStartedAt,
+                $"systems={systems.Count} order={string.Join(">", systems.Select(system => system.Id))}");
+        }
+
+        var checkpointStartedAt =
+            profileEnabled
+                ? YearPerformanceProfiler.StartTimestamp()
+                : 0;
+
         var checkpoint = _boundary?.Capture();
+
+        if (profileEnabled)
+        {
+            YearPerformanceProfiler.LogDuration(
+                targetYear,
+                "year.checkpoint_capture",
+                checkpointStartedAt);
+        }
 
         IYearSystem? currentSystem = null;
 
         try
         {
+            var queueCaptureStartedAt =
+                profileEnabled
+                    ? YearPerformanceProfiler.StartTimestamp()
+                    : 0;
+
             _actions?.CaptureTurnStartQueuedActions();
+
+            if (profileEnabled)
+            {
+                YearPerformanceProfiler.LogDuration(
+                    targetYear,
+                    "year.turn_start_queue_capture",
+                    queueCaptureStartedAt);
+            }
+
+            var beforeYearStartedAt =
+                profileEnabled
+                    ? YearPerformanceProfiler.StartTimestamp()
+                    : 0;
 
             _reconciliation?.Reconcile(
                 ReconciliationLifecycleStage.BeforeYear);
+
+            if (profileEnabled)
+            {
+                YearPerformanceProfiler.LogDuration(
+                    targetYear,
+                    "year.reconcile_before",
+                    beforeYearStartedAt);
+            }
 
             _gameState.Year++;
 
@@ -49,8 +117,19 @@ public sealed class YearProcessor
                     $"[{_gameState.Year}] Running {system.Id}");
 
                 var peopleCountBefore = _gameState.People.Count;
+                var startedAt = Stopwatch.GetTimestamp();
 
-                system.Execute(_gameState);
+                try
+                {
+                    system.Execute(_gameState);
+                }
+                finally
+                {
+                    var elapsed = Stopwatch.GetElapsedTime(startedAt);
+                    Console.WriteLine(
+                        $"[{_gameState.Year}] Finished {system.Id} in {elapsed.TotalMilliseconds:F3} ms");
+
+                }
 
                 if (_gameState.People.Count > peopleCountBefore)
                 {
@@ -59,8 +138,21 @@ public sealed class YearProcessor
                 }
             }
 
+            var afterYearStartedAt =
+                profileEnabled
+                    ? YearPerformanceProfiler.StartTimestamp()
+                    : 0;
+
             _reconciliation?.Reconcile(
                 ReconciliationLifecycleStage.AfterYear);
+
+            if (profileEnabled)
+            {
+                YearPerformanceProfiler.LogDuration(
+                    _gameState.Year,
+                    "year.reconcile_after",
+                    afterYearStartedAt);
+            }
         }
         catch (Exception exception)
         {
@@ -83,6 +175,34 @@ public sealed class YearProcessor
                 BuildFailureMessage(currentSystem),
                 exception);
         }
+        finally
+        {
+            if (profileEnabled)
+            {
+                YearPerformanceProfiler.LogDuration(
+                    targetYear,
+                    "year.advance_total",
+                    advanceStartedAt);
+            }
+        }
+    }
+
+    private IReadOnlyList<IYearSystem> GetOrderedSystems()
+    {
+        if (_registry is not IVersionedYearSystemRegistry versioned)
+            return OrderSystems(_registry.Systems);
+
+        var version = versioned.Version;
+        if (_orderedSystems is not null
+            && _orderedSystemsVersion == version)
+        {
+            return _orderedSystems;
+        }
+
+        var ordered = OrderSystems(_registry.Systems);
+        _orderedSystems = ordered;
+        _orderedSystemsVersion = version;
+        return ordered;
     }
 
     internal static IReadOnlyList<IYearSystem> OrderSystems(

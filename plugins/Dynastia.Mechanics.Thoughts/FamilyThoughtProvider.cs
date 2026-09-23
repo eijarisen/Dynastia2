@@ -5,6 +5,14 @@ namespace Dynastia.Mechanics.Thoughts;
 internal sealed class FamilyThoughtProvider :
     IThoughtProvider
 {
+    private readonly IPersonLookup? _people;
+
+    public FamilyThoughtProvider(
+        IPersonLookup? people)
+    {
+        _people = people;
+    }
+
     public string Id =>
         "thoughts.family";
 
@@ -160,11 +168,9 @@ internal sealed class FamilyThoughtProvider :
                 }
 
                 var deceased =
-                    context.GameState.People
-                        .FirstOrDefault(
-                            candidate =>
-                                candidate.Id
-                                == deceasedId);
+                    FindPerson(
+                        context,
+                        deceasedId);
 
                 if (deceased is null)
                     continue;
@@ -242,11 +248,9 @@ internal sealed class FamilyThoughtProvider :
                     is Guid newbornId)
             {
                 var newborn =
-                    context.GameState.People
-                        .FirstOrDefault(
-                            candidate =>
-                                candidate.Id
-                                == newbornId);
+                    FindPerson(
+                        context,
+                        newbornId);
 
                 if (newborn is null)
                     continue;
@@ -290,7 +294,14 @@ internal sealed class FamilyThoughtProvider :
         }
     }
 
-    private static bool IsCurrentLossFor(
+    private IPerson? FindPerson(
+        ThoughtContext context,
+        Guid id) =>
+        _people?.FindPerson(id)
+        ?? context.GameState.People.FirstOrDefault(
+            candidate => candidate.Id == id);
+
+    private bool IsCurrentLossFor(
         IPerson person,
         GameEvent gameEvent,
         ThoughtContext context)
@@ -302,11 +313,9 @@ internal sealed class FamilyThoughtProvider :
         }
 
         var deceased =
-            context.GameState.People
-                .FirstOrDefault(
-                    candidate =>
-                        candidate.Id
-                        == deceasedId);
+            FindPerson(
+                context,
+                deceasedId);
 
         return deceased is not null
             && ThoughtProviderUtilities

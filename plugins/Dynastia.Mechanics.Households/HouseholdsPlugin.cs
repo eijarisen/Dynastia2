@@ -232,18 +232,42 @@ public sealed partial class HouseholdsPlugin : IGamePlugin
             random,
             events);
 
+        // Collaborators remain internal to this plugin. Their order is fixed;
+        // the facade rejects overlapping scorer ownership before scoring.
+        var reproductiveEligibility = new AutonomousReproductiveEligibility(family);
+        var snapshots = new AutonomousSnapshotBuilder(
+            context,
+            gameState,
+            households,
+            economy,
+            health,
+            career,
+            family,
+            stats,
+            reproductiveEligibility);
+        var candidates = new AutonomousActionCandidateBuilder(
+            context,
+            gameState,
+            households,
+            actions,
+            economy,
+            career);
+        IAutonomousActionScorer[] scorers =
+        [
+            new AutonomousHealthScorer(),
+            new AutonomousFinancePropertyScorer(context, gameState, economy),
+            new AutonomousCareerEducationScorer(context, career, stats),
+            new AutonomousFamilyContinuityScorer(context, family, stats, reproductiveEligibility),
+            new AutonomousFamilyRelationsScorer(context),
+            new AutonomousPersonalDevelopmentScorer(context)
+        ];
         var autonomousStrategy =
             new AdvancedAutonomousHouseholdStrategy(
-                context,
-                gameState,
-                households,
                 actions,
-                economy,
-                health,
-                career,
-                family,
-                stats,
-                random);
+                random,
+                snapshots,
+                candidates,
+                scorers);
 
         var autonomousDecisions =
             new AutonomousHouseholdDecisionService(
@@ -273,6 +297,7 @@ public sealed partial class HouseholdsPlugin : IGamePlugin
         healthModifiers.Register(
             new HouseholdHealthModifierProvider(
                 households,
+                economy,
                 family,
                 stats,
                 career));

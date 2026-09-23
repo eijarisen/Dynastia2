@@ -20,7 +20,7 @@ public sealed class Development10HouseholdFamilyBalanceTests
     [Fact]
     public void AdultHouseholdResidentsAreNotAutomaticallyMadeIndependentAtEighteen()
     {
-        var source = ReadRepositoryFile(
+        var source = RepositoryFiles.ReadText(
             "plugins",
             "Dynastia.Mechanics.Adoption",
             "AdoptionYearSystem.cs");
@@ -39,15 +39,15 @@ public sealed class Development10HouseholdFamilyBalanceTests
     [Fact]
     public void RecoverReducesJobsCraftsAndFarmingOutput()
     {
-        var career = ReadRepositoryFile(
+        var career = RepositoryFiles.ReadText(
             "plugins",
             "Dynastia.Mechanics.Career",
             "CareerIncomeProvider.cs");
-        var crafts = ReadRepositoryFile(
+        var crafts = RepositoryFiles.ReadText(
             "plugins",
             "Dynastia.Mechanics.Crafts",
             "StandardCraftService.cs");
-        var farming = ReadRepositoryFile(
+        var farming = RepositoryFiles.ReadText(
             "plugins",
             "Dynastia.Mechanics.Farming",
             "StandardFarmingService.cs");
@@ -60,7 +60,7 @@ public sealed class Development10HouseholdFamilyBalanceTests
     [Fact]
     public void HouseholdFormationCarriesFinalChildhoodHappinessIntoFamilyRelations()
     {
-        var bridge = ReadRepositoryFile(
+        var bridge = RepositoryFiles.ReadText(
             "plugins",
             "Dynastia.Mechanics.FamilyRelations",
             "FamilyRelationEventBridge.cs");
@@ -74,24 +74,11 @@ public sealed class Development10HouseholdFamilyBalanceTests
     [Fact]
     public void DesignatedInheritanceCanCreateRelationshipFallout()
     {
-        var inheritance = ReadRepositoryFile(
-            "plugins",
-            "Dynastia.Mechanics.Inheritance",
-            "EstateInheritanceSystem.cs");
-        var bridge = ReadRepositoryFile(
+        var bridge = RepositoryFiles.ReadText(
             "plugins",
             "Dynastia.Mechanics.FamilyRelations",
             "FamilyRelationEventBridge.cs");
 
-        Assert.Contains("inheritance.disadvantaged", inheritance);
-        Assert.Contains("hasExplicitDesignation", inheritance);
-        Assert.Contains("_economy.GetHouseValue", inheritance);
-        Assert.Contains("_farmingResolver()?.PurchasePrice", inheritance);
-        Assert.Contains("AppraisedValue", inheritance);
-        Assert.Contains("receivedAssetValue", inheritance);
-        Assert.Contains("favoredAssetValue", inheritance);
-        Assert.Contains("favoredHeirIds", inheritance);
-        Assert.Contains("receivedValue * 2m < maximum", inheritance);
         Assert.Contains("inheritance.disadvantaged", bridge);
         Assert.Contains("ApplyInheritanceDisadvantage", bridge);
     }
@@ -99,13 +86,13 @@ public sealed class Development10HouseholdFamilyBalanceTests
     [Fact]
     public void MapDoubleClickOpensTownSpecificTownLife()
     {
-        var control = ReadRepositoryFile(
+        var control = RepositoryFiles.ReadText(
             "src",
             "Dynastia.App",
             "Map",
             "Rendering",
             "TownMapControl.cs");
-        var window = ReadRepositoryFile(
+        var window = RepositoryFiles.ReadText(
             "src",
             "Dynastia.App",
             "Map",
@@ -117,19 +104,5 @@ public sealed class Development10HouseholdFamilyBalanceTests
         Assert.Contains("GetTownLife(townId)", window);
     }
 
-    private static string ReadRepositoryFile(params string[] parts) =>
-        File.ReadAllText(Path.Combine(RepositoryRoot(), Path.Combine(parts)));
 
-    private static string RepositoryRoot()
-    {
-        var current = new DirectoryInfo(AppContext.BaseDirectory);
-        while (current is not null)
-        {
-            if (File.Exists(Path.Combine(current.FullName, "Dynastia.slnx")))
-                return current.FullName;
-            current = current.Parent;
-        }
-
-        throw new DirectoryNotFoundException("Could not locate repository root.");
-    }
 }

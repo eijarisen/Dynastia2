@@ -8,6 +8,7 @@ public sealed class StandardFamilyService : IFamilyService
         "Names/polish_surnames.csv";
 
     private readonly IGameState _gameState;
+    private readonly IPersonLookup? _personLookup;
     private readonly IGameDataService _data;
     private readonly IHistoricalNameService _historicalNames;
     private readonly StandardNationalityService _nationalities;
@@ -20,8 +21,24 @@ public sealed class StandardFamilyService : IFamilyService
         IGameDataService data,
         IHistoricalNameService historicalNames,
         StandardNationalityService nationalities)
+        : this(
+            gameState,
+            gameState as IPersonLookup,
+            data,
+            historicalNames,
+            nationalities)
+    {
+    }
+
+    public StandardFamilyService(
+        IGameState gameState,
+        IPersonLookup? personLookup,
+        IGameDataService data,
+        IHistoricalNameService historicalNames,
+        StandardNationalityService nationalities)
     {
         _gameState = gameState;
+        _personLookup = personLookup;
         _data = data;
         _historicalNames = historicalNames;
         _nationalities = nationalities;
@@ -318,8 +335,9 @@ public sealed class StandardFamilyService : IFamilyService
         if (id is null)
             return null;
 
-        return _gameState.People.FirstOrDefault(
-            person => person.Id == id.Value);
+        return _personLookup?.FindPerson(id)
+            ?? _gameState.People.FirstOrDefault(
+                person => person.Id == id.Value);
     }
 
     private static FamilyComponent GetRequired(IPerson person)
@@ -376,18 +394,12 @@ public sealed class StandardFamilyService : IFamilyService
                 return;
 
             var father =
-                _gameState.People
-                    .FirstOrDefault(
-                        candidate =>
-                            candidate.Id
-                            == founderFamily.FatherId);
+                FindPerson(
+                    founderFamily.FatherId);
 
             var mother =
-                _gameState.People
-                    .FirstOrDefault(
-                        candidate =>
-                            candidate.Id
-                            == founderFamily.MotherId);
+                FindPerson(
+                    founderFamily.MotherId);
 
             if (father is null
                 || mother is null)

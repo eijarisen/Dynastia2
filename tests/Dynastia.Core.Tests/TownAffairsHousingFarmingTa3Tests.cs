@@ -20,7 +20,7 @@ public sealed class TownAffairsHousingFarmingTa3Tests
             livestock.Skip(1).Select(row => row[0]).ToArray());
 
         using var rules = JsonDocument.Parse(
-            File.ReadAllText(Path.Combine(RepositoryRoot(), "data", "Farming", "livestock_rules.json")));
+            File.ReadAllText(Path.Combine(RepositoryFiles.Root, "data", "Farming", "livestock_rules.json")));
         var root = rules.RootElement;
         Assert.Equal(2500m, root.GetProperty("purchasePrice").GetDecimal());
         Assert.Equal(2000m, root.GetProperty("saleValue").GetDecimal());
@@ -34,8 +34,8 @@ public sealed class TownAffairsHousingFarmingTa3Tests
     [Fact]
     public void FlavorSelectionUsesYearRegionWeightsAndDeterministicLegacyBackfill()
     {
-        var catalog = Read("plugins", "Dynastia.Mechanics.Farming", "FarmingFlavorCatalog.cs");
-        var service = Read("plugins", "Dynastia.Mechanics.Farming", "StandardFarmingService.cs");
+        var catalog = RepositoryFiles.ReadText("plugins", "Dynastia.Mechanics.Farming", "FarmingFlavorCatalog.cs");
+        var service = RepositoryFiles.ReadText("plugins", "Dynastia.Mechanics.Farming", "StandardFarmingService.cs");
 
         Assert.Contains("definition.BaseWeight * time * region", catalog);
         Assert.Contains("year < definition.StartYear || year > definition.EndYear", catalog);
@@ -56,8 +56,8 @@ public sealed class TownAffairsHousingFarmingTa3Tests
     [Fact]
     public void FarmlandStatePersistsFlavorThroughExistingAndPendingInheritancePaths()
     {
-        var state = Read("plugins", "Dynastia.Mechanics.Economy", "FarmlandAssetState.cs");
-        var economy = Read("plugins", "Dynastia.Mechanics.Economy", "StandardEconomyService.Farmland.cs");
+        var state = RepositoryFiles.ReadText("plugins", "Dynastia.Mechanics.Economy", "FarmlandAssetState.cs");
+        var economy = RepositoryFiles.ReadText("plugins", "Dynastia.Mechanics.Economy", "StandardEconomyService.Farmland.cs");
 
         Assert.Contains("FarmTypeId", state);
         Assert.Contains("LivestockTypeId", state);
@@ -69,7 +69,7 @@ public sealed class TownAffairsHousingFarmingTa3Tests
     [Fact]
     public void FarmTypeIsFlavorOnlyWhileLivestockChangesIncomeAndVolatilityUniversally()
     {
-        var service = Read("plugins", "Dynastia.Mechanics.Farming", "StandardFarmingService.cs");
+        var service = RepositoryFiles.ReadText("plugins", "Dynastia.Mechanics.Farming", "StandardFarmingService.cs");
         var expectedStart = service.IndexOf("private decimal GetExpectedAnnualIncomeForWorkers", StringComparison.Ordinal);
         var incomeStart = service.IndexOf("decimal IHouseholdIncomeProvider.GetAnnualIncome", expectedStart, StringComparison.Ordinal);
         Assert.True(expectedStart >= 0 && incomeStart > expectedStart);
@@ -84,7 +84,7 @@ public sealed class TownAffairsHousingFarmingTa3Tests
     [Fact]
     public void AddLivestockIsQueuedLocalOnePerParcelAndCostsTwentyFiveHundred()
     {
-        var plugin = Read("plugins", "Dynastia.Mechanics.Farming", "FarmingPlugin.cs");
+        var plugin = RepositoryFiles.ReadText("plugins", "Dynastia.Mechanics.Farming", "FarmingPlugin.cs");
 
         Assert.Contains("Id = \"farming.add_livestock\"", plugin);
         Assert.Contains("QueuePhase = YearPhase.QueuedActionsEarly", plugin);
@@ -99,25 +99,22 @@ public sealed class TownAffairsHousingFarmingTa3Tests
     [Fact]
     public void ManualFarmlandSaleUsesSelectedParcelAndLivestockSalvageWithLegacyFallback()
     {
-        var plugin = Read("plugins", "Dynastia.Mechanics.Farming", "FarmingPlugin.cs");
-        var app = Read("src", "Dynastia.App", "ViewModels", "MainWindowViewModel.Actions.cs");
+        var plugin = RepositoryFiles.ReadText("plugins", "Dynastia.Mechanics.Farming", "FarmingPlugin.cs");
 
         Assert.Contains("ResolveFarmlandForAction", plugin);
         Assert.Contains("allowLegacyFallback: true", plugin);
         Assert.Contains("farming.GetFarmlandSaleValue(flavored)", plugin);
         Assert.Contains("\"farmlandId\"", plugin);
-        Assert.Contains("? \"farmlandId\"", app);
-        Assert.Contains("farming.add_livestock", app);
     }
 
     [Fact]
     public void VoluntaryRelocationsLiquidateOnlyOriginTownFarmsBeforeResidenceChanges()
     {
-        var farming = Read("plugins", "Dynastia.Mechanics.Farming", "StandardFarmingService.cs");
-        var household = Read("plugins", "Dynastia.Mechanics.Households", "HouseholdsPlugin.PropertyActions.cs");
-        var marriageReconciliation = Read("plugins", "Dynastia.Mechanics.Households", "StandardHouseholdService.MembershipReconciliation.cs");
-        var relations = Read("plugins", "Dynastia.Mechanics.FamilyRelations", "FamilyRelationActions.Property.cs");
-        var historical = Read("plugins", "Dynastia.Mechanics.Historical", "HistoricalMigrationService.cs");
+        var farming = RepositoryFiles.ReadText("plugins", "Dynastia.Mechanics.Farming", "StandardFarmingService.cs");
+        var household = RepositoryFiles.ReadText("plugins", "Dynastia.Mechanics.Households", "HouseholdsPlugin.PropertyActions.cs");
+        var marriageReconciliation = RepositoryFiles.ReadText("plugins", "Dynastia.Mechanics.Households", "StandardHouseholdService.MembershipReconciliation.cs");
+        var relations = RepositoryFiles.ReadText("plugins", "Dynastia.Mechanics.FamilyRelations", "FamilyRelationActions.Property.cs");
+        var historical = RepositoryFiles.ReadText("plugins", "Dynastia.Mechanics.Historical", "HistoricalMigrationService.cs");
 
         Assert.Contains("asset.Town.Id.Equals(\n                origin.Id", farming);
         Assert.Contains("GetFarmlandSaleValue", farming);
@@ -136,9 +133,9 @@ public sealed class TownAffairsHousingFarmingTa3Tests
     [Fact]
     public void FamilyPropertiesShowsFlavorLivestockSaleValueAndParcelActions()
     {
-        var viewModel = Read("src", "Dynastia.App", "ViewModels", "FamilyInventoryViewModels.cs");
-        var xaml = Read("src", "Dynastia.App", "Views", "FamilyInventoryWindow.axaml");
-        var code = Read("src", "Dynastia.App", "Views", "FamilyInventoryWindow.axaml.cs");
+        var viewModel = RepositoryFiles.ReadText("src", "Dynastia.App", "ViewModels", "FamilyInventoryViewModels.cs");
+        var xaml = RepositoryFiles.ReadText("src", "Dynastia.App", "Views", "FamilyInventoryWindow.axaml");
+        var code = RepositoryFiles.ReadText("src", "Dynastia.App", "Views", "FamilyInventoryWindow.axaml.cs");
 
         Assert.Contains("FarmTypeEmoji", viewModel);
         Assert.Contains("FarmTypeDisplayName", viewModel);
@@ -173,24 +170,9 @@ public sealed class TownAffairsHousingFarmingTa3Tests
     }
 
     private static List<string[]> ReadCsv(params string[] parts) =>
-        File.ReadAllLines(Path.Combine(new[] { RepositoryRoot() }.Concat(parts).ToArray()))
+        File.ReadAllLines(Path.Combine(new[] { RepositoryFiles.Root }.Concat(parts).ToArray()))
             .Where(line => !string.IsNullOrWhiteSpace(line))
             .Select(line => line.TrimStart('\uFEFF').Split(','))
             .ToList();
 
-    private static string Read(params string[] parts) =>
-        File.ReadAllText(Path.Combine(new[] { RepositoryRoot() }.Concat(parts).ToArray()));
-
-    private static string RepositoryRoot()
-    {
-        var current = new DirectoryInfo(AppContext.BaseDirectory);
-        while (current is not null)
-        {
-            if (File.Exists(Path.Combine(current.FullName, "Dynastia.slnx")))
-                return current.FullName;
-            current = current.Parent;
-        }
-
-        throw new DirectoryNotFoundException("Could not locate repository root.");
-    }
 }

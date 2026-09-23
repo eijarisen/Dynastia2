@@ -48,6 +48,16 @@ public sealed class MarriageSatisfactionYearSystem : IYearSystem
 
     public void Execute(IGameState gameState)
     {
+        var relations = _familyRelationsResolver();
+        var people = gameState as IPersonLookup;
+        Dictionary<Guid, IPerson>? fallbackPeople = null;
+
+        if (people is null && relations is not null)
+        {
+            fallbackPeople = gameState.People
+                .ToDictionary(person => person.Id);
+        }
+
         var husbands = gameState.People
             .Where(person =>
                 person.Tags.Has("state.alive")
@@ -69,7 +79,13 @@ public sealed class MarriageSatisfactionYearSystem : IYearSystem
                 continue;
 
             var issues = new List<string>();
-            var penalty = CalculatePenalty(gameState, husband, wife, issues);
+            var penalty = CalculatePenalty(
+                husband,
+                wife,
+                issues,
+                relations,
+                people,
+                fallbackPeople);
 
             // Ordinary life repairs only about one point per year. Ongoing
             // incompatibility and household/family stress therefore accumulate
@@ -89,10 +105,12 @@ public sealed class MarriageSatisfactionYearSystem : IYearSystem
     }
 
     private double CalculatePenalty(
-        IGameState gameState,
         IPerson husband,
         IPerson wife,
-        List<string> issues)
+        List<string> issues,
+        IFamilyRelationService? relations,
+        IPersonLookup? people,
+        IReadOnlyDictionary<Guid, IPerson>? fallbackPeople)
     {
         var total = 0.0;
 
@@ -226,9 +244,11 @@ public sealed class MarriageSatisfactionYearSystem : IYearSystem
 
         var familyRelationsPenalty =
             GetPoorFamilyRelationsPenalty(
-                gameState,
                 husband,
-                wife);
+                wife,
+                relations,
+                people,
+                fallbackPeople);
         if (familyRelationsPenalty > 0)
         {
             total += familyRelationsPenalty;
@@ -246,31 +266,47 @@ public sealed class MarriageSatisfactionYearSystem : IYearSystem
         || _farming.IsWorkingFarmWorker(person, person);
 
     private double GetPoorFamilyRelationsPenalty(
-        IGameState gameState,
         IPerson husband,
-        IPerson wife)
+        IPerson wife,
+        IFamilyRelationService? relations,
+        IPersonLookup? people,
+        IReadOnlyDictionary<Guid, IPerson>? fallbackPeople)
     {
-        var relations = _familyRelationsResolver();
         if (relations is null)
             return 0;
 
-        var householdMemberIds =
-            _economy.GetHouseholdMemberIds(husband)
-                .Concat(_economy.GetHouseholdMemberIds(wife))
-                .Where(id => id != husband.Id && id != wife.Id)
-                .Distinct()
-                .ToList();
+        var seen = new HashSet<Guid>();
+        var householdMemberIds = new List<Guid>();
+
+        AddHouseholdMembers(
+            _economy.GetHouseholdMemberIds(husband),
+            husband.Id,
+            wife.Id,
+            seen,
+            householdMemberIds);
+
+        AddHouseholdMembers(
+            _economy.GetHouseholdMemberIds(wife),
+            husband.Id,
+            wife.Id,
+            seen,
+            householdMemberIds);
 
         if (householdMemberIds.Count == 0)
             return 0;
 
-        var people = gameState.People
-            .ToDictionary(person => person.Id);
         var sympathy = new List<double>();
 
         foreach (var memberId in householdMemberIds)
         {
-            if (!people.TryGetValue(memberId, out var member)
+            var member = people?.FindPerson(memberId);
+            if (member is null
+                && fallbackPeople is not null)
+            {
+                fallbackPeople.TryGetValue(memberId, out member);
+            }
+
+            if (member is null
                 || !member.Tags.Has("state.alive"))
             {
                 continue;
@@ -286,6 +322,26 @@ public sealed class MarriageSatisfactionYearSystem : IYearSystem
         }
 
         return MarriageBalanceRules.GetPoorFamilyRelationsPenalty(sympathy);
+    }
+
+    private static void AddHouseholdMembers(
+        IReadOnlyCollection<Guid> source,
+        Guid husbandId,
+        Guid wifeId,
+        ISet<Guid> seen,
+        ICollection<Guid> destination)
+    {
+        foreach (var id in source)
+        {
+            if (id == husbandId
+                || id == wifeId
+                || !seen.Add(id))
+            {
+                continue;
+            }
+
+            destination.Add(id);
+        }
     }
 
     private int GetStat(IPerson person, string id) =>

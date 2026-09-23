@@ -166,7 +166,7 @@ public sealed class HistoricalTownCatalogBatch2Tests
     [Fact]
     public void OpportunityFilesUsePermanentPlacesAndCoverAllHistoricalRegions()
     {
-        var root = RepositoryRoot();
+        var root = RepositoryFiles.Root;
         var catalog = LoadCatalog();
 
         var townPath = Path.Combine(root, "data", "Towns", "town_opportunities.csv");
@@ -199,7 +199,7 @@ public sealed class HistoricalTownCatalogBatch2Tests
     [Fact]
     public void LocalOpportunityServiceAcceptsHistoricalPermanentIdsAndEasternRegions()
     {
-        var root = RepositoryRoot();
+        var root = RepositoryFiles.Root;
         var data = new JsonGameDataService(Path.Combine(root, "data"));
         var catalog = HistoricalTownCatalog.Load(data);
         var state = new GameState { Year = 1950, StartYear = 1930 };
@@ -221,7 +221,7 @@ public sealed class HistoricalTownCatalogBatch2Tests
     [Fact]
     public void MapDataSourceReadsTownsThroughLocationServiceRatherThanTownFiles()
     {
-        var root = RepositoryRoot();
+        var root = RepositoryFiles.Root;
         var path = Path.Combine(
             root,
             "src",
@@ -240,7 +240,7 @@ public sealed class HistoricalTownCatalogBatch2Tests
 
     private static HistoricalTownCatalog LoadCatalog()
     {
-        var root = RepositoryRoot();
+        var root = RepositoryFiles.Root;
         return HistoricalTownCatalog.Load(
             new JsonGameDataService(Path.Combine(root, "data")));
     }
@@ -255,20 +255,6 @@ public sealed class HistoricalTownCatalogBatch2Tests
             catalog,
             random ?? new ZeroRandom(),
             new GameEventBus());
-
-    private static string RepositoryRoot()
-    {
-        var current = new DirectoryInfo(AppContext.BaseDirectory);
-        while (current is not null)
-        {
-            if (File.Exists(Path.Combine(current.FullName, "Dynastia.slnx")))
-                return current.FullName;
-
-            current = current.Parent;
-        }
-
-        throw new DirectoryNotFoundException("Could not locate repository root.");
-    }
 
     private sealed class ZeroRandom : IGameRandom
     {

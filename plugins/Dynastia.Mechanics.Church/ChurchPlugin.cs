@@ -73,6 +73,12 @@ public sealed class ChurchPlugin : IGamePlugin
         actions.Register(new GameActionDefinition
         {
             Id = "church.attend",
+            Presentation = new()
+            {
+                Emoji = "⛪",
+                Categories = [ActionPresentationCategories.Personal],
+                ShowInPrimaryActionList = false
+            },
             Label = "Attend Church",
             Description = "Attend the local Church for a small social benefit and a 5% chance to improve Morals or protect already Good Morals.",
             Mode = ActionExecutionMode.Queued,
@@ -123,6 +129,11 @@ public sealed class ChurchPlugin : IGamePlugin
         actions.Register(new GameActionDefinition
         {
             Id = actionId,
+            Presentation = new()
+            {
+                Emoji = aidPoorFamily ? "🤝" : "⛪",
+                Categories = [ActionPresentationCategories.Personal]
+            },
             Label = label,
             Description = description,
             Mode = ActionExecutionMode.Queued,
@@ -256,6 +267,11 @@ public sealed class ChurchPlugin : IGamePlugin
         actions.Register(new GameActionDefinition
         {
             Id = "church.ask_welfare",
+            Presentation = new()
+            {
+                Emoji = "🥖",
+                Categories = [ActionPresentationCategories.Personal]
+            },
             Label = "Ask for Welfare",
             Description = "Ask the local Church for emergency household relief. Available only at 0 zł or less wealth, with Household Reputation of at least -10, once per household per year.",
             Mode = ActionExecutionMode.Queued,

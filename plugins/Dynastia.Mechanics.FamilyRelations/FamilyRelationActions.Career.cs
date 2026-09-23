@@ -15,6 +15,11 @@ internal static partial class FamilyRelationActions
         IGameState gameState) => new()
     {
         Id = "family_relations.ask_job_help",
+        Presentation = new()
+        {
+            Emoji = "🤝",
+            Categories = [ActionPresentationCategories.Personal]
+        },
         Label = "Use Family Connections",
         Description = "Ask this relative's household to use its strongest current career connection. Requires a Warm or Close relationship. Placements are always capped two Career levels below the strongest helper.",
         Mode = ActionExecutionMode.Queued,
@@ -101,6 +106,11 @@ internal static partial class FamilyRelationActions
         IGameState gameState) => new()
     {
         Id = "family_relations.give_job_help",
+        Presentation = new()
+        {
+            Emoji = "🤝",
+            Categories = [ActionPresentationCategories.Personal]
+        },
         Label = "Help with Careers",
         Description = "Offer the active household's strongest current career connection. The relation must be Warm or Close enough to cooperate, and placements are always capped two Career levels below the strongest helper.",
         Mode = ActionExecutionMode.Queued,

@@ -134,9 +134,11 @@ Rules:
 - Underage/adulthood transitions can defer claims until `DerivedState`/adult reconciliation.
 - Household reconciliation runs around inheritance so succession, orphan placement and residence remain coherent.
 
-Primary code: `EstateInheritanceSystem.cs`, `AdulthoodInheritanceSystem.cs`, household inheritance reconciliation, Loans/Heirlooms/Farming inheritance hooks.
+Estate settlement first captures read-only state and builds an immutable allocation plan. The applier revalidates the balance, ordered asset identities and current recipients before removing assets. Signed balance writes precede asset additions; recipient events retain their existing houses/farmland/heirlooms/cash order, followed by designation fallout and the estate summary. Unexpected apply/subscriber failures remain covered by the existing year rollback, not a separate transaction layer.
 
-Regression tests: `HouseInheritanceAssignmentRulesTests.cs`, inheritance assertions in Heirlooms/Loans/Households suites.
+Primary code: `EstateInheritanceSystem.cs` (orchestration), `EstateSnapshotReader.cs`, `EstatePlanBuilder.cs`, `EstateSettlementApplier.cs`, `EstateHeirResolver.cs`, `EstateEventFactory.cs`, `AdulthoodInheritanceSystem.cs`, household inheritance reconciliation, Loans/Heirlooms/Farming inheritance hooks.
+
+Regression tests: `EstatePlanBuilderTests.cs`, `EstateSettlementApplierTests.cs`, `EstateHeirResolverTests.cs`, `EstateInheritanceCharacterizationTests.cs`, `HouseInheritanceAssignmentRulesTests.cs`, inheritance assertions in Heirlooms/Loans/Households suites.
 
 ## Family Inventory
 Status: **Implemented**  

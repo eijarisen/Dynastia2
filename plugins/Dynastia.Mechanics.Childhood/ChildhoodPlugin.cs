@@ -68,6 +68,11 @@ public sealed class ChildhoodPlugin : IGamePlugin
         return new GameActionDefinition
         {
             Id = "childhood.raise_child",
+            Presentation = new()
+            {
+                Emoji = "🫂",
+                Categories = [ActionPresentationCategories.Family]
+            },
             Label = "Raise Child",
             Description = "Spend the year giving the selected young relative in this household extra guidance and attention. Improves Happiness and may gently improve Morals.",
             Mode = ActionExecutionMode.Queued,

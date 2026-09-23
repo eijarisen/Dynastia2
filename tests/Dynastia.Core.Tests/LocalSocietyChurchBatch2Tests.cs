@@ -10,7 +10,7 @@ public sealed class LocalSocietyChurchBatch2Tests
     public void ChurchIsAlwaysPresentAndTierNeverFallsAsPopulationRises()
     {
         var rules = ChurchInstitutionRules.Load(
-            new RepositoryDataService(RepositoryRoot()));
+            new RepositoryDataService(RepositoryFiles.Root));
         var populations = new[]
         {
             0, 1_999, 2_000, 9_999, 10_000,
@@ -42,7 +42,7 @@ public sealed class LocalSocietyChurchBatch2Tests
     public void ChurchDonationAndDirectCharityUseDifferentStatusAndMoralsProfiles()
     {
         var rules = ChurchRules.Load(
-            new RepositoryDataService(RepositoryRoot()));
+            new RepositoryDataService(RepositoryFiles.Root));
 
         Assert.Equal(500m, rules.CalculateDonationAmount(
             rules.ChurchDonationTiers,
@@ -68,7 +68,7 @@ public sealed class LocalSocietyChurchBatch2Tests
     public void WelfareAndAttendanceMatchTheSuppliedLimits()
     {
         var rules = ChurchRules.Load(
-            new RepositoryDataService(RepositoryRoot()));
+            new RepositoryDataService(RepositoryFiles.Root));
 
         Assert.Equal(0m, rules.Welfare.MaximumWealth);
         Assert.Equal(-10d, rules.Welfare.MinimumReputation, 10);
@@ -85,9 +85,9 @@ public sealed class LocalSocietyChurchBatch2Tests
         Assert.Equal(0.05d, rules.Attend.GoodMoralsProtectionChance, 10);
         Assert.Contains(
             "church.attend,0.15,0.25,actor",
-            Read("data", "LocalSociety", "status_event_effects.csv"));
+            RepositoryFiles.ReadText("data", "LocalSociety", "status_event_effects.csv"));
 
-        var personality = Read(
+        var personality = RepositoryFiles.ReadText(
             "plugins",
             "Dynastia.Mechanics.Personality",
             "PersonalityPlugin.cs");
@@ -99,20 +99,20 @@ public sealed class LocalSocietyChurchBatch2Tests
     [Fact]
     public void ChurchActionsRespectEligibilityAndTownAffairsWiring()
     {
-        var church = Read(
+        var church = RepositoryFiles.ReadText(
             "plugins",
             "Dynastia.Mechanics.Church",
             "ChurchPlugin.cs");
-        var townLife = Read(
+        var townLife = RepositoryFiles.ReadText(
             "plugins",
             "Dynastia.Mechanics.TownLife",
             "StandardTownInstitutionService.cs");
-        var window = Read(
+        var window = RepositoryFiles.ReadText(
             "src",
             "Dynastia.App",
             "Views",
             "TownLifeWindow.axaml");
-        var news = Read(
+        var news = RepositoryFiles.ReadText(
             "data",
             "LocalSociety",
             "local_society_news_templates.csv");
@@ -131,7 +131,7 @@ public sealed class LocalSocietyChurchBatch2Tests
         Assert.Contains("ChurchActions", window);
         Assert.Contains("<primitives:UniformGrid Columns=\"3\" />", window);
         Assert.Contains("ToolTip.Tip=\"{Binding Description}\"", window);
-        var presentation = Read(
+        var presentation = RepositoryFiles.ReadText(
             "src", "Dynastia.App", "ViewModels", "MainWindowViewModel.TownLife.cs");
         Assert.Contains("AddChurchMoneyAction(\"church.donate\")", presentation);
         Assert.Contains("AddChurchMoneyAction(\"church.aid_poor_family\")", presentation);
@@ -141,27 +141,6 @@ public sealed class LocalSocietyChurchBatch2Tests
         Assert.Contains("church.donate", news);
         Assert.Contains("church.aid_poor", news);
         Assert.Contains("church.welfare", news);
-    }
-
-    private static string Read(params string[] parts) =>
-        File.ReadAllText(
-            Path.Combine(
-                new[] { RepositoryRoot() }
-                    .Concat(parts)
-                    .ToArray()));
-
-    private static string RepositoryRoot()
-    {
-        var current = new DirectoryInfo(AppContext.BaseDirectory);
-        while (current is not null)
-        {
-            if (File.Exists(Path.Combine(current.FullName, "Dynastia.slnx")))
-                return current.FullName;
-            current = current.Parent;
-        }
-
-        throw new DirectoryNotFoundException(
-            "Could not locate repository root.");
     }
 
     private sealed class RepositoryDataService(string root) : IGameDataService

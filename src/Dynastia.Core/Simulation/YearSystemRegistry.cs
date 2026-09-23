@@ -2,11 +2,14 @@ using Dynastia.Contracts;
 
 namespace Dynastia.Core.Simulation;
 
-public sealed class YearSystemRegistry : IYearSystemRegistry
+public sealed class YearSystemRegistry : IVersionedYearSystemRegistry
 {
     private readonly List<IYearSystem> _systems = [];
+    private long _version;
 
     public IReadOnlyCollection<IYearSystem> Systems => _systems;
+
+    public long Version => _version;
 
     public void Register(IYearSystem system)
     {
@@ -20,5 +23,6 @@ public sealed class YearSystemRegistry : IYearSystemRegistry
         }
 
         _systems.Add(system);
+        _version++;
     }
 }

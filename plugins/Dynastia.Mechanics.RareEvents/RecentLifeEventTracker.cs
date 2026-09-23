@@ -14,15 +14,20 @@ internal sealed class RecentLifeEventTracker
         "recent.job_loss";
 
     private readonly IGameState _gameState;
+    private readonly IPersonLookup? _people;
     private readonly IFamilyService _family;
 
     public RecentLifeEventTracker(
         IGameState gameState,
+        IPersonLookup? people,
         IFamilyService family,
         IGameEventBus events)
     {
         _gameState =
             gameState;
+
+        _people =
+            people;
 
         _family =
             family;
@@ -290,10 +295,9 @@ internal sealed class RecentLifeEventTracker
         if (id is null)
             return null;
 
-        return _gameState.People
-            .FirstOrDefault(
-                person =>
-                    person.Id
-                    == id.Value);
+        return _people?.FindPerson(
+                id.Value)
+            ?? _gameState.People.FirstOrDefault(
+                person => person.Id == id.Value);
     }
 }

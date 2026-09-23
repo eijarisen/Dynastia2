@@ -13,6 +13,11 @@ internal static partial class FamilyRelationActions
         IFamilyService family) => new()
     {
         Id = "family_relations.ask_money",
+        Presentation = new()
+        {
+            Emoji = "🙏",
+            Categories = [ActionPresentationCategories.Personal]
+        },
         Label = "Request Money",
         Description = "Request financial help from this relative's household. Acceptance depends on Familiarity, Sympathy, relative wealth and whether the other household can keep a safe cash reserve after helping.",
         Mode = ActionExecutionMode.Queued,
@@ -98,6 +103,11 @@ internal static partial class FamilyRelationActions
         IFamilyService family) => new()
     {
         Id = "family_relations.give_money",
+        Presentation = new()
+        {
+            Emoji = "🎁",
+            Categories = [ActionPresentationCategories.Personal]
+        },
         Label = "Send Money",
         Description = "Offer money to this relative's household in full-thousand increments. The action is offered while your household is at least as wealthy as theirs. Only very hostile relatives are likely to refuse a gift.",
         Mode = ActionExecutionMode.Queued,

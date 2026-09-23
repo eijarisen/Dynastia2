@@ -378,7 +378,9 @@ public sealed class CrimeYearSystem : IYearSystem
             return true;
         var memberIds = _economy.GetHouseholdMemberIds(person);
         return memberIds
-            .Select(id => state.People.FirstOrDefault(p => p.Id == id))
+            .Select(id => state is IPersonLookup lookup
+                ? lookup.FindPerson(id)
+                : state.People.FirstOrDefault(p => p.Id == id))
             .Any(p => p is not null && _family.IsMaleLineage(p));
     }
 

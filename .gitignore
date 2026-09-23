@@ -1,3 +1,5 @@
+# Generated categories are mirrored in build/repository-artifact-policy.ps1.
+# build/test-repository-tooling.ps1 checks coverage; Git rules are not runtime policy.
 # .NET build output
 **/bin/
 **/obj/

@@ -9,7 +9,7 @@ public sealed class LocalSocietyCriminalOccupationBatch6Tests
     public void MasteryUsesActiveHeistYearsAndDetectionFallsAtExactThresholds()
     {
         var catalog = CriminalOccupationCatalog.Load(
-            new RepositoryDataService(RepositoryRoot()));
+            new RepositoryDataService(RepositoryFiles.Root));
 
         var expected = new[]
         {
@@ -38,7 +38,7 @@ public sealed class LocalSocietyCriminalOccupationBatch6Tests
     public void ArchetypeUsesHighestStatsAndExactTripleFiveIsMastermind()
     {
         var catalog = CriminalOccupationCatalog.Load(
-            new RepositoryDataService(RepositoryRoot()));
+            new RepositoryDataService(RepositoryFiles.Root));
 
         Assert.Equal("appeal", catalog.ResolveArchetype(5, 3, 2).ArchetypeId);
         Assert.Equal("strength", catalog.ResolveArchetype(2, 5, 3).ArchetypeId);
@@ -57,11 +57,11 @@ public sealed class LocalSocietyCriminalOccupationBatch6Tests
     [Fact]
     public void StartIsEvilOnlyOneTimeAndFirstActionPerformsOnlyOneHeist()
     {
-        var actions = Read(
+        var actions = RepositoryFiles.ReadText(
             "plugins", "Dynastia.Mechanics.Justice", "JusticePlugin.CriminalOccupation.cs");
-        var service = Read(
+        var service = RepositoryFiles.ReadText(
             "plugins", "Dynastia.Mechanics.Justice", "CriminalOccupationService.cs");
-        var state = Read(
+        var state = RepositoryFiles.ReadText(
             "plugins", "Dynastia.Mechanics.Justice", "CriminalOccupationComponent.cs");
 
         Assert.Contains("Id = rules.StartActionId", actions);
@@ -78,8 +78,8 @@ public sealed class LocalSocietyCriminalOccupationBatch6Tests
     public void CrimeIncomeUsesSharedCompressedLongTailAndMastermindSentenceReduction()
     {
         var rules = CriminalOccupationCatalog.Load(
-            new RepositoryDataService(RepositoryRoot())).Rules;
-        var service = Read(
+            new RepositoryDataService(RepositoryFiles.Root)).Rules;
+        var service = RepositoryFiles.ReadText(
             "plugins", "Dynastia.Mechanics.Justice", "CriminalOccupationService.cs");
 
         Assert.Equal(1000m, rules.Heist.BaseIncome);
@@ -98,19 +98,19 @@ public sealed class LocalSocietyCriminalOccupationBatch6Tests
     [Fact]
     public void CriminalOccupationIsExclusiveAndPrisonPausesIncomeAndMastery()
     {
-        var crime = Read(
+        var crime = RepositoryFiles.ReadText(
             "plugins", "Dynastia.Mechanics.Justice", "CriminalOccupationService.cs");
-        var randomCrime = Read(
+        var randomCrime = RepositoryFiles.ReadText(
             "plugins", "Dynastia.Mechanics.Justice", "CrimeYearSystem.cs");
-        var career = Read(
+        var career = RepositoryFiles.ReadText(
             "plugins", "Dynastia.Mechanics.Career", "StandardCareerService.Opportunities.cs");
-        var crafts = Read(
+        var crafts = RepositoryFiles.ReadText(
             "plugins", "Dynastia.Mechanics.Crafts", "StandardCraftService.cs");
-        var farming = Read(
+        var farming = RepositoryFiles.ReadText(
             "plugins", "Dynastia.Mechanics.Farming", "StandardFarmingService.cs");
-        var retirement = Read(
+        var retirement = RepositoryFiles.ReadText(
             "plugins", "Dynastia.Mechanics.Career", "CareerRetirementYearSystem.cs");
-        var civic = Read(
+        var civic = RepositoryFiles.ReadText(
             "plugins", "Dynastia.Mechanics.Community", "CivicOfficeService.cs");
 
         Assert.Contains("_career.AssignCareer(person, null, 0", crime);
@@ -128,9 +128,9 @@ public sealed class LocalSocietyCriminalOccupationBatch6Tests
     [Fact]
     public void JusticePluginRegistersPersistentServiceIncomeProviderAndAnnualHeistSystem()
     {
-        var plugin = Read(
+        var plugin = RepositoryFiles.ReadText(
             "plugins", "Dynastia.Mechanics.Justice", "JusticePlugin.cs");
-        var system = Read(
+        var system = RepositoryFiles.ReadText(
             "plugins", "Dynastia.Mechanics.Justice", "CriminalOccupationYearSystem.cs");
 
         Assert.Contains("context.AddService<ICriminalOccupationService>", plugin);
@@ -139,22 +139,6 @@ public sealed class LocalSocietyCriminalOccupationBatch6Tests
         Assert.Contains("new CriminalOccupationYearSystem(criminalOccupation)", plugin);
         Assert.Contains("Before => [\"justice.crime\"]", system);
         Assert.Contains("After => [\"actions.queued.life_events\"]", system);
-    }
-
-    private static string Read(params string[] parts) =>
-        File.ReadAllText(Path.Combine(new[] { RepositoryRoot() }.Concat(parts).ToArray()));
-
-    private static string RepositoryRoot()
-    {
-        var current = new DirectoryInfo(AppContext.BaseDirectory);
-        while (current is not null)
-        {
-            if (File.Exists(Path.Combine(current.FullName, "Dynastia.slnx")))
-                return current.FullName;
-            current = current.Parent;
-        }
-
-        throw new DirectoryNotFoundException("Could not locate repository root.");
     }
 
     private sealed class RepositoryDataService(string root) : IGameDataService

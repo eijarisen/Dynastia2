@@ -139,6 +139,11 @@ public sealed class CommunityPlugin : IGamePlugin
         actions.Register(new GameActionDefinition
         {
             Id = "community.lobby_policy",
+            Presentation = new()
+            {
+                Emoji = "🗣️",
+                Categories = [ActionPresentationCategories.Personal]
+            },
             Label = "Lobby for Policy",
             Description = "Publicly support one current local proposal. Lobbying improves local standing and civic participation, but never guarantees passage.",
             Mode = ActionExecutionMode.Queued,
@@ -305,6 +310,11 @@ public sealed class CommunityPlugin : IGamePlugin
         actions.Register(new GameActionDefinition
         {
             Id = "community.perform_office_duties",
+            Presentation = new()
+            {
+                Emoji = "🏛️",
+                Categories = [ActionPresentationCategories.Personal]
+            },
             Label = "Perform Office Duties",
             Description = "Devote the year to the responsibilities of Town Head. This prevents civic neglect and slightly improves local standing and approval.",
             Mode = ActionExecutionMode.Queued,

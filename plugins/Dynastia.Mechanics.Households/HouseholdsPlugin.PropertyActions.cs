@@ -23,6 +23,13 @@ public sealed partial class HouseholdsPlugin
             new GameActionDefinition
             {
                 Id = "household.buy_house",
+                Presentation = new()
+                {
+                    Emoji = "🏠",
+                    Categories = [ActionPresentationCategories.Finances],
+                    AdjacencyGroup = ActionPresentationGroups.PropertyMarket,
+                    GroupOrder = 10
+                },
                 Label = "Buy a House",
                 Description =
                     "Choose any town, inspect its housing market, and queue a specific offer. The selected offer price is preserved when the action resolves next year. Buying elsewhere creates a rented investment and never moves the household.",
@@ -115,6 +122,11 @@ public sealed partial class HouseholdsPlugin
             new GameActionDefinition
             {
                 Id = "household.extend_house",
+                Presentation = new()
+                {
+                    Emoji = "🏠",
+                    Categories = [ActionPresentationCategories.Finances]
+                },
                 Label = "Extend House",
                 Description =
                     "Choose an owned house to extend. Each extension costs 25% of that house's original purchase price, permanently adds room for 2 residents, and increases the property's value.",
@@ -211,6 +223,13 @@ public sealed partial class HouseholdsPlugin
             new GameActionDefinition
             {
                 Id = "household.sell_house",
+                Presentation = new()
+                {
+                    Emoji = "💵",
+                    Categories = [ActionPresentationCategories.Finances],
+                    AdjacencyGroup = ActionPresentationGroups.PropertyMarket,
+                    GroupOrder = 20
+                },
                 Label = "Sell a House",
                 Description =
                     "Choose one owned property and sell it for 80% of its current value, including extensions. Selling the residence never causes relocation; the household simply rents in the same town if no local house remains.",
@@ -295,6 +314,11 @@ public sealed partial class HouseholdsPlugin
                         new GameActionDefinition
                         {
                             Id = $"household.move.{town.Id}",
+                            Presentation = new()
+                            {
+                                Emoji = "🚚",
+                                Categories = [ActionPresentationCategories.Finances]
+                            },
                             Label = $"Move to {town.Town}",
                             Description =
                                 $"Move the household to its owned property in {town.DisplayName}. Current employment ends and each employed household member immediately tries to establish replacement work in the destination labour market.",
@@ -349,6 +373,11 @@ public sealed partial class HouseholdsPlugin
             new GameActionDefinition
             {
                 Id = "household.give_house_to_son",
+                Presentation = new()
+                {
+                    Emoji = "🎁",
+                    Categories = [ActionPresentationCategories.Finances, ActionPresentationCategories.Family]
+                },
                 Label = "Give House to Son",
                 Description =
                     "Legacy queued house gift.",
@@ -512,6 +541,11 @@ public sealed partial class HouseholdsPlugin
         actions.Register(new GameActionDefinition
         {
             Id = id,
+            Presentation = new()
+            {
+                Emoji = "🙏",
+                Categories = [ActionPresentationCategories.Finances]
+            },
             Label = label,
             Description =
                 "Ask the parental household for one spare rented property. Their Morals affect willingness. Your parents choose which spare house to give you. If it is in another town, your household will move there and current careers will end.",

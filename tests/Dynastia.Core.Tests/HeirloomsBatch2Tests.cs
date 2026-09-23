@@ -188,8 +188,8 @@ public sealed class HeirloomsBatch2Tests
         var systems = new YearSystemRegistry();
         var education = new TestEducationService();
         var career = new TestCareerService();
-        var crafts = new TestCraftService(FindRepoRoot());
-        var data = new JsonGameDataService(Path.Combine(FindRepoRoot(), "data"));
+        var crafts = new TestCraftService(RepositoryFiles.Root);
+        var data = new JsonGameDataService(Path.Combine(RepositoryFiles.Root, "data"));
 
         var context = new GamePluginContext();
         context.AddService<IGameState>(state);
@@ -231,18 +231,6 @@ public sealed class HeirloomsBatch2Tests
         };
         component.MemberIds.Add(head.Id);
         head.Components.Set(component);
-    }
-
-    private static string FindRepoRoot()
-    {
-        var directory = new DirectoryInfo(AppContext.BaseDirectory);
-        while (directory is not null)
-        {
-            if (File.Exists(Path.Combine(directory.FullName, "Dynastia.slnx")))
-                return directory.FullName;
-            directory = directory.Parent;
-        }
-        throw new DirectoryNotFoundException("Could not find Dynastia repository root.");
     }
 
     private sealed record Fixture(

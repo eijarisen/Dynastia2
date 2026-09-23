@@ -10,6 +10,8 @@ public sealed class RareEventsPlugin : IGamePlugin
             context.GetService<T>() ?? throw new InvalidOperationException($"{name} is unavailable.");
 
         var gameState = Require<IGameState>("Game state");
+        var people = context.GetService<IPersonLookup>()
+            ?? gameState as IPersonLookup;
         var data = Require<IGameDataService>("Game data service");
         var family = Require<IFamilyService>("Family service");
         var health = Require<IHealthService>("Health service");
@@ -40,7 +42,7 @@ public sealed class RareEventsPlugin : IGamePlugin
             "RareEvents/rare_event_context_weights.csv",
             catalog.Events.Select(item => item.EventId));
 
-        var recent = new RecentLifeEventTracker(gameState, family, events);
+        var recent = new RecentLifeEventTracker(gameState, people, family, events);
         var death = new RareEventDeathService(family, health, economy, random, calendar, events);
 
         systems.Register(new RecentLifeEventCleanupYearSystem(recent));

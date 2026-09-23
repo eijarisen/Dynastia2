@@ -1,3 +1,4 @@
+using Dynastia.App.ViewModels.Actions;
 using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
@@ -107,6 +108,9 @@ public partial class App : Application
                 new GamePluginContext();
 
             pluginContext.AddService<IGameState>(
+                gameState);
+
+            pluginContext.AddService<IPersonLookup>(
                 gameState);
 
             pluginContext.AddService<IYearSystemRegistry>(
@@ -330,6 +334,12 @@ public partial class App : Application
             var musicService =
                 new BackgroundMusicService();
 
+            var actionSelectionOptions = new ActionSelectionOptionService(
+                successionService, actionRegistry, economyService, farmingService, heirloomService,
+                loanService, locationService, townProsperityService, localCareerOpportunityService);
+            var actionSurfaces = new ActionSurfaceDefinitions(
+                locationService, economyService, justiceService);
+
             var mainWindow =
                 new MainWindow
                 {
@@ -391,7 +401,9 @@ public partial class App : Application
                             eventBus,
                             actionRegistry,
                             saveService,
-                            reconciliation)
+                            reconciliation,
+                            actionSelectionOptions,
+                            actionSurfaces)
                 };
 
             mainWindow.Opened +=

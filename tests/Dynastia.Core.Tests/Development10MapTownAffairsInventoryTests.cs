@@ -5,7 +5,7 @@ public sealed class Development10MapTownAffairsInventoryTests
     [Fact]
     public void TownAffairsInstitutionCardsUseCompactLeftAlignedLayout()
     {
-        var xaml = ReadRepositoryFile(
+        var xaml = RepositoryFiles.ReadText(
             "src", "Dynastia.App", "Views", "TownLifeWindow.axaml");
 
         Assert.Contains("ColumnDefinitions=\"52,*\"", xaml);
@@ -19,11 +19,11 @@ public sealed class Development10MapTownAffairsInventoryTests
     [Fact]
     public void OverlappingMapMarkersOfferAChooserAndMapDetailsUseTownAffairsData()
     {
-        var control = ReadRepositoryFile(
+        var control = RepositoryFiles.ReadText(
             "src", "Dynastia.App", "Map", "Rendering", "TownMapControl.cs");
-        var panel = ReadRepositoryFile(
+        var panel = RepositoryFiles.ReadText(
             "src", "Dynastia.App", "Map", "Views", "TownMapPanel.cs");
-        var window = ReadRepositoryFile(
+        var window = RepositoryFiles.ReadText(
             "src", "Dynastia.App", "Map", "Views", "TownMapWindow.cs");
 
         Assert.Contains("HitTestTowns", control);
@@ -48,9 +48,9 @@ public sealed class Development10MapTownAffairsInventoryTests
     [Fact]
     public void InventoryMoneyKeepsFinanceLinesLeftOfGraphAndUsesDarkerGuidesAndEmoji()
     {
-        var xaml = ReadRepositoryFile(
+        var xaml = RepositoryFiles.ReadText(
             "src", "Dynastia.App", "Views", "FamilyInventoryWindow.axaml");
-        var graph = ReadRepositoryFile(
+        var graph = RepositoryFiles.ReadText(
             "src", "Dynastia.App", "Controls", "HouseholdBudgetGraph.cs");
 
         var budgetIndex = xaml.IndexOf("BudgetText", StringComparison.Ordinal);
@@ -67,19 +67,5 @@ public sealed class Development10MapTownAffairsInventoryTests
         Assert.Contains("Color.FromArgb(70, 101, 70, 33)", graph);
     }
 
-    private static string ReadRepositoryFile(params string[] parts) =>
-        File.ReadAllText(Path.Combine(RepositoryRoot(), Path.Combine(parts)));
 
-    private static string RepositoryRoot()
-    {
-        var current = new DirectoryInfo(AppContext.BaseDirectory);
-        while (current is not null)
-        {
-            if (File.Exists(Path.Combine(current.FullName, "Dynastia.slnx")))
-                return current.FullName;
-            current = current.Parent;
-        }
-
-        throw new DirectoryNotFoundException("Could not locate repository root.");
-    }
 }

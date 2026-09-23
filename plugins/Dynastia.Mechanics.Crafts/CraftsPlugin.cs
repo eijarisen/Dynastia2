@@ -93,6 +93,11 @@ public sealed class CraftsPlugin : IGamePlugin
             actions.Register(new GameActionDefinition
             {
                 Id = $"craft.start.{definition.Id}",
+                Presentation = new()
+                {
+                    Emoji = "🛠️",
+                    Categories = [ActionPresentationCategories.Career]
+                },
                 Label = "Work in a Profession",
                 Description =
                     $"Leave any formal career and earn a living through {definition.Name}. Income varies sharply from year to year.",
@@ -118,6 +123,11 @@ public sealed class CraftsPlugin : IGamePlugin
             actions.Register(new GameActionDefinition
             {
                 Id = $"craft.teach.{definition.Id}",
+                Presentation = new()
+                {
+                    Emoji = "🛠️",
+                    Categories = [ActionPresentationCategories.Family, ActionPresentationCategories.Skills]
+                },
                 Label = "Teach Craft",
                 Description =
                     $"Teach {definition.Name} to a young relative in the household who is old enough to learn it. Success depends on the craft's relevant aptitude.",
@@ -201,6 +211,11 @@ public sealed class CraftsPlugin : IGamePlugin
         actions.Register(new GameActionDefinition
         {
             Id = "craft.stop_occupation",
+            Presentation = new()
+            {
+                Emoji = "🚶",
+                Categories = [ActionPresentationCategories.Career]
+            },
             Label = "Quit Profession",
             Description =
                 "End Craft self-employment. The Craft and all Mastery progress are preserved.",

@@ -8,7 +8,7 @@ public sealed class LocalSocietyNonmaritalBirthBatch8Tests
     public void RulesKeepEventRareAndApplySpecifiedAgeFertilityPersonalityModifiers()
     {
         using var document = JsonDocument.Parse(
-            Read("data", "LocalSociety", "nonmarital_birth_rules.json"));
+            RepositoryFiles.ReadText("data", "LocalSociety", "nonmarital_birth_rules.json"));
         var root = document.RootElement;
 
         Assert.Equal(15, root.GetProperty("minimumAge").GetInt32());
@@ -22,7 +22,7 @@ public sealed class LocalSocietyNonmaritalBirthBatch8Tests
         Assert.Equal(0.85, root.GetProperty("temperamentMultipliers").GetProperty("Melancholic").GetDouble(), 10);
         Assert.Equal(2.0, root.GetProperty("moralsMultipliers").GetProperty("Evil").GetDouble(), 10);
 
-        var source = Read(
+        var source = RepositoryFiles.ReadText(
             "plugins", "Dynastia.Mechanics.Reproduction", "NonmaritalBirthYearSystem.cs");
         Assert.Contains("person.Age < _rules.MinimumAge", source);
         Assert.Contains("person.Age > _rules.MaximumAge", source);
@@ -34,9 +34,9 @@ public sealed class LocalSocietyNonmaritalBirthBatch8Tests
     [Fact]
     public void UnknownFatherBirthUsesMotherIdentityAndMaternalOnlyInheritance()
     {
-        var system = Read(
+        var system = RepositoryFiles.ReadText(
             "plugins", "Dynastia.Mechanics.Reproduction", "NonmaritalBirthYearSystem.cs");
-        var reproduction = Read(
+        var reproduction = RepositoryFiles.ReadText(
             "plugins", "Dynastia.Mechanics.Reproduction", "ReproductionYearSystem.cs");
 
         Assert.Contains("father: null", system);
@@ -53,17 +53,17 @@ public sealed class LocalSocietyNonmaritalBirthBatch8Tests
     public void SameYearMarriageReusesFullPartnerPipelineAndCreatesOnlyOneSpecialChild()
     {
         using var document = JsonDocument.Parse(
-            Read("data", "LocalSociety", "nonmarital_birth_rules.json"));
+            RepositoryFiles.ReadText("data", "LocalSociety", "nonmarital_birth_rules.json"));
         var root = document.RootElement;
         Assert.Equal(0.55, root.GetProperty("outcomes").GetProperty("unknownFatherChance").GetDouble(), 10);
         Assert.Equal(0.45, root.GetProperty("outcomes").GetProperty("marryFatherSameYearChance").GetDouble(), 10);
         Assert.True(root.GetProperty("outcomes").GetProperty("singleBirthOnly").GetBoolean());
 
-        var system = Read(
+        var system = RepositoryFiles.ReadText(
             "plugins", "Dynastia.Mechanics.Reproduction", "NonmaritalBirthYearSystem.cs");
-        var partner = Read(
+        var partner = RepositoryFiles.ReadText(
             "plugins", "Dynastia.Mechanics.Relationships", "StandardPartnerSearchService.cs");
-        var contract = Read(
+        var contract = RepositoryFiles.ReadText(
             "src", "Dynastia.Contracts", "IPartnerSearchService.cs");
 
         Assert.Contains("\"nonmarital_father\"", system);
@@ -82,9 +82,9 @@ public sealed class LocalSocietyNonmaritalBirthBatch8Tests
     [Fact]
     public void SystemRunsAfterMarriageAndAffairsButBeforeOrdinaryBirths()
     {
-        var system = Read(
+        var system = RepositoryFiles.ReadText(
             "plugins", "Dynastia.Mechanics.Reproduction", "NonmaritalBirthYearSystem.cs");
-        var eligibility = Read(
+        var eligibility = RepositoryFiles.ReadText(
             "plugins", "Dynastia.Mechanics.Reproduction", "ReproductionEligibilityRules.cs");
 
         Assert.Contains("public string Id => \"reproduction.nonmarital_births\"", system);
@@ -97,11 +97,11 @@ public sealed class LocalSocietyNonmaritalBirthBatch8Tests
     [Fact]
     public void TeenageAndUnknownFatherStatusEffectsStackByNamedTargets()
     {
-        var data = Read(
+        var data = RepositoryFiles.ReadText(
             "data", "LocalSociety", "status_extension_event_effects.csv");
-        var catalog = Read(
+        var catalog = RepositoryFiles.ReadText(
             "plugins", "Dynastia.Mechanics.Status", "StatusEventCatalog.cs");
-        var plugin = Read(
+        var plugin = RepositoryFiles.ReadText(
             "plugins", "Dynastia.Mechanics.Status", "StatusPlugin.cs");
 
         Assert.Contains("reproduction.unknown_father_birth,2,-6,mother", data);
@@ -118,11 +118,11 @@ public sealed class LocalSocietyNonmaritalBirthBatch8Tests
     [Fact]
     public void NonmaritalEventsAppearAsFamilyNewsWithoutDuplicatingNormalBirthChronicle()
     {
-        var system = Read(
+        var system = RepositoryFiles.ReadText(
             "plugins", "Dynastia.Mechanics.Reproduction", "NonmaritalBirthYearSystem.cs");
-        var familyNews = Read(
+        var familyNews = RepositoryFiles.ReadText(
             "plugins", "Dynastia.Mechanics.Households", "StandardHouseholdService.FamilyNews.cs");
-        var emoji = Read(
+        var emoji = RepositoryFiles.ReadText(
             "src", "Dynastia.App", "ViewModels", "EventEmojiMap.cs");
 
         Assert.Contains("[\"suppressChronicle\"] = \"true\"", system);
@@ -134,19 +134,4 @@ public sealed class LocalSocietyNonmaritalBirthBatch8Tests
         Assert.Contains("[\"reproduction.birth_and_marriage\"] = \"💍\"", emoji);
     }
 
-    private static string Read(params string[] parts) =>
-        File.ReadAllText(Path.Combine(new[] { RepositoryRoot() }.Concat(parts).ToArray()));
-
-    private static string RepositoryRoot()
-    {
-        var current = new DirectoryInfo(AppContext.BaseDirectory);
-        while (current is not null)
-        {
-            if (File.Exists(Path.Combine(current.FullName, "Dynastia.slnx")))
-                return current.FullName;
-            current = current.Parent;
-        }
-
-        throw new DirectoryNotFoundException("Could not locate repository root.");
-    }
 }

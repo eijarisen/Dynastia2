@@ -16,7 +16,7 @@ public sealed class TownsNationalitiesBatch3Tests
         var townCatalog = HistoricalTownCatalog.Load(data);
 
         var registryPath = Path.Combine(
-            RepositoryRoot(),
+            RepositoryFiles.Root,
             "data",
             "Nationalities",
             "nationalities.csv");
@@ -63,7 +63,7 @@ public sealed class TownsNationalitiesBatch3Tests
     [Fact]
     public void ExternalCultureFilesContainExpectedWeightedEntryCounts()
     {
-        var root = RepositoryRoot();
+        var root = RepositoryFiles.Root;
         var data = new JsonGameDataService(Path.Combine(root, "data"));
         var json = File.ReadAllText(
             Path.Combine(root, "data", "Names", "name_cultures.json"));
@@ -259,7 +259,7 @@ public sealed class TownsNationalitiesBatch3Tests
     [Fact]
     public void PersonalDetailsGeneralDisplaysNationalityWithoutFlags()
     {
-        var root = RepositoryRoot();
+        var root = RepositoryFiles.Root;
         var xaml = File.ReadAllText(
             Path.Combine(
                 root,
@@ -287,7 +287,7 @@ public sealed class TownsNationalitiesBatch3Tests
     {
         var data = new JsonGameDataService(
             Path.Combine(
-                RepositoryRoot(),
+                RepositoryFiles.Root,
                 "data"));
 
         var names = StandardHistoricalNameService.Load(data);
@@ -296,21 +296,6 @@ public sealed class TownsNationalitiesBatch3Tests
             names);
 
         return (data, names, nationalities);
-    }
-
-    private static string RepositoryRoot()
-    {
-        var current = new DirectoryInfo(AppContext.BaseDirectory);
-        while (current is not null)
-        {
-            if (File.Exists(Path.Combine(current.FullName, "Dynastia.slnx")))
-                return current.FullName;
-
-            current = current.Parent;
-        }
-
-        throw new DirectoryNotFoundException(
-            "Could not locate repository root.");
     }
 
     private sealed class ZeroRandom : IGameRandom

@@ -9,7 +9,7 @@ public sealed class LocalSocietyReligiousCallingsBatch12Tests
     public void CallingRulesUseOneAgeEighteenRollAndFlatAgeNineteenDeparture()
     {
         using var document = JsonDocument.Parse(
-            Read("data", "LocalSociety", "religious_calling_rules.json"));
+            RepositoryFiles.ReadText("data", "LocalSociety", "religious_calling_rules.json"));
         var root = document.RootElement;
 
         Assert.Equal(18, root.GetProperty("callingAge").GetInt32());
@@ -25,7 +25,7 @@ public sealed class LocalSocietyReligiousCallingsBatch12Tests
         Assert.True(departure.GetProperty("onDeparture")
             .GetProperty("neverRollCallingAgain").GetBoolean());
 
-        var system = Read(
+        var system = RepositoryFiles.ReadText(
             "plugins", "Dynastia.Mechanics.ReligiousVocation", "ReligiousVocationYearSystem.cs");
         Assert.Contains("person.Age != _rules.CallingAge", system);
         Assert.Contains("person.Tags.Add(_rules.CheckedTag);", system);
@@ -38,7 +38,7 @@ public sealed class LocalSocietyReligiousCallingsBatch12Tests
     [Fact]
     public void CallingOnlyCareersUseSpecifiedSexSalaryTitlesAndChurchRequirement()
     {
-        var careers = ParseCsv(Read("data", "Career", "careers.csv"));
+        var careers = ParseCsv(RepositoryFiles.ReadText("data", "Career", "careers.csv"));
         Assert.Equal(76, careers.Count);
 
         var priest = Row(careers, "priest_vocation");
@@ -51,13 +51,13 @@ public sealed class LocalSocietyReligiousCallingsBatch12Tests
         Assert.Equal("religion", nun["CareerFamily"]);
 
         var requirements = ParseCsv(
-            Read("data", "TownLife", "career_institution_requirements.csv"));
+            RepositoryFiles.ReadText("data", "TownLife", "career_institution_requirements.csv"));
         Assert.Equal("church", Row(requirements, "priest_vocation", "CareerId")["InstitutionId"]);
         Assert.Equal("1", Row(requirements, "priest_vocation", "CareerId")["MinimumTier"]);
         Assert.Equal("church", Row(requirements, "nun_vocation", "CareerId")["InstitutionId"]);
         Assert.Equal("1", Row(requirements, "nun_vocation", "CareerId")["MinimumTier"]);
 
-        var system = Read(
+        var system = RepositoryFiles.ReadText(
             "plugins", "Dynastia.Mechanics.ReligiousVocation", "ReligiousVocationYearSystem.cs");
         Assert.Contains("sex == Sex.Female", system);
         Assert.Contains("_institutions.Resolve(town, gameState.Year).GetTier(\"church\") < 1", system);
@@ -69,11 +69,11 @@ public sealed class LocalSocietyReligiousCallingsBatch12Tests
     [Fact]
     public void CallingOnlyCareersAreExcludedFromOrdinaryEmploymentAndRelocationReplacement()
     {
-        var service = Read(
+        var service = RepositoryFiles.ReadText(
             "plugins", "Dynastia.Mechanics.Career", "StandardCareerService.cs");
-        var employment = Read(
+        var employment = RepositoryFiles.ReadText(
             "plugins", "Dynastia.Mechanics.Career", "StandardCareerService.Employment.cs");
-        var opportunities = Read(
+        var opportunities = RepositoryFiles.ReadText(
             "plugins", "Dynastia.Mechanics.Career", "StandardCareerService.Opportunities.cs");
 
         Assert.Contains("PriestVocationCareerId = \"priest_vocation\"", service);
@@ -88,15 +88,15 @@ public sealed class LocalSocietyReligiousCallingsBatch12Tests
     [Fact]
     public void ActiveClergyKeepPromotionAndRecoveryButCannotQuitLoseJobOrRetire()
     {
-        var actions = Read(
+        var actions = RepositoryFiles.ReadText(
             "plugins", "Dynastia.Mechanics.Career", "CareerPlugin.Actions.cs");
-        var support = Read(
+        var support = RepositoryFiles.ReadText(
             "plugins", "Dynastia.Mechanics.Career", "CareerPlugin.FamilySupportActions.cs");
-        var loss = Read(
+        var loss = RepositoryFiles.ReadText(
             "plugins", "Dynastia.Mechanics.Career", "CareerJobLossYearSystem.cs");
-        var retirement = Read(
+        var retirement = RepositoryFiles.ReadText(
             "plugins", "Dynastia.Mechanics.Career", "CareerRetirementYearSystem.cs");
-        var advancement = Read(
+        var advancement = RepositoryFiles.ReadText(
             "plugins", "Dynastia.Mechanics.Career", "CareerAdvancementYearSystem.cs");
 
         Assert.Contains("Id = \"career.work_harder\"", actions);
@@ -130,7 +130,7 @@ public sealed class LocalSocietyReligiousCallingsBatch12Tests
     public void ClergyRelativeStatusUsesActiveChildSiblingBonusesAndCaps()
     {
         using var document = JsonDocument.Parse(
-            Read("data", "LocalSociety", "clerical_relative_status_rules.json"));
+            RepositoryFiles.ReadText("data", "LocalSociety", "clerical_relative_status_rules.json"));
         var root = document.RootElement;
         var bonuses = root.GetProperty("bonuses").EnumerateArray().ToArray();
 
@@ -153,7 +153,7 @@ public sealed class LocalSocietyReligiousCallingsBatch12Tests
         Assert.Equal(6, root.GetProperty("perPersonCaps").GetProperty("renown").GetDouble());
         Assert.Equal(2, root.GetProperty("perPersonCaps").GetProperty("reputation").GetDouble());
 
-        var status = Read(
+        var status = RepositoryFiles.ReadText(
             "plugins", "Dynastia.Mechanics.Status", "StandardStatusService.cs");
         Assert.Contains("_family.GetChildren(person)", status);
         Assert.Contains("\"Child\"", status);
@@ -169,7 +169,7 @@ public sealed class LocalSocietyReligiousCallingsBatch12Tests
             : null;
 
     private static void AssertTagGuard(params string[] parts) =>
-        Assert.Contains("vocation.religious.active", Read(parts));
+        Assert.Contains("vocation.religious.active", RepositoryFiles.ReadText(parts));
 
     private static Dictionary<string, string> Row(
         IReadOnlyList<Dictionary<string, string>> rows,
@@ -200,19 +200,4 @@ public sealed class LocalSocietyReligiousCallingsBatch12Tests
             .ToArray();
     }
 
-    private static string Read(params string[] parts) =>
-        File.ReadAllText(Path.Combine(new[] { RepositoryRoot() }.Concat(parts).ToArray()));
-
-    private static string RepositoryRoot()
-    {
-        var current = new DirectoryInfo(AppContext.BaseDirectory);
-        while (current is not null)
-        {
-            if (File.Exists(Path.Combine(current.FullName, "Dynastia.slnx")))
-                return current.FullName;
-            current = current.Parent;
-        }
-
-        throw new DirectoryNotFoundException("Could not locate repository root.");
-    }
 }

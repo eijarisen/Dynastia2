@@ -83,7 +83,7 @@ public sealed class TownLifeBatch4Tests
     [Fact]
     public void NewBorrowingAndLendingRequireLocalBankButExistingLoanServicingDoesNot()
     {
-        var root = RepositoryRoot();
+        var root = RepositoryFiles.Root;
         var plugin = File.ReadAllText(Path.Combine(
             root,
             "plugins",
@@ -100,11 +100,6 @@ public sealed class TownLifeBatch4Tests
             "Dynastia.Mechanics.Loans",
             "LoanPaymentYearSystem.cs"));
 
-        var autonomy = File.ReadAllText(Path.Combine(
-            root,
-            "plugins",
-            "Dynastia.Mechanics.Households",
-            "AdvancedAutonomousHouseholdStrategy.cs"));
 
         Assert.True(
             plugin.Split("HasLocalBank", StringSplitOptions.None).Length - 1 >= 4,
@@ -117,8 +112,6 @@ public sealed class TownLifeBatch4Tests
         Assert.Contains("durationYears,\n                interestMultiplier", service);
         Assert.Contains("new List<LoanOfferInfo>(3)", service);
         Assert.Contains("index < 3", service);
-        Assert.Contains("loans.GetOffers(snapshot.Head, isGivingLoan: false, 10000m)", autonomy);
-        Assert.Contains("interestMultiplier", autonomy);
         Assert.DoesNotContain("ITownFacilityQualityService", payments);
         Assert.DoesNotContain("GetBankQuality", payments);
     }
@@ -126,7 +119,7 @@ public sealed class TownLifeBatch4Tests
     [Fact]
     public void HealthcareUsesLocalMedicalQualityWithoutChangingIllnessIncidence()
     {
-        var root = RepositoryRoot();
+        var root = RepositoryFiles.Root;
         var wellbeing = File.ReadAllText(Path.Combine(
             root,
             "plugins",
@@ -185,7 +178,7 @@ public sealed class TownLifeBatch4Tests
     [Fact]
     public void VisitingPhysicianRemainsAvailableWithoutLocalMedicalInstitution()
     {
-        var root = RepositoryRoot();
+        var root = RepositoryFiles.Root;
         var wellbeing = File.ReadAllText(Path.Combine(
             root,
             "plugins",
@@ -203,7 +196,7 @@ public sealed class TownLifeBatch4Tests
     [Fact]
     public void AlcoholDependenceFromDrinkingUsesTemperamentSpecificRiskAndReducedHealthDamage()
     {
-        var root = RepositoryRoot();
+        var root = RepositoryFiles.Root;
         var wellbeing = File.ReadAllText(Path.Combine(
             root,
             "plugins",
@@ -237,7 +230,7 @@ public sealed class TownLifeBatch4Tests
     [Fact]
     public void Batch4DataFilesAreInstalled()
     {
-        var root = RepositoryRoot();
+        var root = RepositoryFiles.Root;
         Assert.True(File.Exists(Path.Combine(root, "data", "TownLife", "bank_offer_quality.csv")));
         Assert.True(File.Exists(Path.Combine(root, "data", "TownLife", "medical_quality.csv")));
     }
@@ -259,7 +252,7 @@ public sealed class TownLifeBatch4Tests
 
     private static IReadOnlyList<Dictionary<string, string>> ReadCsv(string relativePath)
     {
-        var lines = File.ReadAllLines(Path.Combine(RepositoryRoot(), relativePath));
+        var lines = File.ReadAllLines(Path.Combine(RepositoryFiles.Root, relativePath));
         var headers = lines[0].TrimStart('\uFEFF').Split(',');
         return lines.Skip(1)
             .Where(line => !string.IsNullOrWhiteSpace(line))
@@ -270,16 +263,4 @@ public sealed class TownLifeBatch4Tests
             .ToList();
     }
 
-    private static string RepositoryRoot()
-    {
-        var current = new DirectoryInfo(AppContext.BaseDirectory);
-        while (current is not null)
-        {
-            if (File.Exists(Path.Combine(current.FullName, "Dynastia.slnx")))
-                return current.FullName;
-            current = current.Parent;
-        }
-
-        throw new DirectoryNotFoundException("Could not locate repository root.");
-    }
 }

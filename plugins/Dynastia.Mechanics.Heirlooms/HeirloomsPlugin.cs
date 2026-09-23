@@ -139,6 +139,13 @@ public sealed class HeirloomsPlugin : IGamePlugin
             new GameActionDefinition
             {
                 Id = "heirloom.sell",
+                Presentation = new()
+                {
+                    Emoji = "💵",
+                    Categories = [ActionPresentationCategories.Personal],
+                    AdjacencyGroup = ActionPresentationGroups.PropertyMarket,
+                    GroupOrder = 50
+                },
                 Label = "Sell Heirloom",
                 Description = "Select one family heirloom and queue its sale for 80% of its appraised value.",
                 Mode = ActionExecutionMode.Queued,

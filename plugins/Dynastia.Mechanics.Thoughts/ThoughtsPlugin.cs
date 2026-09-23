@@ -18,6 +18,10 @@ public sealed class ThoughtsPlugin :
                 context,
                 "Family service");
 
+        var people =
+            context.GetService<IPersonLookup>()
+            ?? gameState as IPersonLookup;
+
         var stats =
             Require<IStatsService>(
                 context,
@@ -87,7 +91,8 @@ public sealed class ThoughtsPlugin :
             new ThoughtProviderRegistry();
 
         providers.Register(
-            new FamilyThoughtProvider());
+            new FamilyThoughtProvider(
+                people));
 
         providers.Register(
             new RelationshipThoughtProvider(
@@ -144,7 +149,6 @@ public sealed class ThoughtsPlugin :
                 ReconciliationLifecycleStage.AfterNewGame,
                 ReconciliationLifecycleStage.AfterYear,
                 ReconciliationLifecycleStage.AfterImmediateAction,
-                ReconciliationLifecycleStage.AfterQueuedAction,
                 ReconciliationLifecycleStage.AfterPersonCreated
             ],
             _ => thoughts.EnsureCurrentThoughts(),

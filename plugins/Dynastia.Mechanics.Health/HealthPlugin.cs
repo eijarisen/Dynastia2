@@ -9,6 +9,8 @@ public sealed class HealthPlugin : IGamePlugin
         var data = context.GetService<IGameDataService>() ?? throw new InvalidOperationException("Game data service is unavailable.");
         var random = context.GetService<IGameRandom>() ?? throw new InvalidOperationException("Game random service is unavailable.");
         var state = context.GetService<IGameState>() ?? throw new InvalidOperationException("Game state is unavailable.");
+        var people = context.GetService<IPersonLookup>()
+            ?? state as IPersonLookup;
         var stats = context.GetService<IStatsService>() ?? throw new InvalidOperationException("Stats service is unavailable. The Health plugin requires dynastia.stats.");
         var family = context.GetService<IFamilyService>() ?? throw new InvalidOperationException("Family service is unavailable. The Health plugin requires dynastia.family.");
         var economy = context.GetService<IEconomyService>() ?? throw new InvalidOperationException("Economy service is unavailable. The Health plugin requires dynastia.economy.");
@@ -37,6 +39,7 @@ public sealed class HealthPlugin : IGamePlugin
 
         var stress = new StandardStressService(
             state,
+            people,
             family,
             economy,
             health,

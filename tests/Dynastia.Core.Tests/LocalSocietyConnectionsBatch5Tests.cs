@@ -7,9 +7,9 @@ public sealed class LocalSocietyConnectionsBatch5Tests
     [Fact]
     public void LobbyingCreatesPersistentLightweightConnectionWithoutGeneratingPerson()
     {
-        var policy = Read("plugins", "Dynastia.Mechanics.Community", "CommunityPolicyService.cs");
-        var connection = Read("plugins", "Dynastia.Mechanics.Community", "CommunityConnectionService.cs");
-        var state = Read("plugins", "Dynastia.Mechanics.Community", "CommunityStateComponents.cs");
+        var policy = RepositoryFiles.ReadText("plugins", "Dynastia.Mechanics.Community", "CommunityPolicyService.cs");
+        var connection = RepositoryFiles.ReadText("plugins", "Dynastia.Mechanics.Community", "CommunityConnectionService.cs");
+        var state = RepositoryFiles.ReadText("plugins", "Dynastia.Mechanics.Community", "CommunityStateComponents.cs");
 
         Assert.Contains("state.Connections.Add(new CommunityConnectionState", policy);
         Assert.Contains("HouseholdId = householdId", policy);
@@ -23,7 +23,7 @@ public sealed class LocalSocietyConnectionsBatch5Tests
     [Fact]
     public void ConnectionRequestsAreLowProbabilityAndDamageRelationsBeforeOutcome()
     {
-        using var rules = JsonDocument.Parse(Read("data", "LocalSociety", "connection_rules.json"));
+        using var rules = JsonDocument.Parse(RepositoryFiles.ReadText("data", "LocalSociety", "connection_rules.json"));
         var root = rules.RootElement;
         Assert.Equal(0.08, root.GetProperty("moneyRequest").GetProperty("baseAcceptanceChance").GetDouble(), 10);
         Assert.Equal(0.03, root.GetProperty("assetRequest").GetProperty("houseBaseAcceptanceChance").GetDouble(), 10);
@@ -35,7 +35,7 @@ public sealed class LocalSocietyConnectionsBatch5Tests
         Assert.Equal(-5, request.GetProperty("onRefusalAdditional").GetProperty("sympathy").GetInt32());
         Assert.Equal(-3, request.GetProperty("onRefusalAdditional").GetProperty("familiarity").GetInt32());
 
-        var service = Read("plugins", "Dynastia.Mechanics.Community", "CommunityConnectionService.cs");
+        var service = RepositoryFiles.ReadText("plugins", "Dynastia.Mechanics.Community", "CommunityConnectionService.cs");
         Assert.Contains("ApplyRequestBaseCost(connection);", service);
         Assert.Contains("ApplyRefusalCost(connection);", service);
         Assert.Contains("Math.Clamp(baseChance +", service);
@@ -44,15 +44,15 @@ public sealed class LocalSocietyConnectionsBatch5Tests
         Assert.Contains("Math.Max(connection.Familiarity, 30)", service);
         Assert.Contains("Math.Max(connection.Sympathy, 15)", service);
 
-        var familyRules = Read("plugins", "Dynastia.Mechanics.FamilyRelations", "FamilyRelationScoreRules.cs");
+        var familyRules = RepositoryFiles.ReadText("plugins", "Dynastia.Mechanics.FamilyRelations", "FamilyRelationScoreRules.cs");
         Assert.Contains("0.95", familyRules);
     }
 
     [Fact]
     public void AnnualConnectionScriptStaysNamesOnlyAndOnlyWeakPoorConnectionsDisappear()
     {
-        var service = Read("plugins", "Dynastia.Mechanics.Community", "CommunityConnectionService.cs");
-        var system = Read("plugins", "Dynastia.Mechanics.Community", "CommunityConnectionYearSystem.cs");
+        var service = RepositoryFiles.ReadText("plugins", "Dynastia.Mechanics.Community", "CommunityConnectionService.cs");
+        var system = RepositoryFiles.ReadText("plugins", "Dynastia.Mechanics.Community", "CommunityConnectionYearSystem.cs");
 
         Assert.Contains("SimulateSimpleFamily(connection, age)", service);
         Assert.Contains("connection.SpouseName = GenerateName", service);
@@ -63,7 +63,7 @@ public sealed class LocalSocietyConnectionsBatch5Tests
         Assert.Contains("relationState.Equals(\"Warm\"", service);
         Assert.Contains("relationState.Equals(\"Close\"", service);
         Assert.Contains("connection.IsActive = false", service);
-        var rules = Read("data", "LocalSociety", "connection_rules.json");
+        var rules = RepositoryFiles.ReadText("data", "LocalSociety", "connection_rules.json");
         Assert.Contains("\"preserveWarmOrCloseConnections\": true", rules);
         Assert.Contains("YearPhase.Thoughts", system);
         Assert.Contains("actions.queued.family_relations", system);
@@ -73,14 +73,14 @@ public sealed class LocalSocietyConnectionsBatch5Tests
     [Fact]
     public void RequestCausedPovertyHurtsReputationAndNetworkRenownIsCappedAtFive()
     {
-        using var rules = JsonDocument.Parse(Read("data", "LocalSociety", "connection_rules.json"));
+        using var rules = JsonDocument.Parse(RepositoryFiles.ReadText("data", "LocalSociety", "connection_rules.json"));
         var consequences = rules.RootElement.GetProperty("wealthConsequences");
         var network = rules.RootElement.GetProperty("networkStatus");
         Assert.Equal(-3, consequences.GetProperty("requestCausedPoorPersistentReputationPenalty").GetInt32());
         Assert.Equal(5, network.GetProperty("householdRenownBonusCap").GetDouble(), 10);
 
-        var connections = Read("plugins", "Dynastia.Mechanics.Community", "CommunityConnectionService.cs");
-        var status = Read("plugins", "Dynastia.Mechanics.Status", "StandardStatusService.cs");
+        var connections = RepositoryFiles.ReadText("plugins", "Dynastia.Mechanics.Community", "CommunityConnectionService.cs");
+        var status = RepositoryFiles.ReadText("plugins", "Dynastia.Mechanics.Status", "StandardStatusService.cs");
         Assert.Contains("connection.request_caused_poverty", connections);
         Assert.Contains("Math.Min(_rules.NetworkRenownBonusCap, total)", connections);
         Assert.Contains("GetNetworkRenownBonus", status);
@@ -90,8 +90,8 @@ public sealed class LocalSocietyConnectionsBatch5Tests
     [Fact]
     public void RelationsWindowHasFamilyAndAcquaintanceTabsWithAllSevenConnectionActions()
     {
-        var window = Read("src", "Dynastia.App", "Views", "FamilyRelationsWindow.axaml");
-        var actions = Read("plugins", "Dynastia.Mechanics.Community", "CommunityConnectionActions.cs");
+        var window = RepositoryFiles.ReadText("src", "Dynastia.App", "Views", "FamilyRelationsWindow.axaml");
+        var actions = RepositoryFiles.ReadText("plugins", "Dynastia.Mechanics.Community", "CommunityConnectionActions.cs");
 
         Assert.Contains("Header=\"Family\"", window);
         Assert.Contains("Header=\"Acquaintances\"", window);
@@ -99,7 +99,7 @@ public sealed class LocalSocietyConnectionsBatch5Tests
         Assert.Contains("Text=\"{Binding PortraitEmoji}\"", window);
         Assert.Contains("OnConnectionActionClick", window);
 
-        var presentation = Read("src", "Dynastia.App", "ViewModels", "MainWindowViewModel.Relations.cs");
+        var presentation = RepositoryFiles.ReadText("src", "Dynastia.App", "ViewModels", "MainWindowViewModel.Relations.cs");
         Assert.Contains("GenerateCandidateAppearance(\n                            connection.Id", presentation);
 
         foreach (var id in new[]
@@ -117,19 +117,4 @@ public sealed class LocalSocietyConnectionsBatch5Tests
         }
     }
 
-    private static string Read(params string[] parts) =>
-        File.ReadAllText(Path.Combine(new[] { RepositoryRoot() }.Concat(parts).ToArray()));
-
-    private static string RepositoryRoot()
-    {
-        var current = new DirectoryInfo(AppContext.BaseDirectory);
-        while (current is not null)
-        {
-            if (File.Exists(Path.Combine(current.FullName, "Dynastia.slnx")))
-                return current.FullName;
-            current = current.Parent;
-        }
-
-        throw new DirectoryNotFoundException("Could not locate repository root.");
-    }
 }

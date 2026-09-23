@@ -8,16 +8,13 @@ public sealed class LocalSocietySelfImprovementBatch9Tests
     [Fact]
     public void SelfImprovementSelectorIsRetiredFromMainActionsAndInstructions()
     {
-        var actions = Read(
-            "src", "Dynastia.App", "ViewModels", "MainWindowViewModel.Actions.cs");
-        var mainWindow = Read(
+        var mainWindow = RepositoryFiles.ReadText(
             "src", "Dynastia.App", "Views", "MainWindow.axaml.cs");
-        var retiredSelector = Read(
+        var retiredSelector = RepositoryFiles.ReadText(
             "src", "Dynastia.App", "ViewModels", "MainWindowViewModel.SelfImprovement.cs");
-        var instructions = Read(
+        var instructions = RepositoryFiles.ReadText(
             "src", "Dynastia.App", "Views", "InstructionsWindow.axaml");
 
-        Assert.DoesNotContain("SelfImprovementUiActionId", actions);
         Assert.DoesNotContain("ui.self_improvement", mainWindow);
         Assert.DoesNotContain("Paid Self Improvement", instructions);
         Assert.DoesNotContain("ui.self_improvement", retiredSelector);
@@ -28,7 +25,7 @@ public sealed class LocalSocietySelfImprovementBatch9Tests
     public void ReligiousStudyUsesChurchTierSuccessFormulaAndChurchRouting()
     {
         using var document = JsonDocument.Parse(
-            Read("data", "LocalSociety", "religious_study_church_rules.json"));
+            RepositoryFiles.ReadText("data", "LocalSociety", "religious_study_church_rules.json"));
         var rules = document.RootElement;
 
         Assert.Equal(3000m, rules.GetProperty("baseCost").GetDecimal());
@@ -42,11 +39,11 @@ public sealed class LocalSocietySelfImprovementBatch9Tests
             Assert.Equal(expected, actual, 10);
         }
 
-        var personality = Read(
+        var personality = RepositoryFiles.ReadText(
             "plugins", "Dynastia.Mechanics.Personality", "PersonalityPlugin.cs");
-        var churchRules = Read(
+        var churchRules = RepositoryFiles.ReadText(
             "plugins", "Dynastia.Mechanics.Personality", "ReligiousStudyChurchRules.cs");
-        var townLife = Read(
+        var townLife = RepositoryFiles.ReadText(
             "src", "Dynastia.App", "ViewModels", "MainWindowViewModel.TownLife.cs");
 
         Assert.Contains("ResolveChurchTier(", personality);
@@ -61,7 +58,7 @@ public sealed class LocalSocietySelfImprovementBatch9Tests
     public void MedicalImprovementRulesUseSpecifiedFacilityMinimums()
     {
         var rows = ParseCsv(
-            Read("data", "LocalSociety", "medical_stat_improvement_rules.csv"));
+            RepositoryFiles.ReadText("data", "LocalSociety", "medical_stat_improvement_rules.csv"));
 
         Assert.Equal(6, rows.Count);
         Assert.Equal("1", Row(rows, "stats.improve_strength")["MinimumMedicalTier"]);
@@ -77,19 +74,19 @@ public sealed class LocalSocietySelfImprovementBatch9Tests
     public void MedicalImprovementCostScalesWithLocalMedicalQuality()
     {
         var improvementRows = ParseCsv(
-            Read("data", "LocalSociety", "medical_stat_improvement_rules.csv"));
+            RepositoryFiles.ReadText("data", "LocalSociety", "medical_stat_improvement_rules.csv"));
         var baseCost = decimal.Parse(
             Row(improvementRows, "stats.improve_strength")["BaseCost"],
             CultureInfo.InvariantCulture);
 
         var medicalRows = ParseCsv(
-            Read("data", "TownLife", "medical_quality.csv"));
+            RepositoryFiles.ReadText("data", "TownLife", "medical_quality.csv"));
 
         Assert.Equal(25000m, Adjust(baseCost, MedicalMultiplier(medicalRows, 1)));
         Assert.Equal(20000m, Adjust(baseCost, MedicalMultiplier(medicalRows, 3)));
         Assert.Equal(16000m, Adjust(baseCost, MedicalMultiplier(medicalRows, 5)));
 
-        var plugin = Read(
+        var plugin = RepositoryFiles.ReadText(
             "plugins", "Dynastia.Mechanics.StatImprovements", "StatImprovementsPlugin.cs");
         Assert.Contains("medical.Tier < definition.MinimumMedicalTier", plugin);
         Assert.Contains("StatImprovementRules.CalculateCost", plugin);
@@ -100,11 +97,11 @@ public sealed class LocalSocietySelfImprovementBatch9Tests
     [Fact]
     public void HealthTabContainsTreatmentTherapyAndMedicalImprovementSections()
     {
-        var townLife = Read(
+        var townLife = RepositoryFiles.ReadText(
             "src", "Dynastia.App", "ViewModels", "MainWindowViewModel.TownLife.cs");
-        var hub = Read(
+        var hub = RepositoryFiles.ReadText(
             "src", "Dynastia.App", "ViewModels", "TownAffairsViewModel.cs");
-        var window = Read(
+        var window = RepositoryFiles.ReadText(
             "src", "Dynastia.App", "Views", "TownLifeWindow.axaml");
 
         Assert.Contains("wellbeing.heal_relative", townLife);
@@ -126,7 +123,7 @@ public sealed class LocalSocietySelfImprovementBatch9Tests
     [Fact]
     public void StatImprovementStillRequiresHistoricalVariantAsAdditionalRule()
     {
-        var plugin = Read(
+        var plugin = RepositoryFiles.ReadText(
             "plugins", "Dynastia.Mechanics.StatImprovements", "StatImprovementsPlugin.cs");
 
         Assert.Contains("historical.GetVariant(", plugin);
@@ -174,19 +171,4 @@ public sealed class LocalSocietySelfImprovementBatch9Tests
             .ToArray();
     }
 
-    private static string Read(params string[] parts) =>
-        File.ReadAllText(Path.Combine(new[] { RepositoryRoot() }.Concat(parts).ToArray()));
-
-    private static string RepositoryRoot()
-    {
-        var current = new DirectoryInfo(AppContext.BaseDirectory);
-        while (current is not null)
-        {
-            if (File.Exists(Path.Combine(current.FullName, "Dynastia.slnx")))
-                return current.FullName;
-            current = current.Parent;
-        }
-
-        throw new DirectoryNotFoundException("Could not locate repository root.");
-    }
 }

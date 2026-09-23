@@ -17,7 +17,7 @@ public sealed class BalancePackages5To8Tests
     [InlineData(75, 1.00)]
     public void FarmAgeContributionUsesConfiguredAgeBands(int age, double expected)
     {
-        var catalog = FarmingWorkerContributionCatalog.Load(new RepositoryDataService(RepositoryRoot()));
+        var catalog = FarmingWorkerContributionCatalog.Load(new RepositoryDataService(RepositoryFiles.Root));
         Assert.Equal((decimal)expected, catalog.GetAgeContribution(age));
     }
 
@@ -49,7 +49,7 @@ public sealed class BalancePackages5To8Tests
     [Fact]
     public void FarmingRanksScarceWorkersByExpectedContributionAndUsesAgeInBothIncomePaths()
     {
-        var farming = Read("plugins", "Dynastia.Mechanics.Farming", "StandardFarmingService.cs");
+        var farming = RepositoryFiles.ReadText("plugins", "Dynastia.Mechanics.Farming", "StandardFarmingService.cs");
         Assert.Contains(".OrderByDescending(GetExpectedProductiveContribution)", farming);
         Assert.Contains(".ThenByDescending(worker => worker.Age)", farming);
         Assert.Contains(".ThenBy(worker => worker.Id)", farming);
@@ -63,13 +63,13 @@ public sealed class BalancePackages5To8Tests
     [Fact]
     public void AcquaintanceRulesUseStrongerImprovementAndTwoYearMeaningfulInteractionGrace()
     {
-        var rules = CommunityConnectionRules.Load(new RepositoryDataService(RepositoryRoot()));
+        var rules = CommunityConnectionRules.Load(new RepositoryDataService(RepositoryFiles.Root));
         Assert.Equal(6, rules.ImproveFamiliarityGain);
         Assert.Equal(3, rules.ImproveSympathyGain);
         Assert.Equal(2, rules.MeaningfulInteractionDecayGraceYears);
 
-        var component = Read("plugins", "Dynastia.Mechanics.Community", "CommunityStateComponents.cs");
-        var service = Read("plugins", "Dynastia.Mechanics.Community", "CommunityConnectionService.cs");
+        var component = RepositoryFiles.ReadText("plugins", "Dynastia.Mechanics.Community", "CommunityStateComponents.cs");
+        var service = RepositoryFiles.ReadText("plugins", "Dynastia.Mechanics.Community", "CommunityConnectionService.cs");
         Assert.Contains("LastMeaningfulInteractionYear", component);
         Assert.Contains("MarkMeaningfulInteraction(connection);", service);
         Assert.Contains("connection.LastMeaningfulInteractionYear ??= _gameState.Year", service);
@@ -80,15 +80,15 @@ public sealed class BalancePackages5To8Tests
     [Fact]
     public void ChildhoodStableCareRulesLoadAndTraumaBlockIsPersisted()
     {
-        var rules = ChildhoodBalanceRules.Load(new RepositoryDataService(RepositoryRoot()));
+        var rules = ChildhoodBalanceRules.Load(new RepositoryDataService(RepositoryFiles.Root));
         Assert.Equal(0.25, rules.StableCareRecoveryChance, 10);
         Assert.Equal(75d, rules.StableCareHealthMinimum, 10);
         Assert.Equal(3, rules.StableCareTarget);
         Assert.Equal(2, rules.MajorTraumaRecoveryBlockYears);
 
-        var component = Read("plugins", "Dynastia.Mechanics.Childhood", "ChildHappinessComponent.cs");
-        var system = Read("plugins", "Dynastia.Mechanics.Childhood", "ChildHappinessYearSystem.cs");
-        var plugin = Read("plugins", "Dynastia.Mechanics.Childhood", "ChildhoodPlugin.cs");
+        var component = RepositoryFiles.ReadText("plugins", "Dynastia.Mechanics.Childhood", "ChildHappinessComponent.cs");
+        var system = RepositoryFiles.ReadText("plugins", "Dynastia.Mechanics.Childhood", "ChildHappinessYearSystem.cs");
+        var plugin = RepositoryFiles.ReadText("plugins", "Dynastia.Mechanics.Childhood", "ChildhoodPlugin.cs");
         Assert.Contains("RecoveryBlockedThroughYear", component);
         Assert.Contains("finance.BasicNeedsShortfall > 0m", system);
         Assert.Contains("householdStatus.IsLargeFamilyStrained", system);
@@ -149,28 +149,12 @@ public sealed class BalancePackages5To8Tests
         }
         Assert.InRange(Math.Abs(legacyTotal - compressedTotal), 0m, 0.0000000001m);
 
-        var craft = Read("plugins", "Dynastia.Mechanics.Crafts", "StandardCraftService.cs");
-        var crime = Read("plugins", "Dynastia.Mechanics.Justice", "CriminalOccupationService.cs");
+        var craft = RepositoryFiles.ReadText("plugins", "Dynastia.Mechanics.Crafts", "StandardCraftService.cs");
+        var crime = RepositoryFiles.ReadText("plugins", "Dynastia.Mechanics.Justice", "CriminalOccupationService.cs");
         Assert.Contains("_random.NextInt(0, 94)", craft);
         Assert.Contains("_random.NextInt(", crime);
         Assert.Contains("IncomeRollMinimum", crime);
         Assert.Contains("IncomeRollMaximumInclusive", crime);
-    }
-
-    private static string Read(params string[] parts) =>
-        File.ReadAllText(Path.Combine(new[] { RepositoryRoot() }.Concat(parts).ToArray()));
-
-    private static string RepositoryRoot()
-    {
-        var current = new DirectoryInfo(AppContext.BaseDirectory);
-        while (current is not null)
-        {
-            if (File.Exists(Path.Combine(current.FullName, "Dynastia.slnx")))
-                return current.FullName;
-            current = current.Parent;
-        }
-
-        throw new DirectoryNotFoundException("Could not locate repository root.");
     }
 
     private sealed class RepositoryDataService(string root) : IGameDataService

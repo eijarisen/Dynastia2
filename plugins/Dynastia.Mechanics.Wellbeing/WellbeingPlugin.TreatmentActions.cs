@@ -48,6 +48,13 @@ public sealed partial class WellbeingPlugin
                     new GameActionDefinition
                     {
                         Id = "wellbeing.therapy",
+                        Presentation = new()
+                        {
+                            Emoji = "😊",
+                            Categories = [ActionPresentationCategories.Personal, ActionPresentationCategories.Family],
+                            AdjacencyGroup = ActionPresentationGroups.TreatmentGrowth,
+                            GroupOrder = 20
+                        },
                         Label = variant.Label,
                         Description = variant.Description,
                         DisplayCost = treatmentCost,
@@ -264,6 +271,13 @@ public sealed partial class WellbeingPlugin
                     new GameActionDefinition
                     {
                         Id = "wellbeing.heal_relative",
+                        Presentation = new()
+                        {
+                            Emoji = "❤️‍🩹",
+                            Categories = [ActionPresentationCategories.Personal],
+                            AdjacencyGroup = ActionPresentationGroups.TreatmentGrowth,
+                            GroupOrder = 10
+                        },
                         Label = StripTreatmentCostLabel(
                             presentation.Label),
                         Description = FormatHealDescription(

@@ -8,7 +8,7 @@ public sealed class LocalSocietyStatusBatch1Tests
     [Fact]
     public void StatusProfileBandsAndFarmWorkMatchSuppliedRules()
     {
-        var rules = StatusRules.Load(new RepositoryDataService(RepositoryRoot()));
+        var rules = StatusRules.Load(new RepositoryDataService(RepositoryFiles.Root));
 
         Assert.Equal(15, rules.BaseRenown, 10);
         Assert.Equal(0, rules.BaseReputation, 10);
@@ -30,7 +30,7 @@ public sealed class LocalSocietyStatusBatch1Tests
     [Fact]
     public void StatusInheritanceLocalityAndHouseholdRulesAreImplemented()
     {
-        var source = Read("plugins", "Dynastia.Mechanics.Status", "StandardStatusService.cs");
+        var source = RepositoryFiles.ReadText("plugins", "Dynastia.Mechanics.Status", "StandardStatusService.cs");
 
         Assert.Contains("Math.Min(\n                _rules.InheritedRenownCap", source);
         Assert.Contains("_rules.InheritedReputationFraction", source);
@@ -44,7 +44,7 @@ public sealed class LocalSocietyStatusBatch1Tests
     [Fact]
     public void StatusNetWorthIncludesOutstandingPrivateLoanReceivables()
     {
-        var source = Read("plugins", "Dynastia.Mechanics.Status", "StandardStatusService.cs");
+        var source = RepositoryFiles.ReadText("plugins", "Dynastia.Mechanics.Status", "StandardStatusService.cs");
 
         Assert.Contains("_loans.GetLoansGiven(person).Sum(item => item.RemainingAmount)", source);
         Assert.Contains("+ receivables - debt", source);
@@ -53,11 +53,11 @@ public sealed class LocalSocietyStatusBatch1Tests
     [Fact]
     public void PublicCrimeAffairDivorceAndHistoricalEventsFeedPersistentStatus()
     {
-        var source = Read("plugins", "Dynastia.Mechanics.Status", "StatusPlugin.cs");
+        var source = RepositoryFiles.ReadText("plugins", "Dynastia.Mechanics.Status", "StatusPlugin.cs");
         Assert.Contains("justice.crime", source);
         Assert.DoesNotContain("justice.crime_uncaught", source);
-        Assert.Contains("relationship.affair", Read("data", "LocalSociety", "status_event_effects.csv"));
-        Assert.Contains("relationship.divorce", Read("data", "LocalSociety", "status_event_effects.csv"));
+        Assert.Contains("relationship.affair", RepositoryFiles.ReadText("data", "LocalSociety", "status_event_effects.csv"));
+        Assert.Contains("relationship.divorce", RepositoryFiles.ReadText("data", "LocalSociety", "status_event_effects.csv"));
         Assert.Contains("historical.household_impact", source);
         Assert.Contains("historicalId", source);
         Assert.Contains("statusRenownDelta", source);
@@ -67,10 +67,10 @@ public sealed class LocalSocietyStatusBatch1Tests
     [Fact]
     public void CandidateAndCareerUseTheSameStatusServiceWithCappedBonuses()
     {
-        var candidates = Read("plugins", "Dynastia.Mechanics.Relationships", "StandardPartnerSearchService.cs");
-        var opportunities = Read("plugins", "Dynastia.Mechanics.Career", "StandardCareerService.Opportunities.cs");
-        var promotion = Read("plugins", "Dynastia.Mechanics.Career", "CareerAdvancementYearSystem.cs");
-        var app = Read("src", "Dynastia.App", "Views", "MainWindow.axaml");
+        var candidates = RepositoryFiles.ReadText("plugins", "Dynastia.Mechanics.Relationships", "StandardPartnerSearchService.cs");
+        var opportunities = RepositoryFiles.ReadText("plugins", "Dynastia.Mechanics.Career", "StandardCareerService.Opportunities.cs");
+        var promotion = RepositoryFiles.ReadText("plugins", "Dynastia.Mechanics.Career", "CareerAdvancementYearSystem.cs");
+        var app = RepositoryFiles.ReadText("src", "Dynastia.App", "Views", "MainWindow.axaml");
 
         Assert.Contains("GetCandidateStatus", candidates);
         Assert.Contains("StatusCandidateProfile", candidates);
@@ -79,24 +79,9 @@ public sealed class LocalSocietyStatusBatch1Tests
         Assert.Contains("SelectedFamily.Renown", app);
         Assert.Contains("SelectedFamily.Reputation", app);
 
-        var rules = StatusRules.Load(new RepositoryDataService(RepositoryRoot()));
+        var rules = StatusRules.Load(new RepositoryDataService(RepositoryFiles.Root));
         Assert.Equal(0.025, rules.ApplicationMaximum, 10);
         Assert.Equal(0.045, rules.PromotionMaximum, 10);
-    }
-
-    private static string Read(params string[] parts) =>
-        File.ReadAllText(Path.Combine(new[] { RepositoryRoot() }.Concat(parts).ToArray()));
-
-    private static string RepositoryRoot()
-    {
-        var current = new DirectoryInfo(AppContext.BaseDirectory);
-        while (current is not null)
-        {
-            if (File.Exists(Path.Combine(current.FullName, "Dynastia.slnx")))
-                return current.FullName;
-            current = current.Parent;
-        }
-        throw new DirectoryNotFoundException("Could not locate repository root.");
     }
 
     private sealed class RepositoryDataService(string root) : IGameDataService

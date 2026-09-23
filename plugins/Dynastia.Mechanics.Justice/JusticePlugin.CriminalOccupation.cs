@@ -17,6 +17,13 @@ public sealed partial class JusticePlugin
         actions.Register(new GameActionDefinition
         {
             Id = rules.StartActionId,
+            Presentation = new()
+            {
+                Emoji = "⚙️",
+                Categories = [ActionPresentationCategories.Career],
+                AdjacencyGroup = ActionPresentationGroups.CareerWork,
+                GroupOrder = 60
+            },
             Label = "Commit a Crime",
             Description =
                 "Begin a persistent Life of Crime and attempt the first Heist this year. " +
@@ -73,6 +80,13 @@ public sealed partial class JusticePlugin
         actions.Register(new GameActionDefinition
         {
             Id = rules.StopActionId,
+            Presentation = new()
+            {
+                Emoji = "⚙️",
+                Categories = [ActionPresentationCategories.Career],
+                AdjacencyGroup = ActionPresentationGroups.CareerWork,
+                GroupOrder = 70
+            },
             Label = "Leave Life of Crime",
             Description =
                 "End the criminal occupation. Mastery is preserved, but Life of Crime cannot be started again later.",
@@ -103,6 +117,13 @@ public sealed partial class JusticePlugin
         actions.Register(new GameActionDefinition
         {
             Id = "justice.ask_to_quit_crime",
+            Presentation = new()
+            {
+                Emoji = "🛑",
+                Categories = [ActionPresentationCategories.Career, ActionPresentationCategories.Family],
+                AdjacencyGroup = ActionPresentationGroups.CareerWork,
+                GroupOrder = 80
+            },
             Label = "Ask to Quit Crime",
             Description =
                 "Ask your spouse to leave their Life of Crime. They may refuse; the success chance is the same as Ask to Quit Job.",

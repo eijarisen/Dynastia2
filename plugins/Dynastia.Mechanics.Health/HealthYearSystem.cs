@@ -41,21 +41,52 @@ public sealed class HealthYearSystem : IYearSystem
 
     public void Execute(IGameState gameState)
     {
-        foreach (var person in gameState.People)
-        {
-            if (person.Tags.Has("state.dead") || SimulationState.IsInactive(person)) continue;
-            _health.EnsureHealth(person);
-            var longevity = GetStat(person, "longevity");
-            var immunity = GetStat(person, "immunity");
+        var preparedProviders =
+            _modifiers.Providers
+                .OfType<IPreparedAnnualHealthModifierProvider>()
+                .ToList();
 
-            var change = longevity * 0.5
-                + HouseholdLifestyleRules.GetHealthRegenerationModifier(person)
-                + _modifiers.GetAnnualHealthChange(person)
-                + _health.ApplyAnnualConditionEffects(person);
-            _health.ChangeHealth(person, change);
-            TryNaturalRecovery(gameState, person, immunity);
-            TryMildCondition(gameState, person, immunity);
-            TrySeriousCondition(gameState, person, longevity);
+        var preparedCount =
+            0;
+
+        try
+        {
+            foreach (var provider in
+                preparedProviders)
+            {
+                // Count before Prepare so a provider that partially prepares
+                // and then throws is still cleared by the finally block.
+                preparedCount++;
+                provider.PrepareAnnualHealthContext(
+                    gameState);
+            }
+
+            foreach (var person in gameState.People)
+            {
+                if (person.Tags.Has("state.dead") || SimulationState.IsInactive(person)) continue;
+                _health.EnsureHealth(person);
+                var longevity = GetStat(person, "longevity");
+                var immunity = GetStat(person, "immunity");
+
+                var change = longevity * 0.5
+                    + HouseholdLifestyleRules.GetHealthRegenerationModifier(person)
+                    + _modifiers.GetAnnualHealthChange(person)
+                    + _health.ApplyAnnualConditionEffects(person);
+                _health.ChangeHealth(person, change);
+                TryNaturalRecovery(gameState, person, immunity);
+                TryMildCondition(gameState, person, immunity);
+                TrySeriousCondition(gameState, person, longevity);
+            }
+        }
+        finally
+        {
+            for (var index = 0;
+                index < preparedCount;
+                index++)
+            {
+                preparedProviders[index]
+                    .ClearAnnualHealthContext();
+            }
         }
     }
 

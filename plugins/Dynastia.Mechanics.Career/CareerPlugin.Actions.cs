@@ -16,6 +16,13 @@ public sealed partial class CareerPlugin
             new GameActionDefinition
             {
                 Id = "career.quit_job",
+                Presentation = new()
+                {
+                    Emoji = "🚶",
+                    Categories = [ActionPresentationCategories.Career],
+                    AdjacencyGroup = ActionPresentationGroups.CareerWork,
+                    GroupOrder = 50
+                },
                 Label = "Quit the Job",
                 Description =
                     "Leave employment. Because this resolves after finances, this year's salary is still paid.",
@@ -81,6 +88,13 @@ public sealed partial class CareerPlugin
             new GameActionDefinition
             {
                 Id = "career.work_harder",
+                Presentation = new()
+                {
+                    Emoji = "✨",
+                    Categories = [ActionPresentationCategories.Career, ActionPresentationCategories.Finances],
+                    AdjacencyGroup = ActionPresentationGroups.CareerWork,
+                    GroupOrder = 20
+                },
                 Label = "Work Harder",
                 Description =
                     "Push harder at work. Greatly improves this year's promotion chance and usually brings 10-50% extra salary home, although there is a small chance the extra effort is unpaid. Costs 5 Health, reduces Marriage Satisfaction and each underage child's Happiness. Repeated unsuccessful overwork can also reduce Job Satisfaction and raise burnout risk.",
@@ -158,6 +172,14 @@ public sealed partial class CareerPlugin
             new GameActionDefinition
             {
                 Id = "career.seek_employment",
+                Presentation = new()
+                {
+                    Emoji = "✅",
+                    Categories = [ActionPresentationCategories.Career],
+                    AdjacencyGroup = ActionPresentationGroups.CareerWork,
+                    GroupOrder = 30,
+                    PlacementAnchor = ActionPresentationGroups.EmploymentSearch
+                },
                 Label = "Seek Employment",
                 Description =
                     "Browse concrete vacancies in the current town and apply for one. " +
@@ -244,6 +266,13 @@ public sealed partial class CareerPlugin
             new GameActionDefinition
             {
                 Id = "career.find_another_job",
+                Presentation = new()
+                {
+                    Emoji = "🔎",
+                    Categories = [ActionPresentationCategories.Career],
+                    AdjacencyGroup = ActionPresentationGroups.CareerWork,
+                    GroupOrder = 40
+                },
                 Label = "Find a Better Job",
                 Description =
                     "Browse the same local vacancies while keeping your current job. " +

@@ -124,25 +124,17 @@ public sealed class TownLifeBatch1Tests
     }
 
     [Fact]
-    public void TownAffairsIsAnActionAndUsesCompactInstitutionCenteredUi()
+    public void TownAffairsUsesCompactInstitutionCenteredUi()
     {
-        var root = RepositoryRoot();
+        var root = RepositoryFiles.Root;
         var mainWindow = File.ReadAllText(Path.Combine(
             root, "src", "Dynastia.App", "Views", "MainWindow.axaml"));
         var townWindow = File.ReadAllText(Path.Combine(
             root, "src", "Dynastia.App", "Views", "TownLifeWindow.axaml"));
-        var townViewModel = File.ReadAllText(Path.Combine(
-            root, "src", "Dynastia.App", "ViewModels", "MainWindowViewModel.TownLife.cs"));
-        var actions = File.ReadAllText(Path.Combine(
-            root, "src", "Dynastia.App", "ViewModels", "MainWindowViewModel.Actions.cs"));
         var plugin = File.ReadAllText(Path.Combine(
             root, "plugins", "Dynastia.Mechanics.TownLife", "TownLifePlugin.cs"));
 
         Assert.DoesNotContain("OnTownLifeClick", mainWindow);
-        Assert.Contains("ui.town_affairs", townViewModel);
-        Assert.Contains("CreateTownAffairsPresentationAction", actions);
-        Assert.Contains("Town Affairs", townViewModel);
-        Assert.Contains("City Affairs", townViewModel);
         Assert.Contains("TownProsperityGraph", townWindow);
         Assert.Contains("Local Economy", townWindow);
         Assert.Contains("InstitutionCards", townWindow);
@@ -167,20 +159,7 @@ public sealed class TownLifeBatch1Tests
         };
 
     private static JsonGameDataService DataService() =>
-        new(Path.Combine(RepositoryRoot(), "data"));
-
-    private static string RepositoryRoot()
-    {
-        var current = new DirectoryInfo(AppContext.BaseDirectory);
-        while (current is not null)
-        {
-            if (File.Exists(Path.Combine(current.FullName, "Dynastia.slnx")))
-                return current.FullName;
-            current = current.Parent;
-        }
-
-        throw new DirectoryNotFoundException("Could not locate repository root.");
-    }
+        new(Path.Combine(RepositoryFiles.Root, "data"));
 
     private sealed class StubOpportunityService : ILocalCareerOpportunityService
     {

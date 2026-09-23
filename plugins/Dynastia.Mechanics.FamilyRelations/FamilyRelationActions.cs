@@ -44,6 +44,11 @@ internal static partial class FamilyRelationActions
         IGameState gameState) => new()
     {
         Id = "family_relations.improve",
+        Presentation = new()
+        {
+            Emoji = "❤️‍🩹",
+            Categories = [ActionPresentationCategories.Personal]
+        },
         Label = "Improve Relations",
         Description = "Spend meaningful time together. Successful contact increases Familiarity and Sympathy, with a small positive spillover to other family ties between the two households. Very hostile relatives may refuse.",
         Mode = ActionExecutionMode.Queued,

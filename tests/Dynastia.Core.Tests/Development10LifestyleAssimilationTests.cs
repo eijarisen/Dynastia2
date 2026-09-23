@@ -36,17 +36,12 @@ public sealed class Development10LifestyleAssimilationTests
     }
 
     [Fact]
-    public void TownAffairsSupportsAdultHouseholdResidentsAndKeepsInstitutionGrid()
+    public void TownAffairsKeepsInstitutionGrid()
     {
-        var root = RepositoryRoot();
-        var viewModel = File.ReadAllText(Path.Combine(
-            root, "src", "Dynastia.App", "ViewModels", "MainWindowViewModel.TownLife.cs"));
+        var root = RepositoryFiles.Root;
         var window = File.ReadAllText(Path.Combine(
             root, "src", "Dynastia.App", "Views", "TownLifeWindow.axaml"));
 
-        Assert.Contains("target.Age < 18", viewModel);
-        Assert.Contains("GetHouseholdMemberIds(actor)", viewModel);
-        Assert.DoesNotContain("_succession.IsControllable(target)", viewModel);
         Assert.Contains("primitives:UniformGrid Columns=\"3\"", window);
         Assert.Contains("<TabControl", window);
         Assert.Contains("<ScrollViewer", window);
@@ -55,15 +50,13 @@ public sealed class Development10LifestyleAssimilationTests
     [Fact]
     public void HouseholdBudgetGraphLivesInPaperMenuAndLifestyleButtonsExplainAndClose()
     {
-        var root = RepositoryRoot();
+        var root = RepositoryFiles.Root;
         var main = File.ReadAllText(Path.Combine(
             root, "src", "Dynastia.App", "Views", "MainWindow.axaml"));
         var inventory = File.ReadAllText(Path.Combine(
             root, "src", "Dynastia.App", "Views", "FamilyInventoryWindow.axaml"));
         var inventoryCodeBehind = File.ReadAllText(Path.Combine(
             root, "src", "Dynastia.App", "Views", "FamilyInventoryWindow.axaml.cs"));
-        var actions = File.ReadAllText(Path.Combine(
-            root, "src", "Dynastia.App", "ViewModels", "MainWindowViewModel.Actions.cs"));
 
         Assert.DoesNotContain("HouseholdBudgetGraph", main);
         Assert.Contains("HouseholdBudgetText", main);
@@ -79,21 +72,17 @@ public sealed class Development10LifestyleAssimilationTests
         Assert.Contains("-10% living costs", inventory);
         Assert.Contains("if (!result.Success)", inventoryCodeBehind);
         Assert.Contains("Close();", inventoryCodeBehind);
-        Assert.Contains("economy.lifestyle.", actions);
     }
 
     [Fact]
     public void PsychotherapyIsPresentedThroughTownAffairsHealthWithDynamicPrice()
     {
-        var root = RepositoryRoot();
-        var actions = File.ReadAllText(Path.Combine(
-            root, "src", "Dynastia.App", "ViewModels", "MainWindowViewModel.Actions.cs"));
+        var root = RepositoryFiles.Root;
         var townAffairs = File.ReadAllText(Path.Combine(
             root, "src", "Dynastia.App", "ViewModels", "MainWindowViewModel.TownLife.cs"));
         var treatment = File.ReadAllText(Path.Combine(
             root, "plugins", "Dynastia.Mechanics.Wellbeing", "WellbeingPlugin.TreatmentActions.cs"));
 
-        Assert.DoesNotContain("SelfImprovementUiActionId", actions);
         Assert.Contains("wellbeing.therapy", townAffairs);
         Assert.Contains("GetCandidateActions(actor, subject)", townAffairs);
         Assert.Contains("TownAffairsHealthActionIds.Contains(action.Id)", townAffairs);
@@ -106,7 +95,7 @@ public sealed class Development10LifestyleAssimilationTests
     [Fact]
     public void AssimilationIsRareAndPolishNamingPersistsIntoNewborns()
     {
-        var root = RepositoryRoot();
+        var root = RepositoryFiles.Root;
         var assimilation = File.ReadAllText(Path.Combine(
             root, "plugins", "Dynastia.Mechanics.Households", "AssimilationYearSystem.cs"));
         var surnameAction = File.ReadAllText(Path.Combine(
@@ -125,16 +114,4 @@ public sealed class Development10LifestyleAssimilationTests
         Assert.Contains("? \"polish\"", reproduction);
     }
 
-    private static string RepositoryRoot()
-    {
-        var current = new DirectoryInfo(AppContext.BaseDirectory);
-        while (current is not null)
-        {
-            if (File.Exists(Path.Combine(current.FullName, "Dynastia.slnx")))
-                return current.FullName;
-            current = current.Parent;
-        }
-
-        throw new DirectoryNotFoundException("Could not locate repository root.");
-    }
 }

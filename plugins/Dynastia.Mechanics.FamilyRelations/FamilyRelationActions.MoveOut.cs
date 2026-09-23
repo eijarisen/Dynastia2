@@ -17,6 +17,11 @@ internal static partial class FamilyRelationActions
         return new GameActionDefinition
         {
             Id = "household.ask_move_out",
+            Presentation = new()
+            {
+                Emoji = "🚪",
+                Categories = [ActionPresentationCategories.Family]
+            },
             Label = "Ask to Move Out",
             Description =
                 "Ask any selected adult resident to establish a separate household. A spare house guarantees the move; otherwise they may refuse and the relationship deteriorates.",

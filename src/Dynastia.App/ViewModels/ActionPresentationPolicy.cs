@@ -277,131 +277,142 @@ internal static class ActionPresentationPolicy
         return categories;
     }
 
+    public static ActionPresentationMetadata Resolve(GameActionDefinition definition)
+    {
+        if (definition.Presentation is { } presentation
+            && !ReferenceEquals(presentation, ActionPresentationMetadata.Empty))
+        {
+            return presentation;
+        }
+
+        var legacy = LegacyPlacement.TryGetValue(definition.Id, out var placement)
+            ? placement
+            : ActionPresentationMetadata.Empty;
+        return legacy with
+        {
+            Categories = GetCategories(definition.Id)
+                .Select(category => category.ToString().ToLowerInvariant()).ToArray(),
+            ShowInPrimaryActionList = !definition.Id.Equals("church.attend", StringComparison.OrdinalIgnoreCase)
+                && !definition.Id.Equals("personality.religious_study", StringComparison.OrdinalIgnoreCase)
+        };
+    }
+
+    public static IReadOnlySet<ActionCategory> GetCategories(GameActionDefinition definition)
+    {
+        var metadata = Resolve(definition);
+        var categories = new HashSet<ActionCategory>();
+        foreach (var id in metadata.Categories)
+        {
+            if (CategoryIds.TryGetValue(id, out var category))
+                categories.Add(category);
+        }
+
+        // Unknown category IDs must not make a third-party action unreachable.
+        if (categories.Count == 0 && metadata.Categories.Count > 0)
+            categories.Add(ActionCategory.Personal);
+        return categories;
+    }
+
     public static IReadOnlyList<GameActionDefinition> Order(
         IReadOnlyList<GameActionDefinition> source)
     {
-        var actions =
-            source.ToList();
+        var indexed = source.Select((definition, index) =>
+            new PresentedAction(definition, Resolve(definition), index)).ToArray();
+        var groups = indexed
+            .Where(action => !string.IsNullOrWhiteSpace(action.Presentation.AdjacencyGroup))
+            .GroupBy(action => action.Presentation.AdjacencyGroup!, StringComparer.OrdinalIgnoreCase)
+            .ToDictionary(group => group.Key,
+                group => group.OrderBy(action => action.Presentation.GroupOrder)
+                    .ThenBy(action => action.OriginalIndex).ToArray(),
+                StringComparer.OrdinalIgnoreCase);
+        var emitted = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        var actions = new List<PresentedAction>(indexed.Length);
 
-        GroupTogether(
-            actions,
-            "wellbeing.recover",
-            "career.work_harder",
-            "career.seek_employment",
-            "career.find_another_job",
-            "career.quit_job",
-            "justice.commit_crime",
-            "justice.leave_life_of_crime",
-            "justice.ask_to_quit_crime");
-
-        GroupTogether(
-            actions,
-            "loan.take",
-            "loan.give");
-
-        GroupTogether(
-            actions,
-            "household.buy_house",
-            "household.sell_house",
-            "farming.buy_farmland",
-            "farming.sell_farmland",
-            "heirloom.sell");
-
-        GroupTogether(
-            actions,
-            "reproduction.try_for_baby",
-            "relationship.repair_marriage",
-            "relationship.divorce_spouse");
-
-        GroupTogether(
-            actions,
-            "wellbeing.heal_relative",
-            "wellbeing.therapy",
-            "education.get_education",
-            "stats.improve_strength",
-            "stats.improve_intellect",
-            "stats.improve_immunity",
-            "stats.improve_appeal",
-            "stats.improve_longevity",
-            "stats.improve_fertility",
-            "personality.religious_study");
-
-        var connections =
-            actions.FirstOrDefault(
-                action =>
-                    action.Id.Equals(
-                        "career.use_family_connections",
-                        StringComparison.OrdinalIgnoreCase));
-
-        if (connections is not null)
+        // Emit each group at its first original occurrence; unrelated actions keep
+        // their registry order. This is not a global numeric sort.
+        foreach (var action in indexed)
         {
-            actions.Remove(connections);
-
-            var seekIndex =
-                actions.FindIndex(
-                    action =>
-                        action.Id.Equals(
-                            "career.seek_employment",
-                            StringComparison.OrdinalIgnoreCase)
-                        || action.Id.Equals(
-                            "career.help_seek_employment",
-                            StringComparison.OrdinalIgnoreCase)
-                        || action.Id.Equals(
-                            "career.help_find_better_job",
-                            StringComparison.OrdinalIgnoreCase));
-
-            actions.Insert(
-                seekIndex >= 0
-                    ? seekIndex + 1
-                    : actions.Count,
-                connections);
+            var group = action.Presentation.AdjacencyGroup;
+            if (string.IsNullOrWhiteSpace(group))
+                actions.Add(action);
+            else if (emitted.Add(group))
+                actions.AddRange(groups[group]);
         }
 
-        var pass =
-            actions.FirstOrDefault(
-                action =>
-                    action.Id.Equals(
-                        "turn.pass",
-                        StringComparison.OrdinalIgnoreCase));
-
-        if (pass is not null)
+        // Family Connections follows the first self/assisted job search. An
+        // absent anchor places the followers at the end, before PlaceLast items.
+        // Both ends are metadata-driven, including for third-party actions.
+        var followers = indexed
+            .Where(action => !string.IsNullOrWhiteSpace(action.Presentation.PlaceAfterAnchor))
+            .GroupBy(action => action.Presentation.PlaceAfterAnchor!, StringComparer.OrdinalIgnoreCase)
+            .OrderBy(group => group.Min(action => action.OriginalIndex));
+        foreach (var group in followers)
         {
-            actions.Remove(pass);
-            actions.Add(pass);
+            var members = group.OrderBy(action => action.Presentation.GroupOrder)
+                .ThenBy(action => action.OriginalIndex).ToArray();
+            foreach (var member in members)
+                actions.Remove(member);
+            var anchorIndex = actions.FindIndex(action => string.Equals(
+                action.Presentation.PlacementAnchor, group.Key, StringComparison.OrdinalIgnoreCase));
+            actions.InsertRange(anchorIndex >= 0 ? anchorIndex + 1 : actions.Count, members);
         }
 
-        return actions;
+        return actions.Where(action => !action.Presentation.PlaceLast)
+            .Concat(actions.Where(action => action.Presentation.PlaceLast))
+            .Select(action => action.Definition).ToArray();
     }
 
-    private static void GroupTogether(
-        List<GameActionDefinition> actions,
-        params string[] orderedIds)
-    {
-        var selected =
-            orderedIds
-                .Select(id =>
-                    actions.FirstOrDefault(action =>
-                        action.Id.Equals(
-                            id,
-                            StringComparison.OrdinalIgnoreCase)))
-                .Where(action => action is not null)
-                .Cast<GameActionDefinition>()
-                .ToList();
+    private sealed record PresentedAction(
+        GameActionDefinition Definition,
+        ActionPresentationMetadata Presentation,
+        int OriginalIndex);
 
-        if (selected.Count < 2)
-            return;
+    private static readonly IReadOnlyDictionary<string, ActionCategory> CategoryIds =
+        new Dictionary<string, ActionCategory>(StringComparer.OrdinalIgnoreCase)
+        {
+            [ActionPresentationCategories.Personal] = ActionCategory.Personal,
+            [ActionPresentationCategories.Career] = ActionCategory.Career,
+            [ActionPresentationCategories.Family] = ActionCategory.Family,
+            [ActionPresentationCategories.Finances] = ActionCategory.Finances,
+            [ActionPresentationCategories.Skills] = ActionCategory.Skills
+        };
 
-        var insertIndex =
-            selected
-                .Select(action => actions.IndexOf(action))
-                .Min();
-
-        foreach (var action in selected)
-            actions.Remove(action);
-
-        actions.InsertRange(
-            insertIndex,
-            selected);
-    }
-
+    // Frozen compatibility table. First-party definitions own their presentation;
+    // new metadata-enabled actions require no addition here or in ActionEmojiMap.
+    private static readonly IReadOnlyDictionary<string, ActionPresentationMetadata> LegacyPlacement =
+        new Dictionary<string, ActionPresentationMetadata>(StringComparer.OrdinalIgnoreCase)
+        {
+            ["wellbeing.recover"] = new() { AdjacencyGroup = ActionPresentationGroups.CareerWork, GroupOrder = 10 },
+            ["career.work_harder"] = new() { AdjacencyGroup = ActionPresentationGroups.CareerWork, GroupOrder = 20 },
+            ["career.seek_employment"] = new() { AdjacencyGroup = ActionPresentationGroups.CareerWork, GroupOrder = 30, PlacementAnchor = ActionPresentationGroups.EmploymentSearch },
+            ["career.find_another_job"] = new() { AdjacencyGroup = ActionPresentationGroups.CareerWork, GroupOrder = 40 },
+            ["career.quit_job"] = new() { AdjacencyGroup = ActionPresentationGroups.CareerWork, GroupOrder = 50 },
+            ["justice.commit_crime"] = new() { AdjacencyGroup = ActionPresentationGroups.CareerWork, GroupOrder = 60 },
+            ["justice.leave_life_of_crime"] = new() { AdjacencyGroup = ActionPresentationGroups.CareerWork, GroupOrder = 70 },
+            ["justice.ask_to_quit_crime"] = new() { AdjacencyGroup = ActionPresentationGroups.CareerWork, GroupOrder = 80 },
+            ["loan.take"] = new() { AdjacencyGroup = ActionPresentationGroups.Loans, GroupOrder = 10 },
+            ["loan.give"] = new() { AdjacencyGroup = ActionPresentationGroups.Loans, GroupOrder = 20 },
+            ["household.buy_house"] = new() { AdjacencyGroup = ActionPresentationGroups.PropertyMarket, GroupOrder = 10 },
+            ["household.sell_house"] = new() { AdjacencyGroup = ActionPresentationGroups.PropertyMarket, GroupOrder = 20 },
+            ["farming.buy_farmland"] = new() { AdjacencyGroup = ActionPresentationGroups.PropertyMarket, GroupOrder = 30 },
+            ["farming.sell_farmland"] = new() { AdjacencyGroup = ActionPresentationGroups.PropertyMarket, GroupOrder = 40 },
+            ["heirloom.sell"] = new() { AdjacencyGroup = ActionPresentationGroups.PropertyMarket, GroupOrder = 50 },
+            ["reproduction.try_for_baby"] = new() { AdjacencyGroup = ActionPresentationGroups.MarriageFamily, GroupOrder = 10 },
+            ["relationship.repair_marriage"] = new() { AdjacencyGroup = ActionPresentationGroups.MarriageFamily, GroupOrder = 20 },
+            ["relationship.divorce_spouse"] = new() { AdjacencyGroup = ActionPresentationGroups.MarriageFamily, GroupOrder = 30 },
+            ["wellbeing.heal_relative"] = new() { AdjacencyGroup = ActionPresentationGroups.TreatmentGrowth, GroupOrder = 10 },
+            ["wellbeing.therapy"] = new() { AdjacencyGroup = ActionPresentationGroups.TreatmentGrowth, GroupOrder = 20 },
+            ["education.get_education"] = new() { AdjacencyGroup = ActionPresentationGroups.TreatmentGrowth, GroupOrder = 30 },
+            ["stats.improve_strength"] = new() { AdjacencyGroup = ActionPresentationGroups.TreatmentGrowth, GroupOrder = 40 },
+            ["stats.improve_intellect"] = new() { AdjacencyGroup = ActionPresentationGroups.TreatmentGrowth, GroupOrder = 50 },
+            ["stats.improve_immunity"] = new() { AdjacencyGroup = ActionPresentationGroups.TreatmentGrowth, GroupOrder = 60 },
+            ["stats.improve_appeal"] = new() { AdjacencyGroup = ActionPresentationGroups.TreatmentGrowth, GroupOrder = 70 },
+            ["stats.improve_longevity"] = new() { AdjacencyGroup = ActionPresentationGroups.TreatmentGrowth, GroupOrder = 80 },
+            ["stats.improve_fertility"] = new() { AdjacencyGroup = ActionPresentationGroups.TreatmentGrowth, GroupOrder = 90 },
+            ["personality.religious_study"] = new() { AdjacencyGroup = ActionPresentationGroups.TreatmentGrowth, GroupOrder = 100 },
+            ["career.help_seek_employment"] = new() { PlacementAnchor = ActionPresentationGroups.EmploymentSearch },
+            ["career.help_find_better_job"] = new() { PlacementAnchor = ActionPresentationGroups.EmploymentSearch },
+            ["career.use_family_connections"] = new() { PlaceAfterAnchor = ActionPresentationGroups.EmploymentSearch },
+            ["turn.pass"] = new() { PlaceLast = true },
+        };
 }

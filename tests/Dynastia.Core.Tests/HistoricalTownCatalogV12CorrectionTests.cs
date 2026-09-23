@@ -138,7 +138,7 @@ public sealed class HistoricalTownCatalogV12CorrectionTests
     [Fact]
     public void V12TownOpportunityRowsDoNotPrecedeMergedTownIdentities()
     {
-        var root = RepositoryRoot();
+        var root = RepositoryFiles.Root;
         var rows = File.ReadAllLines(Path.Combine(root, "data", "Towns", "town_opportunities.csv"))
             .Where(line => !string.IsNullOrWhiteSpace(line))
             .Skip(1)
@@ -155,22 +155,9 @@ public sealed class HistoricalTownCatalogV12CorrectionTests
 
     private static HistoricalTownCatalog Load()
     {
-        var root = RepositoryRoot();
+        var root = RepositoryFiles.Root;
         return HistoricalTownCatalog.Load(
             new JsonGameDataService(Path.Combine(root, "data")));
     }
 
-    private static string RepositoryRoot()
-    {
-        var current = new DirectoryInfo(AppContext.BaseDirectory);
-        while (current is not null)
-        {
-            if (File.Exists(Path.Combine(current.FullName, "Dynastia.slnx")))
-                return current.FullName;
-
-            current = current.Parent;
-        }
-
-        throw new DirectoryNotFoundException("Could not locate repository root.");
-    }
 }

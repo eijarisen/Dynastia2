@@ -5,7 +5,7 @@ public sealed class Development13PostAdditionsRegressionTests
     [Fact]
     public void TutorSelectionUsesDistinctChildOptionsLocal()
     {
-        var source = Read(
+        var source = RepositoryFiles.ReadText(
             "src", "Dynastia.App", "ViewModels",
             "MainWindowViewModel.CraftsEducation.cs");
 
@@ -16,10 +16,10 @@ public sealed class Development13PostAdditionsRegressionTests
     [Fact]
     public void CriminalOccupationPublishesCrimeOutcomeWithoutSeparateIncomeNews()
     {
-        var service = Read(
+        var service = RepositoryFiles.ReadText(
             "plugins", "Dynastia.Mechanics.Justice",
             "CriminalOccupationService.cs");
-        var templates = Read(
+        var templates = RepositoryFiles.ReadText(
             "data", "LocalSociety", "extension_news_templates.csv");
 
         Assert.DoesNotContain("justice.criminal_income", service);
@@ -31,7 +31,7 @@ public sealed class Development13PostAdditionsRegressionTests
     [Fact]
     public void OverlapLocationEntriesUseCompletedClicksForReliableDoubleClickActivation()
     {
-        var map = Read(
+        var map = RepositoryFiles.ReadText(
             "src", "Dynastia.App", "Map", "Views", "TownMapPanel.cs");
 
         Assert.Contains("button.Click +=", map);
@@ -43,7 +43,7 @@ public sealed class Development13PostAdditionsRegressionTests
     [Fact]
     public void LifeOfCrimeOccupationShowsOnlyArchetypeAndMastery()
     {
-        var career = Read(
+        var career = RepositoryFiles.ReadText(
             "plugins", "Dynastia.Mechanics.Career", "StandardCareerService.cs");
 
         Assert.Contains("$\"{crime.ArchetypeName} · {crime.MasteryName}\"", career);
@@ -53,13 +53,13 @@ public sealed class Development13PostAdditionsRegressionTests
     [Fact]
     public void DivorceCreatesAndPreservesIndependentPeripheralHouseholds()
     {
-        var breakups = Read(
+        var breakups = RepositoryFiles.ReadText(
             "plugins", "Dynastia.Mechanics.Relationships",
             "RelationshipBreakupService.cs");
-        var reconciliation = Read(
+        var reconciliation = RepositoryFiles.ReadText(
             "plugins", "Dynastia.Mechanics.Households",
             "StandardHouseholdService.RelationshipReconciliation.cs");
-        var succession = Read(
+        var succession = RepositoryFiles.ReadText(
             "plugins", "Dynastia.Mechanics.Households",
             "StandardHouseholdService.Succession.cs");
 
@@ -77,26 +77,11 @@ public sealed class Development13PostAdditionsRegressionTests
     [Fact]
     public void PermanentInjuryHelperUsesItsParameterName()
     {
-        var tests = Read(
+        var tests = RepositoryFiles.ReadText(
             "tests", "Dynastia.Core.Tests", "Development13AdditionsTests.cs");
 
         Assert.Contains("Assert.Equal(newsworthy, condition.Newsworthy);", tests);
         Assert.DoesNotContain("Assert.Equal(newsworthiness", tests);
     }
 
-    private static string Read(params string[] parts) =>
-        File.ReadAllText(Path.Combine(new[] { RepositoryRoot() }.Concat(parts).ToArray()));
-
-    private static string RepositoryRoot()
-    {
-        var current = new DirectoryInfo(AppContext.BaseDirectory);
-        while (current is not null)
-        {
-            if (File.Exists(Path.Combine(current.FullName, "Dynastia.slnx")))
-                return current.FullName;
-            current = current.Parent;
-        }
-
-        throw new DirectoryNotFoundException("Could not locate repository root.");
-    }
 }

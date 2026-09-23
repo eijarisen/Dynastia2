@@ -28,6 +28,11 @@ internal static class CommunityConnectionActions
         IFamilyService family) => new()
     {
         Id = "community.connection.improve",
+        Presentation = new()
+        {
+            Emoji = "🤝",
+            Categories = [ActionPresentationCategories.Personal]
+        },
         Label = "Improve Relations",
         Description = "Spend time maintaining this acquaintance. Connections improve more slowly than close family ties.",
         Mode = ActionExecutionMode.Queued,
@@ -51,6 +56,11 @@ internal static class CommunityConnectionActions
         IFamilyService family) => new()
     {
         Id = "community.connection.send_money",
+        Presentation = new()
+        {
+            Emoji = "🎁",
+            Categories = [ActionPresentationCategories.Personal]
+        },
         Label = "Send Money",
         Description = "Send financial help in full-thousand increments. A meaningful gift improves the connection and may improve their estimated wealth.",
         Mode = ActionExecutionMode.Queued,
@@ -88,6 +98,11 @@ internal static class CommunityConnectionActions
         IFamilyService family) => new()
     {
         Id = "community.connection.give_house",
+        Presentation = new()
+        {
+            Emoji = "🎁",
+            Categories = [ActionPresentationCategories.Personal]
+        },
         Label = "Give House",
         Description = "Give one non-residence house to this connection. The real property leaves the household and becomes an abstract asset of the acquaintance.",
         Mode = ActionExecutionMode.Queued,
@@ -127,6 +142,11 @@ internal static class CommunityConnectionActions
         IFamilyService family) => new()
     {
         Id = "community.connection.give_farmland",
+        Presentation = new()
+        {
+            Emoji = "🎁",
+            Categories = [ActionPresentationCategories.Personal]
+        },
         Label = "Give Farmland",
         Description = "Give one real farmland parcel to this connection. The parcel leaves the household and becomes an abstract asset of the acquaintance.",
         Mode = ActionExecutionMode.Queued,
@@ -162,6 +182,11 @@ internal static class CommunityConnectionActions
         IFamilyService family) => new()
     {
         Id = "community.connection.request_money",
+        Presentation = new()
+        {
+            Emoji = "🙏",
+            Categories = [ActionPresentationCategories.Personal]
+        },
         Label = "Request Money",
         Description = "Ask this acquaintance for money. The request damages the relationship before the outcome, and refusal damages it further. Acceptance is deliberately rare.",
         Mode = ActionExecutionMode.Queued,
@@ -200,6 +225,11 @@ internal static class CommunityConnectionActions
         IFamilyService family) => new()
     {
         Id = "community.connection.request_house",
+        Presentation = new()
+        {
+            Emoji = "🙏",
+            Categories = [ActionPresentationCategories.Personal]
+        },
         Label = "Request House",
         Description = "Ask for an abstract spare house. The relationship is strained immediately and acceptance starts from only 3% before modifiers.",
         Mode = ActionExecutionMode.Queued,
@@ -232,6 +262,11 @@ internal static class CommunityConnectionActions
         IFamilyService family) => new()
     {
         Id = "community.connection.request_farmland",
+        Presentation = new()
+        {
+            Emoji = "🙏",
+            Categories = [ActionPresentationCategories.Personal]
+        },
         Label = "Request Farmland",
         Description = "Ask for an abstract spare farmland parcel. The relationship is strained immediately and acceptance starts from only 4% before modifiers.",
         Mode = ActionExecutionMode.Queued,

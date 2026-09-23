@@ -5,9 +5,6 @@ namespace Dynastia.App.ViewModels;
 
 public sealed partial class MainWindowViewModel
 {
-    private const string CraftProfessionUiActionId =
-        "ui.craft_profession";
-
     private const decimal StandardEducationUiCost =
         5000m;
 
@@ -16,19 +13,6 @@ public sealed partial class MainWindowViewModel
 
     private const decimal PrivateTutorUiCost =
         3000m;
-
-    private static GameActionDefinition CreateCraftProfessionPresentationAction() =>
-        new()
-        {
-            Id = CraftProfessionUiActionId,
-            Label = "Work in a Profession",
-            Description =
-                "Choose one of the known Crafts to use as a self-employed profession.",
-            Mode = ActionExecutionMode.Queued,
-            QueuePhase = YearPhase.LifeEvents,
-            IsAvailable = _ => true,
-            Execute = _ => new GameActionResult(false)
-        };
 
     public IReadOnlyList<PropertySelectionOption> GetCraftProfessionOptions()
     {

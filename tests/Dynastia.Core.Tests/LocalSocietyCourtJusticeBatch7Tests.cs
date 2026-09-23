@@ -10,10 +10,10 @@ public sealed class LocalSocietyCourtJusticeBatch7Tests
     public void CourtProtectionUsesWarmOrCloseBestRelativeAndExactTiers()
     {
         var rules = CourtJusticeRules.Load(
-            new RepositoryDataService(RepositoryRoot()));
-        var service = Read(
+            new RepositoryDataService(RepositoryFiles.Root));
+        var service = RepositoryFiles.ReadText(
             "plugins", "Dynastia.Mechanics.Justice", "StandardJusticeService.cs");
-        var relations = Read(
+        var relations = RepositoryFiles.ReadText(
             "src", "Dynastia.Contracts", "IFamilyRelationService.cs");
 
         Assert.Contains("relation.Sympathy >= 60", relations);
@@ -34,7 +34,7 @@ public sealed class LocalSocietyCourtJusticeBatch7Tests
     public void MastermindAndExceptionalProtectionRespectHalfSentenceFloor()
     {
         var rules = CourtJusticeRules.Load(
-            new RepositoryDataService(RepositoryRoot()));
+            new RepositoryDataService(RepositoryFiles.Root));
         var exceptional = rules.ResolveProtection(5d);
         var rawCombined = 0.80m * exceptional.SentenceMultiplier;
         var finalCombined = Math.Max(
@@ -44,9 +44,9 @@ public sealed class LocalSocietyCourtJusticeBatch7Tests
         Assert.Equal(0.48m, rawCombined);
         Assert.Equal(0.50m, finalCombined);
 
-        var crime = Read(
+        var crime = RepositoryFiles.ReadText(
             "plugins", "Dynastia.Mechanics.Justice", "CriminalOccupationService.cs");
-        var justice = Read(
+        var justice = RepositoryFiles.ReadText(
             "plugins", "Dynastia.Mechanics.Justice", "StandardJusticeService.cs");
         Assert.Contains("_justice.ConvictKnownOffense(", crime);
         Assert.Contains("CombinedSentenceMultiplierFloor", justice);
@@ -57,10 +57,10 @@ public sealed class LocalSocietyCourtJusticeBatch7Tests
     public void BailIsExpensiveQueuedGuaranteedWhenAffordableAndRecordPersists()
     {
         var rules = CourtJusticeRules.Load(
-            new RepositoryDataService(RepositoryRoot()));
-        var actions = Read(
+            new RepositoryDataService(RepositoryFiles.Root));
+        var actions = RepositoryFiles.ReadText(
             "plugins", "Dynastia.Mechanics.Justice", "JusticePlugin.Court.cs");
-        var state = Read(
+        var state = RepositoryFiles.ReadText(
             "plugins", "Dynastia.Mechanics.Justice", "JusticeComponent.cs");
 
         Assert.Equal(20_000m, rules.Bail.MinimumCost);
@@ -78,10 +78,10 @@ public sealed class LocalSocietyCourtJusticeBatch7Tests
     public void EscapeIsIntellectFiveOncePerImprisonmentAndFailureAddsThreeYears()
     {
         var rules = CourtJusticeRules.Load(
-            new RepositoryDataService(RepositoryRoot()));
-        var actions = Read(
+            new RepositoryDataService(RepositoryFiles.Root));
+        var actions = RepositoryFiles.ReadText(
             "plugins", "Dynastia.Mechanics.Justice", "JusticePlugin.Court.cs");
-        var state = Read(
+        var state = RepositoryFiles.ReadText(
             "plugins", "Dynastia.Mechanics.Justice", "JusticeComponent.cs");
 
         Assert.Equal(5, rules.Escape.RequiresIntellect);
@@ -99,10 +99,10 @@ public sealed class LocalSocietyCourtJusticeBatch7Tests
     public void StolenHeirloomRiskOccursOnlyOnSaleAndUsesProtectionTier()
     {
         var rules = CourtJusticeRules.Load(
-            new RepositoryDataService(RepositoryRoot()));
-        var heirlooms = Read(
+            new RepositoryDataService(RepositoryFiles.Root));
+        var heirlooms = RepositoryFiles.ReadText(
             "plugins", "Dynastia.Mechanics.Heirlooms", "HeirloomsPlugin.cs");
-        var status = Read(
+        var status = RepositoryFiles.ReadText(
             "data", "LocalSociety", "status_extension_event_effects.csv");
 
         Assert.True(rules.StolenHeirloomSale.KeepingIsHarmless);
@@ -155,11 +155,11 @@ public sealed class LocalSocietyCourtJusticeBatch7Tests
     [Fact]
     public void CourtTownAffairsShowsInstitutionProtectionActionsRecordAndRisk()
     {
-        var model = Read(
+        var model = RepositoryFiles.ReadText(
             "src", "Dynastia.App", "ViewModels", "MainWindowViewModel.TownLife.cs");
-        var window = Read(
+        var window = RepositoryFiles.ReadText(
             "src", "Dynastia.App", "Views", "TownLifeWindow.axaml");
-        var relations = Read(
+        var relations = RepositoryFiles.ReadText(
             "src", "Dynastia.App", "ViewModels", "MainWindowViewModel.Relations.cs");
 
         Assert.Contains("GetTownAffairsCourtModel", model);
@@ -176,30 +176,14 @@ public sealed class LocalSocietyCourtJusticeBatch7Tests
         Assert.DoesNotContain("Not imprisoned.", window);
         Assert.DoesNotContain("Selling a stolen Heirloom", window);
         Assert.DoesNotContain("GetFamilyRelationsJusticeActions", relations);
-        var familyWindow = Read(
+        var familyWindow = RepositoryFiles.ReadText(
             "src", "Dynastia.App", "Views", "FamilyRelationsWindow.axaml");
         Assert.DoesNotContain("Imprisoned Household Members", familyWindow);
         Assert.DoesNotContain("JusticeActions", familyWindow);
-        var actions = Read(
+        var actions = RepositoryFiles.ReadText(
             "plugins", "Dynastia.Mechanics.Justice", "JusticePlugin.Court.cs");
         Assert.Contains("Id = rules.Bail.ActionId", actions);
         Assert.Contains("Id = rules.Escape.ActionId", actions);
-    }
-
-    private static string Read(params string[] parts) =>
-        File.ReadAllText(Path.Combine(new[] { RepositoryRoot() }.Concat(parts).ToArray()));
-
-    private static string RepositoryRoot()
-    {
-        var current = new DirectoryInfo(AppContext.BaseDirectory);
-        while (current is not null)
-        {
-            if (File.Exists(Path.Combine(current.FullName, "Dynastia.slnx")))
-                return current.FullName;
-            current = current.Parent;
-        }
-
-        throw new DirectoryNotFoundException("Could not locate repository root.");
     }
 
     private sealed class RepositoryDataService(string root) : IGameDataService

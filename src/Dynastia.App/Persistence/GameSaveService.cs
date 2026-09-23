@@ -252,25 +252,21 @@ public sealed partial class GameSaveService : IYearExecutionBoundary
                 true,
                 0));
 
-        var prepared = PrepareComponents(snapshot);
-        return new SaveCheckpoint(this, snapshot, prepared);
+        return new SaveCheckpoint(this, snapshot);
     }
 
     private sealed class SaveCheckpoint : IYearExecutionCheckpoint
     {
         private readonly GameSaveService _owner;
         private readonly DesktopSaveEnvelope _snapshot;
-        private readonly PreparedComponents _prepared;
         private bool _restored;
 
         public SaveCheckpoint(
             GameSaveService owner,
-            DesktopSaveEnvelope snapshot,
-            PreparedComponents prepared)
+            DesktopSaveEnvelope snapshot)
         {
             _owner = owner;
             _snapshot = snapshot;
-            _prepared = prepared;
         }
 
         public void Restore()
@@ -278,7 +274,14 @@ public sealed partial class GameSaveService : IYearExecutionBoundary
             if (_restored)
                 return;
 
-            _owner.Apply(_snapshot, _prepared);
+            var prepared =
+                _owner.PrepareComponents(
+                    _snapshot);
+
+            _owner.Apply(
+                _snapshot,
+                prepared);
+
             _restored = true;
         }
     }

@@ -160,7 +160,7 @@ public sealed class HistoricalEventsReworkTests
     [Fact]
     public void UkrainianRefugeeModifierRaisesShareThenRenormalizes()
     {
-        var root = RepositoryRoot();
+        var root = RepositoryFiles.Root;
         var data = new JsonGameDataService(Path.Combine(root, "data"));
         var names = StandardHistoricalNameService.Load(data);
         var baseline = StandardNationalityService.Load(data, names);
@@ -187,7 +187,7 @@ public sealed class HistoricalEventsReworkTests
     [Fact]
     public void HistoricalSystemRegistersInPreYearWithoutUsingRareEventGate()
     {
-        var root = RepositoryRoot();
+        var root = RepositoryFiles.Root;
         var data = new JsonGameDataService(Path.Combine(root, "data"));
         var names = StandardHistoricalNameService.Load(data);
         var nationalities = StandardNationalityService.Load(data, names);
@@ -271,7 +271,7 @@ public sealed class HistoricalEventsReworkTests
     [Fact]
     public void HistoricalNewsPresentationUsesGlobalNewsAndExactEventYears()
     {
-        var root = RepositoryRoot();
+        var root = RepositoryFiles.Root;
         var flow = File.ReadAllText(Path.Combine(
             root,
             "src",
@@ -308,7 +308,7 @@ public sealed class HistoricalEventsReworkTests
 
     private static (HistoricalEventCatalog Catalog, HistoricalTownCatalog Towns, INationalityService Nationalities) LoadCatalog()
     {
-        var root = RepositoryRoot();
+        var root = RepositoryFiles.Root;
         var data = new JsonGameDataService(Path.Combine(root, "data"));
         var names = StandardHistoricalNameService.Load(data);
         var nationalities = StandardNationalityService.Load(data, names);
@@ -316,16 +316,4 @@ public sealed class HistoricalEventsReworkTests
         return (HistoricalEventCatalog.Load(data, towns, nationalities), towns, nationalities);
     }
 
-    private static string RepositoryRoot()
-    {
-        var current = new DirectoryInfo(AppContext.BaseDirectory);
-        while (current is not null)
-        {
-            if (File.Exists(Path.Combine(current.FullName, "Dynastia.slnx")))
-                return current.FullName;
-            current = current.Parent;
-        }
-
-        throw new DirectoryNotFoundException("Could not locate repository root.");
-    }
 }

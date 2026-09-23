@@ -197,20 +197,8 @@ public sealed class SharedMechanics4ECatalogValidationTests
         Assert.NotEmpty(RareEventEpidemicCatalog.Load(data).Entries);
     }
 
-    private static IGameDataService CreateRepositoryData()
-    {
-        var directory = new DirectoryInfo(AppContext.BaseDirectory);
-        while (directory is not null)
-        {
-            var dataPath = Path.Combine(directory.FullName, "data");
-            if (File.Exists(Path.Combine(dataPath, "Career", "retirement_rules.csv")))
-                return new JsonGameDataService(dataPath);
-            directory = directory.Parent;
-        }
-
-        throw new DirectoryNotFoundException(
-            "Could not locate repository data directory from test output.");
-    }
+    private static IGameDataService CreateRepositoryData() =>
+        new JsonGameDataService(RepositoryFiles.Path("data"));
 
     private sealed class InlineDataService : IGameDataService
     {

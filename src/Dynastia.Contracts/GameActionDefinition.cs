@@ -14,6 +14,9 @@ public sealed class GameActionDefinition
 
     public decimal? DisplayCost { get; init; }
 
+    public ActionPresentationMetadata Presentation { get; init; } =
+        ActionPresentationMetadata.Empty;
+
     // Used only by universal fallback actions such as Pass.
     // Normal gameplay actions remain subject to imprisonment/other guards.
     public bool BypassGuards { get; init; }

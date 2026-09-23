@@ -23,6 +23,11 @@ public sealed partial class HouseholdsPlugin
             new GameActionDefinition
             {
                 Id = AdoptPolishSurnameActionId,
+                Presentation = new()
+                {
+                    Emoji = "🇵🇱",
+                    Categories = [ActionPresentationCategories.Family]
+                },
                 Label = "Adopt a Polish Surname",
                 Description =
                     "Adopt a new Polish surname for the dynasty. This is optional; leave the action unused to retain the original family name.",

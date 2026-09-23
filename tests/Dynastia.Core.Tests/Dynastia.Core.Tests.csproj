@@ -16,9 +16,11 @@
 
   <ItemGroup>
     <Using Include="Xunit" />
+    <Using Include="Dynastia.TestSupport" />
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\Dynastia.TestSupport\Dynastia.TestSupport.csproj" />
     <ProjectReference Include="..\..\src\Dynastia.Core\Dynastia.Core.csproj" />
     <ProjectReference Include="..\..\plugins\Dynastia.Mechanics.Appearance\Dynastia.Mechanics.Appearance.csproj" />
     <ProjectReference Include="..\..\plugins\Dynastia.Mechanics.Career\Dynastia.Mechanics.Career.csproj" />
@@ -45,6 +47,7 @@
     <ProjectReference Include="..\..\plugins\Dynastia.Mechanics.Relationships\Dynastia.Mechanics.Relationships.csproj" />
     <ProjectReference Include="..\..\plugins\Dynastia.Mechanics.Status\Dynastia.Mechanics.Status.csproj" />
     <ProjectReference Include="..\..\plugins\Dynastia.Mechanics.TownLife\Dynastia.Mechanics.TownLife.csproj" />
+    <ProjectReference Include="..\..\plugins\Dynastia.Mechanics.Thoughts\Dynastia.Mechanics.Thoughts.csproj" />
     <ProjectReference Include="..\..\plugins\Dynastia.Mechanics.Wellbeing\Dynastia.Mechanics.Wellbeing.csproj" />
     <ProjectReference Include="..\..\plugins\Dynastia.Mechanics.RareEvents\Dynastia.Mechanics.RareEvents.csproj" />
   </ItemGroup>

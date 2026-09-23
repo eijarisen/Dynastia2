@@ -220,7 +220,7 @@ public sealed class HeirloomsBatch1Tests
         AttachHousehold(head, town, 1000m);
 
         var events = new GameEventBus();
-        var data = new JsonGameDataService(Path.Combine(FindRepoRoot(), "data"));
+        var data = new JsonGameDataService(Path.Combine(RepositoryFiles.Root, "data"));
         var catalog = HeirloomCatalog.Load(data);
         var service = new StandardHeirloomService(
             state,
@@ -274,19 +274,6 @@ public sealed class HeirloomsBatch1Tests
         };
         component.MemberIds.Add(head.Id);
         head.Components.Set(component);
-    }
-
-    private static string FindRepoRoot()
-    {
-        var directory = new DirectoryInfo(AppContext.BaseDirectory);
-        while (directory is not null)
-        {
-            if (File.Exists(Path.Combine(directory.FullName, "Dynastia.slnx")))
-                return directory.FullName;
-            directory = directory.Parent;
-        }
-
-        throw new DirectoryNotFoundException("Could not find Dynastia repository root.");
     }
 
     private sealed record Fixture(

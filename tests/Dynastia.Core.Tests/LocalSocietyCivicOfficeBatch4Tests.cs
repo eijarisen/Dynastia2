@@ -7,7 +7,7 @@ public sealed class LocalSocietyCivicOfficeBatch4Tests
     [Fact]
     public void CivicProfilesChangeByPolityAndPost1918PolandAllowsBothSexes()
     {
-        var rows = Read("data", "LocalSociety", "civic_office_profiles.csv")
+        var rows = RepositoryFiles.ReadText("data", "LocalSociety", "civic_office_profiles.csv")
             .TrimStart('\uFEFF')
             .Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
             .Skip(1)
@@ -23,7 +23,7 @@ public sealed class LocalSocietyCivicOfficeBatch4Tests
     [Fact]
     public void EligiblePlayerStillCompetesWithThreeNpcElitesAndHighStatusHelpsMaterially()
     {
-        using var rules = JsonDocument.Parse(Read("data", "LocalSociety", "civic_office_rules.json"));
+        using var rules = JsonDocument.Parse(RepositoryFiles.ReadText("data", "LocalSociety", "civic_office_rules.json"));
         var appointment = rules.RootElement.GetProperty("appointment");
         Assert.Equal(3, appointment.GetProperty("npcCandidateCount").GetInt32());
         var npcRange = appointment.GetProperty("npcCandidateWeightRange")
@@ -44,7 +44,7 @@ public sealed class LocalSocietyCivicOfficeBatch4Tests
         Assert.True(eminent > threshold * 1.7);
         Assert.True(eminentVsWeakestNpcField > thresholdVsWeakestNpcField + 0.10);
 
-        var service = Read("plugins", "Dynastia.Mechanics.Community", "CivicOfficeService.cs");
+        var service = RepositoryFiles.ReadText("plugins", "Dynastia.Mechanics.Community", "CivicOfficeService.cs");
         Assert.Contains("1.5 * social.LocalRenown", service);
         Assert.Contains("_rules.NpcCandidateCount", service);
         Assert.Contains("AppointSimulated", service);
@@ -54,9 +54,9 @@ public sealed class LocalSocietyCivicOfficeBatch4Tests
     [Fact]
     public void AppointmentEndsOtherLivelihoodAndOfficeBecomesSyntheticLevelFiveCareer()
     {
-        var civic = Read("plugins", "Dynastia.Mechanics.Community", "CivicOfficeService.cs");
-        var career = Read("plugins", "Dynastia.Mechanics.Career", "StandardCareerService.cs");
-        var farming = Read("plugins", "Dynastia.Mechanics.Farming", "StandardFarmingService.cs");
+        var civic = RepositoryFiles.ReadText("plugins", "Dynastia.Mechanics.Community", "CivicOfficeService.cs");
+        var career = RepositoryFiles.ReadText("plugins", "Dynastia.Mechanics.Career", "StandardCareerService.cs");
+        var farming = RepositoryFiles.ReadText("plugins", "Dynastia.Mechanics.Farming", "StandardFarmingService.cs");
 
         Assert.Contains("_career.AssignCareer(person, null, 0", civic);
         Assert.Contains("_crafts.EndOccupation(person, \"civic office\")", civic);
@@ -69,16 +69,16 @@ public sealed class LocalSocietyCivicOfficeBatch4Tests
     [Fact]
     public void SalaryUsesPublicAdministrationLevelFiveSettlementAndProsperityAndCountsAsCareerIncome()
     {
-        using var rules = JsonDocument.Parse(Read("data", "LocalSociety", "civic_office_rules.json"));
+        using var rules = JsonDocument.Parse(RepositoryFiles.ReadText("data", "LocalSociety", "civic_office_rules.json"));
         var multipliers = rules.RootElement.GetProperty("employment").GetProperty("salary").GetProperty("settlementMultipliers");
         Assert.Equal(0.9m, multipliers.GetProperty("SmallTown").GetDecimal());
         Assert.Equal(1.0m, multipliers.GetProperty("Town").GetDecimal());
         Assert.Equal(1.1m, multipliers.GetProperty("City").GetDecimal());
         Assert.Equal(1.2m, multipliers.GetProperty("MajorCity").GetDecimal());
 
-        var civic = Read("plugins", "Dynastia.Mechanics.Community", "CivicOfficeService.cs");
-        var compensation = Read("plugins", "Dynastia.Mechanics.Career", "StandardCareerService.Compensation.cs");
-        var lifetime = Read("plugins", "Dynastia.Mechanics.Career", "CareerLifetimeEarningsYearSystem.cs");
+        var civic = RepositoryFiles.ReadText("plugins", "Dynastia.Mechanics.Community", "CivicOfficeService.cs");
+        var compensation = RepositoryFiles.ReadText("plugins", "Dynastia.Mechanics.Career", "StandardCareerService.Compensation.cs");
+        var lifetime = RepositoryFiles.ReadText("plugins", "Dynastia.Mechanics.Career", "CareerLifetimeEarningsYearSystem.cs");
         Assert.Contains("GetLevelOneSalary(PublicAdministrationCareerId) * 10m", civic);
         Assert.Contains("_prosperity.GetIncomeMultiplier", civic);
         Assert.Contains("return civicOffice.GetAnnualSalary(person);", compensation);
@@ -88,14 +88,14 @@ public sealed class LocalSocietyCivicOfficeBatch4Tests
     [Fact]
     public void DutiesPreventNeglectIncreaseParticipationAndApprovalWhileImprisonmentRemovesOfficeSameYear()
     {
-        using var rules = JsonDocument.Parse(Read("data", "LocalSociety", "civic_office_rules.json"));
+        using var rules = JsonDocument.Parse(RepositoryFiles.ReadText("data", "LocalSociety", "civic_office_rules.json"));
         var approval = rules.RootElement.GetProperty("approval");
         Assert.Equal(-8, approval.GetProperty("noCommunityOrOfficeActionPenalty").GetInt32());
         Assert.Equal(4, approval.GetProperty("performOfficeDutiesBonus").GetInt32());
         Assert.True(approval.GetProperty("imprisonmentCausesImmediateLoss").GetBoolean());
 
-        var civic = Read("plugins", "Dynastia.Mechanics.Community", "CivicOfficeService.cs");
-        var system = Read("plugins", "Dynastia.Mechanics.Community", "CivicOfficeYearSystem.cs");
+        var civic = RepositoryFiles.ReadText("plugins", "Dynastia.Mechanics.Community", "CivicOfficeService.cs");
+        var system = RepositoryFiles.ReadText("plugins", "Dynastia.Mechanics.Community", "CivicOfficeYearSystem.cs");
         Assert.Contains("state.LastOfficeActionYear != _gameState.Year", civic);
         Assert.Contains("participation.Count += 1", civic);
         Assert.Contains("PendingApprovalAdjustment += _rules.DutiesBonus", civic);
@@ -106,11 +106,11 @@ public sealed class LocalSocietyCivicOfficeBatch4Tests
     [Fact]
     public void ReplacementLeavesOutgoingHeadUnoccupiedAndTownAffairsShowsOfficeAndDuties()
     {
-        var civic = Read("plugins", "Dynastia.Mechanics.Community", "CivicOfficeService.cs");
-        var careerActions = Read("plugins", "Dynastia.Mechanics.Career", "CareerPlugin.Actions.cs");
-        var townLife = Read("plugins", "Dynastia.Mechanics.TownLife", "StandardTownLifeService.cs");
-        var window = Read("src", "Dynastia.App", "Views", "TownLifeWindow.axaml");
-        var viewModel = Read("src", "Dynastia.App", "ViewModels", "TownAffairsViewModel.cs");
+        var civic = RepositoryFiles.ReadText("plugins", "Dynastia.Mechanics.Community", "CivicOfficeService.cs");
+        var careerActions = RepositoryFiles.ReadText("plugins", "Dynastia.Mechanics.Career", "CareerPlugin.Actions.cs");
+        var townLife = RepositoryFiles.ReadText("plugins", "Dynastia.Mechanics.TownLife", "StandardTownLifeService.cs");
+        var window = RepositoryFiles.ReadText("src", "Dynastia.App", "Views", "TownLifeWindow.axaml");
+        var viewModel = RepositoryFiles.ReadText("src", "Dynastia.App", "ViewModels", "TownAffairsViewModel.cs");
 
         Assert.Contains("LoseSimulatedOffice(outgoing", civic);
         Assert.Contains("person.Tags.Remove(TownHeadTag)", civic);
@@ -122,19 +122,4 @@ public sealed class LocalSocietyCivicOfficeBatch4Tests
         Assert.Contains("OnOfficeDutiesClick", window);
     }
 
-    private static string Read(params string[] parts) =>
-        File.ReadAllText(Path.Combine(new[] { RepositoryRoot() }.Concat(parts).ToArray()));
-
-    private static string RepositoryRoot()
-    {
-        var current = new DirectoryInfo(AppContext.BaseDirectory);
-        while (current is not null)
-        {
-            if (File.Exists(Path.Combine(current.FullName, "Dynastia.slnx")))
-                return current.FullName;
-            current = current.Parent;
-        }
-
-        throw new DirectoryNotFoundException("Could not locate repository root.");
-    }
 }

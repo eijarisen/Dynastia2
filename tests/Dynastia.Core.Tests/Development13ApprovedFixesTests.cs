@@ -2,52 +2,37 @@ namespace Dynastia.Core.Tests;
 
 public sealed class Development13ApprovedFixesTests
 {
-    private static string Read(params string[] parts) =>
-        File.ReadAllText(Path.Combine(new[] { RepositoryRoot() }.Concat(parts).ToArray()));
-
-    private static string RepositoryRoot()
-    {
-        var current = new DirectoryInfo(AppContext.BaseDirectory);
-        while (current is not null)
-        {
-            if (File.Exists(Path.Combine(current.FullName, "Dynastia.slnx")))
-                return current.FullName;
-            current = current.Parent;
-        }
-
-        throw new DirectoryNotFoundException("Could not locate repository root.");
-    }
-
     [Fact]
-    public void TurnStartActionsRunBeforeAgingAndConsumeCommittedQueue()
+    public void AppInstallsTheTurnStartActionSystem()
     {
-        Assert.True(Dynastia.Contracts.YearPhase.TurnStartActions < Dynastia.Contracts.YearPhase.Aging);
-        var registry = Read("src", "Dynastia.Core", "Actions", "ActionRegistry.cs");
-        var app = Read("src", "Dynastia.App", "App.axaml.cs");
-        Assert.Contains("ExecuteTurnStartQueuedActions", registry);
-        Assert.Contains("committedAtTurnStart: true", registry);
+        var app = RepositoryFiles.ReadText("src", "Dynastia.App", "App.axaml.cs");
         Assert.Contains("new TurnStartQueuedActionYearSystem(actionRegistry)", app);
-        Assert.Contains("schedulingPreview ? _gameState.Year + 1", registry);
     }
 
     [Fact]
-    public void SignedEstateDebtIsPreservedAndPresentedAsDebt()
+    public void PendingEstateDebtKeepsItsPresentationLabel()
     {
-        var estate = Read("plugins", "Dynastia.Mechanics.Inheritance", "EstateInheritanceSystem.cs");
-        var assets = Read("plugins", "Dynastia.Mechanics.Economy", "StandardEconomyService.Assets.cs");
-        var adulthood = Read("plugins", "Dynastia.Mechanics.Inheritance", "AdulthoodInheritanceSystem.cs");
-        var view = Read("src", "Dynastia.App", "ViewModels", "EconomyViewModel.cs");
-        Assert.Contains("var sign = Math.Sign(wholeUnits);", estate);
-        Assert.Contains("ChangeWealthAllowDebt(heir, amount)", estate);
-        Assert.Contains("RoundCurrency(amount)", assets);
-        Assert.Contains("ChangeWealthAllowDebt", adulthood);
+        var view = RepositoryFiles.ReadText("src", "Dynastia.App", "ViewModels", "EconomyViewModel.cs");
         Assert.Contains("Pending inherited debt", view);
+    }
+
+    [Theory]
+    [InlineData(-1.5, -2)]
+    [InlineData(1.5, 2)]
+    public void PendingEstateBalanceRoundsAwayFromZeroAndAccumulatesWithoutDroppingDebt(double amount, int rounded)
+    {
+        using var fixture = new RefactorFixture();
+        var heir = fixture.Person(12);
+        fixture.Economy.SetPendingInheritance(heir, (decimal)amount);
+        Assert.Equal((decimal)rounded, fixture.Economy.GetPendingInheritance(heir));
+        fixture.Economy.ChangePendingInheritance(heir, -5m);
+        Assert.Equal(rounded - 5m, fixture.Economy.GetPendingInheritance(heir));
     }
 
     [Fact]
     public void CriminalOccupationUsesSharedProductiveEffort()
     {
-        var service = Read("plugins", "Dynastia.Mechanics.Justice", "CriminalOccupationService.cs");
+        var service = RepositoryFiles.ReadText("plugins", "Dynastia.Mechanics.Justice", "CriminalOccupationService.cs");
         Assert.Contains("AnnualProductiveEffortRules.Get(person, _workCapacity)", service);
         Assert.Contains("if (!effort.CanProduce)", service);
         Assert.Contains("effort.Apply(CalculateIncome", service);
@@ -56,8 +41,8 @@ public sealed class Development13ApprovedFixesTests
     [Fact]
     public void PassiveIncomeCanSuppressOnlyHusbandUnemploymentPenalty()
     {
-        var economy = Read("plugins", "Dynastia.Mechanics.Economy", "StandardEconomyService.Forecast.cs");
-        var marriage = Read("plugins", "Dynastia.Mechanics.Relationships", "MarriageSatisfactionYearSystem.cs");
+        var economy = RepositoryFiles.ReadText("plugins", "Dynastia.Mechanics.Economy", "StandardEconomyService.Forecast.cs");
+        var marriage = RepositoryFiles.ReadText("plugins", "Dynastia.Mechanics.Relationships", "MarriageSatisfactionYearSystem.cs");
         Assert.Contains("HasSufficientPassiveIncomeForBasicNeeds", economy);
         Assert.Contains("GetExpectedPassiveAnnualIncome", economy);
         Assert.Contains("GetProjectedPassiveIncome", economy);
@@ -68,9 +53,9 @@ public sealed class Development13ApprovedFixesTests
     [Fact]
     public void WeakPolicyImplementationIsNotPublishedAsNewsAndFamilyTabsMatchTownAffairs()
     {
-        var policy = Read("plugins", "Dynastia.Mechanics.Community", "CommunityPolicyService.cs");
-        var relations = Read("src", "Dynastia.App", "Views", "FamilyRelationsWindow.axaml");
-        var town = Read("src", "Dynastia.App", "Views", "TownLifeWindow.axaml");
+        var policy = RepositoryFiles.ReadText("plugins", "Dynastia.Mechanics.Community", "CommunityPolicyService.cs");
+        var relations = RepositoryFiles.ReadText("src", "Dynastia.App", "Views", "FamilyRelationsWindow.axaml");
+        var town = RepositoryFiles.ReadText("src", "Dynastia.App", "Views", "TownLifeWindow.axaml");
         Assert.Contains("!chosen.ImpactTier.Equals(\"Weak\"", policy);
         Assert.Contains("<Setter Property=\"FontSize\" Value=\"14.5\" />", relations);
         Assert.Contains("<Setter Property=\"FontSize\" Value=\"14.5\" />", town);

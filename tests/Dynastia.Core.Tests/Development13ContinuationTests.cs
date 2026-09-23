@@ -5,8 +5,8 @@ public sealed class Development13ContinuationTests
     [Fact]
     public void TownAffairsUsesRequestedTabOrderAndShowsMayorSummaryUnderPopulation()
     {
-        var hub = Read("src", "Dynastia.App", "ViewModels", "TownAffairsViewModel.cs");
-        var window = Read("src", "Dynastia.App", "Views", "TownLifeWindow.axaml");
+        var hub = RepositoryFiles.ReadText("src", "Dynastia.App", "ViewModels", "TownAffairsViewModel.cs");
+        var window = RepositoryFiles.ReadText("src", "Dynastia.App", "Views", "TownLifeWindow.axaml");
 
         Assert.Contains("Institutions = 0", hub);
         Assert.Contains("Community = 1", hub);
@@ -42,12 +42,8 @@ public sealed class Development13ContinuationTests
     [Fact]
     public void ChurchVisitAndReligiousStudyStayInTownAffairsButNotStandardActions()
     {
-        var actions = Read("src", "Dynastia.App", "ViewModels", "MainWindowViewModel.Actions.cs");
-        var townLife = Read("src", "Dynastia.App", "ViewModels", "MainWindowViewModel.TownLife.cs");
+        var townLife = RepositoryFiles.ReadText("src", "Dynastia.App", "ViewModels", "MainWindowViewModel.TownLife.cs");
 
-        Assert.Contains("\"church.attend\"", actions);
-        Assert.Contains("\"personality.religious_study\"", actions);
-        Assert.Contains("continue;", actions);
         Assert.Contains("AddChurchAction(\"church.attend\"", townLife);
         Assert.Contains("AddChurchAction(\"personality.religious_study\"", townLife);
     }
@@ -55,9 +51,9 @@ public sealed class Development13ContinuationTests
     [Fact]
     public void HealthTabHidesUnavailableFacilityImprovementsAndEmptyOptionalSections()
     {
-        var townLife = Read("src", "Dynastia.App", "ViewModels", "MainWindowViewModel.TownLife.cs");
-        var hub = Read("src", "Dynastia.App", "ViewModels", "TownAffairsViewModel.cs");
-        var window = Read("src", "Dynastia.App", "Views", "TownLifeWindow.axaml");
+        var townLife = RepositoryFiles.ReadText("src", "Dynastia.App", "ViewModels", "MainWindowViewModel.TownLife.cs");
+        var hub = RepositoryFiles.ReadText("src", "Dynastia.App", "ViewModels", "TownAffairsViewModel.cs");
+        var window = RepositoryFiles.ReadText("src", "Dynastia.App", "Views", "TownLifeWindow.axaml");
 
         var methodStart = townLife.IndexOf("GetTownAffairsHealthActions(IPerson subject)", StringComparison.Ordinal);
         var methodEnd = townLife.IndexOf("GetTownAffairsChurchActions()", methodStart, StringComparison.Ordinal);
@@ -77,7 +73,7 @@ public sealed class Development13ContinuationTests
     [Fact]
     public void InventoryRemovesDuplicatePropertyHeadersAndEnlargesEmptyStates()
     {
-        var inventory = Read("src", "Dynastia.App", "Views", "FamilyInventoryWindow.axaml");
+        var inventory = RepositoryFiles.ReadText("src", "Dynastia.App", "Views", "FamilyInventoryWindow.axaml");
 
         Assert.Contains("Header=\"Houses\"", inventory);
         Assert.Contains("Header=\"Farmland\"", inventory);
@@ -92,8 +88,8 @@ public sealed class Development13ContinuationTests
     [Fact]
     public void LoanOffersShowBoldColorCodedFavorability()
     {
-        var model = Read("src", "Dynastia.App", "ViewModels", "LoanSelectionModels.cs");
-        var window = Read("src", "Dynastia.App", "Views", "LoanSelectionWindow.axaml");
+        var model = RepositoryFiles.ReadText("src", "Dynastia.App", "ViewModels", "LoanSelectionModels.cs");
+        var window = RepositoryFiles.ReadText("src", "Dynastia.App", "Views", "LoanSelectionWindow.axaml");
 
         Assert.Contains("FavorabilityText", model);
         Assert.Contains("FavorabilityBrush", model);
@@ -108,8 +104,8 @@ public sealed class Development13ContinuationTests
     [Fact]
     public void PersonalDetailsUseWordOnlyStatusWithoutBoldStyling()
     {
-        var selection = Read("src", "Dynastia.App", "ViewModels", "MainWindowViewModel.Selection.cs");
-        var window = Read("src", "Dynastia.App", "Views", "MainWindow.axaml");
+        var selection = RepositoryFiles.ReadText("src", "Dynastia.App", "ViewModels", "MainWindowViewModel.Selection.cs");
+        var window = RepositoryFiles.ReadText("src", "Dynastia.App", "Views", "MainWindow.axaml");
 
         Assert.Contains("$\"Renown: {socialStatus.RenownLabel}\"", selection);
         Assert.Contains("$\"Reputation: {socialStatus.ReputationLabel}\"", selection);
@@ -125,8 +121,8 @@ public sealed class Development13ContinuationTests
     [Fact]
     public void PotentialPartnerCardsShowNationalitySimpleOccupationAndStatusPrefix()
     {
-        var model = Read("src", "Dynastia.App", "ViewModels", "OpportunitySelectionViewModels.cs");
-        var window = Read("src", "Dynastia.App", "Views", "PotentialPartnersWindow.axaml");
+        var model = RepositoryFiles.ReadText("src", "Dynastia.App", "ViewModels", "OpportunitySelectionViewModels.cs");
+        var window = RepositoryFiles.ReadText("src", "Dynastia.App", "Views", "PotentialPartnersWindow.axaml");
 
         Assert.Contains("$\"Nationality: {Candidate.DisplayNationality}\"", model);
         Assert.DoesNotContain("Birthplace:", model);
@@ -136,24 +132,21 @@ public sealed class Development13ContinuationTests
     }
 
     [Fact]
-    public void TownAffairsAdministrationRoutesToCommunityAndDirectActionIsHiddenInPrison()
+    public void TownAffairsAdministrationRoutesToCommunity()
     {
-        var hub = Read("src", "Dynastia.App", "ViewModels", "TownAffairsViewModel.cs");
-        var owner = Read("src", "Dynastia.App", "ViewModels", "MainWindowViewModel.TownLife.cs");
-        var window = Read("src", "Dynastia.App", "Views", "TownLifeWindow.axaml");
+        var hub = RepositoryFiles.ReadText("src", "Dynastia.App", "ViewModels", "TownAffairsViewModel.cs");
+        var window = RepositoryFiles.ReadText("src", "Dynastia.App", "Views", "TownLifeWindow.axaml");
 
         Assert.Contains("\"administration\" => TownAffairsTab.Community", hub);
-        Assert.Contains("_justiceService?.IsImprisoned(actor) == true", owner);
-        Assert.Contains("_justiceService?.IsImprisoned(target) == true", owner);
         Assert.Contains("<Setter Property=\"FontSize\" Value=\"14.5\" />", window);
     }
 
     [Fact]
     public void HealthTabHidesEmptyTreatmentAndOmitsPercentageText()
     {
-        var hub = Read("src", "Dynastia.App", "ViewModels", "TownAffairsViewModel.cs");
-        var owner = Read("src", "Dynastia.App", "ViewModels", "MainWindowViewModel.TownLife.cs");
-        var window = Read("src", "Dynastia.App", "Views", "TownLifeWindow.axaml");
+        var hub = RepositoryFiles.ReadText("src", "Dynastia.App", "ViewModels", "TownAffairsViewModel.cs");
+        var owner = RepositoryFiles.ReadText("src", "Dynastia.App", "ViewModels", "MainWindowViewModel.TownLife.cs");
+        var window = RepositoryFiles.ReadText("src", "Dynastia.App", "Views", "TownLifeWindow.axaml");
 
         Assert.Contains("HasTreatmentHealthActions => TreatmentHealthActions.Count > 0", hub);
         Assert.Contains("IsVisible=\"{Binding HasTreatmentHealthActions}\"", window);
@@ -166,9 +159,9 @@ public sealed class Development13ContinuationTests
     [Fact]
     public void LoanOffersAreMoreProminentColorCodedAndDoNotShowCounterpartyRoles()
     {
-        var model = Read("src", "Dynastia.App", "ViewModels", "LoanSelectionModels.cs");
-        var window = Read("src", "Dynastia.App", "Views", "LoanSelectionWindow.axaml");
-        var codeBehind = Read("src", "Dynastia.App", "Views", "LoanSelectionWindow.axaml.cs");
+        var model = RepositoryFiles.ReadText("src", "Dynastia.App", "ViewModels", "LoanSelectionModels.cs");
+        var window = RepositoryFiles.ReadText("src", "Dynastia.App", "Views", "LoanSelectionWindow.axaml");
+        var codeBehind = RepositoryFiles.ReadText("src", "Dynastia.App", "Views", "LoanSelectionWindow.axaml.cs");
 
         Assert.DoesNotContain("RoleText", model);
         Assert.DoesNotContain("RoleText", window);
@@ -178,14 +171,14 @@ public sealed class Development13ContinuationTests
         Assert.Contains("FontSize=\"15.5\"", window);
         Assert.Contains("FontSize=\"13.2\"", window);
 
-        var townWindow = Read("src", "Dynastia.App", "Views", "TownLifeWindow.axaml");
+        var townWindow = RepositoryFiles.ReadText("src", "Dynastia.App", "Views", "TownLifeWindow.axaml");
         Assert.DoesNotContain("Text=\"{Binding Snapshot.Bank.DisplayName}\"", townWindow);
     }
 
     [Fact]
     public void CourtRecordUsesSameFramedSectionTreatmentAsProtection()
     {
-        var window = Read("src", "Dynastia.App", "Views", "TownLifeWindow.axaml");
+        var window = RepositoryFiles.ReadText("src", "Dynastia.App", "Views", "TownLifeWindow.axaml");
         var record = window.IndexOf("Text=\"Known Criminal Record\"", StringComparison.Ordinal);
         Assert.True(record >= 0);
         var frame = window.LastIndexOf("<Border Padding=\"10,8\" Background=\"#20FFF4D9\" BorderBrush=\"#A17A43\"", record, StringComparison.Ordinal);
@@ -195,7 +188,7 @@ public sealed class Development13ContinuationTests
     [Fact]
     public void InventoryAssetTabsShareCardTypographySpacingAndGeometry()
     {
-        var inventory = Read("src", "Dynastia.App", "Views", "FamilyInventoryWindow.axaml");
+        var inventory = RepositoryFiles.ReadText("src", "Dynastia.App", "Views", "FamilyInventoryWindow.axaml");
 
         Assert.Contains("Border.inventoryAssetCard", inventory);
         Assert.Contains("TextBlock.inventoryAssetTitle", inventory);
@@ -210,8 +203,8 @@ public sealed class Development13ContinuationTests
     [Fact]
     public void TownAffairsUsesLargerTabsInstitutionsAndExpandedMayorPane()
     {
-        var hub = Read("src", "Dynastia.App", "ViewModels", "TownAffairsViewModel.cs");
-        var window = Read("src", "Dynastia.App", "Views", "TownLifeWindow.axaml");
+        var hub = RepositoryFiles.ReadText("src", "Dynastia.App", "ViewModels", "TownAffairsViewModel.cs");
+        var window = RepositoryFiles.ReadText("src", "Dynastia.App", "Views", "TownLifeWindow.axaml");
 
         Assert.Contains("<Setter Property=\"FontSize\" Value=\"14.5\" />", window);
         Assert.Contains("Width=\"48\" Height=\"48\"", window);
@@ -229,7 +222,7 @@ public sealed class Development13ContinuationTests
     [Fact]
     public void CivicOfficeIsRestrictedToPolishNationalityIncludingNpcMayors()
     {
-        var civic = Read("plugins", "Dynastia.Mechanics.Community", "CivicOfficeService.cs");
+        var civic = RepositoryFiles.ReadText("plugins", "Dynastia.Mechanics.Community", "CivicOfficeService.cs");
 
         Assert.Contains("private const string PolishNationalityId = \"polish\";", civic);
         Assert.Contains("|| !IsPolish(person)", civic);
@@ -242,8 +235,8 @@ public sealed class Development13ContinuationTests
     [Fact]
     public void FamilyRelationsWindowUsesTownAffairsTabSizeAndExplainsEmptyAcquaintances()
     {
-        var model = Read("src", "Dynastia.App", "ViewModels", "FamilyRelationsViewModels.cs");
-        var window = Read("src", "Dynastia.App", "Views", "FamilyRelationsWindow.axaml");
+        var model = RepositoryFiles.ReadText("src", "Dynastia.App", "ViewModels", "FamilyRelationsViewModels.cs");
+        var window = RepositoryFiles.ReadText("src", "Dynastia.App", "Views", "FamilyRelationsWindow.axaml");
 
         Assert.Contains("Title=\"Family Relations\"", window);
         Assert.Contains("Text=\"Family Relations\"", window);
@@ -257,7 +250,7 @@ public sealed class Development13ContinuationTests
     [Fact]
     public void CourtTabStaysVisibleForChildHealthSelectionAndSwitchesBackToAdultController()
     {
-        var hub = Read("src", "Dynastia.App", "ViewModels", "TownAffairsViewModel.cs");
+        var hub = RepositoryFiles.ReadText("src", "Dynastia.App", "ViewModels", "TownAffairsViewModel.cs");
 
         Assert.Contains("!IsRemote && _householdPeople.Any(person => person.Age >= 18)", hub);
         Assert.Contains("tab == TownAffairsTab.Court", hub);
@@ -268,7 +261,7 @@ public sealed class Development13ContinuationTests
     [Fact]
     public void CriminalOccupationSkipsPeopleOutsideActiveDynastyHouseholds()
     {
-        var service = Read("plugins", "Dynastia.Mechanics.Justice", "CriminalOccupationService.cs");
+        var service = RepositoryFiles.ReadText("plugins", "Dynastia.Mechanics.Justice", "CriminalOccupationService.cs");
         var annualStart = service.IndexOf("internal void ResolveAnnualHeist", StringComparison.Ordinal);
         var reconcileStart = service.IndexOf("internal void ReconcileAll", annualStart, StringComparison.Ordinal);
         Assert.True(annualStart >= 0 && reconcileStart > annualStart);
@@ -280,19 +273,4 @@ public sealed class Development13ContinuationTests
         Assert.True(guard >= 0 && changeWealth > guard);
     }
 
-    private static string Read(params string[] parts) =>
-        File.ReadAllText(Path.Combine(new[] { RepositoryRoot() }.Concat(parts).ToArray()));
-
-    private static string RepositoryRoot()
-    {
-        var current = new DirectoryInfo(AppContext.BaseDirectory);
-        while (current is not null)
-        {
-            if (File.Exists(Path.Combine(current.FullName, "Dynastia.slnx")))
-                return current.FullName;
-            current = current.Parent;
-        }
-
-        throw new DirectoryNotFoundException("Could not locate repository root.");
-    }
 }

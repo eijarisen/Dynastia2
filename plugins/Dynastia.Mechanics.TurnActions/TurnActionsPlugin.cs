@@ -18,6 +18,12 @@ public sealed class TurnActionsPlugin :
             {
                 Id =
                     "turn.pass",
+                Presentation = new()
+                {
+                    Emoji = "⏭️",
+                    Categories = [],
+                    PlaceLast = true
+                },
 
                 Label =
                     "Pass",

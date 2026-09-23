@@ -17,6 +17,13 @@ public sealed partial class WellbeingPlugin
             {
                 Id =
                     "wellbeing.recover",
+                Presentation = new()
+                {
+                    Emoji = "🧘",
+                    Categories = [ActionPresentationCategories.Personal, ActionPresentationCategories.Career],
+                    AdjacencyGroup = ActionPresentationGroups.CareerWork,
+                    GroupOrder = 10
+                },
 
                 Label =
                     "Recover",
@@ -129,6 +136,11 @@ public sealed partial class WellbeingPlugin
             {
                 Id =
                     "wellbeing.drink",
+                Presentation = new()
+                {
+                    Emoji = "🍺",
+                    Categories = [ActionPresentationCategories.Personal]
+                },
 
                 Label =
                     "Drink",

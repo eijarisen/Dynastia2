@@ -6,23 +6,20 @@ namespace Dynastia.App.Persistence;
 
 public sealed partial class GameSaveService
 {
+    private readonly object _componentTypeRegistrySync = new();
+    private ComponentTypeRegistry? _componentTypeRegistry;
+
+    internal int ComponentPreparationCount { get; private set; }
+    internal int ComponentTypeRegistryBuildCount { get; private set; }
+
     private PreparedComponents PrepareComponents(
         DesktopSaveEnvelope envelope)
     {
-        var resolvedAssemblies =
-            AppDomain.CurrentDomain
-                .GetAssemblies()
-                .Where(assembly => !assembly.IsDynamic)
-                .GroupBy(
-                    assembly => assembly.GetName().Name ?? string.Empty,
-                    StringComparer.OrdinalIgnoreCase)
-                .ToDictionary(
-                    group => group.Key,
-                    group => group.First(),
-                    StringComparer.OrdinalIgnoreCase);
+        ComponentPreparationCount++;
 
-        var persistedTypes = BuildPersistedTypeRegistry(
-            resolvedAssemblies.Values);
+        var registry = GetComponentTypeRegistry();
+        var resolvedAssemblies = registry.ResolvedAssemblies;
+        var persistedTypes = registry.PersistedTypes;
 
         var byPerson =
             new Dictionary<Guid, IReadOnlyList<PreparedComponent>>();
@@ -68,6 +65,47 @@ public sealed partial class GameSaveService
 
         return new PreparedComponents(byPerson);
     }
+
+
+    private ComponentTypeRegistry GetComponentTypeRegistry()
+    {
+        if (_componentTypeRegistry is not null)
+            return _componentTypeRegistry;
+
+        lock (_componentTypeRegistrySync)
+        {
+            if (_componentTypeRegistry is not null)
+                return _componentTypeRegistry;
+
+            var resolvedAssemblies =
+                AppDomain.CurrentDomain
+                    .GetAssemblies()
+                    .Where(assembly => !assembly.IsDynamic)
+                    .GroupBy(
+                        assembly => assembly.GetName().Name ?? string.Empty,
+                        StringComparer.OrdinalIgnoreCase)
+                    .ToDictionary(
+                        group => group.Key,
+                        group => group.First(),
+                        StringComparer.OrdinalIgnoreCase);
+
+            var persistedTypes = BuildPersistedTypeRegistry(
+                resolvedAssemblies.Values);
+
+            ComponentTypeRegistryBuildCount++;
+
+            _componentTypeRegistry =
+                new ComponentTypeRegistry(
+                    resolvedAssemblies,
+                    persistedTypes);
+
+            return _componentTypeRegistry;
+        }
+    }
+
+    private sealed record ComponentTypeRegistry(
+        IReadOnlyDictionary<string, Assembly> ResolvedAssemblies,
+        IReadOnlyDictionary<string, Type> PersistedTypes);
 
     private static Type ResolveComponentType(
         ComponentSaveData saved,

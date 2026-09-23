@@ -44,6 +44,27 @@ public sealed class StatImprovementsPlugin : IGamePlugin
             "Paid stat-improvement actions registered through local Medical facilities.");
     }
 
+    private static ActionPresentationMetadata GetPresentation(string statId)
+    {
+        var (emoji, order) = statId.ToLowerInvariant() switch
+        {
+            "strength" => ("🏋️", 40),
+            "intellect" => ("🧠", 50),
+            "immunity" => ("🛡️", 60),
+            "appeal" => ("✨", 70),
+            "longevity" => ("🩺", 80),
+            "fertility" => ("🧬", 90),
+            _ => ("⚙️", 0)
+        };
+        return new ActionPresentationMetadata
+        {
+            Emoji = emoji,
+            Categories = [ActionPresentationCategories.Personal],
+            AdjacencyGroup = order > 0 ? ActionPresentationGroups.TreatmentGrowth : null,
+            GroupOrder = order
+        };
+    }
+
     private static GameActionDefinition CreateAction(
         PaidStatImprovementDefinition definition,
         IPerson presentationTarget,
@@ -74,6 +95,7 @@ public sealed class StatImprovementsPlugin : IGamePlugin
         return new GameActionDefinition
         {
             Id = definition.ActionId,
+            Presentation = GetPresentation(definition.StatId),
             Label = variant.Label,
             Description =
                 $"{variant.Description} Requires a Tier {definition.MinimumMedicalTier}+ local medical facility.",

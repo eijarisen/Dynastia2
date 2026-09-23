@@ -7,7 +7,11 @@ public sealed class StandardStressService : IStressService
 {
     public const double MaximumStress = 10;
 
+    private static readonly double[] EventStressDecay =
+        [1.0, 0.65, 0.35, 0.15];
+
     private readonly IGameState _state;
+    private readonly IPersonLookup? _people;
     private readonly IFamilyService _family;
     private readonly IEconomyService _economy;
     private readonly StandardHealthService _health;
@@ -21,8 +25,28 @@ public sealed class StandardStressService : IStressService
         StandardHealthService health,
         IGameEventBus events,
         IStressModifierRegistry modifiers)
+        : this(
+            state,
+            state as IPersonLookup,
+            family,
+            economy,
+            health,
+            events,
+            modifiers)
+    {
+    }
+
+    public StandardStressService(
+        IGameState state,
+        IPersonLookup? people,
+        IFamilyService family,
+        IEconomyService economy,
+        StandardHealthService health,
+        IGameEventBus events,
+        IStressModifierRegistry modifiers)
     {
         _state = state;
+        _people = people;
         _family = family;
         _economy = economy;
         _health = health;
@@ -34,20 +58,23 @@ public sealed class StandardStressService : IStressService
     {
         ArgumentNullException.ThrowIfNull(person);
         var contributions = new List<StressContribution>();
+        var currentYearEvents =
+            _events.GetEventsForYear(_state.Year);
 
         // Major life events fade rather than disappearing after one year.
         // The current year is fully salient, then the effect tapers over the
         // following three years.
-        var eventStressDecay = new[] { 1.0, 0.65, 0.35, 0.15 };
-        for (var yearsAgo = 0; yearsAgo < eventStressDecay.Length; yearsAgo++)
+        for (var yearsAgo = 0; yearsAgo < EventStressDecay.Length; yearsAgo++)
         {
             var eventYear = _state.Year - yearsAgo;
             AddEventStress(
                 person,
-                _events.GetEventsForYear(eventYear),
+                yearsAgo == 0
+                    ? currentYearEvents
+                    : _events.GetEventsForYear(eventYear),
                 contributions,
                 eventYear,
-                eventStressDecay[yearsAgo]);
+                EventStressDecay[yearsAgo]);
         }
 
         var household = _economy.GetHousehold(person);
@@ -98,7 +125,7 @@ public sealed class StandardStressService : IStressService
             .ThenBy(contribution => contribution.SourceId, StringComparer.OrdinalIgnoreCase)
             .ToList();
 
-        var drinkRelief = _events.GetEventsForYear(_state.Year)
+        var drinkRelief = currentYearEvents
             .Where(gameEvent => gameEvent.SubjectId == person.Id
                 && gameEvent.Type.Equals("wellbeing.drink", StringComparison.OrdinalIgnoreCase))
             .Sum(gameEvent =>
@@ -324,5 +351,8 @@ public sealed class StandardStressService : IStressService
     }
 
     private IPerson? Find(Guid? id) =>
-        id is Guid personId ? _state.People.FirstOrDefault(person => person.Id == personId) : null;
+        _people?.FindPerson(id)
+        ?? (id is Guid personId
+            ? _state.People.FirstOrDefault(person => person.Id == personId)
+            : null);
 }

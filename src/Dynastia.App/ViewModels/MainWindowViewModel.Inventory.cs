@@ -4,36 +4,6 @@ namespace Dynastia.App.ViewModels;
 
 public sealed partial class MainWindowViewModel
 {
-    private const string ManagePropertiesUiActionId =
-        "ui.manage_properties";
-
-    private const string ManageFinancesUiActionId =
-        "ui.manage_finances";
-
-    private static GameActionDefinition CreateManagePropertiesPresentationAction() =>
-        new()
-        {
-            Id = ManagePropertiesUiActionId,
-            Label = "Manage Properties",
-            Description =
-                "Open Family Inventory to buy, extend, sell, and assign houses alongside farmland and heirlooms.",
-            Mode = ActionExecutionMode.Immediate,
-            IsAvailable = _ => true,
-            Execute = _ => new GameActionResult(false)
-        };
-
-    private static GameActionDefinition CreateManageFinancesPresentationAction() =>
-        new()
-        {
-            Id = ManageFinancesUiActionId,
-            Label = "Manage Finances",
-            Description =
-                "Open Family Inventory to review income, expenses, lifestyle, loans and local banking access.",
-            Mode = ActionExecutionMode.Immediate,
-            IsAvailable = _ => true,
-            Execute = _ => new GameActionResult(false)
-        };
-
     internal bool CanOpenFamilyInventory =>
         IsLineageFamilyView
         && _succession.ActiveController is not null

@@ -65,6 +65,37 @@ public sealed class YearProcessorOrderingTests
 
 
     [Fact]
+    public void VersionedRegistryInvalidatesCachedOrderingWhenSystemIsRegistered()
+    {
+        var executed = new List<string>();
+        var state = new GameState();
+        var registry = new YearSystemRegistry();
+        registry.Register(
+            new TestSystem(
+                "b.second",
+                YearPhase.LifeEvents,
+                executed));
+
+        var processor = new YearProcessor(state, registry);
+        processor.AdvanceYear();
+
+        registry.Register(
+            new TestSystem(
+                "a.first",
+                YearPhase.LifeEvents,
+                executed,
+                before: ["b.second"]));
+
+        processor.AdvanceYear();
+
+        Assert.Equal(2, registry.Version);
+        Assert.Equal(
+            ["b.second", "a.first", "b.second"],
+            executed);
+    }
+
+
+    [Fact]
     public void MarriageRepairAndLateMortalityHaveExplicitOrdering()
     {
         Assert.True(YearPhase.LifeEvents < YearPhase.MarriageEvaluation);

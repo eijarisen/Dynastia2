@@ -91,27 +91,6 @@ public sealed class NewGameRestartLifecycleTests
         Assert.Equal(founder.Id, onlyEvent.SubjectId);
     }
 
-    private static IGameDataService CreateRepositoryData()
-    {
-        var directory = new DirectoryInfo(AppContext.BaseDirectory);
-
-        while (directory is not null)
-        {
-            var dataPath = Path.Combine(directory.FullName, "data");
-
-            if (File.Exists(
-                Path.Combine(
-                    dataPath,
-                    "Names",
-                    "name_eras.csv")))
-            {
-                return new JsonGameDataService(dataPath);
-            }
-
-            directory = directory.Parent;
-        }
-
-        throw new DirectoryNotFoundException(
-            "Could not locate repository data directory from test output.");
-    }
+    private static IGameDataService CreateRepositoryData() =>
+        new JsonGameDataService(RepositoryFiles.Path("data"));
 }

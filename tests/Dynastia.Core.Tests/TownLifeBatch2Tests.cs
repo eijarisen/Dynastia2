@@ -227,7 +227,7 @@ public sealed class TownLifeBatch2Tests
     [Fact]
     public void CareerCraftAndFarmingIncomePathsAllUseTownProsperity()
     {
-        var root = RepositoryRoot();
+        var root = RepositoryFiles.Root;
         var career = File.ReadAllText(Path.Combine(
             root,
             "plugins",
@@ -344,7 +344,7 @@ public sealed class TownLifeBatch2Tests
     [Fact]
     public void Batch2TownLifeWindowShowsProsperityAndHistoricalShocksWithoutLegacyExplanations()
     {
-        var root = RepositoryRoot();
+        var root = RepositoryFiles.Root;
         var window = File.ReadAllText(Path.Combine(
             root,
             "src",
@@ -364,7 +364,7 @@ public sealed class TownLifeBatch2Tests
     [Fact]
     public void HistoricalShockBridgeUsesYearAvailableTownsInsteadOfEveryPermanentPlace()
     {
-        var root = RepositoryRoot();
+        var root = RepositoryFiles.Root;
         var service = File.ReadAllText(Path.Combine(
             root,
             "plugins",
@@ -421,20 +421,7 @@ public sealed class TownLifeBatch2Tests
         };
 
     private static JsonGameDataService DataService() =>
-        new(Path.Combine(RepositoryRoot(), "data"));
-
-    private static string RepositoryRoot()
-    {
-        var current = new DirectoryInfo(AppContext.BaseDirectory);
-        while (current is not null)
-        {
-            if (File.Exists(Path.Combine(current.FullName, "Dynastia.slnx")))
-                return current.FullName;
-            current = current.Parent;
-        }
-
-        throw new DirectoryNotFoundException("Could not locate repository root.");
-    }
+        new(Path.Combine(RepositoryFiles.Root, "data"));
 
     private sealed class SequenceRandom : IGameRandom
     {

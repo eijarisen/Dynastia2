@@ -35,13 +35,4 @@ public sealed partial class MainWindowViewModel
     public ObservableCollection<BiographyEntryViewModel>
         SelectedBiography { get; } = [];
 
-    public ObservableCollection<AvailableActionViewModel>
-        AvailableActions { get; } = [];
-
-    public ObservableCollection<AvailableActionViewModel>
-        PassActions { get; } = [];
-
-    public ObservableCollection<ActionFilterViewModel>
-        ActionFilters { get; } = [];
-
 }

@@ -185,20 +185,6 @@ public sealed class ContentReworkBatch3HobbiesCraftsTests
             settlementClass,
             opportunityTags));
 
-    private static IGameDataService CreateRepositoryData()
-    {
-        var directory = new DirectoryInfo(AppContext.BaseDirectory);
-        while (directory is not null)
-        {
-            var dataPath = Path.Combine(directory.FullName, "data");
-            if (File.Exists(Path.Combine(dataPath, "Hobbies", "hobbies.csv"))
-                && File.Exists(Path.Combine(dataPath, "Crafts", "crafts.csv")))
-            {
-                return new JsonGameDataService(dataPath);
-            }
-            directory = directory.Parent;
-        }
-
-        throw new DirectoryNotFoundException("Could not locate repository data directory from test output.");
-    }
+    private static IGameDataService CreateRepositoryData() =>
+        new JsonGameDataService(RepositoryFiles.Path("data"));
 }

@@ -87,20 +87,20 @@ public sealed class BalancePackages1To4Tests
     {
         var sources = new[]
         {
-            Read("plugins", "Dynastia.Mechanics.Households", "StandardHouseholdService.cs"),
-            Read("plugins", "Dynastia.Mechanics.Health", "StandardStressService.cs"),
-            Read("plugins", "Dynastia.Mechanics.Childhood", "ChildHappinessYearSystem.cs"),
-            Read("plugins", "Dynastia.Mechanics.Relationships", "MarriageSatisfactionYearSystem.cs"),
-            Read("plugins", "Dynastia.Mechanics.Thoughts", "HouseholdThoughtProvider.cs"),
-            Read("plugins", "Dynastia.Mechanics.Justice", "CrimeYearSystem.cs"),
-            Read("plugins", "Dynastia.Mechanics.Personality", "MoralsDeteriorationYearSystem.cs"),
-            Read("plugins", "Dynastia.Mechanics.RareEvents", "RareEventYearSystem.Helpers.cs")
+            RepositoryFiles.ReadText("plugins", "Dynastia.Mechanics.Households", "StandardHouseholdService.cs"),
+            RepositoryFiles.ReadText("plugins", "Dynastia.Mechanics.Health", "StandardStressService.cs"),
+            RepositoryFiles.ReadText("plugins", "Dynastia.Mechanics.Childhood", "ChildHappinessYearSystem.cs"),
+            RepositoryFiles.ReadText("plugins", "Dynastia.Mechanics.Relationships", "MarriageSatisfactionYearSystem.cs"),
+            RepositoryFiles.ReadText("plugins", "Dynastia.Mechanics.Thoughts", "HouseholdThoughtProvider.cs"),
+            RepositoryFiles.ReadText("plugins", "Dynastia.Mechanics.Justice", "CrimeYearSystem.cs"),
+            RepositoryFiles.ReadText("plugins", "Dynastia.Mechanics.Personality", "MoralsDeteriorationYearSystem.cs"),
+            RepositoryFiles.ReadText("plugins", "Dynastia.Mechanics.RareEvents", "RareEventYearSystem.Helpers.cs")
         };
         foreach (var source in sources)
             Assert.Contains("HasUnfundedBasicNeeds", source);
 
-        var loans = Read("plugins", "Dynastia.Mechanics.Loans", "LoanPaymentYearSystem.cs");
-        var economy = Read("plugins", "Dynastia.Mechanics.Economy", "StandardEconomyService.cs");
+        var loans = RepositoryFiles.ReadText("plugins", "Dynastia.Mechanics.Loans", "LoanPaymentYearSystem.cs");
+        var economy = RepositoryFiles.ReadText("plugins", "Dynastia.Mechanics.Economy", "StandardEconomyService.cs");
         Assert.Contains("ApplyAnnualFinanceReceipt", economy);
         Assert.Contains("var duePayments =", loans);
         Assert.Contains("ApplyAnnualFinanceReceipt", loans);
@@ -111,7 +111,7 @@ public sealed class BalancePackages1To4Tests
     [Fact]
     public void CivicProfilesFreezeAtSharedTechnologyHorizonAndValidateIncumbents()
     {
-        var civic = Read("plugins", "Dynastia.Mechanics.Community", "CivicOfficeService.cs");
+        var civic = RepositoryFiles.ReadText("plugins", "Dynastia.Mechanics.Community", "CivicOfficeService.cs");
 
         Assert.Contains("GameCalendarConfiguration.TechnologyFreezeYear", civic);
         Assert.DoesNotContain("Math.Min(year, 2026)", civic);
@@ -201,10 +201,10 @@ public sealed class BalancePackages1To4Tests
     [Fact]
     public void ActiveAndPassiveMaritalConceptionUseTheSameSymmetricRule()
     {
-        var rule = Read("plugins", "Dynastia.Mechanics.Reproduction", "ReproductionEligibilityRules.cs");
-        var plugin = Read("plugins", "Dynastia.Mechanics.Reproduction", "ReproductionPlugin.cs");
-        var system = Read("plugins", "Dynastia.Mechanics.Reproduction", "ReproductionYearSystem.cs");
-        var nonmarital = Read("plugins", "Dynastia.Mechanics.Reproduction", "NonmaritalBirthYearSystem.cs");
+        var rule = RepositoryFiles.ReadText("plugins", "Dynastia.Mechanics.Reproduction", "ReproductionEligibilityRules.cs");
+        var plugin = RepositoryFiles.ReadText("plugins", "Dynastia.Mechanics.Reproduction", "ReproductionPlugin.cs");
+        var system = RepositoryFiles.ReadText("plugins", "Dynastia.Mechanics.Reproduction", "ReproductionYearSystem.cs");
+        var nonmarital = RepositoryFiles.ReadText("plugins", "Dynastia.Mechanics.Reproduction", "NonmaritalBirthYearSystem.cs");
 
         Assert.Contains("ReproductionEligibilityRules.CanAttemptMaritalConception", plugin);
         Assert.Contains("ReproductionEligibilityRules.CanAttemptMaritalConception", system);
@@ -225,10 +225,10 @@ public sealed class BalancePackages1To4Tests
     [Fact]
     public void ArtisticCraftAndFarmOutputUseSharedProductiveEffort()
     {
-        var art = Read("plugins", "Dynastia.Mechanics.Heirlooms", "ArtisticWorkYearSystem.cs");
-        var crafts = Read("plugins", "Dynastia.Mechanics.Crafts", "StandardCraftService.cs");
-        var farming = Read("plugins", "Dynastia.Mechanics.Farming", "StandardFarmingService.cs");
-        var heirloomManifest = Read("plugins", "Dynastia.Mechanics.Heirlooms", "plugin.json");
+        var art = RepositoryFiles.ReadText("plugins", "Dynastia.Mechanics.Heirlooms", "ArtisticWorkYearSystem.cs");
+        var crafts = RepositoryFiles.ReadText("plugins", "Dynastia.Mechanics.Crafts", "StandardCraftService.cs");
+        var farming = RepositoryFiles.ReadText("plugins", "Dynastia.Mechanics.Farming", "StandardFarmingService.cs");
+        var heirloomManifest = RepositoryFiles.ReadText("plugins", "Dynastia.Mechanics.Heirlooms", "plugin.json");
 
         Assert.Contains("AnnualProductiveEffortRules.Get", art);
         Assert.Contains("AnnualProductiveEffortRules.Get", crafts);
@@ -244,19 +244,6 @@ public sealed class BalancePackages1To4Tests
         Assert.Contains("\"dynastia.health\"", heirloomManifest);
     }
 
-    private static string Read(params string[] parts)
-    {
-        var directory = new DirectoryInfo(AppContext.BaseDirectory);
-        while (directory is not null)
-        {
-            var candidate = Path.Combine(new[] { directory.FullName }.Concat(parts).ToArray());
-            if (File.Exists(candidate))
-                return File.ReadAllText(candidate);
-            directory = directory.Parent;
-        }
-
-        throw new FileNotFoundException($"Could not locate repository file: {string.Join("/", parts)}");
-    }
 
     private static IEconomyService CreateEconomy(
         params (Guid PersonId, Guid HouseholdId)[] memberships)

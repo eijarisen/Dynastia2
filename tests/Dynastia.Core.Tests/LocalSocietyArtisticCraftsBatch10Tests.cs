@@ -83,7 +83,7 @@ public sealed class LocalSocietyArtisticCraftsBatch10Tests
     [Fact]
     public void KnownCraftOccupationDoesNotRecheckLocalTrainingAvailability()
     {
-        var source = File.ReadAllText(LocateRepositoryFile(
+        var source = File.ReadAllText(RepositoryFiles.Path(
             "plugins",
             "Dynastia.Mechanics.Crafts",
             "StandardCraftService.cs"));
@@ -134,39 +134,7 @@ public sealed class LocalSocietyArtisticCraftsBatch10Tests
             string.Empty);
     }
 
-    private static IGameDataService CreateRepositoryData()
-    {
-        var directory = new DirectoryInfo(AppContext.BaseDirectory);
-        while (directory is not null)
-        {
-            var dataPath = Path.Combine(directory.FullName, "data");
-            if (File.Exists(Path.Combine(dataPath, "Crafts", "crafts.csv"))
-                && File.Exists(Path.Combine(dataPath, "Crafts", "artistic_craft_rules.json")))
-            {
-                return new JsonGameDataService(dataPath);
-            }
+    private static IGameDataService CreateRepositoryData() =>
+        new JsonGameDataService(RepositoryFiles.Path("data"));
 
-            directory = directory.Parent;
-        }
-
-        throw new DirectoryNotFoundException(
-            "Could not locate repository data directory from test output.");
-    }
-
-    private static string LocateRepositoryFile(params string[] parts)
-    {
-        var directory = new DirectoryInfo(AppContext.BaseDirectory);
-        while (directory is not null)
-        {
-            var path = parts.Aggregate(
-                directory.FullName,
-                (current, part) => Path.Combine(current, part));
-            if (File.Exists(path))
-                return path;
-            directory = directory.Parent;
-        }
-
-        throw new FileNotFoundException(
-            $"Could not locate repository file: {string.Join("/", parts)}");
-    }
 }

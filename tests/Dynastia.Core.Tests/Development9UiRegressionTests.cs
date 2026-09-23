@@ -5,7 +5,7 @@ public sealed class Development9UiRegressionTests
     [Fact]
     public void PartnerCardsStayCompactAndDoNotShowHobbies()
     {
-        var root = RepositoryRoot();
+        var root = RepositoryFiles.Root;
         var xaml = File.ReadAllText(Path.Combine(
             root,
             "src",
@@ -31,27 +31,11 @@ public sealed class Development9UiRegressionTests
         Assert.Contains("count: 4", opportunities);
     }
 
-    [Fact]
-    public void QueuedActionPresentationUsesEnDashAndCleanFarmlandLabels()
-    {
-        var root = RepositoryRoot();
-        var source = File.ReadAllText(Path.Combine(
-            root,
-            "src",
-            "Dynastia.App",
-            "ViewModels",
-            "MainWindowViewModel.Actions.cs"));
-
-        Assert.Contains("text += $\" – {detail}\"", source);
-        Assert.Contains("return \"Buy Farmland\";", source);
-        Assert.Contains("return \"Sell Farmland\";", source);
-        Assert.DoesNotContain("text += $\" -- {detail}\"", source);
-    }
 
     [Fact]
     public void CraftProfessionUsesQuitLabelAndSingleChoiceShortcut()
     {
-        var root = RepositoryRoot();
+        var root = RepositoryFiles.Root;
         var crafts = File.ReadAllText(Path.Combine(
             root,
             "plugins",
@@ -73,7 +57,7 @@ public sealed class Development9UiRegressionTests
     [Fact]
     public void FamilyInventorySeparatesBudgetAndShowsCareerLevelContext()
     {
-        var root = RepositoryRoot();
+        var root = RepositoryFiles.Root;
         var inventory = File.ReadAllText(Path.Combine(
             root,
             "src",
@@ -115,7 +99,7 @@ public sealed class Development9UiRegressionTests
     [Fact]
     public void ImprisonedCareerAndStatusEmojiPresentationAreDistinct()
     {
-        var root = RepositoryRoot();
+        var root = RepositoryFiles.Root;
         var career = File.ReadAllText(Path.Combine(
             root,
             "src",
@@ -128,17 +112,10 @@ public sealed class Development9UiRegressionTests
             "Dynastia.App",
             "ViewModels",
             "EventEmojiMap.cs"));
-        var actionEmoji = File.ReadAllText(Path.Combine(
-            root,
-            "src",
-            "Dynastia.App",
-            "ViewModels",
-            "ActionEmojiMap.cs"));
 
         Assert.Contains("isAlive && isImprisoned", career);
         Assert.Contains("? \"N/A\"", career);
         Assert.DoesNotContain("🔹", eventEmoji);
-        Assert.DoesNotContain("🔹", actionEmoji);
         Assert.Contains("[\"historical.milestone\"] = \"🗞️\"", eventEmoji);
         Assert.Contains("[\"career.changed_job\"] = \"🔄\"", eventEmoji);
         Assert.Contains("[\"farming.income\"] = \"🌾\"", eventEmoji);
@@ -147,7 +124,7 @@ public sealed class Development9UiRegressionTests
     [Fact]
     public void HistoricalEraWrapsAboveYearWithoutEnteringNextYearButton()
     {
-        var root = RepositoryRoot();
+        var root = RepositoryFiles.Root;
         var xaml = File.ReadAllText(Path.Combine(
             root,
             "src",
@@ -162,18 +139,4 @@ public sealed class Development9UiRegressionTests
         Assert.Contains("Width=\"158\"", xaml);
     }
 
-    private static string RepositoryRoot()
-    {
-        var current = new DirectoryInfo(AppContext.BaseDirectory);
-        while (current is not null)
-        {
-            if (File.Exists(Path.Combine(current.FullName, "Dynastia.slnx")))
-                return current.FullName;
-
-            current = current.Parent;
-        }
-
-        throw new DirectoryNotFoundException(
-            "Could not locate repository root.");
-    }
 }

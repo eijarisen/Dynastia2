@@ -57,7 +57,7 @@ public sealed class AdultSonsHouseholdReworkTests
     public void HistoricalCatalogContainsBothSonMarriageEras()
     {
         var path = Path.Combine(
-            RepositoryRoot(),
+            RepositoryFiles.Root,
             "data",
             "Common",
             "historical_action_variants.json");
@@ -81,17 +81,4 @@ public sealed class AdultSonsHouseholdReworkTests
                 == "Help Son Find a Wife");
     }
 
-    private static string RepositoryRoot()
-    {
-        var current = new DirectoryInfo(AppContext.BaseDirectory);
-        while (current is not null)
-        {
-            if (File.Exists(Path.Combine(current.FullName, "Dynastia.slnx")))
-                return current.FullName;
-
-            current = current.Parent;
-        }
-
-        throw new DirectoryNotFoundException("Could not locate repository root.");
-    }
 }

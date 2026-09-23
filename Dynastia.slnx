@@ -47,5 +47,7 @@
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/Dynastia.Core.Tests/Dynastia.Core.Tests.csproj" />
+    <Project Path="tests/Dynastia.App.Tests/Dynastia.App.Tests.csproj" />
+    <Project Path="tests/Dynastia.TestSupport/Dynastia.TestSupport.csproj" />
   </Folder>
 </Solution>

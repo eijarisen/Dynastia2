@@ -16,18 +16,18 @@ public sealed class BalanceReassessmentPackages2To4Tests
         Assert.Equal(1.20m, oldLendingTerms.InterestMultiplier);
         Assert.Equal(0.60m, newLendingTerms.InterestMultiplier);
 
-        var service = Read("plugins", "Dynastia.Mechanics.Loans", "StandardLoanService.cs");
-        var calculator = Read("plugins", "Dynastia.Mechanics.Loans", "LoanTermsCalculator.cs");
+        var service = RepositoryFiles.ReadText("plugins", "Dynastia.Mechanics.Loans", "StandardLoanService.cs");
+        var calculator = RepositoryFiles.ReadText("plugins", "Dynastia.Mechanics.Loans", "LoanTermsCalculator.cs");
         Assert.Contains("ExternalLendingInterestScale = 0.50m", service);
         Assert.Contains("if (isGivingLoan)\n                interestMultiplier *= ExternalLendingInterestScale;", service);
         Assert.DoesNotContain("ExternalLendingInterestScale", calculator);
-        Assert.Contains("terms.InterestMultiplier", Read("plugins", "Dynastia.Mechanics.Loans", "LoansPlugin.cs"));
+        Assert.Contains("terms.InterestMultiplier", RepositoryFiles.ReadText("plugins", "Dynastia.Mechanics.Loans", "LoansPlugin.cs"));
     }
 
     [Fact]
     public void MoneyRequestGateUsesWarmRelationAndEstablishedHouseholdRenownBoundary()
     {
-        var rules = CommunityConnectionRules.Load(new RepositoryDataService(RepositoryRoot()));
+        var rules = CommunityConnectionRules.Load(new RepositoryDataService(RepositoryFiles.Root));
         Assert.Equal("Warm", rules.MoneyMinimumRelation);
         Assert.Equal(30d, rules.MoneyMinimumHouseholdRenown);
 
@@ -57,7 +57,7 @@ public sealed class BalanceReassessmentPackages2To4Tests
     [Fact]
     public void MajorAssetGateRequiresCloseRelationAndProminentHouseholdRenownBoundary()
     {
-        var rules = CommunityConnectionRules.Load(new RepositoryDataService(RepositoryRoot()));
+        var rules = CommunityConnectionRules.Load(new RepositoryDataService(RepositoryFiles.Root));
         Assert.Equal("Close", rules.AssetMinimumRelation);
         Assert.Equal(50d, rules.AssetMinimumHouseholdRenown);
 
@@ -85,8 +85,8 @@ public sealed class BalanceReassessmentPackages2To4Tests
     [Fact]
     public void RequestAvailabilityAndResolutionShareTheSameEligibilityPredicates()
     {
-        var service = Read("plugins", "Dynastia.Mechanics.Community", "CommunityConnectionService.cs");
-        var actions = Read("plugins", "Dynastia.Mechanics.Community", "CommunityConnectionActions.cs");
+        var service = RepositoryFiles.ReadText("plugins", "Dynastia.Mechanics.Community", "CommunityConnectionService.cs");
+        var actions = RepositoryFiles.ReadText("plugins", "Dynastia.Mechanics.Community", "CommunityConnectionActions.cs");
 
         var moneyResolution = Slice(service, "internal bool RequestMoney(", "internal bool RequestHouse(");
         AssertBefore(moneyResolution, "CanRequestMoney(actor, connection", "ApplyRequestBaseCost(connection);");
@@ -115,7 +115,7 @@ public sealed class BalanceReassessmentPackages2To4Tests
     [Fact]
     public void RequestEligibilityConfigurationRejectsOutOfRangeRenownAndUnsupportedRelation()
     {
-        var source = File.ReadAllText(Path.Combine(RepositoryRoot(), "data", "LocalSociety", "connection_rules.json"));
+        var source = File.ReadAllText(Path.Combine(RepositoryFiles.Root, "data", "LocalSociety", "connection_rules.json"));
 
         var badRenown = source.Replace(
             "\"moneyMinimumHouseholdRenown\": 30",
@@ -148,22 +148,6 @@ public sealed class BalanceReassessmentPackages2To4Tests
         var endIndex = source.IndexOf(end, startIndex + start.Length, StringComparison.Ordinal);
         Assert.True(endIndex > startIndex, $"Missing end marker: {end}");
         return source[startIndex..endIndex];
-    }
-
-    private static string Read(params string[] parts) =>
-        File.ReadAllText(Path.Combine(new[] { RepositoryRoot() }.Concat(parts).ToArray()));
-
-    private static string RepositoryRoot()
-    {
-        var current = new DirectoryInfo(AppContext.BaseDirectory);
-        while (current is not null)
-        {
-            if (File.Exists(Path.Combine(current.FullName, "Dynastia.slnx")))
-                return current.FullName;
-            current = current.Parent;
-        }
-
-        throw new DirectoryNotFoundException("Could not locate repository root.");
     }
 
     private sealed class RepositoryDataService(string root) : IGameDataService

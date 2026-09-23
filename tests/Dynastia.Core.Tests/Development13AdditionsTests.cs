@@ -67,7 +67,7 @@ public sealed class Development13AdditionsTests
         Assert.DoesNotContain("rare.crop_failure,", rare);
         Assert.Contains("rare.local_epidemic,", rare);
 
-        var root = FindRepositoryRoot();
+        var root = RepositoryFiles.Root;
         var education = File.ReadAllText(Path.Combine(root, "plugins", "Dynastia.Mechanics.Education", "EducationPlugin.cs"));
         var town = File.ReadAllText(Path.Combine(root, "src", "Dynastia.App", "ViewModels", "TownAffairsViewModel.cs"));
         var farming = File.ReadAllText(Path.Combine(root, "plugins", "Dynastia.Mechanics.Farming", "StandardFarmingService.cs"));
@@ -99,20 +99,6 @@ public sealed class Development13AdditionsTests
     }
 
     private static IGameDataService CreateRepositoryData() =>
-        new JsonGameDataService(Path.Combine(FindRepositoryRoot(), "data"));
+        new JsonGameDataService(Path.Combine(RepositoryFiles.Root, "data"));
 
-    private static string FindRepositoryRoot()
-    {
-        var directory = new DirectoryInfo(AppContext.BaseDirectory);
-        while (directory is not null)
-        {
-            if (Directory.Exists(Path.Combine(directory.FullName, "data"))
-                && Directory.Exists(Path.Combine(directory.FullName, "plugins")))
-            {
-                return directory.FullName;
-            }
-            directory = directory.Parent;
-        }
-        throw new DirectoryNotFoundException("Could not locate repository root from test output.");
-    }
 }

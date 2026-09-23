@@ -145,6 +145,14 @@ internal sealed class StandardThoughtService :
                     _events.AllEvents.Count);
         }
 
+        var context =
+            CreateContext(
+                Array.Empty<GameEvent>());
+
+        var dynastyKey =
+            GetDynastyKey(
+                anchor);
+
         foreach (var person in
             _gameState.People)
         {
@@ -171,8 +179,8 @@ internal sealed class StandardThoughtService :
 
             GenerateForPerson(
                 person,
-                events:
-                    []);
+                context,
+                dynastyKey);
         }
 
         state.LastGeneratedYear =
@@ -262,6 +270,14 @@ internal sealed class StandardThoughtService :
                     eventStart)
                 .ToList();
 
+        var context =
+            CreateContext(
+                pendingEvents);
+
+        var dynastyKey =
+            GetDynastyKey(
+                anchor);
+
         foreach (var person in
             _gameState.People)
         {
@@ -278,7 +294,8 @@ internal sealed class StandardThoughtService :
 
             GenerateForPerson(
                 person,
-                pendingEvents);
+                context,
+                dynastyKey);
         }
 
         state.LastProcessedEventCount =
@@ -290,53 +307,102 @@ internal sealed class StandardThoughtService :
 
     private void GenerateForPerson(
         IPerson person,
-        IReadOnlyList<GameEvent> events)
+        ThoughtContext context,
+        string dynastyKey)
     {
-        var context =
-            new ThoughtContext
+        var winnersByKey =
+            new Dictionary<
+                string,
+                CandidateSelection>(
+                    StringComparer.OrdinalIgnoreCase);
+
+        ThoughtCandidate? selected =
+            null;
+
+        var selectedGroupOrder =
+            int.MaxValue;
+
+        var nextGroupOrder =
+            0;
+
+        void Consider(
+            ThoughtCandidate candidate)
+        {
+            var ageAdjusted =
+                ThoughtProviderUtilities
+                    .ApplyAgePriority(
+                        person,
+                        candidate);
+
+            var adjusted =
+                candidate with
+                {
+                    Salience =
+                        ApplyPersonalitySalience(
+                            person,
+                            candidate,
+                            ageAdjusted)
+                };
+
+            if (!winnersByKey.TryGetValue(
+                    adjusted.DeduplicationKey,
+                    out var existing))
             {
-                Year =
-                    _gameState.Year,
+                var selection =
+                    new CandidateSelection(
+                        adjusted,
+                        nextGroupOrder++);
 
-                Events =
-                    events,
+                winnersByKey.Add(
+                    adjusted.DeduplicationKey,
+                    selection);
 
-                GameState =
-                    _gameState,
+                if (selected is null
+                    || IsGlobalWinner(
+                        adjusted,
+                        selection.GroupOrder,
+                        selected,
+                        selectedGroupOrder))
+                {
+                    selected = adjusted;
+                    selectedGroupOrder =
+                        selection.GroupOrder;
+                }
 
-                Family =
-                    _family,
+                return;
+            }
 
-                Stats =
-                    _stats,
+            if (!IsBetterWithinGroup(
+                    adjusted,
+                    existing.Candidate))
+            {
+                return;
+            }
 
-                Health =
-                    _health,
+            var replacement =
+                existing with
+                {
+                    Candidate = adjusted
+                };
 
-                Career =
-                    _career,
+            winnersByKey[
+                adjusted.DeduplicationKey] =
+                    replacement;
 
-                Households =
-                    _households,
-
-                Justice =
-                    _justice,
-
-                Education =
-                    _education,
-
-                Economy =
-                    _economy,
-
-                Adoption =
-                    _adoption,
-
-                MarriageSatisfaction =
-                    _marriageSatisfaction
-            };
-
-        var candidates =
-            new List<ThoughtCandidate>();
+            if (selectedGroupOrder
+                == replacement.GroupOrder
+                || selected is null
+                || IsGlobalWinner(
+                    adjusted,
+                    replacement.GroupOrder,
+                    selected,
+                    selectedGroupOrder))
+            {
+                selected = adjusted;
+                selectedGroupOrder =
+                    replacement.GroupOrder;
+            }
+        }
 
         foreach (var provider in
             _providers.Providers)
@@ -346,25 +412,12 @@ internal sealed class StandardThoughtService :
                     person,
                     context))
             {
-                var ageAdjusted =
-                    ThoughtProviderUtilities
-                        .ApplyAgePriority(
-                            person,
-                            candidate);
-
-                candidates.Add(
-                    candidate with
-                    {
-                        Salience =
-                            ApplyPersonalitySalience(
-                                person,
-                                candidate,
-                                ageAdjusted)
-                    });
+                Consider(
+                    candidate);
             }
         }
 
-        candidates.Add(
+        Consider(
             new ThoughtCandidate(
                 "fallback",
                 "fallback",
@@ -378,45 +431,18 @@ internal sealed class StandardThoughtService :
                 null,
                 "fallback"));
 
-        var deduplicated =
-            candidates
-                .GroupBy(
-                    candidate =>
-                        candidate.DeduplicationKey,
-                    StringComparer.OrdinalIgnoreCase)
-                .Select(
-                    group =>
-                        group
-                            .OrderByDescending(
-                                candidate =>
-                                    candidate.Salience)
-                            .ThenBy(
-                                candidate =>
-                                    candidate.Id,
-                                StringComparer.OrdinalIgnoreCase)
-                            .First())
-                .OrderByDescending(
-                    candidate =>
-                        candidate.Salience)
-                .ThenBy(
-                    candidate =>
-                        candidate.Id,
-                    StringComparer.OrdinalIgnoreCase)
-                .ToList();
-
-        var dynastyKey =
-            GetDynastyKey();
-
         // Always surface the single most salient thought. Random selection
         // from the top three could let routine financial events displace
         // major family events such as the death of a child.
-        var selected =
-            deduplicated[0];
+        var finalSelection =
+            selected
+            ?? throw new InvalidOperationException(
+                "Thought generation produced no candidate.");
 
         var text =
             _renderer.Render(
                 person,
-                selected,
+                finalSelection,
                 dynastyKey,
                 _gameState.Year);
 
@@ -427,24 +453,116 @@ internal sealed class StandardThoughtService :
                     _gameState.Year,
 
                 ThoughtId =
-                    selected.Id,
+                    finalSelection.Id,
 
                 Topic =
-                    selected.Topic,
+                    finalSelection.Topic,
 
                 Text =
                     text,
 
                 Emoji =
-                    selected.Emoji,
+                    finalSelection.Emoji,
 
                 Salience =
-                    selected.Salience,
+                    finalSelection.Salience,
 
                 SourceId =
-                    selected.SourceId
+                    finalSelection.SourceId
             });
     }
+
+    private ThoughtContext CreateContext(
+        IReadOnlyList<GameEvent> events)
+    {
+        return new ThoughtContext
+        {
+            Year =
+                _gameState.Year,
+
+            Events =
+                events,
+
+            GameState =
+                _gameState,
+
+            Family =
+                _family,
+
+            Stats =
+                _stats,
+
+            Health =
+                _health,
+
+            Career =
+                _career,
+
+            Households =
+                _households,
+
+            Justice =
+                _justice,
+
+            Education =
+                _education,
+
+            Economy =
+                _economy,
+
+            Adoption =
+                _adoption,
+
+            MarriageSatisfaction =
+                _marriageSatisfaction
+        };
+    }
+
+    private static bool IsBetterWithinGroup(
+        ThoughtCandidate candidate,
+        ThoughtCandidate existing)
+    {
+        if (candidate.Salience
+            != existing.Salience)
+        {
+            return candidate.Salience
+                > existing.Salience;
+        }
+
+        return StringComparer.OrdinalIgnoreCase.Compare(
+                candidate.Id,
+                existing.Id)
+            < 0;
+    }
+
+    private static bool IsGlobalWinner(
+        ThoughtCandidate candidate,
+        int groupOrder,
+        ThoughtCandidate selected,
+        int selectedGroupOrder)
+    {
+        if (candidate.Salience
+            != selected.Salience)
+        {
+            return candidate.Salience
+                > selected.Salience;
+        }
+
+        var idComparison =
+            StringComparer.OrdinalIgnoreCase.Compare(
+                candidate.Id,
+                selected.Id);
+
+        if (idComparison != 0)
+            return idComparison < 0;
+
+        return groupOrder
+            < selectedGroupOrder;
+    }
+
+    private readonly record struct CandidateSelection(
+        ThoughtCandidate Candidate,
+        int GroupOrder);
 
 
     private static int ApplyPersonalitySalience(
@@ -582,11 +700,9 @@ internal sealed class StandardThoughtService :
                 .FirstOrDefault();
     }
 
-    private string GetDynastyKey()
+    private string GetDynastyKey(
+        IPerson? anchor)
     {
-        var anchor =
-            FindStateAnchor();
-
         return
             $"{_gameState.DynastySurname}|" +
             $"{anchor?.Id.ToString() ?? "no-founder"}";

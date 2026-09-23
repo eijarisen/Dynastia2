@@ -269,20 +269,6 @@ public sealed class ContentReworkBatch2CareerCrimeTests
             .ToList();
     }
 
-    private static IGameDataService CreateRepositoryData()
-    {
-        var directory = new DirectoryInfo(AppContext.BaseDirectory);
-        while (directory is not null)
-        {
-            var dataPath = Path.Combine(directory.FullName, "data");
-            if (File.Exists(Path.Combine(dataPath, "Career", "careers.csv"))
-                && File.Exists(Path.Combine(dataPath, "Common", "crimes.json")))
-            {
-                return new JsonGameDataService(dataPath);
-            }
-            directory = directory.Parent;
-        }
-
-        throw new DirectoryNotFoundException("Could not locate repository data directory from test output.");
-    }
+    private static IGameDataService CreateRepositoryData() =>
+        new JsonGameDataService(RepositoryFiles.Path("data"));
 }

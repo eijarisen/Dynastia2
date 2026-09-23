@@ -116,7 +116,7 @@ public sealed class TownLifeBatch3Tests
     [Fact]
     public void CareerGenerationApplicationsAndAnnualRevalidationUseInstitutions()
     {
-        var root = RepositoryRoot();
+        var root = RepositoryFiles.Root;
         var opportunities = File.ReadAllText(Path.Combine(
             root,
             "plugins",
@@ -144,7 +144,7 @@ public sealed class TownLifeBatch3Tests
     [Fact]
     public void CraftTrainingIsLocalButKnownCraftPracticeSurvivesRelocation()
     {
-        var root = RepositoryRoot();
+        var root = RepositoryFiles.Root;
         var service = File.ReadAllText(Path.Combine(
             root,
             "plugins",
@@ -171,7 +171,7 @@ public sealed class TownLifeBatch3Tests
     [Fact]
     public void GeneratedPartnersAndEducationUiUseLocalSchoolCeiling()
     {
-        var root = RepositoryRoot();
+        var root = RepositoryFiles.Root;
         var partners = File.ReadAllText(Path.Combine(
             root,
             "plugins",
@@ -202,7 +202,7 @@ public sealed class TownLifeBatch3Tests
     [Fact]
     public void Batch3DataFilesAreInstalledFromImplementationPackage()
     {
-        var root = RepositoryRoot();
+        var root = RepositoryFiles.Root;
 
         Assert.True(File.Exists(Path.Combine(
             root,
@@ -262,18 +262,6 @@ public sealed class TownLifeBatch3Tests
     }
 
     private static JsonGameDataService DataService() =>
-        new(Path.Combine(RepositoryRoot(), "data"));
+        new(Path.Combine(RepositoryFiles.Root, "data"));
 
-    private static string RepositoryRoot()
-    {
-        var current = new DirectoryInfo(AppContext.BaseDirectory);
-        while (current is not null)
-        {
-            if (File.Exists(Path.Combine(current.FullName, "Dynastia.slnx")))
-                return current.FullName;
-            current = current.Parent;
-        }
-
-        throw new DirectoryNotFoundException("Could not locate repository root.");
-    }
 }

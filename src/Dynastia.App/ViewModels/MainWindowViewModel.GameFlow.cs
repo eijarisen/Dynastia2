@@ -83,6 +83,14 @@ public sealed partial class MainWindowViewModel
             return;
         }
 
+        var profileEnabled =
+            YearPerformanceProfiler.IsEnabled;
+
+        var commandStartedAt =
+            profileEnabled
+                ? YearPerformanceProfiler.StartTimestamp()
+                : 0;
+
         var missing =
             GetMaleHeirsWithoutAnnualAction();
 
@@ -115,10 +123,25 @@ public sealed partial class MainWindowViewModel
             return;
         }
 
+        var peopleAtTurnStart =
+            profileEnabled
+                ? _gameState.People.Count
+                : 0;
+
+        var queuedAtTurnStart =
+            profileEnabled
+                ? _actionRegistry.GetAllQueuedActions().Count
+                : 0;
+
         PersistenceStatusText =
             string.Empty;
 
         _yearProcessor.AdvanceYear();
+
+        var refreshStartedAt =
+            profileEnabled
+                ? YearPerformanceProfiler.StartTimestamp()
+                : 0;
 
         AlbumYear =
             _gameState.Year;
@@ -129,6 +152,75 @@ public sealed partial class MainWindowViewModel
 
         ShowYearSummary(
             _gameState.Year);
+
+        if (profileEnabled)
+        {
+            var refreshElapsed =
+                YearPerformanceProfiler.GetElapsedTime(
+                    refreshStartedAt);
+
+            var commandElapsed =
+                YearPerformanceProfiler.GetElapsedTime(
+                    commandStartedAt);
+
+            YearPerformanceProfiler.LogDuration(
+                _gameState.Year,
+                "app.post_year_refresh",
+                refreshElapsed);
+
+            YearPerformanceProfiler.LogDuration(
+                _gameState.Year,
+                "app.next_year_total",
+                commandElapsed);
+
+            LogYearProfileCounters(
+                peopleAtTurnStart,
+                queuedAtTurnStart);
+        }
+    }
+
+    private void LogYearProfileCounters(
+        int peopleAtTurnStart,
+        int queuedAtTurnStart)
+    {
+        var totalPeople =
+            _gameState.People.Count;
+
+        var livingPeople =
+            _gameState.People.Count(
+                person =>
+                    !person.Tags.Has(
+                        "state.dead"));
+
+        var activePeople =
+            _gameState.People.Count(
+                person =>
+                    !person.Tags.Has(
+                        "state.dead")
+                    && !SimulationState.IsInactive(
+                        person));
+
+        var householdCount =
+            _householdService?
+                .GetActiveHouseholds()
+                .Count
+            ?? 0;
+
+        var peopleCreated =
+            Math.Max(
+                0,
+                totalPeople - peopleAtTurnStart);
+
+        YearPerformanceProfiler.Log(
+            _gameState.Year,
+            "year.counters",
+            $"people={totalPeople} " +
+            $"living={livingPeople} " +
+            $"active={activePeople} " +
+            $"households={householdCount} " +
+            $"events={_eventBus.AllEvents.Count} " +
+            $"queued_turn_start={queuedAtTurnStart} " +
+            $"created={peopleCreated}");
     }
 
     private IReadOnlyList<IPerson>

@@ -126,6 +126,8 @@ public sealed partial class StandardHouseholdService
                                 "state.alive")
                             && _family.IsBloodline(
                                 person)
+                            && !_economy.HasHousehold(
+                                person)
                             && ResolveHouseholdHead(
                                 person)?.Id
                                 == formerPartner.Id)
@@ -147,7 +149,17 @@ public sealed partial class StandardHouseholdService
                                 "state.alive")
                             && person.Age >= 18
                             && _family.IsBloodline(
-                                person))
+                                person)
+                            // MemberIds can be briefly stale during the divorce
+                            // event: a Bloodline adult may already have been moved
+                            // into an independent household by Relationships. Only
+                            // a person who still resolves to this former partner's
+                            // household may inherit this household headship.
+                            && !_economy.HasHousehold(
+                                person)
+                            && ResolveHouseholdHead(
+                                person)?.Id
+                                == formerPartner.Id)
                     .Cast<IPerson>()
                     .OrderBy(
                         BirthSortKey)

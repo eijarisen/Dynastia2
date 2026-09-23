@@ -159,7 +159,7 @@ public sealed class LoansPlugin :
                         family)
                     && HasLocalBank(
                         actionContext.Actor,
-                        actionContext.GameState.Year,
+                        actionContext.ScheduledExecutionYear,
                         locations,
                         facilityQuality)
                     && !loans.HasActiveSelfOriginatedBankLoan(
@@ -268,7 +268,7 @@ public sealed class LoansPlugin :
                             family)
                         || !HasLocalBank(
                             actionContext.Actor,
-                            actionContext.GameState.Year,
+                            actionContext.ScheduledExecutionYear,
                             locations,
                             facilityQuality))
                     {

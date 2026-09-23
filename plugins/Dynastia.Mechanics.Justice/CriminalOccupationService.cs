@@ -19,6 +19,7 @@ internal sealed class CriminalOccupationService :
     private readonly IReadOnlyList<CrimeDefinition> _crimes;
     private readonly CrimeHistoricalCatalog _historical;
     private readonly Func<ICraftService?> _craftResolver;
+    private readonly IWorkCapacityService _workCapacity;
 
     public CriminalOccupationService(
         IGameState gameState,
@@ -32,7 +33,8 @@ internal sealed class CriminalOccupationService :
         CriminalOccupationCatalog catalog,
         IReadOnlyList<CrimeDefinition> crimes,
         CrimeHistoricalCatalog historical,
-        Func<ICraftService?> craftResolver)
+        Func<ICraftService?> craftResolver,
+        IWorkCapacityService workCapacity)
     {
         _gameState = gameState;
         _family = family;
@@ -46,6 +48,7 @@ internal sealed class CriminalOccupationService :
         _crimes = crimes;
         _historical = historical;
         _craftResolver = craftResolver;
+        _workCapacity = workCapacity;
     }
 
     public string Id => "justice.life_of_crime";
@@ -64,7 +67,7 @@ internal sealed class CriminalOccupationService :
             mastery.DisplayName,
             archetype.ArchetypeId,
             archetype.DisplayName,
-            component.IsActive ? CalculateExpectedIncome(person, mastery.Level, archetype) : 0m,
+            component.IsActive ? GetExpectedAnnualIncome(person) : 0m,
             component.LastAnnualIncome,
             component.LastIncomeYear);
     }
@@ -147,8 +150,15 @@ internal sealed class CriminalOccupationService :
             return 0m;
         }
 
+        var effort = AnnualProductiveEffortRules.Get(person, _workCapacity);
+        if (!effort.CanProduce)
+            return 0m;
+
         var mastery = _catalog.ResolveMastery(component.ActiveHeistYears);
-        return CalculateExpectedIncome(person, mastery.Level, ResolveArchetype(person));
+        return Math.Round(
+            effort.Apply(CalculateExpectedIncome(person, mastery.Level, ResolveArchetype(person))),
+            0,
+            MidpointRounding.AwayFromZero);
     }
 
     public decimal GetAnnualIncome(IPerson person)
@@ -188,8 +198,14 @@ internal sealed class CriminalOccupationService :
         }
 
         var proceeds = PrepareHeistProceeds(person, component);
-        if (proceeds > 0m)
-            _economy.ChangeWealth(person, proceeds);
+        if (proceeds <= 0m)
+        {
+            component.PendingHeistYear = 0;
+            component.PendingHeistProceeds = 0m;
+            return true;
+        }
+
+        _economy.ChangeWealth(person, proceeds);
         ResolveHeist(person, component, proceeds);
         return true;
     }
@@ -208,7 +224,14 @@ internal sealed class CriminalOccupationService :
 
         var incomeWasPrepared = component.PendingHeistYear == _gameState.Year;
         var proceeds = PrepareHeistProceeds(person, component);
-        if (!incomeWasPrepared && proceeds > 0m)
+        if (proceeds <= 0m)
+        {
+            component.PendingHeistYear = 0;
+            component.PendingHeistProceeds = 0m;
+            return;
+        }
+
+        if (!incomeWasPrepared)
             _economy.ChangeWealth(person, proceeds);
         ResolveHeist(person, component, proceeds);
     }
@@ -232,12 +255,25 @@ internal sealed class CriminalOccupationService :
         if (component.PendingHeistYear == _gameState.Year)
             return component.PendingHeistProceeds;
 
-        var mastery = _catalog.ResolveMastery(component.ActiveHeistYears);
-        var archetype = ResolveArchetype(person);
-        var roll = _random.NextInt(
-            _catalog.Rules.Heist.IncomeRollMinimum,
-            _catalog.Rules.Heist.IncomeRollMaximumInclusive);
-        var proceeds = CalculateIncome(person, mastery.Level, archetype, roll);
+        var effort = AnnualProductiveEffortRules.Get(person, _workCapacity);
+        decimal proceeds;
+
+        if (!effort.CanProduce)
+        {
+            proceeds = 0m;
+        }
+        else
+        {
+            var mastery = _catalog.ResolveMastery(component.ActiveHeistYears);
+            var archetype = ResolveArchetype(person);
+            var roll = _random.NextInt(
+                _catalog.Rules.Heist.IncomeRollMinimum,
+                _catalog.Rules.Heist.IncomeRollMaximumInclusive);
+            proceeds = Math.Round(
+                effort.Apply(CalculateIncome(person, mastery.Level, archetype, roll)),
+                0,
+                MidpointRounding.AwayFromZero);
+        }
 
         component.PendingHeistYear = _gameState.Year;
         component.PendingHeistProceeds = proceeds;

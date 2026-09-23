@@ -23,6 +23,10 @@ internal sealed class CommunityConnectionRules
     public IReadOnlyDictionary<string, int> MoneyMaximumLivingCostUnits { get; init; } = new Dictionary<string, int>();
     public double HouseBaseAcceptance { get; init; }
     public double FarmlandBaseAcceptance { get; init; }
+    public string MoneyMinimumRelation { get; init; } = "Warm";
+    public double MoneyMinimumHouseholdRenown { get; init; }
+    public string AssetMinimumRelation { get; init; } = "Close";
+    public double AssetMinimumHouseholdRenown { get; init; }
     public IReadOnlyDictionary<string, double> RelationshipAcceptancePoints { get; init; } = new Dictionary<string, double>();
     public IReadOnlyDictionary<string, double> WealthAcceptancePoints { get; init; } = new Dictionary<string, double>();
     public int RequestSympathyCost { get; init; }
@@ -64,6 +68,7 @@ internal sealed class CommunityConnectionRules
         var assets = root.GetProperty("abstractAssets");
         var moneyRequest = root.GetProperty("moneyRequest");
         var assetRequest = root.GetProperty("assetRequest");
+        var requestEligibility = root.GetProperty("requestEligibility");
         var modifiers = root.GetProperty("acceptanceModifiersPercentagePoints");
         var requestCost = root.GetProperty("requestRelationshipCost");
         var giftGain = root.GetProperty("giftRelationshipGain");
@@ -89,6 +94,10 @@ internal sealed class CommunityConnectionRules
             MoneyMaximumLivingCostUnits = ReadIntMap(moneyRequest.GetProperty("estimatedMaximumByWealthBandInLivingCostUnits")),
             HouseBaseAcceptance = assetRequest.GetProperty("houseBaseAcceptanceChance").GetDouble(),
             FarmlandBaseAcceptance = assetRequest.GetProperty("farmlandBaseAcceptanceChance").GetDouble(),
+            MoneyMinimumRelation = requestEligibility.GetProperty("moneyMinimumRelation").GetString() ?? string.Empty,
+            MoneyMinimumHouseholdRenown = requestEligibility.GetProperty("moneyMinimumHouseholdRenown").GetDouble(),
+            AssetMinimumRelation = requestEligibility.GetProperty("assetMinimumRelation").GetString() ?? string.Empty,
+            AssetMinimumHouseholdRenown = requestEligibility.GetProperty("assetMinimumHouseholdRenown").GetDouble(),
             RelationshipAcceptancePoints = ReadDoubleMap(modifiers.GetProperty("relationship")),
             WealthAcceptancePoints = ReadDoubleMap(modifiers.GetProperty("wealthBand")),
             RequestSympathyCost = requestCost.GetProperty("onAnyRequest").GetProperty("sympathy").GetInt32(),
@@ -133,8 +142,26 @@ internal sealed class CommunityConnectionRules
                 "Community relationship interaction gains and decay grace must be non-negative.");
         }
 
+        if (rules.MoneyMinimumHouseholdRenown is < 0 or > 100
+            || rules.AssetMinimumHouseholdRenown is < 0 or > 100)
+        {
+            throw new InvalidDataException(
+                "Community request eligibility Renown thresholds must be within 0-100.");
+        }
+
+        if (!IsSupportedRequestMinimumRelation(rules.MoneyMinimumRelation)
+            || !IsSupportedRequestMinimumRelation(rules.AssetMinimumRelation))
+        {
+            throw new InvalidDataException(
+                "Community request eligibility relation minima must be either 'Warm' or 'Close'.");
+        }
+
         return rules;
     }
+
+    private static bool IsSupportedRequestMinimumRelation(string relation) =>
+        relation.Equals("Warm", StringComparison.OrdinalIgnoreCase)
+        || relation.Equals("Close", StringComparison.OrdinalIgnoreCase);
 
     private static IReadOnlyDictionary<string, double> ReadDoubleMap(JsonElement element) =>
         element.EnumerateObject().ToDictionary(

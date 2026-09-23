@@ -40,7 +40,7 @@ public sealed partial class StandardHouseholdService
                         child)
                     .ToList();
 
-            if (wealth > 0)
+            if (wealth != 0)
             {
                 _economy.ChangePendingInheritance(
                     child,

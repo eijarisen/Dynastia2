@@ -43,6 +43,8 @@ public sealed partial class JusticePlugin : IGamePlugin
         var guards = context.GetService<IActionGuardRegistry>() ?? throw new InvalidOperationException("Action guard registry is unavailable.");
         var stressModifiers = context.GetService<IStressModifierRegistry>() ?? throw new InvalidOperationException("Stress modifier registry is unavailable.");
         var stress = context.GetService<IStressService>();
+        var workCapacity = context.GetService<IWorkCapacityService>()
+            ?? throw new InvalidOperationException("Work capacity service is unavailable.");
 
         var jsonOptions = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
         var crimes = CatalogValidation.DeserializeJson<List<CrimeDefinition>>(
@@ -89,7 +91,8 @@ public sealed partial class JusticePlugin : IGamePlugin
             criminalCatalog,
             crimes,
             historicalCrimes,
-            () => context.GetService<ICraftService>());
+            () => context.GetService<ICraftService>(),
+            workCapacity);
         context.AddService<IJusticeService>(justice);
         context.AddService<ICriminalOccupationService>(criminalOccupation);
         income.Register(criminalOccupation);

@@ -143,7 +143,7 @@ public sealed class PersonalityPlugin : IGamePlugin
 
                 var churchTier = ResolveChurchTier(
                     actor,
-                    actionContext.GameState.Year,
+                    actionContext.ScheduledExecutionYear,
                     locations,
                     institutions);
                 var chance = rules.GetSuccessChance(churchTier);

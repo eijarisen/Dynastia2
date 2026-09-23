@@ -59,7 +59,7 @@ public sealed partial class WellbeingPlugin
                             var historicallyAvailable =
                                 historical.GetVariant(
                                     "wellbeing.therapy",
-                                    actionContext.GameState.Year)
+                                    actionContext.ScheduledExecutionYear)
                                 is not null;
 
                             if (!historicallyAvailable
@@ -114,7 +114,7 @@ public sealed partial class WellbeingPlugin
                             var historicallyAvailable =
                                 historical.GetVariant(
                                     "wellbeing.therapy",
-                                    actionContext.GameState.Year)
+                                    actionContext.ScheduledExecutionYear)
                                 is not null;
 
                             if (!historicallyAvailable

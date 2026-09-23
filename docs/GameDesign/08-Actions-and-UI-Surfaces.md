@@ -120,11 +120,11 @@ Craft IDs are data-driven, so some action IDs are patterns rather than a finite 
 | `community.perform_office_duties` | Perform Office Duties | civic-office holder | Queued / Early | Town Affairs → Community |
 | `community.connection.improve` | Improve Relations | acquaintance | Queued / FamilyRelationActions | Town Affairs → Community |
 | `community.connection.send_money` | Send Money | acquaintance | Queued / FamilyRelationActions | Town Affairs → Community |
-| `community.connection.request_money` | Request Money | acquaintance | Queued / FamilyRelationActions | Town Affairs → Community |
+| `community.connection.request_money` | Request Money | Warm/Close acquaintance; household Renown ≥30 | Queued / FamilyRelationActions | Town Affairs → Community |
 | `community.connection.give_house` | Give House | acquaintance | Queued / FamilyRelationActions | Town Affairs → Community |
-| `community.connection.request_house` | Request House | acquaintance | Queued / FamilyRelationActions | Town Affairs → Community |
+| `community.connection.request_house` | Request House | Close acquaintance; household Renown ≥50; spare house | Queued / FamilyRelationActions | Town Affairs → Community |
 | `community.connection.give_farmland` | Give Farmland | acquaintance | Queued / FamilyRelationActions | Town Affairs → Community |
-| `community.connection.request_farmland` | Request Farmland | acquaintance | Queued / FamilyRelationActions | Town Affairs → Community |
+| `community.connection.request_farmland` | Request Farmland | Close acquaintance; household Renown ≥50; spare farmland | Queued / FamilyRelationActions | Town Affairs → Community |
 
 `Attend Church` and `Religious Study` are intentionally filtered out of the standard Actions panel. Their definitions remain registered so Town Affairs can evaluate and queue them normally.
 
@@ -185,3 +185,6 @@ Purpose: inspect towns, historical/local context, dynasty presence and owned ass
 
 ### Genealogy
 Purpose: inspect the wider bloodline and family unions. It is informational; Succession still uses Male Lineage rules.
+
+### Scheduling preview
+Queued player actions are offered against their next turn-start execution year while retaining the actor/target's current pre-Aging age. Once committed, the action is invoked once at turn start; later phase queue executors are reserved for actions created during annual simulation.

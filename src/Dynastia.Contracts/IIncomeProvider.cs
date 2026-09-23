@@ -10,4 +10,8 @@ public interface IIncomeProvider
     decimal GetExpectedAnnualIncome(
         IPerson person) =>
         GetAnnualIncome(person);
+
+    decimal GetExpectedPassiveAnnualIncome(
+        IPerson person) =>
+        0m;
 }

@@ -90,6 +90,7 @@ Owner: `dynastia.loans`, Economy/Inheritance
 Rules:
 - `loan.take` and `loan.give` are queued early actions selected through Town Affairs Bank/loan-selection UI.
 - Historical era and local bank availability determine whether/which offers exist.
+- Newly generated player-issued external lending offers use **50% of the generic interest multiplier** after local Bank-quality adjustment. Borrowing keeps the generic curve, Bank tiers keep their relative ordering, and existing receivables are never repriced.
 - Loan terms are generated as contracts; repayment/receivable flows run late in `Finances`, after ordinary household funding has been measured.
 - Annual loan receipts first cover any remaining current-year basic-needs shortfall; only the excess becomes spendable Wealth. The entire receipt is still recorded once as annual income/breakdown.
 - Due contracts are materialized before money changes; creditor allocations are applied before simulated borrower debits, then contracts progress/finalize once. This makes settlement independent of contract enumeration order while preserving minor-creditor pending-inheritance behavior and existing first-payment timing.
@@ -97,9 +98,9 @@ Rules:
 - Outstanding debts and receivables are inherited/reassigned in the inheritance phase according to Loans rules rather than disappearing at death.
 - Bank UI shows offer favorability qualitatively with bold color-coded text; exact hidden multipliers are not exposed as player-facing percentages.
 
-Primary code/data: `LoansPlugin.cs`, `LoanPaymentYearSystem.cs`, `LoanInheritanceYearSystem.cs`, `data/Loans/loan_eras.csv`, `data/TownLife/bank_offer_quality.csv`.
+Primary code/data: `StandardLoanService.cs`, `LoansPlugin.cs`, `LoanPaymentYearSystem.cs`, `LoanInheritanceYearSystem.cs`, `data/Loans/loan_eras.csv`, `data/TownLife/bank_offer_quality.csv`.
 
-Regression tests: `LoanAndDebtRulesTests.cs`, `Development13ContinuationTests.cs`.
+Regression tests: `LoanAndDebtRulesTests.cs`, `TownLifeBatch4Tests.cs`, `BalanceReassessmentPackages2To4Tests.cs`, `Development13ContinuationTests.cs`.
 
 ## Gambling losses and negative wealth
 Status: **Implemented**  
@@ -144,3 +145,6 @@ Owner: application projection over Economy/Households/Farming/Heirlooms/Loans
 Current tabs include Houses, Farmland and Heirlooms without duplicate internal headers. Empty “no owned …” states use larger text. The window also exposes household money/budget/debt/lifestyle information and routes banking/property workflows to their dedicated selection/Town Affairs surfaces.
 
 Primary UI: `FamilyInventoryWindow.axaml*`, `MainWindowViewModel.Inventory.cs`, `FamilyInventoryViewModels.cs`.
+
+### Signed estate balance
+Household Wealth remains signed at estate settlement. Positive cash and negative cash debt use the same eligible heirs and whole-zł split. An heir without an established household can carry a signed pending estate balance until household establishment. Contractual loan obligations remain separate.

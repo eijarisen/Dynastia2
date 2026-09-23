@@ -26,6 +26,10 @@ public interface IEconomyService
     HouseholdAnnualForecast? GetAnnualForecast(
         IPerson person);
 
+    bool HasSufficientPassiveIncomeForBasicNeeds(
+        IPerson person) =>
+        false;
+
     Guid? GetHouseholdId(
         IPerson person);
 
@@ -211,6 +215,7 @@ public interface IEconomyService
     IReadOnlyList<FarmlandAssetInfo> TakeAllFarmland(
         IPerson person);
 
+    // Signed pending estate balance: positive inheritance, negative inherited debt.
     decimal GetPendingInheritance(
         IPerson person);
 

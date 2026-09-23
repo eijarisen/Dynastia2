@@ -76,6 +76,10 @@ public interface IActionRegistry
     void CancelQueuedActions(
         IPerson actor);
 
+    void CaptureTurnStartQueuedActions();
+
+    IReadOnlyList<QueuedActionOutcome> ExecuteTurnStartQueuedActions();
+
     IReadOnlyList<QueuedActionOutcome> ExecuteQueued(
         YearPhase phase);
 

@@ -74,15 +74,15 @@ public sealed class HeirloomsBatch2Tests
         six.Head.Age = 80;
         six.Family.SetChildren(six.Head, CreateChildren(six, 6));
         Publish(six, "life.death", six.Head);
-        Assert.Single(six.Heirlooms.GetHeirlooms(six.Head)
-            .Where(item => item.OriginTriggerType == "large_family_death"));
+        Assert.Single(six.Heirlooms.GetHeirlooms(six.Head),
+            item => item.OriginTriggerType == "large_family_death");
 
         var five = CreateFixture();
         five.Head.Age = 80;
         five.Family.SetChildren(five.Head, CreateChildren(five, 5));
         Publish(five, "life.death", five.Head);
-        Assert.Empty(five.Heirlooms.GetHeirlooms(five.Head)
-            .Where(item => item.OriginTriggerType == "large_family_death"));
+        Assert.DoesNotContain(five.Heirlooms.GetHeirlooms(five.Head),
+            item => item.OriginTriggerType == "large_family_death");
     }
 
     [Fact]
@@ -91,14 +91,14 @@ public sealed class HeirloomsBatch2Tests
         var hundred = CreateFixture();
         hundred.Head.Age = 100;
         Publish(hundred, "life.death", hundred.Head);
-        Assert.Single(hundred.Heirlooms.GetHeirlooms(hundred.Head)
-            .Where(item => item.OriginTriggerType == "longevity100"));
+        Assert.Single(hundred.Heirlooms.GetHeirlooms(hundred.Head),
+            item => item.OriginTriggerType == "longevity100");
 
         var ninetyNine = CreateFixture();
         ninetyNine.Head.Age = 99;
         Publish(ninetyNine, "life.death", ninetyNine.Head);
-        Assert.Empty(ninetyNine.Heirlooms.GetHeirlooms(ninetyNine.Head)
-            .Where(item => item.OriginTriggerType == "longevity100"));
+        Assert.DoesNotContain(ninetyNine.Heirlooms.GetHeirlooms(ninetyNine.Head),
+            item => item.OriginTriggerType == "longevity100");
     }
 
     [Fact]
@@ -107,12 +107,12 @@ public sealed class HeirloomsBatch2Tests
         var random = new AlwaysSuccessRandom();
         var fixture = CreateFixture(random);
         var wealthSystem = Assert.Single(
-            fixture.Systems.Systems.Where(system => system.Id == "heirlooms.wealth_milestones"));
+            fixture.Systems.Systems, system => system.Id == "heirlooms.wealth_milestones");
 
         fixture.Economy.SetWealth(fixture.Head, 100000m);
         wealthSystem.Execute(fixture.State);
-        Assert.Single(fixture.Heirlooms.GetHeirlooms(fixture.Head)
-            .Where(item => item.OriginTriggerType == "wealth"));
+        Assert.Single(fixture.Heirlooms.GetHeirlooms(fixture.Head),
+            item => item.OriginTriggerType == "wealth");
         Assert.Equal(1, random.ChanceCalls);
 
         fixture.Economy.SetWealth(fixture.Head, 90000m);
@@ -120,8 +120,8 @@ public sealed class HeirloomsBatch2Tests
         fixture.Economy.SetWealth(fixture.Head, 100000m);
         wealthSystem.Execute(fixture.State);
 
-        Assert.Single(fixture.Heirlooms.GetHeirlooms(fixture.Head)
-            .Where(item => item.OriginTriggerType == "wealth"));
+        Assert.Single(fixture.Heirlooms.GetHeirlooms(fixture.Head),
+            item => item.OriginTriggerType == "wealth");
         Assert.Equal(1, random.ChanceCalls);
     }
 

@@ -171,6 +171,11 @@ internal static class CommunityConnectionActions
             var baseResult = EvaluateBase(context, connections);
             if (!baseResult.Available)
                 return baseResult;
+            var connection = Resolve(context, connections);
+            if (connection is null)
+                return ActionEvaluationResult.Denied(ActionReasonCodes.NoLongerEligible, "This household connection is no longer available.");
+            if (!connections.CanRequestMoney(context.Actor, connection, out var eligibilityReason))
+                return ActionEvaluationResult.Denied(ActionReasonCodes.NoLongerEligible, eligibilityReason);
             var maximum = connections.GetEstimatedMoneyRequestMaximum(context.Actor, ReadConnectionId(context));
             if (!TryAmount(context, out var amount))
                 return maximum >= 1000m ? ActionEvaluationResult.Allowed() : ActionEvaluationResult.Denied(ActionReasonCodes.ResourceUnavailable, "This connection cannot provide meaningful financial help.");
@@ -204,7 +209,12 @@ internal static class CommunityConnectionActions
             var baseResult = EvaluateBase(context, connections);
             if (!baseResult.Available)
                 return baseResult;
-            return Resolve(context, connections)?.HasSpareHouse == true
+            var connection = Resolve(context, connections);
+            if (connection is null)
+                return ActionEvaluationResult.Denied(ActionReasonCodes.NoLongerEligible, "This household connection is no longer available.");
+            if (!connections.CanRequestMajorAsset(context.Actor, connection, out var eligibilityReason))
+                return ActionEvaluationResult.Denied(ActionReasonCodes.NoLongerEligible, eligibilityReason);
+            return connection.HasSpareHouse
                 ? ActionEvaluationResult.Allowed()
                 : ActionEvaluationResult.Denied(ActionReasonCodes.ResourceUnavailable, "This connection has no spare house.");
         },
@@ -231,7 +241,12 @@ internal static class CommunityConnectionActions
             var baseResult = EvaluateBase(context, connections);
             if (!baseResult.Available)
                 return baseResult;
-            return Resolve(context, connections)?.HasSpareFarmland == true
+            var connection = Resolve(context, connections);
+            if (connection is null)
+                return ActionEvaluationResult.Denied(ActionReasonCodes.NoLongerEligible, "This household connection is no longer available.");
+            if (!connections.CanRequestMajorAsset(context.Actor, connection, out var eligibilityReason))
+                return ActionEvaluationResult.Denied(ActionReasonCodes.NoLongerEligible, eligibilityReason);
+            return connection.HasSpareFarmland
                 ? ActionEvaluationResult.Allowed()
                 : ActionEvaluationResult.Denied(ActionReasonCodes.ResourceUnavailable, "This connection has no spare farmland.");
         },

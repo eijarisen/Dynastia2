@@ -168,7 +168,8 @@ public sealed class MarriageSatisfactionYearSystem : IYearSystem
         if (!husbandImprisoned
             && !husbandCareer.IsRetired
             && husband.Age >= 18
-            && !IsEconomicallyEmployed(husband, husbandCareer))
+            && !IsEconomicallyEmployed(husband, husbandCareer)
+            && !_economy.HasSufficientPassiveIncomeForBasicNeeds(husband))
         {
             total += MarriageBalanceRules.UnemployedHusbandPenalty;
             issues.Add("husband unemployed");

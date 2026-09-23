@@ -224,7 +224,7 @@ public sealed class ReproductionPlugin : IGamePlugin
                         economy,
                         actor,
                         spouse,
-                        gameState.Year);
+                        actionContext.ScheduledExecutionYear);
                 },
 
             Execute =
@@ -246,11 +246,15 @@ public sealed class ReproductionPlugin : IGamePlugin
                         return new GameActionResult(false);
                     }
 
-                    actor.Tags.Add(
-                        "modifier.try_for_baby");
+                    actor.Tags.Remove("modifier.try_for_baby");
+                    actor.Components.Set(new ActiveConceptionAttemptComponent
+                    {
+                        AttemptYear = actionContext.GameState.Year,
+                        MotherId = spouse!.Id,
+                        MotherAgeAtAttempt = spouse.Age
+                    });
 
-                    return new GameActionResult(
-                        true);
+                    return new GameActionResult(true);
                 }
         };
     }

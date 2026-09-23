@@ -528,10 +528,7 @@ public sealed partial class StandardEconomyService
         GetClaim(
             person)
             .PendingInheritance =
-                RoundCurrency(
-                    Math.Max(
-                        0,
-                        amount));
+                RoundCurrency(amount);
     }
 
     public void ChangePendingInheritance(

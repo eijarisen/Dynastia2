@@ -26,6 +26,11 @@ internal sealed class LoanFinanceProjectionProvider :
             : Array.Empty<FinanceBreakdownItem>();
     }
 
+    public decimal GetProjectedPassiveIncome(
+        IPerson householdRepresentative) =>
+        _loans.GetLoansGiven(householdRepresentative)
+            .Sum(loan => loan.AnnualPayment);
+
     public IReadOnlyList<FinanceBreakdownItem> GetProjectedExpenses(
         IPerson householdRepresentative)
     {

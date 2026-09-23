@@ -9,6 +9,10 @@ public interface IHouseholdFinanceProjectionProvider
 
     IReadOnlyList<FinanceBreakdownItem> GetProjectedExpenses(
         IPerson householdRepresentative);
+
+    decimal GetProjectedPassiveIncome(
+        IPerson householdRepresentative) =>
+        0m;
 }
 
 public interface IHouseholdFinanceProjectionProviderRegistry

@@ -5,6 +5,8 @@ namespace Dynastia.Mechanics.Loans;
 public sealed partial class StandardLoanService :
     ILoanService
 {
+    private const decimal ExternalLendingInterestScale = 0.50m;
+
     private readonly IGameState _gameState;
     private readonly IFamilyService _family;
     private readonly IEconomyService _economy;
@@ -137,6 +139,8 @@ public sealed partial class StandardLoanService :
                 qualityRandom,
                 interestMinimum,
                 interestMaximum);
+            if (isGivingLoan)
+                interestMultiplier *= ExternalLendingInterestScale;
 
             var terms = CalculateTerms(
                 principal,

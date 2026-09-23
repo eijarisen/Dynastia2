@@ -61,7 +61,7 @@ public sealed class LocalSocietyArtisticWorksBatch11Tests
         Assert.Equal(fixture.Head.Id, created.RoyaltyAuthorId);
         Assert.Equal(0.01m, created.RoyaltyAnnualRate);
         Assert.Equal(0, random.ChanceCalls);
-        Assert.Single(fixture.Events.AllEvents.Where(item => item.Type == "artistic.work_created"));
+        Assert.Single(fixture.Events.AllEvents, item => item.Type == "artistic.work_created");
 
         fixture.State.Year++;
         system.Execute(fixture.State);

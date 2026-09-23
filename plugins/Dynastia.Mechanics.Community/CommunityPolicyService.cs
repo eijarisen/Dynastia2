@@ -426,7 +426,8 @@ internal sealed class CommunityPolicyService : ICommunityPolicyService
                     }
                 }
 
-                if (playableHeadsByTown.TryGetValue(town.Id, out var subjectId))
+                if (!chosen.ImpactTier.Equals("Weak", StringComparison.OrdinalIgnoreCase)
+                    && playableHeadsByTown.TryGetValue(town.Id, out var subjectId))
                 {
                     events.Publish(new GameEvent
                     {

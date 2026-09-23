@@ -12,7 +12,8 @@ internal static class ReproductionEligibilityRules
         IEconomyService economy,
         IPerson father,
         IPerson? mother,
-        int year)
+        int year,
+        int? motherAgeOverride = null)
     {
         ArgumentNullException.ThrowIfNull(family);
         ArgumentNullException.ThrowIfNull(economy);
@@ -39,8 +40,9 @@ internal static class ReproductionEligibilityRules
             return false;
         }
 
-        if (mother.Age < MinimumChildbearingAge
-            || mother.Age > MaximumChildbearingAge)
+        var maternalAge = motherAgeOverride ?? mother.Age;
+        if (maternalAge < MinimumChildbearingAge
+            || maternalAge > MaximumChildbearingAge)
         {
             return false;
         }

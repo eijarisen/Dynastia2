@@ -67,6 +67,9 @@ public sealed class Development13PostAdditionsRegressionTests
         Assert.Contains("_economy.EnsureIndependentHousehold(\n            parent,", breakups);
         Assert.Contains("Compatibility repair for saves created before divorced", reconciliation);
         Assert.Contains("_economy.EnsureIndependentHousehold(\n                        person,", reconciliation);
+        Assert.Contains("MemberIds can be briefly stale during the divorce", reconciliation);
+        Assert.Contains("&& !_economy.HasHousehold(\n                                person)", reconciliation);
+        Assert.Contains("&& ResolveHouseholdHead(\n                                person)?.Id\n                                == formerPartner.Id", reconciliation);
         Assert.Contains("A living divorced spouse may head a non-playable peripheral", succession);
         Assert.Contains("HasDirectBloodlineMarriage(oldHead)", succession);
     }

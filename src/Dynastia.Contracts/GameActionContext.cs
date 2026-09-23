@@ -9,7 +9,9 @@ public sealed class GameActionContext
         IGameEventBus eventBus,
         IGameRandom random,
         IReadOnlyDictionary<string, string>? parameters = null,
-        ActionExecutionContext? execution = null)
+        ActionExecutionContext? execution = null,
+        bool isSchedulingPreview = false,
+        int? scheduledExecutionYear = null)
     {
         GameState = gameState;
         Actor = actor;
@@ -18,6 +20,8 @@ public sealed class GameActionContext
         Random = random;
         Parameters = parameters ?? new Dictionary<string, string>();
         Execution = execution ?? ActionExecutionContext.Player;
+        IsSchedulingPreview = isSchedulingPreview;
+        ScheduledExecutionYear = scheduledExecutionYear ?? gameState.Year;
     }
 
     public IGameState GameState { get; }
@@ -27,6 +31,8 @@ public sealed class GameActionContext
     public IGameRandom Random { get; }
     public IReadOnlyDictionary<string, string> Parameters { get; }
     public ActionExecutionContext Execution { get; }
+    public bool IsSchedulingPreview { get; }
+    public int ScheduledExecutionYear { get; }
 
     public ActionExecutionOrigin Origin => Execution.Origin;
     public Guid? ActorHouseholdId => Execution.ActorHouseholdId;

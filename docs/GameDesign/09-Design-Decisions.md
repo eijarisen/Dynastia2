@@ -219,3 +219,55 @@ Affected mechanics: Health, Historical Events, Rare Events.
 Implementation notes: `health.injury_exposure` carries actual damage/source context; Health selects among Chronic Pain, Mobility Impairment, Hearing Loss, Traumatic Brain Injury and Paraplegia while retaining existing acute Rare Event injury behavior.
 Save compatibility: additive condition definitions/events; no manual migration.
 Supersedes: war/disaster injury consequences being limited to immediate Health loss/temporary injuries.
+
+---
+
+ID: **GD-2026-016**
+Status: **Implemented**
+Date: **2026-09-23**
+Area: **Loans / Bank balance**
+Decision: Newly generated player-issued external lending offers use half the previous lending interest multiplier after Bank-quality adjustment; borrowing and existing receivables are unchanged.
+Reasoning: Bank-quality mechanics already create financial-market variation, so the former guaranteed lending return was too dominant.
+Affected mechanics: Loans, Town Affairs Bank.
+Implementation notes: the 0.50 scale is applied only in `StandardLoanService.GetOffers(..., isGivingLoan: true, ...)` before normal `CalculateTerms`; `LoanTermsCalculator` and `CreateExternalReceivable` are unchanged.
+Save compatibility: no migration; active receivables keep their stored terms.
+Supersedes: full generic interest curve for newly issued external dynasty lending.
+
+---
+
+ID: **GD-2026-017**
+Status: **Implemented**
+Date: **2026-09-23**
+Area: **Community connections / Monetary assistance**
+Decision: Request Money is available only from Warm/Close acquaintances when the requesting household has Renown ≥30.
+Reasoning: Rich acquaintances should remain valuable, but newly met or socially ordinary households should not treat them as disposable financial lottery tickets.
+Affected mechanics: Community connections, Status, Family Relations action presentation.
+Implementation notes: eligibility uses household Renown, is data-driven through `connection_rules.json`, and is revalidated before request costs or acceptance RNG. Existing acceptance and consequence formulas are unchanged.
+Save compatibility: no persisted-state migration; old saves immediately use the new eligibility gate.
+Supersedes: money requests being available regardless of relation/status once a connection existed.
+
+---
+
+ID: **GD-2026-018**
+Status: **Implemented**
+Date: **2026-09-23**
+Area: **Community connections / Major property assistance**
+Decision: Request House and Request Farmland require a Close acquaintance, household Renown ≥50 and the corresponding spare asset.
+Reasoning: Giving away major property should be considered only for socially prominent households with an established close relationship, while retaining the intentionally low acceptance chance.
+Affected mechanics: Community connections, Status, Family Relations action presentation, Economy/Farming transfers.
+Implementation notes: the same data-driven service predicate controls availability and execution-time revalidation; accepted favors retain existing relationship/Wealth Band/Reputation consequences and may settle the relation at Warm.
+Save compatibility: no persisted-state migration.
+Supersedes: major asset requests being available whenever the acquaintance had a spare asset.
+
+
+## GD-2026-017 — Signed debt inheritance
+Household cash is inherited as a signed balance. Negative household Wealth is divided among the same eligible heirs as positive cash and can remain as signed pending estate balance until an heir establishes a household. Contractual loans keep their separate inheritance path.
+
+## GD-2026-018 — Criminal productive effort
+Life of Crime uses the shared annual productive-effort rule. Work Capacity and Recover reduce Heist output; zero productive capacity prevents a Heist, detection and criminal Mastery progress for that year.
+
+## GD-2026-019 — Turn-start queued action execution
+Player-scheduled annual actions execute after the calendar advances but before Aging. Queue-time availability represents the next turn-start, and committed actions are invoked once rather than discarded by deterministic age/calendar revalidation.
+
+## GD-2026-020 — Passive means and marriage unemployment
+The husband's unemployment Marriage Satisfaction penalty is waived when recurring passive household income fully funds ordinary needs under debt-first household accounting. Other unemployment and financial-pressure rules are unchanged.

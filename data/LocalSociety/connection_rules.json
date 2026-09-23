@@ -59,6 +59,12 @@
     "houseBaseAcceptanceChance": 0.03,
     "farmlandBaseAcceptanceChance": 0.04
   },
+  "requestEligibility": {
+    "moneyMinimumRelation": "Warm",
+    "moneyMinimumHouseholdRenown": 30,
+    "assetMinimumRelation": "Close",
+    "assetMinimumHouseholdRenown": 50
+  },
   "acceptanceModifiersPercentagePoints": {
     "relationship": {
       "Close": 8,

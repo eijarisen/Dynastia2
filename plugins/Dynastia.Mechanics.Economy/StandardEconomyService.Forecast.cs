@@ -34,4 +34,45 @@ public sealed partial class StandardEconomyService
             incomeLines,
             expenseLines);
     }
+
+
+    public bool HasSufficientPassiveIncomeForBasicNeeds(IPerson person)
+    {
+        var resolved = FindHousehold(person);
+        if (resolved is null)
+            return false;
+
+        var (owner, household) = resolved.Value;
+        var members = GetFinancialHouseholdMembers(household);
+
+        var passiveIncome = members
+            .Where(member => member.Age >= 18)
+            .Sum(member => _income.Providers.Sum(provider =>
+                provider.GetExpectedPassiveAnnualIncome(member)));
+
+        passiveIncome += GetHouses(owner)
+            .Where(house => house.IsRented)
+            .Sum(GetRentalIncome);
+
+        passiveIncome += _householdIncome.Providers.Sum(provider =>
+            provider.GetExpectedPassiveAnnualIncome(owner));
+
+        passiveIncome += _financeProjections.Providers.Sum(provider =>
+            provider.GetProjectedPassiveIncome(owner));
+
+        var core = CalculateAnnualFinances(
+            owner,
+            AnnualFinanceCalculationMode.Forecast);
+        var projectedExpenses = core.Expenses
+            + _financeProjections.Providers.Sum(provider =>
+                provider.GetProjectedExpenses(owner).Sum(line => line.Amount));
+
+        var funding = EconomyBalanceRules.CalculateBasicNeedsFunding(
+            household.Wealth,
+            RoundCurrency(passiveIncome),
+            RoundCurrency(projectedExpenses));
+
+        return funding.Shortfall <= 0m;
+    }
+
 }

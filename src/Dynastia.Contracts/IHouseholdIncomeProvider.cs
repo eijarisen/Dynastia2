@@ -10,4 +10,8 @@ public interface IHouseholdIncomeProvider
 
     decimal GetExpectedAnnualIncome(
         IPerson householdRepresentative);
+
+    decimal GetExpectedPassiveAnnualIncome(
+        IPerson householdRepresentative) =>
+        0m;
 }

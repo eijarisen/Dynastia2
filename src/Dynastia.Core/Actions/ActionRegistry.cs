@@ -11,6 +11,8 @@ public sealed class ActionRegistry : IActionRegistry
         _dynamicProviders = [];
 
     private readonly List<QueuedAction> _queued = [];
+    private readonly List<QueuedAction> _turnStartSnapshot = [];
+    private bool _turnStartSnapshotCaptured;
     private readonly List<QueuedActionOutcome> _lastQueuedOutcomes = [];
 
     private readonly IGameState _gameState;
@@ -345,7 +347,41 @@ public sealed class ActionRegistry : IActionRegistry
 
         _queued.Clear();
         _queued.AddRange(restored);
+        _turnStartSnapshot.Clear();
+        _turnStartSnapshotCaptured = false;
         _lastQueuedOutcomes.Clear();
+    }
+
+    public void CaptureTurnStartQueuedActions()
+    {
+        _turnStartSnapshot.Clear();
+        _turnStartSnapshot.AddRange(_queued);
+        _turnStartSnapshotCaptured = true;
+    }
+
+    public IReadOnlyList<QueuedActionOutcome> ExecuteTurnStartQueuedActions()
+    {
+        if (!_turnStartSnapshotCaptured)
+        {
+            _turnStartSnapshot.Clear();
+            _turnStartSnapshot.AddRange(_queued);
+        }
+
+        var pending = _turnStartSnapshot.ToList();
+        _turnStartSnapshot.Clear();
+        _turnStartSnapshotCaptured = false;
+
+        foreach (var queued in pending)
+            _queued.Remove(queued);
+
+        _lastQueuedOutcomes.Clear();
+        foreach (var queued in pending)
+        {
+            var outcome = ExecuteQueuedAction(queued, committedAtTurnStart: true);
+            _lastQueuedOutcomes.Add(outcome);
+        }
+
+        return _lastQueuedOutcomes.ToList();
     }
 
     public IReadOnlyList<QueuedActionOutcome> ExecuteQueued(YearPhase phase)
@@ -359,7 +395,7 @@ public sealed class ActionRegistry : IActionRegistry
 
         foreach (var queued in pending)
         {
-            var outcome = ExecuteQueuedAction(queued);
+            var outcome = ExecuteQueuedAction(queued, committedAtTurnStart: false);
             _lastQueuedOutcomes.Add(outcome);
         }
 
@@ -372,7 +408,9 @@ public sealed class ActionRegistry : IActionRegistry
         return result.Allowed ? null : result.Reason;
     }
 
-    private QueuedActionOutcome ExecuteQueuedAction(QueuedAction queued)
+    private QueuedActionOutcome ExecuteQueuedAction(
+        QueuedAction queued,
+        bool committedAtTurnStart)
     {
         var actor = _gameState.People.FirstOrDefault(person => person.Id == queued.ActorId);
         if (actor is null)
@@ -404,36 +442,39 @@ public sealed class ActionRegistry : IActionRegistry
                 "The action is no longer registered.");
         }
 
-        var guardResult = _guards.Evaluate(actor);
-        if (!guardResult.Allowed && !action.BypassGuards)
-        {
-            return Outcome(
-                queued,
-                QueuedActionResultCategory.ActorBlocked,
-                ActionReasonCodes.ActorBlocked,
-                guardResult.Reason ?? "The actor can no longer perform this action.");
-        }
-
         var executionContext = new ActionExecutionContext(
             queued.Origin,
             queued.ActorHouseholdId,
-            queued.Phase);
+            committedAtTurnStart ? YearPhase.TurnStartActions : queued.Phase);
 
-        var evaluation = EvaluateDefinition(
-            action,
-            actor,
-            target,
-            queued.Parameters,
-            executionContext,
-            checkExistingQueue: false);
-
-        if (!evaluation.Available)
+        if (!committedAtTurnStart)
         {
-            return Outcome(
-                queued,
-                QueuedActionResultCategory.Invalidated,
-                evaluation.ReasonCode,
-                evaluation.Reason ?? "The action is no longer available.");
+            var guardResult = _guards.Evaluate(actor);
+            if (!guardResult.Allowed && !action.BypassGuards)
+            {
+                return Outcome(
+                    queued,
+                    QueuedActionResultCategory.ActorBlocked,
+                    ActionReasonCodes.ActorBlocked,
+                    guardResult.Reason ?? "The actor can no longer perform this action.");
+            }
+
+            var evaluation = EvaluateDefinition(
+                action,
+                actor,
+                target,
+                queued.Parameters,
+                executionContext,
+                checkExistingQueue: false);
+
+            if (!evaluation.Available)
+            {
+                return Outcome(
+                    queued,
+                    QueuedActionResultCategory.Invalidated,
+                    evaluation.ReasonCode,
+                    evaluation.Reason ?? "The action is no longer available.");
+            }
         }
 
         var result = action.Execute(
@@ -495,11 +536,18 @@ public sealed class ActionRegistry : IActionRegistry
                 target);
         }
 
+        var schedulingPreview =
+            checkExistingQueue
+            && action.Mode == ActionExecutionMode.Queued
+            && executionContext.Origin == ActionExecutionOrigin.Player;
+
         var context = CreateContext(
             actor,
             target,
             parameters,
-            executionContext);
+            executionContext,
+            schedulingPreview,
+            schedulingPreview ? _gameState.Year + 1 : _gameState.Year);
         var evaluation = action.EvaluateAvailability is not null
             ? action.EvaluateAvailability(context)
             : action.IsAvailable!(context)
@@ -620,7 +668,9 @@ public sealed class ActionRegistry : IActionRegistry
         IPerson actor,
         IPerson target,
         IReadOnlyDictionary<string, string>? parameters,
-        ActionExecutionContext executionContext) =>
+        ActionExecutionContext executionContext,
+        bool isSchedulingPreview = false,
+        int? scheduledExecutionYear = null) =>
         new(
             _gameState,
             actor,
@@ -628,7 +678,9 @@ public sealed class ActionRegistry : IActionRegistry
             _eventBus,
             _random,
             parameters,
-            executionContext);
+            executionContext,
+            isSchedulingPreview,
+            scheduledExecutionYear);
 
     private QueuedAction CreateQueuedAction(
         GameActionDefinition action,

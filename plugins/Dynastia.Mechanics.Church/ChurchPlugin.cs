@@ -407,7 +407,7 @@ public sealed class ChurchPlugin : IGamePlugin
         ITownInstitutionService institutions)
     {
         var town = economy.GetResidenceTown(context.Actor);
-        return institutions.Resolve(town, context.GameState.Year).Find("church")
+        return institutions.Resolve(town, context.ScheduledExecutionYear).Find("church")
             ?? new TownInstitutionInfo("church", "Church", 0, "Unavailable");
     }
 

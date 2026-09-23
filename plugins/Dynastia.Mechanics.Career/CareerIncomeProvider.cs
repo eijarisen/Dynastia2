@@ -58,6 +58,17 @@ public sealed class CareerIncomeProvider : IIncomeProvider
             * (1m + adjustmentPercent / 100m);
     }
 
+    public decimal GetExpectedPassiveAnnualIncome(IPerson person)
+    {
+        if (person.Tags.Has("state.dead"))
+            return 0m;
+
+        var career = _career.GetCareer(person);
+        return career.IsRetired
+            ? Math.Max(0m, _career.GetAnnualIncome(person))
+            : 0m;
+    }
+
     private static decimal ReadPercent(
         IPerson person,
         string prefix)

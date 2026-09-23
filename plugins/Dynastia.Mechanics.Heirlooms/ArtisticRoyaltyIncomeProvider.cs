@@ -27,6 +27,9 @@ internal sealed class ArtisticRoyaltyIncomeProvider : IHouseholdIncomeProvider
     public decimal GetExpectedAnnualIncome(IPerson householdRepresentative) =>
         Calculate(householdRepresentative);
 
+    public decimal GetExpectedPassiveAnnualIncome(IPerson householdRepresentative) =>
+        Calculate(householdRepresentative);
+
     private decimal Calculate(IPerson householdRepresentative)
     {
         decimal total = 0m;

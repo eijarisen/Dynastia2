@@ -112,3 +112,6 @@ Status: **Implemented**
 Owners: event bus + Biography/UI + mechanic-specific news filtering
 
 Mechanics emit structured `GameEvent` objects; Chronicle/Biography formatting should consume those events rather than mechanics duplicating presentation state. Household Family News uses a visibility ledger so only intended important household events reach the Chronicle. The console `[year] Running system.id` trace is diagnostic output, not Chronicle content.
+
+### Criminal effort and weak civic-policy news
+Criminal occupation income obeys the shared productive-effort rule; a zero-capacity year produces no Heist/detection/Mastery roll. Community policies with `ImpactTier=Weak` may still be implemented mechanically, but their implementation does not create a family-news event.

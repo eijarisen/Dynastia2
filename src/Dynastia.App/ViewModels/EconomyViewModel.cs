@@ -69,7 +69,11 @@ public sealed class EconomyViewModel
         $"Net: ${Net:N0}";
 
     public string PendingInheritanceText =>
-        $"Pending inheritance: ${PendingInheritance:N0}";
+        PendingInheritance < 0
+            ? $"Pending inherited debt: {Math.Abs(PendingInheritance):N0} zł"
+            : PendingInheritance > 0
+                ? $"Pending inheritance: {PendingInheritance:N0} zł"
+                : string.Empty;
 
     public string PendingHousesText =>
         $"Pending houses: {PendingHouses}";

@@ -71,6 +71,9 @@ public partial class App : Application
                     reconciliation);
 
             registry.Register(
+                new TurnStartQueuedActionYearSystem(actionRegistry));
+
+            registry.Register(
                 new QueuedActionYearSystem(
                     actionRegistry,
                     YearPhase.QueuedActionsEarly,
@@ -287,7 +290,8 @@ public partial class App : Application
                     gameState,
                     registry,
                     saveService,
-                    reconciliation);
+                    reconciliation,
+                    actionRegistry);
 
             var genealogyDataSource =
                 familyService is null

@@ -151,3 +151,6 @@ Rules:
 Primary code/data: `plugins/Dynastia.Mechanics.Status/`, `data/LocalSociety/status*.csv/json`.
 
 Regression tests: `LocalSocietyStatusBatch1Tests.cs` and later LocalSociety batch tests.
+
+### Life of Crime productive effort
+Life of Crime is productive work for annual-effort purposes. Recover and Health Work Capacity proportionally reduce expected and realized Heist proceeds; zero productive capacity produces no Heist or Mastery year.

@@ -108,12 +108,21 @@ public sealed class AdulthoodInheritanceSystem :
             _economy.GetPendingInheritance(
                 person);
 
-        if (amount <= 0)
+        if (amount == 0)
             return;
 
-        _economy.ChangeWealth(
-            person,
-            amount);
+        if (amount > 0)
+        {
+            _economy.ChangeWealth(
+                person,
+                amount);
+        }
+        else
+        {
+            _economy.ChangeWealthAllowDebt(
+                person,
+                amount);
+        }
 
         _economy.SetPendingInheritance(
             person,
@@ -137,10 +146,9 @@ public sealed class AdulthoodInheritanceSystem :
                         ["amount"] =
                             amount.ToString(),
 
-                        ["text"] =
-                            $"{_family.GetDisplayName(person)} " +
-                            $"received {amount:N0} zł of inheritance " +
-                            "after establishing a household."
+                        ["text"] = amount > 0
+                            ? $"{_family.GetDisplayName(person)} received {amount:N0} zł of inheritance after establishing a household."
+                            : $"{_family.GetDisplayName(person)} assumed {Math.Abs(amount):N0} zł of inherited debt after establishing a household."
                     }
             });
     }

@@ -159,10 +159,12 @@ Owner: `dynastia.community`
 Rules:
 - Non-family local acquaintances have persistent connection relation state/archetypes.
 - Actions include improving relations, sending/requesting money and giving/requesting house/farmland. Improve Relations grants +6 Familiarity and +3 Sympathy.
+- `Request Money` requires a Warm or Close acquaintance and household Renown of at least 30 (Established). `Request House` and `Request Farmland` require a Close acquaintance and household Renown of at least 50 (Prominent), plus the corresponding spare abstract asset. These gates use household rather than individual Renown and are revalidated when queued requests resolve.
+- Once a request is eligible, the existing acceptance probabilities, relationship costs, refusal penalties, Wealth Band effects and Reputation consequences remain unchanged.
 - Successful meaningful contact pauses passive Familiarity/Sympathy decay for the interaction year and the following two years; refused requests do not refresh this grace period, and long-neglected connections resume normal decay.
 - Major accepted help (house/farmland) moves the relation to Warm rather than terminating the acquaintance after the transfer.
 - Warm/Close contacts remain valid even if a generous transfer leaves the donor Poor; only the explicit connection-retention rules should end the relationship.
 
 Primary data: `data/LocalSociety/connection_archetypes.csv`, `connection_rules.json`.
 
-Regression tests: `LocalSocietyConnectionsBatch5Tests.cs`, `Development13ContinuationTests.cs`.
+Regression tests: `LocalSocietyConnectionsBatch5Tests.cs`, `BalanceReassessmentPackages2To4Tests.cs`, `Development13ContinuationTests.cs`.

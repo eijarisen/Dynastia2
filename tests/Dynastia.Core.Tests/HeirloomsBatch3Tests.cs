@@ -100,7 +100,7 @@ public sealed class HeirloomsBatch3Tests
         var fixture = CreateFixture(random, "reading");
         fixture.Head.Age = 40;
         var system = Assert.Single(
-            fixture.Systems.Systems.Where(system => system.Id == "heirlooms.hobby_keepsakes"));
+            fixture.Systems.Systems, system => system.Id == "heirlooms.hobby_keepsakes");
 
         system.Execute(fixture.State);
         Assert.Empty(fixture.Heirlooms.GetHeirlooms(fixture.Head));

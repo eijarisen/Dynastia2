@@ -189,3 +189,6 @@ Owner: `dynastia.thoughts`, `dynastia.hobbies`, `dynastia.biography`
 - Biography records important structured events rather than being the authoritative state for mechanics.
 
 Primary data: `data/Hobbies/`, event templates owned by their mechanics.
+
+### Passive provision and Marriage Satisfaction
+An adult husband's unemployment penalty is suppressed when recurring passive household means (such as rent, royalties, pensions and scheduled receivables) can fully fund ordinary needs after existing household debt is accounted for. The wife's distinct previously-employed unemployment pressure and actual financial-pressure rules remain separate.

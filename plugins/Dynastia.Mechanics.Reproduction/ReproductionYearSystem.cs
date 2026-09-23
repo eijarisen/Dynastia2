@@ -142,36 +142,43 @@ public sealed class ReproductionYearSystem : IYearSystem
                 _family.GetSpouse(
                     father);
 
+            var attempt = father.Components.Get<ActiveConceptionAttemptComponent>();
+            var activelyTried = attempt is not null
+                && attempt.AttemptYear == gameState.Year
+                && mother is not null
+                && attempt.MotherId == mother.Id;
+            var maternalAge = activelyTried
+                ? attempt!.MotherAgeAtAttempt
+                : mother?.Age;
+
             if (!ReproductionEligibilityRules.CanAttemptMaritalConception(
                 _family,
                 _economy,
                 father,
                 mother,
-                gameState.Year))
+                gameState.Year,
+                maternalAge))
             {
-                father.Tags.Remove(
-                    "modifier.try_for_baby");
-
+                father.Tags.Remove("modifier.try_for_baby");
+                if (attempt is not null && attempt.AttemptYear <= gameState.Year)
+                    father.Components.Remove<ActiveConceptionAttemptComponent>();
                 continue;
             }
 
-            var childChance =
-                CalculateChildChance(
-                    father,
-                    mother!);
+            var childChance = CalculateChildChance(
+                father,
+                mother!,
+                maternalAge);
 
-            var activelyTried =
-                father.Tags.Has(
-                    "modifier.try_for_baby");
-
+            // Compatibility: old transient modifier tags still count if one
+            // survives a restored state, but new queued actions use the snapshot.
+            activelyTried = activelyTried || father.Tags.Has("modifier.try_for_baby");
             if (activelyTried)
-            {
-                childChance *=
-                    TryForBabyMultiplier;
-            }
+                childChance *= TryForBabyMultiplier;
 
-            father.Tags.Remove(
-                "modifier.try_for_baby");
+            father.Tags.Remove("modifier.try_for_baby");
+            if (attempt is not null && attempt.AttemptYear <= gameState.Year)
+                father.Components.Remove<ActiveConceptionAttemptComponent>();
 
             var conceived =
                 _random.NextDouble()
@@ -215,7 +222,8 @@ public sealed class ReproductionYearSystem : IYearSystem
 
     private double CalculateChildChance(
         IPerson father,
-        IPerson mother)
+        IPerson mother,
+        int? maternalAgeOverride = null)
     {
         var fatherFertility =
             GetStat(
@@ -239,7 +247,9 @@ public sealed class ReproductionYearSystem : IYearSystem
                     0,
                     5)];
 
-        if (mother.Age
+        var maternalAge = maternalAgeOverride ?? mother.Age;
+
+        if (maternalAge
             > FertilityDeclineStartAge)
         {
             var ageRange =
@@ -247,7 +257,7 @@ public sealed class ReproductionYearSystem : IYearSystem
                 - FertilityDeclineStartAge;
 
             var yearsIntoDecline =
-                mother.Age
+                maternalAge
                 - FertilityDeclineStartAge;
 
             var ageFactor =
@@ -264,11 +274,11 @@ public sealed class ReproductionYearSystem : IYearSystem
         // Pregnancy remains possible through age 45, but after 40
         // the already-declining chance is halved again for every
         // additional year of age.
-        if (mother.Age
+        if (maternalAge
             > LateFertilityStartAge)
         {
             var yearsAfterForty =
-                mother.Age
+                maternalAge
                 - LateFertilityStartAge;
 
             chance *=

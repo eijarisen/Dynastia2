@@ -351,6 +351,12 @@ public sealed class EstateInheritanceSystem :
                     anchor,
                     wealth);
             }
+            else if (wealth < 0)
+            {
+                _economy.ChangeWealthAllowDebt(
+                    anchor,
+                    wealth);
+            }
 
             foreach (var house in
                 houses)
@@ -379,7 +385,7 @@ public sealed class EstateInheritanceSystem :
         }
         else
         {
-            if (wealth > 0)
+            if (wealth != 0)
             {
                 _economy.ChangePendingInheritance(
                     anchor,
@@ -720,85 +726,66 @@ public sealed class EstateInheritanceSystem :
         decimal wealth,
         Guid? estateHouseholdId)
     {
-        if (wealth <= 0)
+        if (wealth == 0 || heirs.Count == 0)
             return;
 
-        // Dynastia uses whole zł only. Normalize any legacy fractional
-        // residue before splitting the estate, then hand the indivisible
-        // whole-zł remainder to the eldest heirs first.
-        var wholeUnits =
-            decimal.ToInt64(
-                Math.Round(
-                    wealth,
-                    0,
-                    MidpointRounding.AwayFromZero));
+        // Whole-zł estate balances are split by absolute amount, then the
+        // original sign is restored. This conserves both inherited cash and
+        // inherited household debt with the existing eldest-first remainder.
+        var wholeUnits = decimal.ToInt64(
+            Math.Round(wealth, 0, MidpointRounding.AwayFromZero));
+        if (wholeUnits == 0)
+            return;
 
-        var baseUnits =
-            wholeUnits
-            / heirs.Count;
+        var sign = Math.Sign(wholeUnits);
+        var units = Math.Abs(wholeUnits);
+        var baseUnits = units / heirs.Count;
+        var remainder = units % heirs.Count;
 
-        var remainder =
-            wholeUnits
-            % heirs.Count;
-
-        for (var index = 0;
-            index < heirs.Count;
-            index++)
+        for (var index = 0; index < heirs.Count; index++)
         {
-            var heir =
-                heirs[index];
-
-            var amount =
-                baseUnits
-                + (
-                    index < remainder
-                        ? 1m
-                        : 0m
-                )
-;
-
-            if (amount <= 0)
+            var heir = heirs[index];
+            var signedUnits = sign * (baseUnits + (index < remainder ? 1L : 0L));
+            var amount = (decimal)signedUnits;
+            if (amount == 0)
                 continue;
 
             var hasOwnHousehold =
-                HasEstablishedHouseholdOutsideEstate(
-                    heir,
-                    estateHouseholdId);
+                HasEstablishedHouseholdOutsideEstate(heir, estateHouseholdId);
 
             if (hasOwnHousehold)
             {
-                _economy.ChangeWealth(
-                    heir,
-                    amount);
+                if (amount > 0)
+                    _economy.ChangeWealth(heir, amount);
+                else
+                    _economy.ChangeWealthAllowDebt(heir, amount);
 
                 PublishCashEvent(
                     gameState,
                     source,
                     heir,
                     amount,
-                    "inheritance.received",
-                    $"{_family.GetDisplayName(heir)} received " +
-                    $"an inheritance of {amount:N0} zł.");
+                    amount > 0 ? "inheritance.received" : "inheritance.debt_received",
+                    amount > 0
+                        ? $"{_family.GetDisplayName(heir)} received an inheritance of {amount:N0} zł."
+                        : $"{_family.GetDisplayName(heir)} inherited {Math.Abs(amount):N0} zł of household debt.");
             }
             else
             {
-                _economy.ChangePendingInheritance(
-                    heir,
-                    amount);
+                _economy.ChangePendingInheritance(heir, amount);
 
                 PublishCashEvent(
                     gameState,
                     source,
                     heir,
                     amount,
-                    "inheritance.pending",
-                    $"{_family.GetDisplayName(heir)} has " +
-                    $"an inheritance of {amount:N0} zł waiting until " +
-                    "they establish a household.");
+                    amount > 0 ? "inheritance.pending" : "inheritance.debt_pending",
+                    amount > 0
+                        ? $"{_family.GetDisplayName(heir)} has an inheritance of {amount:N0} zł waiting until they establish a household."
+                        : $"{_family.GetDisplayName(heir)} has {Math.Abs(amount):N0} zł of inherited debt waiting until they establish a household.");
             }
         }
     }
-
 
     private void PublishInheritanceDisadvantage(
         IGameState gameState,

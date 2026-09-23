@@ -3,6 +3,7 @@ namespace Dynastia.Contracts;
 public enum YearPhase
 {
     PreYear = 0,
+    TurnStartActions = 50,
     Aging = 100,
     QueuedActionsEarly = 200,
     Finances = 300,

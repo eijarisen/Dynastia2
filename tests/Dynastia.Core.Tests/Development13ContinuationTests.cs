@@ -240,7 +240,7 @@ public sealed class Development13ContinuationTests
     }
 
     [Fact]
-    public void FamilyRelationsWindowHasCompactTabsAndExplainsEmptyAcquaintances()
+    public void FamilyRelationsWindowUsesTownAffairsTabSizeAndExplainsEmptyAcquaintances()
     {
         var model = Read("src", "Dynastia.App", "ViewModels", "FamilyRelationsViewModels.cs");
         var window = Read("src", "Dynastia.App", "Views", "FamilyRelationsWindow.axaml");
@@ -248,7 +248,7 @@ public sealed class Development13ContinuationTests
         Assert.Contains("Title=\"Family Relations\"", window);
         Assert.Contains("Text=\"Family Relations\"", window);
         Assert.Contains("<Style Selector=\"TabItem\">", window);
-        Assert.Contains("<Setter Property=\"FontSize\" Value=\"11.5\" />", window);
+        Assert.Contains("<Setter Property=\"FontSize\" Value=\"14.5\" />", window);
         Assert.Contains("public bool HasConnections => Connections.Count > 0;", model);
         Assert.Contains("public bool ShowNoConnections => !HasConnections;", model);
         Assert.Contains("No acquaintances are currently known to this household.", window);

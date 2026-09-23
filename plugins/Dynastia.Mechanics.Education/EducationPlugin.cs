@@ -320,7 +320,7 @@ public sealed class EducationPlugin : IGamePlugin
 
                 if (!HasLocalSchool(
                         target,
-                        actionContext.GameState.Year,
+                        actionContext.ScheduledExecutionYear,
                         locations,
                         institutions))
                 {
@@ -523,7 +523,7 @@ public sealed class EducationPlugin : IGamePlugin
                     return false;
                 }
 
-                var ceiling = education.GetHelpedEducationCeiling(actionContext.GameState.Year);
+                var ceiling = education.GetHelpedEducationCeiling(actionContext.ScheduledExecutionYear);
                 return education.GetEducationLevel(child) < Math.Min(5, ceiling)
                     && HouseholdKinshipRules.IsSupportedResidentRelative(actor, child, family, economy)
                     && economy.CanAfford(actor, PrivateTutorCost);
@@ -637,7 +637,7 @@ public sealed class EducationPlugin : IGamePlugin
 
                     var era =
                         eras.GetRule(
-                            actionContext.GameState.Year);
+                            actionContext.ScheduledExecutionYear);
 
                     var helperEducation = education.GetEducationLevel(helper);
                     var helpedCeiling =

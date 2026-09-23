@@ -122,6 +122,13 @@
                                 <Border Classes="tipCard">
                                     <TextBlock Classes="guideTip">
                                         <Run Text="• " />
+                                        <Run FontWeight="Bold" Text="Queued actions. " />
+                                        <Run Text="Queued actions resolve at the start of the next year, before characters age." />
+                                    </TextBlock>
+                                </Border>
+                                <Border Classes="tipCard">
+                                    <TextBlock Classes="guideTip">
+                                        <Run Text="• " />
                                         <Run FontWeight="Bold" Text="Control and selection. " />
                                         <Run Text="The active household determines who you direct; selecting another person changes the details and action target you are viewing." />
                                     </TextBlock>
@@ -186,7 +193,7 @@
                                     <TextBlock Classes="guideTip">
                                         <Run Text="• " />
                                         <Run FontWeight="Bold" Text="Marriage. " />
-                                        <Run Text="Seek a spouse or help resident relatives find one. Couples develop Marriage Satisfaction and may reconcile, have affairs, divorce or remarry." />
+                                        <Run Text="Seek a spouse or help resident relatives find one. Couples develop Marriage Satisfaction and may reconcile, have affairs, divorce or remarry. A household securely supported by passive income is not treated as unsupported merely because the husband has no job." />
                                     </TextBlock>
                                 </Border>
                                 <Border Classes="tipCard">
@@ -221,7 +228,7 @@
                                     <TextBlock Classes="guideTip">
                                         <Run Text="• " />
                                         <Run FontWeight="Bold" Text="Succession and estates. " />
-                                        <Run Text="Household leadership changes across generations. Wealth, houses, farmland, heirlooms, debts and financial claims can continue through inheritance." />
+                                        <Run Text="Household leadership changes across generations. Wealth, houses, farmland, heirlooms, debts and financial claims can continue through inheritance. Debts can pass to heirs alongside assets." />
                                     </TextBlock>
                                 </Border>
                             </StackPanel>
@@ -466,7 +473,7 @@
                                     <TextBlock Classes="guideTip">
                                         <Run Text="• " />
                                         <Run FontWeight="Bold" Text="Community connections. " />
-                                        <Run Text="Households can build relationships with local acquaintances, exchange gifts or assistance, and sometimes request money, housing or farmland outside the bloodline. Relationships fade after long neglect, while meaningful contact keeps them active." />
+                                        <Run Text="Households can build relationships with local acquaintances, exchange gifts or assistance, and sometimes request money, housing or farmland outside the bloodline. Better-established households with strong local relationships can sometimes ask wealthy acquaintances for substantial help. Relationships fade after long neglect, while meaningful contact keeps them active." />
                                     </TextBlock>
                                 </Border>
                                 <Border Classes="tipCard">

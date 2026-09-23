@@ -151,3 +151,6 @@ Rules:
 Primary code: `src/Dynastia.App/Persistence/GameSaveService*.cs`, reconciliation services in Core/plugins.
 
 Regression tests: `NewGameRestartLifecycleTests.cs`, `ReliabilityBatchTests.cs`, migration/reconciliation tests named in the owning mechanic.
+
+### Turn-start action timing
+A player action queued during year Y resolves at the start of Y+1 after the calendar advances but before Aging. The queue snapshot is taken when annual processing begins; actions queued autonomously during Y+1 retain their normal later phases.

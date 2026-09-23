@@ -162,6 +162,77 @@ internal sealed class CommunityConnectionService : IHouseholdConnectionService
         return "Close";
     }
 
+    internal bool CanRequestMoney(
+        IPerson actor,
+        CommunityConnectionState connection,
+        out string reason)
+    {
+        var relationState = GetRelationState(connection);
+        var householdRenown = _status.GetHouseholdStatus(actor).Renown;
+        if (MeetsRequestEligibility(
+                relationState,
+                householdRenown,
+                _rules.MoneyMinimumRelation,
+                _rules.MoneyMinimumHouseholdRenown))
+        {
+            reason = string.Empty;
+            return true;
+        }
+
+        if (RelationRank(relationState) < RelationRank(_rules.MoneyMinimumRelation))
+        {
+            reason = "Build this acquaintance to a Warm relationship first.";
+            return false;
+        }
+
+        reason = "The household needs Established Renown before asking acquaintances for money.";
+        return false;
+    }
+
+    internal bool CanRequestMajorAsset(
+        IPerson actor,
+        CommunityConnectionState connection,
+        out string reason)
+    {
+        var relationState = GetRelationState(connection);
+        var householdRenown = _status.GetHouseholdStatus(actor).Renown;
+        if (MeetsRequestEligibility(
+                relationState,
+                householdRenown,
+                _rules.AssetMinimumRelation,
+                _rules.AssetMinimumHouseholdRenown))
+        {
+            reason = string.Empty;
+            return true;
+        }
+
+        if (RelationRank(relationState) < RelationRank(_rules.AssetMinimumRelation))
+        {
+            reason = "Only a Close acquaintance would consider giving away major property.";
+            return false;
+        }
+
+        reason = "The household needs Prominent Renown before asking acquaintances for major property.";
+        return false;
+    }
+
+    internal static bool MeetsRequestEligibility(
+        string relationState,
+        double householdRenown,
+        string minimumRelation,
+        double minimumHouseholdRenown) =>
+        RelationRank(relationState) >= RelationRank(minimumRelation)
+        && householdRenown >= minimumHouseholdRenown;
+
+    private static int RelationRank(string relationState)
+    {
+        if (relationState.Equals("Close", StringComparison.OrdinalIgnoreCase))
+            return 2;
+        if (relationState.Equals("Warm", StringComparison.OrdinalIgnoreCase))
+            return 1;
+        return 0;
+    }
+
     internal void ImproveRelations(CommunityConnectionState connection)
     {
         connection.Familiarity = Math.Clamp(
@@ -229,6 +300,9 @@ internal sealed class CommunityConnectionService : IHouseholdConnectionService
         out bool accepted)
     {
         accepted = false;
+        if (!CanRequestMoney(actor, connection, out _))
+            return false;
+
         if (!IsValidMoneyAmount(amount)
             || amount > GetEstimatedMoneyRequestMaximum(actor, connection.Id))
         {
@@ -262,6 +336,8 @@ internal sealed class CommunityConnectionService : IHouseholdConnectionService
         out bool accepted)
     {
         accepted = false;
+        if (!CanRequestMajorAsset(actor, connection, out _))
+            return false;
         if (!connection.HasSpareHouse)
             return false;
         ApplyRequestBaseCost(connection);
@@ -293,6 +369,8 @@ internal sealed class CommunityConnectionService : IHouseholdConnectionService
         out bool accepted)
     {
         accepted = false;
+        if (!CanRequestMajorAsset(actor, connection, out _))
+            return false;
         if (!connection.HasSpareFarmland)
             return false;
         ApplyRequestBaseCost(connection);

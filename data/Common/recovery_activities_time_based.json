@@ -1,14 +1,14 @@
 [
   {
     "id": "family_illness",
-    "text": "took extended leave to care for a seriously ill family member",
+    "text": "took extended leave to rest and recover after a demanding period",
     "startYear": 1700,
     "endYear": null,
     "weight": 5
   },
   {
     "id": "bereavement",
-    "text": "withdrew from work for several months after a death in the family",
+    "text": "withdrew from work for several months of quiet rest",
     "startYear": 1700,
     "endYear": null,
     "weight": 4
@@ -22,21 +22,21 @@
   },
   {
     "id": "country_relatives",
-    "text": "spent several months staying with relatives in the countryside to rest and recuperate",
+    "text": "spent several months in quiet countryside lodgings to rest and recuperate",
     "startYear": 1700,
     "endYear": null,
     "weight": 4
   },
   {
     "id": "family_matters",
-    "text": "took prolonged leave to settle difficult family matters",
+    "text": "took prolonged leave to put neglected personal matters in order",
     "startYear": 1700,
     "endYear": null,
     "weight": 4
   },
   {
     "id": "care_children",
-    "text": "took extended leave to care for children during a difficult period at home",
+    "text": "took extended leave to recover at home and follow a quieter routine",
     "startYear": 1700,
     "endYear": null,
     "weight": 4
@@ -57,7 +57,7 @@
   },
   {
     "id": "relative_household",
-    "text": "spent several months helping to run a relative's household during a family emergency",
+    "text": "spent several months away from regular duties restoring a steadier daily routine",
     "startYear": 1700,
     "endYear": null,
     "weight": 3
@@ -148,14 +148,14 @@
   },
   {
     "id": "country_recovery_interwar",
-    "text": "spent much of the season recuperating with family outside the city",
+    "text": "spent much of the season recuperating outside the city",
     "startYear": 1919,
     "endYear": 1939,
     "weight": 4
   },
   {
     "id": "household_crisis_interwar",
-    "text": "took several months away from work to deal with a prolonged household crisis",
+    "text": "took several months away from work after an exhausting period",
     "startYear": 1919,
     "endYear": 1939,
     "weight": 4
@@ -176,21 +176,21 @@
   },
   {
     "id": "wartime_family_care",
-    "text": "spent months away from regular work caring for relatives during a period of upheaval",
+    "text": "spent months away from regular work recovering from the strain of wartime disruption",
     "startYear": 1939,
     "endYear": 1946,
     "weight": 5
   },
   {
     "id": "wartime_displacement",
-    "text": "was unable to maintain regular work for months while the family relocated and recovered from disruption",
+    "text": "was unable to maintain regular work for months while relocating and recovering from disruption",
     "startYear": 1939,
     "endYear": 1946,
     "weight": 4
   },
   {
     "id": "wartime_country",
-    "text": "spent an extended period with family in the countryside, away from normal working life",
+    "text": "spent an extended period in the countryside, away from normal working life",
     "startYear": 1939,
     "endYear": 1946,
     "weight": 4
@@ -204,7 +204,7 @@
   },
   {
     "id": "wartime_home",
-    "text": "spent months focused on keeping the household together rather than pursuing regular employment",
+    "text": "spent months focused on basic recovery and daily survival rather than regular employment",
     "startYear": 1939,
     "endYear": 1946,
     "weight": 4
@@ -225,7 +225,7 @@
   },
   {
     "id": "rural_family_postwar",
-    "text": "spent several months recovering with relatives in the countryside",
+    "text": "spent several months recovering in the countryside",
     "startYear": 1947,
     "endYear": 1989,
     "weight": 4
@@ -253,14 +253,14 @@
   },
   {
     "id": "family_obligations_postwar",
-    "text": "temporarily left regular work to handle demanding family obligations",
+    "text": "temporarily left regular work to recover from prolonged personal strain",
     "startYear": 1947,
     "endYear": 1989,
     "weight": 4
   },
   {
     "id": "allotment_rest",
-    "text": "spent much of the warmer months resting and working lightly on the family allotment",
+    "text": "spent much of the warmer months resting and working lightly on an allotment",
     "startYear": 1955,
     "endYear": 1989,
     "weight": 3
@@ -281,14 +281,14 @@
   },
   {
     "id": "family_care_prl",
-    "text": "stepped away from work for several months to care for an elderly or sick relative",
+    "text": "stepped away from work for several months after an exhausting period",
     "startYear": 1970,
     "endYear": 1989,
     "weight": 5
   },
   {
     "id": "country_house_prl",
-    "text": "spent a long period outside the city, resting with family and avoiding regular work",
+    "text": "spent a long period outside the city, resting and avoiding regular work",
     "startYear": 1970,
     "endYear": 1989,
     "weight": 3
@@ -323,14 +323,14 @@
   },
   {
     "id": "family_care_90s",
-    "text": "put work aside for several months to care for a close relative",
+    "text": "put work aside for several months to recover from prolonged strain",
     "startYear": 1990,
     "endYear": 2026,
     "weight": 5
   },
   {
     "id": "quiet_country_90s",
-    "text": "spent an extended period away from the city, resting with family",
+    "text": "spent an extended period away from the city, resting in the countryside",
     "startYear": 1990,
     "endYear": 2026,
     "weight": 3
@@ -351,7 +351,7 @@
   },
   {
     "id": "home_and_family_90s",
-    "text": "took a long break to concentrate on home and family after an exhausting period",
+    "text": "took a long break to concentrate on rest and neglected personal matters",
     "startYear": 1990,
     "endYear": 2026,
     "weight": 4
@@ -421,7 +421,7 @@
   },
   {
     "id": "family_reset_modern",
-    "text": "took several months away from regular work to recover and spend more time with family",
+    "text": "took several months away from regular work to recover and rebuild a healthier routine",
     "startYear": 2005,
     "endYear": null,
     "weight": 5

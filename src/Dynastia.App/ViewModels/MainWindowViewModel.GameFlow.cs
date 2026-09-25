@@ -136,6 +136,22 @@ public sealed partial class MainWindowViewModel
         PersistenceStatusText =
             string.Empty;
 
+        try
+        {
+            _saveService.SaveAutosave(
+                CaptureUiSaveState());
+        }
+        catch (Exception exception)
+        {
+            Console.Error.WriteLine(
+                exception);
+
+            ReportPersistenceStatus(
+                $"Autosave failed: {exception.Message} The year was not advanced.");
+
+            return;
+        }
+
         _yearProcessor.AdvanceYear();
 
         var refreshStartedAt =

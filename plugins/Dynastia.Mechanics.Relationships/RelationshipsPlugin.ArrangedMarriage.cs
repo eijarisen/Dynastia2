@@ -32,7 +32,7 @@ public sealed partial class RelationshipsPlugin
             return false;
         }
 
-        return HouseholdKinshipRules.IsSupportedRelative(
+        return IsSameOrLowerGeneration(
                 father,
                 daughter,
                 family)
@@ -71,11 +71,34 @@ public sealed partial class RelationshipsPlugin
             return false;
         }
 
-        return HouseholdKinshipRules.IsSupportedRelative(
+        return IsSameOrLowerGeneration(
                 father,
                 son,
                 family)
             && households.ResolveHouseholdHead(son)?.Id == father.Id;
+    }
+
+
+    private static bool IsSameOrLowerGeneration(
+        IPerson controller,
+        IPerson target,
+        IFamilyService family)
+    {
+        if (family.GetFather(controller)?.Id == target.Id
+            || family.GetMother(controller)?.Id == target.Id)
+        {
+            return false;
+        }
+
+        var controllerGeneration =
+            family.GetGeneration(controller);
+
+        var targetGeneration =
+            family.GetGeneration(target);
+
+        return controllerGeneration is int activeGeneration
+            && targetGeneration is int selectedGeneration
+            && selectedGeneration >= activeGeneration;
     }
 
     private static GameActionDefinition

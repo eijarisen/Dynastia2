@@ -107,7 +107,6 @@ public sealed class CraftsPlugin : IGamePlugin
                 IsAvailable = context =>
                     CanDirectCraftOccupation(
                         context,
-                        family,
                         economy)
                     && context.Target.Tags.Has("state.alive")
                     && context.Target.Age >= 18
@@ -118,7 +117,27 @@ public sealed class CraftsPlugin : IGamePlugin
                         definition.Id,
                         StringComparison.OrdinalIgnoreCase),
                 Execute = context =>
-                    new GameActionResult(crafts.StartOccupation(context.Target, definition.Id))
+                {
+                    if (!CanDirectCraftOccupation(
+                            context,
+                            economy)
+                        || !context.Target.Tags.Has("state.alive")
+                        || context.Target.Age < 18
+                        || context.Target.Tags.Has("state.imprisoned")
+                        || !crafts.KnowsCraft(context.Target, definition.Id)
+                        || string.Equals(
+                            crafts.GetActiveCraft(context.Target)?.Id,
+                            definition.Id,
+                            StringComparison.OrdinalIgnoreCase))
+                    {
+                        return new GameActionResult(false);
+                    }
+
+                    return new GameActionResult(
+                        crafts.StartOccupation(
+                            context.Target,
+                            definition.Id));
+                }
             });
 
             actions.Register(new GameActionDefinition
@@ -225,19 +244,32 @@ public sealed class CraftsPlugin : IGamePlugin
             IsAvailable = context =>
                 CanDirectCraftOccupation(
                     context,
-                    family,
                     economy)
                 && context.Target.Tags.Has("state.alive")
                 && !context.Target.Tags.Has("state.imprisoned")
                 && crafts.IsSelfEmployed(context.Target),
             Execute = context =>
-                new GameActionResult(crafts.EndOccupation(context.Target, "stopped"))
+            {
+                if (!CanDirectCraftOccupation(
+                        context,
+                        economy)
+                    || !context.Target.Tags.Has("state.alive")
+                    || context.Target.Tags.Has("state.imprisoned")
+                    || !crafts.IsSelfEmployed(context.Target))
+                {
+                    return new GameActionResult(false);
+                }
+
+                return new GameActionResult(
+                    crafts.EndOccupation(
+                        context.Target,
+                        "stopped"));
+            }
         });
     }
 
     private static bool CanDirectCraftOccupation(
         GameActionContext context,
-        IFamilyService family,
         IEconomyService economy)
     {
         if (!context.ActorHasControl
@@ -246,13 +278,9 @@ public sealed class CraftsPlugin : IGamePlugin
             return false;
         }
 
-        if (context.Actor.Id == context.Target.Id)
-            return true;
-
-        return HouseholdKinshipRules.IsSupportedResidentRelative(
+        return HouseholdKinshipRules.IsResidentHouseholdMember(
             context.Actor,
             context.Target,
-            family,
             economy,
             requireAdult: true);
     }

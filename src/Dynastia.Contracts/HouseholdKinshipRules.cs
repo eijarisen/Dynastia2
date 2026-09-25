@@ -67,10 +67,32 @@ public static class HouseholdKinshipRules
         IEconomyService economy,
         bool requireAdult = false)
     {
-        if (!target.Tags.Has("state.alive")
-            || target.Id == actor.Id
-            || requireAdult && target.Age < 18
+        if (target.Id == actor.Id
             || !IsSupportedRelative(actor, target, family))
+        {
+            return false;
+        }
+
+        return IsResidentHouseholdMember(
+            actor,
+            target,
+            economy,
+            requireAdult);
+    }
+
+    public static bool IsResidentHouseholdMember(
+        IPerson actor,
+        IPerson target,
+        IEconomyService economy,
+        bool requireAdult = false)
+    {
+        ArgumentNullException.ThrowIfNull(actor);
+        ArgumentNullException.ThrowIfNull(target);
+        ArgumentNullException.ThrowIfNull(economy);
+
+        if (!actor.Tags.Has("state.alive")
+            || !target.Tags.Has("state.alive")
+            || requireAdult && target.Age < 18)
         {
             return false;
         }

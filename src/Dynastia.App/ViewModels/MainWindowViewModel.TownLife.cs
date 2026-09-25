@@ -421,14 +421,18 @@ public sealed partial class MainWindowViewModel
     }
 
     internal IReadOnlyList<TownAffairsChurchActionViewModel>
-        GetTownAffairsChurchActions()
+        GetTownAffairsChurchActions(
+            IPerson subject)
     {
         var actor = _succession.ActiveController;
-        if (actor is null)
+        if (actor is null
+            || subject.Age < 18)
+        {
             return [];
+        }
 
         var definitions = _actionRegistry
-            .GetCandidateActions(actor, actor)
+            .GetCandidateActions(actor, subject)
             .Where(action => TownAffairsChurchActionIds.Contains(action.Id))
             .ToDictionary(action => action.Id, StringComparer.OrdinalIgnoreCase);
         var result = new List<TownAffairsChurchActionViewModel>();
@@ -453,7 +457,7 @@ public sealed partial class MainWindowViewModel
             var evaluation = _actionRegistry.Evaluate(
                 actionId,
                 actor,
-                actor,
+                subject,
                 parameters);
 
             var minimum = 100m;
@@ -498,7 +502,7 @@ public sealed partial class MainWindowViewModel
             var evaluation = _actionRegistry.Evaluate(
                 actionId,
                 actor,
-                actor,
+                subject,
                 parameters);
 
             decimal? amount = null;
@@ -768,6 +772,7 @@ public sealed partial class MainWindowViewModel
 
     internal void QueueTownAffairsChurchAction(
         TownAffairsChurchActionViewModel action,
+        IPerson subject,
         decimal? selectedAmount = null)
     {
         if (!TownAffairsChurchActionIds.Contains(action.ActionId)
@@ -796,6 +801,7 @@ public sealed partial class MainWindowViewModel
             var tier = ResolveChurchDonationTier(
                 action.ActionId,
                 actor,
+                subject,
                 amount);
             if (tier is null)
                 return;
@@ -807,7 +813,7 @@ public sealed partial class MainWindowViewModel
             var evaluation = _actionRegistry.Evaluate(
                 action.ActionId,
                 actor,
-                actor,
+                subject,
                 parameters);
             if (!evaluation.Available)
             {
@@ -819,7 +825,7 @@ public sealed partial class MainWindowViewModel
         var result = _actionRegistry.Execute(
             action.ActionId,
             actor,
-            actor,
+            subject,
             parameters);
         if (!result.Success && !string.IsNullOrWhiteSpace(result.Message))
             PersistenceStatusText = result.Message;
@@ -839,6 +845,7 @@ public sealed partial class MainWindowViewModel
     private string? ResolveChurchDonationTier(
         string actionId,
         IPerson actor,
+        IPerson subject,
         decimal selectedAmount)
     {
         string? chosen = null;
@@ -851,7 +858,7 @@ public sealed partial class MainWindowViewModel
             var evaluation = _actionRegistry.Evaluate(
                 actionId,
                 actor,
-                actor,
+                subject,
                 parameters);
             if (!evaluation.PresentationMetadata.TryGetValue("amount", out var raw)
                 || !decimal.TryParse(

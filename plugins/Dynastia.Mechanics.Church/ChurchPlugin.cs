@@ -99,11 +99,14 @@ public sealed class ChurchPlugin : IGamePlugin
                 {
                     Type = "church.attend",
                     Year = actionContext.GameState.Year,
-                    SubjectId = actionContext.Actor.Id,
+                    SubjectId = actionContext.Target.Id,
+                    RelatedPersonIds = actionContext.Actor.Id == actionContext.Target.Id
+                        ? []
+                        : [actionContext.Actor.Id],
                     Data = new Dictionary<string, string>
                     {
                         ["churchName"] = church.TierName,
-                        ["text"] = $"{family.GetDisplayName(actionContext.Actor)} attended {church.TierName}."
+                        ["text"] = $"{family.GetDisplayName(actionContext.Target)} attended {church.TierName}."
                     }
                 });
 
@@ -235,20 +238,23 @@ public sealed class ChurchPlugin : IGamePlugin
                         names);
                     eventData["familyName"] = familyName;
                     eventData["text"] =
-                        $"{family.GetDisplayName(actionContext.Actor)} gave {amount:N0} zł to the struggling {familyName} family.";
+                        $"{family.GetDisplayName(actionContext.Target)} gave {amount:N0} zł to the struggling {familyName} family.";
                 }
                 else
                 {
                     eventData["churchName"] = church.TierName;
                     eventData["text"] =
-                        $"{family.GetDisplayName(actionContext.Actor)} donated {amount:N0} zł to {church.TierName}.";
+                        $"{family.GetDisplayName(actionContext.Target)} donated {amount:N0} zł to {church.TierName}.";
                 }
 
                 actionContext.EventBus.Publish(new GameEvent
                 {
                     Type = eventType,
                     Year = actionContext.GameState.Year,
-                    SubjectId = actionContext.Actor.Id,
+                    SubjectId = actionContext.Target.Id,
+                    RelatedPersonIds = actionContext.Actor.Id == actionContext.Target.Id
+                        ? []
+                        : [actionContext.Actor.Id],
                     Data = eventData
                 });
 
@@ -391,14 +397,21 @@ public sealed class ChurchPlugin : IGamePlugin
         IEconomyService economy,
         ITownInstitutionService institutions)
     {
-        if (context.Actor.Id != context.Target.Id
-            || !context.Actor.Tags.Has("state.alive")
+        if (!context.Actor.Tags.Has("state.alive")
             || context.Actor.Age < 18
-            || !context.ActorHasControl)
+            || !context.ActorHasControl
+            || context.Actor.Tags.Has("state.imprisoned")
+            || !context.Target.Tags.Has("state.alive")
+            || context.Target.Tags.Has("state.imprisoned")
+            || !HouseholdKinshipRules.IsResidentHouseholdMember(
+                context.Actor,
+                context.Target,
+                economy,
+                requireAdult: true))
         {
             return ActionEvaluationResult.Denied(
                 ActionReasonCodes.NoLongerEligible,
-                "Church actions are performed by the active adult household controller.");
+                "Church actions are available to living adult members of the active household.");
         }
 
         var householdId = economy.GetHouseholdId(context.Actor);
@@ -512,19 +525,19 @@ public sealed class ChurchPlugin : IGamePlugin
         double improveChance,
         double protectionChance)
     {
-        var current = personality.GetPersonality(context.Actor)?.Morals;
+        var current = personality.GetPersonality(context.Target)?.Morals;
         if (current is null)
             return;
 
         if (current.Equals("Good", StringComparison.OrdinalIgnoreCase))
         {
             if (context.Random.NextDouble() < protectionChance)
-                personality.GrantMoralsProtection(context.Actor);
+                personality.GrantMoralsProtection(context.Target);
             return;
         }
 
         if (context.Random.NextDouble() < improveChance)
-            personality.ShiftMorals(context.Actor, 1);
+            personality.ShiftMorals(context.Target, 1);
     }
 
     private static string GeneratePoorFamilyName(

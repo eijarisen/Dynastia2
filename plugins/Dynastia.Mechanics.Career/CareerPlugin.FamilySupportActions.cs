@@ -27,7 +27,7 @@ public sealed partial class CareerPlugin
                 },
                 Label = "Help to Seek Employment",
                 Description =
-                    "Browse vacancies for an unemployed adult relative living in this household " +
+                    "Browse vacancies for an unemployed adult household member " +
                     "and help them apply for a specific position.",
                 Mode = ActionExecutionMode.Queued,
                 QueuePhase = YearPhase.QueuedActionsEarly,
@@ -41,6 +41,7 @@ public sealed partial class CareerPlugin
                         || !target.Tags.Has("state.alive")
                         || target.Id == actor.Id
                         || target.Age < 18
+                        || target.Tags.Has("state.imprisoned")
                         || target.Tags.Has("vocation.religious.active"))
                     {
                         return false;
@@ -53,10 +54,9 @@ public sealed partial class CareerPlugin
                         return false;
                     }
 
-                    return IsResidentSupportedRelative(
+                    return IsResidentSupportedMember(
                         actor,
                         target,
-                        family,
                         economy);
                 },
 
@@ -69,16 +69,16 @@ public sealed partial class CareerPlugin
                         || !target.Tags.Has("state.alive")
                         || target.Id == actor.Id
                         || target.Age < 18
+                        || target.Tags.Has("state.imprisoned")
                         || target.Tags.Has("vocation.religious.active"))
                     {
                         return new GameActionResult(false);
                     }
 
                     var targetCareer = career.GetCareer(target);
-                    if (!IsResidentSupportedRelative(
+                    if (!IsResidentSupportedMember(
                             actor,
                             target,
-                            family,
                             economy)
                         || targetCareer.IsRetired
                         || targetCareer.IsEmployed)
@@ -146,7 +146,7 @@ public sealed partial class CareerPlugin
                 },
                 Label = "Find a Better Job",
                 Description =
-                    "Browse better-paying vacancies for an employed adult relative living in this household.",
+                    "Browse better-paying vacancies for an employed adult household member.",
                 Mode = ActionExecutionMode.Queued,
                 QueuePhase = YearPhase.QueuedActionsEarly,
 
@@ -165,10 +165,9 @@ public sealed partial class CareerPlugin
                         return false;
                     }
 
-                    if (!IsResidentSupportedRelative(
+                    if (!IsResidentSupportedMember(
                             actor,
                             target,
-                            family,
                             economy))
                     {
                         return false;
@@ -189,6 +188,7 @@ public sealed partial class CareerPlugin
                         || !target.Tags.Has("state.alive")
                         || target.Id == actor.Id
                         || target.Age < 18
+                        || target.Tags.Has("state.imprisoned")
                         || target.Tags.Has("vocation.religious.active"))
                     {
                         return new GameActionResult(false);
@@ -196,10 +196,9 @@ public sealed partial class CareerPlugin
 
                     var targetCareer = career.GetCareer(target);
 
-                    if (!IsResidentSupportedRelative(
+                    if (!IsResidentSupportedMember(
                             actor,
                             target,
-                            family,
                             economy)
                         || targetCareer.IsRetired
                         || !targetCareer.IsEmployed
@@ -231,7 +230,7 @@ public sealed partial class CareerPlugin
                 },
                 Label = "Ask to Recover",
                 Description =
-                    "Ask a working adult relative in this household to take the year easier. " +
+                    "Ask a working adult household member to take the year easier. " +
                     "They may refuse. On success they recover Health and reduce their work output/income for the year.",
                 Mode = ActionExecutionMode.Queued,
                 QueuePhase = YearPhase.QueuedActionsEarly,
@@ -251,7 +250,6 @@ public sealed partial class CareerPlugin
                     if (!IsRecoverOrQuitTarget(
                         actor,
                         target,
-                        family,
                         economy))
                     {
                         return false;
@@ -275,7 +273,6 @@ public sealed partial class CareerPlugin
                         || !IsRecoverOrQuitTarget(
                             actor,
                             target,
-                            family,
                             economy))
                     {
                         return new GameActionResult(false);
@@ -371,7 +368,7 @@ public sealed partial class CareerPlugin
                 },
                 Label = "Ask to Quit Job",
                 Description =
-                    "Ask an employed adult relative living in this household to quit so they can focus on the household, including farm work. " +
+                    "Ask an employed adult household member to quit so they can focus on the household, including farm work. " +
                     "There is a 50% refusal chance.",
                 Mode = ActionExecutionMode.Queued,
                 QueuePhase = YearPhase.QueuedActionsEarly,
@@ -387,7 +384,6 @@ public sealed partial class CareerPlugin
                         || !IsRecoverOrQuitTarget(
                             actor,
                             target,
-                            family,
                             economy))
                     {
                         return false;
@@ -412,7 +408,6 @@ public sealed partial class CareerPlugin
                         || !IsRecoverOrQuitTarget(
                             actor,
                             target,
-                            family,
                             economy))
                     {
                         return new GameActionResult(false);

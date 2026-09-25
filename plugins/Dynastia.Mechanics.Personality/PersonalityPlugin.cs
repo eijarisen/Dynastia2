@@ -139,19 +139,26 @@ public sealed class PersonalityPlugin : IGamePlugin
             EvaluateAvailability = actionContext =>
             {
                 var actor = actionContext.Actor;
-                if (actor.Id != actionContext.Target.Id
-                    || !actor.Tags.Has("state.alive")
+                var target = actionContext.Target;
+                if (!actor.Tags.Has("state.alive")
                     || !actionContext.ActorHasControl
                     || actor.Age < 18
-                    || actor.Tags.Has("state.imprisoned"))
+                    || actor.Tags.Has("state.imprisoned")
+                    || !target.Tags.Has("state.alive")
+                    || target.Tags.Has("state.imprisoned")
+                    || !HouseholdKinshipRules.IsResidentHouseholdMember(
+                        actor,
+                        target,
+                        economy,
+                        requireAdult: true))
                 {
                     return ActionEvaluationResult.Denied(
                         ActionReasonCodes.NoLongerEligible,
-                        "Religious Study is available only to the active living adult controller.");
+                        "Religious Study is available to living adult members of the active household.");
                 }
 
                 var churchTier = ResolveChurchTier(
-                    actor,
+                    target,
                     actionContext.ScheduledExecutionYear,
                     locations,
                     institutions);
@@ -185,14 +192,25 @@ public sealed class PersonalityPlugin : IGamePlugin
             Execute = actionContext =>
             {
                 var actor = actionContext.Actor;
+                var target = actionContext.Target;
                 var churchTier = ResolveChurchTier(
-                    actor,
+                    target,
                     actionContext.GameState.Year,
                     locations,
                     institutions);
                 var successChance = rules.GetSuccessChance(churchTier);
 
                 if (churchTier <= 0
+                    || !actor.Tags.Has("state.alive")
+                    || !actionContext.ActorHasControl
+                    || actor.Tags.Has("state.imprisoned")
+                    || !target.Tags.Has("state.alive")
+                    || target.Tags.Has("state.imprisoned")
+                    || !HouseholdKinshipRules.IsResidentHouseholdMember(
+                        actor,
+                        target,
+                        economy,
+                        requireAdult: true)
                     || !economy.CanAfford(actor, rules.BaseCost))
                 {
                     return new GameActionResult(
@@ -201,7 +219,7 @@ public sealed class PersonalityPlugin : IGamePlugin
                 }
 
                 economy.ChangeWealth(actor, -rules.BaseCost);
-                var possessive = family.GetSex(actor) == Sex.Female
+                var possessive = family.GetSex(target) == Sex.Female
                     ? "her"
                     : "his";
 
@@ -212,31 +230,37 @@ public sealed class PersonalityPlugin : IGamePlugin
                         {
                             Type = "personality.religious_study",
                             Year = actionContext.GameState.Year,
-                            SubjectId = actor.Id,
+                            SubjectId = target.Id,
+                            RelatedPersonIds = actor.Id == target.Id
+                                ? []
+                                : [actor.Id],
                             Data = new Dictionary<string, string>
                             {
                                 ["success"] = "false",
                                 ["churchTier"] = churchTier.ToString(CultureInfo.InvariantCulture),
                                 ["successChance"] = successChance.ToString(CultureInfo.InvariantCulture),
-                                ["text"] = $"{family.GetDisplayName(actor)} devoted time to religious study, but {possessive} outlook did not change."
+                                ["text"] = $"{family.GetDisplayName(target)} devoted time to religious study, but {possessive} outlook did not change."
                             }
                         });
                     return new GameActionResult(true);
                 }
 
-                var before = personality.GetPersonality(actor)?.Morals;
+                var before = personality.GetPersonality(target)?.Morals;
                 if (before == "Good")
-                    personality.GrantMoralsProtection(actor);
+                    personality.GrantMoralsProtection(target);
                 else
-                    personality.ShiftMorals(actor, 1);
+                    personality.ShiftMorals(target, 1);
 
-                var after = personality.GetPersonality(actor)?.Morals;
+                var after = personality.GetPersonality(target)?.Morals;
                 events.Publish(
                     new GameEvent
                     {
                         Type = "personality.religious_study",
                         Year = actionContext.GameState.Year,
-                        SubjectId = actor.Id,
+                        SubjectId = target.Id,
+                        RelatedPersonIds = actor.Id == target.Id
+                            ? []
+                            : [actor.Id],
                         Data = new Dictionary<string, string>
                         {
                             ["success"] = "true",
@@ -245,8 +269,8 @@ public sealed class PersonalityPlugin : IGamePlugin
                             ["from"] = before ?? string.Empty,
                             ["to"] = after ?? string.Empty,
                             ["text"] = before == "Good"
-                                ? $"{family.GetDisplayName(actor)} deepened {possessive} religious convictions."
-                                : $"{family.GetDisplayName(actor)} emerged from religious study with a more benevolent outlook."
+                                ? $"{family.GetDisplayName(target)} deepened {possessive} religious convictions."
+                                : $"{family.GetDisplayName(target)} emerged from religious study with a more benevolent outlook."
                         }
                     });
                 return new GameActionResult(true);

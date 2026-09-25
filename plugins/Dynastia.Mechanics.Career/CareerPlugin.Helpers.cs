@@ -13,27 +13,24 @@ public sealed partial class CareerPlugin
             && !actor.Tags.Has("state.imprisoned");
     }
 
-    private static bool IsResidentSupportedRelative(
+    private static bool IsResidentSupportedMember(
         IPerson actor,
         IPerson target,
-        IFamilyService family,
         IEconomyService economy) =>
-        HouseholdKinshipRules.IsSupportedResidentRelative(
+        target.Id != actor.Id
+        && HouseholdKinshipRules.IsResidentHouseholdMember(
             actor,
             target,
-            family,
             economy,
             requireAdult: true);
 
     private static bool IsRecoverOrQuitTarget(
         IPerson actor,
         IPerson target,
-        IFamilyService family,
         IEconomyService economy) =>
-        IsResidentSupportedRelative(
+        IsResidentSupportedMember(
             actor,
             target,
-            family,
             economy);
 
     private static IPerson? FindFirstRelatedPerson(

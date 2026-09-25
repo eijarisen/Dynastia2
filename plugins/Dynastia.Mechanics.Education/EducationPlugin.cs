@@ -317,12 +317,12 @@ public sealed class EducationPlugin : IGamePlugin
                     return false;
                 }
 
-                var validTarget = target.Id == actor.Id
-                    || HouseholdKinshipRules.IsSupportedResidentRelative(
+                var validTarget =
+                    HouseholdKinshipRules.IsResidentHouseholdMember(
                         actor,
                         target,
-                        family,
-                        economy);
+                        economy,
+                        requireAdult: true);
                 if (!validTarget)
                     return false;
 
@@ -382,6 +382,19 @@ public sealed class EducationPlugin : IGamePlugin
                     return new GameActionResult(
                         false,
                         "Children use Help in Learning instead of paid education.");
+                }
+
+                if (!actionContext.ActorHasControl
+                    || !HouseholdKinshipRules.IsResidentHouseholdMember(
+                        actor,
+                        target,
+                        economy,
+                        requireAdult: true))
+                {
+                    return new GameActionResult(
+                        false,
+                        "This adult is no longer a member of the active household.",
+                        ActionReasonCodes.NoLongerEligible);
                 }
 
                 if (!HasLocalSchool(

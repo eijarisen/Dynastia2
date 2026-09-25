@@ -2,21 +2,31 @@ namespace Dynastia.App.ViewModels;
 
 public static class ThoughtUiFormatter
 {
+    public static string Quote(
+        string? text)
+    {
+        var normalized =
+            Normalize(text);
+
+        return string.IsNullOrEmpty(normalized)
+            ? string.Empty
+            : $"“{normalized}”";
+    }
+
     public static string QuoteAndWrap(
         string? text,
         int maximumLineLength = 46)
     {
-        if (string.IsNullOrWhiteSpace(
-                text))
-        {
+        var normalized =
+            Normalize(text);
+
+        if (string.IsNullOrEmpty(normalized))
             return string.Empty;
-        }
 
         var words =
-            text.Trim()
-                .Split(
-                    ' ',
-                    StringSplitOptions.RemoveEmptyEntries);
+            normalized.Split(
+                ' ',
+                StringSplitOptions.RemoveEmptyEntries);
 
         var lines =
             new List<string>();
@@ -86,5 +96,18 @@ public static class ThoughtUiFormatter
         return string.Join(
             Environment.NewLine,
             lines);
+    }
+
+    private static string Normalize(
+        string? text)
+    {
+        if (string.IsNullOrWhiteSpace(text))
+            return string.Empty;
+
+        return string.Join(
+            " ",
+            text.Split(
+                (char[]?)null,
+                StringSplitOptions.RemoveEmptyEntries));
     }
 }

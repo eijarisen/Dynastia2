@@ -82,6 +82,7 @@ public sealed class TownAffairsViewModel : ViewModelBase
                 : _householdPeople.FirstOrDefault();
 
         if ((request.InitialTab == TownAffairsTab.Jobs
+                || request.InitialTab == TownAffairsTab.Church
                 || request.InitialTab == TownAffairsTab.Court)
             && Subject is { Age: < 18 })
         {
@@ -149,6 +150,7 @@ public sealed class TownAffairsViewModel : ViewModelBase
                 return;
 
             if ((tab == TownAffairsTab.Jobs
+                    || tab == TownAffairsTab.Church
                     || tab == TownAffairsTab.Court)
                 && Subject is { Age: < 18 })
             {
@@ -475,10 +477,18 @@ public sealed class TownAffairsViewModel : ViewModelBase
         TownAffairsChurchActionViewModel action,
         decimal? selectedAmount = null)
     {
-        if (!ShowChurchTab || !action.IsAvailable)
+        if (!ShowChurchTab
+            || Subject is null
+            || Subject.Age < 18
+            || !action.IsAvailable)
+        {
             return;
+        }
 
-        _owner.QueueTownAffairsChurchAction(action, selectedAmount);
+        _owner.QueueTownAffairsChurchAction(
+            action,
+            Subject,
+            selectedAmount);
     }
 
     public void QueueCommunity(TownAffairsCommunityProposalViewModel proposal)
@@ -536,11 +546,11 @@ public sealed class TownAffairsViewModel : ViewModelBase
         ChurchActions = Array.Empty<TownAffairsChurchActionViewModel>();
         CourtModel = null;
 
-        if (!IsRemote)
-            ChurchActions = _owner.GetTownAffairsChurchActions();
-
         if (!IsRemote && Subject is not null)
         {
+            if (Subject.Age >= 18)
+                ChurchActions = _owner.GetTownAffairsChurchActions(Subject);
+
             var preferredActionId = Subject.Id == Request.SubjectPersonId
                 ? Request.PreferredActionId
                 : null;

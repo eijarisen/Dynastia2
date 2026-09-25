@@ -21,6 +21,10 @@ public sealed partial class GameSaveService : IYearExecutionBoundary
     private readonly IActionRegistry _actions;
     private readonly IBiographyService? _biography;
     private readonly IStatefulGameRandom _random;
+    private readonly string _gameRootDirectory;
+
+    public const string AutosaveFileName =
+        "dynastia_autosave.txt";
 
     private static readonly JsonSerializerOptions
         SaveJsonOptions =
@@ -54,7 +58,8 @@ public sealed partial class GameSaveService : IYearExecutionBoundary
         IGameEventBus events,
         IActionRegistry actions,
         IBiographyService? biography,
-        IStatefulGameRandom random)
+        IStatefulGameRandom random,
+        string? gameRootDirectory = null)
     {
         _gameState = gameState;
         _selection = selection;
@@ -64,6 +69,12 @@ public sealed partial class GameSaveService : IYearExecutionBoundary
         _biography = biography;
         _random = random
             ?? throw new ArgumentNullException(nameof(random));
+
+        _gameRootDirectory =
+            Path.GetFullPath(
+                string.IsNullOrWhiteSpace(gameRootDirectory)
+                    ? AppContext.BaseDirectory
+                    : gameRootDirectory);
     }
 
     public string GetSuggestedFileName()
@@ -115,6 +126,54 @@ public sealed partial class GameSaveService : IYearExecutionBoundary
             encrypted);
 
         writer.Flush();
+    }
+
+
+    public string AutosavePath =>
+        Path.Combine(
+            _gameRootDirectory,
+            AutosaveFileName);
+
+    public void SaveAutosave(
+        GameUiSaveState uiState)
+    {
+        if (_gameState.People.Count == 0)
+        {
+            throw new InvalidOperationException(
+                "There is no active dynasty to autosave.");
+        }
+
+        Directory.CreateDirectory(
+            _gameRootDirectory);
+
+        var path = AutosavePath;
+        var temporaryPath =
+            path + ".tmp";
+
+        try
+        {
+            using (var stream =
+                new FileStream(
+                    temporaryPath,
+                    FileMode.Create,
+                    FileAccess.Write,
+                    FileShare.None))
+            {
+                Save(
+                    stream,
+                    uiState);
+            }
+
+            File.Move(
+                temporaryPath,
+                path,
+                overwrite: true);
+        }
+        finally
+        {
+            if (File.Exists(temporaryPath))
+                File.Delete(temporaryPath);
+        }
     }
 
     public GameUiSaveState Load(
@@ -184,6 +243,10 @@ public sealed partial class GameSaveService : IYearExecutionBoundary
         var prepared =
             PrepareComponents(
                 loaded);
+
+        RepairPreparedSpouseReferences(
+            loaded,
+            prepared);
 
         ValidatePreparedReferences(
             loaded,

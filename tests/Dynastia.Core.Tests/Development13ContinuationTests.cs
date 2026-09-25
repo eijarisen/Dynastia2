@@ -57,7 +57,7 @@ public sealed class Development13ContinuationTests
         var window = RepositoryFiles.ReadText("src", "Dynastia.App", "Views", "TownLifeWindow.axaml");
 
         var methodStart = townLife.IndexOf("GetTownAffairsHealthActions(IPerson subject)", StringComparison.Ordinal);
-        var methodEnd = townLife.IndexOf("GetTownAffairsChurchActions()", methodStart, StringComparison.Ordinal);
+        var methodEnd = townLife.IndexOf("GetTownAffairsChurchActions(", methodStart, StringComparison.Ordinal);
         Assert.True(methodStart >= 0 && methodEnd > methodStart);
         var healthMethod = townLife[methodStart..methodEnd];
 

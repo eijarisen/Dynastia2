@@ -37,6 +37,34 @@ public sealed class PersonThoughtPresentationTests
     }
 
     [Fact]
+    public void FamilyTooltipLeavesLongThoughtWrappingToAvalonia()
+    {
+        var state = new GameState { Year = 1900 };
+        var person = state.CreatePerson(
+            "Jan",
+            "Test",
+            30,
+            Guid.Parse("10000000-0000-0000-0000-000000000006"));
+        person.Tags.Add("state.alive");
+        var thoughts = new ThoughtStub(new PersonThoughtSnapshot(
+            1900,
+            "health.chronic",
+            "Health",
+            "My chronic condition has been bothering me a lot lately and I want to recover properly.",
+            ThoughtMoodIds.Concerned,
+            "😟",
+            "❤️‍🩹",
+            80,
+            "health"));
+
+        var card = CreateCard(person, thoughts);
+
+        Assert.StartsWith("“", card.TooltipThoughtText);
+        Assert.EndsWith("”", card.TooltipThoughtText);
+        Assert.DoesNotContain(Environment.NewLine, card.TooltipThoughtText);
+    }
+
+    [Fact]
     public void NonNeutralMoodCanDriveStatusButTopicNeverDoes()
     {
         var state = new GameState { Year = 1900 };

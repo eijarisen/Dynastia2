@@ -325,7 +325,7 @@ public sealed class FamilyMemberCardViewModel
                 .ToList();
 
         TooltipThoughtText =
-            ThoughtUiFormatter.QuoteAndWrap(
+            ThoughtUiFormatter.Quote(
                 ThoughtText);
 
         HasTooltipThought =

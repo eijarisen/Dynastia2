@@ -78,8 +78,7 @@ public sealed partial class WellbeingPlugin
                                     "Psychotherapy is not available in this period.");
                             }
 
-                            if (!CanActorAct(actionContext)
-                                || !actionContext.Target.Tags.Has("state.alive")
+                            if (!CanTreatHouseholdMember(actionContext, economy)
                                 || !HasTherapyCondition(health, actionContext.Target))
                             {
                                 return ActionEvaluationResult.Denied(
@@ -142,8 +141,8 @@ public sealed partial class WellbeingPlugin
                                     currentMedical.TreatmentCostMultiplier);
 
                             if (!currentMedical.IsAvailable
+                                || !CanTreatHouseholdMember(actionContext, economy)
                                 || !economy.CanAfford(actor, currentCost)
-                                || !treatmentTarget.Tags.Has("state.alive")
                                 || !HasTherapyCondition(health, treatmentTarget))
                             {
                                 return new GameActionResult(false);
@@ -294,8 +293,7 @@ public sealed partial class WellbeingPlugin
                             var actor = actionContext.Actor;
                             var treatmentTarget = actionContext.Target;
 
-                            if (!CanActorAct(actionContext)
-                                || !treatmentTarget.Tags.Has("state.alive"))
+                            if (!CanTreatHouseholdMember(actionContext, economy))
                             {
                                 return ActionEvaluationResult.Denied(
                                     ActionReasonCodes.NoLongerEligible,
@@ -354,8 +352,8 @@ public sealed partial class WellbeingPlugin
                                 healthcareEras.GetHealAmount(
                                     actionContext.GameState.Year));
 
-                            if (!economy.CanAfford(actor, currentTreatment.Cost)
-                                || !treatmentTarget.Tags.Has("state.alive")
+                            if (!CanTreatHouseholdMember(actionContext, economy)
+                                || !economy.CanAfford(actor, currentTreatment.Cost)
                                 || targetHealth.Current >= targetHealth.Maximum)
                             {
                                 return new GameActionResult(false);
@@ -494,6 +492,17 @@ public sealed partial class WellbeingPlugin
             .Any(condition =>
                 TherapyRules.IsTreatableCondition(
                     condition.Id));
+    }
+
+    private static bool CanTreatHouseholdMember(
+        GameActionContext context,
+        IEconomyService economy)
+    {
+        return CanActorAct(context)
+            && HouseholdKinshipRules.IsResidentHouseholdMember(
+                context.Actor,
+                context.Target,
+                economy);
     }
 
     private static bool CanActorActOnSelf(

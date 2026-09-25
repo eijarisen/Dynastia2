@@ -583,8 +583,14 @@ internal sealed class ActionPanelCoordinator : ViewModelBase
                 "farming.buy_farmland",
                 StringComparison.OrdinalIgnoreCase))
         {
+            if (TryReadDecimalParameter(parameters, "summaryPrice", out var summaryPrice)
+                || TryReadDecimalParameter(parameters, "farmlandAskingPrice", out summaryPrice))
+            {
+                return $"{summaryPrice.ToString("N0", CultureInfo.InvariantCulture)} zł";
+            }
+
             return _farmingService is null
-                ? "20,000 zł"
+                ? "10,000 zł"
                 : $"{_farmingService.PurchasePrice.ToString("N0", CultureInfo.InvariantCulture)} zł";
         }
 

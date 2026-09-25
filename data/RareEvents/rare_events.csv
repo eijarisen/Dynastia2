@@ -26,4 +26,4 @@ rare.professional_recognition,Professional Recognition,Personal,Opportunity,1700
 rare.patronage,Unexpected Patronage,Personal,Fortune,1700,,4,18,,True,0,False,False,False,False,0,appeal,High,Urban,SmallTown,-,media;tourism,media_creative;science_health;education;religion,generic.wealth_gain
 rare.prize_award,Prize or Award,Personal,Fortune,1850,,3,18,,True,0,False,False,False,False,0,intellect,High,Urban,SmallTown,-,-,media_creative;science_health;technology;engineering,generic.wealth_gain
 rare.craft_commission,Valuable Craft Commission,Personal,CraftFortune,1700,,6,16,,True,0,False,False,False,True,0,-,None,Universal,SmallTown,-,-,-,bespoke.craft_commission
-rare.suicide,Suicide,Special,MentalHealth,1700,,0,15,,False,0,False,False,False,False,5,-,None,Universal,SmallTown,-,-,-,special.suicide
+rare.suicide,Suicide,Special,MentalHealth,1700,,0,15,,False,0,False,False,False,False,50,-,None,Universal,SmallTown,-,-,-,special.suicide

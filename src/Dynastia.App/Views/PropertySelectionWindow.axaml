@@ -129,7 +129,7 @@
                                         BorderBrush="#93662F"
                                         BorderThickness="1"
                                         CornerRadius="4">
-                                        <TextBlock HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="25" Text="{Binding LeadingEmoji}" />
+                                        <TextBlock HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="{Binding LeadingEmojiFontSize}" Text="{Binding LeadingEmoji}" />
                                     </Border>
                                     <StackPanel Grid.Column="1" Spacing="3">
                                         <TextBlock

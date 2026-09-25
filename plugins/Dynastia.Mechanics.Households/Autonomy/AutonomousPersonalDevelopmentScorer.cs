@@ -78,12 +78,12 @@ internal sealed class AutonomousPersonalDevelopmentScorer : IAutonomousActionSco
 
         // Alcohol is a risky coping mechanism, not a routine leisure choice.
         // Autonomous households only consider it under substantial stress.
-        if (stress < 4)
+        if (stress < StressScale.FromLegacy(4))
             return null;
 
         return WithScore(option, AutonomyCategory.Optional,
             AutonomousPriorityBands.OptionalDevelopment,
-            8 + stress * 2);
+            8 + StressScale.ToLegacy(stress) * 2);
     }
 
     private AutonomousActionCandidate? ScoreSelfImprovement(

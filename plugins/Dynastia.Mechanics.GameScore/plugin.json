@@ -1,0 +1,16 @@
+{
+  "id": "dynastia.game_score",
+  "name": "Dynasty Game Score",
+  "version": "0.1.0",
+  "apiVersion": 1,
+  "assembly": "Dynastia.Mechanics.GameScore.dll",
+  "entryType": "Dynastia.Mechanics.GameScore.GameScorePlugin",
+  "dependencies": [
+    "dynastia.family",
+    "dynastia.households",
+    "dynastia.career",
+    "dynastia.crafts",
+    "dynastia.justice",
+    "dynastia.community"
+  ]
+}

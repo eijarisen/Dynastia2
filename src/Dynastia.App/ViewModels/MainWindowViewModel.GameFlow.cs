@@ -338,7 +338,8 @@ public sealed partial class MainWindowViewModel
                     group.Events.Select(
                         gameEvent =>
                             new AlbumEventViewModel(
-                                gameEvent))));
+                                gameEvent,
+                                _gameScoreService?.GetEventDelta(gameEvent) ?? 0))));
         }
 
         OnPropertyChanged(
@@ -346,6 +347,7 @@ public sealed partial class MainWindowViewModel
 
         OnPropertyChanged(
             nameof(YearSummaryEmptyText));
+        OnPropertyChanged(nameof(YearSummaryScoreText));
 
         IsYearSummaryVisible =
             true;

@@ -123,15 +123,15 @@ public sealed class ContentReworkBatch4RareEventsTests
     [Fact]
     public void SuicideRequiresStressAndRecognizesDrugDependenceWithinCap()
     {
-        var below = RareEventRules.GetSuicideChance(4.99, true, true, true, true, true, true, true, true, "Melancholic");
+        var below = RareEventRules.GetSuicideChance(49.9, true, true, true, true, true, true, true, true, "Melancholic");
         Assert.Equal(0.0, below, 10);
 
-        var withoutDrug = RareEventRules.GetSuicideChance(5, false, false, false, false, false, false, false, false, "Melancholic");
-        var withDrug = RareEventRules.GetSuicideChance(5, false, false, false, true, false, false, false, false, "Melancholic");
+        var withoutDrug = RareEventRules.GetSuicideChance(50, false, false, false, false, false, false, false, false, "Melancholic");
+        var withDrug = RareEventRules.GetSuicideChance(50, false, false, false, true, false, false, false, false, "Melancholic");
         Assert.True(withDrug > withoutDrug);
         Assert.InRange(withDrug, 0.0, RareEventRules.MaximumSuicideChance);
 
-        var extreme = RareEventRules.GetSuicideChance(100, true, true, true, true, true, true, true, true, "Melancholic");
+        var extreme = RareEventRules.GetSuicideChance(1000, true, true, true, true, true, true, true, true, "Melancholic");
         Assert.Equal(RareEventRules.MaximumSuicideChance, extreme, 10);
     }
 

@@ -174,7 +174,12 @@ public sealed partial class MainWindowViewModel
                 var town = _locationService?.FindTownAtYear(connection.TownId, _gameState.Year);
                 var townName = town?.Town ?? town?.Id ?? connection.TownId;
                 var profile = $"Age {connection.Age} · {nationality} · {connection.OccupationLabel} · {townName}";
-                var status = $"Renown {connection.Renown:0.#} · Reputation {connection.Reputation:0.#}";
+                var renownLabel = _statusService?.GetRenownLabel(connection.Renown) ?? string.Empty;
+                var reputationLabel = _statusService?.GetReputationLabel(connection.Reputation) ?? string.Empty;
+                var status = !string.IsNullOrWhiteSpace(renownLabel)
+                    && !string.IsNullOrWhiteSpace(reputationLabel)
+                        ? $"{renownLabel} as {reputationLabel}"
+                        : "Status unknown";
                 var familyParts = new List<string>();
                 if (!string.IsNullOrWhiteSpace(connection.SpouseName))
                     familyParts.Add($"Spouse: {connection.SpouseName}");
@@ -234,7 +239,9 @@ public sealed partial class MainWindowViewModel
                     house.Town.County,
                     "Spare house",
                     $"Value {_economyService.GetHouseValue(house):N0} zł",
-                    $"{house.Town.Town} {house.Town.County} {house.Town.RegionId}"))
+                    $"{house.Town.Town} {house.Town.County} {house.Town.RegionId}",
+                    LeadingEmoji: "🏠",
+                    LeadingEmojiFontSize: 32))
                 .ToArray();
         }
 
@@ -345,7 +352,9 @@ public sealed partial class MainWindowViewModel
                 house.Town.County,
                 $"{house.Town.SettlementClassDisplayName} — rented investment",
                 $"Value {_economyService.GetHouseValue(house):N0} zł",
-                $"{house.Town.Town} {house.Town.County} {house.Town.RegionId}"))
+                $"{house.Town.Town} {house.Town.County} {house.Town.RegionId}",
+                LeadingEmoji: "🏠",
+                LeadingEmojiFontSize: 32))
             .ToList();
     }
 

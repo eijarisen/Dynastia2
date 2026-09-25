@@ -153,6 +153,84 @@ public sealed partial class MainWindowViewModel
             .ToArray();
     }
 
+    internal IReadOnlyList<TownAffairsFarmlandOfferViewModel>
+        GetTownAffairsFarmlandOffers(TownInfo town)
+    {
+        var actor = _succession.ActiveController;
+        if (actor is null || _farmingService is null || _economyService is null)
+            return [];
+
+        var residenceTown = _economyService.GetResidenceTown(actor);
+        if (!residenceTown.Id.Equals(town.Id, StringComparison.OrdinalIgnoreCase))
+            return [];
+
+        var askingPrice = _farmingService.GetPurchasePrice(town, _gameState.Year);
+        var parameters = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+        {
+            ["townId"] = town.Id,
+            ["farmlandOfferYear"] = _gameState.Year.ToString(
+                System.Globalization.CultureInfo.InvariantCulture),
+            ["farmlandAskingPrice"] = askingPrice.ToString(
+                System.Globalization.CultureInfo.InvariantCulture),
+            ["summaryTown"] = town.Town,
+            ["summaryPrice"] = askingPrice.ToString(
+                System.Globalization.CultureInfo.InvariantCulture)
+        };
+        var evaluation = _actionRegistry.Evaluate(
+            "farming.buy_farmland",
+            actor,
+            actor,
+            parameters);
+
+        return
+        [
+            new TownAffairsFarmlandOfferViewModel(
+                askingPrice,
+                evaluation.Available,
+                evaluation.Reason)
+        ];
+    }
+
+    internal void QueueTownAffairsFarmlandPurchase(
+        TownAffairsFarmlandOfferViewModel offer)
+    {
+        var actor = _succession.ActiveController;
+        if (actor is null || _succession.IsGameOver || _economyService is null)
+            return;
+
+        var town = _economyService.GetResidenceTown(actor);
+        var parameters = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+        {
+            ["townId"] = town.Id,
+            ["farmlandOfferYear"] = _gameState.Year.ToString(
+                System.Globalization.CultureInfo.InvariantCulture),
+            ["farmlandAskingPrice"] = offer.AskingPrice.ToString(
+                System.Globalization.CultureInfo.InvariantCulture),
+            ["summaryTown"] = town.Town,
+            ["summaryPrice"] = offer.AskingPrice.ToString(
+                System.Globalization.CultureInfo.InvariantCulture)
+        };
+
+        var result = _actionRegistry.Execute(
+            "farming.buy_farmland",
+            actor,
+            actor,
+            parameters);
+
+        if (!result.Success && !string.IsNullOrWhiteSpace(result.Message))
+            PersistenceStatusText = result.Message;
+
+        RefreshPeople();
+        RefreshAlbum();
+        RefreshHealth();
+        RefreshEconomy();
+        RefreshEducation();
+        RefreshCareer();
+        RefreshJustice();
+        RefreshNarrative();
+        RefreshActions();
+    }
+
     internal void QueueTownAffairsHousePurchase(HousePurchaseOfferInfo offer)
     {
         var actor = _succession.ActiveController;
@@ -195,6 +273,26 @@ public sealed partial class MainWindowViewModel
         RefreshJustice();
         RefreshNarrative();
         RefreshActions();
+    }
+
+    internal string GetTownAffairsRenownLabel(double value)
+    {
+        var label = _statusService?.GetRenownLabel(value);
+        return string.IsNullOrWhiteSpace(label) ? "Unknown" : label;
+    }
+
+    internal string GetTownAffairsReputationLabel(double value)
+    {
+        var label = _statusService?.GetReputationLabel(value);
+        return string.IsNullOrWhiteSpace(label) ? "Unknown" : label;
+    }
+
+    internal decimal GetTownAffairsCurrentFunds()
+    {
+        var actor = _succession.ActiveController;
+        return actor is null
+            ? 0m
+            : _economyService?.GetHousehold(actor)?.Wealth ?? 0m;
     }
 
     internal string GetTownAffairsSubjectName(IPerson person) =>

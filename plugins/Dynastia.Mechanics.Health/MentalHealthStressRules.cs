@@ -12,7 +12,7 @@ public static class MentalHealthStressRules
         if (stress <= 0)
             return 0;
 
-        var chance = 0.0015 + stress * 0.011;
+        var chance = 0.0015 + stress * 0.0011;
         chance *= GetTemperamentMultiplier(person);
 
         if (existingStressConditions > 0)
@@ -63,7 +63,7 @@ public static class MentalHealthStressRules
         // Work Harder use. This is an outcome-weight modifier rather than an
         // extra incidence roll, so it remains inside the shared Stress system.
         return Math.Clamp(
-            1.0 + lowSatisfaction * 0.20 + overwork * 0.90,
+            1.0 + lowSatisfaction * 0.020 + overwork * 0.090,
             1.0,
             4.5);
     }
@@ -72,13 +72,13 @@ public static class MentalHealthStressRules
     // outcome choice now comes from health_stress_outcomes.csv + context weights.
     public static double GetAlcoholismWeight(IPerson person, int stress)
     {
-        if (person.Age < 18 || stress < 4)
+        if (person.Age < 18 || stress < 40)
             return 0;
 
         var weight = stress switch
         {
-            >= 8 => 0.60,
-            >= 6 => 0.40,
+            >= 80 => 0.60,
+            >= 60 => 0.40,
             _ => 0.25
         };
 

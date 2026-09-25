@@ -48,6 +48,7 @@ Status: **Implemented**
 Owner: `dynastia.health` plus stress providers from other mechanics
 
 Rules:
+- Stress is displayed and consumed on a **0–100** scale. Registered source contributions retain their existing relative balance and are converted onto that scale by the Health stress service.
 - Stress is accumulated from registered sources instead of one monolithic formula.
 - Career strain, relationships, justice/prison, households and other systems can contribute.
 - Household deprivation is based on whether ordinary basic needs were fully funded during the current Finance phase, not on whether the household merely ends the year with zero cash. A household that exactly pays its needs and retains no reserve is not treated as poor for Health/Stress/Childhood penalties.
@@ -89,7 +90,7 @@ Action ID: `wellbeing.drink`.
 
 Rules:
 - Adult self-action available when current Stress is above zero.
-- Immediately costs 10 Health and reduces current-year Stress pressure by 2.
+- Immediately costs 10 Health and reduces current-year Stress pressure by 20 on the 0–100 scale.
 - Drinking can create Alcoholism; personality changes the chance (approximately 25% for Sanguine/Phlegmatic and 33% for Choleric/Melancholic in the current action description/rules).
 
 ## Treatment and Therapy

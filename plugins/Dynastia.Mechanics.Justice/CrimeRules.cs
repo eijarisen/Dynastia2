@@ -1,3 +1,5 @@
+using Dynastia.Contracts;
+
 namespace Dynastia.Mechanics.Justice;
 
 public static class CrimeRules
@@ -11,7 +13,7 @@ public static class CrimeRules
         ArgumentNullException.ThrowIfNull(rules);
         var stressMultiplier = Math.Min(
             rules.MaximumStressMultiplier,
-            1.0 + Math.Max(0, stress) * rules.StressMultiplierPerPoint);
+            1.0 + StressScale.ToLegacy(Math.Max(0, stress)) * rules.StressMultiplierPerPoint);
         var chance = rules.BaseAttemptChance
             * Math.Max(0, contextMultiplier)
             * (broke ? rules.PovertyMultiplier : 1.0)
@@ -63,5 +65,5 @@ public static class CrimeRules
     public static double CalculateStressSelectionMultiplier(
         CrimeDefinition crime,
         double stress) =>
-        Math.Max(0.1, 1.0 + Math.Max(0, stress) * crime.StressWeightPerPoint);
+        Math.Max(0.1, 1.0 + StressScale.ToLegacy(Math.Max(0, stress)) * crime.StressWeightPerPoint);
 }

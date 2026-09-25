@@ -136,7 +136,7 @@ public sealed class TownAffairsHousingFarmingTa2Tests
         var action = RepositoryFiles.ReadText("plugins", "Dynastia.Mechanics.Households", "HouseholdsPlugin.PropertyActions.cs");
 
         Assert.Contains("RemoteHousingBrowse", hub);
-        Assert.Contains("No houses are currently offered for sale in this town.", hub);
+        Assert.Contains("No houses or farmland are currently offered for sale in this town.", hub);
         Assert.Contains("QueueHousePurchase", hub);
         Assert.DoesNotContain("BaseHouseMarketValue", hub);
         Assert.Contains("HouseOffers", hub);

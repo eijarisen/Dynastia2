@@ -259,6 +259,23 @@ internal sealed class AutonomousActionCandidateBuilder
             parameters["summaryPrice"] = offer.AskingPrice.ToString(CultureInfo.InvariantCulture);
             parameters["summaryCapacity"] = offer.BaseResidentCapacity.ToString(CultureInfo.InvariantCulture);
         }
+        else if (actionId.Equals("farming.buy_farmland", StringComparison.OrdinalIgnoreCase))
+        {
+            var farming = _context.GetService<IFarmingService>();
+            if (farming is null)
+                return null;
+
+            var town = _economy.GetResidenceTown(snapshot.Head);
+            var askingPrice = farming.GetPurchasePrice(town, _gameState.Year);
+            if (!_economy.CanAfford(snapshot.Head, askingPrice))
+                return null;
+
+            parameters["townId"] = town.Id;
+            parameters["farmlandOfferYear"] = _gameState.Year.ToString(CultureInfo.InvariantCulture);
+            parameters["farmlandAskingPrice"] = askingPrice.ToString(CultureInfo.InvariantCulture);
+            parameters["summaryTown"] = town.Town;
+            parameters["summaryPrice"] = askingPrice.ToString(CultureInfo.InvariantCulture);
+        }
         else if (actionId.Equals("household.ask_move_out", StringComparison.OrdinalIgnoreCase))
         {
             var residence = _economy.GetResidenceTown(snapshot.Head);

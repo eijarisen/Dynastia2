@@ -1,3 +1,4 @@
+using Avalonia.Media;
 using Dynastia.Contracts;
 
 namespace Dynastia.App.ViewModels;
@@ -21,7 +22,8 @@ public sealed class FamilyMemberCardViewModel
         IAppearanceService? appearance,
         bool isSelected,
         bool isActiveHouseholdHead,
-        Action<Guid> selectPerson)
+        Action<Guid> selectPerson,
+        IStatusService? status = null)
     {
         PersonId =
             person.Id;
@@ -136,19 +138,28 @@ public sealed class FamilyMemberCardViewModel
                 ? "Unknown"
                 : $"Level {educationLevel}";
 
-        ShowChildEducation =
+        ShowEducation =
             IsLiving
             && person.Age >= 6
-            && person.Age < 18
             && education is not null;
 
-        ChildEducationLevel =
+        EducationLevel =
             educationLevel;
 
-        ChildEducationTooltipText =
+        EducationTooltipText =
             educationLevel <= 0
                 ? "Education: None"
                 : $"Education: Level {educationLevel}";
+
+        ShowChildEducation =
+            ShowEducation
+            && person.Age < 18;
+
+        ChildEducationLevel =
+            EducationLevel;
+
+        ChildEducationTooltipText =
+            EducationTooltipText;
 
         var satisfactionTooltip =
             "N/A";
@@ -318,7 +329,7 @@ public sealed class FamilyMemberCardViewModel
                 : null;
         StressTooltipText = stressSnapshot is null
             ? string.Empty
-            : $"Stress: {stressSnapshot.Total:0.#}/10";
+            : $"Stress: {stressSnapshot.Total:0.#}/100";
         ShowStress = stressSnapshot is not null;
 
         var childHappinessSnapshot =
@@ -352,6 +363,38 @@ public sealed class FamilyMemberCardViewModel
         ShowAdultSatisfaction =
             IsLiving
             && person.Age >= 18;
+
+        var statusSnapshot =
+            ShowAdultSatisfaction
+                ? status?.GetStatus(person)
+                : null;
+
+        ShowAdultStatus =
+            statusSnapshot is not null;
+
+        RenownStatusLabel =
+            statusSnapshot?.RenownLabel
+            ?? string.Empty;
+
+        ReputationStatusLabel =
+            statusSnapshot?.ReputationLabel
+            ?? string.Empty;
+
+        RenownStatusText =
+            ShowAdultStatus
+                ? $"Renown: {RenownStatusLabel}"
+                : string.Empty;
+
+        ReputationStatusText =
+            ShowAdultStatus
+                ? $"Reputation: {ReputationStatusLabel}"
+                : string.Empty;
+
+        RenownStatusBrush =
+            StatusPresentation.BrushForLabel(RenownStatusLabel);
+
+        ReputationStatusBrush =
+            StatusPresentation.BrushForLabel(ReputationStatusLabel);
 
         var deceasedInfoLines = new List<string>();
         if (person.Age >= 6)
@@ -423,6 +466,13 @@ public sealed class FamilyMemberCardViewModel
 
     public bool ShowStress { get; }
 
+    public int EducationLevel { get; }
+
+    public string EducationTooltipText { get; } =
+        string.Empty;
+
+    public bool ShowEducation { get; }
+
     public int ChildEducationLevel { get; }
 
     public string ChildEducationTooltipText { get; } =
@@ -447,6 +497,26 @@ public sealed class FamilyMemberCardViewModel
         string.Empty;
 
     public bool ShowAdultSatisfaction { get; }
+
+    public bool ShowAdultStatus { get; }
+
+    public string RenownStatusLabel { get; } =
+        string.Empty;
+
+    public string ReputationStatusLabel { get; } =
+        string.Empty;
+
+    public string RenownStatusText { get; } =
+        string.Empty;
+
+    public string ReputationStatusText { get; } =
+        string.Empty;
+
+    public IBrush RenownStatusBrush { get; } =
+        StatusPresentation.BrushForLabel(null);
+
+    public IBrush ReputationStatusBrush { get; } =
+        StatusPresentation.BrushForLabel(null);
 
     public bool IsDeceased =>
         !IsLiving;

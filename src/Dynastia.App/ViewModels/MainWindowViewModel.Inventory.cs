@@ -103,7 +103,7 @@ public sealed partial class MainWindowViewModel
             CanUseFamilyInventoryAction("household.buy_house"),
             CanUseFamilyInventoryAction("household.extend_house"),
             CanUseFamilyInventoryAction("household.sell_house"),
-            CanUseFamilyInventoryAction("farming.buy_farmland"),
+            _farmingService is not null,
             CanUseFamilyInventoryAction("farming.sell_farmland"),
             CanUseFamilyInventoryAction("farming.add_livestock"),
             CanUseFamilyInventoryAction("heirloom.sell"),

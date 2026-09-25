@@ -143,17 +143,17 @@ public sealed class HealthContentReworkBatch1Tests
         Assert.Equal(6, outcomes.Definitions.Count);
         var drugs = outcomes.Definitions.Single(outcome => outcome.ConditionId == "drug_dependence");
         Assert.Equal(18, drugs.MinimumAge);
-        Assert.Equal(5, drugs.MinimumStress);
+        Assert.Equal(50, drugs.MinimumStress);
         Assert.Equal(1800, drugs.StartYear);
 
         var burnout = outcomes.Definitions.Single(outcome => outcome.ConditionId == "burnout");
         Assert.Equal(18, burnout.MinimumAge);
-        Assert.Equal(2.5, burnout.MinimumStress, 6);
+        Assert.Equal(25, burnout.MinimumStress, 6);
         Assert.Equal(1700, burnout.StartYear);
 
         var gambling = outcomes.Definitions.Single(outcome => outcome.ConditionId == "gambling_disorder");
         Assert.Equal(18, gambling.MinimumAge);
-        Assert.Equal(3, gambling.MinimumStress, 6);
+        Assert.Equal(30, gambling.MinimumStress, 6);
         Assert.Equal(0.30, gambling.BaseWeight, 6);
         Assert.Equal(1700, gambling.StartYear);
 
@@ -169,10 +169,10 @@ public sealed class HealthContentReworkBatch1Tests
         var sanguine = PersonWithTag("personality.sanguine");
         var phlegmatic = PersonWithTag("personality.phlegmatic");
 
-        var mel = MentalHealthStressRules.GetReactionChance(6, melancholic, 0);
-        var chol = MentalHealthStressRules.GetReactionChance(6, choleric, 0);
-        var sang = MentalHealthStressRules.GetReactionChance(6, sanguine, 0);
-        var phleg = MentalHealthStressRules.GetReactionChance(6, phlegmatic, 0);
+        var mel = MentalHealthStressRules.GetReactionChance(60, melancholic, 0);
+        var chol = MentalHealthStressRules.GetReactionChance(60, choleric, 0);
+        var sang = MentalHealthStressRules.GetReactionChance(60, sanguine, 0);
+        var phleg = MentalHealthStressRules.GetReactionChance(60, phlegmatic, 0);
 
         Assert.True(mel > sang);
         Assert.True(chol > sang);
@@ -244,14 +244,14 @@ public sealed class HealthContentReworkBatch1Tests
     [Fact]
     public void CareerStressStronglyWeightsBurnoutOutcome()
     {
-        var ordinary = new StressSnapshot(5,
+        var ordinary = new StressSnapshot(50,
         [
-            new StressContribution("economy.wealth_zero", 5)
+            new StressContribution("economy.wealth_zero", 50)
         ]);
-        var overworked = new StressSnapshot(5,
+        var overworked = new StressSnapshot(50,
         [
-            new StressContribution("career.low_satisfaction", 2.5),
-            new StressContribution("career.overwork", 2.5)
+            new StressContribution("career.low_satisfaction", 25),
+            new StressContribution("career.overwork", 25)
         ]);
 
         Assert.Equal(1.0,

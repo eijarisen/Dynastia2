@@ -6,6 +6,7 @@ using Avalonia.Input;
 using Avalonia.Media;
 using Avalonia.Media.Imaging;
 using Avalonia.Platform;
+using Dynastia.App.ViewModels;
 using Dynastia.StandardUI.Genealogy.Layout;
 
 public sealed partial class GenealogyCanvas
@@ -142,6 +143,24 @@ public sealed partial class GenealogyCanvas
     private static IBrush ResolveTooltipLineBrush(
         string line)
     {
+        var separator =
+            line.IndexOf(':');
+
+        var label =
+            separator >= 0
+                ? line[(separator + 1)..].Trim()
+                : string.Empty;
+
+        if (line.StartsWith(
+                "Renown:",
+                StringComparison.OrdinalIgnoreCase)
+            || line.StartsWith(
+                "Reputation:",
+                StringComparison.OrdinalIgnoreCase))
+        {
+            return StatusPresentation.BrushForLabel(label);
+        }
+
         if (!line.StartsWith(
                 "Career:",
                 StringComparison.OrdinalIgnoreCase)
@@ -151,14 +170,6 @@ public sealed partial class GenealogyCanvas
         {
             return TooltipText;
         }
-
-        var separator =
-            line.IndexOf(':');
-
-        var label =
-            separator >= 0
-                ? line[(separator + 1)..].Trim()
-                : string.Empty;
 
         return label.ToLowerInvariant() switch
         {

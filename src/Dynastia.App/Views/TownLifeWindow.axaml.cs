@@ -61,6 +61,19 @@ public partial class TownLifeWindow : Window
         CloseIfQueued(model);
     }
 
+    private void OnBuyFarmlandOfferClick(object? sender, RoutedEventArgs e)
+    {
+        if (DataContext is not TownAffairsViewModel model
+            || sender is not Button { DataContext: TownAffairsFarmlandOfferViewModel offer }
+            || !offer.CanBuy)
+        {
+            return;
+        }
+
+        model.QueueFarmlandPurchase(offer);
+        CloseIfQueued(model);
+    }
+
     private void OnApplyJobClick(object? sender, RoutedEventArgs e)
     {
         if (DataContext is not TownAffairsViewModel model

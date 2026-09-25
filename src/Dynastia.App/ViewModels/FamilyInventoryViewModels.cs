@@ -189,8 +189,12 @@ public sealed class FamilyInventoryWindowViewModel :
 
             _houseEmptyText = value;
             OnPropertyChanged();
+            OnPropertyChanged(nameof(ShowHouseEmpty));
         }
     }
+
+    public bool ShowHouseEmpty =>
+        !string.IsNullOrWhiteSpace(HouseEmptyText);
 
     public string FarmlandTitle
     {
@@ -225,8 +229,12 @@ public sealed class FamilyInventoryWindowViewModel :
                 return;
             _farmlandEmptyText = value;
             OnPropertyChanged();
+            OnPropertyChanged(nameof(ShowFarmlandEmpty));
         }
     }
+
+    public bool ShowFarmlandEmpty =>
+        !string.IsNullOrWhiteSpace(FarmlandEmptyText);
 
     public string HeirloomEmptyText
     {
@@ -237,8 +245,12 @@ public sealed class FamilyInventoryWindowViewModel :
                 return;
             _heirloomEmptyText = value;
             OnPropertyChanged();
+            OnPropertyChanged(nameof(ShowHeirloomEmpty));
         }
     }
+
+    public bool ShowHeirloomEmpty =>
+        !string.IsNullOrWhiteSpace(HeirloomEmptyText);
 
     public string BuyFarmlandActionText
     {

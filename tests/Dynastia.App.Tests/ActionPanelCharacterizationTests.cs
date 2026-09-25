@@ -160,7 +160,7 @@ public sealed class ActionPanelCharacterizationTests
     }
 
     [Theory]
-    [InlineData("farming.buy_farmland", "Queued: 🌾 Buy Farmland – 20,000 zł")]
+    [InlineData("farming.buy_farmland", "Queued: 🌾 Buy Farmland – 12,345 zł")]
     [InlineData("farming.sell_farmland", "Queued: 🌾 Sell Farmland – Farm — 12,345 zł")]
     [InlineData("farming.add_livestock", "Queued: 🌾 Add Livestock – Farm — 12,345 zł")]
     public void QueuedFarmlandLabelsAndDetailsAreCleanAndDoNotAppendPersonNames(string id, string expected)

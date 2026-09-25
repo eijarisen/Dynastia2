@@ -60,7 +60,7 @@ public sealed class Development13AdditionsTests
     public void GamblingIsStressOnlyAndTutorAndWeatherAreWiredIntoExistingSurfaces()
     {
         var stress = CreateRepositoryData().ReadText("Health/health_stress_outcomes.csv");
-        Assert.Contains("gambling_disorder,1700,,18,3,0.30", stress);
+        Assert.Contains("gambling_disorder,1700,,18,30,0.30", stress);
 
         var rare = CreateRepositoryData().ReadText("RareEvents/rare_events.csv");
         Assert.DoesNotContain("rare.exceptional_harvest,", rare);

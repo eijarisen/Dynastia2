@@ -5,7 +5,7 @@ namespace Dynastia.Mechanics.Health;
 
 public sealed class StandardStressService : IStressService
 {
-    public const double MaximumStress = 10;
+    public const double MaximumStress = StressScale.Maximum;
 
     private static readonly double[] EventStressDecay =
         [1.0, 0.65, 0.35, 0.15];
@@ -147,14 +147,20 @@ public sealed class StandardStressService : IStressService
             ? -lifestyleStress
             : 0.0;
 
+        var legacyTotal = Math.Clamp(
+            normalized.Sum(contribution => contribution.Value)
+            - drinkRelief
+            - lifestyleRelief,
+            0,
+            StressScale.LegacyMaximum);
+
         return new StressSnapshot(
-            Math.Clamp(
-                normalized.Sum(contribution => contribution.Value)
-                - drinkRelief
-                - lifestyleRelief,
-                0,
-                MaximumStress),
-            normalized);
+            StressScale.FromLegacy(legacyTotal),
+            normalized
+                .Select(contribution => new StressContribution(
+                    contribution.SourceId,
+                    StressScale.FromLegacy(contribution.Value)))
+                .ToList());
     }
 
     private void AddEventStress(

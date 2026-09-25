@@ -7,6 +7,11 @@ public interface IFarmingService
     decimal LivestockPurchasePrice { get; }
     decimal LivestockSalePrice { get; }
 
+    decimal GetPurchasePrice(
+        TownInfo town,
+        int year) =>
+        PurchasePrice;
+
     FarmingHouseholdSnapshot GetSnapshot(
         IPerson householdRepresentative);
 

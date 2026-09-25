@@ -244,7 +244,10 @@
                 <TabItem Header="Housing">
                     <ScrollViewer VerticalScrollBarVisibility="Auto">
                         <StackPanel Margin="6" Spacing="8">
-                            <TextBlock Classes="sectionHeader" Text="For Sale" />
+                            <StackPanel Orientation="Horizontal" Spacing="12">
+                                <TextBlock Classes="sectionHeader" Text="For Sale" />
+                                <TextBlock VerticalAlignment="Center" FontSize="12.5" FontWeight="Bold" Foreground="#654621" Text="{Binding HousingFundsText}" />
+                            </StackPanel>
                             <TextBlock IsVisible="{Binding ShowNoHouseOffers}" Margin="0,18,0,0" HorizontalAlignment="Center" TextAlignment="Center" FontStyle="Italic" TextWrapping="Wrap" Text="{Binding NoHouseOffersText}" />
                             <ItemsControl ItemsSource="{Binding HouseOffers}">
                                 <ItemsControl.ItemTemplate>
@@ -255,6 +258,20 @@
                                                 <TextBlock Grid.Column="1" VerticalAlignment="Center" FontSize="14" FontWeight="Bold" Text="{Binding CapacityText}" />
                                                 <TextBlock Grid.Column="2" VerticalAlignment="Center" FontSize="16" FontWeight="Bold" Foreground="#5A3A18" Text="{Binding AskingPriceText}" />
                                                 <Button Grid.Column="3" Classes="paperAction" VerticalAlignment="Center" Content="Buy" IsEnabled="{Binding IsAffordable}" Click="OnBuyHouseOfferClick" />
+                                            </Grid>
+                                        </Border>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                            <ItemsControl ItemsSource="{Binding FarmlandOffers}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate x:DataType="vm:TownAffairsFarmlandOfferViewModel">
+                                        <Border Margin="2" Padding="10,7" Background="#25FFF4D9" BorderBrush="#A17A43" BorderThickness="1" CornerRadius="4">
+                                            <Grid ColumnDefinitions="44,*,Auto,Auto" ColumnSpacing="10">
+                                                <TextBlock HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="25" Text="🌾" />
+                                                <TextBlock Grid.Column="1" VerticalAlignment="Center" FontSize="14" FontWeight="Bold" Text="{Binding DescriptionText}" />
+                                                <TextBlock Grid.Column="2" VerticalAlignment="Center" FontSize="16" FontWeight="Bold" Foreground="#5A3A18" Text="{Binding AskingPriceText}" />
+                                                <Button Grid.Column="3" Classes="paperAction" VerticalAlignment="Center" Content="Buy" IsEnabled="{Binding CanBuy}" Click="OnBuyFarmlandOfferClick" />
                                             </Grid>
                                         </Border>
                                     </DataTemplate>
@@ -320,6 +337,14 @@
                                     </DataTemplate>
                                 </ItemsControl.ItemTemplate>
                             </ItemsControl>
+
+                            <Grid ColumnDefinitions="Auto,*" ColumnSpacing="10">
+                                <TextBlock VerticalAlignment="Center" FontSize="30" Text="{Binding Snapshot.Medical.Emoji}" />
+                                <StackPanel Grid.Column="1" Spacing="1">
+                                    <TextBlock Classes="sectionHeader" Text="{Binding Snapshot.Medical.DisplayName}" />
+                                    <TextBlock FontSize="12" TextWrapping="Wrap" Text="{Binding Snapshot.Medical.Summary}" />
+                                </StackPanel>
+                            </Grid>
 
                             <Border Padding="10,7" Background="#20FFF4D9" BorderBrush="#A17A43" BorderThickness="1" CornerRadius="4">
                                 <StackPanel Spacing="2">
@@ -398,6 +423,13 @@
                 <TabItem Header="Church" IsVisible="{Binding ShowChurchTab}">
                     <ScrollViewer VerticalScrollBarVisibility="Auto">
                         <StackPanel Margin="6" Spacing="8">
+                            <Grid ColumnDefinitions="Auto,*" ColumnSpacing="10">
+                                <TextBlock VerticalAlignment="Center" FontSize="30" Text="{Binding Snapshot.Church.Emoji}" />
+                                <StackPanel Grid.Column="1" Spacing="1">
+                                    <TextBlock Classes="sectionHeader" Text="{Binding Snapshot.Church.DisplayName}" />
+                                    <TextBlock FontSize="12" TextWrapping="Wrap" Text="{Binding Snapshot.Church.Summary}" />
+                                </StackPanel>
+                            </Grid>
                             <TextBlock IsVisible="{Binding ShowChurchEmpty}" Margin="0,18,0,0" HorizontalAlignment="Center" TextAlignment="Center" FontStyle="Italic" Text="No Church action is currently available." />
                             <ItemsControl ItemsSource="{Binding ChurchActions}">
                                 <ItemsControl.ItemTemplate>
@@ -407,9 +439,10 @@
                                                 <TextBlock HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="28" Text="{Binding Emoji}" />
                                                 <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="2">
                                                     <TextBlock FontSize="14" FontWeight="Bold" TextWrapping="Wrap" Text="{Binding Label}" />
+                                                    <TextBlock FontSize="11.5" TextWrapping="Wrap" Text="{Binding Description}" />
                                                     <TextBlock IsVisible="{Binding HasAmount}" FontSize="11.5" FontWeight="Bold" Text="{Binding AmountText}" />
                                                 </StackPanel>
-                                                <Button Grid.Column="2" Classes="paperAction" VerticalAlignment="Center" IsEnabled="{Binding IsAvailable}" Content="Queue" Click="OnChurchActionClick" ToolTip.Tip="{Binding Description}" />
+                                                <Button Grid.Column="2" Classes="paperAction" VerticalAlignment="Center" IsEnabled="{Binding IsAvailable}" Content="Queue" Click="OnChurchActionClick" />
                                             </Grid>
                                         </Border>
                                     </DataTemplate>
@@ -434,6 +467,13 @@
                                     </DataTemplate>
                                 </ItemsControl.ItemTemplate>
                             </ItemsControl>
+                            <Grid ColumnDefinitions="Auto,*" ColumnSpacing="10">
+                                <TextBlock VerticalAlignment="Center" FontSize="30" Text="{Binding Snapshot.School.Emoji}" />
+                                <StackPanel Grid.Column="1" Spacing="1">
+                                    <TextBlock Classes="sectionHeader" Text="{Binding Snapshot.School.DisplayName}" />
+                                    <TextBlock FontSize="12" TextWrapping="Wrap" Text="{Binding Snapshot.School.Summary}" />
+                                </StackPanel>
+                            </Grid>
                             <TextBlock FontStyle="Italic" TextWrapping="Wrap" Text="{Binding EducationContextText}" />
                             <TextBlock IsVisible="{Binding ShowEducationEmpty}" TextWrapping="Wrap" Text="{Binding EducationEmptyText}" />
                             <ItemsControl ItemsSource="{Binding EducationOptions}">
@@ -464,7 +504,14 @@
                 <TabItem Header="Bank" IsVisible="{Binding ShowBankTab}">
                     <ScrollViewer VerticalScrollBarVisibility="Auto">
                         <StackPanel Margin="6" Spacing="10">
-                            <TextBlock FontSize="12.5" TextWrapping="Wrap" Text="{Binding BankStatusText}" />
+                            <Grid ColumnDefinitions="Auto,*" ColumnSpacing="10">
+                                <TextBlock VerticalAlignment="Center" FontSize="30" Text="{Binding Snapshot.Bank.Emoji}" />
+                                <StackPanel Grid.Column="1" Spacing="1">
+                                    <TextBlock Classes="sectionHeader" Text="{Binding Snapshot.Bank.DisplayName}" />
+                                    <TextBlock FontSize="12" TextWrapping="Wrap" Text="{Binding Snapshot.Bank.Summary}" />
+                                </StackPanel>
+                            </Grid>
+                            <TextBlock FontSize="12.5" FontWeight="Bold" Foreground="{Binding BankStatusBrush}" TextWrapping="Wrap" Text="{Binding BankStatusText}" />
 
                             <Border Padding="12,9" Background="#25FFF4D9" BorderBrush="#A17A43" BorderThickness="1" CornerRadius="4">
                                 <Grid ColumnDefinitions="54,*,Auto" ColumnSpacing="12">

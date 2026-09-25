@@ -3,12 +3,29 @@ namespace Dynastia.Mechanics.Farming;
 public static class FarmingRules
 {
     public const decimal PurchasePrice = 10000m;
+    public const decimal MinimumPurchasePrice = 9000m;
+    public const decimal MaximumPurchasePrice = 11000m;
+    public const decimal PurchasePriceStep = 100m;
     public const decimal SalePrice = 8000m;
     public const decimal LivestockPurchasePrice = 2500m;
     public const decimal LivestockSalePrice = 2000m;
     public const decimal WorkerBaseIncomeScale = 2m;
     public const decimal MaximumLivestockIncomeBoost = 0.10m;
     public const decimal MaximumLivestockVolatilityCompression = 0.20m;
+
+    public static decimal GetMarketPurchasePrice(double unitRoll)
+    {
+        var normalized = Math.Clamp(unitRoll, 0d, 1d);
+        var stepCount =
+            (int)((MaximumPurchasePrice - MinimumPurchasePrice)
+                / PurchasePriceStep)
+            + 1;
+        var index = normalized >= 1d
+            ? stepCount - 1
+            : Math.Min(stepCount - 1, (int)Math.Floor(normalized * stepCount));
+
+        return MinimumPurchasePrice + index * PurchasePriceStep;
+    }
 
     public static int GetActiveWorkerCount(
         int localParcelCount,

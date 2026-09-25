@@ -205,11 +205,13 @@ internal sealed class AutonomousFinancePropertyScorer : IAutonomousActionScorer
         if (farm.AvailableWorkers <= farm.LocalWorkerCapacity)
             return null;
 
+        var town = _economy.GetResidenceTown(snapshot.Head);
+        var purchasePrice = farming.GetPurchasePrice(town, _gameState.Year);
         var reserve = Math.Max(
             snapshot.ExpectedExpenses * 2m,
-            farming.PurchasePrice * 0.5m);
+            purchasePrice * 0.5m);
 
-        if (snapshot.Finance.Wealth - farming.PurchasePrice < reserve)
+        if (snapshot.Finance.Wealth - purchasePrice < reserve)
             return null;
 
         var projectedIncome =
@@ -227,7 +229,7 @@ internal sealed class AutonomousFinancePropertyScorer : IAutonomousActionScorer
         // rarer in later eras as its income multiplier declines, while still
         // allowing productive agrarian households to expand.
         var paybackYears =
-            farming.PurchasePrice / marginalIncome;
+            purchasePrice / marginalIncome;
 
         if (paybackYears > 10m)
             return null;

@@ -61,18 +61,18 @@ public sealed class MechanicsAuditTests
             0.0,
             MentalHealthStressRules.GetAlcoholismWeight(
                 adult,
-                stress: 3));
+                stress: 30));
 
         Assert.True(
             MentalHealthStressRules.GetAlcoholismWeight(
                 adult,
-                stress: 6) > 0);
+                stress: 60) > 0);
 
         Assert.Equal(
             0.0,
             MentalHealthStressRules.GetAlcoholismWeight(
                 child,
-                stress: 8));
+                stress: 80));
     }
 
     [Fact]
@@ -82,17 +82,17 @@ public sealed class MechanicsAuditTests
         person.Tags.Add("personality.melancholic");
 
         var first = MentalHealthStressRules.GetReactionChance(
-            stress: 6,
+            stress: 60,
             person,
             existingStressConditions: 0);
 
         var second = MentalHealthStressRules.GetReactionChance(
-            stress: 6,
+            stress: 60,
             person,
             existingStressConditions: 1);
 
         var third = MentalHealthStressRules.GetReactionChance(
-            stress: 6,
+            stress: 60,
             person,
             existingStressConditions: 2);
 

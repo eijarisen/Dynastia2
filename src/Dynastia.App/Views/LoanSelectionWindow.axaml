@@ -63,12 +63,13 @@
 
             <ItemsControl
                 x:Name="OffersList"
-                Grid.Row="2">
+                Grid.Row="2"
+                VerticalAlignment="Center">
                 <ItemsControl.ItemTemplate>
                     <DataTemplate x:DataType="vm:LoanOfferCardViewModel">
                         <Border
-                            Margin="5,4"
-                            Padding="14,11"
+                            Margin="5,3"
+                            Padding="14,9"
                             Background="#35FFF4D9"
                             BorderBrush="{Binding FavorabilityBrush}"
                             BorderThickness="2"
@@ -101,12 +102,6 @@
                                         FontWeight="Bold"
                                         Foreground="#352110"
                                         Text="{Binding Heading}" />
-                                    <TextBlock
-                                        FontFamily="Georgia"
-                                        FontSize="15.5"
-                                        FontWeight="Bold"
-                                        Foreground="{Binding FavorabilityBrush}"
-                                        Text="{Binding FavorabilityText}" />
                                     <TextBlock
                                         FontFamily="Georgia"
                                         FontSize="11.2"

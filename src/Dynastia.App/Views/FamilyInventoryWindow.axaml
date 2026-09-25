@@ -393,6 +393,7 @@
 
                             <TextBlock
                                 Classes="inventoryEmpty"
+                                IsVisible="{Binding ShowHouseEmpty}"
                                 Text="{Binding HouseEmptyText}" />
 
                             <ItemsControl ItemsSource="{Binding Houses}">
@@ -478,6 +479,7 @@
 
                             <TextBlock
                                 Classes="inventoryEmpty"
+                                IsVisible="{Binding ShowFarmlandEmpty}"
                                 Text="{Binding FarmlandEmptyText}" />
 
                             <ItemsControl ItemsSource="{Binding Farmland}">
@@ -552,6 +554,7 @@
 
                             <TextBlock
                                 Classes="inventoryEmpty"
+                                IsVisible="{Binding ShowHeirloomEmpty}"
                                 Text="{Binding HeirloomEmptyText}" />
 
                             <ItemsControl ItemsSource="{Binding Heirlooms}">

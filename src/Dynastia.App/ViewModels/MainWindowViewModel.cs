@@ -54,6 +54,7 @@ public sealed partial class MainWindowViewModel : ViewModelBase
     private readonly IActionRegistry _actionRegistry;
     private readonly GameSaveService _saveService;
     private readonly IStateReconciliationLifecycle _reconciliation;
+    private readonly IGameScoreService? _gameScoreService;
 
     private PersonRowViewModel? _selectedPerson;
     private FamilyDetailsViewModel? _selectedFamily;
@@ -176,7 +177,8 @@ public sealed partial class MainWindowViewModel : ViewModelBase
             new ActionSelectionOptionService(
                 succession, actionRegistry, economyService, farmingService, heirloomService,
                 loanService, locationService, townProsperityService, localCareerOpportunityService),
-            new ActionSurfaceDefinitions(locationService, economyService, justiceService))
+            new ActionSurfaceDefinitions(locationService, economyService, justiceService),
+            null)
     {
     }
 
@@ -224,7 +226,8 @@ public sealed partial class MainWindowViewModel : ViewModelBase
         GameSaveService saveService,
         IStateReconciliationLifecycle reconciliation,
         ActionSelectionOptionService actionSelectionOptions,
-        ActionSurfaceDefinitions actionSurfaces)
+        ActionSurfaceDefinitions actionSurfaces,
+        IGameScoreService? gameScoreService)
     {
         _gameState = gameState;
         _newGameService = newGameService;
@@ -278,6 +281,7 @@ public sealed partial class MainWindowViewModel : ViewModelBase
         _actionRegistry = actionRegistry;
         _saveService = saveService;
         _reconciliation = reconciliation;
+        _gameScoreService = gameScoreService;
         _actionSelectionOptions = actionSelectionOptions;
         _actionSurfaces = actionSurfaces;
         _actionPanel = new ActionPanelCoordinator(
@@ -649,6 +653,8 @@ public sealed partial class MainWindowViewModel : ViewModelBase
             OnPropertyChanged();
             OnPropertyChanged(
                 nameof(AlbumDisplayYear));
+            OnPropertyChanged(nameof(ChronicleScoreText));
+            OnPropertyChanged(nameof(ChronicleYearScoreText));
 
             PreviousAlbumYearCommand
                 .RaiseCanExecuteChanged();
@@ -659,6 +665,33 @@ public sealed partial class MainWindowViewModel : ViewModelBase
             RefreshAlbum();
         }
     }
+
+    public bool HasGameScore => _gameScoreService is not null;
+
+    public string ChronicleScoreText =>
+        _gameScoreService is null
+            ? "Family Chronicle"
+            : $"Family Chronicle – Score {_gameScoreService.GetScoreAfterYear(AlbumYear):N0}";
+
+    public string ChronicleYearScoreText =>
+        _gameScoreService is null
+            ? string.Empty
+            : AlbumYear == _gameState.Year
+                ? $"This year: {FormatSignedScore(_gameScoreService.GetYearDelta(AlbumYear))}"
+                : $"{AlbumYear}: {FormatSignedScore(_gameScoreService.GetYearDelta(AlbumYear))}";
+
+    public string YearSummaryScoreText =>
+        _gameScoreService is null
+            ? string.Empty
+            : $"Dynasty Score after {_yearSummaryEventYear}: {_gameScoreService.GetScoreAfterYear(_yearSummaryEventYear):N0}    {_yearSummaryEventYear}: {FormatSignedScore(_gameScoreService.GetYearDelta(_yearSummaryEventYear))}";
+
+    public string FinalGameScoreText =>
+        _gameScoreService is null
+            ? string.Empty
+            : $"Final Dynasty Score: {_gameScoreService.TotalScore:N0}";
+
+    private static string FormatSignedScore(long value) =>
+        value > 0 ? $"+{value:N0}" : value.ToString("N0");
 
     public string AlbumEmptyText =>
         AlbumEvents.Count == 0
@@ -682,7 +715,9 @@ public sealed partial class MainWindowViewModel : ViewModelBase
     }
 
     public string YearSummaryTitle =>
-        $"Year {_yearSummaryEventYear}";
+        _gameScoreService is null
+            ? $"Year {_yearSummaryEventYear}"
+            : $"Year {_yearSummaryEventYear} – Score: {_gameScoreService.GetScoreAfterYear(_yearSummaryEventYear):N0}";
 
     public string YearSummaryEmptyText =>
         YearSummaryHouseholds.Count == 0

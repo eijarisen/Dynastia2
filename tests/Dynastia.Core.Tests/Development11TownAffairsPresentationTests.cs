@@ -314,11 +314,22 @@ public sealed class Development11TownAffairsPresentationTests
         Assert.Contains("IStressService? stress", card);
         Assert.Contains("snapshot.Conditions.Select(condition => condition.Name)", card);
         Assert.Contains("$\"Health: {healthTooltip} • {conditionTooltip}\"", card);
-        Assert.Contains("$\"Stress: {stressSnapshot.Total:0.#}/10\"", card);
+        Assert.Contains("$\"Stress: {stressSnapshot.Total:0.#}/100\"", card);
         Assert.Contains("person.Age >= 6", card);
         Assert.Contains("_stressService", family);
         Assert.Contains("IsVisible=\"{Binding ShowStress}\"", window);
         Assert.Contains("Text=\"{Binding StressTooltipText}\"", window);
+        Assert.Contains("IStatusService? status", card);
+        Assert.Contains("ShowAdultStatus", card);
+        Assert.Contains("RenownStatusText", card);
+        Assert.Contains("ReputationStatusText", card);
+        Assert.Contains("Text=\"{Binding RenownStatusText}\"", window);
+        Assert.Contains("Text=\"{Binding ReputationStatusText}\"", window);
+
+        var genealogy = RepositoryFiles.ReadText("src", "Dynastia.App", "Genealogy", "Host", "GameGenealogyDataSource.cs");
+        Assert.Contains("$\"Stress: {stressSnapshot.Total:0.#}/100\"", genealogy);
+        Assert.Contains("$\"Renown: {status.RenownLabel}\"", genealogy);
+        Assert.Contains("$\"Reputation: {status.ReputationLabel}\"", genealogy);
     }
 
     [Fact]

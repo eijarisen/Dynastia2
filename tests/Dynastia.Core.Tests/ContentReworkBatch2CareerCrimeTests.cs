@@ -157,7 +157,7 @@ public sealed class ContentReworkBatch2CareerCrimeTests
             6);
         Assert.Equal(
             0.02156544,
-            Chance(new ContextWeightContext(2026, 25, Sex.Male, "Phlegmatic", "Neutral"), broke: true, stress: 5),
+            Chance(new ContextWeightContext(2026, 25, Sex.Male, "Phlegmatic", "Neutral"), broke: true, stress: 50),
             6);
     }
 
@@ -167,7 +167,7 @@ public sealed class ContentReworkBatch2CareerCrimeTests
         var rules = LoadAttemptRules(CreateRepositoryData());
         var baseline = CrimeRules.CalculateAttemptChance(rules, 1.0, broke: false, stress: 0);
         var poor = CrimeRules.CalculateAttemptChance(rules, 1.0, broke: true, stress: 0);
-        var stressed = CrimeRules.CalculateAttemptChance(rules, 1.0, broke: false, stress: 5);
+        var stressed = CrimeRules.CalculateAttemptChance(rules, 1.0, broke: false, stress: 50);
         var extreme = CrimeRules.CalculateAttemptChance(rules, 99, broke: true, stress: 999);
 
         Assert.Equal(0.008, baseline, 6);
@@ -204,8 +204,8 @@ public sealed class ContentReworkBatch2CareerCrimeTests
 
         Assert.True(theft.PovertyMultiplier > fraud.PovertyMultiplier);
         Assert.True(
-            CrimeRules.CalculateStressSelectionMultiplier(brawling, 5)
-            > CrimeRules.CalculateStressSelectionMultiplier(fraud, 5));
+            CrimeRules.CalculateStressSelectionMultiplier(brawling, 50)
+            > CrimeRules.CalculateStressSelectionMultiplier(fraud, 50));
         Assert.Contains("property", theft.BehaviorTags);
         Assert.Contains("violent", brawling.BehaviorTags);
     }

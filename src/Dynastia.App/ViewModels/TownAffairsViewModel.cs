@@ -41,6 +41,14 @@ public sealed class TownAffairsViewModel : ViewModelBase
         new SolidColorBrush(Color.FromRgb(63, 122, 69));
     private static readonly IBrush BoomingProsperityBrush =
         new SolidColorBrush(Color.FromRgb(39, 105, 51));
+    private static readonly IBrush UnfavorableBankBrush =
+        new SolidColorBrush(Color.Parse("#A13A2B"));
+    private static readonly IBrush ModestBankBrush =
+        new SolidColorBrush(Color.Parse("#B57A33"));
+    private static readonly IBrush StandardBankBrush =
+        new SolidColorBrush(Color.Parse("#806633"));
+    private static readonly IBrush FavorableBankBrush =
+        new SolidColorBrush(Color.Parse("#2F6F3E"));
 
     private readonly MainWindowViewModel _owner;
     private readonly IReadOnlyList<IPerson> _householdPeople;
@@ -57,6 +65,9 @@ public sealed class TownAffairsViewModel : ViewModelBase
         Request = request;
 
         HouseOffers = owner.GetTownAffairsHouseOffers(snapshot.Town);
+        FarmlandOffers = IsRemote
+            ? Array.Empty<TownAffairsFarmlandOfferViewModel>()
+            : owner.GetTownAffairsFarmlandOffers(snapshot.Town);
         CanTakeLoan = !IsRemote
             && owner.IsTownAffairsHouseholdActionAvailable("loan.take");
         CanGiveLoan = !IsRemote
@@ -185,7 +196,7 @@ public sealed class TownAffairsViewModel : ViewModelBase
 
     public string MayorSummaryText => CivicOffice is null
         ? "No mayor is currently recorded."
-        : $"{CivicOffice.Name} · Approval {CivicOffice.Approval:0.#}%";
+        : CivicOffice.Name;
 
     public string CivicOfficeNameText => CivicOffice?.Name ?? string.Empty;
 
@@ -200,11 +211,11 @@ public sealed class TownAffairsViewModel : ViewModelBase
 
     public string CivicOfficeRenownText => CivicOffice is null
         ? string.Empty
-        : $"Renown: {CivicOffice.Renown:0.#}";
+        : $"Renown: {_owner.GetTownAffairsRenownLabel(CivicOffice.Renown)}";
 
     public string CivicOfficeReputationText => CivicOffice is null
         ? string.Empty
-        : $"Reputation: {CivicOffice.Reputation:0.#}";
+        : $"Reputation: {_owner.GetTownAffairsReputationLabel(CivicOffice.Reputation)}";
 
     public string CivicOfficeApprovalText => CivicOffice is null
         ? string.Empty
@@ -238,12 +249,17 @@ public sealed class TownAffairsViewModel : ViewModelBase
 
     public IReadOnlyList<TownAffairsHouseOfferViewModel> HouseOffers { get; }
 
+    public IReadOnlyList<TownAffairsFarmlandOfferViewModel> FarmlandOffers { get; }
+
     public bool HasHouseOffers => HouseOffers.Count > 0;
 
-    public bool ShowNoHouseOffers => !HasHouseOffers;
+    public bool HasPropertyOffers =>
+        HasHouseOffers || FarmlandOffers.Count > 0;
+
+    public bool ShowNoHouseOffers => !HasPropertyOffers;
 
     public string NoHouseOffersText =>
-        "No houses are currently offered for sale in this town.";
+        "No houses or farmland are currently offered for sale in this town.";
 
     public JobOpportunityDialogViewModel? JobModel { get; private set; }
 
@@ -282,6 +298,18 @@ public sealed class TownAffairsViewModel : ViewModelBase
 
     public string BankStatusText =>
         Snapshot.FinanceCapacityText;
+
+    public IBrush BankStatusBrush =>
+        Snapshot.BankQuality.Tier switch
+        {
+            <= 1 => UnfavorableBankBrush,
+            2 => ModestBankBrush,
+            3 => StandardBankBrush,
+            _ => FavorableBankBrush
+        };
+
+    public string HousingFundsText =>
+        $"Funds: {_owner.GetTownAffairsCurrentFunds():N0} zł";
 
     public IReadOnlyList<TownAffairsHealthActionViewModel> HealthActions { get; private set; }
         = Array.Empty<TownAffairsHealthActionViewModel>();
@@ -407,6 +435,14 @@ public sealed class TownAffairsViewModel : ViewModelBase
             return;
 
         _owner.QueueTownAffairsHousePurchase(offer.Offer);
+    }
+
+    public void QueueFarmlandPurchase(TownAffairsFarmlandOfferViewModel offer)
+    {
+        if (!offer.CanBuy)
+            return;
+
+        _owner.QueueTownAffairsFarmlandPurchase(offer);
     }
 
     public void QueueJob(JobOpportunityInfo opportunity)
@@ -593,6 +629,17 @@ public sealed record TownAffairsHouseOfferViewModel(
 
     public string AskingPriceText =>
         $"{Offer.AskingPrice:N0} zł";
+}
+
+public sealed record TownAffairsFarmlandOfferViewModel(
+    decimal AskingPrice,
+    bool CanBuy,
+    string? UnavailableReason = null)
+{
+    public string DescriptionText => "Farmland parcel";
+
+    public string AskingPriceText =>
+        $"{AskingPrice:N0} zł";
 }
 
 public sealed record TownAffairsHealthSummaryViewModel(

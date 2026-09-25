@@ -14,7 +14,7 @@ public sealed class HealthViewModel
 
         StressText = stress is null
             ? null
-            : $"Stress: {stress.Total:0.#}/10";
+            : $"Stress: {stress.Total:0.#}/100";
 
         ConditionsText =
             snapshot.Conditions.Count == 0

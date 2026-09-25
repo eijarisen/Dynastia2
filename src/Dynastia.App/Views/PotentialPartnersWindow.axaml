@@ -54,8 +54,8 @@
                 <ItemsControl.ItemTemplate>
                     <DataTemplate x:DataType="vm:PotentialPartnerCardViewModel">
                         <Border
-                            Height="258"
                             Margin="5"
+                            VerticalAlignment="Top"
                             Padding="10,9"
                             Background="#35FFF4D9"
                             BorderBrush="#A17A43"
@@ -63,7 +63,7 @@
                             CornerRadius="4"
                             Cursor="Hand"
                             PointerPressed="OnCandidatePointerPressed">
-                            <Grid RowDefinitions="*,Auto" RowSpacing="7">
+                            <Grid RowDefinitions="Auto,Auto" RowSpacing="4">
                                 <Grid ColumnDefinitions="104,*" ColumnSpacing="10">
                                     <Border
                                         Width="96"

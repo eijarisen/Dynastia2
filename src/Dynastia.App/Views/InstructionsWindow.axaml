@@ -159,6 +159,9 @@
                                         <Run Text="• " />
                                         <Run FontWeight="Bold" Text="Family records. " />
                                         <Run Text="The Chronicle records major events, biographies follow individual lives, Thoughts show current concerns, and Genealogy follows the wider bloodline." />
+                                        <LineBreak />
+                                        <Run FontWeight="Bold" Text="Dynasty Score: " />
+                                        <Run Text="grows from family continuity, longevity, education, careers, crafts, property and heirlooms. Some reversible achievements lose only the points they previously awarded if deliberately undone." />
                                     </TextBlock>
                                 </Border>
                                 <Border Classes="tipCard">

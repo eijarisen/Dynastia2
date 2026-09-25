@@ -11,7 +11,8 @@ public sealed record PropertySelectionOption(
     string SearchText,
     bool IsEnabled = true,
     double? SuccessChance = null,
-    string LeadingEmoji = "")
+    string LeadingEmoji = "",
+    double LeadingEmojiFontSize = 25)
 {
     public double DisplayOpacity =>
         IsEnabled ? 1.0 : 0.42;

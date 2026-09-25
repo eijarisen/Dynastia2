@@ -38,6 +38,9 @@ public sealed class GameGenealogyDataSource :
     private readonly ILocationService? _locations;
     private readonly IMarriageSatisfactionService?
         _marriageSatisfaction;
+    private readonly IStressService? _stress;
+    private readonly IChildHappinessService? _childHappiness;
+    private readonly IStatusService? _status;
     private readonly IThoughtService? _thoughts;
     private readonly IAppearanceService? _appearance;
     private readonly ISuccessionService? _succession;
@@ -60,7 +63,10 @@ public sealed class GameGenealogyDataSource :
             marriageSatisfaction = null,
         IThoughtService? thoughts = null,
         IAppearanceService? appearance = null,
-        ISuccessionService? succession = null)
+        ISuccessionService? succession = null,
+        IStressService? stress = null,
+        IChildHappinessService? childHappiness = null,
+        IStatusService? status = null)
     {
         _gameState =
             gameState;
@@ -91,6 +97,15 @@ public sealed class GameGenealogyDataSource :
 
         _marriageSatisfaction =
             marriageSatisfaction;
+
+        _stress =
+            stress;
+
+        _childHappiness =
+            childHappiness;
+
+        _status =
+            status;
 
         _thoughts =
             thoughts;
@@ -309,6 +324,13 @@ public sealed class GameGenealogyDataSource :
             healthTooltip =
                 $"{Math.Round(health.Current)}/" +
                 $"{Math.Round(health.Maximum)}";
+
+            if (health.Conditions.Count > 0)
+            {
+                healthTooltip += " • " + string.Join(
+                    ", ",
+                    health.Conditions.Select(condition => condition.Name));
+            }
         }
 
         var educationTooltip =
@@ -461,6 +483,34 @@ public sealed class GameGenealogyDataSource :
         livingTooltipSections.Add(
             $"Health: {healthTooltip}");
 
+        var stressSnapshot =
+            isAlive
+                ? _stress?.GetStress(person)
+                : null;
+
+        if (stressSnapshot is not null)
+        {
+            livingTooltipSections.Add(
+                $"Stress: {stressSnapshot.Total:0.#}/100");
+        }
+
+        if (person.Age >= 6 && _education is not null)
+        {
+            livingTooltipSections.Add(
+                $"Education: {educationTooltip}");
+        }
+
+        if (person.Age < 18)
+        {
+            var happiness =
+                _childHappiness?.GetHappiness(person);
+            if (happiness is not null)
+            {
+                livingTooltipSections.Add(
+                    $"Happiness: {happiness.Label}");
+            }
+        }
+
         if (person.Age >= 18)
         {
             livingTooltipSections.Add(
@@ -468,6 +518,16 @@ public sealed class GameGenealogyDataSource :
 
             livingTooltipSections.Add(
                 $"Marriage: {marriageTooltip}");
+
+            var status =
+                _status?.GetStatus(person);
+            if (status is not null)
+            {
+                livingTooltipSections.Add(
+                    $"Renown: {status.RenownLabel}");
+                livingTooltipSections.Add(
+                    $"Reputation: {status.ReputationLabel}");
+            }
         }
 
         var tooltipFather =

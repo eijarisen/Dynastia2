@@ -77,11 +77,11 @@
                                     Text="{Binding StressTooltipText}" />
 
                                 <TextBlock
-                                    IsVisible="{Binding ShowChildEducation}"
+                                    IsVisible="{Binding ShowEducation}"
                                     FontSize="12"
                                     FontWeight="SemiBold"
-                                    Foreground="{Binding ChildEducationLevel, Converter={StaticResource StatValueBrushConverter}}"
-                                    Text="{Binding ChildEducationTooltipText}" />
+                                    Foreground="{Binding EducationLevel, Converter={StaticResource StatValueBrushConverter}}"
+                                    Text="{Binding EducationTooltipText}" />
 
                                 <TextBlock
                                     IsVisible="{Binding ShowChildHappiness}"
@@ -105,6 +105,20 @@
                                     Foreground="{Binding MarriageSatisfactionLabel,
                                                          Converter={StaticResource SatisfactionBrushConverter}}"
                                     Text="{Binding MarriageTooltipText}" />
+
+                                <TextBlock
+                                    IsVisible="{Binding ShowAdultStatus}"
+                                    FontSize="12"
+                                    FontWeight="SemiBold"
+                                    Foreground="{Binding RenownStatusBrush}"
+                                    Text="{Binding RenownStatusText}" />
+
+                                <TextBlock
+                                    IsVisible="{Binding ShowAdultStatus}"
+                                    FontSize="12"
+                                    FontWeight="SemiBold"
+                                    Foreground="{Binding ReputationStatusBrush}"
+                                    Text="{Binding ReputationStatusText}" />
                             </StackPanel>
 
                             <TextBlock
@@ -693,7 +707,7 @@
                         <Grid
                             Margin="50,76,48,36"
                             RowDefinitions="Auto,*"
-                            RowSpacing="9"
+                            RowSpacing="6"
                             ClipToBounds="True">
 
                             <Grid
@@ -703,7 +717,7 @@
                                 <TextBlock
                                     FontSize="24"
                                     FontWeight="Bold"
-                                    Text="Family Chronicle" />
+                                    Text="{Binding ChronicleScoreText}" />
 
                                 <Button
                                     Grid.Column="1"
@@ -818,12 +832,24 @@
                                             <DataTemplate
                                                 x:DataType="vm:AlbumEventViewModel">
 
-                                                <TextBlock
+                                                <Grid
                                                     Margin="0,3,0,6"
-                                                    FontSize="16"
-                                                    LineHeight="23"
-                                                    TextWrapping="Wrap"
-                                                    Text="{Binding Text}" />
+                                                    ColumnDefinitions="*,Auto"
+                                                    ColumnSpacing="8">
+                                                    <TextBlock
+                                                        FontSize="16"
+                                                        LineHeight="23"
+                                                        TextWrapping="Wrap"
+                                                        Text="{Binding Text}" />
+                                                    <TextBlock
+                                                        Grid.Column="1"
+                                                        IsVisible="{Binding HasScoreDelta}"
+                                                        VerticalAlignment="Top"
+                                                        FontSize="13"
+                                                        FontWeight="SemiBold"
+                                                        Foreground="#806020"
+                                                        Text="{Binding ScoreDeltaText}" />
+                                                </Grid>
                                             </DataTemplate>
                                         </ItemsControl.ItemTemplate>
                                     </ItemsControl>
@@ -1952,13 +1978,17 @@
                                 </Button>
                             </Grid>
 
-                            <TextBlock
+                            <StackPanel
                                 Grid.Row="1"
                                 HorizontalAlignment="Center"
-                                FontFamily="Georgia"
-                                FontSize="14"
-                                Foreground="#5B4024"
-                                Text="Global news and notable family events." />
+                                Spacing="2">
+                                <TextBlock
+                                    HorizontalAlignment="Center"
+                                    FontFamily="Georgia"
+                                    FontSize="14"
+                                    Foreground="#5B4024"
+                                    Text="Global news and notable family events." />
+                            </StackPanel>
 
                             <Border
                                 Grid.Row="2"
@@ -2012,14 +2042,26 @@
                                                                     <DataTemplate
                                                                         x:DataType="vm:AlbumEventViewModel">
 
-                                                                        <TextBlock
+                                                                        <Grid
                                                                             Margin="10,2,0,3"
-                                                                            FontFamily="Georgia"
-                                                                            FontSize="16"
-                                                                            LineHeight="23"
-                                                                            Foreground="#46321C"
-                                                                            TextWrapping="Wrap"
-                                                                            Text="{Binding Text}" />
+                                                                            ColumnDefinitions="*,Auto"
+                                                                            ColumnSpacing="8">
+                                                                            <TextBlock
+                                                                                FontFamily="Georgia"
+                                                                                FontSize="16"
+                                                                                LineHeight="23"
+                                                                                Foreground="#46321C"
+                                                                                TextWrapping="Wrap"
+                                                                                Text="{Binding Text}" />
+                                                                            <TextBlock
+                                                                                Grid.Column="1"
+                                                                                IsVisible="{Binding HasScoreDelta}"
+                                                                                FontFamily="Georgia"
+                                                                                FontSize="13"
+                                                                                FontWeight="Bold"
+                                                                                Foreground="#806020"
+                                                                                Text="{Binding ScoreDeltaText}" />
+                                                                        </Grid>
                                                                     </DataTemplate>
                                                                 </ItemsControl.ItemTemplate>
                                                             </ItemsControl>
@@ -2083,6 +2125,14 @@
                                 FontSize="15"
                                 Foreground="#362616"
                                 Text="{Binding GameOverText}" />
+
+                            <TextBlock
+                                IsVisible="{Binding HasGameScore}"
+                                HorizontalAlignment="Center"
+                                FontSize="17"
+                                FontWeight="Bold"
+                                Foreground="#74501E"
+                                Text="{Binding FinalGameScoreText}" />
 
                             <StackPanel
                                 HorizontalAlignment="Center"

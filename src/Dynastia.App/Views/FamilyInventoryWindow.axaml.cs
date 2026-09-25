@@ -206,16 +206,24 @@ public partial class FamilyInventoryWindow : Window
         Close();
     }
 
-    private void OnBuyFarmlandClick(
+    private async void OnBuyFarmlandClick(
         object? sender,
         RoutedEventArgs e)
     {
-        var result = _main.QueueFamilyInventoryAction(
-            "farming.buy_farmland");
-        if (result.Success)
-            Close();
-        else
-            _viewModel.Refresh();
+        if (_townLifeService is null || Owner is not Window dialogOwner)
+            return;
+
+        var request = _main.CreateActiveHouseholdTownAffairsRequest(
+            TownAffairsTab.Housing);
+        if (request is null)
+            return;
+
+        Close();
+
+        var snapshot = _townLifeService.GetTownLife(request.TownId);
+        var model = _main.CreateTownAffairsViewModel(snapshot, request);
+        var window = new TownLifeWindow(model);
+        await window.ShowDialog(dialogOwner);
     }
 
     private async void OnSellFarmlandClick(

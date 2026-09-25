@@ -218,7 +218,7 @@ public sealed partial class MainWindowViewModel
                 ?? "🛠️";
             var heading = craft.IsKnownCraft
                 ? $"{craft.CraftName} — {craft.CurrentMasteryName}"
-                : $"Learn {craft.CraftName}";
+                : $"Learn {GetCraftLearningName(craft.CraftId, craft.CraftName)}";
             var supportTags = craftDefinition is null
                 ? Array.Empty<string>()
                 : craftDefinition.RequiredOpportunityTags.Count > 0
@@ -262,6 +262,18 @@ public sealed partial class MainWindowViewModel
 
         return options;
     }
+
+    internal static string GetCraftLearningName(
+        string craftId,
+        string fallbackName) =>
+        craftId.ToLowerInvariant() switch
+        {
+            "musician" => "Music",
+            "painter" => "Painting",
+            "writer" => "Writing",
+            "sculptor" => "Sculpture",
+            _ => fallbackName
+        };
 
     public string GetEducationSelectionContextText()
     {

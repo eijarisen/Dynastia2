@@ -102,7 +102,9 @@ internal sealed class ActionSelectionOptionService
                             $"{town.PolityName} • {region} • {town.County}",
                             details,
                             string.Empty,
-                            search)
+                            search,
+                            LeadingEmoji: "🏠",
+                            LeadingEmojiFontSize: 32)
                     };
                 })
                 .OrderBy(item => item.Category)
@@ -129,7 +131,9 @@ internal sealed class ActionSelectionOptionService
                         $"{house.Town.County} • {region}",
                         $"{status} • {house.Town.SettlementClassDisplayName}\nProperty value: {propertyValue:N0} zł • Local base price: {localPrice:N0} zł\nRental income: {rentalIncome:N0} zł/year",
                         $"Sale: {sale:N0} zł",
-                        $"{house.Town.Town} {house.Town.County} {region} {status}");
+                        $"{house.Town.Town} {house.Town.County} {region} {status}",
+                        LeadingEmoji: "🏠",
+                        LeadingEmojiFontSize: 32);
                 })
                 .OrderByDescending(option => option.DetailsText.StartsWith("Residence", StringComparison.OrdinalIgnoreCase))
                 .ThenBy(option => option.PrimaryText, StringComparer.CurrentCultureIgnoreCase)
@@ -182,7 +186,9 @@ internal sealed class ActionSelectionOptionService
                         $"{house.Town.County} • {region}",
                         $"Spare property • {house.Town.SettlementClassDisplayName}\nCurrently yields {rentalIncome:N0} zł/year as rental income. It will become the selected resident's new home.",
                         "Provide house",
-                        $"{house.Town.Town} {house.Town.County} {region} move out resident");
+                        $"{house.Town.Town} {house.Town.County} {region} move out resident",
+                        LeadingEmoji: "🏠",
+                        LeadingEmojiFontSize: 32);
                 })
                 .OrderBy(option => option.PrimaryText, StringComparer.CurrentCultureIgnoreCase)
                 .ToList();

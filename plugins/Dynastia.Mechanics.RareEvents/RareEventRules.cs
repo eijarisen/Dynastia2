@@ -64,9 +64,9 @@ public static class RareEventRules
         bool veryLowHealth,
         string? temperament)
     {
-        if (stress < 5) return 0.0;
+        if (stress < 50) return 0.0;
 
-        var chance = BaseSuicideChance * Math.Clamp(1.0 + (stress - 5.0) * 0.15, 1.0, 2.5);
+        var chance = BaseSuicideChance * Math.Clamp(1.0 + (stress - 50.0) * 0.015, 1.0, 2.5);
         if (depression) chance *= 20.0;
         if (bereavement) chance *= 3.0;
         if (alcoholism) chance *= 3.0;

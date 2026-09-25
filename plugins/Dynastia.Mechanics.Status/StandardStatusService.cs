@@ -68,6 +68,12 @@ internal sealed class StandardStatusService : IStatusService
         return CalculateHouseholdStatus(householdMember, excludedPersonId: null);
     }
 
+    public string GetRenownLabel(double value) =>
+        _rules.RenownLabel(value);
+
+    public string GetReputationLabel(double value) =>
+        _rules.ReputationLabel(value);
+
     public StatusSnapshot GetCandidateStatus(StatusCandidateProfile profile)
     {
         ArgumentNullException.ThrowIfNull(profile);

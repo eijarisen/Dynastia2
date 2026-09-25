@@ -8,6 +8,10 @@ public interface IStatusService
 
     StatusSnapshot GetCandidateStatus(StatusCandidateProfile profile);
 
+    string GetRenownLabel(double value) => string.Empty;
+
+    string GetReputationLabel(double value) => string.Empty;
+
     double GetCareerApplicationBonus(IPerson person);
 
     double GetCareerPromotionBonus(IPerson person);

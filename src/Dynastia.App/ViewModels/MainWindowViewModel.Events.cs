@@ -18,7 +18,8 @@ public sealed partial class MainWindowViewModel
         {
             AlbumEvents.Add(
                 new AlbumEventViewModel(
-                    gameEvent));
+                    gameEvent,
+                    _gameScoreService?.GetEventDelta(gameEvent) ?? 0));
         }
 
         OnPropertyChanged(
@@ -54,6 +55,9 @@ public sealed partial class MainWindowViewModel
             RefreshAlbum();
         }
 
+        OnPropertyChanged(nameof(ChronicleScoreText));
+        OnPropertyChanged(nameof(ChronicleYearScoreText));
+        OnPropertyChanged(nameof(FinalGameScoreText));
         RefreshNarrative();
     }
 
@@ -155,6 +159,10 @@ public sealed partial class MainWindowViewModel
         OnPropertyChanged(
             nameof(GameOverTitle));
 
+        OnPropertyChanged(nameof(ChronicleScoreText));
+        OnPropertyChanged(nameof(ChronicleYearScoreText));
+        OnPropertyChanged(nameof(FinalGameScoreText));
+
         OnPropertyChanged(
             nameof(ActiveHouseholdText));
 
@@ -192,6 +200,10 @@ public sealed partial class MainWindowViewModel
 
         OnPropertyChanged(
             nameof(GameOverTitle));
+
+        OnPropertyChanged(nameof(ChronicleScoreText));
+        OnPropertyChanged(nameof(ChronicleYearScoreText));
+        OnPropertyChanged(nameof(FinalGameScoreText));
 
         OnPropertyChanged(
             nameof(ActiveHouseholdText));

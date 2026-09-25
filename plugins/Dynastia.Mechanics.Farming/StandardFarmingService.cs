@@ -63,6 +63,21 @@ internal sealed class StandardFarmingService :
     public decimal PurchasePrice =>
         FarmingRules.PurchasePrice;
 
+    public decimal GetPurchasePrice(
+        TownInfo town,
+        int year)
+    {
+        ArgumentNullException.ThrowIfNull(town);
+
+        var anchor =
+            _gameState.People.FirstOrDefault()?.Id.ToString("N")
+            ?? "no-anchor";
+        var key =
+            $"{_gameState.DynastySurname}|{_gameState.StartYear}|{anchor}|" +
+            $"{town.Id}|{year.ToString(CultureInfo.InvariantCulture)}|farmland-price";
+        return FarmingRules.GetMarketPurchasePrice(DeterministicRoll(key));
+    }
+
     public decimal SalePrice =>
         FarmingRules.SalePrice;
 
@@ -381,6 +396,7 @@ internal sealed class StandardFarmingService :
                 ["fromTown"] = origin.Town,
                 ["toTown"] = destination.Town,
                 ["parcelCount"] = originParcels.Count.ToString(),
+                ["farmlandIds"] = string.Join(",", originParcels.Select(parcel => parcel.Id.ToString())),
                 ["livestockCount"] = livestockCount.ToString(),
                 ["amount"] = proceeds.ToString(),
                 ["text"] =
@@ -762,9 +778,12 @@ internal sealed class StandardFarmingService :
         Guid farmlandId,
         string regionId,
         int acquiredYear,
-        string purpose)
+        string purpose) =>
+        DeterministicRoll(
+            $"{farmlandId:N}|{regionId}|{acquiredYear}|{purpose}");
+
+    private static double DeterministicRoll(string key)
     {
-        var key = $"{farmlandId:N}|{regionId}|{acquiredYear}|{purpose}";
         var hash = SHA256.HashData(Encoding.UTF8.GetBytes(key));
         var value = BinaryPrimitives.ReadUInt64LittleEndian(hash.AsSpan(0, 8));
         return value / ((double)ulong.MaxValue + 1d);

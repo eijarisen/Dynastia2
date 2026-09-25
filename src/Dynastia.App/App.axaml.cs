@@ -209,6 +209,10 @@ public partial class App : Application
             var householdService =
                 pluginContext.GetService<IHouseholdService>();
 
+            var gameScoreService =
+                pluginContext.GetService<IGameScoreService>();
+
+
             var autonomousHouseholdDecisionService =
                 pluginContext.GetService<
                     IAutonomousHouseholdDecisionService>();
@@ -314,7 +318,10 @@ public partial class App : Application
                         marriageSatisfactionService,
                         thoughtService,
                         appearanceService,
-                        successionService);
+                        successionService,
+                        stressService,
+                        childHappinessService,
+                        statusService);
 
             var genealogySelection =
                 new SelectionServiceGenealogyAdapter(
@@ -403,7 +410,8 @@ public partial class App : Application
                             saveService,
                             reconciliation,
                             actionSelectionOptions,
-                            actionSurfaces)
+                            actionSurfaces,
+                            gameScoreService)
                 };
 
             mainWindow.Opened +=

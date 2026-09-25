@@ -516,7 +516,8 @@ public sealed partial class MainWindowViewModel
             _appearanceService,
             selectedId == person.Id,
             activeHeadId == person.Id,
-            SelectFamilyMember);
+            SelectFamilyMember,
+            _statusService);
     }
 
     private string BuildHouseholdActionSummary(

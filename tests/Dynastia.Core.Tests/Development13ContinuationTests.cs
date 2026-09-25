@@ -36,7 +36,8 @@ public sealed class Development13ContinuationTests
         var mayor = window.IndexOf("Text=\"Mayor\"", StringComparison.Ordinal);
         Assert.True(population >= 0 && mayor > population);
         Assert.Contains("Text=\"{Binding MayorSummaryText}\"", window);
-        Assert.Contains("Approval {CivicOffice.Approval:0.#}%", hub);
+        Assert.Contains(": CivicOffice.Name;", hub);
+        Assert.DoesNotContain("$\"{CivicOffice.Name} · Approval", hub);
     }
 
     [Fact]
@@ -86,7 +87,7 @@ public sealed class Development13ContinuationTests
     }
 
     [Fact]
-    public void LoanOffersShowBoldColorCodedFavorability()
+    public void LoanOffersKeepColorCodingWithoutFavorabilityCaption()
     {
         var model = RepositoryFiles.ReadText("src", "Dynastia.App", "ViewModels", "LoanSelectionModels.cs");
         var window = RepositoryFiles.ReadText("src", "Dynastia.App", "Views", "LoanSelectionWindow.axaml");
@@ -95,10 +96,10 @@ public sealed class Development13ContinuationTests
         Assert.Contains("FavorabilityBrush", model);
         Assert.Contains("multiplier <= 0.95m", model);
         Assert.Contains("multiplier >= 1.05m", model);
-        Assert.Contains("Text=\"{Binding FavorabilityText}\"", window);
+        Assert.DoesNotContain("Text=\"{Binding FavorabilityText}\"", window);
         Assert.Contains("Foreground=\"{Binding FavorabilityBrush}\"", window);
-        Assert.Contains("FontSize=\"15.5\"", window);
-        Assert.True(window.Split("FontWeight=\"Bold\"").Length - 1 >= 5);
+        Assert.Contains("FontSize=\"13.2\"", window);
+        Assert.True(window.Split("FontWeight=\"Bold\"").Length - 1 >= 4);
     }
 
     [Fact]
@@ -168,11 +169,12 @@ public sealed class Development13ContinuationTests
         Assert.False(codeBehind.Contains("outside lender", StringComparison.OrdinalIgnoreCase));
         Assert.False(codeBehind.Contains("outside borrower", StringComparison.OrdinalIgnoreCase));
         Assert.Contains("BorderBrush=\"{Binding FavorabilityBrush}\"", window);
-        Assert.Contains("FontSize=\"15.5\"", window);
+        Assert.Contains("FontSize=\"13.2\"", window);
         Assert.Contains("FontSize=\"13.2\"", window);
 
         var townWindow = RepositoryFiles.ReadText("src", "Dynastia.App", "Views", "TownLifeWindow.axaml");
-        Assert.DoesNotContain("Text=\"{Binding Snapshot.Bank.DisplayName}\"", townWindow);
+        Assert.Contains("Text=\"{Binding Snapshot.Bank.DisplayName}\"", townWindow);
+        Assert.Contains("Text=\"{Binding Snapshot.Bank.Summary}\"", townWindow);
     }
 
     [Fact]

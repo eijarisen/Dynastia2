@@ -1,3 +1,4 @@
+using System.Globalization;
 using Dynastia.Contracts;
 
 namespace Dynastia.Mechanics.Farming;
@@ -77,20 +78,41 @@ public sealed class FarmingPlugin : IGamePlugin
                     AdjacencyGroup = ActionPresentationGroups.PropertyMarket,
                     GroupOrder = 30
                 },
-                Label = $"Buy Farmland ({farming.PurchasePrice:N0} zł)",
+                Label = "Buy Farmland",
                 Description =
-                    $"Queue the purchase of one farmland parcel in the household's current town for {farming.PurchasePrice:N0} zł. The household must own a house in that town.",
+                    "Queue the purchase of one farmland parcel in the household's current town at the current market price (9,000–11,000 zł). The household must own a house in that town.",
                 Mode = ActionExecutionMode.Queued,
                 QueuePhase = YearPhase.QueuedActionsEarly,
                 IsAvailable = context =>
                     context.Actor.Id == context.Target.Id
                     && economy.GetHousehold(context.Actor) is not null
-                    && economy.CanAfford(context.Actor, farming.PurchasePrice)
+                    && TryResolveFarmlandPurchaseOffer(
+                        context,
+                        economy,
+                        farming,
+                        allowLegacyFallback: true,
+                        out _,
+                        out var askingPrice)
+                    && economy.CanAfford(context.Actor, askingPrice)
                     && OwnsHouseInResidenceTown(economy, context.Actor),
                 Execute = context =>
                 {
                     var finance = economy.GetHousehold(context.Actor);
-                    if (finance is null || !economy.CanAfford(context.Actor, farming.PurchasePrice))
+                    if (finance is null
+                        || !TryResolveFarmlandPurchaseOffer(
+                            context,
+                            economy,
+                            farming,
+                            allowLegacyFallback: true,
+                            out var town,
+                            out var askingPrice))
+                    {
+                        return new GameActionResult(
+                            false,
+                            "The selected farmland offer is no longer valid.");
+                    }
+
+                    if (!economy.CanAfford(context.Actor, askingPrice))
                     {
                         return new GameActionResult(
                             false,
@@ -104,11 +126,10 @@ public sealed class FarmingPlugin : IGamePlugin
                             "The household must own a house in its current town before buying farmland there.");
                     }
 
-                    var town = economy.GetResidenceTown(context.Actor);
-                    economy.ChangeWealth(context.Actor, -farming.PurchasePrice);
+                    economy.ChangeWealth(context.Actor, -askingPrice);
                     var parcel = economy.AddFarmland(
                         context.Actor,
-                        town,
+                        town!,
                         context.GameState.Year,
                         "purchase");
                     var flavored = farming.AssignNewFarmlandType(
@@ -123,8 +144,8 @@ public sealed class FarmingPlugin : IGamePlugin
                             SubjectId = context.Actor.Id,
                             Data = new Dictionary<string, string>
                             {
-                                ["amount"] = farming.PurchasePrice.ToString(),
-                                ["town"] = town.Town,
+                                ["amount"] = askingPrice.ToString(CultureInfo.InvariantCulture),
+                                ["town"] = town!.Town,
                                 ["farmlandId"] = flavored.Id.ToString(),
                                 ["farmTypeId"] = flavored.FarmTypeId,
                                 ["text"] =
@@ -329,6 +350,52 @@ public sealed class FarmingPlugin : IGamePlugin
             .ThenBy(asset => asset.AcquiredYear)
             .ThenBy(asset => asset.Id)
             .FirstOrDefault();
+    }
+
+    private static bool TryResolveFarmlandPurchaseOffer(
+        GameActionContext context,
+        IEconomyService economy,
+        IFarmingService farming,
+        bool allowLegacyFallback,
+        out TownInfo? town,
+        out decimal askingPrice)
+    {
+        town = economy.GetResidenceTown(context.Actor);
+        askingPrice = 0m;
+
+        var hasSnapshotParameters =
+            context.Parameters.ContainsKey("townId")
+            || context.Parameters.ContainsKey("farmlandOfferYear")
+            || context.Parameters.ContainsKey("farmlandAskingPrice");
+
+        if (!hasSnapshotParameters)
+        {
+            if (!allowLegacyFallback)
+                return false;
+
+            askingPrice = farming.PurchasePrice;
+            return true;
+        }
+
+        if (!context.Parameters.TryGetValue("townId", out var townId)
+            || !town.Id.Equals(townId, StringComparison.OrdinalIgnoreCase)
+            || !context.Parameters.TryGetValue("farmlandOfferYear", out var yearText)
+            || !int.TryParse(
+                yearText,
+                NumberStyles.Integer,
+                CultureInfo.InvariantCulture,
+                out var offerYear)
+            || !context.Parameters.TryGetValue("farmlandAskingPrice", out var priceText)
+            || !decimal.TryParse(
+                priceText,
+                NumberStyles.Number,
+                CultureInfo.InvariantCulture,
+                out askingPrice))
+        {
+            return false;
+        }
+
+        return askingPrice == farming.GetPurchasePrice(town, offerYear);
     }
 
     private static bool OwnsHouseInResidenceTown(

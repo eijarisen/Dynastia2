@@ -130,7 +130,8 @@ public sealed class LocalSocietyChurchBatch2Tests
         Assert.DoesNotContain("Snapshot.ChurchCard", window);
         Assert.Contains("ChurchActions", window);
         Assert.Contains("<primitives:UniformGrid Columns=\"3\" />", window);
-        Assert.Contains("ToolTip.Tip=\"{Binding Description}\"", window);
+        Assert.DoesNotContain("ToolTip.Tip=\"{Binding Description}\"", window);
+        Assert.Contains("Text=\"{Binding Description}\"", window);
         var presentation = RepositoryFiles.ReadText(
             "src", "Dynastia.App", "ViewModels", "MainWindowViewModel.TownLife.cs");
         Assert.Contains("AddChurchMoneyAction(\"church.donate\")", presentation);

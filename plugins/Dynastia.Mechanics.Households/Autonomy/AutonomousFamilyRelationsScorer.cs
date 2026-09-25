@@ -1,3 +1,4 @@
+using System.Globalization;
 using Dynastia.Contracts;
 using static Dynastia.Mechanics.Households.AutonomousScoringHelpers;
 
@@ -126,7 +127,7 @@ internal sealed class AutonomousFamilyRelationsScorer : IAutonomousActionScorer
 
         var farming = _context.GetService<IFarmingService>();
         var own = farming?.GetSnapshot(snapshot.Head);
-        if (own is null || own.AvailableWorkers == 0)
+        if (own is null || own.AvailableWorkers <= own.LocalWorkerCapacity)
             return null;
 
         var willingnessBonus = (option.RequestWillingness ?? 0) * 15;
@@ -226,14 +227,88 @@ internal sealed class AutonomousFamilyRelationsScorer : IAutonomousActionScorer
         AutonomousHouseholdSnapshot snapshot)
     {
         if (snapshot.FinancialState != AutonomousFinancialState.Secure
-            || snapshot.HasSeriousMedicalDanger
-            || snapshot.LivingChildCount < 2 && snapshot.HasRealisticReproductivePath)
+            || snapshot.HasSeriousMedicalDanger)
         {
             return null;
         }
 
+        var economy = _context.GetService<IEconomyService>();
+        var recipient = economy?.GetHousehold(option.Target);
+        if (economy is null || recipient is null || snapshot.Finance is null
+            || option.Target.Id == snapshot.Head.Id
+            || economy.GetHouseholdId(option.Target) == economy.GetHouseholdId(snapshot.Head))
+        {
+            return null;
+        }
+
+        var forecast = economy.GetAnnualForecast(option.Target);
+        var recipientExpenses = Math.Max(recipient.LastExpenses, forecast?.ProjectedExpenses ?? 0m);
+        var recipientReserve = Math.Max(1000m, recipientExpenses);
+        var needsHelp = recipient.Wealth < recipientReserve;
+        if (!needsHelp)
+            return null;
+
+        var id = option.Action.Id.ToLowerInvariant();
+        if (id == "family_relations.give_money")
+        {
+            if (!option.Parameters.TryGetValue("amount", out var amountText)
+                || !decimal.TryParse(amountText, NumberStyles.Number,
+                    CultureInfo.InvariantCulture, out var amount)
+                || amount < 1000m
+                || snapshot.Finance.Wealth - amount < snapshot.ExpectedExpenses * 2m
+                || amount > Math.Ceiling((recipientReserve - recipient.Wealth) / 1000m) * 1000m)
+            {
+                return null;
+            }
+        }
+        else if (id == "family_relations.give_house")
+        {
+            if (recipient.Houses.Any(house => house.IsResidence)
+                || !option.Parameters.TryGetValue("propertyId", out var propertyText)
+                || !Guid.TryParse(propertyText, out var propertyId))
+            {
+                return null;
+            }
+
+            var house = snapshot.Finance.Houses.FirstOrDefault(candidate =>
+                candidate.Id == propertyId && !candidate.IsResidence);
+            if (house is null
+                || !house.Town.Id.Equals(economy.GetResidenceTown(option.Target).Id,
+                    StringComparison.OrdinalIgnoreCase)
+                || snapshot.ProjectedIncome - economy.GetRentalIncome(house) < snapshot.ExpectedExpenses)
+            {
+                return null;
+            }
+        }
+        else if (id == "family_relations.give_farmland")
+        {
+            var farming = _context.GetService<IFarmingService>();
+            var targetFarm = farming?.GetSnapshot(option.Target);
+            if (targetFarm is null || targetFarm.AvailableWorkers <= targetFarm.LocalWorkerCapacity
+                || !option.Parameters.TryGetValue("farmlandId", out var parcelText)
+                || !Guid.TryParse(parcelText, out var parcelId))
+            {
+                return null;
+            }
+
+            var parcel = economy.GetFarmland(snapshot.Head).FirstOrDefault(asset => asset.Id == parcelId);
+            if (parcel is null
+                || parcel.Town.Id.Equals(economy.GetResidenceTown(snapshot.Head).Id,
+                    StringComparison.OrdinalIgnoreCase)
+                || !parcel.Town.Id.Equals(economy.GetResidenceTown(option.Target).Id,
+                    StringComparison.OrdinalIgnoreCase))
+            {
+                return null;
+            }
+        }
+
+        var recipientIsMaleLine = snapshot.LivingMaleLineDescendants.Any(person => person.Id == option.Target.Id);
+        var recipientIsBloodline = snapshot.LivingBloodlineDescendants.Any(person => person.Id == option.Target.Id);
         return WithScore(option, AutonomyCategory.FamilyRelations,
-            AutonomousPriorityBands.OptionalDevelopment, 24);
+            recipientIsMaleLine ? AutonomousPriorityBands.MaleLineContinuity
+                : recipientIsBloodline ? AutonomousPriorityBands.BloodlineContinuity
+                : AutonomousPriorityBands.OptionalDevelopment,
+            recipientIsMaleLine || recipientIsBloodline ? 76 : 24);
     }
 
     private static bool RequestIsReasonable(AutonomousActionCandidate option) =>

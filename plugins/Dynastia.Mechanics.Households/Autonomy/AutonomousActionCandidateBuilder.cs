@@ -99,6 +99,7 @@ internal sealed class AutonomousActionCandidateBuilder
                     double? willingness = action.Id is
                         "family_relations.ask_money" or
                         "family_relations.ask_house" or
+                        "family_relations.ask_farmland" or
                         "family_relations.ask_job_help"
                             ? relations.EvaluateRequestWillingness(
                                 snapshot.Head,
@@ -190,49 +191,50 @@ internal sealed class AutonomousActionCandidateBuilder
             if (candidates.Count == 0)
                 return null;
 
-            var needsChildren = snapshot.LivingChildCount < 2
+            var needsChildren = snapshot.NeedsFamilyContinuity
                 && snapshot.HasRealisticReproductivePath;
             var needsIncome = snapshot.FinancialState is
-                AutonomousFinancialState.Critical or
-                AutonomousFinancialState.Poor;
-
-            var best = candidates
-                .OrderByDescending(candidate =>
-                candidate.AcceptanceChance * 60.0
-                + candidate.PartnerValue * 0.35
-                + (needsChildren && candidate.Sex == Sex.Female
-                    ? Math.Max(0, 46 - candidate.Age) * 1.5
-                    : 0)
-                + (needsIncome
-                    ? (double)candidate.AnnualIncome / 100.0
-                    : 0))
-                .First();
+                AutonomousFinancialState.Critical or AutonomousFinancialState.Poor;
+            var best = AutonomousPartnerChoiceRules.Choose(
+                candidates, Sex.Female, needsChildren, needsIncome);
+            if (best is null)
+                return null;
 
             foreach (var pair in partnerSearch.BuildActionParameters(best))
                 parameters[pair.Key] = pair.Value;
         }
-        else if (actionId.Equals("relationship.marry_off_daughter", StringComparison.OrdinalIgnoreCase))
+        else if (actionId.Equals("relationship.marry_off_daughter", StringComparison.OrdinalIgnoreCase)
+            || actionId.Equals("relationship.marry_off_son", StringComparison.OrdinalIgnoreCase))
         {
             var partnerSearch = _context.GetService<IPartnerSearchService>();
             if (partnerSearch is null)
                 return null;
 
+            var partnerSex = actionId.Equals("relationship.marry_off_son", StringComparison.OrdinalIgnoreCase)
+                ? Sex.Female : Sex.Male;
             var candidates = partnerSearch.GetCandidatesFor(
                 target,
-                Sex.Male,
+                partnerSex,
                 "arranged-marriage");
             if (candidates.Count == 0)
                 return null;
 
-            var best = candidates
-                .OrderByDescending(candidate =>
-                    candidate.AcceptanceChance * 70.0
-                    + candidate.PartnerValue * 0.25
-                    + (double)candidate.AnnualIncome / 150.0)
-                .First();
+            var best = AutonomousPartnerChoiceRules.Choose(
+                candidates, partnerSex, needsContinuity: true,
+                needsIncome: snapshot.FinancialState != AutonomousFinancialState.Secure);
+            if (best is null)
+                return null;
 
             foreach (var pair in partnerSearch.BuildActionParameters(best))
                 parameters[pair.Key] = pair.Value;
+        }
+        else if (actionId.Equals("household.extend_house", StringComparison.OrdinalIgnoreCase))
+        {
+            var residence = snapshot.Finance?.Houses.FirstOrDefault(house => house.IsResidence);
+            if (residence is null || residence.ExtensionCost <= 0m
+                || !_economy.CanAfford(snapshot.Head, residence.ExtensionCost))
+                return null;
+            parameters["propertyId"] = residence.Id.ToString();
         }
         else if (actionId.Equals("household.buy_house", StringComparison.OrdinalIgnoreCase))
         {
@@ -241,10 +243,24 @@ internal sealed class AutonomousActionCandidateBuilder
                 return null;
 
             var town = _economy.GetResidenceTown(snapshot.Head);
-            var offer = market.GetOffers(snapshot.Head, town, _gameState.Year)
+            var requiredCapacity = (snapshot.Status?.ResidentCount ?? snapshot.Members.Count)
+                + (snapshot.NeedsFamilyContinuity && snapshot.HasRealisticReproductivePath ? 1 : 0);
+            var offers = market.GetOffers(snapshot.Head, town, _gameState.Year)
                 .Where(candidate => _economy.CanAfford(snapshot.Head, candidate.AskingPrice))
+                .ToList();
+            var offer = offers
+                .Where(candidate => snapshot.HasResidence || candidate.BaseResidentCapacity >= requiredCapacity)
                 .OrderBy(candidate => candidate.AskingPrice)
                 .ThenByDescending(candidate => candidate.BaseResidentCapacity)
+                .FirstOrDefault();
+            // Large rented families may need to buy first, then extend next year.
+            // The scorer checks the combined purchase/construction budget.
+            offer ??= offers
+                .Where(candidate => !snapshot.HasResidence
+                    && candidate.BaseResidentCapacity >= Math.Min(requiredCapacity,
+                        snapshot.Status?.OvercrowdingThreshold ?? 8))
+                .OrderByDescending(candidate => candidate.BaseResidentCapacity)
+                .ThenBy(candidate => candidate.AskingPrice)
                 .FirstOrDefault();
 
             if (offer is null)
@@ -300,6 +316,18 @@ internal sealed class AutonomousActionCandidateBuilder
                 return null;
             parameters["propertyId"] = investment.Id.ToString();
         }
+        else if (actionId.Equals("farming.sell_farmland", StringComparison.OrdinalIgnoreCase))
+        {
+            var town = _economy.GetResidenceTown(snapshot.Head);
+            var parcel = _economy.GetFarmland(snapshot.Head)
+                .OrderBy(asset => asset.Town.Id.Equals(town.Id, StringComparison.OrdinalIgnoreCase) ? 1 : 0)
+                .ThenBy(asset => asset.AcquiredYear)
+                .ThenBy(asset => asset.Id)
+                .FirstOrDefault();
+            if (parcel is null)
+                return null;
+            parameters["farmlandId"] = parcel.Id.ToString();
+        }
         else if (actionId.Equals("loan.take", StringComparison.OrdinalIgnoreCase))
         {
             var loanParameters = BuildLoanParameters(snapshot, lending: false);
@@ -329,7 +357,16 @@ internal sealed class AutonomousActionCandidateBuilder
         }
         else if (actionId.Equals("family_relations.give_money", StringComparison.OrdinalIgnoreCase))
         {
-            var amount = ChooseFamilyMoneyAmount(snapshot, snapshot.Finance?.Wealth ?? 0m, receiving: false);
+            var recipientHead = _households.ResolveHouseholdHead(target);
+            var recipient = recipientHead is null ? null : _economy.GetHousehold(recipientHead);
+            if (recipient is null || recipientHead!.Id == snapshot.Head.Id)
+                return null;
+            var forecast = _economy.GetAnnualForecast(recipientHead);
+            var shortfall = Math.Max(1000m, forecast?.ProjectedExpenses ?? 0m) - recipient.Wealth;
+            var need = Math.Ceiling(Math.Max(0m, shortfall) / 1000m) * 1000m;
+            var reserve = Math.Max(1000m, snapshot.ExpectedExpenses * 2m);
+            var available = Math.Floor(Math.Max(0m, (snapshot.Finance?.Wealth ?? 0m) - reserve) / 1000m) * 1000m;
+            var amount = Math.Min(need, available);
             if (amount < 1000m)
                 return null;
             parameters["amount"] = amount.ToString(CultureInfo.InvariantCulture);
@@ -371,13 +408,17 @@ internal sealed class AutonomousActionCandidateBuilder
             if (snapshot.FinancialState != AutonomousFinancialState.Secure
                 || snapshot.HasSeriousMedicalDanger
                 || snapshot.Status?.IsLargeFamilyStrained == true
-                || snapshot.LivingChildCount < 2 && snapshot.HasRealisticReproductivePath
+                || snapshot.NeedsFamilyContinuity && snapshot.HasRealisticReproductivePath
                 || (snapshot.Finance?.Wealth ?? 0m) < snapshot.ExpectedExpenses * 3m + 1000m)
             {
                 return null;
             }
 
-            return LoanParameters(1000m, 5);
+            var lendingOffer = loans.GetOffers(snapshot.Head, isGivingLoan: true, 1000m)
+                .Where(offer => offer.Terms.Principal == 1000m && offer.Terms.DurationYears == 5)
+                .OrderByDescending(offer => offer.Terms.TotalInterestRate)
+                .FirstOrDefault();
+            return lendingOffer is null ? null : LoanParameters(lendingOffer);
         }
 
         if (snapshot.ProjectedIncome <= 0)
@@ -403,15 +444,6 @@ internal sealed class AutonomousActionCandidateBuilder
             ? null
             : LoanParameters(offer);
     }
-
-    private static IReadOnlyDictionary<string, string> LoanParameters(
-        decimal principal,
-        int duration) =>
-        new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
-        {
-            ["principal"] = principal.ToString(CultureInfo.InvariantCulture),
-            ["durationYears"] = duration.ToString(CultureInfo.InvariantCulture)
-        };
 
     private static IReadOnlyDictionary<string, string> LoanParameters(
         LoanOfferInfo offer) =>

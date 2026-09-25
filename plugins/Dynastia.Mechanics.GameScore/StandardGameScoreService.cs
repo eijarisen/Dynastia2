@@ -3,7 +3,7 @@ using Dynastia.Contracts;
 
 namespace Dynastia.Mechanics.GameScore;
 
-public sealed class StandardGameScoreService : IGameScoreService
+public sealed class StandardGameScoreService : IGameScoreService, IGameScorePreviewService
 {
     private readonly IGameState _gameState;
     private readonly IGameEventBus _events;
@@ -66,6 +66,33 @@ public sealed class StandardGameScoreService : IGameScoreService
             .Where(entry => entry.Year == year)
             .Select(entry => new GameScoreEntryInfo(entry.Year, entry.SourceEventIndex, entry.Delta, entry.Reason, entry.OutcomeKey))
             .ToList() ?? [];
+
+    public long PreviewEventDelta(IReadOnlyList<GameEvent> events)
+    {
+        ArgumentNullException.ThrowIfNull(events);
+        var current = GetComponent(false);
+        if (current is null && !_gameState.People.Any(_family.IsBloodline))
+            return 0;
+
+        // Only decision state is copied. Historical entries and totals are unnecessary:
+        // the detached ledger starts at zero and accumulates the hypothetical delta.
+        var preview = new GameScoreComponent
+        {
+            ActiveClaims = current?.ActiveClaims.ToDictionary(
+                pair => pair.Key,
+                pair => new GameScoreClaimState
+                {
+                    Points = pair.Value.Points,
+                    AwardedTierKeys = [.. pair.Value.AwardedTierKeys]
+                },
+                StringComparer.OrdinalIgnoreCase) ?? new(StringComparer.OrdinalIgnoreCase),
+            LockedClaimKeys = current is null ? [] : [.. current.LockedClaimKeys],
+            AwardedOutcomeKeys = current is null ? [] : [.. current.AwardedOutcomeKeys]
+        };
+        for (var index = 0; index < events.Count; index++)
+            ProcessEvent(preview, events[index], _events.AllEvents.Count + index);
+        return preview.TotalScore;
+    }
 
     public void ReconcileAfterNewGame()
     {

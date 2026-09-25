@@ -25,6 +25,7 @@ public sealed class GameScorePlugin : IGamePlugin
             context.GetService<ICivicOfficeService>());
 
         context.AddService<IGameScoreService>(score);
+        context.AddService<IGameScorePreviewService>(score);
         systems.Register(new GameScoreClaimReconcileYearSystem(score));
 
         reconciliation.Register(

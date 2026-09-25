@@ -267,7 +267,8 @@ public sealed partial class HouseholdsPlugin : IGamePlugin
                 random,
                 snapshots,
                 candidates,
-                scorers);
+                scorers,
+                new AutonomousGameScoreEstimator(context));
 
         var autonomousDecisions =
             new AutonomousHouseholdDecisionService(

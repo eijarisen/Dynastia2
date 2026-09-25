@@ -85,17 +85,24 @@ Historical Education access lives in `data/Education/education_eras.csv` and is 
 `HouseholdsPlugin` keeps initialization separate from property and nanny actions.
 
 Autonomous decisions use `AdvancedAutonomousHouseholdStrategy` as a small facade. It
-owns the single-scorer dispatch check, personality adjustment, score clamp, weighted
-choice and queue submission. `AutonomousHouseholdDecisionService` still owns which
+owns the single-scorer dispatch check, personality adjustment, score clamp, priority
+selection and queue submission. Within urgency bands it protects male-line and
+bloodline medical targets; safe development uses incremental game-score estimates
+before weighted choice among equivalent candidates. `AutonomousHouseholdDecisionService` still owns which
 households are processed and whether existing queues are retained or replaced.
 
-`Autonomy/AutonomousSnapshotBuilder` preserves live-member and service-read order;
+`Autonomy/AutonomousSnapshotBuilder` preserves live-member order and captures
+biological descendant viability, reproductive eligibility and sustainable child capacity;
 `AutonomousActionCandidateBuilder` owns mechanical availability, parameter selection
 and first-occurrence deduplication. The six named domain scorers consume candidates
 without rediscovering availability. Shared pure calculations live in
 `AutonomousScoringHelpers`; the narrow `AutonomousReproductiveEligibility` query is
 shared by snapshot construction and continuity scoring. Optional plugin services
-are still resolved at the original point of use, not cached at construction.
+are resolved at point of use, not cached at construction. `AutonomousPartnerChoiceRules`
+ranks viable reproductive matches without generating extra pools.
+`AutonomousGameScoreEstimator` uses `IGameScorePreviewService`, implemented by the
+GameScore plugin with a detached copy of its claim ledger; previews cannot publish
+events, create assets or modify the real score. Unknown future rewards are omitted.
 
 `HouseholdsPlugin` explicitly constructs these internal collaborators in a fixed
 order. Every supported ID/prefix must have exactly one owner; overlapping owners

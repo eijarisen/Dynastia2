@@ -217,6 +217,10 @@ internal sealed class AutonomousCareerEducationScorer : IAutonomousActionScorer
             return null;
         }
 
+        var cost = option.Action.DisplayCost ?? 5000m;
+        if ((snapshot.Finance?.Wealth ?? 0m) - cost < snapshot.ExpectedExpenses * 2m)
+            return null;
+
         return WithScore(option, AutonomyCategory.PersonalDevelopment,
             AutonomousPriorityBands.LongTermImprovement, 62);
     }
@@ -270,19 +274,34 @@ internal sealed class AutonomousCareerEducationScorer : IAutonomousActionScorer
         AutonomousHouseholdSnapshot snapshot)
     {
         var head = snapshot.Members.First(member => member.Person.Id == snapshot.Head.Id);
-        if (head.Health.Percentage < 75
+        if (head.Health.Percentage < 90
             || snapshot.Status?.IsLargeFamilyStrained == true
-            || snapshot.HasSeriousMedicalDanger)
+            || snapshot.HasSeriousMedicalDanger
+            || snapshot.NeedsFamilyContinuity
+            || snapshot.DependentChildCount > 0
+            || snapshot.MarriageSatisfaction is < 80
+            || head.Career is not { IsEmployed: true, JobSatisfaction: >= 3 }
+            || !IsAtLeast(snapshot.FinancialState, AutonomousFinancialState.Stable))
         {
             return null;
         }
 
-        if (!IsAtLeast(snapshot.FinancialState, AutonomousFinancialState.Stable))
+        var stress = _context.GetService<IStressService>()?.GetStress(snapshot.Head);
+        if (stress?.Total >= StressScale.FromLegacy(3))
             return null;
 
+        var year = _context.GetService<IGameState>()?.Year;
+        var events = _context.GetService<IGameEventBus>();
+        if (year is { } currentYear && events is not null
+            && Enumerable.Range(0, 3).Any(offset => events.GetEventsForYear(currentYear - offset)
+                .Any(gameEvent => gameEvent.SubjectId == snapshot.Head.Id
+                    && gameEvent.Type.Equals("career.work_harder", StringComparison.OrdinalIgnoreCase))))
+        {
+            return null;
+        }
+
         return WithScore(option, AutonomyCategory.CareerDevelopment,
-            AutonomousPriorityBands.LongTermImprovement,
-            head.Career?.JobSatisfaction >= 3 ? 62 : 48);
+            AutonomousPriorityBands.LongTermImprovement, 48);
     }
 
     private AutonomousActionCandidate? ScoreQuitJob(
@@ -382,7 +401,7 @@ internal sealed class AutonomousCareerEducationScorer : IAutonomousActionScorer
         if (!IsAtLeast(snapshot.FinancialState, AutonomousFinancialState.Stable)
             || snapshot.HasSeriousMedicalDanger
             || snapshot.Status?.IsLargeFamilyStrained == true
-            || snapshot.LivingChildCount < 2 && snapshot.HasRealisticReproductivePath)
+            || snapshot.NeedsFamilyContinuity && snapshot.HasRealisticReproductivePath)
         {
             return null;
         }

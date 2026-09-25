@@ -82,7 +82,7 @@ internal sealed class AutonomousHealthScorer : IAutonomousActionScorer
                 target.Person.Id == snapshot.Head.Id
                 || target.Career?.IsEmployed == true && workingAdults <= 1
                 || snapshot.Spouse?.Id == target.Person.Id
-                    && snapshot.LivingChildCount < 2
+                    && snapshot.NeedsFamilyContinuity
                     && snapshot.HasRealisticReproductivePath;
 
             var emergency =
@@ -201,12 +201,20 @@ internal sealed class AutonomousHealthScorer : IAutonomousActionScorer
         AutonomousActionCandidate option,
         AutonomousHouseholdSnapshot snapshot)
     {
-        if (snapshot.Status?.IsLargeFamilyStrained != true)
+        var needsCapacity = snapshot.NeedsFamilyContinuity
+            && snapshot.HasRealisticReproductivePath
+            && snapshot.Status is { } status
+            && snapshot.DependentChildCount >= status.EffectiveChildCapacity;
+        if (snapshot.Status?.IsLargeFamilyStrained != true && !needsCapacity)
             return null;
 
         var band = snapshot.HasSeriousMedicalDanger
             ? AutonomousPriorityBands.EmergencySurvival
-            : AutonomousPriorityBands.FamilyStability;
+            : needsCapacity
+                ? snapshot.NeedsMaleLineContinuity
+                    ? AutonomousPriorityBands.MaleLineContinuity
+                    : AutonomousPriorityBands.BloodlineContinuity
+                : AutonomousPriorityBands.FamilyStability;
 
         return WithScore(option, AutonomyCategory.ChildProtection, band,
             snapshot.HasSeriousMedicalDanger ? 82 : 90);
@@ -224,6 +232,10 @@ internal sealed class AutonomousHealthScorer : IAutonomousActionScorer
         {
             return null;
         }
+
+        // Removing childcare must not reintroduce the strain it just solved.
+        if (snapshot.Status.UnderageChildren > snapshot.Status.BaseChildCapacity)
+            return null;
 
         if (snapshot.FinancialState is AutonomousFinancialState.Critical
             or AutonomousFinancialState.Poor)
@@ -261,7 +273,7 @@ internal sealed class AutonomousHealthScorer : IAutonomousActionScorer
         }
 
         if (snapshot.Spouse?.Id == target.Person.Id
-            && snapshot.LivingChildCount < 2
+            && snapshot.NeedsFamilyContinuity
             && snapshot.HasRealisticReproductivePath)
         {
             score += 20;

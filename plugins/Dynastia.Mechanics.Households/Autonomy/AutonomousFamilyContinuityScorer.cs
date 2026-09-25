@@ -32,6 +32,7 @@ internal sealed class AutonomousFamilyContinuityScorer : IAutonomousActionScorer
             "relationship.find_spouse" => true,
             "childhood.raise_child" => true,
             "relationship.marry_off_daughter" => true,
+            "relationship.marry_off_son" => true,
             _ => false
         };
     }
@@ -59,7 +60,10 @@ internal sealed class AutonomousFamilyContinuityScorer : IAutonomousActionScorer
                 ScoreRaiseChild(option, snapshot, targetMember),
 
             "relationship.marry_off_daughter" =>
-                ScoreMarryOffDaughter(option, snapshot),
+                ScoreArrangeMarriage(option, snapshot),
+
+            "relationship.marry_off_son" =>
+                ScoreArrangeMarriage(option, snapshot),
 
             _ => null
         };
@@ -74,11 +78,11 @@ internal sealed class AutonomousFamilyContinuityScorer : IAutonomousActionScorer
             return null;
 
         if (snapshot.HasRealisticReproductivePath
-            && snapshot.LivingChildCount < 2
+            && snapshot.NeedsFamilyContinuity
             && satisfaction < 45)
         {
             return WithScore(option, AutonomyCategory.RelationshipStability,
-                AutonomousPriorityBands.FamilyContinuity,
+                ContinuityBand(snapshot),
                 satisfaction < 25 ? 110 : 100);
         }
 
@@ -101,7 +105,9 @@ internal sealed class AutonomousFamilyContinuityScorer : IAutonomousActionScorer
         AutonomousActionCandidate option,
         AutonomousHouseholdSnapshot snapshot)
     {
-        if (!snapshot.CanActivelyTryForChild)
+        if (!snapshot.CanActivelyTryForChild
+            || !snapshot.NeedsFamilyContinuity
+            || snapshot.HasSeriousMedicalDanger)
             return null;
 
         // A reproductively useful marriage that is nearing the automatic
@@ -110,18 +116,23 @@ internal sealed class AutonomousFamilyContinuityScorer : IAutonomousActionScorer
         if (snapshot.MarriageSatisfaction is < 45)
             return null;
 
-        var score = snapshot.LivingChildCount == 0 ? 96.0 : 68.0;
+        var viableDescendants = snapshot.NeedsMaleLineContinuity
+            ? snapshot.ViableMaleLineDescendantCount
+            : snapshot.ViableBloodlineDescendantCount;
+        var score = viableDescendants == 0 ? 96.0 : 68.0;
         score += snapshot.ReproductiveUrgency * 18;
 
         return WithScore(option, AutonomyCategory.Continuity,
-            AutonomousPriorityBands.FamilyContinuity, score);
+            ContinuityBand(snapshot), score);
     }
 
     private AutonomousActionCandidate? ScoreFindSpouse(
         AutonomousActionCandidate option,
         AutonomousHouseholdSnapshot snapshot)
     {
-        if (_family.GetSex(snapshot.Head) != Sex.Male)
+        if (_family.GetSex(snapshot.Head) != Sex.Male
+            || !AutonomousReproductiveEligibility.CanParticipateInFamilyLife(snapshot.Head)
+            || snapshot.Spouse is not null)
             return null;
 
         var stats = GetStats(snapshot.Head);
@@ -141,16 +152,19 @@ internal sealed class AutonomousFamilyContinuityScorer : IAutonomousActionScorer
                 snapshot.FinancialState == AutonomousFinancialState.Critical ? 92 : 84);
         }
 
-        if (snapshot.LivingChildCount < 2
-            && _reproductiveEligibility.CanSearchForReproductiveSpouse(snapshot.Head)
+        if (snapshot.NeedsFamilyContinuity
+            && _reproductiveEligibility.CanSearchForReproductiveSpouse(
+                snapshot.Head, GetStat(stats, "fertility"))
             && IsAtLeast(snapshot.FinancialState, AutonomousFinancialState.Stable))
         {
             return WithScore(option, AutonomyCategory.Continuity,
-                AutonomousPriorityBands.FamilyContinuity,
-                snapshot.LivingChildCount == 0 ? 92 : 62);
+                ContinuityBand(snapshot),
+                (snapshot.NeedsMaleLineContinuity
+                    ? snapshot.ViableMaleLineDescendantCount
+                    : snapshot.ViableBloodlineDescendantCount) == 0 ? 92 : 62);
         }
 
-        if (snapshot.LivingChildCount > 0
+        if (snapshot.LivingBloodlineDescendants.Count > 0
             && snapshot.Head.Age >= 60
             && IsAtLeast(snapshot.FinancialState, AutonomousFinancialState.Stable))
         {
@@ -183,8 +197,14 @@ internal sealed class AutonomousFamilyContinuityScorer : IAutonomousActionScorer
 
         if (happiness <= 2)
         {
+            var priority = _family.IsMaleLineage(target.Person)
+                && _family.GetSex(target.Person) == Sex.Male
+                    ? AutonomousPriorityBands.MaleLineContinuity
+                    : _family.IsBloodline(target.Person)
+                        ? AutonomousPriorityBands.BloodlineContinuity
+                        : AutonomousPriorityBands.FamilyStability;
             return WithScore(option, AutonomyCategory.ChildProtection,
-                AutonomousPriorityBands.FamilyStability,
+                priority,
                 happiness == 1 ? 82 : 68);
         }
 
@@ -193,7 +213,7 @@ internal sealed class AutonomousFamilyContinuityScorer : IAutonomousActionScorer
             snapshot.HasRealisticReproductivePath ? 34 : 44);
     }
 
-    private AutonomousActionCandidate? ScoreMarryOffDaughter(
+    private AutonomousActionCandidate? ScoreArrangeMarriage(
         AutonomousActionCandidate option,
         AutonomousHouseholdSnapshot snapshot)
     {
@@ -203,9 +223,42 @@ internal sealed class AutonomousFamilyContinuityScorer : IAutonomousActionScorer
             return null;
         }
 
+        var person = option.Target;
+        if (!AutonomousReproductiveEligibility.CanParticipateInFamilyLife(person)
+            || person.Age < 18
+            || _family.GetSpouse(person) is { } spouse && spouse.Tags.Has("state.alive"))
+        {
+            return null;
+        }
+
+        var fertility = GetStat(GetStats(person), "fertility");
+        var canContinue = _family.GetSex(person) == Sex.Male
+            ? _reproductiveEligibility.CanSearchForReproductiveSpouse(person, fertility)
+            : person.Age <= 45 && fertility > 0 && !person.Tags.Has("sexuality.homosexual");
+        if (!canContinue)
+            return null;
+
+        if (_family.IsMaleLineage(person) && _family.GetSex(person) == Sex.Male)
+        {
+            return WithScore(option, AutonomyCategory.Continuity,
+                AutonomousPriorityBands.MaleLineContinuity, 94);
+        }
+
+        if (_family.IsBloodline(person))
+        {
+            return WithScore(option, AutonomyCategory.Continuity,
+                AutonomousPriorityBands.BloodlineContinuity,
+                person.Age >= 35 && _family.GetSex(person) == Sex.Female ? 94 : 82);
+        }
+
         return WithScore(option, AutonomyCategory.FamilyRelations,
             AutonomousPriorityBands.LongTermImprovement, 42);
     }
+
+    private static int ContinuityBand(AutonomousHouseholdSnapshot snapshot) =>
+        snapshot.NeedsMaleLineContinuity
+            ? AutonomousPriorityBands.MaleLineContinuity
+            : AutonomousPriorityBands.BloodlineContinuity;
 
     private IReadOnlyDictionary<string, int> GetStats(IPerson person) =>
         _stats.GetStats(person)

@@ -45,6 +45,8 @@ public sealed partial class AutonomousStrategyCharacterizationTests
     [InlineData("relationship.find_spouse", typeof(AutonomousFamilyContinuityScorer))]
     [InlineData("childhood.raise_child", typeof(AutonomousFamilyContinuityScorer))]
     [InlineData("relationship.marry_off_daughter", typeof(AutonomousFamilyContinuityScorer))]
+    [InlineData("relationship.marry_off_son", typeof(AutonomousFamilyContinuityScorer))]
+    [InlineData("household.extend_house", typeof(AutonomousFinancePropertyScorer))]
     [InlineData("family_relations.ask_money", typeof(AutonomousFamilyRelationsScorer))]
     [InlineData("family_relations.ask_house", typeof(AutonomousFamilyRelationsScorer))]
     [InlineData("family_relations.ask_farmland", typeof(AutonomousFamilyRelationsScorer))]
@@ -169,8 +171,8 @@ public sealed partial class AutonomousStrategyCharacterizationTests
         foreach (var candidate in candidates) f.Actions.Register(candidate.Action);
         var scored = candidates.Select(candidate => f.Strategy.ScoreAction(candidate, f.Snapshot))
             .OfType<AutonomousActionCandidate>().ToArray();
-        Assert.Equal(new[] { 62d, 42d, 24d, 38d, 36d, 38d, 62d }, scored.Select(candidate => candidate.Score));
-        Assert.Equal(new[] { 300, 100, 100, 300, 300, 300, 300 }, scored.Select(candidate => candidate.PriorityBand));
+        Assert.Equal(new[] { 62d, 42d, 38d, 36d, 38d, 62d }, scored.Select(candidate => candidate.Score));
+        Assert.Equal(new[] { 300, 100, 300, 300, 300, 300 }, scored.Select(candidate => candidate.PriorityBand));
         Assert.Equal(0, f.World.Random.ConsumedCount);
         var selected = Assert.IsType<AutonomousActionCandidate>(f.Strategy.ChooseAction(scored));
         Assert.Equal(expectedId, selected.Action.Id);
@@ -234,11 +236,13 @@ public sealed partial class AutonomousStrategyCharacterizationTests
         var finance = f.Snapshot.Finance! with { LastExpenses = historicalExpenses };
         var economy = Probe<IEconomyService>((method, args) =>
         {
-            Assert.Same(f.Head, args[0]);
+            if (method.Name != nameof(IEconomyService.GetHouseholdId))
+                Assert.Same(f.Head, args[0]);
             calls.Add(method.Name);
             return method.Name switch
             {
                 nameof(IEconomyService.GetHousehold) => finance,
+                nameof(IEconomyService.GetHouseholdId) => f.Snapshot.Household.HouseholdId,
                 nameof(IEconomyService.GetAnnualForecast) => new HouseholdAnnualForecast(6000m, 2000m, [], []),
                 _ => throw new InvalidOperationException(method.Name)
             };
@@ -268,7 +272,7 @@ public sealed partial class AutonomousStrategyCharacterizationTests
         Assert.True(snapshot.CanActivelyTryForChild);
         Assert.Equal(1, snapshot.LivingChildCount);
         Assert.Equal(1, snapshot.DependentChildCount);
-        Assert.Equal(1.1, snapshot.ReproductiveUrgency);
+        Assert.Equal(1.5, snapshot.ReproductiveUrgency); // Sole child is seriously ill, so continuity is still urgent.
         Assert.Equal(3, snapshot.Members[1].Stats["fertility"]);
         Assert.Null(snapshot.Members[1].Career);
         Assert.Equal(new[] {
@@ -276,7 +280,7 @@ public sealed partial class AutonomousStrategyCharacterizationTests
             "health:" + child.Id, "stats:" + child.Id,
             "health:" + spouse.Id, "career:" + spouse.Id, "stats:" + spouse.Id,
             "GetHousehold", "status", "GetAnnualForecast", "debts",
-            "stats:" + spouse.Id, "stats:" + f.Head.Id }, calls);
+            "GetHouseholdId", "GetHouseholdId" }, calls);
         Assert.Equal(0, f.World.Random.ConsumedCount);
     }
 
@@ -413,8 +417,8 @@ public sealed partial class AutonomousStrategyCharacterizationTests
         Assert.Equal(new[] { "turn.pass", "family_relations.ask_house", "family_relations.ask_farmland",
             "family_relations.ask_money", "family_relations.ask_job_help" }, candidates.Select(candidate => candidate.Action.Id));
         Assert.Equal(2, queries); // Dead relatives and non-family actions from the external query are skipped.
-        Assert.Equal(3, requests); // Ask Farmland did not request willingness in the original strategy.
-        Assert.Null(candidates[2].RequestWillingness);
+        Assert.Equal(4, requests); // Farmland requests need the same willingness check as other requests.
+        Assert.Equal(0.4, candidates[2].RequestWillingness);
         Assert.Equal(0.4, candidates[1].RequestWillingness);
         Assert.Equal(0.4, candidates[3].RequestWillingness);
         Assert.Equal(0.4, candidates[4].RequestWillingness);

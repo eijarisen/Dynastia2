@@ -4,6 +4,7 @@ public static class AutonomousStrategyRules
 {
     public const double CloseActionTolerance = 0.15;
     public const double MinimumUsefulRequestWillingness = 0.25;
+    public const int ContinuityBuffer = 2;
 
     public static AutonomousFinancialState GetFinancialState(
         decimal wealth,
@@ -38,7 +39,7 @@ public static class AutonomousStrategyRules
     }
 
     public static bool CanActivelyTryForChild(
-        int livingChildren,
+        int viableDescendants,
         AutonomousFinancialState financialState,
         bool strained,
         int dependentChildren,
@@ -46,7 +47,7 @@ public static class AutonomousStrategyRules
         bool hasReproductivePath)
     {
         if (!hasReproductivePath
-            || livingChildren >= 2
+            || viableDescendants >= ContinuityBuffer
             || financialState is AutonomousFinancialState.Critical
                 or AutonomousFinancialState.Poor
             || strained)

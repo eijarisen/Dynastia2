@@ -10,19 +10,22 @@ internal sealed class AdvancedAutonomousHouseholdStrategy : IAutonomousHousehold
     private readonly AutonomousSnapshotBuilder _snapshots;
     private readonly AutonomousActionCandidateBuilder _candidates;
     private readonly IReadOnlyList<IAutonomousActionScorer> _scorers;
+    private readonly AutonomousGameScoreEstimator? _gameScore;
 
     public AdvancedAutonomousHouseholdStrategy(
         IActionRegistry actions,
         IGameRandom random,
         AutonomousSnapshotBuilder snapshots,
         AutonomousActionCandidateBuilder candidates,
-        IReadOnlyList<IAutonomousActionScorer> scorers)
+        IReadOnlyList<IAutonomousActionScorer> scorers,
+        AutonomousGameScoreEstimator? gameScore = null)
     {
         _actions = actions;
         _random = random;
         _snapshots = snapshots;
         _candidates = candidates;
         _scorers = scorers.ToArray();
+        _gameScore = gameScore;
     }
 
     public AutonomousHouseholdSnapshot BuildSnapshot(
@@ -62,7 +65,10 @@ internal sealed class AdvancedAutonomousHouseholdStrategy : IAutonomousHousehold
         var adjusted = ApplyPersonality(scored, snapshot.Head);
         return adjusted with
         {
-            Score = Math.Clamp(adjusted.Score, 1, 150)
+            Score = Math.Clamp(adjusted.Score, 1, 150),
+            LineagePriority = GetLineagePriority(adjusted, snapshot),
+            ExpectedGameScore = adjusted.PriorityBand <= AutonomousPriorityBands.LongTermImprovement
+                ? _gameScore?.Estimate(adjusted, snapshot) ?? 0 : 0
         };
     }
 
@@ -73,8 +79,20 @@ internal sealed class AdvancedAutonomousHouseholdStrategy : IAutonomousHousehold
             return null;
 
         var highestBand = scoredActions.Max(action => action.PriorityBand);
-        var inBand = scoredActions
-            .Where(action => action.PriorityBand == highestBand)
+        var eligible = scoredActions.Where(action => action.PriorityBand == highestBand).ToList();
+        var lineagePriority = eligible.Max(action => action.LineagePriority);
+        eligible = eligible.Where(action => action.LineagePriority == lineagePriority).ToList();
+
+        // Rewards only break ties between safe development choices. They cannot
+        // buy their way above medical care, solvency, continuity or family stability.
+        if (highestBand <= AutonomousPriorityBands.LongTermImprovement)
+        {
+            var bestReward = eligible.Max(action => action.ExpectedGameScore);
+            if (bestReward > 0)
+                eligible = eligible.Where(action => action.ExpectedGameScore == bestReward).ToList();
+        }
+
+        var inBand = eligible
             .OrderByDescending(action => action.Score)
             .ThenBy(action => action.Action.Id, StringComparer.OrdinalIgnoreCase)
             .ThenBy(action => action.Target.Id)
@@ -118,6 +136,37 @@ internal sealed class AdvancedAutonomousHouseholdStrategy : IAutonomousHousehold
             action.Target,
             action.Parameters,
             snapshot.Household.HouseholdId).Success;
+    }
+
+    private static int GetLineagePriority(
+        AutonomousActionCandidate action,
+        AutonomousHouseholdSnapshot snapshot)
+    {
+        if (action.PriorityBand < AutonomousPriorityBands.FamilyStability)
+            return 0;
+
+        // Prefer threatened male-line carriers and their reproductive partners
+        // within the same urgency band; an acute emergency remains first.
+        var member = snapshot.Members.FirstOrDefault(m => m.Person.Id == action.Target.Id);
+        if (member is null || action.Category is not
+            (AutonomyCategory.Survival or AutonomyCategory.ChildProtection))
+            return 0;
+
+        var medical = action.Action.Id is "wellbeing.heal_relative" or "wellbeing.therapy"
+            or "wellbeing.recover" or "career.ask_to_recover"
+            or "stats.improve_immunity" or "stats.improve_longevity";
+        if (!medical)
+            return 0;
+
+        var priority = member.IsMaleLineage ? 3 : member.IsBloodline ? 2 : 0;
+        if (snapshot.Spouse?.Id == member.Person.Id && snapshot.HasRealisticReproductivePath)
+        {
+            if (snapshot.NeedsMaleLineContinuity)
+                priority = Math.Max(priority, 3);
+            else if (snapshot.NeedsBloodlineContinuity)
+                priority = Math.Max(priority, 2);
+        }
+        return priority + (member.IsImmediateHealthRisk ? 10 : 0);
     }
 
     private AutonomousActionCandidate ApplyPersonality(

@@ -28,7 +28,9 @@ internal static class AutonomousPriorityBands
 {
     public const int EmergencySurvival = 1000;
     public const int HouseholdSolvency = 800;
-    public const int FamilyContinuity = 650;
+    public const int MaleLineContinuity = 700;
+    public const int BloodlineContinuity = 650;
+    public const int FamilyContinuity = BloodlineContinuity;
     public const int FamilyStability = 500;
     public const int LongTermImprovement = 300;
     public const int OptionalDevelopment = 100;
@@ -42,7 +44,11 @@ internal sealed record AutonomousMemberSnapshot(
     bool IsChild,
     bool IsDependent,
     bool IsSeriousHealthRisk,
-    bool IsImmediateHealthRisk);
+    bool IsImmediateHealthRisk)
+{
+    public bool IsMaleLineage { get; init; }
+    public bool IsBloodline { get; init; }
+}
 
 internal sealed record AutonomousHouseholdSnapshot(
     HouseholdInfo Household,
@@ -66,7 +72,21 @@ internal sealed record AutonomousHouseholdSnapshot(
     int DependentChildCount,
     double? MarriageSatisfaction,
     double ReproductiveUrgency,
-    IReadOnlyList<RelatedFamilyHouseholdInfo> RelatedHouseholds);
+    IReadOnlyList<RelatedFamilyHouseholdInfo> RelatedHouseholds)
+{
+    // Descendants include adults living elsewhere and descendants of deceased
+    // children. Household membership and direct child counts are insufficient
+    // to determine whether the dynasty can continue.
+    public IReadOnlyList<IPerson> LivingMaleLineDescendants { get; init; } = [];
+    public IReadOnlyList<IPerson> LivingBloodlineDescendants { get; init; } = [];
+    public int ViableMaleLineDescendantCount { get; init; }
+    public int ViableBloodlineDescendantCount { get; init; }
+    public bool HasSecuredMaleLine { get; init; }
+    public bool HasSecuredBloodline { get; init; }
+    public bool NeedsMaleLineContinuity { get; init; }
+    public bool NeedsBloodlineContinuity { get; init; }
+    public bool NeedsFamilyContinuity => NeedsMaleLineContinuity || NeedsBloodlineContinuity;
+}
 
 internal sealed record AutonomousActionCandidate(
     GameActionDefinition Action,
@@ -75,4 +95,8 @@ internal sealed record AutonomousActionCandidate(
     AutonomyCategory Category,
     int PriorityBand,
     double Score,
-    double? RequestWillingness = null);
+    double? RequestWillingness = null)
+{
+    public int LineagePriority { get; init; }
+    public double ExpectedGameScore { get; init; }
+}

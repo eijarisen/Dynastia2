@@ -94,16 +94,63 @@ internal sealed class AutonomousSnapshotBuilder
             .DistinctBy(child => child.Id)
             .ToList();
 
-        var dependentChildren = livingChildren.Count(child => child.Age < 18);
-        var reproductivePath = HasRealisticReproductivePath(head, spouse);
+        // Read each person's planning stats and health once. Descendants living
+        // in other households can secure the line just as resident children can.
+        var statsByPerson = members.ToDictionary(member => member.Person.Id, member => member.Stats);
+        var healthByPerson = members.ToDictionary(member => member.Person.Id, member => member.Health);
+        IReadOnlyDictionary<string, int> StatsFor(IPerson person)
+        {
+            if (!statsByPerson.TryGetValue(person.Id, out var values))
+                statsByPerson[person.Id] = values = GetStats(person);
+            return values;
+        }
+        HealthSnapshot HealthFor(IPerson person)
+        {
+            if (!healthByPerson.TryGetValue(person.Id, out var health))
+                healthByPerson[person.Id] = health = _health.GetHealth(person);
+            return health;
+        }
+
+        var descendants = GetBiologicalDescendants(head, spouse);
+        var bloodlineDescendants = descendants.Where(_family.IsBloodline).ToList();
+        // The canonical lineage tag is assigned by Reproduction only to a son
+        // of a male-line father. Sex or surname alone never establishes it.
+        var maleLineDescendants = bloodlineDescendants
+            .Where(person => _family.GetSex(person) == Sex.Male && _family.IsMaleLineage(person))
+            .ToList();
+        var viableBloodline = bloodlineDescendants
+            .Where(person => HasViableContinuation(person, StatsFor, HealthFor))
+            .Select(person => person.Id)
+            .ToHashSet();
+        var viableMaleLineCount = maleLineDescendants.Count(person => viableBloodline.Contains(person.Id));
+        var hasSecuredMaleLine = viableMaleLineCount >= AutonomousStrategyRules.ContinuityBuffer;
+        var hasSecuredBloodline = viableBloodline.Count >= AutonomousStrategyRules.ContinuityBuffer;
+        var canExtendMaleLine = _family.GetSex(head) == Sex.Male && _family.IsMaleLineage(head);
+        var canExtendBloodline = _family.IsBloodline(head)
+            || spouse is not null && _family.IsBloodline(spouse);
+        var needsMaleLine = canExtendMaleLine && !hasSecuredMaleLine;
+        var needsBloodline = canExtendBloodline && !hasSecuredBloodline;
+
+        // Count all dependent household children, including stepchildren and
+        // supported grandchildren, when deciding whether another birth fits.
+        var dependentChildren = members.Count(member => member.IsDependent);
+        var reproductivePath = HasRealisticReproductivePath(head, spouse, StatsFor);
+        var viableDescendants = needsMaleLine ? viableMaleLineCount : viableBloodline.Count;
+        // Economy charges living costs per resident. Use its forecast so the
+        // household's local prices, lifestyle and efficiency are retained.
+        var livingCosts = forecast?.ExpenseBreakdown.FirstOrDefault(line =>
+            line.Label.Equals("living costs", StringComparison.OrdinalIgnoreCase))?.Amount;
+        var additionalChildCost = Math.Ceiling(
+            Math.Max(0m, livingCosts ?? expectedExpenses) / Math.Max(1, members.Count));
+        var canSupportAdditionalChild = projectedIncome >= expectedExpenses + additionalChildCost;
         var canTryForChild = CanActivelyTryForChild(
             head,
             spouse,
-            livingChildren.Count,
+            viableDescendants,
             dependentChildren,
             financialState,
             status,
-            reproductivePath);
+            reproductivePath && (needsMaleLine || needsBloodline) && canSupportAdditionalChild);
 
         var marriageSatisfaction =
             spouse is null
@@ -142,8 +189,19 @@ internal sealed class AutonomousSnapshotBuilder
             livingChildren.Count,
             dependentChildren,
             marriageSatisfaction,
-            CalculateReproductiveUrgency(head, spouse, livingChildren.Count),
-            relatedHouseholds);
+            CalculateReproductiveUrgency(head, spouse, viableDescendants,
+                needsMaleLine || needsBloodline),
+            relatedHouseholds)
+        {
+            LivingMaleLineDescendants = maleLineDescendants,
+            LivingBloodlineDescendants = bloodlineDescendants,
+            ViableMaleLineDescendantCount = viableMaleLineCount,
+            ViableBloodlineDescendantCount = viableBloodline.Count,
+            HasSecuredMaleLine = hasSecuredMaleLine,
+            HasSecuredBloodline = hasSecuredBloodline,
+            NeedsMaleLineContinuity = needsMaleLine,
+            NeedsBloodlineContinuity = needsBloodline
+        };
     }
 
     private AutonomousMemberSnapshot BuildMemberSnapshot(
@@ -163,7 +221,11 @@ internal sealed class AutonomousSnapshotBuilder
             person.Age < 18,
             person.Age < 18,
             serious,
-            immediate);
+            immediate)
+        {
+            IsMaleLineage = _family.GetSex(person) == Sex.Male && _family.IsMaleLineage(person),
+            IsBloodline = _family.IsBloodline(person)
+        };
     }
 
     private IReadOnlyDictionary<string, int> GetStats(IPerson person) =>
@@ -173,10 +235,26 @@ internal sealed class AutonomousSnapshotBuilder
 
     private bool HasRealisticReproductivePath(
         IPerson head,
-        IPerson? spouse)
+        IPerson? spouse,
+        Func<IPerson, IReadOnlyDictionary<string, int>> statsFor)
     {
         if (spouse is null)
-            return _reproductiveEligibility.CanSearchForReproductiveSpouse(head);
+            return _reproductiveEligibility.CanSearchForReproductiveSpouse(
+                head, GetStat(statsFor(head), "fertility"));
+
+        if (!AutonomousReproductiveEligibility.CanParticipateInFamilyLife(head)
+            || !AutonomousReproductiveEligibility.CanParticipateInFamilyLife(spouse)
+            || head.Age < 18
+            || spouse.Age < 18
+            || _family.GetSpouse(head)?.Id != spouse.Id
+            || _family.GetSpouse(spouse)?.Id != head.Id)
+        {
+            return false;
+        }
+
+        var householdId = _economy.GetHouseholdId(head);
+        if (householdId is null || _economy.GetHouseholdId(spouse) != householdId)
+            return false;
 
         var first = head;
         var second = spouse;
@@ -189,20 +267,19 @@ internal sealed class AutonomousSnapshotBuilder
         var female = firstSex == Sex.Female ? first : second;
         var male = firstSex == Sex.Male ? first : second;
 
-        if (female.Age < 18 || female.Age > 45
-            || female.Tags.Has("state.imprisoned"))
+        if (female.Age > 45)
         {
             return false;
         }
 
-        return GetStat(GetStats(female), "fertility") > 0
-            && GetStat(GetStats(male), "fertility") > 0;
+        return GetStat(statsFor(female), "fertility") > 0
+            && GetStat(statsFor(male), "fertility") > 0;
     }
 
     private bool CanActivelyTryForChild(
         IPerson head,
         IPerson? spouse,
-        int livingChildren,
+        int viableDescendants,
         int dependentChildren,
         AutonomousFinancialState financialState,
         HouseholdStatusSnapshot? status,
@@ -210,13 +287,17 @@ internal sealed class AutonomousSnapshotBuilder
     {
         if (spouse is null
             || _family.GetSex(head) != Sex.Male
-            || _family.GetSex(spouse) != Sex.Female)
+            || _family.GetSex(spouse) != Sex.Female
+            || status?.IsOvercrowded == true
+            || status?.HasUnfundedBasicNeeds == true
+            || status is not null
+                && status.ResidentCount + 1 > status.OvercrowdingThreshold)
         {
             return false;
         }
 
         return AutonomousStrategyRules.CanActivelyTryForChild(
-            livingChildren,
+            viableDescendants,
             financialState,
             status?.IsLargeFamilyStrained == true,
             dependentChildren,
@@ -227,9 +308,10 @@ internal sealed class AutonomousSnapshotBuilder
     private double CalculateReproductiveUrgency(
         IPerson head,
         IPerson? spouse,
-        int livingChildren)
+        int viableDescendants,
+        bool needsContinuity)
     {
-        if (livingChildren >= 2)
+        if (!needsContinuity)
             return 0;
 
         IPerson? female = null;
@@ -238,7 +320,7 @@ internal sealed class AutonomousSnapshotBuilder
         else if (spouse is not null && _family.GetSex(spouse) == Sex.Female)
             female = spouse;
 
-        var baseUrgency = livingChildren == 0 ? 1.0 : 0.55;
+        var baseUrgency = viableDescendants == 0 ? 1.0 : 0.55;
         if (female is null)
             return baseUrgency;
 
@@ -248,6 +330,72 @@ internal sealed class AutonomousSnapshotBuilder
             baseUrgency += 0.30;
 
         return Math.Min(1.5, baseUrgency);
+    }
+
+    private IReadOnlyList<IPerson> GetBiologicalDescendants(IPerson head, IPerson? spouse)
+    {
+        var seen = new HashSet<Guid> { head.Id };
+        var pending = new Queue<IPerson>();
+        pending.Enqueue(head);
+        if (spouse is not null && seen.Add(spouse.Id))
+            pending.Enqueue(spouse);
+        var living = new List<IPerson>();
+
+        while (pending.TryDequeue(out var parent))
+        {
+            foreach (var child in _family.GetChildren(parent))
+            {
+                if ((_family.GetFather(child)?.Id != parent.Id
+                        && _family.GetMother(child)?.Id != parent.Id)
+                    || !seen.Add(child.Id))
+                {
+                    continue;
+                }
+
+                // A deceased child may have living children of their own.
+                pending.Enqueue(child);
+                if (child.Tags.Has("state.alive") && !child.Tags.Has("state.dead"))
+                    living.Add(child);
+            }
+        }
+
+        return living;
+    }
+
+    private bool HasViableContinuation(
+        IPerson person,
+        Func<IPerson, IReadOnlyDictionary<string, int>> statsFor,
+        Func<IPerson, HealthSnapshot> healthFor)
+    {
+        if (!AutonomousReproductiveEligibility.CanParticipateInFamilyLife(person)
+            || IsSeriousHealthRisk(healthFor(person)))
+        {
+            return false;
+        }
+
+        // Children are future heirs, not current marriage candidates. Do not
+        // apply adult age-gap or sexuality rules before their coming of age.
+        if (person.Age < 18)
+            return GetStat(statsFor(person), "fertility") > 0;
+
+        // A surviving elderly relative is not a dependable replacement for a
+        // younger generation, even while the person still counts as alive.
+        if (person.Age >= 60
+            || _family.GetSex(person) == Sex.Female && person.Age > 40)
+        {
+            return false;
+        }
+
+        var spouse = _family.GetSpouse(person);
+        if (spouse is not null && spouse.Tags.Has("state.alive"))
+            return HasRealisticReproductivePath(person, spouse, statsFor);
+
+        if (_family.GetSex(person) == Sex.Male)
+            return _reproductiveEligibility.CanSearchForReproductiveSpouse(
+                person, GetStat(statsFor(person), "fertility"));
+
+        return GetStat(statsFor(person), "fertility") > 0
+            && !person.Tags.Has("sexuality.homosexual");
     }
 
     private static bool IsSeriousHealthRisk(HealthSnapshot health) =>

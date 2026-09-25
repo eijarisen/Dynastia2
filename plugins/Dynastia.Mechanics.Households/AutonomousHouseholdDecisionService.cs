@@ -81,12 +81,20 @@ internal sealed class AutonomousHouseholdDecisionService :
                 .OfType<AutonomousActionCandidate>()
                 .ToList();
 
-            var selected = _strategy.ChooseAction(scored);
-            if (selected is null)
-                continue;
-
-            if (_strategy.QueueAction(selected, snapshot))
-                queuedCount++;
+            // A stale offer or a guard can reject the first choice. Try the
+            // remaining valid plans so the household does not silently lose a year.
+            while (scored.Count > 0)
+            {
+                var selected = _strategy.ChooseAction(scored);
+                if (selected is null)
+                    break;
+                if (_strategy.QueueAction(selected, snapshot))
+                {
+                    queuedCount++;
+                    break;
+                }
+                scored.Remove(selected);
+            }
         }
 
         return queuedCount;

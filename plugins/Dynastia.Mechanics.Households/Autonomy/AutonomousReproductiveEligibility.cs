@@ -13,10 +13,14 @@ internal sealed class AutonomousReproductiveEligibility
         _family = family;
     }
 
-    public bool CanSearchForReproductiveSpouse(IPerson head)
+    public bool CanSearchForReproductiveSpouse(IPerson head, int fertility = 1)
     {
-        if (_family.GetSex(head) != Sex.Male
-            || _family.GetSpouse(head) is not null)
+        if (!CanParticipateInFamilyLife(head)
+            || head.Age < 18
+            || fertility <= 0
+            || _family.GetSex(head) != Sex.Male
+            || _family.GetSpouse(head) is { } spouse
+                && spouse.Tags.Has("state.alive"))
         {
             return false;
         }
@@ -27,4 +31,12 @@ internal sealed class AutonomousReproductiveEligibility
             head.Tags.Has("morals.evil"),
             head.Tags.Has("sexuality.homosexual"));
     }
+
+    internal static bool CanParticipateInFamilyLife(IPerson person) =>
+        person.Tags.Has("state.alive")
+        && !person.Tags.Has("state.dead")
+        && !person.Tags.Has("state.imprisoned")
+        && !person.Tags.Has("vocation.religious.active")
+        && !SimulationState.IsInactive(person)
+        && !SimulationState.IsExternallyResident(person);
 }

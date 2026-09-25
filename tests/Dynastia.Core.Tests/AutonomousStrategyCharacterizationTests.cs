@@ -30,13 +30,21 @@ public sealed partial class AutonomousStrategyCharacterizationTests
             snapshot = snapshot with { FinancialState = AutonomousFinancialState.Critical, HasInvestmentHouse = true };
         if (actionId == "reproduction.try_for_baby")
             snapshot = snapshot with { CanActivelyTryForChild = true, HasRealisticReproductivePath = true,
-                LivingChildCount = 0, ReproductiveUrgency = 0.25 };
+                LivingChildCount = 0, ReproductiveUrgency = 0.25, NeedsBloodlineContinuity = true };
         if (actionId == "education.help_learning")
         {
             target = f.World.Person(10);
             snapshot = snapshot with { Members = [Member(f.Head), Member(target)] };
         }
+        if (actionId == "family_relations.give_money")
+        {
+            target = f.World.Person(25);
+            f.World.Household(target, 0m);
+            f.Context.AddService<IEconomyService>(f.World.Economy);
+        }
         var candidate = Candidate(actionId, target);
+        if (actionId == "family_relations.give_money")
+            candidate = candidate with { Parameters = new Dictionary<string, string> { ["amount"] = "1000" } };
         var result = f.Strategy.ScoreAction(candidate, snapshot);
         Assert.NotNull(result);
         Assert.Equal(band, result.PriorityBand);

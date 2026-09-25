@@ -29,7 +29,7 @@ public sealed class AutonomousStrategyRulesTests
     {
         Assert.True(
             AutonomousStrategyRules.CanActivelyTryForChild(
-                livingChildren: 0,
+                viableDescendants: 0,
                 AutonomousFinancialState.Stable,
                 strained: false,
                 dependentChildren: 0,
@@ -38,7 +38,7 @@ public sealed class AutonomousStrategyRulesTests
 
         Assert.False(
             AutonomousStrategyRules.CanActivelyTryForChild(
-                livingChildren: 0,
+                viableDescendants: 0,
                 AutonomousFinancialState.Poor,
                 strained: false,
                 dependentChildren: 0,
@@ -47,7 +47,7 @@ public sealed class AutonomousStrategyRulesTests
 
         Assert.False(
             AutonomousStrategyRules.CanActivelyTryForChild(
-                livingChildren: 1,
+                viableDescendants: 1,
                 AutonomousFinancialState.Stable,
                 strained: true,
                 dependentChildren: 1,
@@ -56,7 +56,7 @@ public sealed class AutonomousStrategyRulesTests
 
         Assert.False(
             AutonomousStrategyRules.CanActivelyTryForChild(
-                livingChildren: 2,
+                viableDescendants: 2,
                 AutonomousFinancialState.Secure,
                 strained: false,
                 dependentChildren: 2,

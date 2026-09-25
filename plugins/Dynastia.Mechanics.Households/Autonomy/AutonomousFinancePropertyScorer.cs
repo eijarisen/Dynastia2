@@ -1,3 +1,4 @@
+using System.Globalization;
 using Dynastia.Contracts;
 using static Dynastia.Mechanics.Households.AutonomousScoringHelpers;
 
@@ -28,6 +29,7 @@ internal sealed class AutonomousFinancePropertyScorer : IAutonomousActionScorer
             "farming.sell_farmland" => true,
             "loan.take" => true,
             "household.buy_house" => true,
+            "household.extend_house" => true,
             "farming.buy_farmland" => true,
             "loan.give" => true,
             "household.ask_move_out" => true,
@@ -54,6 +56,9 @@ internal sealed class AutonomousFinancePropertyScorer : IAutonomousActionScorer
 
             "household.buy_house" =>
                 ScoreBuyHouse(option, snapshot),
+
+            "household.extend_house" =>
+                ScoreExtendHouse(option, snapshot),
 
             "farming.buy_farmland" =>
                 ScoreBuyFarmland(option, snapshot),
@@ -156,29 +161,99 @@ internal sealed class AutonomousFinancePropertyScorer : IAutonomousActionScorer
         AutonomousActionCandidate option,
         AutonomousHouseholdSnapshot snapshot)
     {
-        if (snapshot.FinancialState != AutonomousFinancialState.Secure
+        var needsResidence = !snapshot.HasResidence;
+        if (!IsAtLeast(snapshot.FinancialState, needsResidence
+                ? AutonomousFinancialState.Stable
+                : AutonomousFinancialState.Secure)
             || snapshot.HasSeriousMedicalDanger
-            || snapshot.Status?.IsLargeFamilyStrained == true
-            || snapshot.LivingChildCount < 2 && snapshot.HasRealisticReproductivePath)
+            || !needsResidence && (snapshot.Status?.IsLargeFamilyStrained == true
+                || snapshot.Status?.IsOvercrowded == true
+                || snapshot.NeedsFamilyContinuity && snapshot.HasRealisticReproductivePath))
         {
             return null;
         }
 
         var finance = snapshot.Finance;
-        if (finance is null)
+        if (finance is null
+            || !option.Parameters.TryGetValue("houseAskingPrice", out var priceText)
+            || !decimal.TryParse(priceText, NumberStyles.Number,
+                CultureInfo.InvariantCulture, out var price)
+            || price <= 0m)
+        {
             return null;
+        }
 
-        var price = _economy.GetHousePrice(_economy.GetResidenceTown(snapshot.Head));
-        var reserve = snapshot.HasResidence
-            ? snapshot.ExpectedExpenses * 2m
-            : snapshot.ExpectedExpenses;
+        var reserve = snapshot.ExpectedExpenses * (needsResidence ? 1m : 2m);
         if (finance.Wealth - price < reserve)
             return null;
 
+        var capacityHelpsContinuity = needsResidence
+            && snapshot.NeedsFamilyContinuity
+            && snapshot.HasRealisticReproductivePath
+            && NeedsMoreResidentCapacity(snapshot);
+        if (capacityHelpsContinuity)
+        {
+            if (snapshot.Status is not { } status
+                || !option.Parameters.TryGetValue("houseCapacity", out var capacityText)
+                || !int.TryParse(capacityText, out var capacity)
+                || capacity < Math.Min(status.ResidentCount, status.OvercrowdingThreshold))
+            {
+                return null;
+            }
+
+            // A rented home may already be as large as every market offer.
+            // Buying it unlocks extensions; reserve the complete path to one
+            // additional resident before committing to that first step.
+            var requiredExtensions = Math.Max(0, (status.ResidentCount + 2 - capacity) / 2);
+            var extensionCost = Math.Round(price * 0.25m, 0, MidpointRounding.AwayFromZero);
+            if (finance.Wealth - price - requiredExtensions * extensionCost < reserve)
+                return null;
+        }
+
         return WithScore(option, AutonomyCategory.Property,
-            AutonomousPriorityBands.LongTermImprovement,
-            snapshot.HasResidence ? 44 : 78);
+            capacityHelpsContinuity ? ContinuityBand(snapshot)
+                : AutonomousPriorityBands.LongTermImprovement,
+            needsResidence ? 78 : 44);
     }
+
+    private AutonomousActionCandidate? ScoreExtendHouse(
+        AutonomousActionCandidate option,
+        AutonomousHouseholdSnapshot snapshot)
+    {
+        if (!IsAtLeast(snapshot.FinancialState, AutonomousFinancialState.Stable)
+            || snapshot.HasSeriousMedicalDanger
+            || !NeedsMoreResidentCapacity(snapshot)
+            || !option.Parameters.TryGetValue("propertyId", out var idText)
+            || !Guid.TryParse(idText, out var propertyId))
+        {
+            return null;
+        }
+
+        var residence = snapshot.Finance?.Houses.FirstOrDefault(house =>
+            house.Id == propertyId && house.IsResidence);
+        if (residence is null || residence.ExtensionCost <= 0m
+            || snapshot.Finance!.Wealth - residence.ExtensionCost < snapshot.ExpectedExpenses)
+        {
+            return null;
+        }
+
+        return WithScore(option, AutonomyCategory.Property,
+            snapshot.NeedsFamilyContinuity && snapshot.HasRealisticReproductivePath
+                ? ContinuityBand(snapshot)
+                : AutonomousPriorityBands.FamilyStability,
+            snapshot.Status?.IsOvercrowded == true ? 94 : 88);
+    }
+
+    private static bool NeedsMoreResidentCapacity(AutonomousHouseholdSnapshot snapshot) =>
+        snapshot.Status?.IsOvercrowded == true
+        || snapshot.NeedsFamilyContinuity && snapshot.HasRealisticReproductivePath
+            && snapshot.Status is { } status
+            && status.ResidentCount >= status.OvercrowdingThreshold;
+
+    private static int ContinuityBand(AutonomousHouseholdSnapshot snapshot) =>
+        snapshot.NeedsMaleLineContinuity
+            ? AutonomousPriorityBands.MaleLineContinuity
+            : AutonomousPriorityBands.BloodlineContinuity;
 
     private AutonomousActionCandidate? ScoreBuyFarmland(
         AutonomousActionCandidate option,
@@ -188,7 +263,7 @@ internal sealed class AutonomousFinancePropertyScorer : IAutonomousActionScorer
             || snapshot.HasSeriousMedicalDanger
             || snapshot.Status?.IsLargeFamilyStrained == true
             || snapshot.Status?.IsOvercrowded == true
-            || snapshot.LivingChildCount < 2 && snapshot.HasRealisticReproductivePath)
+            || snapshot.NeedsFamilyContinuity && snapshot.HasRealisticReproductivePath)
         {
             return null;
         }
@@ -260,7 +335,7 @@ internal sealed class AutonomousFinancePropertyScorer : IAutonomousActionScorer
         if (snapshot.FinancialState != AutonomousFinancialState.Secure
             || snapshot.HasSeriousMedicalDanger
             || snapshot.Status?.IsLargeFamilyStrained == true
-            || snapshot.LivingChildCount < 2 && snapshot.HasRealisticReproductivePath)
+            || snapshot.NeedsFamilyContinuity && snapshot.HasRealisticReproductivePath)
         {
             return null;
         }
@@ -277,25 +352,69 @@ internal sealed class AutonomousFinancePropertyScorer : IAutonomousActionScorer
         AutonomousActionCandidate option,
         AutonomousHouseholdSnapshot snapshot)
     {
-        var hasSpareHouse = snapshot.Finance?.Houses
-            .Any(house => !house.IsResidence) == true;
-
-        if (hasSpareHouse)
+        // Branch creation starts a separate budget. A free house alone does
+        // not make an unemployed heir or a family with dependants solvent.
+        var family = _context.GetService<IFamilyService>();
+        if (family is null || option.Target.Id == snapshot.Head.Id
+            || option.Target.Id == snapshot.Spouse?.Id
+            || !option.Parameters.TryGetValue("propertyId", out var idText)
+            || !Guid.TryParse(idText, out var propertyId))
         {
-            return WithScore(
-                option,
-                AutonomyCategory.FamilyRelations,
-                AutonomousPriorityBands.FamilyStability,
-                86);
+            return null;
         }
 
-        if (snapshot.Status?.IsOvercrowded != true)
+        var house = snapshot.Finance?.Houses.FirstOrDefault(candidate =>
+            candidate.Id == propertyId && !candidate.IsResidence);
+        var residenceTown = _economy.GetResidenceTown(snapshot.Head);
+        if (house is null || !house.Town.Id.Equals(residenceTown.Id,
+                StringComparison.OrdinalIgnoreCase))
+        {
+            return null;
+        }
+
+        var residents = snapshot.Members.ToDictionary(member => member.Person.Id);
+        var movingIds = new HashSet<Guid>();
+        void AddBranch(IPerson person, bool includeSpouse)
+        {
+            if (person.Id == snapshot.Head.Id || !residents.ContainsKey(person.Id)
+                || !movingIds.Add(person.Id))
+                return;
+            if (includeSpouse && family.GetSpouse(person) is { } spouse)
+                AddBranch(spouse, false);
+            foreach (var child in family.GetChildren(person).Where(child => child.Age < 18))
+                AddBranch(child, false);
+        }
+        AddBranch(option.Target, true);
+        var branch = movingIds.Select(id => residents[id]).ToList();
+        if (branch.Count == 0 || branch.Any(member => member.IsSeriousHealthRisk
+                || member.Person.Id == snapshot.Finance?.NannyId)
+            || house.ResidentCapacity < branch.Count + 1)
+        {
+            return null;
+        }
+
+        var branchIncome = branch.Sum(member => member.Career?.AnnualIncome ?? 0m);
+        var livingCost = _economy.GetLivingCostPerPerson(house.Town);
+        // Keep room in the new household budget for a child or a bad year.
+        if (branchIncome < livingCost * (branch.Count + 1))
             return null;
 
-        return WithScore(
-            option,
-            AutonomyCategory.FamilyRelations,
-            AutonomousPriorityBands.FamilyStability,
-            68);
+        var farm = _context.GetService<IFarmingService>();
+        var farming = farm?.GetSnapshot(snapshot.Head);
+        var farmWorkersLeaving = farm is null ? 0 : branch.Count(member =>
+            farm.IsWorkingFarmWorker(member.Person, snapshot.Head));
+        var farmIncomeLost = farming is null || farming.AvailableWorkers <= 0
+            ? 0m
+            : farming.ExpectedAnnualIncome * Math.Min(1m,
+                (decimal)farmWorkersLeaving / farming.AvailableWorkers);
+        var sourceIncome = snapshot.ProjectedIncome - branchIncome - farmIncomeLost
+            - _economy.GetRentalIncome(house);
+        var remainingExpenses = Math.Max(0m,
+            snapshot.ExpectedExpenses - livingCost * branch.Count);
+        if (sourceIncome < remainingExpenses)
+            return null;
+
+        return WithScore(option, AutonomyCategory.FamilyRelations,
+            AutonomousPriorityBands.FamilyStability, 86);
     }
 }

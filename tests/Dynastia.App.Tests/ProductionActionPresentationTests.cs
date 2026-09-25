@@ -38,6 +38,10 @@ public sealed class ProductionActionPresentationTests
         var definitions = f.Actions.GetCandidateActions(f.Head, f.Head);
         Assert.Equal(35, definitions.Count); // 8 career + 3 education + 10 relations + 6 legacy + 7 connections + Pass.
         AssertParity(definitions);
+        Assert.True(definitions.Single(action => action.Id == "education.private_tutor")
+            .Presentation.ShowInPrimaryActionList);
+        Assert.True(definitions.Single(action => action.Id == "education.help_learning")
+            .Presentation.ShowInPrimaryActionList);
         Assert.Equal(0, f.Random.ConsumedCount);
     }
 
@@ -101,6 +105,7 @@ public sealed class ProductionActionPresentationTests
         Assert.Equal(new[] { "stats.improve_strength", "stats.improve_intellect", "stats.improve_immunity",
             "stats.improve_appeal", "stats.improve_longevity", "stats.improve_fertility" },
             ActionPresentationPolicy.Order(definitions).Select(action => action.Id));
+        Assert.All(definitions, definition => Assert.False(definition.Presentation.ShowInPrimaryActionList));
         Assert.Equal(0, f.Random.ConsumedCount);
     }
 
@@ -119,7 +124,11 @@ public sealed class ProductionActionPresentationTests
             Assert.Equal(legacy.PlacementAnchor, definition.Presentation.PlacementAnchor);
             Assert.Equal(legacy.PlaceAfterAnchor, definition.Presentation.PlaceAfterAnchor);
             Assert.Equal(legacy.PlaceLast, definition.Presentation.PlaceLast);
-            Assert.Equal(legacy.ShowInPrimaryActionList, definition.Presentation.ShowInPrimaryActionList);
+            var expectedPrimaryVisibility =
+                definition.Id.StartsWith("stats.improve_", StringComparison.OrdinalIgnoreCase)
+                    ? false
+                    : legacy.ShowInPrimaryActionList;
+            Assert.Equal(expectedPrimaryVisibility, definition.Presentation.ShowInPrimaryActionList);
         }
 
         // Compare rotations, reversal and incomplete groups without drawing from game RNG.

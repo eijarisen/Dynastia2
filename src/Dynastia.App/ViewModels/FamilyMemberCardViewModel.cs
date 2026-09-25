@@ -5,6 +5,12 @@ namespace Dynastia.App.ViewModels;
 
 public sealed class FamilyMemberCardViewModel
 {
+    private static readonly IBrush NoStressBrush =
+        new SolidColorBrush(Color.Parse("#43A047"));
+
+    private static readonly IBrush ElevatedStressBrush =
+        new SolidColorBrush(Color.Parse("#D6B76A"));
+
     public FamilyMemberCardViewModel(
         IPerson person,
         IFamilyService? family,
@@ -337,7 +343,10 @@ public sealed class FamilyMemberCardViewModel
                 : null;
         StressTooltipText = stressSnapshot is null
             ? string.Empty
-            : $"Stress: {stressSnapshot.Total:0.#}/100";
+            : $"Stress: {stressSnapshot.Total:0}/100";
+        StressBrush = stressSnapshot is { Total: <= 0 }
+            ? NoStressBrush
+            : ElevatedStressBrush;
         ShowStress = stressSnapshot is not null;
 
         var childHappinessSnapshot =
@@ -476,6 +485,9 @@ public sealed class FamilyMemberCardViewModel
 
     public string StressTooltipText { get; } =
         string.Empty;
+
+    public IBrush StressBrush { get; } =
+        ElevatedStressBrush;
 
     public bool ShowStress { get; }
 

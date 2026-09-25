@@ -79,51 +79,127 @@ internal sealed class AdvancedAutonomousHouseholdStrategy : IAutonomousHousehold
             return null;
 
         var highestBand = scoredActions.Max(action => action.PriorityBand);
-        var eligible = scoredActions.Where(action => action.PriorityBand == highestBand).ToList();
-        var lineagePriority = eligible.Max(action => action.LineagePriority);
-        eligible = eligible.Where(action => action.LineagePriority == lineagePriority).ToList();
+        var eligible = scoredActions
+            .Where(action => action.PriorityBand == highestBand)
+            .ToList();
 
-        // Rewards only break ties between safe development choices. They cannot
-        // buy their way above medical care, solvency, continuity or family stability.
-        if (highestBand <= AutonomousPriorityBands.LongTermImprovement)
-        {
-            var bestReward = eligible.Max(action => action.ExpectedGameScore);
-            if (bestReward > 0)
-                eligible = eligible.Where(action => action.ExpectedGameScore == bestReward).ToList();
-        }
+        if (highestBand == AutonomousPriorityBands.SustainableFamilyContinuity)
+            eligible = ApplyFamilyPlanFairness(eligible);
 
         var inBand = eligible
             .OrderByDescending(action => action.Score)
             .ThenBy(action => action.Action.Id, StringComparer.OrdinalIgnoreCase)
             .ThenBy(action => action.Target.Id)
             .ToList();
-
         if (inBand.Count == 0)
             return null;
 
-        var best = inBand[0].Score;
+        var bestScore = inBand[0].Score;
+
+        // Emergency survival choices are ordered by concrete harm reduction.
+        // Do not spend RNG on a weaker rescue when one intervention is already
+        // scored as the better way to keep an existing household member alive.
+        if (highestBand == AutonomousPriorityBands.EmergencySurvival)
+            return inBand[0];
+
+        // Succession may break only a genuine utility tie between otherwise
+        // equivalent family-formation actions. It never upgrades ancestry into
+        // a higher urgency or lets it outrank a better care/family option.
+        if (highestBand == AutonomousPriorityBands.SustainableFamilyContinuity)
+        {
+            var exactBest = inBand
+                .Where(action => Math.Abs(action.Score - bestScore) < 0.000001)
+                .ToList();
+            var bestLineage = exactBest.Max(action => action.LineagePriority);
+            if (bestLineage > 0
+                && exactBest.Any(action => action.LineagePriority < bestLineage))
+            {
+                return exactBest
+                    .Where(action => action.LineagePriority == bestLineage)
+                    .OrderBy(action => action.Action.Id, StringComparer.OrdinalIgnoreCase)
+                    .ThenBy(action => action.Target.Id)
+                    .First();
+            }
+        }
+
         var competitive = inBand
             .Where(action => AutonomousStrategyRules.IsCloseEnoughToCompete(
                 action.Score,
-                best))
+                bestScore))
             .ToList();
+
+        // Score is a final ledger-aware preference only among already-safe,
+        // near-equivalent development/optional choices. It cannot outbid the
+        // household's ordinary utility or any higher survival/family band.
+        if (highestBand <= AutonomousPriorityBands.LongTermImprovement)
+        {
+            var bestReward = competitive.Max(action => action.ExpectedGameScore);
+            if (bestReward > 0)
+            {
+                competitive = competitive
+                    .Where(action => action.ExpectedGameScore == bestReward)
+                    .ToList();
+            }
+        }
 
         if (competitive.Count == 1)
             return competitive[0];
 
-        var totalWeight = competitive.Sum(action => action.Score * action.Score);
-        var roll = _random.NextDouble() * totalWeight;
-
-        foreach (var action in competitive)
+        var weighted = competitive
+            .Select(action => (Action: action, Weight: Math.Pow(Math.Max(1.0, action.Score), 2)))
+            .ToList();
+        var total = weighted.Sum(item => item.Weight);
+        var roll = _random.NextDouble() * total;
+        foreach (var item in weighted)
         {
-            var weight = action.Score * action.Score;
-            if (roll < weight)
-                return action;
-
-            roll -= weight;
+            roll -= item.Weight;
+            if (roll < 0)
+                return item.Action;
         }
 
-        return competitive[^1];
+        return weighted[^1].Action;
+    }
+
+    private static List<AutonomousActionCandidate> ApplyFamilyPlanFairness(
+        List<AutonomousActionCandidate> candidates)
+    {
+        var planned = candidates.Where(candidate => candidate.PlanGoalId is not null).ToList();
+        if (planned.Count == 0)
+            return candidates;
+
+        var maxDeadline = planned.Max(candidate => candidate.PlanDeadlineUrgency);
+        if (maxDeadline > 0)
+        {
+            planned = planned
+                .Where(candidate => candidate.PlanDeadlineUrgency == maxDeadline)
+                .ToList();
+        }
+
+        var overdue = planned.Where(candidate => candidate.PlanIsOverdue).ToList();
+        if (overdue.Count > 0)
+            planned = overdue;
+
+        var maxMissed = planned.Max(candidate => candidate.PlanMissedSafeOpportunities);
+        planned = planned
+            .Where(candidate => candidate.PlanMissedSafeOpportunities == maxMissed)
+            .ToList();
+
+        var readyYears = planned
+            .Where(candidate => candidate.PlanFirstReadyYear is not null)
+            .Select(candidate => candidate.PlanFirstReadyYear!.Value)
+            .ToList();
+        if (readyYears.Count > 0)
+        {
+            var oldestReady = readyYears.Min();
+            planned = planned
+                .Where(candidate => candidate.PlanFirstReadyYear == oldestReady)
+                .ToList();
+        }
+
+        var oldestLastServed = planned.Min(candidate => candidate.PlanLastServedYear ?? int.MinValue);
+        return planned
+            .Where(candidate => (candidate.PlanLastServedYear ?? int.MinValue) == oldestLastServed)
+            .ToList();
     }
 
     public bool QueueAction(
@@ -142,31 +218,25 @@ internal sealed class AdvancedAutonomousHouseholdStrategy : IAutonomousHousehold
         AutonomousActionCandidate action,
         AutonomousHouseholdSnapshot snapshot)
     {
-        if (action.PriorityBand < AutonomousPriorityBands.FamilyStability)
-            return 0;
-
-        // Prefer threatened male-line carriers and their reproductive partners
-        // within the same urgency band; an acute emergency remains first.
-        var member = snapshot.Members.FirstOrDefault(m => m.Person.Id == action.Target.Id);
-        if (member is null || action.Category is not
-            (AutonomyCategory.Survival or AutonomyCategory.ChildProtection))
-            return 0;
-
-        var medical = action.Action.Id is "wellbeing.heal_relative" or "wellbeing.therapy"
-            or "wellbeing.recover" or "career.ask_to_recover"
-            or "stats.improve_immunity" or "stats.improve_longevity";
-        if (!medical)
-            return 0;
-
-        var priority = member.IsMaleLineage ? 3 : member.IsBloodline ? 2 : 0;
-        if (snapshot.Spouse?.Id == member.Person.Id && snapshot.HasRealisticReproductivePath)
+        if (action.PriorityBand != AutonomousPriorityBands.SustainableFamilyContinuity
+            || action.Category is not (AutonomyCategory.Continuity or AutonomyCategory.FamilyRelations))
         {
-            if (snapshot.NeedsMaleLineContinuity)
-                priority = Math.Max(priority, 3);
-            else if (snapshot.NeedsBloodlineContinuity)
-                priority = Math.Max(priority, 2);
+            return 0;
         }
-        return priority + (member.IsImmediateHealthRisk ? 10 : 0);
+
+        // Only target-specific adult family formation can use succession as a
+        // last tie-break. Medical care, child protection and conception never
+        // receive ancestry priority.
+        if (action.Action.Id is not ("relationship.marry_off_son"
+            or "relationship.marry_off_daughter"
+            or "household.ask_move_out"))
+        {
+            return 0;
+        }
+
+        var member = snapshot.Members.FirstOrDefault(candidate =>
+            candidate.Person.Id == action.Target.Id);
+        return member is { IsMaleLineage: true } ? 1 : 0;
     }
 
     private AutonomousActionCandidate ApplyPersonality(

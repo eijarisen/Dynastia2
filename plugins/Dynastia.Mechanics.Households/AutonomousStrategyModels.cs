@@ -28,9 +28,12 @@ internal static class AutonomousPriorityBands
 {
     public const int EmergencySurvival = 1000;
     public const int HouseholdSolvency = 800;
-    public const int MaleLineContinuity = 700;
-    public const int BloodlineContinuity = 650;
-    public const int FamilyContinuity = BloodlineContinuity;
+    public const int SustainableFamilyContinuity = 650;
+    // Compatibility aliases intentionally resolve to the same band. Ancestry
+    // is a diagnostic/tie-break fact, never a separate autonomous urgency.
+    public const int MaleLineContinuity = SustainableFamilyContinuity;
+    public const int BloodlineContinuity = SustainableFamilyContinuity;
+    public const int FamilyContinuity = SustainableFamilyContinuity;
     public const int FamilyStability = 500;
     public const int LongTermImprovement = 300;
     public const int OptionalDevelopment = 100;
@@ -74,9 +77,19 @@ internal sealed record AutonomousHouseholdSnapshot(
     double ReproductiveUrgency,
     IReadOnlyList<RelatedFamilyHouseholdInfo> RelatedHouseholds)
 {
-    // Descendants include adults living elsewhere and descendants of deceased
-    // children. Household membership and direct child counts are insufficient
-    // to determine whether the dynasty can continue.
+    // Existing-child commitments are deliberately separate from biological
+    // succession diagnostics. An ill, infertile, adult, adopted or departed
+    // child remains a family commitment and never creates a replacement-birth
+    // quota merely by becoming a weak succession carrier.
+    public IReadOnlyList<IPerson> ExistingChildren { get; init; } = [];
+    public int ExistingChildCount => ExistingChildren.Count;
+    public bool HasMaterialUnmetDependentNeed { get; init; }
+    public bool HasAdultFamilyFormationNeed { get; init; }
+    public bool HasEstablishedDescendantFamily { get; init; }
+    public bool NeedsFamilyExpansion { get; init; }
+
+    // Descendants remain available for canonical succession diagnostics and a
+    // final tie-break between otherwise equivalent family-formation plans.
     public IReadOnlyList<IPerson> LivingMaleLineDescendants { get; init; } = [];
     public IReadOnlyList<IPerson> LivingBloodlineDescendants { get; init; } = [];
     public int ViableMaleLineDescendantCount { get; init; }
@@ -85,7 +98,12 @@ internal sealed record AutonomousHouseholdSnapshot(
     public bool HasSecuredBloodline { get; init; }
     public bool NeedsMaleLineContinuity { get; init; }
     public bool NeedsBloodlineContinuity { get; init; }
-    public bool NeedsFamilyContinuity => NeedsMaleLineContinuity || NeedsBloodlineContinuity;
+
+    public bool NeedsFamilyContinuity =>
+        NeedsFamilyExpansion || HasAdultFamilyFormationNeed;
+
+    public decimal ProtectedPlanReserve { get; init; }
+    public bool HasProtectedFamilyPlan { get; init; }
 }
 
 internal sealed record AutonomousActionCandidate(
@@ -99,4 +117,11 @@ internal sealed record AutonomousActionCandidate(
 {
     public int LineagePriority { get; init; }
     public double ExpectedGameScore { get; init; }
+    public string? PlanGoalId { get; init; }
+    public Guid? PlanBeneficiaryId { get; init; }
+    public int? PlanFirstReadyYear { get; init; }
+    public int? PlanLastServedYear { get; init; }
+    public int PlanMissedSafeOpportunities { get; init; }
+    public bool PlanIsOverdue { get; init; }
+    public int PlanDeadlineUrgency { get; init; }
 }

@@ -150,18 +150,30 @@ internal sealed class AutonomousCareerEducationScorer : IAutonomousActionScorer
             jobValue,
             alternative);
 
-        return snapshot.FinancialState switch
+        if (snapshot.FinancialState is AutonomousFinancialState.Critical)
         {
-            AutonomousFinancialState.Critical => WithScore(option,
-                AutonomyCategory.Solvency,
-                AutonomousPriorityBands.HouseholdSolvency, 95 + bonus),
-            AutonomousFinancialState.Poor => WithScore(option,
-                AutonomyCategory.Solvency,
-                AutonomousPriorityBands.HouseholdSolvency, 90 + bonus),
-            _ => WithScore(option,
-                AutonomyCategory.CareerDevelopment,
-                AutonomousPriorityBands.LongTermImprovement, 55 + bonus)
-        };
+            return WithScore(option, AutonomyCategory.Solvency,
+                AutonomousPriorityBands.HouseholdSolvency, 95 + bonus);
+        }
+
+        if (snapshot.FinancialState is AutonomousFinancialState.Poor)
+        {
+            return WithScore(option, AutonomyCategory.Solvency,
+                AutonomousPriorityBands.HouseholdSolvency, 90 + bonus);
+        }
+
+        // Employment is not merely development when it is the missing legal
+        // prerequisite for an adult child's independent household. Give the
+        // prerequisite the same family-formation urgency as the move itself.
+        if (SupportsAdultFamilyFormation(snapshot, target))
+        {
+            return WithScore(option, AutonomyCategory.Continuity,
+                AutonomousPriorityBands.SustainableFamilyContinuity,
+                86 + bonus);
+        }
+
+        return WithScore(option, AutonomyCategory.CareerDevelopment,
+            AutonomousPriorityBands.LongTermImprovement, 55 + bonus);
     }
 
     private AutonomousActionCandidate? ScoreFindAnotherJob(
@@ -200,6 +212,13 @@ internal sealed class AutonomousCareerEducationScorer : IAutonomousActionScorer
 
         if (IsAtLeast(snapshot.FinancialState, AutonomousFinancialState.Stable))
         {
+            if (SupportsAdultFamilyFormation(snapshot, member))
+            {
+                return WithScore(option, AutonomyCategory.Continuity,
+                    AutonomousPriorityBands.SustainableFamilyContinuity,
+                    78 + bonus);
+            }
+
             return WithScore(option, AutonomyCategory.CareerDevelopment,
                 AutonomousPriorityBands.LongTermImprovement, 58 + bonus);
         }
@@ -212,13 +231,15 @@ internal sealed class AutonomousCareerEducationScorer : IAutonomousActionScorer
         AutonomousHouseholdSnapshot snapshot)
     {
         if (!IsAtLeast(snapshot.FinancialState, AutonomousFinancialState.Stable)
-            || snapshot.HasSeriousMedicalDanger)
+            || snapshot.HasImmediateMedicalDanger || snapshot.HasMaterialUnmetDependentNeed
+            || snapshot.NeedsFamilyContinuity)
         {
             return null;
         }
 
         var cost = option.Action.DisplayCost ?? 5000m;
-        if ((snapshot.Finance?.Wealth ?? 0m) - cost < snapshot.ExpectedExpenses * 2m)
+        if ((snapshot.Finance?.Wealth ?? 0m) - cost < snapshot.ExpectedExpenses * 2m
+            || !LeavesReserve(snapshot, cost, snapshot.ExpectedExpenses * 2m))
             return null;
 
         return WithScore(option, AutonomyCategory.PersonalDevelopment,
@@ -233,14 +254,14 @@ internal sealed class AutonomousCareerEducationScorer : IAutonomousActionScorer
         if (target is null || !target.IsChild
             || snapshot.FinancialState is AutonomousFinancialState.Critical
                 or AutonomousFinancialState.Poor
-            || snapshot.HasSeriousMedicalDanger)
+            || snapshot.HasImmediateMedicalDanger || snapshot.HasMaterialUnmetDependentNeed)
         {
             return null;
         }
 
         return WithScore(option, AutonomyCategory.ChildProtection,
-            AutonomousPriorityBands.LongTermImprovement,
-            snapshot.HasRealisticReproductivePath ? 52 : 60);
+            AutonomousPriorityBands.FamilyStability,
+            snapshot.NeedsFamilyExpansion ? 52 : 60);
     }
 
     private AutonomousActionCandidate? ScorePrivateTutor(
@@ -250,14 +271,16 @@ internal sealed class AutonomousCareerEducationScorer : IAutonomousActionScorer
     {
         if (target is null
             || !target.IsChild
-            || snapshot.HasSeriousMedicalDanger
+            || snapshot.HasImmediateMedicalDanger || snapshot.HasMaterialUnmetDependentNeed
             || !IsAtLeast(snapshot.FinancialState, AutonomousFinancialState.Stable))
         {
             return null;
         }
 
+        var tutorCost = option.Action.DisplayCost ?? 0m;
         var reserve = (snapshot.Finance?.Wealth ?? 0m) - snapshot.ExpectedExpenses;
-        if (reserve < 6000m)
+        if (reserve < 6000m
+            || !LeavesReserve(snapshot, tutorCost, snapshot.ExpectedExpenses))
             return null;
 
         var intellect = _stats.GetStats(target.Person)
@@ -265,7 +288,7 @@ internal sealed class AutonomousCareerEducationScorer : IAutonomousActionScorer
         return WithScore(
             option,
             AutonomyCategory.ChildProtection,
-            AutonomousPriorityBands.LongTermImprovement,
+            AutonomousPriorityBands.FamilyStability,
             34 + intellect * 4);
     }
 
@@ -276,7 +299,7 @@ internal sealed class AutonomousCareerEducationScorer : IAutonomousActionScorer
         var head = snapshot.Members.First(member => member.Person.Id == snapshot.Head.Id);
         if (head.Health.Percentage < 90
             || snapshot.Status?.IsLargeFamilyStrained == true
-            || snapshot.HasSeriousMedicalDanger
+            || snapshot.HasImmediateMedicalDanger || snapshot.HasMaterialUnmetDependentNeed
             || snapshot.NeedsFamilyContinuity
             || snapshot.DependentChildCount > 0
             || snapshot.MarriageSatisfaction is < 80
@@ -376,18 +399,27 @@ internal sealed class AutonomousCareerEducationScorer : IAutonomousActionScorer
 
         if (!current.IsEmployed)
         {
-            return snapshot.FinancialState switch
+            if (snapshot.FinancialState is AutonomousFinancialState.Critical)
             {
-                AutonomousFinancialState.Critical => WithScore(option,
-                    AutonomyCategory.Solvency,
-                    AutonomousPriorityBands.HouseholdSolvency, 96 + bonus),
-                AutonomousFinancialState.Poor => WithScore(option,
-                    AutonomyCategory.Solvency,
-                    AutonomousPriorityBands.HouseholdSolvency, 88 + bonus),
-                _ => WithScore(option,
-                    AutonomyCategory.CareerDevelopment,
-                    AutonomousPriorityBands.LongTermImprovement, 60 + bonus)
-            };
+                return WithScore(option, AutonomyCategory.Solvency,
+                    AutonomousPriorityBands.HouseholdSolvency, 96 + bonus);
+            }
+
+            if (snapshot.FinancialState is AutonomousFinancialState.Poor)
+            {
+                return WithScore(option, AutonomyCategory.Solvency,
+                    AutonomousPriorityBands.HouseholdSolvency, 88 + bonus);
+            }
+
+            if (SupportsAdultFamilyFormation(snapshot, target))
+            {
+                return WithScore(option, AutonomyCategory.Continuity,
+                    AutonomousPriorityBands.SustainableFamilyContinuity,
+                    82 + bonus);
+            }
+
+            return WithScore(option, AutonomyCategory.CareerDevelopment,
+                AutonomousPriorityBands.LongTermImprovement, 60 + bonus);
         }
 
         return WithScore(option, AutonomyCategory.CareerDevelopment,
@@ -399,9 +431,9 @@ internal sealed class AutonomousCareerEducationScorer : IAutonomousActionScorer
         AutonomousHouseholdSnapshot snapshot)
     {
         if (!IsAtLeast(snapshot.FinancialState, AutonomousFinancialState.Stable)
-            || snapshot.HasSeriousMedicalDanger
+            || snapshot.HasImmediateMedicalDanger || snapshot.HasMaterialUnmetDependentNeed
             || snapshot.Status?.IsLargeFamilyStrained == true
-            || snapshot.NeedsFamilyContinuity && snapshot.HasRealisticReproductivePath)
+            || snapshot.NeedsFamilyContinuity)
         {
             return null;
         }
@@ -409,6 +441,15 @@ internal sealed class AutonomousCareerEducationScorer : IAutonomousActionScorer
         return WithScore(option, AutonomyCategory.CareerDevelopment,
             AutonomousPriorityBands.LongTermImprovement, 38);
     }
+
+
+    private static bool SupportsAdultFamilyFormation(
+        AutonomousHouseholdSnapshot snapshot,
+        AutonomousMemberSnapshot? target) =>
+        target is not null
+        && target.Person.Age >= 18
+        && snapshot.HasAdultFamilyFormationNeed
+        && snapshot.ExistingChildren.Any(child => child.Id == target.Person.Id);
 
     private decimal GetSelectedJobValue(
         AutonomousActionCandidate option,

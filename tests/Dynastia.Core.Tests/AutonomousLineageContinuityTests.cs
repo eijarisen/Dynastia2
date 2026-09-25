@@ -6,7 +6,7 @@ namespace Dynastia.Core.Tests;
 public sealed partial class AutonomousStrategyCharacterizationTests
 {
     [Fact]
-    public void TwoDaughtersSecureBloodlineButStillLeaveMaleLineWithoutAnHeir()
+    public void TwoLivingDaughtersReachTheDeliberateExpansionSoftStop()
     {
         using var f = new Fixture();
         var wife = LineageWife(f);
@@ -15,185 +15,194 @@ public sealed partial class AutonomousStrategyCharacterizationTests
 
         var snapshot = BuildLineageSnapshot(f, [wife, first, second]);
 
-        Assert.Equal(2, snapshot.LivingChildCount);
+        Assert.Equal(2, snapshot.ExistingChildCount);
         Assert.Equal(2, snapshot.ViableBloodlineDescendantCount);
-        Assert.Empty(snapshot.LivingMaleLineDescendants);
-        Assert.True(snapshot.HasSecuredBloodline);
-        Assert.False(snapshot.HasSecuredMaleLine);
-        Assert.True(snapshot.NeedsMaleLineContinuity);
-        Assert.True(snapshot.CanActivelyTryForChild);
-        var action = Assert.IsType<AutonomousActionCandidate>(f.Strategy.ScoreAction(
+        Assert.True(snapshot.NeedsMaleLineContinuity); // diagnostic only
+        Assert.False(snapshot.NeedsFamilyExpansion);
+        Assert.False(snapshot.CanActivelyTryForChild);
+        Assert.Null(f.Strategy.ScoreAction(
             Candidate("reproduction.try_for_baby", f.Head), snapshot));
-        Assert.Equal(AutonomousPriorityBands.MaleLineContinuity, action.PriorityBand);
     }
 
-    [Fact]
-    public void ASecondViableMaleDescendantSuppliesTheSingleHeirBuffer()
+    [Theory]
+    [InlineData(Sex.Male)]
+    [InlineData(Sex.Female)]
+    public void OneHealthyChildLeavesRoomForOneSustainableSecondChildRegardlessOfSex(Sex childSex)
     {
         using var f = new Fixture();
         var wife = LineageWife(f);
-        var first = LineageChild(f, wife, 7, Sex.Male);
-        var oneHeir = BuildLineageSnapshot(f, [wife, first]);
-        Assert.Equal(1, oneHeir.ViableMaleLineDescendantCount);
-        Assert.True(oneHeir.CanActivelyTryForChild);
+        var child = LineageChild(f, wife, 7, childSex);
 
-        var second = LineageChild(f, wife, 4, Sex.Male);
-        var buffered = BuildLineageSnapshot(f, [wife, first, second]);
-        Assert.True(buffered.HasSecuredMaleLine);
-        Assert.False(buffered.NeedsFamilyContinuity);
-        Assert.False(buffered.CanActivelyTryForChild);
-        Assert.Null(f.Strategy.ScoreAction(Candidate("reproduction.try_for_baby", f.Head), buffered));
+        var snapshot = BuildLineageSnapshot(f, [wife, child]);
+
+        Assert.Equal(1, snapshot.ExistingChildCount);
+        Assert.True(snapshot.NeedsFamilyExpansion);
+        Assert.True(snapshot.CanActivelyTryForChild);
+        var action = Assert.IsType<AutonomousActionCandidate>(f.Strategy.ScoreAction(
+            Candidate("reproduction.try_for_baby", f.Head), snapshot));
+        Assert.Equal(AutonomousPriorityBands.SustainableFamilyContinuity, action.PriorityBand);
+        Assert.Equal(0, action.LineagePriority);
     }
 
     [Fact]
-    public void GrandsonsLivingElsewhereCountEvenWhenTheirFatherHasDied()
+    public void SickChildRemainsACommitmentAndBlocksDiscretionarySecondBirth()
+    {
+        using var f = new Fixture();
+        var wife = LineageWife(f);
+        var child = LineageChild(f, wife, 7, Sex.Female);
+
+        var snapshot = BuildLineageSnapshot(
+            f,
+            [wife, child],
+            health: new Dictionary<Guid, double> { [child.Id] = 45 });
+
+        Assert.Equal(1, snapshot.ExistingChildCount);
+        Assert.True(snapshot.HasMaterialUnmetDependentNeed);
+        Assert.False(snapshot.CanActivelyTryForChild);
+        Assert.Null(f.Strategy.ScoreAction(
+            Candidate("reproduction.try_for_baby", f.Head), snapshot));
+    }
+
+    [Fact]
+    public void InfertilityDoesNotRemoveLivingChildrenFromTheSoftStop()
+    {
+        using var f = new Fixture();
+        var wife = LineageWife(f);
+        var first = LineageChild(f, wife, 20, Sex.Male);
+        var second = LineageChild(f, wife, 18, Sex.Female);
+
+        var snapshot = BuildLineageSnapshot(
+            f,
+            [wife, first, second],
+            fertility: new Dictionary<Guid, int> { [first.Id] = 0, [second.Id] = 0 });
+
+        Assert.Equal(2, snapshot.ExistingChildCount);
+        Assert.False(snapshot.NeedsFamilyExpansion);
+        Assert.False(snapshot.CanActivelyTryForChild);
+        Assert.True(snapshot.NeedsMaleLineContinuity); // may remain true, but cannot trigger replacement births
+    }
+
+    [Fact]
+    public void SpousesExistingChildrenCountTowardTheHouseholdsFamilyCommitment()
+    {
+        using var f = new Fixture();
+        var wife = LineageWife(f);
+        var otherFather = f.World.Person(40);
+        var stepchild = f.World.Person(10, sex: Sex.Female);
+        stepchild.Tags.Remove("family.bloodline");
+        stepchild.Tags.Remove("lineage.male");
+        f.World.Family.SetParents(stepchild, otherFather, wife);
+
+        var snapshot = BuildLineageSnapshot(f, [wife, stepchild]);
+
+        Assert.Contains(snapshot.ExistingChildren, child => child.Id == stepchild.Id);
+        Assert.Equal(1, snapshot.ExistingChildCount);
+    }
+
+    [Fact]
+    public void RecognizedAdoptedChildrenCountTowardTheHouseholdsFamilyCommitment()
+    {
+        using var f = new Fixture();
+        var wife = LineageWife(f);
+        var adopted = f.World.Person(8, sex: Sex.Female);
+        adopted.Tags.Remove("family.bloodline");
+        adopted.Tags.Remove("lineage.male");
+        f.Context.AddService<IAdoptionService>(new AdoptionStub(adopted.Id, f.Head.Id));
+
+        var snapshot = BuildLineageSnapshot(f, [wife, adopted]);
+
+        Assert.Contains(snapshot.ExistingChildren, child => child.Id == adopted.Id);
+        Assert.Equal(1, snapshot.ExistingChildCount);
+    }
+
+    [Fact]
+    public void EstablishedDescendantFamilyPreventsParentsFromStartingOverAfterDirectChildDeath()
     {
         using var f = new Fixture();
         var wife = LineageWife(f);
         var deadSon = f.World.Person(27, alive: false);
         f.World.Family.SetParents(deadSon, f.Head, wife);
-        var firstGrandson = f.World.Person(6);
-        var secondGrandson = f.World.Person(3);
-        f.World.Family.SetParents(firstGrandson, deadSon, null);
-        f.World.Family.SetParents(secondGrandson, deadSon, null);
+        var daughterInLaw = f.World.Person(26, sex: Sex.Female);
+        f.World.Family.SetSpouses(deadSon, daughterInLaw, 1900);
+        deadSon.Tags.Add("state.dead");
+        var grandson = f.World.Person(3);
+        f.World.Family.SetParents(grandson, deadSon, daughterInLaw);
 
         var snapshot = BuildLineageSnapshot(f, [wife]);
 
-        Assert.Empty(snapshot.LivingChildren);
-        Assert.Equal(new[] { firstGrandson.Id, secondGrandson.Id },
-            snapshot.LivingMaleLineDescendants.Select(person => person.Id));
-        Assert.Equal(2, snapshot.ViableMaleLineDescendantCount);
-        Assert.True(snapshot.HasSecuredMaleLine);
+        Assert.Empty(snapshot.ExistingChildren);
+        Assert.True(snapshot.HasEstablishedDescendantFamily);
+        Assert.False(snapshot.NeedsFamilyExpansion);
         Assert.False(snapshot.CanActivelyTryForChild);
-        Assert.Equal(0, snapshot.ReproductiveUrgency);
+        Assert.Contains(snapshot.LivingMaleLineDescendants, person => person.Id == grandson.Id);
     }
 
     [Fact]
-    public void AdoptedHouseholdChildrenAndDaughtersSonsDoNotBecomeMaleLineHeirs()
+    public void ResidentAdultChildFormationPrecedesAParentsDiscretionarySecondBirth()
     {
         using var f = new Fixture();
         var wife = LineageWife(f);
-        var daughter = LineageChild(f, wife, 21, Sex.Female);
-        var grandson = f.World.Person(2);
-        grandson.Tags.Remove("lineage.male");
-        f.World.Family.SetParents(grandson, null, daughter);
-        var adopted = f.World.Person(5);
-        adopted.Tags.Remove("lineage.male");
-        adopted.Tags.Remove("family.bloodline");
+        var adult = LineageChild(f, wife, 22, Sex.Female);
 
-        var snapshot = BuildLineageSnapshot(f, [wife, daughter, adopted]);
+        var snapshot = BuildLineageSnapshot(f, [wife, adult]);
 
-        Assert.Empty(snapshot.LivingMaleLineDescendants);
-        Assert.Contains(snapshot.LivingBloodlineDescendants, person => person.Id == grandson.Id);
-        Assert.DoesNotContain(snapshot.LivingBloodlineDescendants, person => person.Id == adopted.Id);
-        Assert.True(snapshot.NeedsMaleLineContinuity);
-        Assert.True(snapshot.CanActivelyTryForChild);
-    }
-
-    [Theory]
-    [InlineData("infertile")]
-    [InlineData("elderly")]
-    [InlineData("seriously-ill")]
-    public void AFragileLivingMaleDoesNotFalselySecureTheContinuationBuffer(string risk)
-    {
-        using var f = new Fixture();
-        var wife = LineageWife(f);
-        var first = LineageChild(f, wife, 7, Sex.Male);
-        var fragile = LineageChild(f, wife, risk == "elderly" ? 65 : 20, Sex.Male);
-        var fertility = risk == "infertile" ? new Dictionary<Guid, int> { [fragile.Id] = 0 } : null;
-        var health = risk == "seriously-ill" ? new Dictionary<Guid, double> { [fragile.Id] = 35 } : null;
-
-        var snapshot = BuildLineageSnapshot(f, [wife, first, fragile], fertility: fertility, health: health);
-
-        Assert.Equal(2, snapshot.LivingMaleLineDescendants.Count);
-        Assert.Equal(1, snapshot.ViableMaleLineDescendantCount);
-        Assert.True(snapshot.NeedsMaleLineContinuity);
-    }
-
-    [Fact]
-    public void MinorHeirsAreAssessedProspectivelyBeforeAdultMarriageRulesApply()
-    {
-        using var f = new Fixture();
-        var wife = LineageWife(f);
-        var first = LineageChild(f, wife, 4, Sex.Male);
-        var second = LineageChild(f, wife, 8, Sex.Male);
-        first.Tags.Add("sexuality.homosexual");
-
-        var snapshot = BuildLineageSnapshot(f, [wife, first, second]);
-
-        Assert.Equal(2, snapshot.ViableMaleLineDescendantCount);
-        Assert.True(snapshot.HasSecuredMaleLine);
-    }
-
-    [Theory]
-    [InlineData(AutonomousFinancialState.Poor, false, 6)]
-    [InlineData(AutonomousFinancialState.Critical, false, 6)]
-    [InlineData(AutonomousFinancialState.Secure, true, 6)]
-    [InlineData(AutonomousFinancialState.Secure, false, 2)]
-    public void LineageUrgencyNeverOverridesPovertyStrainOrDependentCapacity(
-        AutonomousFinancialState financialState, bool strained, int capacity)
-    {
-        Assert.False(AutonomousStrategyRules.CanActivelyTryForChild(
-            viableDescendants: 0, financialState, strained,
-            dependentChildren: 2, effectiveCapacity: capacity, hasReproductivePath: true));
-    }
-
-    [Fact]
-    public void SupportedStepchildrenUseCapacityEvenThoughTheyAreNotTheHeadsDescendants()
-    {
-        using var f = new Fixture();
-        var wife = LineageWife(f);
-        var stepchild = f.World.Person(9);
-        stepchild.Tags.Remove("family.bloodline");
-        stepchild.Tags.Remove("lineage.male");
-
-        var snapshot = BuildLineageSnapshot(f, [wife, stepchild], capacity: 1);
-
-        Assert.Equal(0, snapshot.LivingChildCount);
-        Assert.Equal(1, snapshot.DependentChildCount);
-        Assert.True(snapshot.NeedsMaleLineContinuity);
+        Assert.Equal(1, snapshot.ExistingChildCount);
+        Assert.True(snapshot.NeedsFamilyExpansion);
+        Assert.True(snapshot.HasAdultFamilyFormationNeed);
         Assert.False(snapshot.CanActivelyTryForChild);
-    }
-
-    [Theory]
-    [InlineData(1)]
-    [InlineData(2)]
-    public void AnotherBirthCannotOvercrowdAHomeDespiteAmpleChildcareCapacity(int residentCapacity)
-    {
-        using var f = new Fixture();
-        var wife = LineageWife(f);
-
-        var snapshot = BuildLineageSnapshot(f, [wife], residentCapacity: residentCapacity);
-
-        Assert.True(snapshot.NeedsMaleLineContinuity);
-        Assert.False(snapshot.CanActivelyTryForChild);
+        Assert.Null(f.Strategy.ScoreAction(
+            Candidate("reproduction.try_for_baby", f.Head), snapshot));
+        var marriage = Assert.IsType<AutonomousActionCandidate>(f.Strategy.ScoreAction(
+            Candidate("relationship.marry_off_daughter", adult), snapshot));
+        Assert.Equal(AutonomousPriorityBands.SustainableFamilyContinuity, marriage.PriorityBand);
     }
 
     [Fact]
-    public void SeriousIllnessSuppressesAnotherBirthEvenWhenNoTreatmentIsAvailable()
+    public void StableChronicIllnessDoesNotFreezeAnAdultChildMarriagePlan()
     {
         using var f = new Fixture();
         var wife = LineageWife(f);
-        var snapshot = BuildLineageSnapshot(f, [wife],
-            health: new Dictionary<Guid, double> { [f.Head.Id] = 45 });
+        var adult = LineageChild(f, wife, 22, Sex.Female);
+        var snapshot = BuildLineageSnapshot(f, [wife, adult]) with
+        {
+            HasSeriousMedicalDanger = true,
+            HasImmediateMedicalDanger = false,
+            HasMaterialUnmetDependentNeed = false
+        };
 
-        Assert.True(snapshot.NeedsMaleLineContinuity);
-        Assert.Null(f.Strategy.ScoreAction(Candidate("reproduction.try_for_baby", f.Head), snapshot));
+        Assert.NotNull(f.Strategy.ScoreAction(
+            Candidate("relationship.marry_off_daughter", adult), snapshot));
     }
 
     [Fact]
-    public void AChildMustFitTheProjectedBudgetAfterTheirLivingCostsAreAdded()
+    public void MaleLineIsOnlyAFinalTieBreakBetweenEquivalentAdultFamilyPlans()
     {
         using var f = new Fixture();
-        var wife = LineageWife(f);
+        var son = f.World.Person(22);
+        var daughter = f.World.Person(22, sex: Sex.Female);
+        var snapshot = f.Snapshot with
+        {
+            ExistingChildren = [son, daughter],
+            HasAdultFamilyFormationNeed = true,
+            Members =
+            [
+                Member(f.Head),
+                Member(son) with { IsBloodline = true, IsMaleLineage = true },
+                Member(daughter) with { IsBloodline = true }
+            ]
+        };
 
-        var snapshot = BuildLineageSnapshot(f, [wife], projectedIncome: 2300m);
+        var male = Assert.IsType<AutonomousActionCandidate>(f.Strategy.ScoreAction(
+            Candidate("relationship.marry_off_son", son), snapshot));
+        var female = Assert.IsType<AutonomousActionCandidate>(f.Strategy.ScoreAction(
+            Candidate("relationship.marry_off_daughter", daughter), snapshot));
 
-        Assert.Equal(AutonomousFinancialState.Secure, snapshot.FinancialState);
-        Assert.True(snapshot.NeedsMaleLineContinuity);
-        Assert.True(snapshot.HasRealisticReproductivePath);
-        Assert.False(snapshot.CanActivelyTryForChild);
-        Assert.True(BuildLineageSnapshot(f, [wife], projectedIncome: 2600m).CanActivelyTryForChild);
+        Assert.Equal(male.PriorityBand, female.PriorityBand);
+        Assert.Equal(male.Score, female.Score);
+        Assert.Equal(1, male.LineagePriority);
+        Assert.Equal(0, female.LineagePriority);
+        Assert.Same(male, f.Strategy.ChooseAction([female, male]));
+        Assert.Equal(0, f.World.Random.ConsumedCount);
     }
 
     [Theory]
@@ -227,67 +236,6 @@ public sealed partial class AutonomousStrategyCharacterizationTests
 
         Assert.False(snapshot.HasRealisticReproductivePath);
         Assert.False(snapshot.CanActivelyTryForChild);
-    }
-
-    [Fact]
-    public void SeparatedSpousesHaveNoConceptionPathUntilTheyShareAHousehold()
-    {
-        using var f = new Fixture();
-        var wife = LineageWife(f);
-        var snapshot = BuildLineageSnapshot(f, [wife], separatedPartner: wife.Id);
-        Assert.False(snapshot.HasRealisticReproductivePath);
-        Assert.False(snapshot.CanActivelyTryForChild);
-    }
-
-    [Fact]
-    public void InfertileUnmarriedManDoesNotSearchForAReproductiveSpouse()
-    {
-        using var f = new Fixture();
-        var snapshot = BuildLineageSnapshot(f, [],
-            fertility: new Dictionary<Guid, int> { [f.Head.Id] = 0 });
-        Assert.False(snapshot.HasRealisticReproductivePath);
-        Assert.False(new AutonomousReproductiveEligibility(f.World.Family)
-            .CanSearchForReproductiveSpouse(f.Head, fertility: 0));
-    }
-
-    [Fact]
-    public void MaleLineMarriageIsPrioritizedBeforeBloodlineMarriageAndDevelopment()
-    {
-        using var f = new Fixture();
-        var son = f.World.Person(22);
-        var daughter = f.World.Person(24, sex: Sex.Female);
-        var scorer = new AutonomousFamilyContinuityScorer(f.Context, f.World.Family,
-            LineageStats(), new AutonomousReproductiveEligibility(f.World.Family));
-
-        var male = Assert.IsType<AutonomousActionCandidate>(scorer.Score(
-            Candidate("relationship.marry_off_son", son), f.Snapshot));
-        var blood = Assert.IsType<AutonomousActionCandidate>(scorer.Score(
-            Candidate("relationship.marry_off_daughter", daughter), f.Snapshot));
-
-        Assert.Equal(AutonomousPriorityBands.MaleLineContinuity, male.PriorityBand);
-        Assert.Equal(AutonomousPriorityBands.BloodlineContinuity, blood.PriorityBand);
-        Assert.Same(male, f.Strategy.ChooseAction([blood, male,
-            Candidate("stats.improve_strength", f.Head, score: 150)]));
-        Assert.Null(scorer.Score(Candidate("relationship.marry_off_son", son),
-            f.Snapshot with { FinancialState = AutonomousFinancialState.Poor }));
-    }
-
-    [Fact]
-    public void MarriageRepairProtectsAnUnsecuredMaleLineEvenWithSeveralLivingDaughters()
-    {
-        using var f = new Fixture();
-        var snapshot = f.Snapshot with
-        {
-            LivingChildCount = 4,
-            HasRealisticReproductivePath = true,
-            NeedsMaleLineContinuity = true,
-            MarriageSatisfaction = 24
-        };
-        var repair = Assert.IsType<AutonomousActionCandidate>(f.Strategy.ScoreAction(
-            Candidate("relationship.repair_marriage", f.Head), snapshot));
-        Assert.Equal(AutonomousPriorityBands.MaleLineContinuity, repair.PriorityBand);
-        Assert.Null(f.Strategy.ScoreAction(Candidate("reproduction.try_for_baby", f.Head),
-            snapshot with { CanActivelyTryForChild = true }));
     }
 
     private static IPerson LineageWife(Fixture f)
@@ -342,6 +290,8 @@ public sealed partial class AutonomousStrategyCharacterizationTests
                 [], [new FinanceBreakdownItem("living costs", 1200m)]),
             nameof(IEconomyService.GetHouseholdId) => ((IPerson)args[0]!).Id == separatedPartner
                 ? Guid.Empty : f.Snapshot.Household.HouseholdId,
+            nameof(IEconomyService.GetResidenceTown) => f.World.Town,
+            nameof(IEconomyService.GetLivingCostPerPerson) => 500m,
             _ => throw new InvalidOperationException(method.Name)
         });
         var healthService = Probe<IHealthService>((method, args) =>
@@ -361,5 +311,28 @@ public sealed partial class AutonomousStrategyCharacterizationTests
         };
         return CreateStrategy(f, households, healthService, career, LineageStats(fertility), economy)
             .BuildSnapshot(household);
+    }
+
+    private sealed class AdoptionStub : IAdoptionService
+    {
+        private readonly Guid _childId;
+        private readonly Guid _guardianId;
+
+        public AdoptionStub(Guid childId, Guid guardianId)
+        {
+            _childId = childId;
+            _guardianId = guardianId;
+        }
+
+        public AdoptionPlacementInfo GetPlacement(IPerson person) =>
+            person.Id == _childId
+                ? new AdoptionPlacementInfo(AdoptionPlacementKind.AdoptiveHousehold,
+                    _guardianId, _guardianId, false, null, "Adopted")
+                : new AdoptionPlacementInfo(AdoptionPlacementKind.BiologicalHousehold,
+                    null, null, false, null, string.Empty);
+
+        public IReadOnlyList<IPerson> GetHostedChildren(IPerson householdHead) => [];
+
+        public bool HasOrphanTrait(IPerson person) => false;
     }
 }

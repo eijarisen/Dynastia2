@@ -86,13 +86,15 @@ Historical Education access lives in `data/Education/education_eras.csv` and is 
 
 Autonomous decisions use `AdvancedAutonomousHouseholdStrategy` as a small facade. It
 owns the single-scorer dispatch check, personality adjustment, score clamp, priority
-selection and queue submission. Within urgency bands it protects male-line and
-bloodline medical targets; safe development uses incremental game-score estimates
-before weighted choice among equivalent candidates. `AutonomousHouseholdDecisionService` still owns which
-households are processed and whether existing queues are retained or replaced.
+selection and queue submission. Survival/family utility is ancestry-neutral; male-line
+succession can only break an exact tie between otherwise equivalent family-formation
+plans. Incremental game score is consulted only among near-equivalent safe development
+choices. `AutonomousHouseholdDecisionService` still owns which households are processed
+and whether existing queues are retained or replaced.
 
 `Autonomy/AutonomousSnapshotBuilder` preserves live-member order and captures
-biological descendant viability, reproductive eligibility and sustainable child capacity;
+existing-child commitments separately from biological succession diagnostics, current
+reproductive eligibility, care/residence pressure and canonical Economy forecasts;
 `AutonomousActionCandidateBuilder` owns mechanical availability, parameter selection
 and first-occurrence deduplication. The six named domain scorers consume candidates
 without rediscovering availability. Shared pure calculations live in

@@ -39,7 +39,7 @@ public sealed class ActionUiExecutionIntegrationTests
     public void DialogRequestForwardsMainWindowAsSenderAndDoesNotRefreshOrSubmit()
     {
         using var f = new ActionPanelFixture();
-        f.Register("education.private_tutor");
+        f.Register("education.get_education");
         f.Select();
         var requests = 0;
         var resets = 0;
@@ -47,10 +47,10 @@ public sealed class ActionUiExecutionIntegrationTests
         f.View.ActionSelectionRequested += (sender, request) =>
         {
             Assert.Same(f.View, sender);
-            Assert.Equal("education.private_tutor", request.ActionId);
+            Assert.Equal("education.get_education", request.ActionId);
             requests++;
         };
-        f.View.AvailableActions.Single(a => a.Id == "education.private_tutor").ExecuteCommand.Execute(null);
+        f.View.AvailableActions.Single(a => a.Id == "education.get_education").ExecuteCommand.Execute(null);
         Assert.Equal(1, requests);
         Assert.Equal(0, resets);
         Assert.Empty(f.Registry.Submissions);

@@ -33,8 +33,11 @@ $SolutionProjects = @($SolutionXml.SelectNodes('//Project[@Path]') | ForEach-Obj
     [IO.Path]::GetFullPath((Join-Path $RepoRoot $_.Path))
 })
 
-Write-Host "Building Dynastia solution (incremental)..."
-dotnet build $Solution
+Write-Host "Building Dynastia solution (patch-safe non-incremental)..."
+# Source patches can arrive with archive timestamps older than existing obj/bin outputs
+# (notably across timezone-preserving ZIP extraction). Force MSBuild to re-evaluate
+# every project so newly extracted source cannot be masked by a newer stale assembly.
+dotnet build $Solution --no-incremental
 if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
 # Preserve the missing-output safety net, including SDK/solution omissions.
@@ -48,7 +51,7 @@ foreach ($Project in $PluginProjects) {
     if (($SolutionProjects -notcontains $Project.FullName) -or
         -not (Test-Path -LiteralPath $ExpectedAssembly -PathType Leaf)) {
         Write-Host "Building plugin directly: $($Project.BaseName)..."
-        dotnet build $Project.FullName
+        dotnet build $Project.FullName --no-incremental
         if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
     }
     if (-not (Test-Path -LiteralPath $ExpectedAssembly -PathType Leaf)) {

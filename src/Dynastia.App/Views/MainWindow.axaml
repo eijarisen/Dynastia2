@@ -86,7 +86,7 @@
                                     IsVisible="{Binding ShowStress}"
                                     FontSize="12"
                                     FontWeight="SemiBold"
-                                    Foreground="#D6B76A"
+                                    Foreground="{Binding StressBrush}"
                                     Text="{Binding StressTooltipText}" />
 
                                 <TextBlock
@@ -860,7 +860,6 @@
                                                         VerticalAlignment="Top"
                                                         FontSize="13"
                                                         FontWeight="SemiBold"
-                                                        Foreground="#806020"
                                                         Text="{Binding ScoreDeltaText}" />
                                                 </Grid>
                                             </DataTemplate>
@@ -1748,8 +1747,8 @@
 
                     <Button
                         x:Name="MusicToggleButton"
-                        Canvas.Left="1150"
-                        Canvas.Top="11"
+                        Canvas.Left="1638"
+                        Canvas.Top="7"
                         Width="28"
                         Height="28"
                         Padding="0"
@@ -2072,7 +2071,7 @@
                                                                                 FontFamily="Georgia"
                                                                                 FontSize="13"
                                                                                 FontWeight="Bold"
-                                                                                Foreground="#806020"
+                                                                                Foreground="#46321C"
                                                                                 Text="{Binding ScoreDeltaText}" />
                                                                         </Grid>
                                                                     </DataTemplate>

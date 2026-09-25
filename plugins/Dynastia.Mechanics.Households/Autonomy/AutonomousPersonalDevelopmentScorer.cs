@@ -55,7 +55,9 @@ internal sealed class AutonomousPersonalDevelopmentScorer : IAutonomousActionSco
         AutonomousHouseholdSnapshot snapshot)
     {
         if (!IsAtLeast(snapshot.FinancialState, AutonomousFinancialState.Stable)
-            || snapshot.HasSeriousMedicalDanger)
+            || snapshot.HasImmediateMedicalDanger || snapshot.HasMaterialUnmetDependentNeed
+            || snapshot.NeedsFamilyContinuity
+            || !LeavesReserve(snapshot, option.Action.DisplayCost ?? 0m))
         {
             return null;
         }
@@ -70,7 +72,7 @@ internal sealed class AutonomousPersonalDevelopmentScorer : IAutonomousActionSco
         AutonomousHouseholdSnapshot snapshot)
     {
         var head = snapshot.Members.First(member => member.Person.Id == snapshot.Head.Id);
-        if (head.Health.Percentage < 85 || snapshot.HasSeriousMedicalDanger
+        if (head.Health.Percentage < 85 || snapshot.HasImmediateMedicalDanger || snapshot.HasMaterialUnmetDependentNeed
             || snapshot.NeedsFamilyContinuity || snapshot.DependentChildCount > 0)
             return null;
 
@@ -91,9 +93,10 @@ internal sealed class AutonomousPersonalDevelopmentScorer : IAutonomousActionSco
         AutonomousActionCandidate option,
         AutonomousHouseholdSnapshot snapshot)
     {
+        var actionCost = option.Action.DisplayCost ?? 0m;
         if (snapshot.FinancialState != AutonomousFinancialState.Secure
-            || snapshot.HasSeriousMedicalDanger
-            || (snapshot.Finance?.Wealth ?? 0m) - (option.Action.DisplayCost ?? 0m)
+            || snapshot.HasImmediateMedicalDanger || snapshot.HasMaterialUnmetDependentNeed
+            || (snapshot.Finance?.Wealth ?? 0m) - actionCost
                 < snapshot.ExpectedExpenses * 2m)
         {
             return null;
@@ -102,9 +105,9 @@ internal sealed class AutonomousPersonalDevelopmentScorer : IAutonomousActionSco
         var member = snapshot.Members.FirstOrDefault(candidate => candidate.Person.Id == option.Target.Id);
         var fertilitySupport = option.Action.Id.Equals("stats.improve_fertility",
                 StringComparison.OrdinalIgnoreCase)
-            && snapshot.NeedsFamilyContinuity
-            && (option.Target.Id == snapshot.Head.Id || option.Target.Id == snapshot.Spouse?.Id
-                || member is { IsBloodline: true })
+            && snapshot.NeedsFamilyExpansion
+            && snapshot.ExistingChildCount == 0
+            && (option.Target.Id == snapshot.Head.Id || option.Target.Id == snapshot.Spouse?.Id)
             && option.Target.Age >= 18
             && AutonomousReproductiveEligibility.CanParticipateInFamilyLife(option.Target);
         if (fertilitySupport)
@@ -117,28 +120,20 @@ internal sealed class AutonomousPersonalDevelopmentScorer : IAutonomousActionSco
                 return null;
             }
 
-            var supportsMaleLine = snapshot.NeedsMaleLineContinuity
-                && (member.IsMaleLineage && family.GetSex(option.Target) == Sex.Male
-                    || option.Target.Id == snapshot.Spouse?.Id
-                        && snapshot.Members.Any(candidate => candidate.Person.Id == snapshot.Head.Id
-                            && candidate.IsMaleLineage));
             return WithScore(option, AutonomyCategory.Continuity,
-                supportsMaleLine ? AutonomousPriorityBands.MaleLineContinuity
-                    : AutonomousPriorityBands.BloodlineContinuity, 58);
+                AutonomousPriorityBands.SustainableFamilyContinuity, 58);
         }
 
         var survivalSupport = option.Action.Id.Equals("stats.improve_immunity", StringComparison.OrdinalIgnoreCase)
             || option.Action.Id.Equals("stats.improve_longevity", StringComparison.OrdinalIgnoreCase);
+        if (snapshot.NeedsFamilyContinuity || !LeavesReserve(snapshot, actionCost))
+            return null;
+
         if (survivalSupport && member is not null)
         {
-            return WithScore(option, AutonomyCategory.Survival,
-                member.IsMaleLineage || member.IsBloodline
-                    ? AutonomousPriorityBands.FamilyStability
-                    : AutonomousPriorityBands.LongTermImprovement, 48);
+            return WithScore(option, AutonomyCategory.PersonalDevelopment,
+                AutonomousPriorityBands.LongTermImprovement, 48);
         }
-
-        if (snapshot.NeedsFamilyContinuity && snapshot.HasRealisticReproductivePath)
-            return null;
 
         return WithScore(option, AutonomyCategory.PersonalDevelopment,
             AutonomousPriorityBands.LongTermImprovement, 38);
@@ -148,7 +143,8 @@ internal sealed class AutonomousPersonalDevelopmentScorer : IAutonomousActionSco
         AutonomousActionCandidate option,
         AutonomousHouseholdSnapshot snapshot)
     {
-        var quietYear = !snapshot.HasSeriousMedicalDanger
+        var quietYear = !snapshot.HasImmediateMedicalDanger
+            && !snapshot.HasMaterialUnmetDependentNeed
             && IsAtLeast(snapshot.FinancialState, AutonomousFinancialState.Stable)
             && (!snapshot.HasRealisticReproductivePath || !snapshot.NeedsFamilyContinuity)
             && snapshot.Status?.IsLargeFamilyStrained != true;

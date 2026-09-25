@@ -37,6 +37,7 @@ public sealed class ActionPanelCharacterizationTests
     [InlineData("career.help_seek_employment", TownAffairsTab.Jobs)]
     [InlineData("career.help_find_better_job", TownAffairsTab.Jobs)]
     [InlineData("education.get_education", TownAffairsTab.Education)]
+    [InlineData("education.private_tutor", TownAffairsTab.Education)]
     [InlineData("wellbeing.heal_relative", TownAffairsTab.Health)]
     [InlineData("wellbeing.therapy", TownAffairsTab.Health)]
     public void ServiceActionOpensSelectionAndKeepsItsTownRouteAndSubject(string id, TownAffairsTab tab)
@@ -78,6 +79,7 @@ public sealed class ActionPanelCharacterizationTests
         Assert.False(f.View.CanOpenTownAffairs);
         Assert.Null(f.View.CreateTownAffairsRequest("ui.town_affairs"));
         Assert.Equal(TownAffairsTab.Health, f.View.CreateTownAffairsRequest("wellbeing.heal_relative")!.InitialTab);
+        Assert.Equal(TownAffairsTab.Education, f.View.CreateTownAffairsRequest("education.private_tutor")!.InitialTab);
     }
 
     [Fact]

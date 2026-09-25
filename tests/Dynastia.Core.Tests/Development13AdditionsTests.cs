@@ -69,13 +69,14 @@ public sealed class Development13AdditionsTests
 
         var root = RepositoryFiles.Root;
         var education = File.ReadAllText(Path.Combine(root, "plugins", "Dynastia.Mechanics.Education", "EducationPlugin.cs"));
-        var town = File.ReadAllText(Path.Combine(root, "src", "Dynastia.App", "ViewModels", "TownAffairsViewModel.cs"));
+        var educationUi = File.ReadAllText(Path.Combine(root, "src", "Dynastia.App", "ViewModels", "MainWindowViewModel.CraftsEducation.cs"));
         var farming = File.ReadAllText(Path.Combine(root, "plugins", "Dynastia.Mechanics.Farming", "StandardFarmingService.cs"));
         var health = File.ReadAllText(Path.Combine(root, "plugins", "Dynastia.Mechanics.Health", "GamblingDisorderYearSystem.cs"));
 
         Assert.Contains("education.private_tutor", education);
         Assert.Contains("PrivateTutorCost = 3000m", education);
-        Assert.Contains("Subject is { Age: >= 6 and < 18 }", town);
+        Assert.Contains("if (target.Age < 18)", educationUi);
+        Assert.Contains("if (target.Age < 6)", educationUi);
         Assert.Contains("ResolveWeatherState()", farming);
         Assert.DoesNotContain("_random.NextDouble() * 2.0);\n            var adjustedMultiplier", farming);
         Assert.Contains("ChangeWealthAllowDebt(person, -amount)", health);

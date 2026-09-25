@@ -42,6 +42,7 @@ public sealed partial class MainWindowViewModel
             "career.help_seek_employment" => TownAffairsTab.Jobs,
             "career.help_find_better_job" => TownAffairsTab.Jobs,
             "education.get_education" => TownAffairsTab.Education,
+            "education.private_tutor" => TownAffairsTab.Education,
             "loan.take" => TownAffairsTab.Bank,
             "loan.give" => TownAffairsTab.Bank,
             "wellbeing.heal_relative" => TownAffairsTab.Health,

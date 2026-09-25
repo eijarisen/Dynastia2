@@ -175,9 +175,7 @@ public sealed class TownAffairsViewModel : ViewModelBase
     public bool ShowHealthTab => !IsRemote;
 
     public bool ShowEducationTab =>
-        !IsRemote
-        && (Snapshot.School.IsAvailable
-            || Subject is { Age: >= 6 and < 18 });
+        !IsRemote;
 
     public bool ShowBankTab =>
         !IsRemote && Snapshot.Bank.IsAvailable;

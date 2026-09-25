@@ -15,7 +15,6 @@ if ($BuildFixtureRoot) {
         $Mode = $env:DYNASTIA_BUILD_SCENARIO
         Add-Content -LiteralPath (Join-Path $Root 'commands.txt') -Value ($Arguments -join '|')
         $global:LASTEXITCODE = 0
-        if ($Arguments -contains '--no-incremental') { throw 'Incrementality was disabled.' }
         if ($Arguments[0] -eq 'test') {
             if ($Arguments -contains '--no-build' -or $Arguments -contains '--no-restore') {
                 throw 'A discovered test project must be allowed to build/restore.'
@@ -239,6 +238,8 @@ try {
         $ShouldSucceed = $Mode -in @('Normal', 'Clean', 'SkipTests', 'MissingOutput')
         Assert-Tooling (($ExitCode -eq 0) -eq $ShouldSucceed) "$Mode exit code $ExitCode. $($Output -join [Environment]::NewLine)"
         $Commands = @(Get-Content -LiteralPath (Join-Path $Fixture 'commands.txt'))
+        $BuildCommands = @($Commands | Where-Object { $_ -like 'build|*' })
+        Assert-Tooling ($BuildCommands.Count -gt 0 -and @($BuildCommands | Where-Object { $_ -notlike '*|--no-incremental*' }).Count -eq 0) "$Mode allowed timestamp-based incremental build reuse."
         if ($Mode -eq 'BuildFailure') { Assert-Tooling ($ExitCode -eq 21 -and $Commands.Count -eq 1) 'Solution failure was not propagated.'; continue }
         if ($Mode -eq 'PluginFailure') { Assert-Tooling ($ExitCode -eq 22) 'Plugin failure was not propagated.'; continue }
         if ($Mode -eq 'NoPluginOutput') {
@@ -261,9 +262,9 @@ try {
             Assert-Tooling (($TestCommands -join "`n") -ceq (($TestCommands | Sort-Object) -join "`n")) 'Test discovery order is not deterministic.'
             Assert-Tooling (Test-Path -LiteralPath (Join-Path $Fixture 'tooling-ran.txt')) 'Tooling checks were not run.'
         }
-        Assert-Tooling (@($Commands | Where-Object { $_ -like 'build|*Omitted.csproj' }).Count -eq 1) 'Existing output masked an omitted plugin project.'
+        Assert-Tooling (@($Commands | Where-Object { $_ -like 'build|*Omitted.csproj|--no-incremental' }).Count -eq 1) 'Existing output masked an omitted plugin project.'
         if ($Mode -eq 'MissingOutput') {
-            Assert-Tooling (@($Commands | Where-Object { $_ -like 'build|*Registered.csproj' }).Count -eq 1) 'Missing plugin fallback did not run.'
+            Assert-Tooling (@($Commands | Where-Object { $_ -like 'build|*Registered.csproj|--no-incremental' }).Count -eq 1) 'Missing plugin fallback did not run.'
         }
         foreach ($Name in @('Registered', 'Omitted')) {
             $Installed = Join-Path $Fixture "src/Dynastia.App/bin/Debug/net10.0/plugins/test.$Name"

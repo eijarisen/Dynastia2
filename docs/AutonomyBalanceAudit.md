@@ -1,6 +1,6 @@
 # Autonomous play: balance audit
 
-Reviewed the supplied 2026-09-25 repository. These are balancing suggestions, not changes to game rules. Findings are based on code paths; no claim of measured long-run dominance is made. Score rewards should remain subordinate to male-lineage survival and then bloodline survival. Preserve the existing policy of reversing points only to prevent achievement cycling, without adding score penalties for misfortune.
+Reviewed the supplied 2026-09-25 repository. These are balancing suggestions, not changes to game rules. Findings are based on code paths; no claim of measured long-run dominance is made. Score rewards should remain subordinate to household survival, solvency, sustainable family continuity, and existing-family obligations. Male-line status is only a final tie-break between otherwise equivalent family-formation choices; it is not a separate urgency band. Preserve the existing policy of reversing points only to prevent achievement cycling, without adding score penalties for misfortune.
 
 ## Confirmed repeatable loopholes
 

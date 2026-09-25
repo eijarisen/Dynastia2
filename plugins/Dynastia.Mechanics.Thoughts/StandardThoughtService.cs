@@ -441,7 +441,7 @@ internal sealed class StandardThoughtService :
                 "fallback",
                 1,
                 ThoughtMoodIds.Neutral,
-                string.Empty,
+                person.Age < 18 ? "💭" : string.Empty,
                 ThoughtSalienceTraits.None,
                 "fallback",
                 null,

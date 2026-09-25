@@ -4,6 +4,9 @@ namespace Dynastia.Mechanics.Economy;
 
 public sealed partial class StandardEconomyService
 {
+    public int GetDefaultResidenceCapacity(TownInfo town) =>
+        HouseExtensionRules.BaseResidenceCapacity;
+
     public HouseholdResidenceCapacitySnapshot GetResidenceCapacity(
         IPerson householdRepresentative)
     {

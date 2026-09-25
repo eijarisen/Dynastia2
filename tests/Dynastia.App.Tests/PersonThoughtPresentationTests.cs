@@ -1,6 +1,7 @@
 using Dynastia.App.ViewModels;
 using Dynastia.Contracts;
 using Dynastia.Core.Simulation;
+using Avalonia.Media;
 
 namespace Dynastia.App.Tests;
 
@@ -29,7 +30,7 @@ public sealed class PersonThoughtPresentationTests
 
         var card = CreateCard(person, thoughts);
 
-        Assert.Equal("👨🏻", card.AvatarText);
+        Assert.Equal("🙂", card.AvatarText);
         Assert.Equal("🌾", card.ThoughtTopicEmoji);
         Assert.True(card.HasThoughtTopicEmoji);
         Assert.Contains("fields need attention", card.TooltipThoughtText);
@@ -104,16 +105,15 @@ public sealed class PersonThoughtPresentationTests
     }
 
     [Theory]
-    [InlineData(3, false, "👶🏻")]
-    [InlineData(7, false, "👦🏻")]
-    [InlineData(7, true, "👧🏻")]
-    [InlineData(14, true, "🧑🏻")]
-    [InlineData(30, true, "👩🏻")]
-    [InlineData(75, false, "👴🏻")]
-    public void NeutralFallbackUsesAgeAndSexPersonIcons(
+    [InlineData(3, false)]
+    [InlineData(7, false)]
+    [InlineData(7, true)]
+    [InlineData(14, true)]
+    [InlineData(30, true)]
+    [InlineData(75, false)]
+    public void NeutralFallbackUsesGenericYellowStatusFace(
         int age,
-        bool female,
-        string expected)
+        bool female)
     {
         var state = new GameState { Year = 1900 };
         var person = state.CreatePerson(
@@ -126,7 +126,7 @@ public sealed class PersonThoughtPresentationTests
             person.Tags.Add("sex.female");
 
         Assert.Equal(
-            expected,
+            "🙂",
             PersonEmojiResolver.GetPersonEmoji(
                 person, null, null, null, null, null));
     }
@@ -169,14 +169,37 @@ public sealed class PersonThoughtPresentationTests
                 null));
     }
 
+    [Fact]
+    public void ZeroStressIsDisplayedWithoutDecimalsAndUsesGreenPresentation()
+    {
+        var state = new GameState { Year = 1900 };
+        var person = state.CreatePerson(
+            "Jan",
+            "Test",
+            30,
+            Guid.Parse("10000000-0000-0000-0000-000000000005"));
+        person.Tags.Add("state.alive");
+
+        var card = CreateCard(
+            person,
+            thoughts: null,
+            stress: new StressStub(new StressSnapshot(0, [])));
+
+        Assert.Equal("Stress: 0/100", card.StressTooltipText);
+        Assert.Equal(
+            Color.Parse("#43A047"),
+            Assert.IsType<SolidColorBrush>(card.StressBrush).Color);
+    }
+
     private static FamilyMemberCardViewModel CreateCard(
         IPerson person,
-        IThoughtService thoughts) =>
+        IThoughtService? thoughts,
+        IStressService? stress = null) =>
         new(
             person,
             null,
             null,
-            null,
+            stress,
             null,
             null,
             null,
@@ -209,5 +232,10 @@ public sealed class PersonThoughtPresentationTests
         public bool AddCondition(IPerson person, string conditionId) => throw new NotSupportedException();
         public bool AddCondition(IPerson person, string conditionId, int year) => throw new NotSupportedException();
         public bool RemoveCondition(IPerson person, string conditionId) => throw new NotSupportedException();
+    }
+
+    private sealed class StressStub(StressSnapshot snapshot) : IStressService
+    {
+        public StressSnapshot GetStress(IPerson person) => snapshot;
     }
 }

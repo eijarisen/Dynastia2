@@ -271,12 +271,18 @@ public sealed partial class HouseholdsPlugin : IGamePlugin
                 scorers,
                 new AutonomousGameScoreEstimator(context));
 
+        var planState = new AutonomousPlanStateCoordinator(
+            gameState,
+            economy,
+            family,
+            career);
         var autonomousDecisions =
             new AutonomousHouseholdDecisionService(
                 gameState,
                 households,
                 actions,
-                autonomousStrategy);
+                autonomousStrategy,
+                planState);
 
         context.AddService<IAutonomousHouseholdDecisionService>(
             autonomousDecisions);

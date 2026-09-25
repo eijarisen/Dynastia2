@@ -62,7 +62,8 @@ public sealed class StatImprovementsPlugin : IGamePlugin
             Emoji = emoji,
             Categories = [ActionPresentationCategories.Personal],
             AdjacencyGroup = order > 0 ? ActionPresentationGroups.TreatmentGrowth : null,
-            GroupOrder = order
+            GroupOrder = order,
+            ShowInPrimaryActionList = false
         };
     }
 

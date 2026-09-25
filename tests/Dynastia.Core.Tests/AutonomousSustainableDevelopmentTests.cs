@@ -6,7 +6,7 @@ namespace Dynastia.Core.Tests;
 public sealed partial class AutonomousStrategyCharacterizationTests
 {
     [Fact]
-    public void ResidenceExtensionSupportsContinuityDespiteExistingChildrenAndCrowding()
+    public void ResidenceExtensionTreatsExistingOvercrowdingAsSurvivalWork()
     {
         using var f = new Fixture();
         var house = new HousePropertyInfo(f.World.NextId(), f.World.Town, true, false,
@@ -17,18 +17,15 @@ public sealed partial class AutonomousStrategyCharacterizationTests
             Status = new HouseholdStatusSnapshot(f.Head.Id, 3, 3, 3, null, null,
                 false, true, true, false, false, [], ResidentCount: 7,
                 OvercrowdingThreshold: 6, IsOvercrowded: true),
-            NeedsMaleLineContinuity = true,
-            HasRealisticReproductivePath = true,
-            LivingChildCount = 3,
             FinancialState = AutonomousFinancialState.Stable
         };
         var candidate = Candidate("household.extend_house", f.Head) with
         { Parameters = new Dictionary<string, string> { ["propertyId"] = house.Id.ToString() } };
         var scorer = new AutonomousFinancePropertyScorer(f.Context, f.World.State, f.World.Economy);
         var result = Assert.IsType<AutonomousActionCandidate>(scorer.Score(candidate, snapshot));
-        Assert.Equal(AutonomousPriorityBands.MaleLineContinuity, result.PriorityBand);
+        Assert.Equal(AutonomousPriorityBands.EmergencySurvival, result.PriorityBand);
         Assert.Null(scorer.Score(candidate, snapshot with
-        { Finance = snapshot.Finance with { Wealth = 4000m } }));
+        { Finance = snapshot.Finance with { Wealth = 400m } }));
         Assert.Null(scorer.Score(candidate, snapshot with
         { Finance = snapshot.Finance with { Houses = [house with { IsResidence = false }] } }));
     }
@@ -47,13 +44,14 @@ public sealed partial class AutonomousStrategyCharacterizationTests
     }
 
     [Fact]
-    public void RentedFamilyCanBuyAHouseAsTheFirstStepOfAnAffordableExtensionPlan()
+    public void RentedFamilyCanBuyAHouseAsAnAffordableExpansionPrerequisite()
     {
         using var f = new Fixture();
         var scorer = new AutonomousFinancePropertyScorer(f.Context, f.World.State, f.World.Economy);
         var snapshot = f.Snapshot with
         {
-            HasResidence = false, NeedsMaleLineContinuity = true,
+            HasResidence = false,
+            NeedsFamilyExpansion = true,
             HasRealisticReproductivePath = true,
             Finance = f.Snapshot.Finance! with { Wealth = 14500m },
             Status = new HouseholdStatusSnapshot(f.Head.Id, 2, 3, 3, null, null,
@@ -64,7 +62,7 @@ public sealed partial class AutonomousStrategyCharacterizationTests
         { Parameters = new Dictionary<string, string>
             { ["houseAskingPrice"] = "10000", ["houseCapacity"] = "8" } };
         var result = Assert.IsType<AutonomousActionCandidate>(scorer.Score(candidate, snapshot));
-        Assert.Equal(AutonomousPriorityBands.MaleLineContinuity, result.PriorityBand);
+        Assert.Equal(AutonomousPriorityBands.SustainableFamilyContinuity, result.PriorityBand);
         Assert.Null(scorer.Score(candidate, snapshot with
         { Finance = snapshot.Finance with { Wealth = 14499m } }));
         Assert.Null(scorer.Score(candidate with
@@ -73,15 +71,16 @@ public sealed partial class AutonomousStrategyCharacterizationTests
     }
 
     [Fact]
-    public void FertilityTreatmentCanRestoreAnInfertileMaleLineAndKeepsCashReserve()
+    public void FertilityTreatmentSupportsAChildlessSustainablePlanAndKeepsCashReserve()
     {
         using var f = new Fixture();
         f.Context.AddService<IFamilyService>(f.World.Family);
         var snapshot = f.Snapshot with
         {
             Finance = f.Snapshot.Finance! with { Wealth = 50000m },
-            NeedsMaleLineContinuity = true,
+            NeedsFamilyExpansion = true,
             HasRealisticReproductivePath = false,
+            ExistingChildren = [],
             Members = [Member(f.Head) with
             { IsMaleLineage = true, IsBloodline = true, Stats = new Dictionary<string, int> { ["fertility"] = 0 } }]
         };
@@ -93,72 +92,147 @@ public sealed partial class AutonomousStrategyCharacterizationTests
         var candidate = Candidate(definition.Id, f.Head) with { Action = definition };
         var scorer = new AutonomousPersonalDevelopmentScorer(f.Context);
         var result = Assert.IsType<AutonomousActionCandidate>(scorer.Score(candidate, snapshot));
-        Assert.Equal(AutonomousPriorityBands.MaleLineContinuity, result.PriorityBand);
+        Assert.Equal(AutonomousPriorityBands.SustainableFamilyContinuity, result.PriorityBand);
         Assert.Null(scorer.Score(candidate, snapshot with
         { Finance = snapshot.Finance with { Wealth = 23000m } }));
     }
 
     [Fact]
-    public void SurvivalStatTreatmentRemainsUsefulWhileFamilyContinuityIsUnsecured()
+    public void SurvivalStatTreatmentIsLongTermImprovementAndYieldsToFamilyObligations()
     {
         using var f = new Fixture();
         var snapshot = f.Snapshot with
         {
-            NeedsMaleLineContinuity = true, HasRealisticReproductivePath = true,
             Members = [Member(f.Head) with { IsMaleLineage = true, IsBloodline = true }]
         };
         var scorer = new AutonomousPersonalDevelopmentScorer(f.Context);
         var result = Assert.IsType<AutonomousActionCandidate>(
             scorer.Score(Candidate("stats.improve_immunity", f.Head), snapshot));
-        Assert.Equal(AutonomousPriorityBands.FamilyStability, result.PriorityBand);
-        Assert.Null(scorer.Score(Candidate("stats.improve_appeal", f.Head), snapshot));
+        Assert.Equal(AutonomousPriorityBands.LongTermImprovement, result.PriorityBand);
+        Assert.Null(scorer.Score(Candidate("stats.improve_immunity", f.Head),
+            snapshot with { NeedsFamilyExpansion = true }));
+    }
+
+
+    [Fact]
+    public void OptionalSelfImprovementCannotSpendProtectedFamilyPlanReserve()
+    {
+        using var f = new Fixture();
+        var definition = new GameActionDefinition
+        {
+            Id = "stats.improve_strength",
+            Label = "Improve",
+            Description = "Improve",
+            DisplayCost = 6000m,
+            Execute = _ => new GameActionResult(true)
+        };
+        var candidate = Candidate(definition.Id, f.Head) with { Action = definition };
+        var scorer = new AutonomousPersonalDevelopmentScorer(f.Context);
+        var snapshot = f.Snapshot with
+        {
+            Finance = f.Snapshot.Finance! with { Wealth = 20000m },
+            ProtectedPlanReserve = 15000m
+        };
+
+        Assert.Null(scorer.Score(candidate, snapshot));
+        Assert.NotNull(scorer.Score(candidate, snapshot with { ProtectedPlanReserve = 0m }));
     }
 
     [Fact]
-    public void GivingMoneySupportsANeedyDescendantAndStopsAfterItsReserveIsFunded()
+    public void GivingMoneySupportsANeedyExistingChildAndStopsAfterReserveIsFunded()
     {
         using var f = new Fixture();
         f.Context.AddService<IEconomyService>(f.World.Economy);
         var child = f.World.Person(22);
         f.World.Household(child);
-        var snapshot = f.Snapshot with { LivingMaleLineDescendants = [child] };
+        var snapshot = f.Snapshot with
+        {
+            ExistingChildren = [child],
+            HasAdultFamilyFormationNeed = true
+        };
         var candidate = Candidate("family_relations.give_money", child) with
         { Parameters = new Dictionary<string, string> { ["amount"] = "1000" } };
         var scorer = new AutonomousFamilyRelationsScorer(f.Context);
         var result = Assert.IsType<AutonomousActionCandidate>(scorer.Score(candidate, snapshot));
-        Assert.Equal(AutonomousPriorityBands.MaleLineContinuity, result.PriorityBand);
+        Assert.Equal(AutonomousPriorityBands.SustainableFamilyContinuity, result.PriorityBand);
         f.World.Economy.SetWealth(child, 10000m);
         Assert.Null(scorer.Score(candidate, snapshot));
         Assert.Null(scorer.Score(candidate with { Target = f.Head }, snapshot));
     }
 
     [Fact]
-    public void MovingAResidentRequiresHousingAndIncomeInBothHouseholds()
+    public void WorkingAdultChildCanEstablishARentedHouseholdWithoutASpareHouse()
     {
         using var f = new Fixture();
         f.Context.AddService<IFamilyService>(f.World.Family);
-        var heir = f.World.Person(22);
+        var adult = f.World.Person(22);
+        var snapshot = f.Snapshot with
+        {
+            ProjectedIncome = 20000m,
+            ExistingChildren = [adult],
+            HasAdultFamilyFormationNeed = true,
+            Members = [Member(f.Head), Member(adult) with
+            { IsMaleLineage = true, IsBloodline = true, Career = EmployedCareer() with { AnnualIncome = 10000m } }]
+        };
+        var scorer = new AutonomousFinancePropertyScorer(f.Context, f.World.State, f.World.Economy);
+        var candidate = Candidate("household.ask_move_out", adult);
+        var result = Assert.IsType<AutonomousActionCandidate>(scorer.Score(candidate, snapshot));
+        Assert.Equal(AutonomousPriorityBands.SustainableFamilyContinuity, result.PriorityBand);
+
+        Assert.Null(scorer.Score(candidate, snapshot with
+        { Members = [Member(f.Head), Member(adult)] }));
+    }
+
+    [Fact]
+    public void SpareHouseRemainsAValidButNotRequiredEstablishmentRoute()
+    {
+        using var f = new Fixture();
+        f.Context.AddService<IFamilyService>(f.World.Family);
+        var adult = f.World.Person(22);
         var house = new HousePropertyInfo(f.World.NextId(), f.World.Town, false, true,
             PurchasePrice: 10000m);
         var snapshot = f.Snapshot with
         {
             Finance = f.Snapshot.Finance! with { Houses = [house] },
             ProjectedIncome = 20000m,
-            Members = [Member(f.Head), Member(heir) with
-            { IsMaleLineage = true, IsBloodline = true, Career = EmployedCareer() with { AnnualIncome = 10000m } }]
+            ExistingChildren = [adult],
+            HasAdultFamilyFormationNeed = true,
+            Members = [Member(f.Head), Member(adult) with
+            { Career = EmployedCareer() with { AnnualIncome = 10000m } }]
         };
-        var scorer = new AutonomousFinancePropertyScorer(f.Context, f.World.State, f.World.Economy);
-        var candidate = Candidate("household.ask_move_out", heir);
-        Assert.Null(scorer.Score(candidate, snapshot));
-        candidate = candidate with
+        var candidate = Candidate("household.ask_move_out", adult) with
         { Parameters = new Dictionary<string, string> { ["propertyId"] = house.Id.ToString() } };
+        var scorer = new AutonomousFinancePropertyScorer(f.Context, f.World.State, f.World.Economy);
         Assert.NotNull(scorer.Score(candidate, snapshot));
-        Assert.Null(scorer.Score(candidate, snapshot with { ProjectedIncome = 10000m }));
-        Assert.Null(scorer.Score(candidate, snapshot with { Members = [Member(f.Head), Member(heir)] }));
     }
 
     [Fact]
-    public void OverworkDoesNotTradeContinuityOrChildWellbeingForPromotion()
+    public void EmploymentPrerequisiteInheritsAdultFamilyFormationUrgency()
+    {
+        using var f = new Fixture();
+        var adult = f.World.Person(22);
+        var unemployed = EmployedCareer() with { IsEmployed = false, AnnualIncome = 0m };
+        var snapshot = f.Snapshot with
+        {
+            ExistingChildren = [adult],
+            HasAdultFamilyFormationNeed = true,
+            Members = [Member(f.Head), Member(adult) with { Career = unemployed }]
+        };
+        var candidate = Candidate("career.help_seek_employment", adult) with
+        {
+            Parameters = new Dictionary<string, string>
+            {
+                ["jobAnnualSalary"] = "3000",
+                ["jobSuccessChance"] = "1"
+            }
+        };
+        var scorer = new AutonomousCareerEducationScorer(f.Context, null!, null!);
+        var result = Assert.IsType<AutonomousActionCandidate>(scorer.Score(candidate, snapshot));
+        Assert.Equal(AutonomousPriorityBands.SustainableFamilyContinuity, result.PriorityBand);
+    }
+
+    [Fact]
+    public void OverworkDoesNotTradeFamilyFormationOrChildWellbeingForPromotion()
     {
         using var f = new Fixture();
         var scorer = new AutonomousCareerEducationScorer(f.Context, null!, null!);
@@ -166,7 +240,8 @@ public sealed partial class AutonomousStrategyCharacterizationTests
         { Members = [Member(f.Head) with { Career = EmployedCareer() }] };
         var candidate = Candidate("career.work_harder", f.Head);
         Assert.NotNull(scorer.Score(candidate, snapshot));
-        Assert.Null(scorer.Score(candidate, snapshot with { NeedsMaleLineContinuity = true }));
+        Assert.Null(scorer.Score(candidate, snapshot with { NeedsFamilyExpansion = true }));
+        Assert.Null(scorer.Score(candidate, snapshot with { HasAdultFamilyFormationNeed = true }));
         Assert.Null(scorer.Score(candidate, snapshot with { DependentChildCount = 1 }));
         Assert.Null(scorer.Score(candidate, snapshot with
         { Members = [Member(f.Head, 85) with { Career = EmployedCareer() }] }));

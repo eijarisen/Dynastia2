@@ -8,7 +8,6 @@ public sealed partial class AutonomousStrategyCharacterizationTests
     [Theory]
     [InlineData(1000)]
     [InlineData(800)]
-    [InlineData(700)]
     [InlineData(650)]
     [InlineData(500)]
     public void ScoreCannotOutbidSurvivalContinuityOrStability(int band)
@@ -21,17 +20,27 @@ public sealed partial class AutonomousStrategyCharacterizationTests
     }
 
     [Fact]
-    public void SafeDevelopmentUsesIncrementalRewardBeforePersonalityUtility()
+    public void ScoreRewardCannotOutbidSubstantiallyBetterDevelopmentUtility()
     {
         using var f = new Fixture();
-        var reward = Candidate("new-achievement", f.Head, 300, 1) with { ExpectedGameScore = 25 };
-        var repeated = Candidate("already-earned", f.Head, 300, 150) with { ExpectedGameScore = 0 };
-        Assert.Same(reward, f.Strategy.ChooseAction([repeated, reward]));
+        var reward = Candidate("new-achievement", f.Head, 300, 20) with { ExpectedGameScore = 25 };
+        var useful = Candidate("already-earned", f.Head, 300, 100) with { ExpectedGameScore = 0 };
+        Assert.Same(useful, f.Strategy.ChooseAction([useful, reward]));
         Assert.Equal(0, f.World.Random.ConsumedCount);
     }
 
     [Fact]
-    public void EquivalentMedicalUrgencyProtectsMaleLineBeforeOtherBloodline()
+    public void ScoreRewardBreaksOnlyNearEquivalentSafeDevelopmentChoices()
+    {
+        using var f = new Fixture();
+        var reward = Candidate("new-achievement", f.Head, 300, 92) with { ExpectedGameScore = 25 };
+        var useful = Candidate("already-earned", f.Head, 300, 100) with { ExpectedGameScore = 0 };
+        Assert.Same(reward, f.Strategy.ChooseAction([useful, reward]));
+        Assert.Equal(0, f.World.Random.ConsumedCount);
+    }
+
+    [Fact]
+    public void MedicalUrgencyIsSexNeutralAndFollowsActualHarm()
     {
         using var f = new Fixture();
         var daughter = f.World.Person(8, sex: Sex.Female);
@@ -39,15 +48,15 @@ public sealed partial class AutonomousStrategyCharacterizationTests
         var snapshot = f.Snapshot with
         {
             Members = [Member(f.Head),
-                Member(daughter, 20, immediate: true) with { IsBloodline = true },
-                Member(son, 20, immediate: true) with { IsBloodline = true, IsMaleLineage = true }],
+                Member(daughter, 10, immediate: true) with { IsBloodline = true },
+                Member(son, 30, immediate: true) with { IsBloodline = true, IsMaleLineage = true }],
             HasSeriousMedicalDanger = true,
             HasImmediateMedicalDanger = true
         };
         var actions = new[] { daughter, son }.Select(person =>
             f.Strategy.ScoreAction(Candidate("wellbeing.heal_relative", person), snapshot)!).ToArray();
-        Assert.Same(son, f.Strategy.ChooseAction(actions)!.Target);
-        Assert.Equal(0, f.World.Random.ConsumedCount);
+        Assert.Same(daughter, f.Strategy.ChooseAction(actions)!.Target);
+        Assert.All(actions, action => Assert.Equal(0, action.LineagePriority));
     }
 
     [Fact]

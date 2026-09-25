@@ -200,6 +200,26 @@ public sealed partial class GenealogyCanvas :
         new SolidColorBrush(
             Color.FromRgb(191, 174, 139));
 
+    private static readonly IBrush StressNone =
+        new SolidColorBrush(
+            Color.FromRgb(67, 160, 71));
+
+    private static readonly IBrush StressElevated =
+        new SolidColorBrush(
+            Color.FromRgb(214, 183, 106));
+
+    private static readonly IBrush StatVeryLow =
+        new SolidColorBrush(
+            Color.FromRgb(156, 39, 32));
+
+    private static readonly IBrush StatLow =
+        new SolidColorBrush(
+            Color.FromRgb(211, 78, 47));
+
+    private static readonly IBrush StatBelowAverage =
+        new SolidColorBrush(
+            Color.FromRgb(230, 126, 34));
+
     public static readonly StyledProperty<TreeLayout?>
         LayoutProperty =
             AvaloniaProperty.Register<

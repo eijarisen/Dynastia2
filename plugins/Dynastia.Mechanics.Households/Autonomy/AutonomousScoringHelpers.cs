@@ -26,4 +26,15 @@ internal static class AutonomousScoringHelpers
         IReadOnlyDictionary<string, int> stats,
         string id) =>
         stats.TryGetValue(id, out var value) ? value : 0;
+
+    internal static decimal ProtectedCash(AutonomousHouseholdSnapshot snapshot) =>
+        Math.Max(0m, snapshot.ProtectedPlanReserve);
+
+    internal static bool LeavesReserve(
+        AutonomousHouseholdSnapshot snapshot,
+        decimal cost,
+        decimal ordinaryReserve = 0m) =>
+        (snapshot.Finance?.Wealth ?? 0m) - Math.Max(0m, cost)
+            >= Math.Max(0m, ordinaryReserve) + ProtectedCash(snapshot);
 }
+

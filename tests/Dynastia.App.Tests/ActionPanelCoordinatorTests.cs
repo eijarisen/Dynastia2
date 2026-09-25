@@ -70,7 +70,6 @@ public sealed class ActionPanelCoordinatorTests
     [InlineData("ui.manage_finances")]
     [InlineData("ui.craft_profession")]
     [InlineData("education.get_education")]
-    [InlineData("education.private_tutor")]
     [InlineData("wellbeing.heal_relative")]
     [InlineData("wellbeing.therapy")]
     [InlineData("career.seek_employment")]
@@ -110,6 +109,21 @@ public sealed class ActionPanelCoordinatorTests
         f.Panel.Refresh(false);
         f.Click(id);
         Assert.Equal(id, Assert.Single(f.Requests));
+        Assert.Empty(f.Source.Registry.Submissions);
+        Assert.Empty(f.Source.Actions.GetQueuedActions(f.Source.Head));
+        Assert.Empty(f.Results);
+    }
+
+    [Fact]
+    public void PrivateTutorOpensItsEducationSurfaceWithoutQueuingDirectly()
+    {
+        using var f = new ActionCoordinatorFixture();
+        f.Source.Register("education.private_tutor");
+        f.Panel.Refresh(false);
+
+        f.Click("education.private_tutor");
+
+        Assert.Equal("education.private_tutor", Assert.Single(f.Requests));
         Assert.Empty(f.Source.Registry.Submissions);
         Assert.Empty(f.Source.Actions.GetQueuedActions(f.Source.Head));
         Assert.Empty(f.Results);

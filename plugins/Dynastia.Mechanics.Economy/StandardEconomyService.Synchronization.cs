@@ -41,6 +41,57 @@ public sealed partial class StandardEconomyService
             SynchronizePendingHouses(person, claim);
             NormalizePendingFarmland(claim);
         }
+
+        RemoveForeignHouseholdHeadsFromMemberships();
+
+        // Membership cleanup can remove a stale lifestyle source after its
+        // tags were synchronized above. Reapply the authoritative household
+        // stance after the invariant has been restored.
+        foreach (var person in _gameState.People)
+        {
+            var household =
+                person.Components.Get<HouseholdEconomyComponent>();
+
+            if (household is not null
+                && household.HeadId == person.Id)
+            {
+                SynchronizeLifestyleTags(household);
+            }
+        }
+    }
+
+    private void RemoveForeignHouseholdHeadsFromMemberships()
+    {
+        var headedHouseholds =
+            _gameState.People
+                .Select(person => new
+                {
+                    Person = person,
+                    Household = person.Components.Get<HouseholdEconomyComponent>()
+                })
+                .Where(item =>
+                    item.Household is not null
+                    && item.Household.HeadId == item.Person.Id)
+                .ToDictionary(
+                    item => item.Person.Id,
+                    item => item.Household!.HouseholdId);
+
+        foreach (var owner in _gameState.People)
+        {
+            var household =
+                owner.Components.Get<HouseholdEconomyComponent>();
+
+            if (household is null
+                || household.HeadId != owner.Id)
+            {
+                continue;
+            }
+
+            household.MemberIds.RemoveAll(memberId =>
+                memberId != household.HeadId
+                && headedHouseholds.TryGetValue(memberId, out var headedHouseholdId)
+                && headedHouseholdId != household.HouseholdId);
+        }
     }
 
     private void CreateHousehold(

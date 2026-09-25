@@ -87,6 +87,7 @@ public sealed class TownAffairsHousingFarmingTa1Tests
         Assert.Contains("ui.town_affairs,institutions", csv);
         Assert.Contains("career.seek_employment,jobs", csv);
         Assert.Contains("education.get_education,education", csv);
+        Assert.Contains("education.private_tutor,education", csv);
         Assert.Contains("loan.take,bank", csv);
         Assert.Contains("loan.give,bank", csv);
         Assert.Contains("wellbeing.heal_relative,health", csv);

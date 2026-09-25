@@ -26,7 +26,13 @@ public sealed partial class StandardHouseholdService
                         member =>
                             member is not null
                             && member.Tags.Has(
-                                "state.alive"))
+                                "state.alive")
+                            // MemberIds can be transiently stale after an
+                            // action moves someone into their own household.
+                            // A person who already heads another household is
+                            // no longer a resident successor of this one.
+                            && (member.Id == oldHead.Id
+                                || !_economy.HasHousehold(member)))
                     .Cast<IPerson>()
                     .ToList();
 

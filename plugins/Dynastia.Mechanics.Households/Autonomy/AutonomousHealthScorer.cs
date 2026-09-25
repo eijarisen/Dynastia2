@@ -82,7 +82,7 @@ internal sealed class AutonomousHealthScorer : IAutonomousActionScorer
                 target.Person.Id == snapshot.Head.Id
                 || target.Career?.IsEmployed == true && workingAdults <= 1
                 || snapshot.Spouse?.Id == target.Person.Id
-                    && snapshot.NeedsFamilyContinuity
+                    && snapshot.NeedsFamilyExpansion
                     && snapshot.HasRealisticReproductivePath;
 
             var emergency =
@@ -201,23 +201,21 @@ internal sealed class AutonomousHealthScorer : IAutonomousActionScorer
         AutonomousActionCandidate option,
         AutonomousHouseholdSnapshot snapshot)
     {
-        var needsCapacity = snapshot.NeedsFamilyContinuity
+        var needsCapacity = snapshot.NeedsFamilyExpansion
             && snapshot.HasRealisticReproductivePath
             && snapshot.Status is { } status
             && snapshot.DependentChildCount >= status.EffectiveChildCapacity;
         if (snapshot.Status?.IsLargeFamilyStrained != true && !needsCapacity)
             return null;
 
-        var band = snapshot.HasSeriousMedicalDanger
+        var band = snapshot.Status?.IsLargeFamilyStrained == true
             ? AutonomousPriorityBands.EmergencySurvival
             : needsCapacity
-                ? snapshot.NeedsMaleLineContinuity
-                    ? AutonomousPriorityBands.MaleLineContinuity
-                    : AutonomousPriorityBands.BloodlineContinuity
+                ? AutonomousPriorityBands.SustainableFamilyContinuity
                 : AutonomousPriorityBands.FamilyStability;
 
         return WithScore(option, AutonomyCategory.ChildProtection, band,
-            snapshot.HasSeriousMedicalDanger ? 82 : 90);
+            snapshot.Status?.IsLargeFamilyStrained == true ? 82 : 90);
     }
 
     private AutonomousActionCandidate? ScoreFireNanny(
@@ -273,7 +271,7 @@ internal sealed class AutonomousHealthScorer : IAutonomousActionScorer
         }
 
         if (snapshot.Spouse?.Id == target.Person.Id
-            && snapshot.NeedsFamilyContinuity
+            && snapshot.NeedsFamilyExpansion
             && snapshot.HasRealisticReproductivePath)
         {
             score += 20;

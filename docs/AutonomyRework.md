@@ -1,40 +1,38 @@
-# Autonomous lineage survival rework — 2026-09-25
+# Autonomous household survival rework — D15-003
 
-This source package updates the repository supplied as `Dynastia(20260925-000515).zip`. Rebuild using the normal `build/build-dev.ps1` workflow. The App project also enables the implicit imports required by its existing source files for a clean build. Existing save fields, action IDs, event rewards and annual system ordering are unchanged; the GameScore plugin adds a read-only preview service.
+The current autonomy policy follows one hierarchy for every household that is under autonomous control. It uses the normal action registry, queue and mechanic executors; it does not create AI-only money, housing, marriages or extra actions.
 
 ## Decision policy
 
 | Priority | Purpose |
 | --- | --- |
-| 1000 | Immediate medical survival and necessary emergency funding |
-| 800 | Restore household solvency |
-| 700 | Protect and continue the male lineage |
-| 650 | Protect and continue the wider bloodline |
-| 500 | Preserve family stability and longer-term health |
-| 300 | Sustainable development; prefer the greatest estimated incremental score |
-| 100 | Optional activity; prefer incremental score when available |
+| 1000 | Keep the household alive: acute health danger, existing harmful overcrowding/strain and emergency funding needed to correct it |
+| 800 | Restore enough income/cash flow to survive |
+| 650 | Sustainable family formation: safe first/second child plans, adult-child establishment and the prerequisites that make those transitions reachable |
+| 500 | Protect existing children and family stability |
+| 300 | Improve long-term circumstances |
+| 100 | Optional activity using genuinely spare capacity |
 
-Urgent medical care and a viable household budget support both lineage objectives. For comparable medical needs, male-line carriers and needed reproductive partners take precedence over other bloodline relatives. Acute danger precedes less urgent treatment. Personality and bounded random choice operate within equivalent priority/reward choices and cannot promote score above family survival.
+Male-line and bloodline facts remain available for succession diagnostics. They are not separate urgency bands. Male-line succession may break an exact tie between equally useful, safe adult family-formation actions; it never changes medical, education or conception priority.
 
-## Implemented behavior
+## Existing children and deliberate expansion
 
-- Two daughters no longer satisfy male-line continuity. The planner seeks a buffer of two viable descendant carriers, checks canonical bloodline/male-line membership and biological parent links, and traverses grandchildren even through deceased children. Children living elsewhere still count. Unrelated/adopted residents still consume care capacity without falsely satisfying biological continuity.
-- A living person is not automatically a dependable future carrier: reproductive availability, fertility and serious health risks matter. Adults aged 60+, women over 40, and adults without a viable reproductive path do not satisfy the buffer. Descendants of those people can still satisfy it. The buffer counts people, not independent family branches.
-- Resident sons can receive the existing arranged-marriage action. Daughters' marriages preserve wider bloodline continuity. Candidate choice considers acceptance, fertility and remaining reproductive years before wealth/prestige when continuity is needed. It uses the existing annual candidate pool and does not repeatedly generate additional candidates.
-- Marriage repair precedes deliberate conception when satisfaction is low. Both parents must be available and share a household. Deliberate attempts stop during serious household illness, poverty, insufficient care capacity, prospective overcrowding or an unsustainable additional living budget. Passive births retain the game's existing rules.
-- Housing can support family growth: extend an owned residence when space is needed, or buy a suitable first house and budget for necessary extensions. No pointless extension is selected merely for its repeatable score reward. Offer prices and construction reserves are checked explicitly.
-- Medical fertility improvements can address a weak reproductive path; immunity/longevity improvements support survival. Paid education and optional investments retain reserves. Overwork is limited to healthy, unstressed, financially secure households without a continuity need or dependent children, and cannot be repeated in consecutive years.
-- Separate-household support requires actual recipient need and protects the donor's budget. Moving a resident branch out requires a local spare home and sufficient income for both households. Remote farmland is explicitly selected before local land when selling; farmland aid requests now evaluate willingness. Lending carries actual generated bank terms, including their interest multiplier.
-- A rejected queue submission tries the next candidate. Normal autonomous processing retains already queued actions. Simulate-all/debug processing continues to use the same policy for every household.
+Every living child belonging to either current partner counts as an existing commitment, including stepchildren and recognized adopted children. Illness, infertility, adulthood, marriage or moving out does not remove that commitment. Two existing children are the initial soft stop for deliberate additional births. Natural/passive reproduction remains governed by the ordinary reproduction mechanic.
 
-## Score estimation
+A living grandchild or another already functioning descendant family prevents old parents from treating a deceased direct child as a reason to start a replacement family. Biological male-line/bloodline viability is still calculated for the game's real succession rules and diagnostics only.
 
-The GameScore plugin processes hypothetical events against a detached copy of its active claims and already-earned outcomes. It applies the same event filtering and deduplication as real scoring without changing the live ledger, event log or random state.
+Active conception additionally requires a real reproductive path, no material unmet dependent need, sufficient care/residence capacity and a two-year essential-budget check with a protected reserve. A resident adult child's unresolved establishment blocks a discretionary second birth until that transition is addressed.
 
-Estimates include attributable education/stat achievements, new craft learning and employment, property purchases, and claim reversals. Known probabilities scale expected rewards. Already-earned stat/education/craft tiers are worth zero. Job switching does not falsely award a new employment bonus. Unknown future promotions, mastery gains and passive family events receive no speculative points. This is a survival-oriented heuristic, not an exhaustive lifetime-score optimizer.
+## Adult family progression
 
-## Validation and balance follow-up
+The planner now treats ordinary establishment as a reachable sequence instead of requiring a spare second house. `household.ask_move_out` can establish a normal rented branch when the child can support its essential rent/living costs; an owned spare house remains an optional route. Employment, better-employment and viable craft steps for an adult child inherit family-formation urgency when they are the prerequisite for independence.
 
-Validation results are recorded in `docs/AutonomyValidation.md`. Focused coverage exercises descendant classification, single-heir risk, marriage/conception gates, medical priorities, score previews, reserves, housing plans and action parameters. Tests verify behavior and regressions; no long-run survival uplift is claimed without a multi-seed simulation benchmark.
+Arranged marriage and spouse-search candidates are filtered against the actual post-union residence and essential budget. A resident son's incoming spouse cannot be selected if the current household would immediately overcrowd; a daughter's marriage-created household must be financially viable, and the source household must remain viable after her income/living-cost departure.
 
-`docs/AutonomyBalanceAudit.md` contains code-referenced suggestions for uncapped house-extension scoring, cash-only divorce settlement shielding, guaranteed lending and annual reproduction incentives. Those game-wide balancing changes are proposals. This package changes autonomous decisions and repairs their parameter handling.
+## Care, reserves and score
+
+Medical triage uses actual health harm, childhood vulnerability and essential earning/reproductive roles without sex/ancestry favoritism. Stable chronic illness no longer freezes unrelated useful actions. Existing dependent danger blocks discretionary births and spending locally rather than through a global chronic-condition veto.
+
+Optional property investment, lending, paid education, religious study and stat improvement yield to live family-formation obligations. Game-score preview is consulted only after ordinary utility has identified near-equivalent safe development/optional actions. It cannot promote a lower-priority or substantially worse action.
+
+D15-003 adds one additive persisted component, `households.autonomy_family_plan`, containing only minimal plan/fairness/reservation intent. Old saves have no such component and therefore begin with no reservations; the planner derives fresh intents on the next autonomous assessment. No save-format version bump or manual migration is required.

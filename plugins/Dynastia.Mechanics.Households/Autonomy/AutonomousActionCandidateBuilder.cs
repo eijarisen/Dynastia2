@@ -187,11 +187,14 @@ internal sealed class AutonomousActionCandidateBuilder
             if (partnerSearch is null)
                 return null;
 
-            var candidates = partnerSearch.GetCandidates(snapshot.Head);
+            var candidates = partnerSearch.GetCandidates(snapshot.Head)
+                .Where(candidate => IsSafeIncomingUnion(
+                    snapshot, snapshot.Head, candidate, createsIndependentHousehold: false))
+                .ToList();
             if (candidates.Count == 0)
                 return null;
 
-            var needsChildren = snapshot.NeedsFamilyContinuity
+            var needsChildren = snapshot.NeedsFamilyExpansion
                 && snapshot.HasRealisticReproductivePath;
             var needsIncome = snapshot.FinancialState is
                 AutonomousFinancialState.Critical or AutonomousFinancialState.Poor;
@@ -212,15 +215,25 @@ internal sealed class AutonomousActionCandidateBuilder
 
             var partnerSex = actionId.Equals("relationship.marry_off_son", StringComparison.OrdinalIgnoreCase)
                 ? Sex.Female : Sex.Male;
+            var createsIndependentHousehold = partnerSex == Sex.Male;
             var candidates = partnerSearch.GetCandidatesFor(
-                target,
-                partnerSex,
-                "arranged-marriage");
+                    target,
+                    partnerSex,
+                    "arranged-marriage")
+                .Where(candidate => IsSafeIncomingUnion(
+                    snapshot, target, candidate, createsIndependentHousehold))
+                .ToList();
             if (candidates.Count == 0)
                 return null;
 
+            var targetMember = snapshot.Members.FirstOrDefault(member =>
+                member.Person.Id == target.Id);
+            var targetFertile = targetMember is not null
+                && GetStat(targetMember.Stats, "fertility") > 0
+                && (_context.GetService<IFamilyService>()?.GetSex(target) != Sex.Female
+                    || target.Age <= 43);
             var best = AutonomousPartnerChoiceRules.Choose(
-                candidates, partnerSex, needsContinuity: true,
+                candidates, partnerSex, needsContinuity: targetFertile,
                 needsIncome: snapshot.FinancialState != AutonomousFinancialState.Secure);
             if (best is null)
                 return null;
@@ -244,7 +257,7 @@ internal sealed class AutonomousActionCandidateBuilder
 
             var town = _economy.GetResidenceTown(snapshot.Head);
             var requiredCapacity = (snapshot.Status?.ResidentCount ?? snapshot.Members.Count)
-                + (snapshot.NeedsFamilyContinuity && snapshot.HasRealisticReproductivePath ? 1 : 0);
+                + (snapshot.NeedsFamilyExpansion && snapshot.HasRealisticReproductivePath ? 1 : 0);
             var offers = market.GetOffers(snapshot.Head, town, _gameState.Year)
                 .Where(candidate => _economy.CanAfford(snapshot.Head, candidate.AskingPrice))
                 .ToList();
@@ -305,8 +318,8 @@ internal sealed class AutonomousActionCandidateBuilder
 
             if (spareHouse is not null)
                 parameters["propertyId"] = spareHouse.Id.ToString();
-            else if (snapshot.Status?.IsOvercrowded != true)
-                return null;
+            // No property parameter means the normal shared action attempts a
+            // rented independent household. Do not suppress that legal route.
         }
         else if (actionId.Equals("household.sell_house", StringComparison.OrdinalIgnoreCase))
         {
@@ -395,6 +408,92 @@ internal sealed class AutonomousActionCandidateBuilder
         return parameters;
     }
 
+
+    private bool IsSafeIncomingUnion(
+        AutonomousHouseholdSnapshot snapshot,
+        IPerson target,
+        PartnerCandidateInfo candidate,
+        bool createsIndependentHousehold)
+    {
+        var currentTown = _economy.GetResidenceTown(snapshot.Head);
+        var currentLivingCost = _economy.GetLivingCostPerPerson(currentTown);
+
+        if (!createsIndependentHousehold)
+        {
+            if (snapshot.Status is { } status
+                && status.ResidentCount + 1 > status.OvercrowdingThreshold)
+            {
+                return false;
+            }
+
+            var postIncome = snapshot.ProjectedIncome + candidate.AnnualIncome;
+            var postExpenses = snapshot.ExpectedExpenses + currentLivingCost;
+            return CoversEssentialBudget(
+                snapshot.Finance?.Wealth ?? 0m,
+                postIncome,
+                postExpenses,
+                requireReserve: snapshot.NeedsFamilyExpansion
+                    || snapshot.ExistingChildren.Any(child => child.Id == target.Id));
+        }
+
+        // An arranged husband forms the destination household immediately.
+        // Evaluate both the new branch and the source household before offering
+        // the candidate. No AI-only cash or housing is assumed.
+        var locations = _context.GetService<ILocationService>();
+        var destination = locations?.FindTown(candidate.TownId) ?? currentTown;
+        var destinationLivingCost = _economy.GetLivingCostPerPerson(destination);
+        var family = _context.GetService<IFamilyService>();
+        var residentChildren = family is null
+            ? 0
+            : family.GetChildren(target).Count(child =>
+                child.Age < 18 && child.Tags.Has("state.alive"));
+        var branchMembers = 2 + residentChildren;
+        var targetIncome = snapshot.Members.FirstOrDefault(member =>
+            member.Person.Id == target.Id)?.Career?.AnnualIncome ?? 0m;
+        var branchIncome = targetIncome + candidate.AnnualIncome;
+        var branchExpenses = destinationLivingCost * branchMembers
+            + (candidate.EstimatedHouses > 0
+                ? 0m
+                : _economy.GetResidenceRent(destination));
+        if (!CoversEssentialBudget(
+            Math.Max(0m, candidate.EstimatedWealth),
+            branchIncome,
+            branchExpenses,
+            requireReserve: true))
+        {
+            return false;
+        }
+
+        var sourceIncome = Math.Max(0m, snapshot.ProjectedIncome - targetIncome);
+        var sourceExpenses = Math.Max(0m, snapshot.ExpectedExpenses - currentLivingCost);
+        return CoversEssentialBudget(
+            snapshot.Finance?.Wealth ?? 0m,
+            sourceIncome,
+            sourceExpenses,
+            requireReserve: false);
+    }
+
+    private static bool CoversEssentialBudget(
+        decimal wealth,
+        decimal income,
+        decimal expenses,
+        bool requireReserve)
+    {
+        if (expenses <= 0m)
+            return true;
+
+        var reserve = requireReserve
+            ? expenses * AutonomousStrategyRules.ForecastReserveFraction
+            : 0m;
+        var twoYearDeficit = Math.Max(0m, expenses - income) * 2m;
+        return wealth >= twoYearDeficit + reserve;
+    }
+
+    private static int GetStat(
+        IReadOnlyDictionary<string, int> stats,
+        string id) =>
+        stats.TryGetValue(id, out var value) ? value : 0;
+
     private IReadOnlyDictionary<string, string>? BuildLoanParameters(
         AutonomousHouseholdSnapshot snapshot,
         bool lending)
@@ -406,9 +505,10 @@ internal sealed class AutonomousActionCandidateBuilder
         if (lending)
         {
             if (snapshot.FinancialState != AutonomousFinancialState.Secure
-                || snapshot.HasSeriousMedicalDanger
+                || snapshot.HasImmediateMedicalDanger
+                || snapshot.HasMaterialUnmetDependentNeed
                 || snapshot.Status?.IsLargeFamilyStrained == true
-                || snapshot.NeedsFamilyContinuity && snapshot.HasRealisticReproductivePath
+                || snapshot.NeedsFamilyContinuity
                 || (snapshot.Finance?.Wealth ?? 0m) < snapshot.ExpectedExpenses * 3m + 1000m)
             {
                 return null;
@@ -426,7 +526,7 @@ internal sealed class AutonomousActionCandidateBuilder
 
         var wealth = snapshot.Finance?.Wealth ?? 0m;
         var shortfall = Math.Max(0m, snapshot.ExpectedExpenses - snapshot.ProjectedIncome - wealth);
-        var need = Math.Max(1000m, shortfall + ((snapshot.HasImmediateMedicalDanger || snapshot.HasSeriousMedicalDanger) ? 3000m : 0m));
+        var need = Math.Max(1000m, shortfall + ((snapshot.HasImmediateMedicalDanger || snapshot.HasMaterialUnmetDependentNeed) ? 3000m : 0m));
         var requiredPrincipal = Math.Clamp(
             Math.Ceiling(need / 1000m) * 1000m,
             1000m,

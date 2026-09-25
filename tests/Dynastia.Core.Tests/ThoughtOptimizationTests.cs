@@ -521,6 +521,35 @@ public sealed class ThoughtOptimizationTests
     }
 
     [Fact]
+    public void GenericChildFallbackThoughtCarriesATopicEmoji()
+    {
+        var state = new GameState
+        {
+            DynastySurname = "Test",
+            Year = 1900
+        };
+        var child = state.CreatePerson(
+            "Child",
+            "Test",
+            8,
+            Guid.Parse("20000000-0000-0000-0000-000000000001"));
+        child.Tags.Add("state.alive");
+
+        var service = CreateService(
+            state,
+            CreateFamilyProxy().Service,
+            new GameEventBus());
+
+        service.EnsureCurrentThoughts();
+
+        var thought = child.Components.Get<PersonThoughtComponent>();
+        Assert.NotNull(thought);
+        Assert.Equal("fallback", thought.ThoughtId);
+        Assert.Equal(ThoughtMoodIds.Neutral, thought.MoodId);
+        Assert.Equal("💭", thought.TopicEmoji);
+    }
+
+    [Fact]
     public void UnknownMoodFallsBackToNeutralPresentation()
     {
         Assert.Equal(

@@ -78,23 +78,9 @@ public static class PersonEmojiResolver
         IPerson person,
         IFamilyService? family)
     {
-        var sex = family?.GetSex(person)
-            ?? (person.Tags.Has("sex.female")
-                ? Sex.Female
-                : Sex.Male);
-
-        if (person.Age <= 4)
-            return "👶🏻";
-
-        if (person.Age <= 11)
-            return sex == Sex.Male ? "👦🏻" : "👧🏻";
-
-        if (person.Age <= 17)
-            return "🧑🏻";
-
-        if (person.Age >= 70)
-            return sex == Sex.Male ? "👴🏻" : "👵🏻";
-
-        return sex == Sex.Male ? "👨🏻" : "👩🏻";
+        // Status indicators are deliberately generic yellow-face emoji.
+        // Character appearance/age/sex belongs to the portrait presentation,
+        // not to the transient status icon.
+        return "🙂";
     }
 }

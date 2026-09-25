@@ -13,7 +13,7 @@ public sealed partial class AutonomousStrategyCharacterizationTests
     [InlineData("household.sell_house", 800, 96, "Solvency")]
     [InlineData("career.seek_employment", 300, 62, "CareerDevelopment")]
     [InlineData("reproduction.try_for_baby", 650, 100.5, "Continuity")]
-    [InlineData("education.help_learning", 300, 60, "ChildProtection")]
+    [InlineData("education.help_learning", 500, 60, "ChildProtection")]
     [InlineData("family_relations.give_money", 100, 24, "FamilyRelations")]
     [InlineData("personality.religious_study", 100, 20, "Optional")]
     [InlineData("turn.pass", 100, 42, "Optional")]
@@ -30,7 +30,7 @@ public sealed partial class AutonomousStrategyCharacterizationTests
             snapshot = snapshot with { FinancialState = AutonomousFinancialState.Critical, HasInvestmentHouse = true };
         if (actionId == "reproduction.try_for_baby")
             snapshot = snapshot with { CanActivelyTryForChild = true, HasRealisticReproductivePath = true,
-                LivingChildCount = 0, ReproductiveUrgency = 0.25, NeedsBloodlineContinuity = true };
+                LivingChildCount = 0, ReproductiveUrgency = 0.25, NeedsFamilyExpansion = true };
         if (actionId == "education.help_learning")
         {
             target = f.World.Person(10);

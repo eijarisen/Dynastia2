@@ -200,17 +200,19 @@ public sealed class Development11TownAffairsPresentationTests
     }
 
     [Fact]
-    public void LocalServiceTabsHideWhenUnavailableAndRemoteTownsOnlyShowInstitutionsAndHousing()
+    public void EducationRemainsVisibleLocallyAndRemoteTownsOnlyShowInstitutionsAndHousing()
     {
         var window = RepositoryFiles.ReadText("src", "Dynastia.App", "Views", "TownLifeWindow.axaml");
         var hub = RepositoryFiles.ReadText("src", "Dynastia.App", "ViewModels", "TownAffairsViewModel.cs");
+        var educationUi = RepositoryFiles.ReadText("src", "Dynastia.App", "ViewModels", "MainWindowViewModel.CraftsEducation.cs");
 
         Assert.Contains("Header=\"Jobs\" IsVisible=\"{Binding ShowJobsTab}\"", window);
         Assert.Contains("Header=\"Health\" IsVisible=\"{Binding ShowHealthTab}\"", window);
         Assert.Contains("Header=\"Education\" IsVisible=\"{Binding ShowEducationTab}\"", window);
         Assert.Contains("Header=\"Bank\" IsVisible=\"{Binding ShowBankTab}\"", window);
-        Assert.Contains("Snapshot.School.IsAvailable", hub);
-        Assert.Contains("Subject is { Age: >= 6 and < 18 }", hub);
+        Assert.Contains("public bool ShowEducationTab =>\n        !IsRemote;", hub);
+        Assert.Contains("if (target.Age < 18)", educationUi);
+        Assert.Contains("if (target.Age < 6)", educationUi);
         Assert.Contains("!IsRemote && Snapshot.Bank.IsAvailable", hub);
         Assert.Contains("if (tab is null || !IsTabVisible(tab.Value))", hub);
         Assert.DoesNotContain("Move here before using local services.", hub);
@@ -314,10 +316,11 @@ public sealed class Development11TownAffairsPresentationTests
         Assert.Contains("IStressService? stress", card);
         Assert.Contains("snapshot.Conditions.Select(condition => condition.Name)", card);
         Assert.Contains("$\"Health: {healthTooltip} • {conditionTooltip}\"", card);
-        Assert.Contains("$\"Stress: {stressSnapshot.Total:0.#}/100\"", card);
+        Assert.Contains("$\"Stress: {stressSnapshot.Total:0}/100\"", card);
         Assert.Contains("person.Age >= 6", card);
         Assert.Contains("_stressService", family);
         Assert.Contains("IsVisible=\"{Binding ShowStress}\"", window);
+        Assert.Contains("Foreground=\"{Binding StressBrush}\"", window);
         Assert.Contains("Text=\"{Binding StressTooltipText}\"", window);
         Assert.Contains("IStatusService? status", card);
         Assert.Contains("ShowAdultStatus", card);
@@ -327,7 +330,7 @@ public sealed class Development11TownAffairsPresentationTests
         Assert.Contains("Text=\"{Binding ReputationStatusText}\"", window);
 
         var genealogy = RepositoryFiles.ReadText("src", "Dynastia.App", "Genealogy", "Host", "GameGenealogyDataSource.cs");
-        Assert.Contains("$\"Stress: {stressSnapshot.Total:0.#}/100\"", genealogy);
+        Assert.Contains("$\"Stress: {stressSnapshot.Total:0}/100\"", genealogy);
         Assert.Contains("$\"Renown: {status.RenownLabel}\"", genealogy);
         Assert.Contains("$\"Reputation: {status.ReputationLabel}\"", genealogy);
     }

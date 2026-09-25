@@ -68,7 +68,7 @@ public sealed class Development14RequestedAdjustmentsTests
         var partners = RepositoryFiles.ReadText(
             "src", "Dynastia.App", "Views", "PotentialPartnersWindow.axaml");
         Assert.DoesNotContain("Height=\"258\"", partners);
-        Assert.Contains("RowDefinitions=\"Auto,Auto\" RowSpacing=\"4\"", partners);
+        Assert.Contains("RowDefinitions=\"Auto,Auto\" RowSpacing=\"10\"", partners);
 
         var inventory = RepositoryFiles.ReadText(
             "src", "Dynastia.App", "Views", "FamilyInventoryWindow.axaml");

@@ -74,7 +74,7 @@ internal sealed class AutonomousFamilyRelationsScorer : IAutonomousActionScorer
 
         var willingnessBonus = (option.RequestWillingness ?? 0) * 20;
 
-        if ((snapshot.HasImmediateMedicalDanger || snapshot.HasSeriousMedicalDanger)
+        if ((snapshot.HasImmediateMedicalDanger || snapshot.HasMaterialUnmetDependentNeed)
             && (snapshot.Finance?.Wealth ?? 0) < 3000m)
         {
             return WithScore(option, AutonomyCategory.Survival,
@@ -203,7 +203,8 @@ internal sealed class AutonomousFamilyRelationsScorer : IAutonomousActionScorer
         AutonomousHouseholdSnapshot snapshot)
     {
         if (snapshot.FinancialState == AutonomousFinancialState.Critical
-            || snapshot.HasSeriousMedicalDanger)
+            || snapshot.HasImmediateMedicalDanger
+            || snapshot.HasMaterialUnmetDependentNeed)
         {
             return null;
         }
@@ -227,7 +228,8 @@ internal sealed class AutonomousFamilyRelationsScorer : IAutonomousActionScorer
         AutonomousHouseholdSnapshot snapshot)
     {
         if (snapshot.FinancialState != AutonomousFinancialState.Secure
-            || snapshot.HasSeriousMedicalDanger)
+            || snapshot.HasImmediateMedicalDanger
+            || snapshot.HasMaterialUnmetDependentNeed)
         {
             return null;
         }
@@ -242,7 +244,7 @@ internal sealed class AutonomousFamilyRelationsScorer : IAutonomousActionScorer
         }
 
         var forecast = economy.GetAnnualForecast(option.Target);
-        var recipientExpenses = Math.Max(recipient.LastExpenses, forecast?.ProjectedExpenses ?? 0m);
+        var recipientExpenses = forecast?.ProjectedExpenses ?? recipient.LastExpenses;
         var recipientReserve = Math.Max(1000m, recipientExpenses);
         var needsHelp = recipient.Wealth < recipientReserve;
         if (!needsHelp)
@@ -302,13 +304,15 @@ internal sealed class AutonomousFamilyRelationsScorer : IAutonomousActionScorer
             }
         }
 
-        var recipientIsMaleLine = snapshot.LivingMaleLineDescendants.Any(person => person.Id == option.Target.Id);
-        var recipientIsBloodline = snapshot.LivingBloodlineDescendants.Any(person => person.Id == option.Target.Id);
+        var recipientIsExistingChild = snapshot.ExistingChildren.Any(person => person.Id == option.Target.Id);
+        if (snapshot.NeedsFamilyContinuity && !recipientIsExistingChild)
+            return null;
+
         return WithScore(option, AutonomyCategory.FamilyRelations,
-            recipientIsMaleLine ? AutonomousPriorityBands.MaleLineContinuity
-                : recipientIsBloodline ? AutonomousPriorityBands.BloodlineContinuity
+            recipientIsExistingChild
+                ? AutonomousPriorityBands.SustainableFamilyContinuity
                 : AutonomousPriorityBands.OptionalDevelopment,
-            recipientIsMaleLine || recipientIsBloodline ? 76 : 24);
+            recipientIsExistingChild ? 76 : 24);
     }
 
     private static bool RequestIsReasonable(AutonomousActionCandidate option) =>

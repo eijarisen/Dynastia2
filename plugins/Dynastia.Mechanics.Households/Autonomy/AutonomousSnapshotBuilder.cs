@@ -68,16 +68,10 @@ internal sealed class AutonomousSnapshotBuilder
         var debtPayments = loans?.GetDebts(head)
             .Sum(loan => loan.AnnualPayment) ?? 0m;
 
+        // The canonical forecast already includes registered finance projection
+        // providers (including scheduled debt). Historical spending is not an
+        // eternal floor and debt must not be counted twice.
         var expectedExpenses = forecast?.ProjectedExpenses ?? 0m;
-        if (finance is not null
-            && finance.LastExpenses > expectedExpenses)
-        {
-            // Preserve the existing conservative autonomous-household policy:
-            // a historically higher ordinary expense year remains the planning
-            // floor, while current debt payments stay explicit. The underlying
-            // expense formulas themselves now come only from Economy.
-            expectedExpenses = finance.LastExpenses + debtPayments;
-        }
 
         var wealth = finance?.Wealth ?? 0m;
         var financialState = AutonomousStrategyRules.GetFinancialState(
@@ -89,8 +83,26 @@ internal sealed class AutonomousSnapshotBuilder
         if (spouse is not null && !spouse.Tags.Has("state.alive"))
             spouse = null;
 
-        var livingChildren = _family.GetChildren(head)
-            .Where(child => child.Tags.Has("state.alive"))
+        var biologicalOrRecognizedChildren = _family.GetChildren(head)
+            .Concat(spouse is null ? Array.Empty<IPerson>() : _family.GetChildren(spouse));
+        var adoption = _context.GetService<IAdoptionService>();
+        var parentIds = new HashSet<Guid> { head.Id };
+        if (spouse is not null)
+            parentIds.Add(spouse.Id);
+        var adoptedChildren = adoption is null
+            ? Array.Empty<IPerson>()
+            : _gameState.People
+                .Where(person =>
+                {
+                    var placement = adoption.GetPlacement(person);
+                    return placement.Kind == AdoptionPlacementKind.AdoptiveHousehold
+                        && placement.GuardianId is Guid guardianId
+                        && parentIds.Contains(guardianId);
+                })
+                .ToArray();
+        var livingChildren = biologicalOrRecognizedChildren
+            .Concat(adoptedChildren)
+            .Where(child => child.Tags.Has("state.alive") && !child.Tags.Has("state.dead"))
             .DistinctBy(child => child.Id)
             .ToList();
 
@@ -131,26 +143,57 @@ internal sealed class AutonomousSnapshotBuilder
         var needsMaleLine = canExtendMaleLine && !hasSecuredMaleLine;
         var needsBloodline = canExtendBloodline && !hasSecuredBloodline;
 
-        // Count all dependent household children, including stepchildren and
-        // supported grandchildren, when deciding whether another birth fits.
+        // Count every dependent resident, including stepchildren, hosted adopted
+        // children and supported grandchildren. Existing-child commitments are
+        // tracked separately and never shrink because a child is ill, infertile,
+        // adult, married or outside the male line.
         var dependentChildren = members.Count(member => member.IsDependent);
+        var existingChildIds = livingChildren.Select(child => child.Id).ToHashSet();
         var reproductivePath = HasRealisticReproductivePath(head, spouse, StatsFor);
-        var viableDescendants = needsMaleLine ? viableMaleLineCount : viableBloodline.Count;
-        // Economy charges living costs per resident. Use its forecast so the
-        // household's local prices, lifestyle and efficiency are retained.
-        var livingCosts = forecast?.ExpenseBreakdown.FirstOrDefault(line =>
-            line.Label.Equals("living costs", StringComparison.OrdinalIgnoreCase))?.Amount;
-        var additionalChildCost = Math.Ceiling(
-            Math.Max(0m, livingCosts ?? expectedExpenses) / Math.Max(1, members.Count));
-        var canSupportAdditionalChild = projectedIncome >= expectedExpenses + additionalChildCost;
+        var directBiologicalChildIds = _family.GetChildren(head)
+            .Concat(spouse is null ? Array.Empty<IPerson>() : _family.GetChildren(spouse))
+            .Select(child => child.Id)
+            .ToHashSet();
+        var hasEstablishedDescendantFamily = descendants.Any(descendant =>
+            descendant.Tags.Has("state.alive")
+            && (!directBiologicalChildIds.Contains(descendant.Id)
+                || _family.GetSpouse(descendant) is { } descendantSpouse
+                    && descendantSpouse.Tags.Has("state.alive")
+                || _family.GetChildren(descendant).Any(child => child.Tags.Has("state.alive"))));
+        var hasAdultFamilyFormationNeed = members.Any(member =>
+            existingChildIds.Contains(member.Person.Id)
+            && member.Person.Id != head.Id
+            && member.Person.Age >= 18
+            && AutonomousReproductiveEligibility.CanParticipateInFamilyLife(member.Person));
+        var needsFamilyExpansion = livingChildren.Count < AutonomousStrategyRules.DeliberateExpansionSoftStop
+            && !hasEstablishedDescendantFamily;
+        var hasMaterialUnmetDependentNeed = members.Any(member =>
+                member.IsDependent
+                && (member.IsSeriousHealthRisk || member.Health.Percentage < 70))
+            || status?.HasUnfundedBasicNeeds == true
+            || status?.IsLargeFamilyStrained == true
+            || status?.IsOvercrowded == true;
+
+        // Use Economy's current local living-cost rule rather than estimating a
+        // child from historic totals. The planner stress-tests two annual cycles
+        // and protects a three-month essential reserve; actual cash is unchanged.
+        var residenceTown = _economy.GetResidenceTown(head);
+        var additionalChildCost = _economy.GetLivingCostPerPerson(residenceTown);
+        var projectedExpensesWithChild = expectedExpenses + additionalChildCost;
+        var hasSustainableExpansionBudget = AutonomousStrategyRules.HasSustainableExpansionBudget(
+            wealth,
+            projectedIncome,
+            projectedExpensesWithChild);
         var canTryForChild = CanActivelyTryForChild(
             head,
             spouse,
-            viableDescendants,
+            livingChildren.Count,
             dependentChildren,
             financialState,
             status,
-            reproductivePath && (needsMaleLine || needsBloodline) && canSupportAdditionalChild);
+            reproductivePath && needsFamilyExpansion && !hasAdultFamilyFormationNeed,
+            hasMaterialUnmetDependentNeed,
+            hasSustainableExpansionBudget);
 
         var marriageSatisfaction =
             spouse is null
@@ -189,10 +232,15 @@ internal sealed class AutonomousSnapshotBuilder
             livingChildren.Count,
             dependentChildren,
             marriageSatisfaction,
-            CalculateReproductiveUrgency(head, spouse, viableDescendants,
-                needsMaleLine || needsBloodline),
+            CalculateReproductiveUrgency(head, spouse, livingChildren.Count,
+                needsFamilyExpansion),
             relatedHouseholds)
         {
+            ExistingChildren = livingChildren,
+            HasMaterialUnmetDependentNeed = hasMaterialUnmetDependentNeed,
+            HasAdultFamilyFormationNeed = hasAdultFamilyFormationNeed,
+            HasEstablishedDescendantFamily = hasEstablishedDescendantFamily,
+            NeedsFamilyExpansion = needsFamilyExpansion,
             LivingMaleLineDescendants = maleLineDescendants,
             LivingBloodlineDescendants = bloodlineDescendants,
             ViableMaleLineDescendantCount = viableMaleLineCount,
@@ -279,11 +327,13 @@ internal sealed class AutonomousSnapshotBuilder
     private bool CanActivelyTryForChild(
         IPerson head,
         IPerson? spouse,
-        int viableDescendants,
+        int existingChildren,
         int dependentChildren,
         AutonomousFinancialState financialState,
         HouseholdStatusSnapshot? status,
-        bool reproductivePath)
+        bool reproductivePath,
+        bool hasMaterialUnmetDependentNeed,
+        bool hasSustainableBudget)
     {
         if (spouse is null
             || _family.GetSex(head) != Sex.Male
@@ -297,21 +347,24 @@ internal sealed class AutonomousSnapshotBuilder
         }
 
         return AutonomousStrategyRules.CanActivelyTryForChild(
-            viableDescendants,
+            existingChildren,
             financialState,
+            hasMaterialUnmetDependentNeed,
             status?.IsLargeFamilyStrained == true,
+            status?.IsOvercrowded == true,
             dependentChildren,
             status?.EffectiveChildCapacity ?? int.MaxValue,
-            reproductivePath);
+            reproductivePath,
+            hasSustainableBudget);
     }
 
     private double CalculateReproductiveUrgency(
         IPerson head,
         IPerson? spouse,
-        int viableDescendants,
-        bool needsContinuity)
+        int existingChildren,
+        bool needsExpansion)
     {
-        if (!needsContinuity)
+        if (!needsExpansion)
             return 0;
 
         IPerson? female = null;
@@ -320,7 +373,7 @@ internal sealed class AutonomousSnapshotBuilder
         else if (spouse is not null && _family.GetSex(spouse) == Sex.Female)
             female = spouse;
 
-        var baseUrgency = viableDescendants == 0 ? 1.0 : 0.55;
+        var baseUrgency = existingChildren == 0 ? 1.0 : 0.55;
         if (female is null)
             return baseUrgency;
 

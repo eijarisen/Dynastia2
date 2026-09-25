@@ -187,11 +187,11 @@ public sealed partial class AutonomousStrategyCharacterizationTests
     }
 
     [Theory]
-    [InlineData(2600, 3000)]
-    [InlineData(2000, 2000)]
-    [InlineData(1800, 2000)]
-    public void SnapshotPreservesWorldOrderLiveMembershipReadOrderAndConservativeForecast(
-        decimal historicalExpenses, decimal expectedExpenses)
+    [InlineData(2600)]
+    [InlineData(2000)]
+    [InlineData(1800)]
+    public void SnapshotUsesCurrentCanonicalForecastWithoutHistoricalExpenseOrDebtDoubleCounting(
+        decimal historicalExpenses)
     {
         using var f = new Fixture();
         var child = f.World.Person(9);
@@ -236,14 +236,14 @@ public sealed partial class AutonomousStrategyCharacterizationTests
         var finance = f.Snapshot.Finance! with { LastExpenses = historicalExpenses };
         var economy = Probe<IEconomyService>((method, args) =>
         {
-            if (method.Name != nameof(IEconomyService.GetHouseholdId))
-                Assert.Same(f.Head, args[0]);
             calls.Add(method.Name);
             return method.Name switch
             {
                 nameof(IEconomyService.GetHousehold) => finance,
                 nameof(IEconomyService.GetHouseholdId) => f.Snapshot.Household.HouseholdId,
                 nameof(IEconomyService.GetAnnualForecast) => new HouseholdAnnualForecast(6000m, 2000m, [], []),
+                nameof(IEconomyService.GetResidenceTown) => f.World.Town,
+                nameof(IEconomyService.GetLivingCostPerPerson) => 500m,
                 _ => throw new InvalidOperationException(method.Name)
             };
         });
@@ -263,16 +263,18 @@ public sealed partial class AutonomousStrategyCharacterizationTests
         Assert.Same(status, snapshot.Status);
         Assert.Same(spouse, snapshot.Spouse);
         Assert.Equal(6000m, snapshot.ProjectedIncome);
-        Assert.Equal(expectedExpenses, snapshot.ExpectedExpenses); // Debt is added only when the historical floor wins.
+        Assert.Equal(2000m, snapshot.ExpectedExpenses);
         Assert.Equal(400m, snapshot.DebtPayments);
         Assert.Equal(AutonomousFinancialState.Secure, snapshot.FinancialState);
         Assert.True(snapshot.HasImmediateMedicalDanger);
         Assert.True(snapshot.HasSeriousMedicalDanger);
         Assert.True(snapshot.HasRealisticReproductivePath);
-        Assert.True(snapshot.CanActivelyTryForChild);
+        Assert.False(snapshot.CanActivelyTryForChild);
+        Assert.True(snapshot.HasMaterialUnmetDependentNeed);
         Assert.Equal(1, snapshot.LivingChildCount);
+        Assert.Equal(1, snapshot.ExistingChildCount);
         Assert.Equal(1, snapshot.DependentChildCount);
-        Assert.Equal(1.5, snapshot.ReproductiveUrgency); // Sole child is seriously ill, so continuity is still urgent.
+        Assert.Equal(1.1, snapshot.ReproductiveUrgency);
         Assert.Equal(3, snapshot.Members[1].Stats["fertility"]);
         Assert.Null(snapshot.Members[1].Career);
         Assert.Equal(new[] {
@@ -280,7 +282,8 @@ public sealed partial class AutonomousStrategyCharacterizationTests
             "health:" + child.Id, "stats:" + child.Id,
             "health:" + spouse.Id, "career:" + spouse.Id, "stats:" + spouse.Id,
             "GetHousehold", "status", "GetAnnualForecast", "debts",
-            "GetHouseholdId", "GetHouseholdId" }, calls);
+            "GetHouseholdId", "GetHouseholdId", "GetResidenceTown",
+            "GetLivingCostPerPerson" }, calls);
         Assert.Equal(0, f.World.Random.ConsumedCount);
     }
 

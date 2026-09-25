@@ -59,10 +59,10 @@ Owner: `dynastia.households` plus mechanic-specific autonomous rules
 Rules:
 - Bloodline households not currently being directed can make yearly household/work decisions automatically.
 - Autonomous behavior uses the same persisted state and action/mechanic services rather than a separate simplified save model.
-- Planning protects urgent health and household solvency, then male-line continuity, then wider bloodline continuity. Actual incremental game-score rewards rank safe development choices last.
-- Continuity counts viable biological descendants beyond direct children, including grandchildren through deceased children. The planning buffer is two viable carriers, with male-line membership checked separately from bloodline membership.
-- The AI can arrange marriages for resident sons and daughters, supports reproductive partners and vulnerable heirs, and checks childcare, residence capacity and the additional living budget before trying for another child.
-- Property purchases and residence extensions preserve reserves. Extensions require a capacity need; lending uses real local offers; medical stat improvements and family support target useful outcomes.
+- Every autonomous household uses the same priority order: immediate survival, solvency, sustainable family formation, existing-child protection, long-term improvement, then optional activity. Male-line/bloodline facts remain succession diagnostics rather than separate urgency bands.
+- Every living child belonging to either partner remains an existing family commitment regardless of sex, health, fertility, marriage or residence. Two existing children are the initial soft stop for deliberate expansion; ordinary passive births remain unchanged.
+- Resident adult children needing establishment take precedence over a discretionary second birth. The AI can use ordinary arranged marriage, employment prerequisites and the shared rented move-out route; a spare owned house is optional rather than mandatory. Incoming unions and deliberate births are screened against current residence, care and essential-budget capacity.
+- Acute care is based on actual harm and essential household roles, not ancestry. Stable chronic illness does not globally freeze unrelated useful actions. Optional purchases, lending, gifts and paid self-development yield to live family obligations and protected reserves.
 - Player-facing annual-action validation remains focused on controllable male-line heads. Normal autonomy retains existing queues; simulate-all uses the same strategy and replaces queues as before.
 
 Primary code: `plugins/Dynastia.Mechanics.Households/AutonomousHouseholdDecisionSystem.cs`, related `Autonomous*Rules` tests.

@@ -25,43 +25,80 @@ public sealed class AutonomousStrategyRulesTests
     }
 
     [Fact]
-    public void ActiveChildbirthRequiresStableUnstrainedHousehold()
+    public void ActiveChildbirthRequiresSustainableUnstrainedHouseholdBelowSoftStop()
     {
         Assert.True(
             AutonomousStrategyRules.CanActivelyTryForChild(
-                viableDescendants: 0,
+                existingChildren: 0,
                 AutonomousFinancialState.Stable,
+                hasMaterialUnmetDependentNeed: false,
                 strained: false,
+                overcrowded: false,
                 dependentChildren: 0,
                 effectiveCapacity: 3,
-                hasReproductivePath: true));
+                hasReproductivePath: true,
+                hasSustainableBudget: true));
 
         Assert.False(
             AutonomousStrategyRules.CanActivelyTryForChild(
-                viableDescendants: 0,
+                existingChildren: 0,
                 AutonomousFinancialState.Poor,
+                hasMaterialUnmetDependentNeed: false,
                 strained: false,
+                overcrowded: false,
                 dependentChildren: 0,
                 effectiveCapacity: 3,
-                hasReproductivePath: true));
+                hasReproductivePath: true,
+                hasSustainableBudget: true));
 
         Assert.False(
             AutonomousStrategyRules.CanActivelyTryForChild(
-                viableDescendants: 1,
+                existingChildren: 1,
                 AutonomousFinancialState.Stable,
-                strained: true,
+                hasMaterialUnmetDependentNeed: true,
+                strained: false,
+                overcrowded: false,
                 dependentChildren: 1,
                 effectiveCapacity: 3,
-                hasReproductivePath: true));
+                hasReproductivePath: true,
+                hasSustainableBudget: true));
 
         Assert.False(
             AutonomousStrategyRules.CanActivelyTryForChild(
-                viableDescendants: 2,
+                existingChildren: 2,
                 AutonomousFinancialState.Secure,
+                hasMaterialUnmetDependentNeed: false,
                 strained: false,
+                overcrowded: false,
                 dependentChildren: 2,
                 effectiveCapacity: 4,
-                hasReproductivePath: true));
+                hasReproductivePath: true,
+                hasSustainableBudget: true));
+
+        Assert.False(
+            AutonomousStrategyRules.CanActivelyTryForChild(
+                existingChildren: 0,
+                AutonomousFinancialState.Secure,
+                hasMaterialUnmetDependentNeed: false,
+                strained: false,
+                overcrowded: false,
+                dependentChildren: 0,
+                effectiveCapacity: 4,
+                hasReproductivePath: true,
+                hasSustainableBudget: false));
+    }
+
+    [Fact]
+    public void ExpansionBudgetProtectsTwoYearDeficitAndEssentialReserve()
+    {
+        Assert.True(AutonomousStrategyRules.HasSustainableExpansionBudget(
+            wealth: 5000m,
+            projectedIncome: 4000m,
+            projectedExpensesWithChild: 3000m));
+        Assert.False(AutonomousStrategyRules.HasSustainableExpansionBudget(
+            wealth: 500m,
+            projectedIncome: 3000m,
+            projectedExpensesWithChild: 3000m));
     }
 
     [Theory]

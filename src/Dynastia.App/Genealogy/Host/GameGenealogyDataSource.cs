@@ -496,7 +496,7 @@ public sealed class GameGenealogyDataSource :
         if (stressSnapshot is not null)
         {
             livingTooltipSections.Add(
-                $"Stress: {stressSnapshot.Total:0.#}/100");
+                $"Stress: {stressSnapshot.Total:0}/100");
         }
 
         if (person.Age >= 6 && _education is not null)

@@ -170,6 +170,8 @@ public interface IEconomyService
 
     decimal GetResidenceRent(TownInfo town);
 
+    int GetDefaultResidenceCapacity(TownInfo town) => 6;
+
     decimal GetRentalIncome(TownInfo town);
 
     decimal GetRentalIncome(HousePropertyInfo house)

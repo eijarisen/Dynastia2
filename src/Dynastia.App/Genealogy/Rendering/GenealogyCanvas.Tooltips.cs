@@ -152,6 +152,33 @@ public sealed partial class GenealogyCanvas
                 : string.Empty;
 
         if (line.StartsWith(
+                "Health:",
+                StringComparison.OrdinalIgnoreCase))
+        {
+            return TryReadSlashValue(label, out var health)
+                ? HealthBrushForValue(health)
+                : TooltipText;
+        }
+
+        if (line.StartsWith(
+                "Stress:",
+                StringComparison.OrdinalIgnoreCase))
+        {
+            return TryReadSlashValue(label, out var stress)
+                ? stress <= 0 ? StressNone : StressElevated
+                : TooltipText;
+        }
+
+        if (line.StartsWith(
+                "Education:",
+                StringComparison.OrdinalIgnoreCase))
+        {
+            return TryReadEducationLevel(label, out var level)
+                ? StatBrushForValue(level)
+                : TooltipText;
+        }
+
+        if (line.StartsWith(
                 "Renown:",
                 StringComparison.OrdinalIgnoreCase)
             || line.StartsWith(
@@ -161,26 +188,90 @@ public sealed partial class GenealogyCanvas
             return StatusPresentation.BrushForLabel(label);
         }
 
-        if (!line.StartsWith(
+        if (line.StartsWith(
+                "Happiness:",
+                StringComparison.OrdinalIgnoreCase)
+            || line.StartsWith(
                 "Career:",
                 StringComparison.OrdinalIgnoreCase)
-            && !line.StartsWith(
+            || line.StartsWith(
                 "Marriage:",
                 StringComparison.OrdinalIgnoreCase))
         {
-            return TooltipText;
+            return SatisfactionBrushForLabel(label);
         }
 
-        return label.ToLowerInvariant() switch
+        return TooltipText;
+    }
+
+    private static IBrush HealthBrushForValue(
+        double value) =>
+        value switch
+        {
+            <= 20 => HealthCritical,
+            <= 40 => HealthPoor,
+            <= 60 => HealthFair,
+            <= 80 => HealthGood,
+            _ => HealthExcellent
+        };
+
+    private static IBrush StatBrushForValue(
+        int value) =>
+        value switch
+        {
+            <= 0 => StatVeryLow,
+            1 => StatLow,
+            2 => StatBelowAverage,
+            3 => SatisfactionContent,
+            4 => SatisfactionSatisfied,
+            _ => SatisfactionThriving
+        };
+
+    private static IBrush SatisfactionBrushForLabel(
+        string label) =>
+        label.ToLowerInvariant() switch
         {
             "miserable" => SatisfactionMiserable,
             "unhappy" => SatisfactionUnhappy,
             "content" => SatisfactionContent,
             "satisfied" => SatisfactionSatisfied,
+            "happy" => SatisfactionSatisfied,
             "thriving" => SatisfactionThriving,
             _ => SatisfactionNeutral
         };
+
+    private static bool TryReadSlashValue(
+        string label,
+        out double value)
+    {
+        var slash = label.IndexOf('/');
+        var raw = slash >= 0
+            ? label[..slash]
+            : label;
+
+        return double.TryParse(
+            raw.Trim(),
+            System.Globalization.NumberStyles.Float,
+            System.Globalization.CultureInfo.InvariantCulture,
+            out value);
     }
+
+    private static bool TryReadEducationLevel(
+        string label,
+        out int level)
+    {
+        const string prefix = "Level ";
+        if (!label.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
+        {
+            level = 0;
+            return false;
+        }
+
+        return int.TryParse(
+            label[prefix.Length..].Trim(),
+            out level);
+    }
+
     private static void DrawCenteredText(
         DrawingContext context,
         string text,

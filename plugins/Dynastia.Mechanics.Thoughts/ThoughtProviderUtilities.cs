@@ -37,115 +37,74 @@ internal static class ThoughtProviderUtilities
         var salience =
             candidate.Salience;
 
+        var traits =
+            candidate.SalienceTraits;
+
         if (person.Age is >= 5 and <= 11)
         {
-            if (candidate.Topic.StartsWith(
-                    "family.loss",
-                    StringComparison.OrdinalIgnoreCase)
-                || candidate.Topic.StartsWith(
-                    "family.orphanhood",
-                    StringComparison.OrdinalIgnoreCase)
-                || candidate.Topic.StartsWith(
-                    "family.placement",
-                    StringComparison.OrdinalIgnoreCase)
-                || candidate.Topic.StartsWith(
-                    "family.parents_divorced",
-                    StringComparison.OrdinalIgnoreCase))
+            if ((traits & (
+                    ThoughtSalienceTraits.FamilyLoss
+                    | ThoughtSalienceTraits.Orphanhood
+                    | ThoughtSalienceTraits.Placement
+                    | ThoughtSalienceTraits.ParentsDivorced)) != 0)
             {
-                salience +=
-                    10;
+                salience += 10;
             }
 
-            if (candidate.Topic.StartsWith(
-                    "health.",
-                    StringComparison.OrdinalIgnoreCase))
+            if (traits.HasFlag(
+                ThoughtSalienceTraits.Health))
             {
-                salience +=
-                    5;
+                salience += 5;
             }
 
-            if (candidate.Topic.Equals(
-                    "family.birth",
-                    StringComparison.OrdinalIgnoreCase)
-                || candidate.Topic.Equals(
-                    "education",
-                    StringComparison.OrdinalIgnoreCase))
+            if ((traits & (
+                    ThoughtSalienceTraits.FamilyBirth
+                    | ThoughtSalienceTraits.Education)) != 0)
             {
-                salience +=
-                    5;
+                salience += 5;
             }
 
-            if (candidate.Topic.Equals(
-                "economy.poverty",
-                StringComparison.OrdinalIgnoreCase))
+            if (traits.HasFlag(
+                ThoughtSalienceTraits.Poverty))
             {
-                salience -=
-                    20;
+                salience -= 20;
             }
 
-            if (candidate.Topic.Equals(
-                "household.strain",
-                StringComparison.OrdinalIgnoreCase))
+            if (traits.HasFlag(
+                ThoughtSalienceTraits.HouseholdStrain))
             {
-                salience -=
-                    10;
+                salience -= 10;
             }
         }
         else if (person.Age is >= 12 and <= 17)
         {
-            if (candidate.Topic.StartsWith(
-                    "family.loss",
-                    StringComparison.OrdinalIgnoreCase)
-                || candidate.Topic.StartsWith(
-                    "family.orphanhood",
-                    StringComparison.OrdinalIgnoreCase)
-                || candidate.Topic.StartsWith(
-                    "family.placement",
-                    StringComparison.OrdinalIgnoreCase)
-                || candidate.Topic.StartsWith(
-                    "family.parents_divorced",
-                    StringComparison.OrdinalIgnoreCase)
-                || candidate.Topic.StartsWith(
-                    "health.",
-                    StringComparison.OrdinalIgnoreCase)
-                || candidate.Topic.Equals(
-                    "education",
-                    StringComparison.OrdinalIgnoreCase))
+            if ((traits & (
+                    ThoughtSalienceTraits.FamilyLoss
+                    | ThoughtSalienceTraits.Orphanhood
+                    | ThoughtSalienceTraits.Placement
+                    | ThoughtSalienceTraits.ParentsDivorced
+                    | ThoughtSalienceTraits.Health
+                    | ThoughtSalienceTraits.Education)) != 0)
             {
-                salience +=
-                    5;
+                salience += 5;
             }
 
-            if (candidate.Topic.Equals(
-                    "rare.event",
-                    StringComparison.OrdinalIgnoreCase)
-                && (
-                    candidate.WordingKey.Equals(
-                        "rare.assault",
-                        StringComparison.OrdinalIgnoreCase)
-                    || candidate.WordingKey.Equals(
-                        "rare.accident",
-                        StringComparison.OrdinalIgnoreCase)
-                ))
+            if (traits.HasFlag(
+                ThoughtSalienceTraits.RareTrauma))
             {
-                salience +=
-                    5;
+                salience += 5;
             }
 
-            if (candidate.Topic.Equals(
-                "economy.poverty",
-                StringComparison.OrdinalIgnoreCase))
+            if (traits.HasFlag(
+                ThoughtSalienceTraits.Poverty))
             {
-                salience -=
-                    10;
+                salience -= 10;
             }
 
-            if (candidate.Topic.Equals(
-                "household.strain",
-                StringComparison.OrdinalIgnoreCase))
+            if (traits.HasFlag(
+                ThoughtSalienceTraits.HouseholdStrain))
             {
-                salience -=
-                    5;
+                salience -= 5;
             }
         }
 

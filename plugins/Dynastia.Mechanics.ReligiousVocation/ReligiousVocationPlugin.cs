@@ -6,6 +6,7 @@ public sealed class ReligiousVocationPlugin : IGamePlugin
 {
     public void Initialize(IGamePluginContext context)
     {
+        EventPresentationRegistration.Register(context);
         var family = Required<IFamilyService>(context, "Family service");
         var career = Required<ICareerService>(context, "Career service");
         var locations = Required<ILocationService>(context, "Location service");

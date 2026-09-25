@@ -14,76 +14,87 @@ public static class PersonEmojiResolver
         IThoughtService? thoughts = null,
         IAppearanceService? appearance = null)
     {
-        if (person.Tags.Has(
-            "state.dead"))
-        {
+        if (person.Tags.Has("state.dead"))
             return "💀";
-        }
 
-        // Status emoji are intentionally separate from physical portraits.
-        // Imprisonment is an overriding state and therefore wins over thoughts.
-        if (person.Tags.Has(
-            "state.imprisoned")
+        if (person.Tags.Has("state.imprisoned")
             || justice?.IsImprisoned(person) == true)
         {
             return "⛓️";
         }
 
-        // Children below five do not have stored thoughts yet, so retain the
-        // small immediate-health override that previously represented their
-        // meaningful status. A healthy child simply uses the neutral status.
         if (person.Age < 5)
         {
-            var healthState =
-                health?.GetHealth(
-                    person);
+            var healthState = health?.GetHealth(person);
 
             if (healthState is not null)
             {
                 var serious =
                     healthState.Percentage <= 20
-                    || healthState.Conditions.Any(
-                        condition =>
-                            condition.Type.Equals(
-                                "terminal",
-                                StringComparison.OrdinalIgnoreCase));
+                    || healthState.Conditions.Any(condition =>
+                        condition.Type.Equals(
+                            "terminal",
+                            StringComparison.OrdinalIgnoreCase)
+                        || condition.Type.Equals(
+                            "critical",
+                            StringComparison.OrdinalIgnoreCase));
 
                 if (serious)
                     return "😣";
 
                 var minorIllness =
-                    healthState.Conditions.Any(
-                        condition =>
-                            condition.Type.Equals(
-                                "seasonal",
-                                StringComparison.OrdinalIgnoreCase)
-                            || condition.Type.Equals(
-                                "curable",
-                                StringComparison.OrdinalIgnoreCase));
+                    healthState.Conditions.Any(condition =>
+                        condition.Type.Equals(
+                            "seasonal",
+                            StringComparison.OrdinalIgnoreCase)
+                        || condition.Type.Equals(
+                            "curable",
+                            StringComparison.OrdinalIgnoreCase));
 
                 if (minorIllness)
                     return "🤒";
             }
 
-            return "🙂";
+            return ResolveNeutralPersonEmoji(person, family);
         }
 
-        var thought =
-            thoughts?.GetCurrentThought(
-                person);
+        var thought = thoughts?.GetCurrentThought(person);
 
         if (thought is not null
-            && !string.IsNullOrWhiteSpace(
-                thought.Emoji)
-            && !thought.Emoji.Equals(
-                "🙂",
-                StringComparison.Ordinal))
+            && !string.IsNullOrWhiteSpace(thought.MoodId)
+            && !string.Equals(
+                thought.MoodId,
+                ThoughtMoodIds.Neutral,
+                StringComparison.OrdinalIgnoreCase)
+            && !string.IsNullOrWhiteSpace(thought.MoodEmoji))
         {
-            return thought.Emoji;
+            return thought.MoodEmoji;
         }
 
-        // Neutral state presentation is deliberately generic. Physical
-        // appearance is shown only in portrait contexts.
-        return "🙂";
+        return ResolveNeutralPersonEmoji(person, family);
+    }
+
+    internal static string ResolveNeutralPersonEmoji(
+        IPerson person,
+        IFamilyService? family)
+    {
+        var sex = family?.GetSex(person)
+            ?? (person.Tags.Has("sex.female")
+                ? Sex.Female
+                : Sex.Male);
+
+        if (person.Age <= 4)
+            return "👶🏻";
+
+        if (person.Age <= 11)
+            return sex == Sex.Male ? "👦🏻" : "👧🏻";
+
+        if (person.Age <= 17)
+            return "🧑🏻";
+
+        if (person.Age >= 70)
+            return sex == Sex.Male ? "👴🏻" : "👵🏻";
+
+        return sex == Sex.Male ? "👨🏻" : "👩🏻";
     }
 }

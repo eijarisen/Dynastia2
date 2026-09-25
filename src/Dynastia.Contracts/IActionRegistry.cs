@@ -14,6 +14,11 @@ public interface IActionRegistry
         IPerson actor,
         IPerson target);
 
+    GameActionDefinition? TryResolveDefinition(
+        string actionId,
+        IPerson actor,
+        IPerson target);
+
     IReadOnlyList<GameActionDefinition> GetAvailableActions(
         IPerson actor,
         IPerson target);

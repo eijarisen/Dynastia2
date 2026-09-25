@@ -422,6 +422,28 @@ public sealed partial class StandardHouseholdService
             if (head is null)
                 continue;
 
+            var spouseHead =
+                ResolveHouseholdHead(
+                    spouse);
+
+            if (spouseHead?.Id
+                == head.Id)
+            {
+                continue;
+            }
+
+            // Generic spouse reconciliation may move an ordinary member,
+            // but it must never absorb the head of another active household.
+            // Headship carries that household's assets, residence and
+            // dependants and therefore requires an explicit transfer/merge
+            // path rather than AddHouseholdMember(). Keep independently
+            // headed households intact in this generic safety pass.
+            if (_economy.HasHousehold(
+                spouse))
+            {
+                continue;
+            }
+
             _economy.AddHouseholdMember(
                 head,
                 spouse);

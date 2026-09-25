@@ -4,132 +4,19 @@ namespace Dynastia.App.ViewModels;
 
 public static class ActionEmojiMap
 {
-    private static readonly IReadOnlyDictionary<string, string>
-        Emojis =
-            new Dictionary<string, string>(
-                StringComparer.OrdinalIgnoreCase)
-            {
-                ["turn.pass"] = "⏭️",
-
-                ["wellbeing.recover"] = "🧘",
-                ["relationship.find_spouse"] = "💍",
-                ["reproduction.try_for_baby"] = "👶",
-                ["relationship.divorce_spouse"] = "💔",
-                ["relationship.marry_off_daughter"] = "💒",
-                ["relationship.marry_off_son"] = "💒",
-                ["relationship.repair_marriage"] = "❤️‍🩹",
-
-                ["career.quit_job"] = "🚶",
-                ["career.work_harder"] = "✨",
-                ["career.seek_employment"] = "✅",
-                ["career.find_another_job"] = "🔎",
-                ["career.use_family_connections"] = "🤝",
-                ["career.help_seek_employment"] = "✅",
-                ["career.help_find_better_job"] = "🔎",
-                ["career.ask_to_recover"] = "🧘",
-                ["career.ask_to_quit"] = "🚶",
-                ["justice.ask_to_quit_crime"] = "🛑",
-
-                ["wellbeing.drink"] = "🍺",
-                ["wellbeing.therapy"] = "😊",
-                ["personality.religious_study"] = "📖",
-                ["wellbeing.heal_relative"] = "❤️‍🩹",
-
-                ["education.get_education"] = "🎓",
-                ["education.help_learning"] = "📚",
-                ["education.private_tutor"] = "🧑‍🏫",
-                ["childhood.raise_child"] = "🫂",
-
-                ["ui.town_affairs"] = "🏛️",
-                ["family.adopt_polish_surname"] = "🇵🇱",
-                ["ui.manage_properties"] = "🏘️",
-                ["ui.manage_finances"] = "🏦",
-                ["stats.improve_strength"] = "🏋️",
-                ["stats.improve_intellect"] = "🧠",
-                ["stats.improve_immunity"] = "🛡️",
-                ["stats.improve_appeal"] = "✨",
-                ["stats.improve_longevity"] = "🩺",
-                ["stats.improve_fertility"] = "🧬",
-
-                ["household.buy_house"] = "🏠",
-                ["household.sell_house"] = "💵",
-                ["farming.buy_farmland"] = "🌾",
-                ["farming.sell_farmland"] = "🌾",
-                ["heirloom.sell"] = "💵",
-                ["household.give_house_to_son"] = "🎁",
-                ["household.ask_parents_house"] = "🙏",
-                ["household.ask_father_house"] = "🙏",
-                ["household.ask_mother_house"] = "🙏",
-                ["household.hire_nanny"] = "🧑‍🍼",
-                ["household.ask_daughter_nanny"] = "🧑‍🍼",
-                ["household.ask_move_out"] = "🚪",
-                ["household.fire_nanny"] = "👋",
-
-                ["family_support.ask_parents"] = "🙏",
-
-                // One of the two missing action-family emojis:
-                // use the same original money-request symbol as parents.
-                ["family_support.ask_child"] = "🙏",
-                ["craft.stop_occupation"] = "🚶",
-                ["family_relations.ask_farmland"] = "🙏",
-                ["family_relations.ask_house"] = "🙏",
-                ["family_relations.ask_job_help"] = "🤝",
-                ["family_relations.ask_money"] = "🙏",
-                ["family_relations.give_farmland"] = "🎁",
-                ["family_relations.give_house"] = "🎁",
-                ["family_relations.give_job_help"] = "🤝",
-                ["family_relations.give_money"] = "🎁",
-                ["family_relations.improve"] = "❤️‍🩹",
-                ["loan.give"] = "🤝",
-                ["loan.take"] = "🏦",
-                ["church.attend"] = "⛪",
-                ["church.donate"] = "⛪",
-                ["church.aid_poor_family"] = "🤝",
-                ["church.ask_welfare"] = "🥖",
-                ["community.lobby_policy"] = "🗣️",
-                ["community.perform_office_duties"] = "🏛️",
-                ["community.connection.improve"] = "🤝",
-                ["community.connection.send_money"] = "🎁",
-                ["community.connection.give_house"] = "🎁",
-                ["community.connection.give_farmland"] = "🎁",
-                ["community.connection.request_money"] = "🙏",
-                ["community.connection.request_house"] = "🙏",
-                ["community.connection.request_farmland"] = "🙏",
-                ["justice.bail_out"] = "💵",
-                ["justice.attempt_escape"] = "🔓"
-            };
-
     public static string GetEmoji(GameActionDefinition definition) =>
-        definition.Presentation?.Emoji is string emoji && !string.IsNullOrWhiteSpace(emoji)
+        definition.Presentation?.Emoji is string emoji
+        && !string.IsNullOrWhiteSpace(emoji)
             ? emoji
             : GetEmoji(definition.Id);
 
     public static string Format(GameActionDefinition definition, string label) =>
         $"{GetEmoji(definition)} {label}";
 
-    public static string GetEmoji(string actionId)
-    {
-        if (actionId.StartsWith(
-            "household.move.",
-            StringComparison.OrdinalIgnoreCase))
-        {
-            return "🚚";
-        }
-
-        if (actionId.StartsWith(
-            "craft.start.",
-            StringComparison.OrdinalIgnoreCase)
-            || actionId.StartsWith(
-                "craft.teach.",
-                StringComparison.OrdinalIgnoreCase))
-        {
-            return "🛠️";
-        }
-
-        if (Emojis.TryGetValue(actionId, out var emoji))
-            return emoji;
-
-        return actionId.StartsWith("career.", StringComparison.OrdinalIgnoreCase)
+    // Compatibility fallback for legacy/third-party definitions that do not
+    // provide ActionPresentationMetadata. First-party actions own their emoji.
+    public static string GetEmoji(string actionId) =>
+        actionId.StartsWith("career.", StringComparison.OrdinalIgnoreCase)
             ? "💼"
             : actionId.StartsWith("relationship.", StringComparison.OrdinalIgnoreCase)
                 ? "💞"
@@ -150,7 +37,6 @@ public static class ActionEmojiMap
                                             : actionId.StartsWith("community.", StringComparison.OrdinalIgnoreCase)
                                                 ? "🏛️"
                                                 : "⚙️";
-    }
 
     public static string Format(
         string actionId,

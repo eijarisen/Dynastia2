@@ -4,11 +4,15 @@ namespace Dynastia.App.ViewModels;
 
 public sealed class AlbumEventViewModel
 {
+    private readonly IEventPresentationRegistry _eventPresentation;
+
     public AlbumEventViewModel(
         GameEvent gameEvent,
+        IEventPresentationRegistry eventPresentation,
         long scoreDelta = 0)
     {
         Event = gameEvent;
+        _eventPresentation = eventPresentation;
         ScoreDelta = scoreDelta;
     }
 
@@ -30,13 +34,12 @@ public sealed class AlbumEventViewModel
                     : Event.Type;
 
             var emoji =
-                EventEmojiMap.GetEmoji(
-                    Event.Type);
+                _eventPresentation.Resolve(
+                    Event.Type).Emoji;
 
-            return string.IsNullOrWhiteSpace(
-                emoji)
-                    ? text
-                    : $"{emoji} {text}";
+            return string.IsNullOrWhiteSpace(emoji)
+                ? text
+                : $"{emoji} {text}";
         }
     }
 }

@@ -6,6 +6,7 @@ public sealed class MortalityPlugin : IGamePlugin
 {
     public void Initialize(IGamePluginContext context)
     {
+        EventPresentationRegistration.Register(context);
         var systems =
             context.GetService<IYearSystemRegistry>()
             ?? throw new InvalidOperationException(

@@ -6,6 +6,7 @@ public sealed class ChildhoodPlugin : IGamePlugin
 {
     public void Initialize(IGamePluginContext context)
     {
+        EventPresentationRegistration.Register(context);
         var gameState = context.GetService<IGameState>() ?? throw new InvalidOperationException("Game state is unavailable.");
         var family = context.GetService<IFamilyService>() ?? throw new InvalidOperationException("Family service is unavailable.");
         var health = context.GetService<IHealthService>() ?? throw new InvalidOperationException("Health service is unavailable.");

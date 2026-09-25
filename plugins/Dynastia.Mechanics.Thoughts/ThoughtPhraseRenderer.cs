@@ -1,3 +1,4 @@
+using System.Text.RegularExpressions;
 using Dynastia.Contracts;
 
 namespace Dynastia.Mechanics.Thoughts;
@@ -5,12 +6,14 @@ namespace Dynastia.Mechanics.Thoughts;
 internal sealed partial class ThoughtPhraseRenderer
 {
     private readonly IStatsService _stats;
+    private readonly IThoughtWordingRegistry _wording;
 
     public ThoughtPhraseRenderer(
-        IStatsService stats)
+        IStatsService stats,
+        IThoughtWordingRegistry wording)
     {
-        _stats =
-            stats;
+        _stats = stats;
+        _wording = wording;
     }
 
     public string Render(
@@ -27,39 +30,33 @@ internal sealed partial class ThoughtPhraseRenderer
             return literalText;
         }
 
-        var voice =
-            ResolveVoice(
-                person);
+        if (!_wording.TryGet(candidate.WordingKey, out var definition))
+        {
+            throw new InvalidOperationException(
+                $"Thought wording key '{candidate.WordingKey}' used by candidate '{candidate.Id}' is not registered.");
+        }
 
-        var variants =
-            GetMoralityVariants(
-                person,
-                candidate,
-                voice);
+        if (!_wording.TryGet("fallback", out var fallback))
+        {
+            throw new InvalidOperationException(
+                "Thought wording registry does not contain the mandatory 'fallback' definition.");
+        }
+
+        var voice = ResolveVoice(person);
+        var variants = ResolveVariants(definition, fallback, voice);
 
         if (variants.Count == 0)
         {
-            variants =
-                GetVariants(
-                    candidate,
-                    voice);
+            throw new InvalidOperationException(
+                $"Thought wording key '{candidate.WordingKey}' has no usable variants for voice '{voice}'.");
         }
 
-        if (variants.Count == 0)
-        {
-            variants =
-                GetVariants(
-                    candidate,
-                    ThoughtVoice.AdultNormal);
-        }
-
-        if (variants.Count == 0)
-        {
-            return "Things are pretty ordinary right now.";
-        }
+        var templates = variants
+            .Select(template => Interpolate(candidate, template))
+            .ToList();
 
         return DeterministicThoughtRandom.Choose(
-            variants,
+            templates,
             dynastyKey,
             person.Id.ToString(),
             year.ToString(),
@@ -67,57 +64,54 @@ internal sealed partial class ThoughtPhraseRenderer
             "thought-wording");
     }
 
-
-    private static IReadOnlyList<string> GetMoralityVariants(
-        IPerson person,
-        ThoughtCandidate candidate,
+    private static IReadOnlyList<string> ResolveVariants(
+        ThoughtWordingDefinition definition,
+        ThoughtWordingDefinition fallback,
         ThoughtVoice voice)
     {
-        if (person.Age < 18
-            || !candidate.WordingKey.Equals(
-                "support.success",
-                StringComparison.OrdinalIgnoreCase)
-            || !candidate.Context.TryGetValue(
-                "supportRole",
-                out var supportRole)
-            || !supportRole.Equals(
-                "donor",
-                StringComparison.OrdinalIgnoreCase))
-        {
-            return [];
-        }
+        var exact = GetVoice(definition, voice);
+        if (exact.Count > 0)
+            return exact;
 
-        if (person.Tags.Has("morals.good"))
+        if (definition.AdultNormal.Count > 0)
+            return definition.AdultNormal;
+
+        var fallbackExact = GetVoice(fallback, voice);
+        if (fallbackExact.Count > 0)
+            return fallbackExact;
+
+        return fallback.AdultNormal;
+    }
+
+    private static IReadOnlyList<string> GetVoice(
+        ThoughtWordingDefinition definition,
+        ThoughtVoice voice) =>
+        voice switch
         {
-            return voice switch
+            ThoughtVoice.Child => definition.Child,
+            ThoughtVoice.Adolescent => definition.Adolescent,
+            ThoughtVoice.AdultRough => definition.AdultRough,
+            ThoughtVoice.AdultElaborate => definition.AdultElaborate,
+            _ => definition.AdultNormal
+        };
+
+    private static string Interpolate(
+        ThoughtCandidate candidate,
+        string template)
+    {
+        return Regex.Replace(
+            template,
+            @"\{([A-Za-z][A-Za-z0-9_]*)\}",
+            match =>
             {
-                ThoughtVoice.AdultRough =>
-                    ["Glad I could help family."],
+                var key = match.Groups[1].Value;
+                if (candidate.Context.TryGetValue(key, out var value))
+                    return value;
 
-                ThoughtVoice.AdultElaborate =>
-                    ["I am glad I was able to help; family obligations matter when they are genuinely needed."],
-
-                _ =>
-                    ["I'm glad I could help them."]
-            };
-        }
-
-        if (person.Tags.Has("morals.evil"))
-        {
-            return voice switch
-            {
-                ThoughtVoice.AdultRough =>
-                    ["They'd better remember what that cost me."],
-
-                ThoughtVoice.AdultElaborate =>
-                    ["They had better appreciate the cost to me; generosity is rarely free."],
-
-                _ =>
-                    ["They'd better appreciate what this cost me."]
-            };
-        }
-
-        return [];
+                throw new InvalidOperationException(
+                    $"Thought wording '{candidate.WordingKey}' for candidate '{candidate.Id}' requires context key '{key}'.");
+            },
+            RegexOptions.CultureInvariant);
     }
 
     private ThoughtVoice ResolveVoice(
@@ -129,14 +123,11 @@ internal sealed partial class ThoughtPhraseRenderer
         if (person.Age <= 17)
             return ThoughtVoice.Adolescent;
 
-        var intellect =
-            _stats.GetStats(
-                person)
-            .FirstOrDefault(
-                stat =>
-                    stat.Id.Equals(
-                        "intellect",
-                        StringComparison.OrdinalIgnoreCase))
+        var intellect = _stats.GetStats(person)
+            .FirstOrDefault(stat =>
+                stat.Id.Equals(
+                    "intellect",
+                    StringComparison.OrdinalIgnoreCase))
             ?.Value
             ?? 3;
 
@@ -148,5 +139,4 @@ internal sealed partial class ThoughtPhraseRenderer
 
         return ThoughtVoice.AdultNormal;
     }
-
 }

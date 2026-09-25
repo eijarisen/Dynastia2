@@ -1,6 +1,7 @@
 using Dynastia.App.Persistence;
 using Dynastia.App.ViewModels.Actions;
 using Dynastia.Contracts;
+using Dynastia.Core.Events;
 using Dynastia.Core.Simulation;
 
 namespace Dynastia.App.ViewModels;
@@ -55,6 +56,7 @@ public sealed partial class MainWindowViewModel : ViewModelBase
     private readonly GameSaveService _saveService;
     private readonly IStateReconciliationLifecycle _reconciliation;
     private readonly IGameScoreService? _gameScoreService;
+    private readonly IEventPresentationRegistry _eventPresentation;
 
     private PersonRowViewModel? _selectedPerson;
     private FamilyDetailsViewModel? _selectedFamily;
@@ -130,7 +132,8 @@ public sealed partial class MainWindowViewModel : ViewModelBase
         IGameEventBus eventBus,
         IActionRegistry actionRegistry,
         GameSaveService saveService,
-        IStateReconciliationLifecycle reconciliation)
+        IStateReconciliationLifecycle reconciliation,
+        IEventPresentationRegistry? eventPresentation = null)
         : this(
             gameState,
             newGameService,
@@ -178,7 +181,8 @@ public sealed partial class MainWindowViewModel : ViewModelBase
                 succession, actionRegistry, economyService, farmingService, heirloomService,
                 loanService, locationService, townProsperityService, localCareerOpportunityService),
             new ActionSurfaceDefinitions(locationService, economyService, justiceService),
-            null)
+            null,
+            eventPresentation)
     {
     }
 
@@ -227,7 +231,8 @@ public sealed partial class MainWindowViewModel : ViewModelBase
         IStateReconciliationLifecycle reconciliation,
         ActionSelectionOptionService actionSelectionOptions,
         ActionSurfaceDefinitions actionSurfaces,
-        IGameScoreService? gameScoreService)
+        IGameScoreService? gameScoreService,
+        IEventPresentationRegistry? eventPresentation)
     {
         _gameState = gameState;
         _newGameService = newGameService;
@@ -282,6 +287,9 @@ public sealed partial class MainWindowViewModel : ViewModelBase
         _saveService = saveService;
         _reconciliation = reconciliation;
         _gameScoreService = gameScoreService;
+        _eventPresentation =
+            eventPresentation
+            ?? CreateFallbackEventPresentationRegistry();
         _actionSelectionOptions = actionSelectionOptions;
         _actionSurfaces = actionSurfaces;
         _actionPanel = new ActionPanelCoordinator(
@@ -741,5 +749,14 @@ public sealed partial class MainWindowViewModel : ViewModelBase
     public RelayCommand ShowDeceasedFamilyCommand { get; }
     public RelayCommand PreviousAlbumYearCommand { get; }
     public RelayCommand NextAlbumYearCommand { get; }
+
+
+    private static IEventPresentationRegistry
+        CreateFallbackEventPresentationRegistry()
+    {
+        var registry = new EventPresentationRegistry();
+        LegacyEventPresentationCatalog.Register(registry);
+        return registry;
+    }
 
 }

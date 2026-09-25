@@ -122,16 +122,18 @@ public sealed class LocalSocietyNonmaritalBirthBatch8Tests
             "plugins", "Dynastia.Mechanics.Reproduction", "NonmaritalBirthYearSystem.cs");
         var familyNews = RepositoryFiles.ReadText(
             "plugins", "Dynastia.Mechanics.Households", "StandardHouseholdService.FamilyNews.cs");
-        var emoji = RepositoryFiles.ReadText(
-            "src", "Dynastia.App", "ViewModels", "EventEmojiMap.cs");
+        var presentation = RepositoryFiles.ReadText(
+            "plugins", "Dynastia.Mechanics.Reproduction", "EventPresentationRegistration.cs");
 
         Assert.Contains("[\"suppressChronicle\"] = \"true\"", system);
         Assert.Contains("reproduction.unknown_father_birth", familyNews);
         Assert.Contains("reproduction.birth_and_marriage", familyNews);
         Assert.Contains("reproduction.teen_birth", familyNews);
         Assert.Contains("reproduction.teen_marriage", familyNews);
-        Assert.Contains("[\"reproduction.unknown_father_birth\"] = \"👶\"", emoji);
-        Assert.Contains("[\"reproduction.birth_and_marriage\"] = \"💍\"", emoji);
+        Assert.Contains("reproduction.unknown_father_birth", presentation);
+        Assert.Contains("Emoji = \"👶\"", presentation);
+        Assert.Contains("reproduction.birth_and_marriage", presentation);
+        Assert.Contains("Emoji = \"💍\"", presentation);
     }
 
 }

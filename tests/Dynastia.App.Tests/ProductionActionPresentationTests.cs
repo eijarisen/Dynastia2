@@ -112,7 +112,7 @@ public sealed class ProductionActionPresentationTests
             Assert.False(string.IsNullOrWhiteSpace(definition.Presentation.Emoji), definition.Id);
             Assert.Equal(ActionPresentationPolicy.GetCategories(definition.Id).OrderBy(category => category),
                 ActionPresentationPolicy.GetCategories(definition).OrderBy(category => category));
-            Assert.Equal(ActionEmojiMap.GetEmoji(definition.Id), ActionEmojiMap.GetEmoji(definition));
+            Assert.Equal(definition.Presentation.Emoji, ActionEmojiMap.GetEmoji(definition));
             var legacy = ActionPresentationPolicy.Resolve(Legacy(definition));
             Assert.Equal(legacy.AdjacencyGroup, definition.Presentation.AdjacencyGroup);
             Assert.Equal(legacy.GroupOrder, definition.Presentation.GroupOrder);

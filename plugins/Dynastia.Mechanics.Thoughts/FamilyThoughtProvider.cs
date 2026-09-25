@@ -34,44 +34,57 @@ internal sealed class FamilyThoughtProvider :
                 "trait.orphan"))
             {
                 yield return new ThoughtCandidate(
-                    "orphan.ongoing",
-                    "family.orphanhood",
-                    "family.orphanhood",
-                    person.Age <= 11
-                        ? 72
-                        : 66,
-                    "😢",
-                    "state",
-                    "trait.orphan",
-                    "orphan.ongoing");
+                                 "orphan.ongoing",
+                                 "family.orphanhood",
+                                 "family.orphanhood",
+                                 person.Age <= 11
+                                 ? 72
+                                 : 66,
+                                 ThoughtMoodIds.Grieving,
+                                 "👪",
+                                 ThoughtSalienceTraits.Emotional
+                                 | ThoughtSalienceTraits.Negative
+                                 | ThoughtSalienceTraits.Orphanhood,
+                                 "state",
+                                 "trait.orphan",
+                                 "orphan.ongoing"
+                             );
             }
 
             if (person.Tags.Has(
                 "residence.orphanage"))
             {
                 yield return new ThoughtCandidate(
-                    "orphanage",
-                    "family.placement",
-                    "family.placement",
-                    86,
-                    "😢",
-                    "state",
-                    "residence.orphanage",
-                    "orphanage");
+                                 "orphanage",
+                                 "family.placement",
+                                 "family.placement",
+                                 86,
+                                 ThoughtMoodIds.Grieving,
+                                 "👪",
+                                 ThoughtSalienceTraits.Emotional
+                                 | ThoughtSalienceTraits.Negative
+                                 | ThoughtSalienceTraits.Placement,
+                                 "state",
+                                 "residence.orphanage",
+                                 "orphanage"
+                             );
             }
 
             if (person.Tags.Has(
                 "residence.adopted"))
             {
                 yield return new ThoughtCandidate(
-                    "placement.ongoing",
-                    "family.placement",
-                    "family.placement",
-                    38,
-                    "🙂",
-                    "state",
-                    "residence.adopted",
-                    "placement.ongoing");
+                                 "placement.ongoing",
+                                 "family.placement",
+                                 "family.placement",
+                                 38,
+                                 ThoughtMoodIds.Neutral,
+                                 "👪",
+                                 ThoughtSalienceTraits.Placement,
+                                 "state",
+                                 "residence.adopted",
+                                 "placement.ongoing"
+                             );
             }
 
             if (person.Tags.Has(
@@ -80,14 +93,19 @@ internal sealed class FamilyThoughtProvider :
                     "household.independent_orphan"))
             {
                 yield return new ThoughtCandidate(
-                    "orphan.independent",
-                    "family.orphanhood",
-                    "family.orphanhood",
-                    78,
-                    "😟",
-                    "state",
-                    "household.independent_orphan",
-                    "orphan.independent");
+                                 "orphan.independent",
+                                 "family.orphanhood",
+                                 "family.orphanhood",
+                                 78,
+                                 ThoughtMoodIds.Concerned,
+                                 "👪",
+                                 ThoughtSalienceTraits.Emotional
+                                 | ThoughtSalienceTraits.Negative
+                                 | ThoughtSalienceTraits.Orphanhood,
+                                 "state",
+                                 "household.independent_orphan",
+                                 "orphan.independent"
+                             );
             }
 
             if (person.Tags.Has(
@@ -104,24 +122,29 @@ internal sealed class FamilyThoughtProvider :
                                 context));
 
                 yield return new ThoughtCandidate(
-                    current
-                        ? "parents.divorced.current"
-                        : "parents.divorced.ongoing",
-                    "family.parents_divorced",
-                    "family.parents_divorced",
-                    current
-                        ? 88
-                        : 62,
-                    current
-                        ? "💔"
-                        : "😔",
-                    current
-                        ? "event"
-                        : "state",
-                    current
-                        ? "relationship.divorce"
-                        : "state.parents_divorced",
-                    "parents.divorced");
+                                 current
+                                 ? "parents.divorced.current"
+                                 : "parents.divorced.ongoing",
+                                 "family.parents_divorced",
+                                 "family.parents_divorced",
+                                 current
+                                 ? 88
+                                 : 62,
+                                 current ? ThoughtMoodIds.Distressed : ThoughtMoodIds.Sad,
+                                 "👪",
+                                 ThoughtSalienceTraits.Emotional
+                                 | ThoughtSalienceTraits.Negative
+                                 | ThoughtSalienceTraits.ImmediateProblem
+                                 | ThoughtSalienceTraits.MelancholicHighImpact
+                                 | ThoughtSalienceTraits.ParentsDivorced,
+                                 current
+                                 ? "event"
+                                 : "state",
+                                 current
+                                 ? "relationship.divorce"
+                                 : "state.parents_divorced",
+                                 "parents.divorced"
+                             );
             }
         }
 
@@ -138,14 +161,20 @@ internal sealed class FamilyThoughtProvider :
                         context)))
         {
             yield return new ThoughtCandidate(
-                "bereavement.recent",
-                "family.loss",
-                "family.bereavement",
-                82,
-                "😢",
-                "state",
-                "recent.bereavement",
-                "family.bereavement.recent");
+                             "bereavement.recent",
+                             "family.loss",
+                             "family.bereavement",
+                             82,
+                             ThoughtMoodIds.Grieving,
+                             "👪",
+                             ThoughtSalienceTraits.Emotional
+                             | ThoughtSalienceTraits.Negative
+                             | ThoughtSalienceTraits.MelancholicHighImpact
+                             | ThoughtSalienceTraits.FamilyLoss,
+                             "state",
+                             "recent.bereavement",
+                             "family.bereavement.recent"
+                         );
         }
     }
 
@@ -186,23 +215,28 @@ internal sealed class FamilyThoughtProvider :
                     continue;
 
                 yield return new ThoughtCandidate(
-                    $"loss:{deceased.Id}",
-                    $"family.loss:{deceased.Id}",
-                    $"family.loss:{deceased.Id}",
-                    relation.Value.Salience,
-                    "😭",
-                    "event",
-                    gameEvent.Type,
-                    "family.loss.current",
-                    ThoughtProviderUtilities.Context(
-                        (
-                            "relation",
-                            relation.Value.Relation
-                        ),
-                        (
-                            "relationPossessive",
-                            relation.Value.RelationPossessive
-                        )));
+                                 $"loss:{deceased.Id}",
+                                 $"family.loss:{deceased.Id}",
+                                 $"family.loss:{deceased.Id}",
+                                 relation.Value.Salience,
+                                 ThoughtMoodIds.Grieving,
+                                 "👪",
+                                 ThoughtSalienceTraits.Emotional
+                                 | ThoughtSalienceTraits.Negative
+                                 | ThoughtSalienceTraits.FamilyLoss,
+                                 "event",
+                                 gameEvent.Type,
+                                 "family.loss.current",
+                                 ThoughtProviderUtilities.Context(
+                                 (
+                                 "relation",
+                                 relation.Value.Relation
+                                 ),
+                                 (
+                                 "relationPossessive",
+                                 relation.Value.RelationPossessive
+                                 ))
+                             );
             }
 
             if (gameEvent.Type.Equals(
@@ -213,14 +247,19 @@ internal sealed class FamilyThoughtProvider :
                 && person.Age < 18)
             {
                 yield return new ThoughtCandidate(
-                    "orphan.new",
-                    "family.orphanhood",
-                    "family.orphanhood",
-                    98,
-                    "😭",
-                    "event",
-                    gameEvent.Type,
-                    "orphan.new");
+                                 "orphan.new",
+                                 "family.orphanhood",
+                                 "family.orphanhood",
+                                 98,
+                                 ThoughtMoodIds.Grieving,
+                                 "👪",
+                                 ThoughtSalienceTraits.Emotional
+                                 | ThoughtSalienceTraits.Negative
+                                 | ThoughtSalienceTraits.Orphanhood,
+                                 "event",
+                                 gameEvent.Type,
+                                 "orphan.new"
+                             );
             }
 
             if (gameEvent.Type.Equals(
@@ -231,14 +270,17 @@ internal sealed class FamilyThoughtProvider :
                 && person.Age < 18)
             {
                 yield return new ThoughtCandidate(
-                    "placement.new",
-                    "family.placement",
-                    "family.placement",
-                    80,
-                    "🙂",
-                    "event",
-                    gameEvent.Type,
-                    "placement.new");
+                                 "placement.new",
+                                 "family.placement",
+                                 "family.placement",
+                                 80,
+                                 ThoughtMoodIds.Neutral,
+                                 "👪",
+                                 ThoughtSalienceTraits.Placement,
+                                 "event",
+                                 gameEvent.Type,
+                                 "placement.new"
+                             );
             }
 
             if (gameEvent.Type.Equals(
@@ -260,14 +302,19 @@ internal sealed class FamilyThoughtProvider :
                     && person.Age >= 18)
                 {
                     yield return new ThoughtCandidate(
-                        $"birth.parent:{newborn.Id}",
-                        "family.birth",
-                        "family.birth",
-                        84,
-                        "😊",
-                        "event",
-                        gameEvent.Type,
-                        "birth.parent");
+                                     $"birth.parent:{newborn.Id}",
+                                     "family.birth",
+                                     "family.birth",
+                                     84,
+                                     ThoughtMoodIds.Pleased,
+                                     "👪",
+                                     ThoughtSalienceTraits.Emotional
+                                     | ThoughtSalienceTraits.Positive
+                                     | ThoughtSalienceTraits.FamilyBirth,
+                                     "event",
+                                     gameEvent.Type,
+                                     "birth.parent"
+                                 );
                 }
 
                 if (person.Age is >= 5 and <= 17
@@ -277,18 +324,21 @@ internal sealed class FamilyThoughtProvider :
                         context.Family))
                 {
                     yield return new ThoughtCandidate(
-                        $"birth.sibling:{newborn.Id}",
-                        "family.birth",
-                        "family.birth",
-                        person.Age <= 11
-                            ? 68
-                            : 58,
-                        person.Age <= 11
-                            ? "😄"
-                            : "🙂",
-                        "event",
-                        gameEvent.Type,
-                        "birth.sibling");
+                                     $"birth.sibling:{newborn.Id}",
+                                     "family.birth",
+                                     "family.birth",
+                                     person.Age <= 11
+                                     ? 68
+                                     : 58,
+                                     person.Age <= 11 ? ThoughtMoodIds.Happy : ThoughtMoodIds.Neutral,
+                                     "👪",
+                                     ThoughtSalienceTraits.Emotional
+                                     | ThoughtSalienceTraits.Positive
+                                     | ThoughtSalienceTraits.FamilyBirth,
+                                     "event",
+                                     gameEvent.Type,
+                                     "birth.sibling"
+                                 );
                 }
             }
         }

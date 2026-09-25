@@ -111,10 +111,7 @@ public sealed class ActionPresentationCharacterizationTests
     }
 
     [Theory]
-    [InlineData("craft.start.future", "🛠️")]
-    [InlineData("craft.teach.future", "🛠️")]
     [InlineData("craft.future", "🛠️")]
-    [InlineData("household.move.future", "🚚")]
     [InlineData("household.future", "🏠")]
     [InlineData("career.future", "💼")]
     [InlineData("relationship.future", "💞")]
@@ -125,15 +122,21 @@ public sealed class ActionPresentationCharacterizationTests
     [InlineData("church.future", "⛪")]
     [InlineData("community.future", "🏛️")]
     [InlineData("unknown.future", "⚙️")]
-    [InlineData("turn.pass", "⏭️")]
-    [InlineData("justice.ask_to_quit_crime", "🛑")]
-    [InlineData("wellbeing.recover", "🧘")]
-    [InlineData("family_support.ask_child", "🙏")]
-    public void EmojiLookupAndFormattingPreserveExplicitValuesAndPrefixFallbacks(string id, string emoji)
+    public void LegacyEmojiLookupUsesPrefixFallbackOnly(string id, string emoji)
     {
         Assert.Equal(emoji, ActionEmojiMap.GetEmoji(id));
         Assert.Equal(emoji, ActionEmojiMap.GetEmoji(id.ToUpperInvariant()));
         Assert.Equal($"{emoji} Label", ActionEmojiMap.Format(id, "Label"));
+    }
+
+    [Theory]
+    [InlineData("turn.pass", "⏭️")]
+    [InlineData("justice.ask_to_quit_crime", "🛑")]
+    [InlineData("wellbeing.recover", "🧘")]
+    [InlineData("family_support.ask_child", "🙏")]
+    [InlineData("household.move.future", "🚚")]
+    public void ExplicitActionEmojiOverridesLegacyPrefixFallback(string id, string emoji)
+    {
         var metadataAction = Action(id, new() { Emoji = emoji });
         Assert.Equal(emoji, ActionEmojiMap.GetEmoji(metadataAction));
         Assert.Equal($"{emoji} Label", ActionEmojiMap.Format(metadataAction, "Label"));
@@ -143,7 +146,7 @@ public sealed class ActionPresentationCharacterizationTests
     public void AvailableActionUsesContextualLabelAndExecutesExactlyOnce()
     {
         var executions = 0;
-        var definition = Action("career.seek_employment");
+        var definition = Action("career.seek_employment", new() { Emoji = "✅" });
         var categories = ActionPresentationPolicy.GetCategories(definition.Id);
         var item = new AvailableActionViewModel(definition, categories, () => executions++, "Help brother find work");
         Assert.Equal("Help brother find work", item.RawLabel);

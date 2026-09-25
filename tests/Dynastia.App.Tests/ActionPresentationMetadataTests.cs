@@ -57,7 +57,7 @@ public sealed class ActionPresentationMetadataTests
         {
             Emoji = emoji, Categories = [ActionPresentationCategories.Family]
         });
-        Assert.Equal("✨", ActionEmojiMap.GetEmoji(definition));
+        Assert.Equal("💼", ActionEmojiMap.GetEmoji(definition));
         Assert.Equal(ActionCategory.Family, Assert.Single(ActionPresentationPolicy.GetCategories(definition)));
         Assert.Null(ActionPresentationPolicy.Resolve(definition).AdjacencyGroup);
     }

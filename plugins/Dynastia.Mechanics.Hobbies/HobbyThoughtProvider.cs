@@ -33,18 +33,21 @@ internal sealed class HobbyThoughtProvider :
                 continue;
 
             yield return new ThoughtCandidate(
-                $"hobby.{hobby.Id}",
-                "hobby",
-                $"hobby.{hobby.Id}",
-                HobbyBalanceRules.ThoughtSalience,
-                hobby.Emoji,
-                "hobby",
-                hobby.Id,
-                "literal",
-                new Dictionary<string, string>
-                {
-                    ["literalText"] = text
-                });
+                             $"hobby.{hobby.Id}",
+                             "hobby",
+                             $"hobby.{hobby.Id}",
+                             HobbyBalanceRules.ThoughtSalience,
+                             ThoughtMoodIds.Pleased,
+                             hobby.Emoji,
+                             ThoughtSalienceTraits.None,
+                             "hobby",
+                             hobby.Id,
+                             "literal",
+                             new Dictionary<string, string>
+                             {
+                             ["literalText"] = text
+                             }
+                         );
         }
     }
 }

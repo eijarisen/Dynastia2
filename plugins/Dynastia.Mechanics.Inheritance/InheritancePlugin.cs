@@ -7,6 +7,7 @@ public sealed class InheritancePlugin : IGamePlugin
     public void Initialize(
         IGamePluginContext context)
     {
+        EventPresentationRegistration.Register(context);
         var family =
             context.GetService<IFamilyService>()
             ?? throw new InvalidOperationException(

@@ -263,6 +263,14 @@ public sealed class FamilyMemberCardViewModel
             thought?.Text
             ?? string.Empty;
 
+        ThoughtTopicEmoji =
+            thought?.TopicEmoji
+            ?? string.Empty;
+
+        HasThoughtTopicEmoji =
+            !string.IsNullOrWhiteSpace(
+                ThoughtTopicEmoji);
+
         var father =
             family?.GetFather(
                 person);
@@ -452,6 +460,11 @@ public sealed class FamilyMemberCardViewModel
         string.Empty;
 
     public string ThoughtText { get; }
+
+    public string ThoughtTopicEmoji { get; } =
+        string.Empty;
+
+    public bool HasThoughtTopicEmoji { get; }
 
     public string TooltipThoughtText { get; } =
         string.Empty;

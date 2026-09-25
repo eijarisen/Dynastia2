@@ -10,6 +10,7 @@ public sealed class ChurchPlugin : IGamePlugin
 
     public void Initialize(IGamePluginContext context)
     {
+        EventPresentationRegistration.Register(context);
         var data = Required<IGameDataService>(context, "game data service");
         var actions = Required<IActionRegistry>(context, "action registry");
         var economy = Required<IEconomyService>(context, "economy service");

@@ -51,19 +51,22 @@ internal sealed class HealthThoughtProvider :
         if (depression is not null)
         {
             yield return new ThoughtCandidate(
-                "health.depression",
-                "health.mental",
-                "health.mental",
-                88,
-                "😥",
-                "state",
-                depression.Id,
-                "depression",
-                ThoughtProviderUtilities.Context(
-                    (
-                        "condition",
-                        depression.Name
-                    )));
+                             "health.depression",
+                             "health.mental",
+                             "health.mental",
+                             88,
+                             ThoughtMoodIds.Sad,
+                             "❤️‍🩹",
+                             ThoughtSalienceTraits.Health,
+                             "state",
+                             depression.Id,
+                             "depression",
+                             ThoughtProviderUtilities.Context(
+                             (
+                             "condition",
+                             depression.Name
+                             ))
+                         );
         }
 
         var anxiety =
@@ -80,19 +83,22 @@ internal sealed class HealthThoughtProvider :
         if (anxiety is not null)
         {
             yield return new ThoughtCandidate(
-                "health.anxiety",
-                "health.mental",
-                "health.mental",
-                80,
-                "😟",
-                "state",
-                anxiety.Id,
-                "anxiety",
-                ThoughtProviderUtilities.Context(
-                    (
-                        "condition",
-                        anxiety.Name
-                    )));
+                             "health.anxiety",
+                             "health.mental",
+                             "health.mental",
+                             80,
+                             ThoughtMoodIds.Concerned,
+                             "❤️‍🩹",
+                             ThoughtSalienceTraits.Health,
+                             "state",
+                             anxiety.Id,
+                             "anxiety",
+                             ThoughtProviderUtilities.Context(
+                             (
+                             "condition",
+                             anxiety.Name
+                             ))
+                         );
         }
 
         if (person.Age >= 18)
@@ -111,19 +117,22 @@ internal sealed class HealthThoughtProvider :
             if (alcoholism is not null)
             {
                 yield return new ThoughtCandidate(
-                    "health.alcoholism",
-                    "health.mental",
-                    "health.mental",
-                    76,
-                    "🥴",
-                    "state",
-                    alcoholism.Id,
-                    "alcoholism",
-                    ThoughtProviderUtilities.Context(
-                        (
-                            "condition",
-                            alcoholism.Name
-                        )));
+                                 "health.alcoholism",
+                                 "health.mental",
+                                 "health.mental",
+                                 76,
+                                 ThoughtMoodIds.Distressed,
+                                 "❤️‍🩹",
+                                 ThoughtSalienceTraits.Health,
+                                 "state",
+                                 alcoholism.Id,
+                                 "alcoholism",
+                                 ThoughtProviderUtilities.Context(
+                                 (
+                                 "condition",
+                                 alcoholism.Name
+                                 ))
+                             );
             }
         }
 
@@ -146,19 +155,22 @@ internal sealed class HealthThoughtProvider :
             if (drugDependence is not null)
             {
                 yield return new ThoughtCandidate(
-                    "health.drug_dependence",
-                    "health.mental",
-                    "health.mental",
-                    78,
-                    "😵",
-                    "state",
-                    drugDependence.Id,
-                    "drug_dependence",
-                    ThoughtProviderUtilities.Context(
-                        (
-                            "condition",
-                            drugDependence.Name
-                        )));
+                                 "health.drug_dependence",
+                                 "health.mental",
+                                 "health.mental",
+                                 78,
+                                 ThoughtMoodIds.Distressed,
+                                 "❤️‍🩹",
+                                 ThoughtSalienceTraits.Health,
+                                 "state",
+                                 drugDependence.Id,
+                                 "drug_dependence",
+                                 ThoughtProviderUtilities.Context(
+                                 (
+                                 "condition",
+                                 drugDependence.Name
+                                 ))
+                             );
             }
         }
 
@@ -201,14 +213,17 @@ internal sealed class HealthThoughtProvider :
             if (poorHealthSalience > 0)
             {
                 yield return new ThoughtCandidate(
-                    "health.poor",
-                    "health.physical",
-                    "health.physical",
-                    poorHealthSalience,
-                    "😣",
-                    "state",
-                    "health",
-                    "health.poor");
+                                 "health.poor",
+                                 "health.physical",
+                                 "health.physical",
+                                 poorHealthSalience,
+                                 ThoughtMoodIds.Distressed,
+                                 "❤️‍🩹",
+                                 ThoughtSalienceTraits.Health,
+                                 "state",
+                                 "health",
+                                 "health.poor"
+                             );
             }
         }
 
@@ -223,14 +238,18 @@ internal sealed class HealthThoughtProvider :
                 StringComparison.OrdinalIgnoreCase))
             {
                 yield return new ThoughtCandidate(
-                    "therapy.success",
-                    "health.mental",
-                    "health.therapy",
-                    62,
-                    "😌",
-                    "event",
-                    gameEvent.Type,
-                    "therapy.success");
+                                 "therapy.success",
+                                 "health.mental",
+                                 "health.therapy",
+                                 62,
+                                 ThoughtMoodIds.Relieved,
+                                 "❤️‍🩹",
+                                 ThoughtSalienceTraits.Positive
+                                 | ThoughtSalienceTraits.Health,
+                                 "event",
+                                 gameEvent.Type,
+                                 "therapy.success"
+                             );
             }
 
             if (gameEvent.Type.Equals(
@@ -238,14 +257,18 @@ internal sealed class HealthThoughtProvider :
                 StringComparison.OrdinalIgnoreCase))
             {
                 yield return new ThoughtCandidate(
-                    "therapy.failure",
-                    "health.mental",
-                    "health.therapy",
-                    48,
-                    "😕",
-                    "event",
-                    gameEvent.Type,
-                    "therapy.failure");
+                                 "therapy.failure",
+                                 "health.mental",
+                                 "health.therapy",
+                                 48,
+                                 ThoughtMoodIds.Concerned,
+                                 "❤️‍🩹",
+                                 ThoughtSalienceTraits.Negative
+                                 | ThoughtSalienceTraits.Health,
+                                 "event",
+                                 gameEvent.Type,
+                                 "therapy.failure"
+                             );
             }
 
             if (gameEvent.Type.Equals(
@@ -263,19 +286,22 @@ internal sealed class HealthThoughtProvider :
                             : "Taking some time to recover";
 
                 yield return new ThoughtCandidate(
-                    "recover",
-                    "health.physical",
-                    "health.recovery",
-                    45,
-                    "😌",
-                    "event",
-                    gameEvent.Type,
-                    "recover",
-                    ThoughtProviderUtilities.Context(
-                        (
-                            "activity",
-                            activity
-                        )));
+                                 "recover",
+                                 "health.physical",
+                                 "health.recovery",
+                                 45,
+                                 ThoughtMoodIds.Relieved,
+                                 "❤️‍🩹",
+                                 ThoughtSalienceTraits.Health,
+                                 "event",
+                                 gameEvent.Type,
+                                 "recover",
+                                 ThoughtProviderUtilities.Context(
+                                 (
+                                 "activity",
+                                 activity
+                                 ))
+                             );
             }
 
             if (gameEvent.Type.Equals(
@@ -286,14 +312,17 @@ internal sealed class HealthThoughtProvider :
                     StringComparison.OrdinalIgnoreCase))
             {
                 yield return new ThoughtCandidate(
-                    "heal",
-                    "health.physical",
-                    "health.recovery",
-                    45,
-                    "🙂",
-                    "event",
-                    gameEvent.Type,
-                    "heal");
+                                 "heal",
+                                 "health.physical",
+                                 "health.recovery",
+                                 45,
+                                 ThoughtMoodIds.Neutral,
+                                 "❤️‍🩹",
+                                 ThoughtSalienceTraits.Health,
+                                 "event",
+                                 gameEvent.Type,
+                                 "heal"
+                             );
             }
         }
     }
@@ -314,19 +343,22 @@ internal sealed class HealthThoughtProvider :
             StringComparison.OrdinalIgnoreCase))
         {
             return new ThoughtCandidate(
-                $"health:{condition.Id}",
-                "health.physical",
-                "health.physical",
-                94,
-                "😣",
-                "state",
-                condition.Id,
-                "health.terminal",
-                ThoughtProviderUtilities.Context(
-                    (
-                        "condition",
-                        condition.Name
-                    )));
+                       $"health:{condition.Id}",
+                       "health.physical",
+                       "health.physical",
+                       94,
+                       ThoughtMoodIds.Distressed,
+                       "❤️‍🩹",
+                       ThoughtSalienceTraits.Health,
+                       "state",
+                       condition.Id,
+                       "health.terminal",
+                       ThoughtProviderUtilities.Context(
+                       (
+                       "condition",
+                       condition.Name
+                       ))
+                   );
         }
 
         if (type.Equals(
@@ -334,23 +366,26 @@ internal sealed class HealthThoughtProvider :
             StringComparison.OrdinalIgnoreCase))
         {
             return new ThoughtCandidate(
-                $"health:{condition.Id}",
-                "health.physical",
-                "health.physical",
-                58
-                + Math.Min(
-                    14,
-                    (int)Math.Round(
-                        impact)),
-                "😣",
-                "state",
-                condition.Id,
-                "health.permanent",
-                ThoughtProviderUtilities.Context(
-                    (
-                        "condition",
-                        condition.Name
-                    )));
+                       $"health:{condition.Id}",
+                       "health.physical",
+                       "health.physical",
+                       58
+                       + Math.Min(
+                       14,
+                       (int)Math.Round(
+                       impact)),
+                       ThoughtMoodIds.Distressed,
+                       "❤️‍🩹",
+                       ThoughtSalienceTraits.Health,
+                       "state",
+                       condition.Id,
+                       "health.permanent",
+                       ThoughtProviderUtilities.Context(
+                       (
+                       "condition",
+                       condition.Name
+                       ))
+                   );
         }
 
         if (type.Equals(
@@ -366,42 +401,46 @@ internal sealed class HealthThoughtProvider :
                     StringComparison.OrdinalIgnoreCase);
 
             return new ThoughtCandidate(
-                $"health:{condition.Id}",
-                "health.physical",
-                "health.physical",
-                48
-                + (int)Math.Round(
-                    impact
-                    * 2),
-                injury
-                    ? "🤕"
-                    : "🤒",
-                "state",
-                condition.Id,
-                "health.curable",
-                ThoughtProviderUtilities.Context(
-                    (
-                        "condition",
-                        condition.Name
-                    )));
+                       $"health:{condition.Id}",
+                       "health.physical",
+                       "health.physical",
+                       48
+                       + (int)Math.Round(
+                       impact
+                       * 2),
+                       ThoughtMoodIds.Sick,
+                       "❤️‍🩹",
+                       ThoughtSalienceTraits.Health,
+                       "state",
+                       condition.Id,
+                       "health.curable",
+                       ThoughtProviderUtilities.Context(
+                       (
+                       "condition",
+                       condition.Name
+                       ))
+                   );
         }
 
         return new ThoughtCandidate(
-            $"health:{condition.Id}",
-            "health.physical",
-            "health.physical",
-            35
-            + (int)Math.Round(
-                impact),
-            "🤧",
-            "state",
-            condition.Id,
-            "health.minor",
-            ThoughtProviderUtilities.Context(
-                (
-                    "condition",
-                    condition.Name
-                )));
+                   $"health:{condition.Id}",
+                   "health.physical",
+                   "health.physical",
+                   35
+                   + (int)Math.Round(
+                   impact),
+                   ThoughtMoodIds.Sick,
+                   "❤️‍🩹",
+                   ThoughtSalienceTraits.Health,
+                   "state",
+                   condition.Id,
+                   "health.minor",
+                   ThoughtProviderUtilities.Context(
+                   (
+                   "condition",
+                   condition.Name
+                   ))
+               );
     }
 
     private static bool IsMental(

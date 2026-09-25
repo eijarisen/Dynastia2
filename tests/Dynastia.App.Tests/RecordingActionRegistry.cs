@@ -19,6 +19,9 @@ internal sealed class RecordingActionRegistry(IActionRegistry inner) : IActionRe
     public IReadOnlyList<GameActionDefinition> GetCandidateActions(IPerson actor, IPerson target) =>
         inner.GetCandidateActions(actor, target);
 
+    public GameActionDefinition? TryResolveDefinition(string actionId, IPerson actor, IPerson target) =>
+        inner.TryResolveDefinition(actionId, actor, target);
+
     public IReadOnlyList<GameActionDefinition> GetAvailableActions(IPerson actor, IPerson target) =>
         inner.GetAvailableActions(actor, target);
 

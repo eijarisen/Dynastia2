@@ -54,14 +54,27 @@
                                 IsVisible="{Binding IsLiving}"
                                 Spacing="3">
 
-                                <TextBlock
+                                <Grid
                                     IsVisible="{Binding HasTooltipThought}"
                                     Margin="0,0,0,4"
-                                    FontSize="12"
-                                    LineHeight="18"
-                                    Foreground="#F5E6C6"
-                                    TextWrapping="Wrap"
-                                    Text="{Binding TooltipThoughtText}" />
+                                    ColumnDefinitions="Auto,*"
+                                    ColumnSpacing="5">
+
+                                    <TextBlock
+                                        Grid.Column="0"
+                                        IsVisible="{Binding HasThoughtTopicEmoji}"
+                                        FontSize="13"
+                                        VerticalAlignment="Top"
+                                        Text="{Binding ThoughtTopicEmoji}" />
+
+                                    <TextBlock
+                                        Grid.Column="1"
+                                        FontSize="12"
+                                        LineHeight="18"
+                                        Foreground="#F5E6C6"
+                                        TextWrapping="Wrap"
+                                        Text="{Binding TooltipThoughtText}" />
+                                </Grid>
 
                                 <TextBlock
                                     FontSize="12"

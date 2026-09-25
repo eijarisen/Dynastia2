@@ -15,99 +15,110 @@ internal sealed class EventThoughtProvider :
                 ["rare.lottery_win"] =
                     new(
                         100,
-                        "🤩",
+                        ThoughtMoodIds.Happy,
+                        "💰",
+                        ThoughtSalienceTraits.Positive,
                         "rare.lottery"),
 
                 ["rare.lightning_strike"] =
                     new(
                         98,
-                        "🤕",
+                        ThoughtMoodIds.Sick,
+                        "⚡",
+                        ThoughtSalienceTraits.RareTrauma,
                         "rare.accident"),
 
                 ["rare.assault"] =
                     new(
                         92,
-                        "🤕",
+                        ThoughtMoodIds.Distressed,
+                        "⚠️",
+                        ThoughtSalienceTraits.Emotional
+                        | ThoughtSalienceTraits.Negative
+                        | ThoughtSalienceTraits.ImmediateProblem
+                        | ThoughtSalienceTraits.RareTrauma
+                        | ThoughtSalienceTraits.MelancholicHighImpact,
                         "rare.assault"),
 
                 ["rare.mugging"] =
                     new(
                         90,
-                        "😠",
+                        ThoughtMoodIds.Angry,
+                        "💰",
+                        ThoughtSalienceTraits.Emotional
+                        | ThoughtSalienceTraits.Negative
+                        | ThoughtSalienceTraits.ImmediateProblem
+                        | ThoughtSalienceTraits.RareTrauma
+                        | ThoughtSalienceTraits.MelancholicHighImpact,
                         "rare.assault"),
 
                 ["rare.traffic_accident"] =
-                    new(
-                        92,
-                        "🤕",
-                        "rare.accident"),
+                    Accident(92, "🚗"),
 
                 ["rare.workplace_accident"] =
-                    new(
-                        92,
-                        "🤕",
-                        "rare.accident"),
+                    Accident(92, "⚠️"),
 
                 ["rare.structural_accident"] =
-                    new(
-                        92,
-                        "🤕",
-                        "rare.accident"),
+                    Accident(92, "🏠"),
 
                 ["rare.serious_fall"] =
-                    new(
-                        88,
-                        "🤕",
-                        "rare.accident"),
+                    Accident(88, "⚠️"),
 
                 ["rare.water_accident"] =
-                    new(
-                        90,
-                        "🌊",
-                        "rare.accident"),
+                    Accident(90, "🌊", ThoughtMoodIds.Afraid),
 
                 ["rare.animal_accident"] =
-                    new(
-                        86,
-                        "🐎",
-                        "rare.accident"),
+                    Accident(86, "🐎", ThoughtMoodIds.Afraid),
 
                 ["rare.storm_flood_damage"] =
-                    new(
-                        88,
-                        "😱",
-                        "rare.accident"),
+                    Accident(88, "🌊", ThoughtMoodIds.Afraid),
 
                 ["rare.storm_flood"] =
-                    new(
-                        88,
-                        "😱",
-                        "rare.accident"),
+                    Accident(88, "🌊", ThoughtMoodIds.Afraid),
 
                 ["rare.burglary"] =
                     new(
                         84,
-                        "😨",
+                        ThoughtMoodIds.Afraid,
+                        "🏠",
+                        ThoughtSalienceTraits.None,
                         "rare.burglary"),
 
                 ["rare.fraud"] =
                     new(
                         86,
-                        "😡",
+                        ThoughtMoodIds.Angry,
+                        "💰",
+                        ThoughtSalienceTraits.None,
                         "rare.fraud"),
 
                 ["rare.distant_inheritance"] =
                     new(
                         82,
-                        "🤑",
+                        ThoughtMoodIds.Pleased,
+                        "💰",
+                        ThoughtSalienceTraits.Positive,
                         "rare.inheritance"),
 
                 ["rare.found_property"] =
                     new(
                         66,
-                        "😄",
+                        ThoughtMoodIds.Happy,
+                        "💰",
+                        ThoughtSalienceTraits.None,
                         "rare.found")
             };
+
+    private static RareEventDefinition Accident(
+        int salience,
+        string topicEmoji,
+        string moodId = ThoughtMoodIds.Sick) =>
+        new(
+            salience,
+            moodId,
+            topicEmoji,
+            ThoughtSalienceTraits.RareTrauma,
+            "rare.accident");
 
     public string Id =>
         "thoughts.events";
@@ -149,18 +160,19 @@ internal sealed class EventThoughtProvider :
                     );
 
                 yield return new ThoughtCandidate(
-                    "rare.house_fire",
-                    "rare.event",
-                    "rare.event",
-                    catastrophic
-                        ? 96
-                        : 78,
-                    catastrophic
-                        ? "😱"
-                        : "😰",
-                    "event",
-                    gameEvent.Type,
-                    "rare.fire");
+                                 "rare.house_fire",
+                                 "rare.event",
+                                 "rare.event",
+                                 catastrophic
+                                 ? 96
+                                 : 78,
+                                 ThoughtMoodIds.Afraid,
+                                 "🔥",
+                                 ThoughtSalienceTraits.None,
+                                 "event",
+                                 gameEvent.Type,
+                                 "rare.fire"
+                             );
 
                 continue;
             }
@@ -170,14 +182,17 @@ internal sealed class EventThoughtProvider :
                     out var rare))
             {
                 yield return new ThoughtCandidate(
-                    gameEvent.Type,
-                    "rare.event",
-                    "rare.event",
-                    rare.Salience,
-                    rare.Emoji,
-                    "event",
-                    gameEvent.Type,
-                    rare.WordingKey);
+                                 gameEvent.Type,
+                                 "rare.event",
+                                 "rare.event",
+                                 rare.Salience,
+                                 rare.MoodId,
+                                 rare.TopicEmoji,
+                                 rare.SalienceTraits,
+                                 "event",
+                                 gameEvent.Type,
+                                 rare.WordingKey
+                             );
             }
 
             if (gameEvent.Type.StartsWith(
@@ -188,14 +203,17 @@ internal sealed class EventThoughtProvider :
                     StringComparison.OrdinalIgnoreCase))
             {
                 yield return new ThoughtCandidate(
-                    "inheritance",
-                    "inheritance",
-                    "money.inheritance",
-                    70,
-                    "🤑",
-                    "event",
-                    gameEvent.Type,
-                    "inheritance");
+                                 "inheritance",
+                                 "inheritance",
+                                 "money.inheritance",
+                                 70,
+                                 ThoughtMoodIds.Pleased,
+                                 "💰",
+                                 ThoughtSalienceTraits.Positive,
+                                 "event",
+                                 gameEvent.Type,
+                                 "inheritance"
+                             );
             }
 
             if (gameEvent.Type.Equals(
@@ -259,27 +277,32 @@ internal sealed class EventThoughtProvider :
                         };
 
                 yield return new ThoughtCandidate(
-                    $"improvement:{statId}",
-                    "personal.improvement",
-                    "personal.improvement",
-                    salience,
-                    emoji,
-                    "event",
-                    gameEvent.Type,
-                    "improvement",
-                    ThoughtProviderUtilities.Context(
-                        (
-                            "statId",
-                            statId
-                        ),
-                        (
-                            "previousValue",
-                            previous
-                        ),
-                        (
-                            "newValue",
-                            next
-                        )));
+                                 $"improvement:{statId}",
+                                 "personal.improvement",
+                                 "personal.improvement",
+                                 salience,
+                                 ThoughtMoodIds.Pleased,
+                                 emoji,
+                                 ThoughtSalienceTraits.None,
+                                 "event",
+                                 gameEvent.Type,
+                                 ResolveImprovementWordingKey(
+                                     statId,
+                                     restoredFertility),
+                                 ThoughtProviderUtilities.Context(
+                                 (
+                                 "statId",
+                                 statId
+                                 ),
+                                 (
+                                 "previousValue",
+                                 previous
+                                 ),
+                                 (
+                                 "newValue",
+                                 next
+                                 ))
+                             );
             }
         }
 
@@ -301,19 +324,46 @@ internal sealed class EventThoughtProvider :
                             person)))
         {
             yield return new ThoughtCandidate(
-                "recent.assault",
-                "rare.event",
-                "rare.event",
-                70,
-                "😟",
-                "state",
-                "recent.assault",
-                "recent.assault");
+                             "recent.assault",
+                             "rare.event",
+                             "rare.event",
+                             70,
+                             ThoughtMoodIds.Concerned,
+                             "⚠️",
+                             ThoughtSalienceTraits.Emotional
+                             | ThoughtSalienceTraits.Negative
+                             | ThoughtSalienceTraits.ImmediateProblem
+                             | ThoughtSalienceTraits.MelancholicHighImpact,
+                             "state",
+                             "recent.assault",
+                             "recent.assault"
+                         );
         }
+    }
+
+    private static string ResolveImprovementWordingKey(
+        string statId,
+        bool restoredFertility)
+    {
+        if (restoredFertility)
+            return "improvement.fertility_restored";
+
+        return statId.ToLowerInvariant() switch
+        {
+            "strength" => "improvement.strength",
+            "intellect" => "improvement.intellect",
+            "immunity" => "improvement.immunity",
+            "appeal" => "improvement.appeal",
+            "longevity" => "improvement.longevity",
+            "fertility" => "improvement.fertility",
+            _ => "improvement.generic"
+        };
     }
 
     private sealed record RareEventDefinition(
         int Salience,
-        string Emoji,
+        string MoodId,
+        string TopicEmoji,
+        ThoughtSalienceTraits SalienceTraits,
         string WordingKey);
 }

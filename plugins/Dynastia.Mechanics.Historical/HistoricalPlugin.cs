@@ -6,6 +6,7 @@ public sealed class HistoricalPlugin : IGamePlugin
 {
     public void Initialize(IGamePluginContext context)
     {
+        EventPresentationRegistration.Register(context);
         var data = context.GetService<IGameDataService>()
             ?? throw new InvalidOperationException("Game data service is unavailable.");
         var towns = context.GetService<IHistoricalTownCatalog>()

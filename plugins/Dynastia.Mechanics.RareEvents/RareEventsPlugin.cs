@@ -6,6 +6,7 @@ public sealed class RareEventsPlugin : IGamePlugin
 {
     public void Initialize(IGamePluginContext context)
     {
+        EventPresentationRegistration.Register(context);
         T Require<T>(string name) where T : class =>
             context.GetService<T>() ?? throw new InvalidOperationException($"{name} is unavailable.");
 

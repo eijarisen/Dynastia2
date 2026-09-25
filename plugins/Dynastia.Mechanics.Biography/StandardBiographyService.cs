@@ -8,6 +8,7 @@ public sealed partial class StandardBiographyService :
     private readonly IGameState _gameState;
     private readonly IFamilyService _family;
     private readonly IHouseholdService _households;
+    private readonly IEventPresentationRegistry _eventPresentation;
     private readonly AboutTextBuilder _about;
 
     private readonly Dictionary<
@@ -21,11 +22,13 @@ public sealed partial class StandardBiographyService :
         IStatsService stats,
         ILocationService locations,
         IHouseholdService households,
-        IGameEventBus events)
+        IGameEventBus events,
+        IEventPresentationRegistry eventPresentation)
     {
         _gameState = gameState;
         _family = family;
         _households = households;
+        _eventPresentation = eventPresentation;
 
         _about =
             new AboutTextBuilder(

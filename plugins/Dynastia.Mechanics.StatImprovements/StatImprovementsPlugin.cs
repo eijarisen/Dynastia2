@@ -7,6 +7,7 @@ public sealed class StatImprovementsPlugin : IGamePlugin
 {
     public void Initialize(IGamePluginContext context)
     {
+        EventPresentationRegistration.Register(context);
         var data = Require<IGameDataService>(context, "Game data service");
         var gameState = Require<IGameState>(context, "Game state");
         var stats = Require<IStatsService>(context, "Stats service");

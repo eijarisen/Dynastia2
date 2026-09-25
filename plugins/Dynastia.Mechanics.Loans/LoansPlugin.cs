@@ -9,6 +9,7 @@ public sealed class LoansPlugin :
     public void Initialize(
         IGamePluginContext context)
     {
+        EventPresentationRegistration.Register(context);
         var gameState =
             Require<IGameState>(context, "Game state");
 
@@ -116,6 +117,8 @@ public sealed class LoansPlugin :
                 family,
                 economy,
                 events));
+
+        LoanThoughtWording.Register(context);
 
         thoughtProviders.Register(
             new LoanThoughtProvider(

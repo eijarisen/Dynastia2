@@ -13,6 +13,7 @@ public sealed class FamilySupportPlugin :
     public void Initialize(
         IGamePluginContext context)
     {
+        EventPresentationRegistration.Register(context);
         context.Log(
             "Legacy family-support actions are provided by Family Relations.");
     }

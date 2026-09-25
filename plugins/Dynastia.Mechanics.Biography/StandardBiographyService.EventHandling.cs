@@ -345,7 +345,7 @@ public sealed partial class StandardBiographyService
                     $"💍 Married {subjectName}.",
 
                 "relationship.partnered" =>
-                    $"{GetEmoji(gameEvent.Type)}" +
+                    $"{GetEmojiPrefix(gameEvent.Type)}" +
                     $"{GetPartnerPartnershipVerb(gameEvent, subject, partner)}.",
 
                 "relationship.divorce" =>
@@ -428,7 +428,7 @@ public sealed partial class StandardBiographyService
                 subject);
 
         var emoji =
-            GetEmoji(
+            GetEmojiPrefix(
                 gameEvent.Type);
 
         foreach (var relative in

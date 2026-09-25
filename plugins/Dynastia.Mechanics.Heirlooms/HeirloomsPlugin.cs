@@ -7,6 +7,7 @@ public sealed class HeirloomsPlugin : IGamePlugin
 {
     public void Initialize(IGamePluginContext context)
     {
+        EventPresentationRegistration.Register(context);
         var gameState = Require<IGameState>(context, "Game state");
         var economy = Require<IEconomyService>(context, "Economy service");
         var family = Require<IFamilyService>(context, "Family service");

@@ -441,7 +441,7 @@ internal sealed class ActionPanelCoordinator : ViewModelBase
                 queued,
                 contextualLabel);
         var text =
-            $"Queued: {ActionEmojiMap.Format(queued.ActionId, queuedLabel)}";
+            $"Queued: {FormatQueuedAction(queued, queuedLabel, queuedActor, queuedTarget)}";
 
         var detail =
             BuildQueuedActionDetail(queued);
@@ -470,6 +470,26 @@ internal sealed class ActionPanelCoordinator : ViewModelBase
                 : _familyService.GetDisplayName(person);
 
         return $"{text} – {personName}";
+    }
+
+    private string FormatQueuedAction(
+        QueuedActionInfo queued,
+        string label,
+        IPerson? actor,
+        IPerson? target)
+    {
+        if (actor is not null && target is not null)
+        {
+            var definition = _actionRegistry.TryResolveDefinition(
+                queued.ActionId,
+                actor,
+                target);
+
+            if (definition is not null)
+                return ActionEmojiMap.Format(definition, label);
+        }
+
+        return ActionEmojiMap.Format(queued.ActionId, label);
     }
 
     private static string ResolveQueuedActionLabel(

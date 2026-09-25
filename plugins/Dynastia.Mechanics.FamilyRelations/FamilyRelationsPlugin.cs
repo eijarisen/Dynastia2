@@ -6,6 +6,7 @@ public sealed class FamilyRelationsPlugin : IGamePlugin
 {
     public void Initialize(IGamePluginContext context)
     {
+        EventPresentationRegistration.Register(context);
         var gameState = context.GetService<IGameState>() ?? throw new InvalidOperationException("Game state is unavailable.");
         var family = context.GetService<IFamilyService>() ?? throw new InvalidOperationException("Family service is unavailable.");
         var economy = context.GetService<IEconomyService>() ?? throw new InvalidOperationException("Economy service is unavailable.");
@@ -69,6 +70,8 @@ public sealed class FamilyRelationsPlugin : IGamePlugin
         FamilyRelationActions.Register(
             actions, gameState, family, relations, households, economy, locations, career, farming, marriage, personality, random, events);
         LegacyFamilyRelationActions.Register(actions);
+
+        FamilyRelationThoughtWording.Register(context);
 
         context.GetService<IThoughtProviderRegistry>()?
             .Register(new FamilyRelationThoughtProvider(relations));

@@ -12,6 +12,7 @@ public sealed class EducationPlugin : IGamePlugin
 
     public void Initialize(IGamePluginContext context)
     {
+        EventPresentationRegistration.Register(context);
         var gameState = context.GetService<IGameState>()
             ?? throw new InvalidOperationException("Game state is unavailable.");
 

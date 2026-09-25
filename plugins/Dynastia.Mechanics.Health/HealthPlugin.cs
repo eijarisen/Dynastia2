@@ -6,6 +6,7 @@ public sealed class HealthPlugin : IGamePlugin
 {
     public void Initialize(IGamePluginContext context)
     {
+        EventPresentationRegistration.Register(context);
         var data = context.GetService<IGameDataService>() ?? throw new InvalidOperationException("Game data service is unavailable.");
         var random = context.GetService<IGameRandom>() ?? throw new InvalidOperationException("Game random service is unavailable.");
         var state = context.GetService<IGameState>() ?? throw new InvalidOperationException("Game state is unavailable.");

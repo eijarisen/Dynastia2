@@ -16,6 +16,18 @@ public sealed class PersonThoughtComponent
     public string Text { get; set; } =
         string.Empty;
 
+    public string MoodId { get; set; } =
+        string.Empty;
+
+    public string MoodEmoji { get; set; } =
+        string.Empty;
+
+    public string TopicEmoji { get; set; } =
+        string.Empty;
+
+    // Retained so older saves deserialize safely. Newly generated thoughts
+    // mirror MoodEmoji here until the compatibility field can be removed.
+    [Obsolete("Legacy save compatibility. Use MoodEmoji.")]
     public string Emoji { get; set; } =
         string.Empty;
 

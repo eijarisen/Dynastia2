@@ -106,19 +106,31 @@ public sealed class Development9UiRegressionTests
             "Dynastia.App",
             "ViewModels",
             "CareerViewModel.cs"));
-        var eventEmoji = File.ReadAllText(Path.Combine(
+        var historicalPresentation = File.ReadAllText(Path.Combine(
             root,
-            "src",
-            "Dynastia.App",
-            "ViewModels",
-            "EventEmojiMap.cs"));
+            "plugins",
+            "Dynastia.Mechanics.Historical",
+            "EventPresentationRegistration.cs"));
+        var careerPresentation = File.ReadAllText(Path.Combine(
+            root,
+            "plugins",
+            "Dynastia.Mechanics.Career",
+            "EventPresentationRegistration.cs"));
+        var farmingPresentation = File.ReadAllText(Path.Combine(
+            root,
+            "plugins",
+            "Dynastia.Mechanics.Farming",
+            "EventPresentationRegistration.cs"));
 
         Assert.Contains("isAlive && isImprisoned", career);
         Assert.Contains("? \"N/A\"", career);
-        Assert.DoesNotContain("🔹", eventEmoji);
-        Assert.Contains("[\"historical.milestone\"] = \"🗞️\"", eventEmoji);
-        Assert.Contains("[\"career.changed_job\"] = \"🔄\"", eventEmoji);
-        Assert.Contains("[\"farming.income\"] = \"🌾\"", eventEmoji);
+        Assert.DoesNotContain("🔹", historicalPresentation);
+        Assert.Contains("historical.milestone", historicalPresentation);
+        Assert.Contains("Emoji = \"🗞️\"", historicalPresentation);
+        Assert.Contains("career.changed_job", careerPresentation);
+        Assert.Contains("Emoji = \"🔄\"", careerPresentation);
+        Assert.Contains("farming.income", farmingPresentation);
+        Assert.Contains("Emoji = \"🌾\"", farmingPresentation);
     }
 
     [Fact]

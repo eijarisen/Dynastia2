@@ -26,54 +26,65 @@ internal sealed class HouseholdThoughtProvider :
             == true)
         {
             yield return new ThoughtCandidate(
-                "economy.broke",
-                "economy.poverty",
-                "economy.poverty",
-                person.Age <= 11
-                    ? 34
-                    : person.Age <= 17
-                        ? 52
-                        : 74,
-                "😟",
-                "state",
-                "household.broke",
-                "economy.broke");
+                             "economy.broke",
+                             "economy.poverty",
+                             "economy.poverty",
+                             person.Age <= 11
+                             ? 34
+                             : person.Age <= 17
+                             ? 52
+                             : 74,
+                             ThoughtMoodIds.Concerned,
+                             "💰",
+                             ThoughtSalienceTraits.Negative
+                             | ThoughtSalienceTraits.ImmediateProblem
+                             | ThoughtSalienceTraits.Poverty,
+                             "state",
+                             "household.broke",
+                             "economy.broke"
+                         );
         }
 
         if (status?.IsLargeFamilyStrained
             == true)
         {
             yield return new ThoughtCandidate(
-                "household.strain",
-                "household.strain",
-                "household.strain",
-                person.Age <= 11
-                    ? 42
-                    : person.Age <= 17
-                        ? 52
-                        : 68,
-                "😫",
-                "state",
-                "household.strain",
-                "household.strain");
+                             "household.strain",
+                             "household.strain",
+                             "household.strain",
+                             person.Age <= 11
+                             ? 42
+                             : person.Age <= 17
+                             ? 52
+                             : 68,
+                             ThoughtMoodIds.Exhausted,
+                             "🏠",
+                             ThoughtSalienceTraits.HouseholdStrain,
+                             "state",
+                             "household.strain",
+                             "household.strain"
+                         );
         }
 
         if (status?.IsOvercrowded
             == true)
         {
             yield return new ThoughtCandidate(
-                "household.overcrowded",
-                "household.overcrowded",
-                "household.overcrowded",
-                person.Age <= 11
-                    ? 42
-                    : person.Age <= 17
-                        ? 52
-                        : 68,
-                "🏠",
-                "state",
-                "household.overcrowded",
-                "household.overcrowded");
+                             "household.overcrowded",
+                             "household.overcrowded",
+                             "household.overcrowded",
+                             person.Age <= 11
+                             ? 42
+                             : person.Age <= 17
+                             ? 52
+                             : 68,
+                             ThoughtMoodIds.Neutral,
+                             "🏠",
+                             ThoughtSalienceTraits.None,
+                             "state",
+                             "household.overcrowded",
+                             "household.overcrowded"
+                         );
         }
 
         if (person.Age >= 18)
@@ -82,27 +93,33 @@ internal sealed class HouseholdThoughtProvider :
                 "role.family_nanny"))
             {
                 yield return new ThoughtCandidate(
-                    "role.family_nanny",
-                    "household.role",
-                    "household.role",
-                    38,
-                    "🧑‍🍼",
-                    "state",
-                    "role.family_nanny",
-                    "role.family_nanny.started");
+                                 "role.family_nanny",
+                                 "household.role",
+                                 "household.role",
+                                 38,
+                                 ThoughtMoodIds.Neutral,
+                                 "🧑‍🍼",
+                                 ThoughtSalienceTraits.None,
+                                 "state",
+                                 "role.family_nanny",
+                                 "role.family_nanny.started"
+                             );
             }
             else if (person.Tags.Has(
                 "role.nanny"))
             {
                 yield return new ThoughtCandidate(
-                    "role.nanny",
-                    "household.role",
-                    "household.role",
-                    24,
-                    "🧑‍🍼",
-                    "state",
-                    "role.nanny",
-                    "role.nanny");
+                                 "role.nanny",
+                                 "household.role",
+                                 "household.role",
+                                 24,
+                                 ThoughtMoodIds.Neutral,
+                                 "🧑‍🍼",
+                                 ThoughtSalienceTraits.None,
+                                 "state",
+                                 "role.nanny",
+                                 "role.nanny"
+                             );
             }
             else if (context.Career
                 .GetCareer(
@@ -112,14 +129,17 @@ internal sealed class HouseholdThoughtProvider :
                     StringComparison.OrdinalIgnoreCase) == true)
             {
                 yield return new ThoughtCandidate(
-                    "role.housewife",
-                    "household.role",
-                    "household.role",
-                    18,
-                    "👩‍🍳",
-                    "state",
-                    "housewife",
-                    "role.housewife");
+                                 "role.housewife",
+                                 "household.role",
+                                 "household.role",
+                                 18,
+                                 ThoughtMoodIds.Neutral,
+                                 "👩‍🍳",
+                                 ThoughtSalienceTraits.None,
+                                 "state",
+                                 "housewife",
+                                 "role.housewife"
+                             );
             }
         }
 
@@ -143,20 +163,25 @@ internal sealed class HouseholdThoughtProvider :
                         : "ordinary";
 
                 yield return new ThoughtCandidate(
-                    "farming.work",
-                    "household.farming",
-                    "household.farming",
-                    performance.Equals("ordinary", StringComparison.OrdinalIgnoreCase)
-                        ? 10
-                        : 18,
-                    "🌾",
-                    "event",
-                    gameEvent.Type,
-                    "farming.work",
-                    new Dictionary<string, string>
-                    {
-                        ["performance"] = performance
-                    });
+                                 "farming.work",
+                                 "household.farming",
+                                 "household.farming",
+                                 performance.Equals("ordinary", StringComparison.OrdinalIgnoreCase)
+                                 ? 10
+                                 : 18,
+                                 ThoughtMoodIds.Neutral,
+                                 "🌾",
+                                 ThoughtSalienceTraits.None,
+                                 "event",
+                                 gameEvent.Type,
+                                 ResolvePerformanceWordingKey(
+                                     "farming.work",
+                                     performance),
+                                 new Dictionary<string, string>
+                                 {
+                                 ["performance"] = performance
+                                 }
+                             );
             }
 
             if (person.Age >= 18)
@@ -234,14 +259,17 @@ internal sealed class HouseholdThoughtProvider :
                     person.Id))
             {
                 yield return new ThoughtCandidate(
-                    "family.nanny.started",
-                    "household.role",
-                    "household.role",
-                    55,
-                    "🧑‍🍼",
-                    "event",
-                    gameEvent.Type,
-                    "role.family_nanny");
+                                 "family.nanny.started",
+                                 "household.role",
+                                 "household.role",
+                                 55,
+                                 ThoughtMoodIds.Neutral,
+                                 "🧑‍🍼",
+                                 ThoughtSalienceTraits.None,
+                                 "event",
+                                 gameEvent.Type,
+                                 "role.family_nanny"
+                             );
             }
 
             if (gameEvent.Type.Equals(
@@ -251,14 +279,17 @@ internal sealed class HouseholdThoughtProvider :
                     person.Id))
             {
                 yield return new ThoughtCandidate(
-                    "family.nanny.ended",
-                    "household.role",
-                    "household.role",
-                    35,
-                    "👋",
-                    "event",
-                    gameEvent.Type,
-                    "role.family_nanny.ended");
+                                 "family.nanny.ended",
+                                 "household.role",
+                                 "household.role",
+                                 35,
+                                 ThoughtMoodIds.Neutral,
+                                 "👋",
+                                 ThoughtSalienceTraits.None,
+                                 "event",
+                                 gameEvent.Type,
+                                 "role.family_nanny.ended"
+                             );
             }
 
             if (gameEvent.Type.Equals(
@@ -266,27 +297,30 @@ internal sealed class HouseholdThoughtProvider :
                     StringComparison.OrdinalIgnoreCase))
             {
                 yield return new ThoughtCandidate(
-                    "household.moved",
-                    "household.move",
-                    "household.move",
-                    76,
-                    "🚚",
-                    "event",
-                    gameEvent.Type,
-                    "household.moved",
-                    new Dictionary<string, string>
-                    {
-                        ["fromTown"] = gameEvent.Data.TryGetValue(
-                            "fromTown",
-                            out var fromTown)
-                                ? fromTown
-                                : "our old town",
-                        ["toTown"] = gameEvent.Data.TryGetValue(
-                            "toTown",
-                            out var toTown)
-                                ? toTown
-                                : "our new town"
-                    });
+                                 "household.moved",
+                                 "household.move",
+                                 "household.move",
+                                 76,
+                                 ThoughtMoodIds.Neutral,
+                                 "🚚",
+                                 ThoughtSalienceTraits.None,
+                                 "event",
+                                 gameEvent.Type,
+                                 "household.moved",
+                                 new Dictionary<string, string>
+                                 {
+                                 ["fromTown"] = gameEvent.Data.TryGetValue(
+                                 "fromTown",
+                                 out var fromTown)
+                                 ? fromTown
+                                 : "our old town",
+                                 ["toTown"] = gameEvent.Data.TryGetValue(
+                                 "toTown",
+                                 out var toTown)
+                                 ? toTown
+                                 : "our new town"
+                                 }
+                             );
             }
 
             if (gameEvent.Type.Equals(
@@ -296,22 +330,29 @@ internal sealed class HouseholdThoughtProvider :
                     "family_support.child_success",
                     StringComparison.OrdinalIgnoreCase))
             {
+                var supportRole =
+                    gameEvent.SubjectId == person.Id
+                        ? "recipient"
+                        : "donor";
+
                 yield return new ThoughtCandidate(
-                    "support.success",
-                    "family.support",
-                    "family.support",
-                    50,
-                    "😌",
-                    "event",
-                    gameEvent.Type,
-                    "support.success",
-                    new Dictionary<string, string>
-                    {
-                        ["supportRole"] =
-                            gameEvent.SubjectId == person.Id
-                                ? "recipient"
-                                : "donor"
-                    });
+                                 "support.success",
+                                 "family.support",
+                                 "family.support",
+                                 50,
+                                 ThoughtMoodIds.Relieved,
+                                 "👪",
+                                 ThoughtSalienceTraits.Positive,
+                                 "event",
+                                 gameEvent.Type,
+                                 ResolveSupportWordingKey(
+                                     person,
+                                     supportRole),
+                                 new Dictionary<string, string>
+                                 {
+                                 ["supportRole"] = supportRole
+                                 }
+                             );
             }
 
             if (gameEvent.Type.Equals(
@@ -322,17 +363,45 @@ internal sealed class HouseholdThoughtProvider :
                     StringComparison.OrdinalIgnoreCase))
             {
                 yield return new ThoughtCandidate(
-                    "support.failure",
-                    "family.support",
-                    "family.support",
-                    48,
-                    "😒",
-                    "event",
-                    gameEvent.Type,
-                    "support.failure");
+                                 "support.failure",
+                                 "family.support",
+                                 "family.support",
+                                 48,
+                                 ThoughtMoodIds.Concerned,
+                                 "👪",
+                                 ThoughtSalienceTraits.Negative,
+                                 "event",
+                                 gameEvent.Type,
+                                 "support.failure"
+                             );
             }
         }
     }
+
+    private static string ResolveSupportWordingKey(
+        IPerson person,
+        string supportRole)
+    {
+        if (supportRole.Equals("recipient", StringComparison.OrdinalIgnoreCase))
+            return "support.success.recipient";
+
+        if (person.Tags.Has("morals.good"))
+            return "support.success.donor.good";
+
+        if (person.Tags.Has("morals.evil"))
+            return "support.success.donor.evil";
+
+        return "support.success.donor.neutral";
+    }
+
+    private static string ResolvePerformanceWordingKey(
+        string prefix,
+        string performance) =>
+        performance.Equals("strong", StringComparison.OrdinalIgnoreCase)
+            ? $"{prefix}.strong"
+            : performance.Equals("poor", StringComparison.OrdinalIgnoreCase)
+                ? $"{prefix}.poor"
+                : $"{prefix}.ordinary";
 
     private static ThoughtCandidate EventCandidate(
         string wordingKey,
@@ -341,13 +410,16 @@ internal sealed class HouseholdThoughtProvider :
         GameEvent gameEvent)
     {
         return new ThoughtCandidate(
-            wordingKey,
-            "property",
-            "property",
-            salience,
-            emoji,
-            "event",
-            gameEvent.Type,
-            wordingKey);
+                   wordingKey,
+                   "property",
+                   "property",
+                   salience,
+                   ThoughtMoodIds.Neutral,
+                   emoji,
+                   ThoughtSalienceTraits.None,
+                   "event",
+                   gameEvent.Type,
+                   wordingKey
+               );
     }
 }

@@ -32,15 +32,18 @@ internal sealed class FamilyRelationThoughtProvider : IThoughtProvider
             {
                 var kinship = ResolveKinship(person, other, context.Family);
                 yield return new ThoughtCandidate(
-                    "family_relation.improved",
-                    "family.relations",
-                    $"family_relation.improved.{other.Id}",
-                    52,
-                    "🤝",
-                    "event",
-                    improved.Type,
-                    "family_relation.improved",
-                    new Dictionary<string, string> { ["relation"] = kinship.ToLowerInvariant() });
+                                 "family_relation.improved",
+                                 "family.relations",
+                                 $"family_relation.improved.{other.Id}",
+                                 52,
+                                 ThoughtMoodIds.Pleased,
+                                 "🤝",
+                                 ThoughtSalienceTraits.None,
+                                 "event",
+                                 improved.Type,
+                                 "family_relation.improved",
+                                 new Dictionary<string, string> { ["relation"] = kinship.ToLowerInvariant() }
+                             );
             }
         }
 
@@ -55,28 +58,34 @@ internal sealed class FamilyRelationThoughtProvider : IThoughtProvider
         if (strongest.Sympathy >= 80)
         {
             yield return new ThoughtCandidate(
-                "family_relation.close",
-                "family.relations",
-                $"family_relation.close.{strongest.RelativeId}",
-                34,
-                "❤️",
-                "state",
-                strongest.RelativeId.ToString(),
-                "family_relation.close",
-                new Dictionary<string, string> { ["relation"] = relationWord });
+                             "family_relation.close",
+                             "family.relations",
+                             $"family_relation.close.{strongest.RelativeId}",
+                             34,
+                             ThoughtMoodIds.Pleased,
+                             "❤️",
+                             ThoughtSalienceTraits.None,
+                             "state",
+                             strongest.RelativeId.ToString(),
+                             "family_relation.close",
+                             new Dictionary<string, string> { ["relation"] = relationWord }
+                         );
         }
         else if (strongest.Sympathy < 40)
         {
             yield return new ThoughtCandidate(
-                "family_relation.strained",
-                "family.relations",
-                $"family_relation.strained.{strongest.RelativeId}",
-                strongest.Type == FamilyRelationshipType.ExSpouse ? 44 : 38,
-                "😒",
-                "state",
-                strongest.RelativeId.ToString(),
-                "family_relation.strained",
-                new Dictionary<string, string> { ["relation"] = relationWord });
+                             "family_relation.strained",
+                             "family.relations",
+                             $"family_relation.strained.{strongest.RelativeId}",
+                             strongest.Type == FamilyRelationshipType.ExSpouse ? 44 : 38,
+                             ThoughtMoodIds.Concerned,
+                             "👪",
+                             ThoughtSalienceTraits.None,
+                             "state",
+                             strongest.RelativeId.ToString(),
+                             "family_relation.strained",
+                             new Dictionary<string, string> { ["relation"] = relationWord }
+                         );
         }
     }
 

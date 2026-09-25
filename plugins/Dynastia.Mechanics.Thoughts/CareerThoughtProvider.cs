@@ -34,14 +34,21 @@ internal sealed class CareerThoughtProvider :
                 StringComparison.OrdinalIgnoreCase))
             {
                 yield return new ThoughtCandidate(
-                    "career.fired",
-                    "career.work",
-                    "career.work",
-                    84,
-                    "😠",
-                    "event",
-                    gameEvent.Type,
-                    "career.fired");
+                                 "career.fired",
+                                 "career.work",
+                                 "career.work",
+                                 84,
+                                 ThoughtMoodIds.Angry,
+                                 "💼",
+                                 ThoughtSalienceTraits.Emotional
+                                 | ThoughtSalienceTraits.Negative
+                                 | ThoughtSalienceTraits.Career
+                                 | ThoughtSalienceTraits.ImmediateProblem
+                                 | ThoughtSalienceTraits.MelancholicHighImpact,
+                                 "event",
+                                 gameEvent.Type,
+                                 "career.fired"
+                             );
             }
 
             if (gameEvent.Type.Equals(
@@ -52,14 +59,17 @@ internal sealed class CareerThoughtProvider :
                     StringComparison.OrdinalIgnoreCase))
             {
                 yield return new ThoughtCandidate(
-                    "career.employment",
-                    "career.work",
-                    "career.work",
-                    64,
-                    "😊",
-                    "event",
-                    gameEvent.Type,
-                    "career.employment");
+                                 "career.employment",
+                                 "career.work",
+                                 "career.work",
+                                 64,
+                                 ThoughtMoodIds.Pleased,
+                                 "💼",
+                                 ThoughtSalienceTraits.Career,
+                                 "event",
+                                 gameEvent.Type,
+                                 "career.employment"
+                             );
             }
 
             if (gameEvent.Type.Equals(
@@ -67,14 +77,18 @@ internal sealed class CareerThoughtProvider :
                 StringComparison.OrdinalIgnoreCase))
             {
                 yield return new ThoughtCandidate(
-                    "career.promotion",
-                    "career.work",
-                    "career.work",
-                    70,
-                    "🤩",
-                    "event",
-                    gameEvent.Type,
-                    "career.promotion");
+                                 "career.promotion",
+                                 "career.work",
+                                 "career.work",
+                                 70,
+                                 ThoughtMoodIds.Happy,
+                                 "💼",
+                                 ThoughtSalienceTraits.Positive
+                                 | ThoughtSalienceTraits.Career,
+                                 "event",
+                                 gameEvent.Type,
+                                 "career.promotion"
+                             );
             }
 
             if (gameEvent.Type.Equals(
@@ -82,14 +96,17 @@ internal sealed class CareerThoughtProvider :
                 StringComparison.OrdinalIgnoreCase))
             {
                 yield return new ThoughtCandidate(
-                    "career.quit",
-                    "career.work",
-                    "career.work",
-                    55,
-                    "😌",
-                    "event",
-                    gameEvent.Type,
-                    "career.quit");
+                                 "career.quit",
+                                 "career.work",
+                                 "career.work",
+                                 55,
+                                 ThoughtMoodIds.Relieved,
+                                 "💼",
+                                 ThoughtSalienceTraits.Career,
+                                 "event",
+                                 gameEvent.Type,
+                                 "career.quit"
+                             );
             }
 
             if (gameEvent.Type.Equals(
@@ -97,14 +114,17 @@ internal sealed class CareerThoughtProvider :
                 StringComparison.OrdinalIgnoreCase))
             {
                 yield return new ThoughtCandidate(
-                    "career.retirement.new",
-                    "career.work",
-                    "career.work",
-                    62,
-                    "😌",
-                    "event",
-                    gameEvent.Type,
-                    "career.retirement.new");
+                                 "career.retirement.new",
+                                 "career.work",
+                                 "career.work",
+                                 62,
+                                 ThoughtMoodIds.Relieved,
+                                 "💼",
+                                 ThoughtSalienceTraits.Career,
+                                 "event",
+                                 gameEvent.Type,
+                                 "career.retirement.new"
+                             );
             }
         }
 
@@ -123,14 +143,17 @@ internal sealed class CareerThoughtProvider :
                         StringComparison.OrdinalIgnoreCase)))
             {
                 yield return new ThoughtCandidate(
-                    "career.retirement",
-                    "career.work",
-                    "career.work",
-                    24,
-                    "😌",
-                    "state",
-                    "career.retired",
-                    "career.retirement");
+                                 "career.retirement",
+                                 "career.work",
+                                 "career.work",
+                                 24,
+                                 ThoughtMoodIds.Relieved,
+                                 "💼",
+                                 ThoughtSalienceTraits.Career,
+                                 "state",
+                                 "career.retired",
+                                 "career.retirement"
+                             );
             }
 
             yield break;
@@ -147,10 +170,15 @@ internal sealed class CareerThoughtProvider :
                             "career.work",
                             "career.work",
                             68,
-                            "🤬",
+                            ThoughtMoodIds.Angry,
+                            "💼",
+                            ThoughtSalienceTraits.Negative
+                            | ThoughtSalienceTraits.Career
+                            | ThoughtSalienceTraits.ImmediateProblem,
                             "state",
                             "career.satisfaction",
-                            "career.miserable"),
+                            "career.miserable"
+                        ),
 
                     2 =>
                         new ThoughtCandidate(
@@ -158,10 +186,15 @@ internal sealed class CareerThoughtProvider :
                             "career.work",
                             "career.work",
                             50,
-                            "😒",
+                            ThoughtMoodIds.Concerned,
+                            "💼",
+                            ThoughtSalienceTraits.Negative
+                            | ThoughtSalienceTraits.Career
+                            | ThoughtSalienceTraits.ImmediateProblem,
                             "state",
                             "career.satisfaction",
-                            "career.unhappy"),
+                            "career.unhappy"
+                        ),
 
                     4 =>
                         new ThoughtCandidate(
@@ -169,10 +202,14 @@ internal sealed class CareerThoughtProvider :
                             "career.work",
                             "career.work",
                             28,
-                            "🙂",
+                            ThoughtMoodIds.Pleased,
+                            "💼",
+                            ThoughtSalienceTraits.Positive
+                            | ThoughtSalienceTraits.Career,
                             "state",
                             "career.satisfaction",
-                            "career.satisfied"),
+                            "career.satisfied"
+                        ),
 
                     5 =>
                         new ThoughtCandidate(
@@ -180,10 +217,14 @@ internal sealed class CareerThoughtProvider :
                             "career.work",
                             "career.work",
                             46,
-                            "😄",
+                            ThoughtMoodIds.Happy,
+                            "💼",
+                            ThoughtSalienceTraits.Positive
+                            | ThoughtSalienceTraits.Career,
                             "state",
                             "career.satisfaction",
-                            "career.thriving"),
+                            "career.thriving"
+                        ),
 
                     _ =>
                         null
@@ -205,18 +246,21 @@ internal sealed class CareerThoughtProvider :
             && _farming.IsWorkingFarmWorker(person, householdHead))
         {
             yield return new ThoughtCandidate(
-                "career.farm_work",
-                "career.work",
-                "career.work",
-                20,
-                "🌾",
-                "state",
-                "farming.work",
-                "farming.work",
-                new Dictionary<string, string>
-                {
-                    ["performance"] = "ordinary"
-                });
+                             "career.farm_work",
+                             "career.work",
+                             "career.work",
+                             20,
+                             ThoughtMoodIds.Neutral,
+                             "🌾",
+                             ThoughtSalienceTraits.Career,
+                             "state",
+                             "farming.work",
+                             "farming.work.ordinary",
+                             new Dictionary<string, string>
+                             {
+                             ["performance"] = "ordinary"
+                             }
+                         );
 
             yield break;
         }
@@ -225,14 +269,19 @@ internal sealed class CareerThoughtProvider :
             "recent.job_loss"))
         {
             yield return new ThoughtCandidate(
-                "career.jobloss",
-                "career.work",
-                "career.work",
-                66,
-                "😕",
-                "state",
-                "recent.job_loss",
-                "career.jobloss");
+                             "career.jobloss",
+                             "career.work",
+                             "career.work",
+                             66,
+                             ThoughtMoodIds.Concerned,
+                             "💼",
+                             ThoughtSalienceTraits.Emotional
+                             | ThoughtSalienceTraits.Negative
+                             | ThoughtSalienceTraits.Career,
+                             "state",
+                             "recent.job_loss",
+                             "career.jobloss"
+                         );
         }
 
         if (context.Justice
@@ -251,13 +300,16 @@ internal sealed class CareerThoughtProvider :
         }
 
         yield return new ThoughtCandidate(
-            "career.unemployed",
-            "career.work",
-            "career.work",
-            52,
-            "😕",
-            "state",
-            "career.unemployed",
-            "career.unemployed");
+                         "career.unemployed",
+                         "career.work",
+                         "career.work",
+                         52,
+                         ThoughtMoodIds.Concerned,
+                         "💼",
+                         ThoughtSalienceTraits.Career,
+                         "state",
+                         "career.unemployed",
+                         "career.unemployed"
+                     );
     }
 }

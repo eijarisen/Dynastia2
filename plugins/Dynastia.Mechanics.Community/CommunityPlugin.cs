@@ -11,6 +11,7 @@ public sealed class CommunityPlugin : IGamePlugin
 
     public void Initialize(IGamePluginContext context)
     {
+        EventPresentationRegistration.Register(context);
         var gameState = Require<IGameState>(context, "Game state");
         var data = Require<IGameDataService>(context, "Game data service");
         var opportunities = Require<ILocalCareerOpportunityService>(context, "Local opportunity service");

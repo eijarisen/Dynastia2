@@ -33,14 +33,17 @@ internal sealed class JusticeEducationThoughtProvider :
                     true;
 
                 yield return new ThoughtCandidate(
-                    "justice.new",
-                    "justice",
-                    "justice",
-                    92,
-                    "⛓️",
-                    "event",
-                    gameEvent.Type,
-                    "justice.new");
+                                 "justice.new",
+                                 "justice",
+                                 "justice",
+                                 92,
+                                 ThoughtMoodIds.Concerned,
+                                 "⚖️",
+                                 ThoughtSalienceTraits.None,
+                                 "event",
+                                 gameEvent.Type,
+                                 "justice.new"
+                             );
             }
 
             if (gameEvent.Type.Equals(
@@ -51,14 +54,17 @@ internal sealed class JusticeEducationThoughtProvider :
                     true;
 
                 yield return new ThoughtCandidate(
-                    "justice.released",
-                    "justice",
-                    "justice",
-                    80,
-                    "😌",
-                    "event",
-                    gameEvent.Type,
-                    "justice.released");
+                                 "justice.released",
+                                 "justice",
+                                 "justice",
+                                 80,
+                                 ThoughtMoodIds.Relieved,
+                                 "⚖️",
+                                 ThoughtSalienceTraits.None,
+                                 "event",
+                                 gameEvent.Type,
+                                 "justice.released"
+                             );
             }
 
             if (gameEvent.Type.Equals(
@@ -69,14 +75,17 @@ internal sealed class JusticeEducationThoughtProvider :
                     true;
 
                 yield return new ThoughtCandidate(
-                    "wrongful.arrest",
-                    "justice",
-                    "justice",
-                    94,
-                    "😡",
-                    "event",
-                    gameEvent.Type,
-                    "wrongful.arrest");
+                                 "wrongful.arrest",
+                                 "justice",
+                                 "justice",
+                                 94,
+                                 ThoughtMoodIds.Angry,
+                                 "⚖️",
+                                 ThoughtSalienceTraits.None,
+                                 "event",
+                                 gameEvent.Type,
+                                 "wrongful.arrest"
+                             );
             }
 
             if (gameEvent.Type.Equals(
@@ -90,18 +99,23 @@ internal sealed class JusticeEducationThoughtProvider :
                     StringComparison.OrdinalIgnoreCase))
             {
                 yield return new ThoughtCandidate(
-                    "education.success",
-                    "education",
-                    "education",
-                    person.Age <= 11
-                        ? 50
-                        : person.Age <= 17
-                            ? 54
-                            : 48,
-                    "😄",
-                    "event",
-                    gameEvent.Type,
-                    "education.success");
+                                 "education.success",
+                                 "education",
+                                 "education",
+                                 person.Age <= 11
+                                 ? 50
+                                 : person.Age <= 17
+                                 ? 54
+                                 : 48,
+                                 ThoughtMoodIds.Happy,
+                                 "🎓",
+                                 ThoughtSalienceTraits.Positive
+                                 | ThoughtSalienceTraits.Career
+                                 | ThoughtSalienceTraits.Education,
+                                 "event",
+                                 gameEvent.Type,
+                                 "education.success"
+                             );
             }
 
             if (gameEvent.Type.Equals(
@@ -112,18 +126,23 @@ internal sealed class JusticeEducationThoughtProvider :
                     StringComparison.OrdinalIgnoreCase))
             {
                 yield return new ThoughtCandidate(
-                    "education.failure",
-                    "education",
-                    "education",
-                    person.Age <= 11
-                        ? 38
-                        : person.Age <= 17
-                            ? 44
-                            : 38,
-                    "😕",
-                    "event",
-                    gameEvent.Type,
-                    "education.failure");
+                                 "education.failure",
+                                 "education",
+                                 "education",
+                                 person.Age <= 11
+                                 ? 38
+                                 : person.Age <= 17
+                                 ? 44
+                                 : 38,
+                                 ThoughtMoodIds.Concerned,
+                                 "🎓",
+                                 ThoughtSalienceTraits.Negative
+                                 | ThoughtSalienceTraits.Career
+                                 | ThoughtSalienceTraits.Education,
+                                 "event",
+                                 gameEvent.Type,
+                                 "education.failure"
+                             );
             }
 
             if (gameEvent.Type.Equals(
@@ -131,14 +150,17 @@ internal sealed class JusticeEducationThoughtProvider :
                 StringComparison.OrdinalIgnoreCase))
             {
                 yield return new ThoughtCandidate(
-                    "life.adult",
-                    "life.stage",
-                    "life.stage",
-                    52,
-                    "🙂",
-                    "event",
-                    gameEvent.Type,
-                    "life.adult");
+                                 "life.adult",
+                                 "life.stage",
+                                 "life.stage",
+                                 52,
+                                 ThoughtMoodIds.Neutral,
+                                 "🎂",
+                                 ThoughtSalienceTraits.None,
+                                 "event",
+                                 gameEvent.Type,
+                                 "life.adult"
+                             );
             }
         }
 
@@ -146,14 +168,17 @@ internal sealed class JusticeEducationThoughtProvider :
             && !currentJusticeEvent)
         {
             yield return new ThoughtCandidate(
-                "justice.imprisoned",
-                "justice",
-                "justice",
-                86,
-                "⛓️",
-                "state",
-                "state.imprisoned",
-                "justice.imprisoned");
+                             "justice.imprisoned",
+                             "justice",
+                             "justice",
+                             86,
+                             ThoughtMoodIds.Concerned,
+                             "⚖️",
+                             ThoughtSalienceTraits.Negative,
+                             "state",
+                             "state.imprisoned",
+                             "justice.imprisoned"
+                         );
         }
     }
 }

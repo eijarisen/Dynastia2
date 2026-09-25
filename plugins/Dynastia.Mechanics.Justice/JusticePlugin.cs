@@ -26,6 +26,7 @@ public sealed partial class JusticePlugin : IGamePlugin
 
     public void Initialize(IGamePluginContext context)
     {
+        EventPresentationRegistration.Register(context);
         var family = context.GetService<IFamilyService>() ?? throw new InvalidOperationException("Family service is unavailable.");
         var personality = context.GetService<IPersonalityService>() ?? throw new InvalidOperationException("Personality service is unavailable.");
         var stats = context.GetService<IStatsService>() ?? throw new InvalidOperationException("Stats service is unavailable.");

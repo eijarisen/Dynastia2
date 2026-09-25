@@ -97,12 +97,54 @@ internal sealed class ActionPanelFixture : IDisposable
     public void Register(params string[] ids)
     {
         foreach (var id in ids)
-            Actions.Register(new GameActionDefinition
+        {
+            var definition = new GameActionDefinition
             {
                 Id = id, Label = id, Description = "Description", Mode = ActionExecutionMode.Queued,
                 IsAvailable = _ => true, Execute = _ => new GameActionResult(true)
-            });
+            };
+
+            if (!id.StartsWith("plugin.", StringComparison.OrdinalIgnoreCase)
+                && !id.StartsWith("test.", StringComparison.OrdinalIgnoreCase))
+            {
+                definition = new GameActionDefinition
+                {
+                    Id = definition.Id,
+                    Label = definition.Label,
+                    Description = definition.Description,
+                    Mode = definition.Mode,
+                    IsAvailable = definition.IsAvailable,
+                    Execute = definition.Execute,
+                    Presentation = ActionPresentationPolicy.Resolve(definition) with
+                    {
+                        Emoji = ResolveFixtureEmoji(id)
+                    }
+                };
+            }
+
+            Actions.Register(definition);
+        }
     }
+
+    private static string ResolveFixtureEmoji(string id) =>
+        id.ToLowerInvariant() switch
+        {
+            "turn.pass" => "⏭️",
+            "wellbeing.recover" => "🧘",
+            "wellbeing.therapy" => "😊",
+            "wellbeing.heal_relative" => "❤️‍🩹",
+            "education.private_tutor" => "🧑‍🏫",
+            "education.get_education" => "🎓",
+            "career.work_harder" => "✨",
+            "career.seek_employment" => "✅",
+            "career.find_another_job" => "🔎",
+            "career.help_seek_employment" => "✅",
+            "career.help_find_better_job" => "🔎",
+            "childhood.raise_child" => "🫂",
+            "heirloom.sell" => "💵",
+            "personality.religious_study" => "📖",
+            _ => ActionEmojiMap.GetEmoji(id)
+        };
 
     public void Dispose() => Random.AssertComplete();
 

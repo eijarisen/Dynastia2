@@ -97,7 +97,7 @@ public sealed class ActionQueuedPresentationTests
         Assert.Equal("🫂 childhood.raise_child", f.Panel.AvailableActions.Single(a => a.Id == "childhood.raise_child").Label);
         f.Click("plugin.unknown");
         f.Panel.Refresh(false);
-        Assert.Contains("plugin.unknown", f.Panel.QueuedActionText);
+        Assert.StartsWith("Queued: ⚙️ plugin.unknown", f.Panel.QueuedActionText);
         Assert.EndsWith(" – Unrelated Test", f.Panel.QueuedActionText);
     }
 }

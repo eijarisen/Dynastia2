@@ -534,7 +534,7 @@ public sealed partial class MainWindowViewModel
             StringComparison.OrdinalIgnoreCase))
         {
             return
-                $"{ActionEmojiMap.Format(queued.ActionId, queued.Label)}" +
+                $"{FormatQueuedAction(queued, queued.Label)}" +
                 Environment.NewLine +
                 "No planned action for this year.";
         }
@@ -546,7 +546,7 @@ public sealed partial class MainWindowViewModel
                 : queued.Description;
 
         var title =
-            ActionEmojiMap.Format(queued.ActionId, queued.Label);
+            FormatQueuedAction(queued, queued.Label);
 
         var detail =
             _actionPanel.BuildQueuedActionDetail(queued);
@@ -588,6 +588,29 @@ public sealed partial class MainWindowViewModel
             personName +
             Environment.NewLine +
             description;
+    }
+
+    private string FormatQueuedAction(
+        QueuedActionInfo queued,
+        string label)
+    {
+        var actor = _gameState.People.FirstOrDefault(
+            person => person.Id == queued.ActorId);
+        var target = _gameState.People.FirstOrDefault(
+            person => person.Id == queued.TargetId);
+
+        if (actor is not null && target is not null)
+        {
+            var definition = _actionRegistry.TryResolveDefinition(
+                queued.ActionId,
+                actor,
+                target);
+
+            if (definition is not null)
+                return ActionEmojiMap.Format(definition, label);
+        }
+
+        return ActionEmojiMap.Format(queued.ActionId, label);
     }
 
     private int GetBirthSortYear(

@@ -6,6 +6,7 @@ public sealed class CraftsPlugin : IGamePlugin
 {
     public void Initialize(IGamePluginContext context)
     {
+        EventPresentationRegistration.Register(context);
         var gameState = Require<IGameState>(context, "Game state");
         var family = Require<IFamilyService>(context, "Family service");
         var economy = Require<IEconomyService>(context, "Economy service");

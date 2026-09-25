@@ -10,6 +10,7 @@ public sealed partial class EconomyPlugin : IGamePlugin
     public void Initialize(
         IGamePluginContext context)
     {
+        EventPresentationRegistration.Register(context);
         var gameState =
             context.GetService<IGameState>()
             ?? throw new InvalidOperationException(

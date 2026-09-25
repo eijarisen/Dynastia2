@@ -339,6 +339,7 @@ public sealed partial class MainWindowViewModel
                         gameEvent =>
                             new AlbumEventViewModel(
                                 gameEvent,
+                                _eventPresentation,
                                 _gameScoreService?.GetEventDelta(gameEvent) ?? 0))));
         }
 

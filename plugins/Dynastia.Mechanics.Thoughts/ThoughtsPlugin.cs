@@ -13,6 +13,11 @@ public sealed class ThoughtsPlugin :
                 context,
                 "Game state");
 
+        var data =
+            Require<IGameDataService>(
+                context,
+                "Game data service");
+
         var family =
             Require<IFamilyService>(
                 context,
@@ -87,6 +92,16 @@ public sealed class ThoughtsPlugin :
                 context,
                 "Year-system registry");
 
+        var wording =
+            new ThoughtWordingRegistry();
+
+        wording.RegisterCatalogue(
+            "dynastia.thoughts",
+            ThoughtWordingCatalog.LoadCore(data));
+
+        context.AddService<IThoughtWordingRegistry>(
+            wording);
+
         var providers =
             new ThoughtProviderRegistry();
 
@@ -134,7 +149,8 @@ public sealed class ThoughtsPlugin :
                 adoption,
                 marriageSatisfaction,
                 events,
-                providers);
+                providers,
+                wording);
 
         context.AddService<IThoughtService>(
             thoughts);

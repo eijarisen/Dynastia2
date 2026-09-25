@@ -37,6 +37,11 @@ public sealed class BiographyPlugin : IGamePlugin
             ?? throw new InvalidOperationException(
                 "Game event bus is unavailable.");
 
+        var eventPresentation =
+            context.GetService<IEventPresentationRegistry>()
+            ?? throw new InvalidOperationException(
+                "Event presentation registry is unavailable.");
+
         var biography =
             new StandardBiographyService(
                 gameState,
@@ -44,7 +49,8 @@ public sealed class BiographyPlugin : IGamePlugin
                 stats,
                 locations,
                 households,
-                events);
+                events,
+                eventPresentation);
 
         context.AddService<IBiographyService>(
             biography);

@@ -42,14 +42,18 @@ internal sealed class RelationshipThoughtProvider :
                     StringComparison.OrdinalIgnoreCase))
             {
                 yield return new ThoughtCandidate(
-                    "relationship.marriage.current",
-                    "relationship.marriage",
-                    "relationship.marriage",
-                    88,
-                    "🥰",
-                    "event",
-                    gameEvent.Type,
-                    "marriage.new");
+                                 "relationship.marriage.current",
+                                 "relationship.marriage",
+                                 "relationship.marriage",
+                                 88,
+                                 ThoughtMoodIds.Happy,
+                                 "💞",
+                                 ThoughtSalienceTraits.Emotional
+                                 | ThoughtSalienceTraits.Positive,
+                                 "event",
+                                 gameEvent.Type,
+                                 "marriage.new"
+                             );
             }
 
             if (gameEvent.Type.Equals(
@@ -63,14 +67,20 @@ internal sealed class RelationshipThoughtProvider :
                     StringComparison.OrdinalIgnoreCase))
             {
                 yield return new ThoughtCandidate(
-                    "relationship.divorce.current",
-                    "relationship.divorce",
-                    "relationship.divorce",
-                    94,
-                    "💔",
-                    "event",
-                    gameEvent.Type,
-                    "divorce.current");
+                                 "relationship.divorce.current",
+                                 "relationship.divorce",
+                                 "relationship.divorce",
+                                 94,
+                                 ThoughtMoodIds.Distressed,
+                                 "💞",
+                                 ThoughtSalienceTraits.Emotional
+                                 | ThoughtSalienceTraits.Negative
+                                 | ThoughtSalienceTraits.ImmediateProblem
+                                 | ThoughtSalienceTraits.MelancholicHighImpact,
+                                 "event",
+                                 gameEvent.Type,
+                                 "divorce.current"
+                             );
             }
 
             if (gameEvent.Type.Equals(
@@ -82,16 +92,20 @@ internal sealed class RelationshipThoughtProvider :
                     == person.Id;
 
                 yield return new ThoughtCandidate(
-                    "relationship.affair",
-                    "relationship.satisfaction",
-                    "relationship.satisfaction",
-                    96,
-                    "💔",
-                    "event",
-                    gameEvent.Type,
-                    actor
-                        ? "affair.actor"
-                        : "affair.victim");
+                                 "relationship.affair",
+                                 "relationship.satisfaction",
+                                 "relationship.satisfaction",
+                                 96,
+                                 ThoughtMoodIds.Distressed,
+                                 "💞",
+                                 ThoughtSalienceTraits.Emotional
+                                 | ThoughtSalienceTraits.Negative,
+                                 "event",
+                                 gameEvent.Type,
+                                 actor
+                                 ? "affair.actor"
+                                 : "affair.victim"
+                             );
             }
 
             if (gameEvent.Type.Equals(
@@ -99,14 +113,18 @@ internal sealed class RelationshipThoughtProvider :
                 StringComparison.OrdinalIgnoreCase))
             {
                 yield return new ThoughtCandidate(
-                    "relationship.repaired",
-                    "relationship.satisfaction",
-                    "relationship.satisfaction",
-                    70,
-                    "❤️‍🩹",
-                    "event",
-                    gameEvent.Type,
-                    "marriage.repaired");
+                                 "relationship.repaired",
+                                 "relationship.satisfaction",
+                                 "relationship.satisfaction",
+                                 70,
+                                 ThoughtMoodIds.Relieved,
+                                 "💞",
+                                 ThoughtSalienceTraits.Emotional
+                                 | ThoughtSalienceTraits.Positive,
+                                 "event",
+                                 gameEvent.Type,
+                                 "marriage.repaired"
+                             );
             }
         }
 
@@ -131,14 +149,20 @@ internal sealed class RelationshipThoughtProvider :
                             person)))
         {
             yield return new ThoughtCandidate(
-                "relationship.divorce.recent",
-                "relationship.divorce",
-                "relationship.divorce",
-                74,
-                "💔",
-                "state",
-                "recent.divorce",
-                "divorce.recent");
+                             "relationship.divorce.recent",
+                             "relationship.divorce",
+                             "relationship.divorce",
+                             74,
+                             ThoughtMoodIds.Distressed,
+                             "💞",
+                             ThoughtSalienceTraits.Emotional
+                             | ThoughtSalienceTraits.Negative
+                             | ThoughtSalienceTraits.ImmediateProblem
+                             | ThoughtSalienceTraits.MelancholicHighImpact,
+                             "state",
+                             "recent.divorce",
+                             "divorce.recent"
+                         );
         }
 
         var hasNewRelationshipEvent =
@@ -210,23 +234,80 @@ internal sealed class RelationshipThoughtProvider :
                     context.GameState.DynastySurname);
 
         yield return new ThoughtCandidate(
-            "relationship.satisfaction",
-            "relationship.satisfaction",
-            "relationship.satisfaction",
-            salience,
-            emoji,
-            "state",
-            "marriage.satisfaction",
-            "marriage.satisfaction",
-            ThoughtProviderUtilities.Context(
-                (
-                    "issue",
-                    issue
-                ),
-                (
-                    "satisfactionLabel",
-                    satisfaction.Label
-                )));
+                         "relationship.satisfaction",
+                         "relationship.satisfaction",
+                         "relationship.satisfaction",
+                         salience,
+                         satisfaction.Value switch
+                         {
+                         < 20 => ThoughtMoodIds.Distressed,
+                         < 40 => ThoughtMoodIds.Sad,
+                         < 80 => ThoughtMoodIds.Neutral,
+                         _ => ThoughtMoodIds.Happy
+                         },
+                         "💞",
+                         ThoughtSalienceTraits.Emotional,
+                         "state",
+                         "marriage.satisfaction",
+                         ResolveMarriageWordingKey(
+                             issue,
+                             satisfaction.Label),
+                         ThoughtProviderUtilities.Context(
+                         (
+                         "issue",
+                         issue
+                         ),
+                         (
+                         "satisfactionLabel",
+                         satisfaction.Label
+                         ))
+                     );
+    }
+
+
+    private static string ResolveMarriageWordingKey(
+        string issue,
+        string satisfactionLabel)
+    {
+        if (string.IsNullOrWhiteSpace(issue))
+        {
+            if (satisfactionLabel.Equals("Thriving", StringComparison.OrdinalIgnoreCase))
+                return "marriage.satisfaction.thriving";
+
+            if (satisfactionLabel.Equals("Satisfied", StringComparison.OrdinalIgnoreCase))
+                return "marriage.satisfaction.satisfied";
+
+            if (satisfactionLabel.Equals("Unhappy", StringComparison.OrdinalIgnoreCase))
+                return "marriage.satisfaction.unhappy";
+
+            if (satisfactionLabel.Equals("Miserable", StringComparison.OrdinalIgnoreCase))
+                return "marriage.satisfaction.miserable";
+
+            return "marriage.satisfaction.generic";
+        }
+
+        if (issue.Equals("being broke", StringComparison.OrdinalIgnoreCase))
+            return "marriage.satisfaction.broke";
+
+        if (issue.Equals("household strain", StringComparison.OrdinalIgnoreCase))
+            return "marriage.satisfaction.household_strain";
+
+        if (issue.Contains("fertility", StringComparison.OrdinalIgnoreCase))
+            return "marriage.satisfaction.fertility";
+
+        if (issue.Contains("health", StringComparison.OrdinalIgnoreCase))
+            return "marriage.satisfaction.health";
+
+        if (issue.Contains("intellect", StringComparison.OrdinalIgnoreCase)
+            || issue.Contains("appeal", StringComparison.OrdinalIgnoreCase))
+        {
+            return "marriage.satisfaction.compatibility";
+        }
+
+        if (issue.Contains("unemployed", StringComparison.OrdinalIgnoreCase))
+            return "marriage.satisfaction.unemployed";
+
+        return "marriage.satisfaction.generic";
     }
 
 

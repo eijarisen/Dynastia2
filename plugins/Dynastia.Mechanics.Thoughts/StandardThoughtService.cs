@@ -33,7 +33,8 @@ internal sealed class StandardThoughtService :
         IAdoptionService adoption,
         IMarriageSatisfactionService marriageSatisfaction,
         IGameEventBus events,
-        IThoughtProviderRegistry providers)
+        IThoughtProviderRegistry providers,
+        IThoughtWordingRegistry wording)
     {
         _gameState =
             gameState;
@@ -76,7 +77,8 @@ internal sealed class StandardThoughtService :
 
         _renderer =
             new ThoughtPhraseRenderer(
-                stats);
+                stats,
+                wording);
 
     }
 
@@ -223,6 +225,21 @@ internal sealed class StandardThoughtService :
                     state.LastProcessedEventCount,
                     0,
                     _events.AllEvents.Count);
+        }
+
+        foreach (var person in _gameState.People)
+        {
+            var thought =
+                person.Components.Get<PersonThoughtComponent>();
+
+            if (thought is not null
+                && string.IsNullOrWhiteSpace(thought.MoodId))
+            {
+                // Legacy Thought components used one overloaded Emoji field.
+                // Thoughts are derived flavor state, so regenerate the current
+                // thought without replaying already-consumed historical events.
+                person.Components.Remove<PersonThoughtComponent>();
+            }
         }
 
         EnsureCurrentThoughts();
@@ -423,10 +440,9 @@ internal sealed class StandardThoughtService :
                 "fallback",
                 "fallback",
                 1,
-                ThoughtProviderUtilities
-                    .FallbackEmoji(
-                        person,
-                        _family),
+                ThoughtMoodIds.Neutral,
+                string.Empty,
+                ThoughtSalienceTraits.None,
                 "fallback",
                 null,
                 "fallback"));
@@ -461,8 +477,22 @@ internal sealed class StandardThoughtService :
                 Text =
                     text,
 
+                MoodId =
+                    ThoughtMoodCatalog.Normalize(
+                        finalSelection.MoodId),
+
+                MoodEmoji =
+                    ThoughtMoodCatalog.ResolveEmoji(
+                        finalSelection.MoodId),
+
+                TopicEmoji =
+                    finalSelection.TopicEmoji,
+
+#pragma warning disable CS0618
                 Emoji =
-                    finalSelection.Emoji,
+                    ThoughtMoodCatalog.ResolveEmoji(
+                        finalSelection.MoodId),
+#pragma warning restore CS0618
 
                 Salience =
                     finalSelection.Salience,
@@ -565,76 +595,40 @@ internal sealed class StandardThoughtService :
         int GroupOrder);
 
 
-    private static int ApplyPersonalitySalience(
+    internal static int ApplyPersonalitySalience(
         IPerson person,
         ThoughtCandidate candidate,
         int salience)
     {
-        var key =
-            $"{candidate.Id} {candidate.Topic} {candidate.WordingKey}"
-                .ToLowerInvariant();
+        var traits =
+            candidate.SalienceTraits;
 
         var emotional =
-            key.Contains("loss")
-            || key.Contains("bereavement")
-            || key.Contains("divorce")
-            || key.Contains("affair")
-            || key.Contains("fired")
-            || key.Contains("assault")
-            || key.Contains("illness")
-            || key.Contains("orphan")
-            || key.Contains("marriage")
-            || key.Contains("birth")
-            || key.Contains("relationship");
+            traits.HasFlag(
+                ThoughtSalienceTraits.Emotional);
 
         var negative =
-            key.Contains("loss")
-            || key.Contains("bereavement")
-            || key.Contains("divorce")
-            || key.Contains("affair")
-            || key.Contains("fired")
-            || key.Contains("assault")
-            || key.Contains("miserable")
-            || key.Contains("unhappy")
-            || key.Contains("broke")
-            || key.Contains("illness")
-            || key.Contains("orphan")
-            || key.Contains("imprison")
-            || key.Contains("failure");
+            traits.HasFlag(
+                ThoughtSalienceTraits.Negative);
 
         var positive =
-            key.Contains("married")
-            || key.Contains("marriage.new")
-            || key.Contains("birth")
-            || key.Contains("promotion")
-            || key.Contains("satisfied")
-            || key.Contains("thriving")
-            || key.Contains("repaired")
-            || key.Contains("success")
-            || key.Contains("inheritance")
-            || key.Contains("lottery");
+            traits.HasFlag(
+                ThoughtSalienceTraits.Positive);
 
         var career =
-            key.Contains("career")
-            || key.Contains("employment")
-            || key.Contains("education");
+            traits.HasFlag(
+                ThoughtSalienceTraits.Career);
 
         var immediateProblem =
-            key.Contains("fired")
-            || key.Contains("miserable")
-            || key.Contains("unhappy")
-            || key.Contains("broke")
-            || key.Contains("assault")
-            || key.Contains("divorce");
+            traits.HasFlag(
+                ThoughtSalienceTraits.ImmediateProblem);
 
         var melancholic =
             negative
-                ? (key.Contains("bereavement")
-                    || key.Contains("divorce")
-                    || key.Contains("fired")
-                    || key.Contains("assault")
+                ? traits.HasFlag(
+                    ThoughtSalienceTraits.MelancholicHighImpact)
                         ? 0.20
-                        : 0.15)
+                        : 0.15
                 : emotional
                     ? 0.10
                     : 0;
@@ -716,7 +710,9 @@ internal sealed class StandardThoughtService :
             component.ThoughtId,
             component.Topic,
             component.Text,
-            component.Emoji,
+            component.MoodId,
+            component.MoodEmoji,
+            component.TopicEmoji,
             component.Salience,
             component.SourceId);
     }

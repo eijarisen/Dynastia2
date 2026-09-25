@@ -650,12 +650,11 @@ public sealed record TownAffairsHealthActionViewModel(
     string ActionId,
     string Label,
     string Description,
+    string Emoji,
     decimal? Cost,
     bool IsAvailable,
     string? UnavailableReason = null)
 {
-    public string Emoji => ActionEmojiMap.GetEmoji(ActionId);
-
     public double DisplayOpacity =>
         IsAvailable ? 1.0 : 0.42;
 
@@ -671,6 +670,7 @@ public sealed record TownAffairsChurchActionViewModel(
     string ActionId,
     string Label,
     string Description,
+    string Emoji,
     decimal? Amount,
     bool IsBenefit,
     bool IsAvailable,
@@ -680,8 +680,6 @@ public sealed record TownAffairsChurchActionViewModel(
     decimal MinimumAmount = 0m,
     decimal MaximumAmount = 0m)
 {
-    public string Emoji => ActionEmojiMap.GetEmoji(ActionId);
-
     public double DisplayOpacity =>
         IsAvailable ? 1.0 : 0.42;
 
@@ -720,11 +718,10 @@ public sealed record TownAffairsCivicOfficeActionViewModel(
     string ActionId,
     string Label,
     string Description,
+    string Emoji,
     bool IsAvailable,
     string? UnavailableReason)
 {
-    public string Emoji => ActionEmojiMap.GetEmoji(ActionId);
-
     public double DisplayOpacity => IsAvailable ? 1.0 : 0.42;
 }
 

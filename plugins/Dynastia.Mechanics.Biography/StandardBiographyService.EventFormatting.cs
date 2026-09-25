@@ -63,177 +63,20 @@ public sealed partial class StandardBiographyService
                 StringComparison.OrdinalIgnoreCase);
     }
 
-    private static string FormatWithEmoji(
+    private string FormatWithEmoji(
         string type,
         string message)
     {
-        var emoji =
-            GetEmoji(type);
-
-        return string.IsNullOrEmpty(
-            emoji)
-            ? message
-            : $"{emoji}{message}";
+        var prefix = GetEmojiPrefix(type);
+        return $"{prefix}{message}";
     }
 
-    private static string GetEmoji(
-        string type)
+    private string GetEmojiPrefix(string type)
     {
-        return type switch
-        {
-            // Structured-event aliases of Dynasty 4's const emojiMap.
-            "wellbeing.heal" => "❤️‍🩹 ",
-            "wellbeing.recover" => "🛌 ",
-            "education.success" => "🎓 ",
-            "education.failure" => "🧱 ",
-            "education.help_learning_success" => "📚 ",
-            "education.help_learning_failure" => "📖 ",
-            "wellbeing.therapy_success" => "😊 ",
-            "wellbeing.therapy_failure" => "😒 ",
-            "wellbeing.drink" => "🍺 ",
-            "life.adult" => "🧑 ",
-
-            "inheritance.received_at_adulthood" => "💰 ",
-            "inheritance.received" => "💸 ",
-            "inheritance.pending_minor" => "⏳ ",
-            "inheritance.claimable" => "⏳ ",
-            "inheritance.unclaimed" => "💨 ",
-            "inheritance.estate_settled" => "🏦 ",
-            "inheritance.houses" => "🏡 ",
-            "inheritance.promised_houses_received" => "🏡 ",
-
-            "loan.taken" => "🏦 ",
-            "loan.given" => "🤝 ",
-            "loan.repaid" => "✅ ",
-            "loan.receivable_repaid" => "✅ ",
-            "loan.debt_inherited" => "📜 ",
-            "career.retirement" => "🕊️ ",
-            "justice.released" => "✅ ",
-            "health.illness" => "🤧 ",
-            "health.serious_illness" => "😣 ",
-            "life.death" => "💀 ",
-            "career.quit" => "🚶 ",
-            "relationship.divorce" => "💔 ",
-            "relationship.low_satisfaction_divorce" => "💔 ",
-            "relationship.repair_marriage" => "❤️‍🩹 ",
-            "relationship.prison_divorce" => "💔 ",
-            "career.employment" => "✅ ",
-            "family_support.parents_success" => "🙏 ",
-            "family_support.parents_failure" => "🚫 ",
-
-            "family_support.child_success" => "🙏 ",
-            "family_support.child_failure" => "🚫 ",
-            "family_relations.money_received" => "💰 ",
-            "family_relations.money_given" => "🎁 ",
-            "family_relations.money_refused" => "🚫 ",
-
-            "career.ask_quit_success" => "✅ ",
-            "career.ask_quit_failure" => "🚫 ",
-            "career.ask_recover_success" => "✅ ",
-            "career.ask_recover_failure" => "🚫 ",
-            "justice.crime" => "⛓️ ",
-            "career.fired" => "💥 ",
-            "career.promotion" => "✨ ",
-            "relationship.partnered" => "👩‍❤️‍👩 ",
-            "relationship.courtship" => "💌 ",
-            "relationship.married" => "💍 ",
-            "relationship.affair" => "🤫 ",
-            "birth.condition" => "🧩 ",
-            "life.birth" => "👶 ",
-            "relationship.remarried" => "💍 ",
-
-            "household.house_bought" => "🏠 ",
-            "household.house_sold" => "💵 ",
-            "household.house_rented" => "🏘️ ",
-            "household.house_given" => "🎁 ",
-            "farmland.bought" => "🌾 ",
-            "farmland.sold" => "🌾 ",
-            "farmland.inherited" => "🌾 ",
-            "farmland.given" => "🌾 ",
-            "farmland.received" => "🌾 ",
-            "farmland.request_refused" => "🚫 ",
-            "craft.learned" => "🛠️ ",
-            "craft.teaching_failed" => "🧱 ",
-            "craft.self_employment_started" => "🛠️ ",
-            "craft.self_employment_ended" => "🚶 ",
-
-            "household.house_promised" => "🎁 ",
-
-            "household.nanny_hired" => "🧑‍🍼 ",
-            "household.family_nanny_started" => "🧑‍🍼 ",
-            "household.family_nanny_ended" => "👋 ",
-            "household.nanny_service_ended" => "👋 ",
-            "household.nanny_fired" => "👋 ",
-
-            "adoption.with_mother" => "👩‍👧 ",
-            "adoption.orphaned" => "🕯️ ",
-            "adoption.placed" => "🏠 ",
-            "adoption.orphanage" => "🏚️ ",
-            "adoption.left_orphanage" => "🧳 ",
-
-            "career.changed_job" => "🔄 ",
-            "career.relocated" => "🚚 ",
-            "career.work_harder" => "💪 ",
-            "childhood.raised" => "🫂 ",
-            "craft.income" => "💰 ",
-            "craft.major_commission" => "🏅 ",
-            "farming.income" => "🌾 ",
-            "historical.milestone" => "🗞️ ",
-            "historical.household_impact" => "🏛️ ",
-            "historical.relocation" => "🚚 ",
-            "historical.external_departure" => "🧳 ",
-            "household.parent_house_gift" => "🎁 ",
-            "household.parent_house_refused" => "🚫 ",
-            "personality.morals_declined" => "⚖️ ",
-            "personality.morals_protected" => "🛡️ ",
-            "stats.paid_improvement" => "📈 ",
-
-            "rare.house_fire" => "🔥 ",
-            "rare.burglary" => "🕵️ ",
-            "rare.storm_flood_damage" => "🌊 ",
-            "rare.storm_flood" => "🌊 ",
-            "rare.structural_accident" => "🧱 ",
-            "rare.legal_dispute" => "⚖️ ",
-            "rare.major_repair" => "🔧 ",
-            "rare.house_discovery" => "💎 ",
-            "rare.exceptional_harvest" => "🌾 ",
-            "rare.crop_failure" => "🌾 ",
-            "rare.local_epidemic" => "🦠 ",
-            "rare.assault" => "🥊 ",
-            "rare.mugging" => "💸 ",
-            "rare.workplace_accident" => "⚠️ ",
-            "rare.traffic_accident" => "🚗 ",
-            "rare.lightning_strike" => "⚡ ",
-            "rare.serious_fall" => "🤕 ",
-            "rare.lottery_win" => "🎰 ",
-            "rare.distant_inheritance" => "💰 ",
-            "rare.fraud" => "🎭 ",
-            "rare.found_property" => "💎 ",
-            "rare.wrongful_arrest" => "⚖️ ",
-            "rare.water_accident" => "🌊 ",
-            "rare.animal_accident" => "🐎 ",
-            "rare.craft_setback" => "🛠️ ",
-            "rare.scholarship" => "🎓 ",
-            "rare.professional_recognition" => "🏅 ",
-            "rare.patronage" => "🤝 ",
-            "rare.prize_award" => "🏆 ",
-            "rare.craft_commission" => "🛠️ ",
-            "rare.suicide" => "🕯️ ",
-
-            _ when type.StartsWith("historical.", StringComparison.OrdinalIgnoreCase) => "🗞️ ",
-            _ when type.StartsWith("career.", StringComparison.OrdinalIgnoreCase) => "💼 ",
-            _ when type.StartsWith("relationship.", StringComparison.OrdinalIgnoreCase) => "💞 ",
-            _ when type.StartsWith("household.", StringComparison.OrdinalIgnoreCase) => "🏠 ",
-            _ when type.StartsWith("health.", StringComparison.OrdinalIgnoreCase) => "❤️‍🩹 ",
-            _ when type.StartsWith("education.", StringComparison.OrdinalIgnoreCase) => "🎓 ",
-            _ when type.StartsWith("justice.", StringComparison.OrdinalIgnoreCase) => "⚖️ ",
-            _ when type.StartsWith("craft.", StringComparison.OrdinalIgnoreCase) => "🛠️ ",
-            _ when type.StartsWith("farming.", StringComparison.OrdinalIgnoreCase) => "🌾 ",
-            _ when type.StartsWith("loan.", StringComparison.OrdinalIgnoreCase) => "🏦 ",
-            _ when type.StartsWith("personality.", StringComparison.OrdinalIgnoreCase) => "🧭 ",
-            _ when type.StartsWith("stats.", StringComparison.OrdinalIgnoreCase) => "📈 ",
-            _ => "📌 "
-        };
+        var emoji = _eventPresentation.Resolve(type).Emoji;
+        return string.IsNullOrWhiteSpace(emoji)
+            ? string.Empty
+            : $"{emoji} ";
     }
 
     private static string? GetEventText(

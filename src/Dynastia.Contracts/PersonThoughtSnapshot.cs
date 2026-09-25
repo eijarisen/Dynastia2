@@ -5,6 +5,12 @@ public sealed record PersonThoughtSnapshot(
     string ThoughtId,
     string Topic,
     string Text,
-    string Emoji,
+    string MoodId,
+    string MoodEmoji,
+    string TopicEmoji,
     int Salience,
-    string? SourceId);
+    string? SourceId)
+{
+    // Compatibility alias for callers that still render the old single field.
+    public string Emoji => MoodEmoji;
+}

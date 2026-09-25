@@ -48,6 +48,12 @@ public partial class App : Application
             var eventBus =
                 new GameEventBus();
 
+            var eventPresentation =
+                new EventPresentationRegistry();
+
+            LegacyEventPresentationCatalog.Register(
+                eventPresentation);
+
             var dataDirectory =
                 Path.Combine(
                     AppContext.BaseDirectory,
@@ -127,6 +133,9 @@ public partial class App : Application
 
             pluginContext.AddService<IGameEventBus>(
                 eventBus);
+
+            pluginContext.AddService<IEventPresentationRegistry>(
+                eventPresentation);
 
             pluginContext.AddService<IGameDataService>(
                 dataService);
@@ -411,7 +420,8 @@ public partial class App : Application
                             reconciliation,
                             actionSelectionOptions,
                             actionSurfaces,
-                            gameScoreService)
+                            gameScoreService,
+                            eventPresentation)
                 };
 
             mainWindow.Opened +=

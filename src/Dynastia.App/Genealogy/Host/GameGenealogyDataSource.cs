@@ -475,8 +475,13 @@ public sealed class GameGenealogyDataSource :
         if (!string.IsNullOrWhiteSpace(
             quotedThought))
         {
+            var thoughtLine =
+                !string.IsNullOrWhiteSpace(thought?.TopicEmoji)
+                    ? $"{thought.TopicEmoji} {quotedThought}"
+                    : quotedThought;
+
             livingTooltipSections.Add(
-                quotedThought
+                thoughtLine
                 + Environment.NewLine);
         }
 

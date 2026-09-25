@@ -7,6 +7,7 @@ public sealed class PersonalityPlugin : IGamePlugin
 {
     public void Initialize(IGamePluginContext context)
     {
+        EventPresentationRegistration.Register(context);
         var gameState = Require<IGameState>(context, "Game state");
         var family = Require<IFamilyService>(context, "Family service");
         var events = Require<IGameEventBus>(context, "Game event bus");

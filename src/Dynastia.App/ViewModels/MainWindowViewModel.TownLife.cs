@@ -412,6 +412,7 @@ public sealed partial class MainWindowViewModel
                 item.Action.Id,
                 item.Action.Label,
                 item.Action.Description,
+                ActionEmojiMap.GetEmoji(item.Action),
                 item.Action.DisplayCost,
                 item.Evaluation.Available,
                 item.Evaluation.Reason))
@@ -474,6 +475,7 @@ public sealed partial class MainWindowViewModel
                 action.Id,
                 action.Label,
                 description,
+                ActionEmojiMap.GetEmoji(action),
                 null,
                 false,
                 evaluation.Available,
@@ -530,6 +532,7 @@ public sealed partial class MainWindowViewModel
                 action.Id,
                 action.Label,
                 description,
+                ActionEmojiMap.GetEmoji(action),
                 amount,
                 isBenefit,
                 evaluation.Available,
@@ -596,6 +599,7 @@ public sealed partial class MainWindowViewModel
             definition.Id,
             definition.Label,
             definition.Description,
+            ActionEmojiMap.GetEmoji(definition),
             evaluation.Available,
             evaluation.Reason);
     }

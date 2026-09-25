@@ -36,14 +36,17 @@ internal sealed class LoanThoughtProvider :
             if (household?.Wealth < 0)
             {
                 yield return new ThoughtCandidate(
-                    "loan.negative_balance",
-                    "economy.debt",
-                    "economy.debt",
-                    82,
-                    "😟",
-                    "state",
-                    "loan.debt",
-                    "loan.negative_balance");
+                                 "loan.negative_balance",
+                                 "economy.debt",
+                                 "economy.debt",
+                                 82,
+                                 ThoughtMoodIds.Concerned,
+                                 "🏦",
+                                 ThoughtSalienceTraits.None,
+                                 "state",
+                                 "loan.debt",
+                                 "loan.negative_balance"
+                             );
             }
 
             var annualPayment =
@@ -61,28 +64,34 @@ internal sealed class LoanThoughtProvider :
                         >= projectedIncome * 0.25m))
             {
                 yield return new ThoughtCandidate(
-                    "loan.large_payment",
-                    "economy.debt",
-                    "economy.debt",
-                    66,
-                    "💸",
-                    "state",
-                    "loan.payment",
-                    "loan.large_payment");
+                                 "loan.large_payment",
+                                 "economy.debt",
+                                 "economy.debt",
+                                 66,
+                                 ThoughtMoodIds.Concerned,
+                                 "💸",
+                                 ThoughtSalienceTraits.None,
+                                 "state",
+                                 "loan.payment",
+                                 "loan.large_payment"
+                             );
             }
         }
 
         if (_loans.GetLoansGiven(person).Count > 0)
         {
             yield return new ThoughtCandidate(
-                "loan.receivable_income",
-                "economy.investment",
-                "economy.loan_income",
-                38,
-                "💰",
-                "state",
-                "loan.receivable",
-                "loan.receivable_income");
+                             "loan.receivable_income",
+                             "economy.investment",
+                             "economy.loan_income",
+                             38,
+                             ThoughtMoodIds.Pleased,
+                             "💰",
+                             ThoughtSalienceTraits.None,
+                             "state",
+                             "loan.receivable",
+                             "loan.receivable_income"
+                         );
         }
 
         if (context.Events.Any(gameEvent =>
@@ -92,14 +101,17 @@ internal sealed class LoanThoughtProvider :
             && gameEvent.SubjectId == person.Id))
         {
             yield return new ThoughtCandidate(
-                "loan.final_repayment",
-                "economy.debt",
-                "economy.debt.repaid",
-                76,
-                "😌",
-                "event",
-                "loan.repaid",
-                "loan.final_repayment");
+                             "loan.final_repayment",
+                             "economy.debt",
+                             "economy.debt.repaid",
+                             76,
+                             ThoughtMoodIds.Relieved,
+                             "🏦",
+                             ThoughtSalienceTraits.None,
+                             "event",
+                             "loan.repaid",
+                             "loan.final_repayment"
+                         );
         }
     }
 }

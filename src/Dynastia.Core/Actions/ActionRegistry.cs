@@ -65,6 +65,12 @@ public sealed class ActionRegistry : IActionRegistry
             .OrderBy(action => action.Label)
             .ToList();
 
+    public GameActionDefinition? TryResolveDefinition(
+        string actionId,
+        IPerson actor,
+        IPerson target) =>
+        ResolveAction(actionId, actor, target);
+
     public IReadOnlyList<GameActionDefinition> GetAvailableActions(
         IPerson actor,
         IPerson target) =>

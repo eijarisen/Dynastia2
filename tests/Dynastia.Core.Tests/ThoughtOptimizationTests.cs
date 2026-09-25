@@ -1,5 +1,6 @@
 using System.Reflection;
 using Dynastia.Contracts;
+using Dynastia.Core.Data;
 using Dynastia.Core.Events;
 using Dynastia.Core.Simulation;
 using Dynastia.Mechanics.Thoughts;
@@ -24,6 +25,9 @@ public sealed class ThoughtOptimizationTests
             new GameState();
 
         context.AddService<IGameState>(gameState);
+        context.AddService<IGameDataService>(
+            new JsonGameDataService(
+                RepositoryFiles.Path("data")));
         context.AddService<IPersonLookup>(gameState);
         context.AddService<IFamilyService>(CreateProxy<IFamilyService>());
         context.AddService<IStatsService>(CreateProxy<IStatsService>());
@@ -262,6 +266,271 @@ public sealed class ThoughtOptimizationTests
             thought.Text);
     }
 
+
+    [Fact]
+    public void LegacyThoughtComponentIsRegeneratedWithoutReplayingEvents()
+    {
+        var state =
+            new GameState
+            {
+                DynastySurname = "Test",
+                Year = 1800
+            };
+
+        var person =
+            state.CreatePerson(
+                "Adam",
+                "Test",
+                30,
+                Guid.Parse("00000000-0000-0000-0000-000000000031"));
+
+#pragma warning disable CS0618
+        person.Components.Set(
+            new PersonThoughtComponent
+            {
+                Year = 1800,
+                ThoughtId = "legacy",
+                Topic = "household.farming",
+                Text = "Legacy",
+                Emoji = "🌾",
+                Salience = 50
+            });
+#pragma warning restore CS0618
+
+        person.Components.Set(
+            new ThoughtSystemStateComponent
+            {
+                LastProcessedEventCount = 1,
+                LastGeneratedYear = 1800
+            });
+
+        var events = new GameEventBus();
+        events.Publish(
+            new GameEvent
+            {
+                Type = "old.event",
+                Year = 1799,
+                SubjectId = person.Id
+            });
+
+        var provider =
+            new RecordingProvider(
+                Candidate(
+                    "fresh",
+                    "household.farming",
+                    50,
+                    "fresh",
+                    moodId: ThoughtMoodIds.Neutral,
+                    topicEmoji: "🌾"));
+
+        var service =
+            CreateService(
+                state,
+                CreateFamilyProxy().Service,
+                events,
+                provider);
+
+        service.ResetAfterLoad();
+
+        var component =
+            person.Components.Get<PersonThoughtComponent>();
+
+        Assert.NotNull(component);
+        Assert.Equal("fresh", component.ThoughtId);
+        Assert.Equal(ThoughtMoodIds.Neutral, component.MoodId);
+        Assert.Equal(string.Empty, component.MoodEmoji);
+        Assert.Equal("🌾", component.TopicEmoji);
+        Assert.Empty(provider.Contexts.Single().Events);
+
+        var systemState =
+            person.Components.Get<ThoughtSystemStateComponent>();
+
+        Assert.NotNull(systemState);
+        Assert.Equal(1, systemState.LastProcessedEventCount);
+    }
+
+    [Theory]
+    [InlineData("personality.melancholic")]
+    [InlineData("personality.phlegmatic")]
+    [InlineData("personality.sanguine")]
+    [InlineData("personality.choleric")]
+    public void ExplicitPersonalityTraitsMatchLegacySalience(string temperament)
+    {
+        var state = new GameState();
+        var person = state.CreatePerson("A", "B", 30, Guid.NewGuid());
+        person.Tags.Add(temperament);
+
+        var cases = new[]
+        {
+            ("career.fired", "career.work", "career.fired", ThoughtSalienceTraits.Emotional | ThoughtSalienceTraits.Negative | ThoughtSalienceTraits.Career | ThoughtSalienceTraits.ImmediateProblem | ThoughtSalienceTraits.MelancholicHighImpact),
+            ("career.miserable", "career.work", "career.miserable", ThoughtSalienceTraits.Negative | ThoughtSalienceTraits.Career | ThoughtSalienceTraits.ImmediateProblem),
+            ("relationship.marriage.current", "relationship.marriage", "marriage.new", ThoughtSalienceTraits.Emotional | ThoughtSalienceTraits.Positive),
+            ("relationship.satisfaction", "relationship.satisfaction", "marriage.satisfaction", ThoughtSalienceTraits.Emotional),
+            ("rare.assault", "rare.event", "rare.assault", ThoughtSalienceTraits.Emotional | ThoughtSalienceTraits.Negative | ThoughtSalienceTraits.ImmediateProblem | ThoughtSalienceTraits.RareTrauma | ThoughtSalienceTraits.MelancholicHighImpact),
+            ("education.success", "education", "education.success", ThoughtSalienceTraits.Positive | ThoughtSalienceTraits.Career | ThoughtSalienceTraits.Education)
+        };
+
+        foreach (var testCase in cases)
+        {
+            var candidate = Candidate(
+                testCase.Item1,
+                testCase.Item2,
+                80,
+                "test",
+                salienceTraits: testCase.Item4,
+                wordingKey: testCase.Item3);
+
+            var expected = LegacyPersonalitySalience(
+                person,
+                testCase.Item1,
+                testCase.Item2,
+                testCase.Item3,
+                80);
+
+            Assert.Equal(
+                expected,
+                StandardThoughtService.ApplyPersonalitySalience(
+                    person,
+                    candidate,
+                    80));
+        }
+    }
+
+    [Theory]
+    [InlineData(7, 80, ThoughtSalienceTraits.FamilyLoss, 90)]
+    [InlineData(7, 80, ThoughtSalienceTraits.Health, 85)]
+    [InlineData(7, 80, ThoughtSalienceTraits.Poverty, 60)]
+    [InlineData(7, 80, ThoughtSalienceTraits.HouseholdStrain, 70)]
+    [InlineData(15, 80, ThoughtSalienceTraits.FamilyLoss, 85)]
+    [InlineData(15, 80, ThoughtSalienceTraits.RareTrauma, 85)]
+    [InlineData(15, 80, ThoughtSalienceTraits.Poverty, 70)]
+    [InlineData(15, 80, ThoughtSalienceTraits.HouseholdStrain, 75)]
+    public void ExplicitAgeTraitsPreserveLegacyPriority(
+        int age,
+        int baseSalience,
+        ThoughtSalienceTraits traits,
+        int expected)
+    {
+        var state = new GameState();
+        var person = state.CreatePerson("A", "B", age, Guid.NewGuid());
+        var candidate = Candidate(
+            "renamed.id",
+            "renamed.topic",
+            baseSalience,
+            "test",
+            salienceTraits: traits,
+            wordingKey: "renamed.wording");
+
+        Assert.Equal(
+            expected,
+            ThoughtProviderUtilities.ApplyAgePriority(
+                person,
+                candidate));
+    }
+
+    [Fact]
+    public void RenamingPresentationFieldsDoesNotChangeSalience()
+    {
+        var state = new GameState();
+        var person = state.CreatePerson("A", "B", 15, Guid.NewGuid());
+        person.Tags.Add("personality.melancholic");
+
+        var traits =
+            ThoughtSalienceTraits.Emotional
+            | ThoughtSalienceTraits.Negative
+            | ThoughtSalienceTraits.FamilyLoss;
+
+        var first = Candidate(
+            "family.loss",
+            "family.loss",
+            80,
+            "first",
+            salienceTraits: traits,
+            moodId: ThoughtMoodIds.Grieving,
+            topicEmoji: "👪",
+            wordingKey: "family.loss.current");
+
+        var renamed = Candidate(
+            "totally.renamed",
+            "different.topic",
+            80,
+            "second",
+            salienceTraits: traits,
+            moodId: ThoughtMoodIds.Happy,
+            topicEmoji: "🌾",
+            wordingKey: "different.wording");
+
+        int Adjust(ThoughtCandidate candidate)
+        {
+            var age = ThoughtProviderUtilities.ApplyAgePriority(person, candidate);
+            return StandardThoughtService.ApplyPersonalitySalience(person, candidate, age);
+        }
+
+        Assert.Equal(Adjust(first), Adjust(renamed));
+    }
+
+    [Fact]
+    public void MoodAndTopicEmojiDoNotAffectWinnerSelection()
+    {
+        static string Select(
+            string moodId,
+            string topicEmoji)
+        {
+            var state =
+                new GameState
+                {
+                    DynastySurname = "Test",
+                    Year = 1800
+                };
+
+            var person =
+                state.CreatePerson(
+                    "Adam",
+                    "Test",
+                    30,
+                    Guid.NewGuid());
+
+            var service =
+                CreateService(
+                    state,
+                    CreateFamilyProxy().Service,
+                    new GameEventBus(),
+                    new RecordingProvider(
+                        Candidate(
+                            "winner",
+                            "topic",
+                            60,
+                            "winner",
+                            moodId: moodId,
+                            topicEmoji: topicEmoji),
+                        Candidate(
+                            "runner-up",
+                            "topic",
+                            50,
+                            "runner-up",
+                            moodId: ThoughtMoodIds.Neutral,
+                            topicEmoji: "💼")));
+
+            service.EnsureCurrentThoughts();
+            return service.GetCurrentThought(person)!.ThoughtId;
+        }
+
+        Assert.Equal(
+            Select(ThoughtMoodIds.Angry, "🌾"),
+            Select(ThoughtMoodIds.Happy, "💰"));
+    }
+
+    [Fact]
+    public void UnknownMoodFallsBackToNeutralPresentation()
+    {
+        Assert.Equal(
+            ThoughtMoodIds.Neutral,
+            ThoughtMoodCatalog.Normalize("external.unknown"));
+        Assert.Equal(
+            string.Empty,
+            ThoughtMoodCatalog.ResolveEmoji("external.unknown"));
+    }
+
     private static StandardThoughtService CreateService(
         IGameState state,
         IFamilyService family,
@@ -287,7 +556,28 @@ public sealed class ThoughtOptimizationTests
             CreateProxy<IAdoptionService>(),
             CreateProxy<IMarriageSatisfactionService>(),
             events,
-            registry);
+            registry,
+            CreateTestWordingRegistry());
+    }
+
+    private static IThoughtWordingRegistry CreateTestWordingRegistry()
+    {
+        var wording = new ThoughtWordingRegistry();
+        wording.RegisterCatalogue(
+            "tests",
+            new Dictionary<string, ThoughtWordingDefinition>(
+                StringComparer.OrdinalIgnoreCase)
+            {
+                ["fallback"] = new()
+                {
+                    AdultNormal = ["Things are ordinary."]
+                },
+                ["test"] = new()
+                {
+                    AdultNormal = ["Test thought."]
+                }
+            });
+        return wording;
     }
 
     private static ThoughtCandidate Candidate(
@@ -295,20 +585,73 @@ public sealed class ThoughtOptimizationTests
         string topic,
         int salience,
         string sourceId,
-        string? deduplicationKey = null) =>
+        string? deduplicationKey = null,
+        ThoughtSalienceTraits salienceTraits = ThoughtSalienceTraits.None,
+        string moodId = ThoughtMoodIds.Neutral,
+        string topicEmoji = "💭",
+        string wordingKey = "test") =>
         new(
             id,
             topic,
             deduplicationKey ?? id,
             salience,
-            "💭",
+            moodId,
+            topicEmoji,
+            salienceTraits,
             "test",
             sourceId,
-            "test",
+            wordingKey,
             new Dictionary<string, string>
             {
                 ["literalText"] = sourceId
             });
+
+    private static int LegacyPersonalitySalience(
+        IPerson person,
+        string id,
+        string topic,
+        string wordingKey,
+        int salience)
+    {
+        var key = $"{id} {topic} {wordingKey}".ToLowerInvariant();
+
+        var emotional =
+            new[] { "loss", "bereavement", "divorce", "affair", "fired", "assault", "illness", "orphan", "marriage", "birth", "relationship" }
+                .Any(key.Contains);
+
+        var negative =
+            new[] { "loss", "bereavement", "divorce", "affair", "fired", "assault", "miserable", "unhappy", "broke", "illness", "orphan", "imprison", "failure" }
+                .Any(key.Contains);
+
+        var positive =
+            new[] { "married", "marriage.new", "birth", "promotion", "satisfied", "thriving", "repaired", "success", "inheritance", "lottery" }
+                .Any(key.Contains);
+
+        var career =
+            new[] { "career", "employment", "education" }
+                .Any(key.Contains);
+
+        var immediateProblem =
+            new[] { "fired", "miserable", "unhappy", "broke", "assault", "divorce" }
+                .Any(key.Contains);
+
+        var highImpact =
+            new[] { "bereavement", "divorce", "fired", "assault" }
+                .Any(key.Contains);
+
+        var multiplier = PersonalityInfluence.Multiplier(
+            person,
+            negative ? (highImpact ? 0.20 : 0.15) : emotional ? 0.10 : 0,
+            emotional && salience < 90 ? -0.10 : 0,
+            positive ? 0.10 : career ? 0.05 : 0,
+            career || immediateProblem ? 0.10 : 0);
+
+        return Math.Max(
+            1,
+            (int)Math.Round(
+                salience * multiplier,
+                MidpointRounding.AwayFromZero));
+    }
 
     private static T CreateProxy<T>()
         where T : class

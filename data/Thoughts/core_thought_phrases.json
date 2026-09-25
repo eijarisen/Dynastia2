@@ -1,0 +1,1274 @@
+{
+  "fallback": {
+    "Child": [
+      "I wonder what we'll do today.",
+      "I hope something nice happens today.",
+      "I wonder what everyone is doing."
+    ],
+    "Adolescent": [
+      "I wonder what this year will be like.",
+      "Things feel pretty normal right now.",
+      "I wonder what's going to happen next."
+    ],
+    "AdultRough": [
+      "Things are fine.",
+      "Nothing much going on.",
+      "Life's normal enough."
+    ],
+    "AdultElaborate": [
+      "Life has been relatively uneventful lately.",
+      "For once, there is remarkably little demanding my attention.",
+      "Things have settled into a fairly ordinary rhythm."
+    ],
+    "AdultNormal": [
+      "Things are pretty ordinary right now.",
+      "Life feels fairly normal at the moment.",
+      "Nothing especially unusual is happening right now."
+    ]
+  },
+  "affair.actor": {
+    "AdultNormal": [
+      "My affair put the marriage in danger.",
+      "I made a mess of our marriage.",
+      "I keep thinking about what my affair has cost us."
+    ]
+  },
+  "affair.victim": {
+    "AdultNormal": [
+      "I can't believe they betrayed me.",
+      "I keep thinking about the betrayal.",
+      "I don't know how to trust them after this."
+    ]
+  },
+  "alcoholism": {
+    "AdultRough": [
+      "This {condition} is hard to stop.",
+      "The {condition} keeps getting worse."
+    ],
+    "AdultElaborate": [
+      "The {condition} is becoming increasingly difficult to ignore or control.",
+      "I understand what this {condition} is doing to me, but changing it remains painfully difficult."
+    ],
+    "AdultNormal": [
+      "This {condition} is getting harder to control.",
+      "I know I need to get this {condition} under control."
+    ]
+  },
+  "anxiety": {
+    "Child": [
+      "This {condition} keeps making me worry something bad will happen.",
+      "I feel worried a lot because of this {condition}."
+    ],
+    "Adolescent": [
+      "This {condition} keeps my mind finding new things to worry about.",
+      "I feel tense all the time with this {condition}."
+    ],
+    "AdultRough": [
+      "This {condition} won't let my head settle down.",
+      "Can't stop worrying with this {condition}."
+    ],
+    "AdultElaborate": [
+      "The {condition} keeps turning ordinary uncertainties into persistent concerns.",
+      "Living with {condition} leaves me anticipating problems long before there is reason to expect them."
+    ],
+    "AdultNormal": [
+      "This {condition} keeps me worrying about everything that could go wrong.",
+      "I can't seem to stop worrying while this {condition} persists."
+    ]
+  },
+  "birth.parent": {
+    "AdultRough": [
+      "The baby's here. I'm happy.",
+      "We had a baby. Feels good.",
+      "New baby. I'm glad."
+    ],
+    "AdultElaborate": [
+      "Welcoming a new child into the family has made this an extraordinary year.",
+      "The arrival of our child has given this year an entirely new significance.",
+      "Having a new child has changed the emotional center of our household overnight."
+    ],
+    "AdultNormal": [
+      "I'm so happy about the new baby.",
+      "Having a new baby has made this a wonderful year.",
+      "I can't stop thinking about the new baby."
+    ]
+  },
+  "birth.sibling": {
+    "Child": [
+      "I have a new baby in the family!",
+      "There's a new baby at home!",
+      "I wonder what the new baby will be like."
+    ],
+    "AdultNormal": [
+      "There's a new baby in the family now.",
+      "Having a new sibling is going to change things at home.",
+      "The family feels different with a new baby here."
+    ]
+  },
+  "career.employment": {
+    "AdultRough": [
+      "Got a job. Good.",
+      "Found work. Finally."
+    ],
+    "AdultElaborate": [
+      "Finding work has given me some welcome stability and a clearer sense of direction.",
+      "Securing employment has restored a useful sense of stability."
+    ],
+    "AdultNormal": [
+      "I'm glad I finally found work.",
+      "Finding a job is a huge relief."
+    ]
+  },
+  "career.fired": {
+    "AdultRough": [
+      "Got fired. Great.",
+      "Lost my job. Bad timing."
+    ],
+    "AdultElaborate": [
+      "Losing my job so abruptly has forced me to reconsider what I do next.",
+      "Being dismissed has unsettled both my finances and my sense of direction."
+    ],
+    "AdultNormal": [
+      "Getting fired has really set me back.",
+      "I can't believe I lost my job."
+    ]
+  },
+  "career.jobloss": {
+    "AdultNormal": [
+      "I'm still trying to recover from losing my job.",
+      "Losing my job is still causing problems."
+    ]
+  },
+  "career.miserable": {
+    "AdultRough": [
+      "Work's awful. Hate it.",
+      "Hate this job.",
+      "Work is miserable."
+    ],
+    "AdultElaborate": [
+      "My work has become deeply frustrating, and I increasingly dread having to return to it.",
+      "The job has become so unpleasant that it now colors the rest of my week.",
+      "I find myself resenting the work more strongly with every passing month."
+    ],
+    "AdultNormal": [
+      "I hate going to work.",
+      "I'm miserable at work.",
+      "Work has become awful lately."
+    ]
+  },
+  "career.promotion": {
+    "AdultRough": [
+      "Got promoted. Finally.",
+      "Promotion. Good."
+    ],
+    "AdultElaborate": [
+      "The promotion feels like welcome recognition for the effort I've put into my career.",
+      "Advancing at work feels like meaningful recognition of the effort I have invested."
+    ],
+    "AdultNormal": [
+      "I got promoted. Things are going well at work.",
+      "I'm really pleased about the promotion."
+    ]
+  },
+  "career.quit": {
+    "AdultNormal": [
+      "Leaving that job was probably the right decision.",
+      "I'm relieved I finally left that job."
+    ]
+  },
+  "career.retirement": {
+    "AdultNormal": [
+      "Retirement has become part of my routine.",
+      "I'm getting used to retired life."
+    ]
+  },
+  "career.retirement.new": {
+    "AdultNormal": [
+      "Retirement is going to take some getting used to.",
+      "It's strange knowing I don't have to go back to work."
+    ]
+  },
+  "career.satisfied": {
+    "AdultNormal": [
+      "Work is going pretty well.",
+      "I'm fairly happy with how work is going."
+    ]
+  },
+  "career.thriving": {
+    "AdultRough": [
+      "Work's good. I like it.",
+      "Job's going great."
+    ],
+    "AdultElaborate": [
+      "I find my work genuinely rewarding; it gives me a welcome sense of progress.",
+      "My work has become one of the more satisfying parts of my life."
+    ],
+    "AdultNormal": [
+      "Work is going really well.",
+      "I'm genuinely enjoying my work."
+    ]
+  },
+  "career.unemployed": {
+    "AdultRough": [
+      "Need a job.",
+      "Need work soon.",
+      "Can't stay unemployed."
+    ],
+    "AdultElaborate": [
+      "Being without work is becoming increasingly difficult; I need to find something soon.",
+      "Unemployment is becoming a growing source of uncertainty and pressure."
+    ],
+    "AdultNormal": [
+      "I really need to find work.",
+      "Being unemployed is getting difficult."
+    ]
+  },
+  "career.unhappy": {
+    "AdultRough": [
+      "Don't like this job much.",
+      "Work's getting on my nerves."
+    ],
+    "AdultElaborate": [
+      "My work is increasingly unsatisfying, even if it has not become unbearable.",
+      "I am finding less and less satisfaction in my work."
+    ],
+    "AdultNormal": [
+      "I'm really not enjoying this job.",
+      "Work has been frustrating lately."
+    ]
+  },
+  "craft.learned": {
+    "AdultNormal": [
+      "I've been learning {craftName}."
+    ]
+  },
+  "craft.self_employment_started": {
+    "AdultNormal": [
+      "I've started earning a living through {craftName}."
+    ]
+  },
+  "craft.work.ordinary": {
+    "AdultRough": [
+      "Work's been coming in."
+    ],
+    "AdultElaborate": [
+      "I've been fortunate enough to maintain a steady stream of work in my trade."
+    ],
+    "AdultNormal": [
+      "I've had a steady amount of work for my craft lately."
+    ]
+  },
+  "craft.work.poor": {
+    "AdultNormal": [
+      "Work for my trade has been painfully scarce."
+    ]
+  },
+  "craft.work.strong": {
+    "AdultNormal": [
+      "Business has been unusually good this year."
+    ]
+  },
+  "depression": {
+    "Child": [
+      "This {condition} makes everything feel sad lately.",
+      "I don't feel happy when this {condition} gets bad."
+    ],
+    "Adolescent": [
+      "This {condition} makes everything feel heavier than it should.",
+      "I can't seem to get out from under this {condition}."
+    ],
+    "AdultRough": [
+      "This {condition} is bad. Don't want to do much.",
+      "Can't shake this {condition}."
+    ],
+    "AdultElaborate": [
+      "The {condition} colors even ordinary days with an exhausting sense of weight.",
+      "Living with {condition} has made it increasingly difficult to summon interest in ordinary things."
+    ],
+    "AdultNormal": [
+      "I can't seem to shake this {condition}.",
+      "This {condition} has made everything feel heavy lately."
+    ]
+  },
+  "divorce.current": {
+    "AdultRough": [
+      "Marriage is over. Still hurts.",
+      "It's over. Hate thinking about it.",
+      "We're done. It still stings."
+    ],
+    "AdultElaborate": [
+      "The end of the marriage still occupies my thoughts more than I would like.",
+      "The marriage is over, but I am still trying to understand what that ending means for my life.",
+      "Separation has left a difficult mixture of relief, grief and uncertainty."
+    ],
+    "AdultNormal": [
+      "I can't stop thinking about how our marriage ended.",
+      "The divorce still hurts.",
+      "I'm still trying to come to terms with the marriage ending."
+    ]
+  },
+  "divorce.recent": {
+    "AdultRough": [
+      "Still thinking about the divorce.",
+      "Marriage is over. Still hurts.",
+      "Haven't really moved on yet."
+    ],
+    "AdultElaborate": [
+      "The divorce is no longer new, yet it continues to shape how I think about the future.",
+      "I am moving forward, though the end of the marriage still occupies a great deal of my mind.",
+      "The marriage has ended, but emotionally I have not entirely left it behind."
+    ],
+    "AdultNormal": [
+      "I'm still thinking about the divorce.",
+      "I haven't completely moved on from the marriage ending.",
+      "The divorce is still difficult to put behind me."
+    ]
+  },
+  "drug_dependence": {
+    "AdultRough": [
+      "This {condition} is hard to stop.",
+      "The {condition} keeps pulling me back."
+    ],
+    "AdultElaborate": [
+      "The {condition} is becoming increasingly difficult to control.",
+      "I understand what this {condition} is doing to me, but breaking the dependence remains painfully difficult."
+    ],
+    "AdultNormal": [
+      "This {condition} is getting harder to control.",
+      "I know I need to get this {condition} under control."
+    ]
+  },
+  "economy.broke": {
+    "Child": [
+      "Mum says we don't have much money.",
+      "Everyone keeps saying money is tight."
+    ],
+    "Adolescent": [
+      "Money is always tight at home. Everyone worries about it.",
+      "The money problems at home are hard to ignore."
+    ],
+    "AdultRough": [
+      "We're broke. Need money.",
+      "No money. This is bad."
+    ],
+    "AdultElaborate": [
+      "Our finances are becoming precarious; every expense now feels consequential.",
+      "Our financial position has become fragile enough that every unexpected cost matters."
+    ],
+    "AdultNormal": [
+      "We're running out of money, and it's getting hard.",
+      "Money problems are becoming serious."
+    ]
+  },
+  "education.failure": {
+    "Child": [
+      "That was too hard.",
+      "I tried, but I still didn't get it."
+    ],
+    "Adolescent": [
+      "I worked on it, but I still couldn't get it right.",
+      "My studies didn't go as well as I wanted."
+    ],
+    "AdultNormal": [
+      "The course didn't go as well as I'd hoped.",
+      "I put in the effort, but it didn't work out."
+    ]
+  },
+  "education.success": {
+    "Child": [
+      "I learned something new!",
+      "I did really well with my lessons!"
+    ],
+    "Adolescent": [
+      "I'm actually doing pretty well with my studies.",
+      "My studying is finally paying off."
+    ],
+    "AdultNormal": [
+      "The studying paid off.",
+      "I'm pleased that the studying went well."
+    ]
+  },
+  "family.bereavement.recent": {
+    "Child": [
+      "I still miss them.",
+      "I still think about them a lot.",
+      "I wish they were still here."
+    ],
+    "Adolescent": [
+      "I still think about them all the time.",
+      "The loss still hurts more than I want to admit.",
+      "I keep missing them when I least expect it."
+    ],
+    "AdultRough": [
+      "Still miss them.",
+      "Still thinking about the loss.",
+      "It still hurts."
+    ],
+    "AdultElaborate": [
+      "The loss is no longer new, but it still weighs heavily on me.",
+      "Time has passed, yet the grief still surfaces with surprising force.",
+      "I am learning to live around the loss, though it has not truly left me."
+    ],
+    "AdultNormal": [
+      "I'm still grieving.",
+      "The loss still weighs on me.",
+      "I still find myself thinking about them."
+    ]
+  },
+  "family.loss.current": {
+    "Child": [
+      "{relation}'s gone. I miss {relationPossessive}.",
+      "I keep thinking about {relation}. I miss {relationPossessive}.",
+      "I wish {relation} was still here."
+    ],
+    "Adolescent": [
+      "I still can't believe {relation} is really gone.",
+      "It doesn't feel real that {relation} is gone.",
+      "I keep thinking about losing {relation}."
+    ],
+    "AdultRough": [
+      "{relation}'s gone. I miss {relationPossessive}.",
+      "Still can't believe {relation}'s gone.",
+      "I miss {relation}. Badly."
+    ],
+    "AdultElaborate": [
+      "Losing {relation} has left an absence I still don't know how to live with.",
+      "The death of {relation} has changed the shape of my life in ways I am only beginning to understand.",
+      "I keep returning to the fact that {relation} is gone; the loss still feels painfully immediate."
+    ],
+    "AdultNormal": [
+      "I still can't believe {relation} is gone.",
+      "I can't stop thinking about losing {relation}.",
+      "I miss {relation} more than I expected."
+    ]
+  },
+  "farming.work.ordinary": {
+    "Child": [
+      "I've been helping with the farm."
+    ],
+    "Adolescent": [
+      "There's always work to do on the land."
+    ],
+    "AdultRough": [
+      "Farm work keeps me busy."
+    ],
+    "AdultElaborate": [
+      "A good portion of my time lately has gone into keeping the family's land productive."
+    ],
+    "AdultNormal": [
+      "I've been spending plenty of time working the family's land."
+    ]
+  },
+  "farming.work.poor": {
+    "AdultNormal": [
+      "The farm hardly produced anything this year."
+    ]
+  },
+  "farming.work.strong": {
+    "AdultNormal": [
+      "The land produced unusually well this year."
+    ]
+  },
+  "heal": {
+    "AdultNormal": [
+      "I'm finally starting to feel better.",
+      "I think my health is finally improving."
+    ]
+  },
+  "health.curable": {
+    "Child": [
+      "I'm really sick. I want to feel better.",
+      "I don't like being this sick."
+    ],
+    "Adolescent": [
+      "I'm tired of being this sick.",
+      "I'm tired of dealing with {condition}."
+    ],
+    "AdultRough": [
+      "Feel awful. Want to get better.",
+      "This {condition} is awful."
+    ],
+    "AdultElaborate": [
+      "Dealing with {condition} has become increasingly exhausting.",
+      "The continuing effects of {condition} are becoming difficult to ignore."
+    ],
+    "AdultNormal": [
+      "This {condition} is really wearing me down.",
+      "I'm tired of dealing with {condition}."
+    ]
+  },
+  "health.minor": {
+    "Child": [
+      "I don't feel good.",
+      "I wish I wasn't sick.",
+      "I feel yucky today."
+    ],
+    "Adolescent": [
+      "I'm tired of feeling sick.",
+      "Being ill is getting really annoying.",
+      "I wish I'd just feel normal again."
+    ],
+    "AdultRough": [
+      "Feel awful today.",
+      "Sick again. Hate it.",
+      "Don't feel good at all."
+    ],
+    "AdultElaborate": [
+      "Being unwell for this long is becoming increasingly exhausting.",
+      "Even this comparatively minor illness is wearing down my patience.",
+      "I had underestimated how tiring it would be to feel unwell for so long."
+    ],
+    "AdultNormal": [
+      "This illness is really wearing me down.",
+      "I'm tired of feeling sick.",
+      "I wish I could just feel well again."
+    ]
+  },
+  "health.permanent": {
+    "Child": [
+      "I don't feel good.",
+      "I wish I felt better."
+    ],
+    "Adolescent": [
+      "I'm tired of dealing with {condition}.",
+      "{condition} has been bothering me a lot."
+    ],
+    "AdultRough": [
+      "{condition} is bad lately.",
+      "Sick of this {condition}."
+    ],
+    "AdultElaborate": [
+      "The continuing effects of {condition} are becoming increasingly difficult to ignore.",
+      "{condition} has become a persistent and frustrating part of daily life."
+    ],
+    "AdultNormal": [
+      "My {condition} has been bothering me a lot lately.",
+      "{condition} has been bothering me a lot lately."
+    ]
+  },
+  "health.poor": {
+    "Child": [
+      "I feel really bad.",
+      "I don't feel well at all."
+    ],
+    "Adolescent": [
+      "My health has been really bad lately.",
+      "I feel awful most of the time."
+    ],
+    "AdultRough": [
+      "Health's bad. Really bad.",
+      "I feel awful lately."
+    ],
+    "AdultElaborate": [
+      "My health has deteriorated enough that it is becoming difficult to think about much else.",
+      "Feeling this physically unwell is beginning to dominate my daily life."
+    ],
+    "AdultNormal": [
+      "My health has been worrying me.",
+      "I feel seriously unwell lately."
+    ]
+  },
+  "health.terminal": {
+    "Child": [
+      "I'm really sick. I want to feel better.",
+      "I don't like being this sick."
+    ],
+    "Adolescent": [
+      "Being this sick is frightening.",
+      "I'm scared by how serious this illness is."
+    ],
+    "AdultRough": [
+      "I'm very sick. It's bad.",
+      "This illness is serious."
+    ],
+    "AdultElaborate": [
+      "The seriousness of my illness is becoming impossible to ignore.",
+      "My illness has become serious enough that it dominates almost every other concern."
+    ],
+    "AdultNormal": [
+      "I'm seriously ill, and it's frightening.",
+      "The seriousness of this illness worries me."
+    ]
+  },
+  "household.moved": {
+    "Child": [
+      "We moved from {fromTown} to {toTown}. Everything feels different here.",
+      "I still keep thinking about {fromTown}. Now we live in {toTown}.",
+      "Our new home is in {toTown}. I wonder how long it will take to feel normal."
+    ],
+    "Adolescent": [
+      "Moving from {fromTown} to {toTown} has changed almost everything around me.",
+      "I am still getting used to life in {toTown} after leaving {fromTown}.",
+      "A new town, a new routine. {toTown} still feels unfamiliar."
+    ],
+    "AdultRough": [
+      "We moved to {toTown}. Big change.",
+      "Left {fromTown}. Now we have to settle in {toTown}.",
+      "New town, new life. Still getting used to {toTown}."
+    ],
+    "AdultElaborate": [
+      "Leaving {fromTown} for {toTown} has unsettled the familiar rhythm of our household more than I expected.",
+      "The move to {toTown} marks a substantial change in our lives; I am still learning the shape of this new place.",
+      "We have exchanged {fromTown} for {toTown}, and the practical consequences of that decision are only beginning to settle."
+    ],
+    "AdultNormal": [
+      "Moving from {fromTown} to {toTown} was a major change. I am still settling in.",
+      "Life feels different now that we live in {toTown} instead of {fromTown}.",
+      "The move to {toTown} is still on my mind. There is a lot to get used to."
+    ]
+  },
+  "household.overcrowded": {
+    "Child": [
+      "There never seems to be enough room or quiet at home.",
+      "It's hard to find any space for myself here."
+    ],
+    "Adolescent": [
+      "The house feels crowded all the time.",
+      "There are too many people under one roof."
+    ],
+    "AdultRough": [
+      "Too many of us are packed into this house.",
+      "We need more room in this place."
+    ],
+    "AdultElaborate": [
+      "There are simply too many of us sharing this home comfortably.",
+      "The lack of space and privacy in this household is becoming difficult to bear."
+    ],
+    "AdultNormal": [
+      "There are too many of us sharing this home.",
+      "This household has become far too crowded."
+    ]
+  },
+  "household.strain": {
+    "Child": [
+      "It's always noisy here.",
+      "There's never any quiet at home."
+    ],
+    "Adolescent": [
+      "There's never any peace in this house.",
+      "This house is always chaotic."
+    ],
+    "AdultRough": [
+      "Too much going on in this house.",
+      "This house is exhausting."
+    ],
+    "AdultElaborate": [
+      "The constant demands of such a crowded household are becoming difficult to manage.",
+      "The household requires so much constant attention that it is becoming genuinely exhausting."
+    ],
+    "AdultNormal": [
+      "This household is exhausting.",
+      "There's too much to manage at home lately."
+    ]
+  },
+  "improvement.appeal": {
+    "AdultNormal": [
+      "I'm pleased with how the surgery turned out.",
+      "The change to my appearance turned out well."
+    ]
+  },
+  "improvement.fertility": {
+    "AdultNormal": [
+      "I'm hopeful the fertility treatment will make a difference.",
+      "The treatment has made me more hopeful about having children."
+    ]
+  },
+  "improvement.fertility_restored": {
+    "AdultRough": [
+      "Treatment worked. Maybe I can have kids now."
+    ],
+    "AdultElaborate": [
+      "The treatment succeeded; for the first time, having children feels like a genuine possibility."
+    ],
+    "AdultNormal": [
+      "The treatment worked. I may finally be able to have children."
+    ]
+  },
+  "improvement.generic": {
+    "AdultNormal": [
+      "I'm pleased with the improvement.",
+      "That treatment seems to have paid off."
+    ]
+  },
+  "improvement.immunity": {
+    "AdultNormal": [
+      "The therapy seems to have strengthened my health.",
+      "I feel more resilient after the treatment."
+    ]
+  },
+  "improvement.intellect": {
+    "AdultNormal": [
+      "The intelligence training really sharpened my thinking.",
+      "I can tell the training improved my mind."
+    ]
+  },
+  "improvement.longevity": {
+    "AdultNormal": [
+      "The preventive treatment feels like a worthwhile investment in my health.",
+      "I'm glad I took my long-term health seriously."
+    ]
+  },
+  "improvement.strength": {
+    "AdultNormal": [
+      "That training really paid off.",
+      "I feel stronger after all that training."
+    ]
+  },
+  "inheritance": {
+    "AdultRough": [
+      "Got an inheritance. That helps.",
+      "Inheritance helps. A lot."
+    ],
+    "AdultElaborate": [
+      "The inheritance has changed our financial position far more than I expected.",
+      "Receiving the inheritance has materially altered what is possible for us."
+    ],
+    "AdultNormal": [
+      "That inheritance has made life considerably easier.",
+      "The inheritance has changed our finances a lot."
+    ]
+  },
+  "justice.imprisoned": {
+    "AdultRough": [
+      "I want out of here.",
+      "Hate being stuck here."
+    ],
+    "AdultElaborate": [
+      "The confinement is becoming unbearable; every year spent here feels painfully wasted.",
+      "Imprisonment has reduced life to an exhausting repetition of confinement."
+    ],
+    "AdultNormal": [
+      "I can't stand being stuck in prison.",
+      "I just want to be free again."
+    ]
+  },
+  "justice.new": {
+    "AdultRough": [
+      "I'm stuck in prison now.",
+      "Prison. This is bad."
+    ],
+    "AdultElaborate": [
+      "The reality of losing so much of my life to imprisonment is finally sinking in.",
+      "The consequences of imprisonment now feel painfully concrete."
+    ],
+    "AdultNormal": [
+      "I can't believe I'm going to spend this time in prison.",
+      "Being sent to prison is difficult to comprehend."
+    ]
+  },
+  "justice.released": {
+    "AdultRough": [
+      "Free at last.",
+      "Finally out."
+    ],
+    "AdultElaborate": [
+      "Being free again feels almost unfamiliar after so much time in confinement.",
+      "Freedom feels unexpectedly strange after living under confinement."
+    ],
+    "AdultNormal": [
+      "It's good to finally be free.",
+      "I can't believe I'm finally out."
+    ]
+  },
+  "life.adult": {
+    "AdultRough": [
+      "I'm an adult now.",
+      "Adult now. Things change."
+    ],
+    "AdultElaborate": [
+      "Reaching adulthood feels like the beginning of a much more consequential part of my life.",
+      "Adulthood suddenly makes the future feel far more immediate and consequential."
+    ]
+  },
+  "marriage.new": {
+    "AdultRough": [
+      "I'm married. Feels good.",
+      "Got married. I'm happy.",
+      "We're married now. Good."
+    ],
+    "AdultElaborate": [
+      "Beginning this marriage feels like the start of an important new part of my life.",
+      "Marriage has given this year a sense of genuine new beginning.",
+      "Starting married life feels both momentous and deeply hopeful."
+    ],
+    "AdultNormal": [
+      "Getting married has made this a wonderful year.",
+      "I'm happy to be starting married life.",
+      "Being married feels like the beginning of something important."
+    ]
+  },
+  "marriage.repaired": {
+    "AdultRough": [
+      "We're doing better now.",
+      "Things are better between us.",
+      "Maybe we can fix this."
+    ],
+    "AdultElaborate": [
+      "For the first time in a while, it feels as though we're finding our way back to each other.",
+      "There is finally a sense that the marriage may be recovering rather than merely surviving.",
+      "The effort we have put into the marriage is beginning to feel worthwhile."
+    ],
+    "AdultNormal": [
+      "Things between us finally seem to be improving.",
+      "Our marriage feels better than it did.",
+      "It feels like we're finding our way back to each other."
+    ]
+  },
+  "marriage.satisfaction.broke": {
+    "AdultRough": [
+      "No money. We keep fighting over it.",
+      "We're broke. It's hurting us."
+    ],
+    "AdultElaborate": [
+      "Our financial difficulties are steadily eroding the patience we have for one another.",
+      "Money problems are turning ordinary disagreements into much larger strains on the marriage."
+    ],
+    "AdultNormal": [
+      "Money problems are putting a strain on our marriage.",
+      "Our lack of money is making the marriage harder."
+    ]
+  },
+  "marriage.satisfaction.compatibility": {
+    "AdultNormal": [
+      "We haven't been connecting as well as we used to.",
+      "There is a distance between us that has been hard to ignore."
+    ]
+  },
+  "marriage.satisfaction.fertility": {
+    "AdultRough": [
+      "We want kids. It isn't happening.",
+      "Want children. Worried it won't happen."
+    ],
+    "AdultElaborate": [
+      "The uncertainty surrounding whether we'll be able to have children has become difficult for us both.",
+      "Questions about whether we can have children are creating a strain neither of us can easily resolve."
+    ],
+    "AdultNormal": [
+      "I'm worried we may not have the children we hoped for.",
+      "Not knowing whether we'll be able to have children is hard on us."
+    ]
+  },
+  "marriage.satisfaction.generic": {
+    "AdultNormal": [
+      "The marriage has been difficult lately.",
+      "Things between us have not been going well."
+    ]
+  },
+  "marriage.satisfaction.health": {
+    "AdultNormal": [
+      "Health problems are putting pressure on our marriage.",
+      "Illness has made things harder between us lately."
+    ]
+  },
+  "marriage.satisfaction.household_strain": {
+    "AdultRough": [
+      "Too much to do here. We're both fed up.",
+      "House is too much. We're worn out."
+    ],
+    "AdultElaborate": [
+      "The constant demands of the household leave remarkably little room for us as a couple.",
+      "The household consumes so much energy that our relationship is increasingly neglected."
+    ],
+    "AdultNormal": [
+      "The pressure of this household is hurting our marriage.",
+      "There is so much to manage at home that our marriage is suffering."
+    ]
+  },
+  "marriage.satisfaction.miserable": {
+    "AdultRough": [
+      "Marriage is awful right now.",
+      "We're barely getting along."
+    ],
+    "AdultElaborate": [
+      "The marriage has deteriorated to the point that it is difficult to imagine continuing like this.",
+      "Our relationship has become deeply unhappy and increasingly difficult to sustain."
+    ],
+    "AdultNormal": [
+      "Our marriage is in a terrible place.",
+      "Things between us feel close to breaking point."
+    ]
+  },
+  "marriage.satisfaction.satisfied": {
+    "AdultNormal": [
+      "Things between us are going well.",
+      "I'm happy with how our marriage is going."
+    ]
+  },
+  "marriage.satisfaction.thriving": {
+    "AdultRough": [
+      "Marriage is great.",
+      "We're really good together."
+    ],
+    "AdultElaborate": [
+      "Our marriage feels unusually strong; there is a genuine sense that we are thriving together.",
+      "The marriage has become one of the most stable and rewarding parts of my life."
+    ],
+    "AdultNormal": [
+      "Our marriage is going wonderfully.",
+      "Things between us are genuinely very good."
+    ]
+  },
+  "marriage.satisfaction.unemployed": {
+    "AdultNormal": [
+      "Not having steady work is putting pressure on our marriage.",
+      "My employment problems are starting to affect us both."
+    ]
+  },
+  "marriage.satisfaction.unhappy": {
+    "AdultNormal": [
+      "Our marriage hasn't been going well.",
+      "Things between us have become difficult."
+    ]
+  },
+  "orphan.independent": {
+    "AdultNormal": [
+      "I'm having to look after myself now.",
+      "I have to manage on my own more than I should.",
+      "Looking after myself this young is harder than I expected."
+    ]
+  },
+  "orphan.new": {
+    "Child": [
+      "Mum and Dad are gone. Who's going to look after me?",
+      "I don't have Mum or Dad anymore. What happens now?",
+      "I just want Mum and Dad back."
+    ],
+    "AdultNormal": [
+      "Both my parents are gone. I don't know what happens to me now.",
+      "I have no parents left. Everything feels uncertain.",
+      "Losing both my parents has left me wondering where I belong."
+    ]
+  },
+  "orphan.ongoing": {
+    "Child": [
+      "I wish my parents were still here.",
+      "I still miss Mum and Dad.",
+      "I wish I could have my parents back."
+    ],
+    "AdultNormal": [
+      "I still wish I could have my parents back.",
+      "I still feel the absence of my parents.",
+      "Not having my parents here still hurts."
+    ]
+  },
+  "orphanage": {
+    "Child": [
+      "I don't like it here. I want a home.",
+      "I wish I lived with a family.",
+      "I want somewhere that feels like home."
+    ],
+    "AdultNormal": [
+      "I hate living in the orphanage. I just want somewhere that feels like home.",
+      "I want a real home, not another year in the orphanage.",
+      "Living here still doesn't feel like belonging anywhere."
+    ]
+  },
+  "parents.divorced": {
+    "Child": [
+      "I wish Mum and Dad were still together.",
+      "I don't like that Mum and Dad split up.",
+      "Things felt better when Mum and Dad were together."
+    ],
+    "AdultNormal": [
+      "Things haven't felt the same since my parents split up.",
+      "I still think about my parents breaking up.",
+      "My parents' divorce changed more than I expected."
+    ]
+  },
+  "placement.new": {
+    "Child": [
+      "I'm living with a new family now.",
+      "They took me into their home.",
+      "Maybe this can be my home now."
+    ],
+    "AdultNormal": [
+      "They took me into their household. Maybe things will finally settle down.",
+      "I'm living with a new family now. I hope this can become home.",
+      "Being taken in has made things feel a little less uncertain."
+    ]
+  },
+  "placement.ongoing": {
+    "Child": [
+      "This is my home now.",
+      "I'm getting used to this family.",
+      "I think this feels more like home now."
+    ],
+    "AdultNormal": [
+      "I'm getting used to living with this family.",
+      "This household is starting to feel familiar.",
+      "I'm slowly settling into life with this family."
+    ]
+  },
+  "property.bought": {
+    "AdultNormal": [
+      "I'm pleased we were able to buy another house.",
+      "Buying the house feels like a real step forward."
+    ]
+  },
+  "property.given": {
+    "AdultNormal": [
+      "My father gave me a house.",
+      "Receiving that house gives me a much stronger start."
+    ]
+  },
+  "property.promised": {
+    "AdultNormal": [
+      "I've been promised a house when the time comes.",
+      "Knowing a house is waiting for me changes how I think about the future."
+    ]
+  },
+  "property.received": {
+    "AdultNormal": [
+      "The house that was promised to me is finally mine.",
+      "I finally received the house that had been promised to me."
+    ]
+  },
+  "property.sold": {
+    "AdultNormal": [
+      "Selling the house changed our finances quite a bit.",
+      "I'm still thinking about selling that house."
+    ]
+  },
+  "rare.accident": {
+    "Child": [
+      "That accident really scared me.",
+      "I keep thinking about getting hurt."
+    ],
+    "Adolescent": [
+      "I keep thinking about the accident.",
+      "That accident could have been much worse."
+    ],
+    "AdultNormal": [
+      "I keep thinking about the accident.",
+      "I'm still shaken by what happened."
+    ]
+  },
+  "rare.assault": {
+    "Adolescent": [
+      "I keep thinking about being attacked.",
+      "I'm still angry about the attack."
+    ],
+    "AdultRough": [
+      "Got attacked. Still angry about it.",
+      "Still thinking about that attack."
+    ],
+    "AdultElaborate": [
+      "I keep replaying the attack in my mind, even though it's already over.",
+      "The attack is over, but the experience still intrudes on my thoughts."
+    ],
+    "AdultNormal": [
+      "I keep thinking about the assault.",
+      "I'm still shaken by being attacked."
+    ]
+  },
+  "rare.burglary": {
+    "AdultNormal": [
+      "I still feel uneasy after the burglary.",
+      "Knowing someone broke into our home is hard to forget."
+    ]
+  },
+  "rare.fire": {
+    "Child": [
+      "The house caught fire. I was really scared.",
+      "I keep thinking about the fire."
+    ],
+    "Adolescent": [
+      "I keep thinking about the fire. It could have been much worse.",
+      "That fire still scares me when I think about it."
+    ],
+    "AdultNormal": [
+      "That fire could have destroyed everything.",
+      "I keep thinking about how bad the fire could have been."
+    ]
+  },
+  "rare.found": {
+    "AdultNormal": [
+      "Finding something that valuable was an incredible stroke of luck.",
+      "I still can't believe what I found."
+    ]
+  },
+  "rare.fraud": {
+    "AdultNormal": [
+      "I'm furious that I was tricked out of that money.",
+      "I can't believe I fell for that fraud."
+    ]
+  },
+  "rare.inheritance": {
+    "AdultNormal": [
+      "That unexpected inheritance changed things quickly.",
+      "I never expected money from such a distant relative."
+    ]
+  },
+  "rare.lottery": {
+    "AdultRough": [
+      "I won! I'm rich!",
+      "Won the lottery. Can't believe it."
+    ],
+    "AdultElaborate": [
+      "Winning the lottery has changed our circumstances so suddenly that it still hardly feels real.",
+      "The lottery win has transformed our finances with almost absurd suddenness."
+    ],
+    "AdultNormal": [
+      "I still can't believe I won the lottery.",
+      "Winning the lottery still doesn't feel real."
+    ]
+  },
+  "recent.assault": {
+    "Adolescent": [
+      "I'm still nervous after what happened.",
+      "I'm still uneasy after the attack."
+    ],
+    "AdultRough": [
+      "Still thinking about that attack.",
+      "Still on edge after what happened."
+    ],
+    "AdultElaborate": [
+      "The immediate danger has passed, but the experience still leaves me uneasy.",
+      "The event is over, yet I remain more watchful than I was before."
+    ],
+    "AdultNormal": [
+      "I'm still shaken by being attacked.",
+      "I'm still uneasy after what happened."
+    ]
+  },
+  "recover": {
+    "Child": [
+      "Resting has helped me feel a little better."
+    ],
+    "Adolescent": [
+      "Taking time to recover was probably a good idea."
+    ],
+    "AdultRough": [
+      "{activity} helped.",
+      "Needed that rest."
+    ],
+    "AdultElaborate": [
+      "{activity} was precisely the pause I needed.",
+      "Taking deliberate time to recover has done more for me than I expected."
+    ],
+    "AdultNormal": [
+      "{activity} was exactly what I needed.",
+      "Taking some time to recover has helped."
+    ]
+  },
+  "role.family_nanny": {
+    "AdultRough": [
+      "I'm looking after the kids now.",
+      "Kids need watching. That's my job now."
+    ],
+    "AdultElaborate": [
+      "For now, much of my time is devoted to caring for the younger children in the household.",
+      "Caring for the younger children has become the central responsibility of my days."
+    ],
+    "AdultNormal": [
+      "I'm spending my days looking after the children.",
+      "Looking after the younger children is taking most of my time."
+    ]
+  },
+  "role.family_nanny.ended": {
+    "AdultRough": [
+      "I'm done looking after the kids now.",
+      "That childcare work is over now."
+    ],
+    "AdultElaborate": [
+      "My period of looking after the younger children has come to an end.",
+      "The responsibility of caring for the younger children is no longer mine."
+    ],
+    "AdultNormal": [
+      "I'm no longer the one looking after the younger children.",
+      "My time helping as the family caregiver has come to an end."
+    ]
+  },
+  "role.family_nanny.started": {
+    "AdultRough": [
+      "I'm looking after the kids now.",
+      "I'll be caring for the younger kids."
+    ],
+    "AdultElaborate": [
+      "I have taken on the responsibility of caring for the younger children in the household.",
+      "For now, I will be devoting much of my time to helping care for the younger children."
+    ],
+    "AdultNormal": [
+      "I'm going to help look after the younger children.",
+      "I've agreed to take care of the younger children for now."
+    ]
+  },
+  "role.housewife": {
+    "AdultNormal": [
+      "There's always something that needs doing at home.",
+      "Keeping the household running takes most of my attention."
+    ]
+  },
+  "role.nanny": {
+    "AdultNormal": [
+      "I'm spending my days caring for the children.",
+      "Looking after the children keeps me busy."
+    ]
+  },
+  "support.failure": {
+    "AdultNormal": [
+      "I asked for help, but they refused.",
+      "I needed help with money, but they said no."
+    ]
+  },
+  "support.success.donor.evil": {
+    "AdultRough": [
+      "They'd better remember what that cost me."
+    ],
+    "AdultElaborate": [
+      "They had better appreciate the cost to me; generosity is rarely free."
+    ],
+    "AdultNormal": [
+      "They'd better appreciate what this cost me."
+    ]
+  },
+  "support.success.donor.good": {
+    "AdultRough": [
+      "Glad I could help family."
+    ],
+    "AdultElaborate": [
+      "I am glad I was able to help; family obligations matter when they are genuinely needed."
+    ],
+    "AdultNormal": [
+      "I'm glad I could help them."
+    ]
+  },
+  "support.success.donor.neutral": {
+    "AdultNormal": [
+      "I'm relieved they agreed to help me with money.",
+      "Their financial help is a real relief."
+    ]
+  },
+  "support.success.recipient": {
+    "AdultNormal": [
+      "I'm relieved they agreed to help me with money.",
+      "Their financial help is a real relief."
+    ]
+  },
+  "therapy.failure": {
+    "AdultNormal": [
+      "Therapy didn't seem to help much.",
+      "I hoped therapy would help more than it did."
+    ]
+  },
+  "therapy.success": {
+    "AdultRough": [
+      "Therapy helped. Feel better.",
+      "That actually helped."
+    ],
+    "AdultElaborate": [
+      "The therapy seems to have helped me regain some control over how I've been feeling.",
+      "The therapy has given me a clearer sense that things can improve."
+    ],
+    "AdultNormal": [
+      "I feel like therapy really helped me.",
+      "Therapy seems to have made a real difference."
+    ]
+  },
+  "wrongful.arrest": {
+    "AdultNormal": [
+      "I was arrested for something I didn't do.",
+      "I still can't believe they detained me when I was innocent."
+    ]
+  }
+}

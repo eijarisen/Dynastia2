@@ -34,10 +34,12 @@ public sealed class StandardHeirloomService : IHeirloomService
         if (householdId is null)
             return [];
 
-        return FindHouseholdState(householdId.Value)?.Assets
+        return FindHouseholdStates(householdId.Value)
+            .SelectMany(component => component.Assets)
+            .GroupBy(asset => asset.Id)
+            .Select(group => group.First())
             .Select(ToInfo)
-            .ToList()
-            ?? [];
+            .ToList();
     }
 
     public HeirloomAssetInfo Create(
@@ -151,17 +153,30 @@ public sealed class StandardHeirloomService : IHeirloomService
         if (householdId is null)
             return null;
 
-        var component = FindHouseholdState(householdId.Value);
-        if (component is null)
-            return null;
+        foreach (var component in FindHouseholdStates(householdId.Value))
+        {
+            var index = component.Assets.FindIndex(asset => asset.Id == heirloomId);
+            if (index < 0)
+                continue;
 
-        var index = component.Assets.FindIndex(asset => asset.Id == heirloomId);
-        if (index < 0)
-            return null;
+            var state = component.Assets[index];
+            component.Assets.RemoveAt(index);
 
-        var state = component.Assets[index];
-        component.Assets.RemoveAt(index);
-        return ToInfo(state);
+            // Older saves can contain duplicate household heirloom components.
+            // Remove duplicate copies of the same asset from every matching
+            // component so a sale/take operation remains definitive.
+            foreach (var duplicate in FindHouseholdStates(householdId.Value))
+            {
+                if (ReferenceEquals(duplicate, component))
+                    continue;
+
+                duplicate.Assets.RemoveAll(asset => asset.Id == heirloomId);
+            }
+
+            return ToInfo(state);
+        }
+
+        return null;
     }
 
     public IReadOnlyList<HeirloomAssetInfo> TakeAll(IPerson householdMember)
@@ -170,12 +185,19 @@ public sealed class StandardHeirloomService : IHeirloomService
         if (householdId is null)
             return [];
 
-        var component = FindHouseholdState(householdId.Value);
-        if (component is null || component.Assets.Count == 0)
+        var components = FindHouseholdStates(householdId.Value).ToList();
+        if (components.Count == 0)
             return [];
 
-        var result = component.Assets.Select(ToInfo).ToList();
-        component.Assets.Clear();
+        var result = components
+            .SelectMany(component => component.Assets)
+            .GroupBy(asset => asset.Id)
+            .Select(group => ToInfo(group.First()))
+            .ToList();
+
+        foreach (var component in components)
+            component.Assets.Clear();
+
         return result;
     }
 
@@ -187,10 +209,14 @@ public sealed class StandardHeirloomService : IHeirloomService
         string reason)
     {
         var householdId = RequireHouseholdId(householdMember);
-        var component = GetOrCreateHouseholdState(householdMember, householdId);
-        if (component.Assets.Any(asset => asset.Id == heirloom.Id))
+        if (FindHouseholdStates(householdId)
+            .SelectMany(existing => existing.Assets)
+            .Any(asset => asset.Id == heirloom.Id))
+        {
             return;
+        }
 
+        var component = GetOrCreateHouseholdState(householdMember, householdId);
         var state = ToState(heirloom);
         state.AssignedHeirId = null;
         state.OwnershipHistory.Add(
@@ -259,9 +285,11 @@ public sealed class StandardHeirloomService : IHeirloomService
         if (householdId is null)
             return false;
 
-        var asset = FindHouseholdState(householdId.Value)?.Assets
-            .FirstOrDefault(candidate => candidate.Id == heirloomId);
-        if (asset is null)
+        var matchingAssets = FindHouseholdStates(householdId.Value)
+            .SelectMany(component => component.Assets)
+            .Where(candidate => candidate.Id == heirloomId)
+            .ToList();
+        if (matchingAssets.Count == 0)
             return false;
 
         if (heirId is Guid id)
@@ -275,7 +303,9 @@ public sealed class StandardHeirloomService : IHeirloomService
                 return false;
         }
 
-        asset.AssignedHeirId = heirId;
+        foreach (var asset in matchingAssets)
+            asset.AssignedHeirId = heirId;
+
         return true;
     }
 
@@ -335,9 +365,16 @@ public sealed class StandardHeirloomService : IHeirloomService
     }
 
     private HeirloomHouseholdComponent? FindHouseholdState(Guid householdId) =>
+        FindHouseholdStates(householdId)
+            .FirstOrDefault();
+
+    private IEnumerable<HeirloomHouseholdComponent> FindHouseholdStates(Guid householdId) =>
         _gameState.People
             .Select(person => person.Components.Get<HeirloomHouseholdComponent>())
-            .FirstOrDefault(component => component?.HouseholdId == householdId);
+            .Where(component =>
+                component is not null
+                && component.HouseholdId == householdId)
+            .Cast<HeirloomHouseholdComponent>();
 
     private static decimal RoundCurrency(decimal amount) =>
         Math.Round(amount, 0, MidpointRounding.AwayFromZero);

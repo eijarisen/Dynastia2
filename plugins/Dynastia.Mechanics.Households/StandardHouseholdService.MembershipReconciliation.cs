@@ -137,6 +137,94 @@ public sealed partial class StandardHouseholdService
         }
     }
 
+    private void ReconcileRemarriedCaregiverHouseholds()
+    {
+        foreach (var caregiver in
+            _gameState.People
+                .Where(person =>
+                    person.Tags.Has("state.alive")
+                    && person.Age >= 18
+                    && _family.GetSex(person) == Sex.Female
+                    && _economy.HasHousehold(person))
+                .ToList())
+        {
+            var spouse = _family.GetSpouse(caregiver);
+            if (spouse is null
+                || !spouse.Tags.Has("state.alive"))
+            {
+                continue;
+            }
+
+            var memberIds = _economy
+                .GetHouseholdMemberIds(caregiver)
+                .ToHashSet();
+
+            var stepchildren = _family
+                .GetChildren(caregiver)
+                .Where(child =>
+                    child.Tags.Has("state.alive")
+                    && memberIds.Contains(child.Id)
+                    && _family.IsBloodline(child)
+                    && _family.GetMother(child)?.Id != spouse.Id
+                    && _family.GetFather(child)?.Id != spouse.Id)
+                .ToList();
+
+            if (stepchildren.Count == 0)
+                continue;
+
+            // A widow/caregiver can remain the temporary head of the old
+            // bloodline household while male-lineage children are minors. A
+            // later husband joins that residence as their stepfather instead
+            // of vanishing from household membership or replacing the
+            // caregiver as head.
+            var spouseHead = ResolveHouseholdHead(spouse);
+            if (spouseHead is null)
+            {
+                _economy.AddHouseholdMember(caregiver, spouse);
+            }
+            else if (spouseHead.Id != caregiver.Id)
+            {
+                // Never merge an independently headed household implicitly.
+                continue;
+            }
+
+            foreach (var son in stepchildren
+                         .Where(child =>
+                             child.Age >= 18
+                             && _family.GetSex(child) == Sex.Male
+                             && _family.IsMaleLineage(child))
+                         .OrderBy(BirthSortKey)
+                         .ThenBy(child => child.Id)
+                         .ToList())
+            {
+                if (_economy.HasHousehold(son)
+                    || ResolveHouseholdHead(son)?.Id != caregiver.Id)
+                {
+                    continue;
+                }
+
+                var branch = CollectResidentBranch(
+                    son,
+                    memberIds,
+                    caregiver.Id);
+
+                EndResidentCaregiverRoles(caregiver, branch);
+
+                foreach (var member in branch)
+                    _economy.RemoveHouseholdMember(member);
+
+                son.Tags.Add("residence.independent");
+                _economy.EnsureIndependentHousehold(son, son);
+
+                foreach (var member in branch)
+                {
+                    if (member.Id != son.Id)
+                        _economy.AddHouseholdMember(son, member);
+                }
+            }
+        }
+    }
+
     private void ReconcileMarriedBloodlineWomen()
     {
         foreach (var woman in

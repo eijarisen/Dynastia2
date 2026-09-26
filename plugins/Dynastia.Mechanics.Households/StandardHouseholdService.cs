@@ -207,6 +207,12 @@ public sealed partial class StandardHouseholdService :
             warnings.Add(
                 $"The household is overcrowded by {excessResidents} resident{(excessResidents == 1 ? "" : "s")}; each additional resident gradually increases Stress and Health loss.");
         }
+        else if (overcrowdingThreshold > 0
+                 && residentCount == overcrowdingThreshold)
+        {
+            warnings.Add(
+                "The house is at its resident capacity; another resident will cause overcrowding.");
+        }
 
         return new HouseholdStatusSnapshot(
             actualHead.Id,
@@ -445,6 +451,8 @@ public sealed partial class StandardHouseholdService :
             DissolveEmptyDeadHouseholdTombstones();
 
             SeedLegacyHouseholdMemberships();
+
+            ReconcileRemarriedCaregiverHouseholds();
 
             ReconcileMarriedBloodlineWomen();
 

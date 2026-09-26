@@ -2,6 +2,9 @@ namespace Dynastia.Contracts;
 
 public static class FamilyShockRules
 {
+    public const double BereavementBaseHealthLoss = 7.5;
+    public const double BereavementStressMultiplier = 2.0;
+
     private const double SameHouseholdMultiplier = 1.25;
     private const double ExtendedRelativeMultiplier = 0.70;
 

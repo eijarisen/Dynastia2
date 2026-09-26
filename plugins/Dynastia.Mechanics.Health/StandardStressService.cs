@@ -207,18 +207,25 @@ public sealed class StandardStressService : IStressService
                 if (subject.Id == person.Id)
                     continue;
 
+                void AddBereavement(string sourceId, double value) =>
+                    Add(
+                        sourceId,
+                        value * FamilyShockRules.BereavementStressMultiplier);
+
                 if (WasSpouseThisYear(person, subject, eventYear))
-                    Add("bereavement.spouse", 5);
+                    AddBereavement("bereavement.spouse", 5);
                 else if (IsParentOf(person, subject) || IsChildOf(person, subject))
                 {
                     var same = SameHousehold(person, subject);
                     var value = same ? (IsParentOf(person, subject) ? 4 : 5) : 2;
-                    Add(IsParentOf(person, subject) ? "bereavement.parent" : "bereavement.child", value);
+                    AddBereavement(
+                        IsParentOf(person, subject) ? "bereavement.parent" : "bereavement.child",
+                        value);
                     if (person.Age < 18 && IsParentOf(person, subject) && BothParentsDead(person))
-                        Add("family.orphaned_recent", 5);
+                        AddBereavement("family.orphaned_recent", 5);
                 }
                 else if (AreSiblings(person, subject))
-                    Add("bereavement.sibling", 2);
+                    AddBereavement("bereavement.sibling", 2);
 
                 continue;
             }

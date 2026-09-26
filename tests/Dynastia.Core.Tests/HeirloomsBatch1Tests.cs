@@ -41,6 +41,35 @@ public sealed class HeirloomsBatch1Tests
     }
 
     [Fact]
+    public void DuplicateHouseholdStateCannotHideOwnedHeirloomsFromInventoryReads()
+    {
+        var fixture = CreateFixture();
+        var created = fixture.Heirlooms.Create(
+            fixture.Head,
+            Request("academic_university_diploma", fixture.Head));
+
+        var householdId = fixture.Economy.GetHouseholdId(fixture.Head)!.Value;
+        var populated = fixture.Head.Components.Get<HeirloomHouseholdComponent>()!;
+        fixture.Head.Components.Remove<HeirloomHouseholdComponent>();
+
+        var laterStorage = fixture.State.CreatePerson("Anna", "Nowak", 40);
+        laterStorage.Tags.Add("state.alive");
+        fixture.Head.Components.Set(
+            new HeirloomHouseholdComponent
+            {
+                HouseholdId = householdId
+            });
+        laterStorage.Components.Set(populated);
+
+        var listed = Assert.Single(fixture.Heirlooms.GetHeirlooms(fixture.Head));
+        Assert.Equal(created.Id, listed.Id);
+
+        var taken = fixture.Heirlooms.Take(fixture.Head, created.Id);
+        Assert.NotNull(taken);
+        Assert.Empty(fixture.Heirlooms.GetHeirlooms(fixture.Head));
+    }
+
+    [Fact]
     public void QueuedSaleRevalidatesOwnershipAndSoldItemIsRemovedPermanently()
     {
         var fixture = CreateFixture(initializePlugin: true);

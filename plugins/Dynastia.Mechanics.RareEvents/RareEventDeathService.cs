@@ -5,7 +5,7 @@ namespace Dynastia.Mechanics.RareEvents;
 internal sealed class RareEventDeathService
 {
     private const double GriefHealthPenalty =
-        15;
+        FamilyShockRules.BereavementBaseHealthLoss;
 
     private readonly IFamilyService _family;
     private readonly IHealthService _health;

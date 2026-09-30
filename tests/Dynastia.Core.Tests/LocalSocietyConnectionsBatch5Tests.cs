@@ -82,7 +82,7 @@ public sealed class LocalSocietyConnectionsBatch5Tests
         var connections = RepositoryFiles.ReadText("plugins", "Dynastia.Mechanics.Community", "CommunityConnectionService.cs");
         var status = RepositoryFiles.ReadText("plugins", "Dynastia.Mechanics.Status", "StandardStatusService.cs");
         Assert.Contains("connection.request_caused_poverty", connections);
-        Assert.Contains("Math.Min(_rules.NetworkRenownBonusCap, total)", connections);
+        Assert.Contains("Math.Min(rules.NetworkRenownBonusCap, breadth + quality)", connections);
         Assert.Contains("GetNetworkRenownBonus", status);
         Assert.Contains("+ networkRenown", status);
     }

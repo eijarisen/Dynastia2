@@ -14,3 +14,4 @@ priest,Clergyman,Modest,Comfortable,45,30,poor_relief;education
 retired_officer,Retired Officer,Comfortable,Wealthy,55,10,emergency;monument
 artist,Artist,Modest,Comfortable,35,10,culture;festival
 engineer,Engineer,Comfortable,Wealthy,50,15,development;flood_defence
+poor_family,Local Resident,Poor,Modest,10,10,poor_relief

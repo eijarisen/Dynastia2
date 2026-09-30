@@ -39,6 +39,7 @@ public sealed class CourtJusticeRules
             throw new InvalidOperationException("Court protection requires at least one tier.");
         if (Protection.CombinedSentenceMultiplierFloor is <= 0m or > 1m)
             throw new InvalidOperationException("Court sentence floor must be within (0,1].");
+        Protection.LawyerAcquaintances.Validate();
         if (Bail.MinimumCost < 0 || Bail.BaseCost < 0 || Bail.PerRemainingYear < 0)
             throw new InvalidOperationException("Court bail costs cannot be negative.");
         if (Escape.RequiresIntellect < 1)
@@ -58,7 +59,36 @@ public sealed class ProtectionRules
     public Dictionary<string, double> RelationMultipliers { get; init; } =
         new(StringComparer.OrdinalIgnoreCase);
     public List<CourtProtectionTier> Tiers { get; init; } = [];
+    public LawyerAcquaintanceProtectionRules LawyerAcquaintances { get; init; } = new();
     public decimal CombinedSentenceMultiplierFloor { get; init; } = 0.5m;
+}
+
+public sealed class LawyerAcquaintanceProtectionRules
+{
+    public string ArchetypeId { get; init; } = "lawyer";
+    public double WarmBaseScore { get; init; } = 0.30;
+    public double CloseBaseScore { get; init; } = 0.50;
+    public double ProminentRenownThreshold { get; init; } = 50;
+    public double ProminentRenownMultiplier { get; init; } = 1.20;
+    public double NotableRenownThreshold { get; init; } = 75;
+    public double NotableRenownMultiplier { get; init; } = 1.40;
+    public double CombinedScoreCap { get; init; } = 1.50;
+
+    internal void Validate()
+    {
+        if (string.IsNullOrWhiteSpace(ArchetypeId)
+            || WarmBaseScore < 0
+            || CloseBaseScore < 0
+            || ProminentRenownThreshold < 0
+            || NotableRenownThreshold < ProminentRenownThreshold
+            || ProminentRenownMultiplier < 0
+            || NotableRenownMultiplier < 0
+            || CombinedScoreCap < 0)
+        {
+            throw new InvalidOperationException(
+                "Court lawyer-acquaintance protection rules are invalid.");
+        }
+    }
 }
 
 public sealed class CourtProtectionTier

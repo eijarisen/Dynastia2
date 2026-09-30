@@ -10,8 +10,10 @@ internal sealed record CommunityPolicyDefinition(
     int StartYear,
     int? EndYear,
     SettlementClass MinimumSettlementClass,
+    SettlementClass MaximumSettlementClass,
     string? RequiredInstitutionId,
     string? RequiredOpportunityTag,
+    int? RequiredProsperityMin,
     int? RequiredProsperityMax,
     IReadOnlySet<string> RequiredRegionIds,
     string Rarity,
@@ -23,11 +25,12 @@ internal sealed record CommunityPolicyDefinition(
     double Magnitude,
     string Favorability,
     IReadOnlyList<string> ProposerArchetypes,
-    string Description)
+    string Description,
+    string EffectSummary)
 {
     public bool IsNoEffect => EffectKey.Equals("none", StringComparison.OrdinalIgnoreCase);
     public bool IsUnfavorable => Favorability.Equals("Unfavorable", StringComparison.OrdinalIgnoreCase);
-    public bool IsFavorable => Favorability.Equals("Favorable", StringComparison.OrdinalIgnoreCase);
+    public bool IsStrong => ImpactTier.Equals("Strong", StringComparison.OrdinalIgnoreCase);
 }
 
 internal sealed record CommunityConnectionArchetype(
@@ -42,6 +45,7 @@ internal sealed record CommunityConnectionArchetype(
 internal sealed class CommunityPolicyCatalog
 {
     private const string PoliciesPath = "LocalSociety/community_policies.csv";
+    private const string LegacyPoliciesPath = "LocalSociety/community_policies_legacy.csv";
     private const string ArchetypesPath = "LocalSociety/connection_archetypes.csv";
 
     private readonly IReadOnlyDictionary<string, CommunityPolicyDefinition> _byId;
@@ -49,14 +53,19 @@ internal sealed class CommunityPolicyCatalog
 
     private CommunityPolicyCatalog(
         IReadOnlyList<CommunityPolicyDefinition> policies,
+        IReadOnlyList<CommunityPolicyDefinition> legacyPolicies,
         IReadOnlyDictionary<string, CommunityConnectionArchetype> archetypes)
     {
         Policies = policies;
-        _byId = policies.ToDictionary(policy => policy.Id, StringComparer.OrdinalIgnoreCase);
+        LegacyPolicies = legacyPolicies;
+        _byId = policies
+            .Concat(legacyPolicies)
+            .ToDictionary(policy => policy.Id, StringComparer.OrdinalIgnoreCase);
         _archetypes = archetypes;
     }
 
     public IReadOnlyList<CommunityPolicyDefinition> Policies { get; }
+    public IReadOnlyList<CommunityPolicyDefinition> LegacyPolicies { get; }
 
     public CommunityPolicyDefinition Get(string policyId) =>
         _byId.TryGetValue(policyId, out var policy)
@@ -72,31 +81,12 @@ internal sealed class CommunityPolicyCatalog
     {
         ArgumentNullException.ThrowIfNull(data);
 
-        var policies = ParseCsv(data.ReadText(PoliciesPath), PoliciesPath)
-            .Select(row => new CommunityPolicyDefinition(
-                Required(row, "PolicyId", PoliciesPath),
-                Required(row, "DisplayName", PoliciesPath),
-                ParseInt(row, "StartYear", PoliciesPath),
-                ParseNullableInt(row, "EndYear", PoliciesPath),
-                ParseSettlementClass(Required(row, "MinimumSettlementClass", PoliciesPath), PoliciesPath),
-                Optional(row, "RequiredInstitutionId"),
-                Optional(row, "RequiredOpportunityTag"),
-                ParseNullableInt(row, "RequiredProsperityMax", PoliciesPath),
-                SplitSet(Optional(row, "RequiredRegionIds")),
-                Required(row, "Rarity", PoliciesPath),
-                ParseDouble(row, "SelectionWeight", PoliciesPath),
-                Required(row, "ImpactTier", PoliciesPath),
-                ParseDouble(row, "BaseSupport", PoliciesPath),
-                ParseInt(row, "DurationYears", PoliciesPath),
-                Required(row, "EffectKey", PoliciesPath),
-                ParseDouble(row, "Magnitude", PoliciesPath),
-                Required(row, "Favorability", PoliciesPath),
-                SplitList(Required(row, "ProposerArchetypes", PoliciesPath)),
-                Required(row, "Description", PoliciesPath)))
-            .ToArray();
+        var policies = LoadPolicies(data.ReadText(PoliciesPath), PoliciesPath);
+        var legacyPolicies = LoadPolicies(data.ReadText(LegacyPoliciesPath), LegacyPoliciesPath);
+        var allPolicies = policies.Concat(legacyPolicies).ToArray();
 
-        if (policies.Select(policy => policy.Id).Distinct(StringComparer.OrdinalIgnoreCase).Count() != policies.Length)
-            throw new InvalidDataException($"{PoliciesPath}: PolicyId values must be unique.");
+        if (allPolicies.Select(policy => policy.Id).Distinct(StringComparer.OrdinalIgnoreCase).Count() != allPolicies.Length)
+            throw new InvalidDataException($"{PoliciesPath}/{LegacyPoliciesPath}: PolicyId values must be unique across current and legacy catalogues.");
 
         var archetypes = ParseCsv(data.ReadText(ArchetypesPath), ArchetypesPath)
             .Select(row => new CommunityConnectionArchetype(
@@ -109,22 +99,60 @@ internal sealed class CommunityPolicyCatalog
                 SplitSet(Optional(row, "PolicyThemes"))))
             .ToDictionary(item => item.Id, StringComparer.OrdinalIgnoreCase);
 
-        foreach (var policy in policies)
+        foreach (var policy in allPolicies)
         {
             foreach (var archetypeId in policy.ProposerArchetypes)
             {
                 if (!archetypes.ContainsKey(archetypeId))
-                    throw new InvalidDataException($"{PoliciesPath}: policy '{policy.Id}' references unknown archetype '{archetypeId}'.");
+                    throw new InvalidDataException($"Community policy '{policy.Id}' references unknown archetype '{archetypeId}'.");
             }
         }
 
-        return new CommunityPolicyCatalog(policies, archetypes);
+        return new CommunityPolicyCatalog(policies, legacyPolicies, archetypes);
     }
+
+    private static IReadOnlyList<CommunityPolicyDefinition> LoadPolicies(string text, string path) =>
+        ParseCsv(text, path)
+            .Select(row => new CommunityPolicyDefinition(
+                Required(row, "PolicyId", path),
+                Required(row, "DisplayName", path),
+                ParseInt(row, "StartYear", path),
+                ParseNullableInt(row, "EndYear", path),
+                ParseSettlementClass(Required(row, "MinimumSettlementClass", path), path),
+                ParseOptionalSettlementClass(row, "MaximumSettlementClass", path) ?? SettlementClass.MajorCity,
+                Optional(row, "RequiredInstitutionId"),
+                Optional(row, "RequiredOpportunityTag"),
+                ParseNullableInt(row, "RequiredProsperityMin", path),
+                ParseNullableInt(row, "RequiredProsperityMax", path),
+                SplitSet(Optional(row, "RequiredRegionIds")),
+                Required(row, "Rarity", path),
+                ParseDouble(row, "SelectionWeight", path),
+                Required(row, "ImpactTier", path),
+                ParseDouble(row, "BaseSupport", path),
+                ParseInt(row, "DurationYears", path),
+                Required(row, "EffectKey", path),
+                ParseDouble(row, "Magnitude", path),
+                Required(row, "Favorability", path),
+                SplitList(Required(row, "ProposerArchetypes", path)),
+                Required(row, "Description", path),
+                Required(row, "EffectSummary", path)))
+            .ToArray();
 
     private static SettlementClass ParseSettlementClass(string value, string path) =>
         Enum.TryParse<SettlementClass>(value, ignoreCase: true, out var result)
             ? result
             : throw new InvalidDataException($"{path}: invalid settlement class '{value}'.");
+
+    private static SettlementClass? ParseOptionalSettlementClass(
+        IReadOnlyDictionary<string, string> row,
+        string field,
+        string path)
+    {
+        var value = Optional(row, field);
+        return value is null
+            ? null
+            : ParseSettlementClass(value, path);
+    }
 
     private static IReadOnlySet<string> SplitSet(string? value) =>
         new HashSet<string>(SplitList(value ?? string.Empty), StringComparer.OrdinalIgnoreCase);

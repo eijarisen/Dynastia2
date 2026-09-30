@@ -129,7 +129,14 @@
     "notableConnectionThreshold": 75,
     "notableWarmBonus": 0.5,
     "notableCloseBonus": 1.0,
-    "householdRenownBonusCap": 5
+    "householdRenownBonusCap": 5,
+    "breadthFirstFiveBonus": 0.15,
+    "breadthSixToTenBonus": 0.1,
+    "breadthBeyondTenBonus": 0.05,
+    "breadthRenownBonusCap": 2.0,
+    "qualityRenownBonusCap": 4.0,
+    "civicCandidateWeightPerLocalActiveConnection": 1.5,
+    "civicCandidateLocalActiveConnectionCap": 12
   },
   "simpleFamily": {
     "simulateNamesOnly": true,

@@ -13,6 +13,16 @@
       "Warm": 0.75,
       "Close": 1.0
     },
+    "lawyerAcquaintances": {
+      "archetypeId": "lawyer",
+      "warmBaseScore": 0.3,
+      "closeBaseScore": 0.5,
+      "prominentRenownThreshold": 50,
+      "prominentRenownMultiplier": 1.2,
+      "notableRenownThreshold": 75,
+      "notableRenownMultiplier": 1.4,
+      "combinedScoreCap": 1.5
+    },
     "tiers": [
       {
         "id": "none",

@@ -17,16 +17,24 @@ public sealed class LocalSocietyCommunityBatch3Tests
         Assert.False(generation.GetProperty("usesGlobalRng").GetBoolean());
         Assert.True(generation.GetProperty("withoutReplacement").GetBoolean());
         Assert.Equal(1, generation.GetProperty("maximumUnfavorablePerSet").GetInt32());
-        Assert.Equal(1, generation.GetProperty("maximumNoEffectPerSet").GetInt32());
-        Assert.True(generation.GetProperty("preferAtLeastOneFavorableSubstantive").GetBoolean());
+        Assert.Equal(1, generation.GetProperty("maximumStrongPerSet").GetInt32());
+        var bands = generation.GetProperty("impactBandWeights");
+        Assert.Equal(0.45, bands.GetProperty("Ceremonial").GetDouble(), 10);
+        Assert.Equal(0.35, bands.GetProperty("Weak").GetDouble(), 10);
+        Assert.Equal(0.16, bands.GetProperty("Medium").GetDouble(), 10);
+        Assert.Equal(0.04, bands.GetProperty("Strong").GetDouble(), 10);
+        Assert.True(generation.TryGetProperty("fallbackOrder", out _));
+        Assert.False(generation.TryGetProperty("maximumNoEffectPerSet", out _));
+        Assert.False(generation.TryGetProperty("preferAtLeastOneFavorableSubstantive", out _));
 
         var service = RepositoryFiles.ReadText(
             "plugins", "Dynastia.Mechanics.Community", "CommunityPolicyService.cs");
-        Assert.Contains("StableUnit(BuildKey(town.Id, year", service);
+        Assert.Contains("StableUnit(BuildKey(town.Id, year, slot, \"impact-band\"))", service);
         Assert.Contains("eligible.Remove(chosen)", service);
         Assert.Contains("activeIds.Contains(policy.Id)", service);
         Assert.Contains("MaximumUnfavorablePerSet", service);
-        Assert.Contains("MaximumNoEffectPerSet", service);
+        Assert.Contains("MaximumStrongPerSet", service);
+        Assert.Contains("FallbackOrder", service);
     }
 
     [Fact]
@@ -100,8 +108,7 @@ public sealed class LocalSocietyCommunityBatch3Tests
 
         Assert.Equal("community.lobby_policy", lobby.GetProperty("actionId").GetString());
         Assert.Equal(1, lobby.GetProperty("participationCountGain").GetInt32());
-        Assert.Equal(0.35, lobby.GetProperty("ordinaryCap").GetDouble(), 10);
-        Assert.Equal(0.45, lobby.GetProperty("townHeadCap").GetDouble(), 10);
+        Assert.Contains("unchanged", lobby.GetProperty("bonusFormula").GetString() ?? string.Empty, StringComparison.OrdinalIgnoreCase);
         Assert.Contains("0.65", resolution.GetProperty("overallImplementationChance").GetString());
         Assert.True(resolution.GetProperty("atMostOnePolicyImplementedPerTownPerYear").GetBoolean());
 
@@ -128,6 +135,14 @@ public sealed class LocalSocietyCommunityBatch3Tests
         Assert.Equal(1.10m, caps.GetProperty("craftIncomeMultiplierMax").GetDecimal());
         Assert.Equal(1, caps.GetProperty("serviceTierBonusMax").GetInt32());
         Assert.Equal(0.80m, caps.GetProperty("historicalLossMultiplierMin").GetDecimal());
+        Assert.Equal(0.94m, caps.GetProperty("livingCostMultiplierMin").GetDecimal());
+        Assert.Equal(1.06m, caps.GetProperty("livingCostMultiplierMax").GetDecimal());
+        Assert.Equal(0.95m, caps.GetProperty("careerIncomeMultiplierMin").GetDecimal());
+        Assert.Equal(1.06m, caps.GetProperty("careerIncomeMultiplierMax").GetDecimal());
+        Assert.Equal(-0.5, caps.GetProperty("annualHealthAddMin").GetDouble(), 10);
+        Assert.Equal(1.0, caps.GetProperty("annualHealthAddMax").GetDouble(), 10);
+        Assert.Equal(0.8, caps.GetProperty("crimeChanceMultiplierMin").GetDouble(), 10);
+        Assert.Equal(1.2, caps.GetProperty("crimeChanceMultiplierMax").GetDouble(), 10);
 
         var service = RepositoryFiles.ReadText(
             "plugins", "Dynastia.Mechanics.Community", "CommunityPolicyService.cs");
@@ -137,6 +152,10 @@ public sealed class LocalSocietyCommunityBatch3Tests
         Assert.Contains("Math.Clamp(education", service);
         Assert.Contains("Math.Clamp(jobApplication", service);
         Assert.Contains("Math.Clamp(historicalWealth", service);
+        Assert.Contains("Math.Clamp(livingCost", service);
+        Assert.Contains("Math.Clamp(careerIncome", service);
+        Assert.Contains("Math.Clamp(annualHealth", service);
+        Assert.Contains("Math.Clamp(crimeChance", service);
     }
 
     [Fact]
@@ -154,6 +173,14 @@ public sealed class LocalSocietyCommunityBatch3Tests
             "plugins", "Dynastia.Mechanics.Church", "ChurchPlugin.cs");
         var historical = RepositoryFiles.ReadText(
             "plugins", "Dynastia.Mechanics.Historical", "HistoricalEventYearSystem.cs");
+        var annualFinance = RepositoryFiles.ReadText(
+            "plugins", "Dynastia.Mechanics.Economy", "StandardEconomyService.AnnualFinance.cs");
+        var compensation = RepositoryFiles.ReadText(
+            "plugins", "Dynastia.Mechanics.Career", "StandardCareerService.Compensation.cs");
+        var health = RepositoryFiles.ReadText(
+            "plugins", "Dynastia.Mechanics.Health", "HealthYearSystem.cs");
+        var crime = RepositoryFiles.ReadText(
+            "plugins", "Dynastia.Mechanics.Justice", "CrimeYearSystem.cs");
         var window = RepositoryFiles.ReadText(
             "src", "Dynastia.App", "Views", "TownLifeWindow.axaml");
 
@@ -166,6 +193,10 @@ public sealed class LocalSocietyCommunityBatch3Tests
         Assert.Contains("ChurchWelfareMultiplier", church);
         Assert.Contains("HistoricalWealthLossMultiplier", historical);
         Assert.Contains("FloodLossMultiplier", historical);
+        Assert.Contains("LivingCostMultiplier", annualFinance);
+        Assert.Contains("CareerIncomeMultiplier", compensation);
+        Assert.Contains("AnnualHealthAdd", health);
+        Assert.Contains("CrimeChanceMultiplier", crime);
         Assert.Contains("Header=\"Community\"", window);
         Assert.Contains("ColumnDefinitions=\"3*,4*\"", window);
         Assert.Contains("Text=\"{Binding CivicOfficePortrait}\"", window);

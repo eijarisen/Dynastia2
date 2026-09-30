@@ -1,4 +1,7 @@
+using System.Buffers.Binary;
 using System.Globalization;
+using System.Security.Cryptography;
+using System.Text;
 using Dynastia.Contracts;
 
 namespace Dynastia.Mechanics.Church;
@@ -7,6 +10,17 @@ public sealed class ChurchPlugin : IGamePlugin
 {
     private const string TierParameter = "churchTier";
     private const string AmountParameter = "churchAmount";
+    private const string PoorFamilyContactIdParameter = "poorFamilyContactId";
+    private const string PoorFamilyNameParameter = "poorFamilyName";
+    private const string PoorFamilyContactNameParameter = "poorFamilyContactName";
+    private const string PoorFamilyContactSexParameter = "poorFamilyContactSex";
+    private const string PoorFamilyContactBirthYearParameter = "poorFamilyContactBirthYear";
+    private const string PoorFamilyNationalityIdParameter = "poorFamilyNationalityId";
+    private const string PoorFamilyTownIdParameter = "poorFamilyTownId";
+    private const string PoorFamilySummaryParameter = "poorFamilySummary";
+    private const string PoorFamilySpouseNameParameter = "poorFamilySpouseName";
+    private const string PoorFamilyChildrenParameter = "poorFamilyChildren";
+    private const string PoorFamilyOriginId = "church.aid_poor_family";
 
     public void Initialize(IGamePluginContext context)
     {
@@ -37,7 +51,8 @@ public sealed class ChurchPlugin : IGamePlugin
             rules.ChurchDonationTiers,
             aidPoorFamily: false,
             nationalities,
-            names);
+            names,
+            () => context.GetService<IHouseholdConnectionService>());
         RegisterDonation(
             actions,
             economy,
@@ -51,7 +66,8 @@ public sealed class ChurchPlugin : IGamePlugin
             rules.PoorFamilyTiers,
             aidPoorFamily: true,
             nationalities,
-            names);
+            names,
+            () => context.GetService<IHouseholdConnectionService>());
         RegisterWelfare(
             actions,
             economy,
@@ -128,7 +144,8 @@ public sealed class ChurchPlugin : IGamePlugin
         IReadOnlyDictionary<string, ChurchRules.DonationTierRule> tiers,
         bool aidPoorFamily,
         INationalityService nationalities,
-        IHistoricalNameService names)
+        IHistoricalNameService names,
+        Func<IHouseholdConnectionService?> connectionsResolver)
     {
         actions.Register(new GameActionDefinition
         {
@@ -173,6 +190,15 @@ public sealed class ChurchPlugin : IGamePlugin
                         "zł")
                 };
                 var metadata = MoneyMetadata(tierId, amount);
+                if (aidPoorFamily)
+                {
+                    var prospectData = ResolvePoorFamilyProspectData(
+                        actionContext,
+                        economy,
+                        nationalities,
+                        names);
+                    metadata = WithPoorFamilyMetadata(metadata, prospectData);
+                }
 
                 return available >= amount
                     ? ActionEvaluationResult.Allowed(
@@ -231,14 +257,42 @@ public sealed class ChurchPlugin : IGamePlugin
 
                 if (aidPoorFamily)
                 {
-                    var familyName = GeneratePoorFamilyName(
+                    var prospectData = ResolvePoorFamilyProspectData(
                         actionContext,
                         economy,
                         nationalities,
                         names);
-                    eventData["familyName"] = familyName;
+                    var prospect = prospectData.Prospect;
+                    var householdId = economy.GetHouseholdId(actionContext.Actor);
+                    if (householdId is Guid resolvedHouseholdId
+                        && connectionsResolver() is { } connections)
+                    {
+                        connections.EnsureLocalConnection(new HouseholdConnectionSeed(
+                            prospect.ContactId,
+                            resolvedHouseholdId,
+                            prospect.ContactName,
+                            prospect.ContactSex,
+                            prospectData.ContactBirthYear,
+                            prospect.NationalityId,
+                            prospect.TownId,
+                            "Local Resident",
+                            "poor_family",
+                            "Poor",
+                            10,
+                            10,
+                            30,
+                            20,
+                            prospectData.SpouseName,
+                            prospectData.Children,
+                            PoorFamilyOriginId));
+                    }
+
+                    eventData["connectionId"] = prospect.ContactId.ToString("D");
+                    eventData["familyName"] = prospect.FamilyName;
+                    eventData["contactName"] = prospect.ContactName;
+                    eventData["familySummary"] = prospect.HouseholdSummary;
                     eventData["text"] =
-                        $"{family.GetDisplayName(actionContext.Target)} gave {amount:N0} zł to the struggling {familyName} family.";
+                        $"{family.GetDisplayName(actionContext.Target)} gave {amount:N0} zł to the struggling {prospect.FamilyName} family.";
                 }
                 else
                 {
@@ -540,24 +594,242 @@ public sealed class ChurchPlugin : IGamePlugin
             personality.ShiftMorals(context.Target, 1);
     }
 
-    private static string GeneratePoorFamilyName(
+    internal static PoorFamilyProspectInfo BuildPoorFamilyProspect(
+        GameActionContext context,
+        IEconomyService economy,
+        INationalityService nationalities,
+        IHistoricalNameService names) =>
+        BuildPoorFamilyProspectData(context, economy, nationalities, names).Prospect;
+
+    private static PoorFamilyProspectData ResolvePoorFamilyProspectData(
+        GameActionContext context,
+        IEconomyService economy,
+        INationalityService nationalities,
+        IHistoricalNameService names)
+    {
+        if (TryReadPoorFamilyProspectData(context, out var persisted))
+            return persisted;
+
+        return BuildPoorFamilyProspectData(context, economy, nationalities, names);
+    }
+
+    private static PoorFamilyProspectData BuildPoorFamilyProspectData(
         GameActionContext context,
         IEconomyService economy,
         INationalityService nationalities,
         IHistoricalNameService names)
     {
         var town = economy.GetResidenceTown(context.Actor);
+        var householdId = economy.GetHouseholdId(context.Actor) ?? context.Actor.Id;
+        var anchor = context.GameState.People.FirstOrDefault()?.Id.ToString("N") ?? "no-anchor";
+        var key = $"{anchor}|{context.GameState.StartYear}|{town.Id}|{householdId:N}|{context.GameState.Year}|church-poor-family";
+        var random = new StableGameRandom(StableHash64(key));
+
+        var contactId = StableGuid(key + "|contact");
+        var contactSex = random.Chance(0.5) ? Sex.Male : Sex.Female;
+        var contactAge = random.NextInt(22, 55);
+        var contactBirthYear = context.GameState.Year - contactAge;
         var nationalityId = string.IsNullOrWhiteSpace(town.RegionId)
             ? nationalities.GetNationality(context.Actor)
             : nationalities.GenerateNationality(
                 town.RegionId,
                 context.GameState.Year,
-                context.Random);
+                random);
         var cultureId = nationalities.GetNameCultureId(nationalityId);
-        return names.GetRandomSurname(
-            Sex.Male,
+        var familyName = names.GetRandomSurname(Sex.Male, cultureId, random);
+        var contactFirstName = names.GetRandomFirstName(
+            contactSex,
+            contactBirthYear,
             cultureId,
-            context.Random);
+            random);
+        var contactSurname = names.FormatSurname(
+            familyName,
+            contactSex,
+            cultureId);
+        var contactName = $"{contactFirstName} {contactSurname}";
+
+        var hasSpouse = random.Chance(0.65);
+        var maximumChildren = contactAge switch
+        {
+            <= 25 => 1,
+            <= 30 => 2,
+            <= 35 => 3,
+            <= 40 => 4,
+            _ => 5
+        };
+        var childCount = random.NextInt(1, Math.Max(1, maximumChildren));
+
+        string? spouseName = null;
+        if (hasSpouse)
+        {
+            var spouseSex = contactSex == Sex.Male ? Sex.Female : Sex.Male;
+            var spouseAge = Math.Clamp(contactAge + random.NextInt(-5, 5), 18, 60);
+            var spouseFirstName = names.GetRandomFirstName(
+                spouseSex,
+                context.GameState.Year - spouseAge,
+                cultureId,
+                random);
+            spouseName = $"{spouseFirstName} {names.FormatSurname(familyName, spouseSex, cultureId)}";
+        }
+
+        var children = new List<string>(childCount);
+        for (var index = 0; index < childCount; index++)
+        {
+            var childSex = random.Chance(0.5) ? Sex.Male : Sex.Female;
+            var oldestPossible = Math.Clamp(contactAge - 18, 0, 17);
+            var childAge = oldestPossible == 0
+                ? 0
+                : random.NextInt(0, oldestPossible);
+            var childFirstName = names.GetRandomFirstName(
+                childSex,
+                context.GameState.Year - childAge,
+                cultureId,
+                random);
+            children.Add(
+                $"{childFirstName} {names.FormatSurname(familyName, childSex, cultureId)}");
+        }
+
+        var childLabel = childCount == 1 ? "1 child" : $"{childCount} children";
+        var summary = hasSpouse
+            ? $"spouse and {childLabel}"
+            : $"widowed parent with {childLabel}";
+        var prospect = new PoorFamilyProspectInfo(
+            contactId,
+            familyName,
+            contactName,
+            contactSex,
+            contactAge,
+            nationalityId,
+            town.Id,
+            summary,
+            string.Empty);
+        return new PoorFamilyProspectData(
+            prospect,
+            contactBirthYear,
+            spouseName,
+            children);
+    }
+
+    private static bool TryReadPoorFamilyProspectData(
+        GameActionContext context,
+        out PoorFamilyProspectData data)
+    {
+        var parameters = context.Parameters;
+        data = null!;
+        if (!parameters.TryGetValue(PoorFamilyContactIdParameter, out var rawId)
+            || !Guid.TryParse(rawId, out var contactId)
+            || !parameters.TryGetValue(PoorFamilyNameParameter, out var familyName)
+            || string.IsNullOrWhiteSpace(familyName)
+            || !parameters.TryGetValue(PoorFamilyContactNameParameter, out var contactName)
+            || string.IsNullOrWhiteSpace(contactName)
+            || !parameters.TryGetValue(PoorFamilyContactSexParameter, out var rawSex)
+            || !Enum.TryParse<Sex>(rawSex, ignoreCase: true, out var contactSex)
+            || !parameters.TryGetValue(PoorFamilyContactBirthYearParameter, out var rawBirthYear)
+            || !int.TryParse(rawBirthYear, NumberStyles.Integer, CultureInfo.InvariantCulture, out var birthYear)
+            || !parameters.TryGetValue(PoorFamilyNationalityIdParameter, out var nationalityId)
+            || string.IsNullOrWhiteSpace(nationalityId)
+            || !parameters.TryGetValue(PoorFamilyTownIdParameter, out var townId)
+            || string.IsNullOrWhiteSpace(townId)
+            || !parameters.TryGetValue(PoorFamilySummaryParameter, out var summary)
+            || string.IsNullOrWhiteSpace(summary))
+        {
+            return false;
+        }
+
+        parameters.TryGetValue(PoorFamilySpouseNameParameter, out var spouseName);
+        parameters.TryGetValue(PoorFamilyChildrenParameter, out var rawChildren);
+        var children = string.IsNullOrWhiteSpace(rawChildren)
+            ? Array.Empty<string>()
+            : rawChildren.Split(
+                '\u001F',
+                StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+
+        var prospect = new PoorFamilyProspectInfo(
+            contactId,
+            familyName,
+            contactName,
+            contactSex,
+            Math.Max(0, context.GameState.Year - birthYear),
+            nationalityId,
+            townId,
+            summary,
+            string.Empty);
+        data = new PoorFamilyProspectData(
+            prospect,
+            birthYear,
+            string.IsNullOrWhiteSpace(spouseName) ? null : spouseName,
+            children);
+        return true;
+    }
+
+    private static IReadOnlyDictionary<string, string> WithPoorFamilyMetadata(
+        IReadOnlyDictionary<string, string> source,
+        PoorFamilyProspectData data)
+    {
+        var prospect = data.Prospect;
+        return new Dictionary<string, string>(source, StringComparer.OrdinalIgnoreCase)
+        {
+            [PoorFamilyContactIdParameter] = prospect.ContactId.ToString("D"),
+            [PoorFamilyNameParameter] = prospect.FamilyName,
+            [PoorFamilyContactNameParameter] = prospect.ContactName,
+            [PoorFamilyContactSexParameter] = prospect.ContactSex.ToString(),
+            [PoorFamilyContactBirthYearParameter] = data.ContactBirthYear.ToString(CultureInfo.InvariantCulture),
+            [PoorFamilyNationalityIdParameter] = prospect.NationalityId,
+            [PoorFamilyTownIdParameter] = prospect.TownId,
+            [PoorFamilySummaryParameter] = prospect.HouseholdSummary,
+            [PoorFamilySpouseNameParameter] = data.SpouseName ?? string.Empty,
+            [PoorFamilyChildrenParameter] = string.Join("\u001F", data.Children)
+        };
+    }
+
+    private static ulong StableHash64(string key)
+    {
+        var bytes = SHA256.HashData(Encoding.UTF8.GetBytes(key));
+        return BinaryPrimitives.ReadUInt64LittleEndian(bytes);
+    }
+
+    private static Guid StableGuid(string key)
+    {
+        var bytes = SHA256.HashData(Encoding.UTF8.GetBytes(key));
+        return new Guid(bytes.AsSpan(0, 16));
+    }
+
+    private sealed record PoorFamilyProspectData(
+        PoorFamilyProspectInfo Prospect,
+        int ContactBirthYear,
+        string? SpouseName,
+        IReadOnlyList<string> Children);
+
+    private sealed class StableGameRandom : IGameRandom
+    {
+        private ulong _state;
+
+        public StableGameRandom(ulong seed) =>
+            _state = seed == 0 ? 0x9E3779B97F4A7C15UL : seed;
+
+        public int NextInt(int minInclusive, int maxInclusive)
+        {
+            if (maxInclusive < minInclusive)
+                throw new ArgumentOutOfRangeException(nameof(maxInclusive));
+            var width = (ulong)((long)maxInclusive - minInclusive + 1L);
+            return minInclusive + (int)(NextUInt64() % width);
+        }
+
+        public double NextDouble() =>
+            (NextUInt64() >> 11) * (1.0 / (1UL << 53));
+
+        public bool Chance(double probability) =>
+            NextDouble() < Math.Clamp(probability, 0, 1);
+
+        private ulong NextUInt64()
+        {
+            var value = _state;
+            value ^= value >> 12;
+            value ^= value << 25;
+            value ^= value >> 27;
+            _state = value;
+            return value * 2685821657736338717UL;
+        }
     }
 
     private static int ResolveWelfareEligibilityYear(GameActionContext context) =>

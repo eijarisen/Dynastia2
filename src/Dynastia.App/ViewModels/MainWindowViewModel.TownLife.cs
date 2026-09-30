@@ -476,6 +476,20 @@ public sealed partial class MainWindowViewModel
             var description = action.Description
                 + " Choose the amount with the money slider; larger gifts qualify for stronger donation effects.";
 
+            var persistedParameters = evaluation.PresentationMetadata
+                .Where(item => item.Key.StartsWith(
+                    "poorFamily",
+                    StringComparison.OrdinalIgnoreCase))
+                .ToDictionary(
+                    item => item.Key,
+                    item => item.Value,
+                    StringComparer.OrdinalIgnoreCase);
+            var poorFamilyProspect = actionId.Equals(
+                    "church.aid_poor_family",
+                    StringComparison.OrdinalIgnoreCase)
+                ? GetTownAffairsPoorFamilyProspect(evaluation.PresentationMetadata)
+                : null;
+
             result.Add(new TownAffairsChurchActionViewModel(
                 action.Id,
                 action.Label,
@@ -485,10 +499,11 @@ public sealed partial class MainWindowViewModel
                 false,
                 evaluation.Available,
                 evaluation.Reason,
-                new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase),
+                persistedParameters,
                 RequiresMoneySelection: true,
                 MinimumAmount: minimum,
-                MaximumAmount: Math.Max(0m, maximum)));
+                MaximumAmount: Math.Max(0m, maximum),
+                PoorFamilyProspect: poorFamilyProspect));
         }
 
         void AddChurchAction(
@@ -547,6 +562,55 @@ public sealed partial class MainWindowViewModel
     }
 
 
+    private PoorFamilyProspectInfo? GetTownAffairsPoorFamilyProspect(
+        IReadOnlyDictionary<string, string> metadata)
+    {
+        if (!metadata.TryGetValue("poorFamilyContactId", out var rawId)
+            || !Guid.TryParse(rawId, out var contactId)
+            || !metadata.TryGetValue("poorFamilyName", out var familyName)
+            || !metadata.TryGetValue("poorFamilyContactName", out var contactName)
+            || !metadata.TryGetValue("poorFamilyContactSex", out var rawSex)
+            || !Enum.TryParse<Sex>(rawSex, ignoreCase: true, out var contactSex)
+            || !metadata.TryGetValue("poorFamilyContactBirthYear", out var rawBirthYear)
+            || !int.TryParse(
+                rawBirthYear,
+                System.Globalization.NumberStyles.Integer,
+                System.Globalization.CultureInfo.InvariantCulture,
+                out var birthYear)
+            || !metadata.TryGetValue("poorFamilyNationalityId", out var nationalityId)
+            || !metadata.TryGetValue("poorFamilyTownId", out var townId)
+            || !metadata.TryGetValue("poorFamilySummary", out var summary))
+        {
+            return null;
+        }
+
+        var age = Math.Max(0, _gameState.Year - birthYear);
+        var portrait = "🧑";
+        if (_appearanceService is not null)
+        {
+            var appearance = _appearanceService.GenerateCandidateAppearance(
+                contactId,
+                contactSex);
+            portrait = _appearanceService.GetPortrait(
+                appearance,
+                contactSex,
+                age,
+                contactId);
+        }
+
+        return new PoorFamilyProspectInfo(
+            contactId,
+            familyName,
+            contactName,
+            contactSex,
+            age,
+            nationalityId,
+            townId,
+            summary,
+            portrait);
+    }
+
+
     internal TownAffairsCourtViewModel? GetTownAffairsCourtModel(
         TownLifeSnapshot snapshot,
         IPerson subject)
@@ -566,6 +630,7 @@ public sealed partial class MainWindowViewModel
             1m);
         var protectionText = $"Court protection: {protectionPercent:P0}";
         var relatives = _justiceService.GetCourtProtectionRelatives(subject);
+        var acquaintances = _justiceService.GetCourtProtectionAcquaintances(subject);
         var status = _justiceService.GetStatus(subject);
 
         return new TownAffairsCourtViewModel(
@@ -573,6 +638,7 @@ public sealed partial class MainWindowViewModel
             hasLocalCourt,
             protectionText,
             relatives,
+            acquaintances,
             status.KnownCriminalRecord);
     }
 

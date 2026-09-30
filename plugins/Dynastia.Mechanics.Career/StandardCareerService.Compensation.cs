@@ -79,10 +79,15 @@ public sealed partial class StandardCareerService
             0,
             MidpointRounding.AwayFromZero);
 
+        var workAdjustedIncome = _workCapacity
+            .GetWorkCapacity(person)
+            .Apply(localIncome);
+        var policyIncomeMultiplier = _communityResolver()?
+            .GetModifiers(town, _gameState.Year)
+            .CareerIncomeMultiplier ?? 1m;
+
         return Math.Round(
-            _workCapacity
-                .GetWorkCapacity(person)
-                .Apply(localIncome),
+            workAdjustedIncome * policyIncomeMultiplier,
             0,
             MidpointRounding.AwayFromZero);
     }

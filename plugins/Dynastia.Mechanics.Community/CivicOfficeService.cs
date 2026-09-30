@@ -28,6 +28,7 @@ internal sealed class CivicOfficeService : ICivicOfficeService
     private readonly IGameEventBus _events;
     private readonly CivicOfficeCatalog _catalog;
     private readonly CivicOfficeRules _rules;
+    private readonly IHouseholdConnectionService _connections;
     private readonly Func<ICriminalOccupationService?> _criminalResolver;
 
     public CivicOfficeService(
@@ -48,6 +49,7 @@ internal sealed class CivicOfficeService : ICivicOfficeService
         IGameEventBus events,
         CivicOfficeCatalog catalog,
         CivicOfficeRules rules,
+        IHouseholdConnectionService connections,
         Func<ICriminalOccupationService?>? criminalResolver = null)
     {
         _gameState = gameState;
@@ -67,6 +69,7 @@ internal sealed class CivicOfficeService : ICivicOfficeService
         _events = events;
         _catalog = catalog;
         _rules = rules;
+        _connections = connections;
         _criminalResolver = criminalResolver ?? (() => null);
     }
 
@@ -457,13 +460,20 @@ internal sealed class CivicOfficeService : ICivicOfficeService
         var appeal = _stats.GetStats(person)
             .FirstOrDefault(stat => stat.Id.Equals("appeal", StringComparison.OrdinalIgnoreCase))?.Value ?? 3;
         var participation = Math.Min(GetParticipationCount(person), 10);
+        var householdId = _economy.GetHouseholdId(person);
+        var localNetworkBonus = householdId is Guid id
+            ? _connections.GetLocalNetworkSnapshot(
+                id,
+                _economy.GetResidenceTown(person).Id).CivicCandidateWeightBonus
+            : 0d;
         return Math.Max(
             1,
             1.5 * social.LocalRenown
             + 0.5 * Math.Max(social.Reputation, 0)
             + 4 * education
             + 3 * appeal
-            + 2 * participation);
+            + 2 * participation
+            + localNetworkBonus);
     }
 
     private void AppointSimulated(IPerson person, CivicOfficeTownState state, TownInfo town)

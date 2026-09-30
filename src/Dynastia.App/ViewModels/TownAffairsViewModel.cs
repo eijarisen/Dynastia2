@@ -342,7 +342,33 @@ public sealed class TownAffairsViewModel : ViewModelBase
     public IReadOnlyList<TownAffairsChurchActionViewModel> ChurchActions { get; private set; }
         = Array.Empty<TownAffairsChurchActionViewModel>();
 
-    public bool HasChurchActions => ChurchActions.Count > 0;
+    public TownAffairsChurchActionViewModel? AttendChurchAction =>
+        FindChurchAction("church.attend");
+
+    public TownAffairsChurchActionViewModel? ReligiousStudyChurchAction =>
+        FindChurchAction("personality.religious_study");
+
+    public TownAffairsChurchActionViewModel? DonateChurchAction =>
+        FindChurchAction("church.donate");
+
+    public TownAffairsChurchActionViewModel? AidPoorFamilyAction =>
+        FindChurchAction("church.aid_poor_family");
+
+    public TownAffairsChurchActionViewModel? WelfareChurchAction =>
+        FindChurchAction("church.ask_welfare");
+
+    public bool HasAttendChurchAction => AttendChurchAction is not null;
+    public bool HasReligiousStudyChurchAction => ReligiousStudyChurchAction is not null;
+    public bool HasDonateChurchAction => DonateChurchAction is not null;
+    public bool HasAidPoorFamilyAction => AidPoorFamilyAction is not null;
+    public bool HasWelfareChurchAction => WelfareChurchAction is not null;
+
+    public bool HasChurchActions =>
+        HasAttendChurchAction
+        || HasReligiousStudyChurchAction
+        || HasDonateChurchAction
+        || HasAidPoorFamilyAction
+        || HasWelfareChurchAction;
 
     public bool ShowChurchEmpty => !HasChurchActions;
 
@@ -529,6 +555,11 @@ public sealed class TownAffairsViewModel : ViewModelBase
             _owner.GetTownAffairsSubjectName(person),
             Subject?.Id == person.Id);
 
+    private TownAffairsChurchActionViewModel? FindChurchAction(string actionId) =>
+        ChurchActions.FirstOrDefault(action => action.ActionId.Equals(
+            actionId,
+            StringComparison.OrdinalIgnoreCase));
+
     private void RefreshSubjectContent()
     {
         JobActionId = null;
@@ -612,6 +643,16 @@ public sealed class TownAffairsViewModel : ViewModelBase
         OnPropertyChanged(nameof(HasMedicalImprovementActions));
         OnPropertyChanged(nameof(ShowHealthEmpty));
         OnPropertyChanged(nameof(ChurchActions));
+        OnPropertyChanged(nameof(AttendChurchAction));
+        OnPropertyChanged(nameof(ReligiousStudyChurchAction));
+        OnPropertyChanged(nameof(DonateChurchAction));
+        OnPropertyChanged(nameof(AidPoorFamilyAction));
+        OnPropertyChanged(nameof(WelfareChurchAction));
+        OnPropertyChanged(nameof(HasAttendChurchAction));
+        OnPropertyChanged(nameof(HasReligiousStudyChurchAction));
+        OnPropertyChanged(nameof(HasDonateChurchAction));
+        OnPropertyChanged(nameof(HasAidPoorFamilyAction));
+        OnPropertyChanged(nameof(HasWelfareChurchAction));
         OnPropertyChanged(nameof(HasChurchActions));
         OnPropertyChanged(nameof(ShowChurchEmpty));
         OnPropertyChanged(nameof(CourtModel));
@@ -686,7 +727,8 @@ public sealed record TownAffairsChurchActionViewModel(
     IReadOnlyDictionary<string, string> Parameters,
     bool RequiresMoneySelection = false,
     decimal MinimumAmount = 0m,
-    decimal MaximumAmount = 0m)
+    decimal MaximumAmount = 0m,
+    PoorFamilyProspectInfo? PoorFamilyProspect = null)
 {
     public double DisplayOpacity =>
         IsAvailable ? 1.0 : 0.42;
@@ -705,6 +747,22 @@ public sealed record TownAffairsChurchActionViewModel(
                             ? $"Relief: {amount:N0} zł"
                             : $"Amount: {amount:N0} zł"
                 : string.Empty;
+
+    public bool HasPoorFamilyProspect => PoorFamilyProspect is not null;
+
+    public string PoorFamilyTitle => PoorFamilyProspect is null
+        ? Label
+        : $"Aid the {PoorFamilyProspect.FamilyName} Family";
+
+    public string PoorFamilyContactText => PoorFamilyProspect is null
+        ? string.Empty
+        : $"{PoorFamilyProspect.ContactName}, age {PoorFamilyProspect.ContactAge}";
+
+    public string PoorFamilySummaryText =>
+        PoorFamilyProspect?.HouseholdSummary ?? string.Empty;
+
+    public string PoorFamilyPortrait =>
+        PoorFamilyProspect?.Portrait ?? string.Empty;
 }
 
 public sealed record TownAffairsCourtViewModel(
@@ -712,11 +770,14 @@ public sealed record TownAffairsCourtViewModel(
     bool HasLocalCourt,
     string ProtectionText,
     IReadOnlyList<CourtProtectionRelativeInfo> ProtectionRelatives,
+    IReadOnlyList<CourtProtectionAcquaintanceInfo> ProtectionAcquaintances,
     IReadOnlyList<CriminalRecordEntryInfo> CriminalRecord)
 {
     public bool ShowNoLocalCourt => !HasLocalCourt;
     public bool HasProtectionRelatives => ProtectionRelatives.Count > 0;
     public bool ShowNoProtectionRelatives => !HasProtectionRelatives;
+    public bool HasProtectionAcquaintances => ProtectionAcquaintances.Count > 0;
+    public bool ShowNoProtectionAcquaintances => !HasProtectionAcquaintances;
     public bool HasCriminalRecord => CriminalRecord.Count > 0;
     public bool ShowNoCriminalRecord => !HasCriminalRecord;
 }
@@ -749,8 +810,13 @@ public sealed record TownAffairsCommunityProposalViewModel(
     public string ProposerText =>
         $"Proposed by {Proposal.Proposer.Name}, {Proposal.Proposer.Occupation}";
 
+    public string EffectSummary =>
+        Proposal.ImpactTier.Equals("Ceremonial", StringComparison.OrdinalIgnoreCase)
+            ? "No direct effect."
+            : Proposal.EffectSummary;
+
     public string DetailText =>
-        $"{Proposal.Rarity} · {Proposal.ImpactTier} · {Proposal.Favorability} · {Proposal.DurationYears} years · base support {Proposal.BaseSupport:P0}";
+        $"{Proposal.Rarity} · {Proposal.ImpactTier} · {Proposal.Favorability} · {Proposal.DurationYears} years";
 
     public bool HasLobbyBonus => LobbySupportBonus.HasValue;
 
@@ -763,6 +829,8 @@ public sealed record TownAffairsActivePolicyViewModel(
     CommunityActivePolicyInfo Policy,
     int RemainingYears)
 {
+    public string EffectSummary => Policy.EffectSummary;
+
     public string DurationText => RemainingYears == 1
         ? "1 year remaining"
         : $"{RemainingYears} years remaining";

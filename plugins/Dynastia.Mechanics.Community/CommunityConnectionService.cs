@@ -65,27 +65,184 @@ internal sealed class CommunityConnectionService : IHouseholdConnectionService
             .ToArray();
     }
 
-    public double GetNetworkRenownBonus(Guid householdId)
+    public HouseholdConnectionInfo EnsureLocalConnection(HouseholdConnectionSeed seed)
     {
-        var total = GetConnections(householdId)
-            .Sum(connection =>
+        ArgumentNullException.ThrowIfNull(seed);
+        if (seed.ConnectionId == Guid.Empty)
+            throw new ArgumentException("A stable connection ID is required.", nameof(seed));
+        if (seed.HouseholdId == Guid.Empty)
+            throw new ArgumentException("A household ID is required.", nameof(seed));
+        if (string.IsNullOrWhiteSpace(seed.Name)
+            || string.IsNullOrWhiteSpace(seed.TownId)
+            || string.IsNullOrWhiteSpace(seed.ArchetypeId))
+        {
+            throw new ArgumentException("Connection identity, town and archetype are required.", nameof(seed));
+        }
+
+        // Validate the archetype up front so controlled creation cannot seed state
+        // that the normal annual connection simulation cannot understand.
+        _catalog.GetArchetype(seed.ArchetypeId);
+
+        var world = _community.GetWorldStateForConnections(create: true)
+            ?? throw new InvalidOperationException("Community world state is unavailable.");
+        var connection = world.Connections.FirstOrDefault(item =>
+            item.HouseholdId == seed.HouseholdId
+            && item.Id == seed.ConnectionId);
+
+        if (connection is null)
+        {
+            connection = new CommunityConnectionState
             {
-                if (!connection.RelationState.Equals("Warm", StringComparison.OrdinalIgnoreCase)
-                    && !connection.RelationState.Equals("Close", StringComparison.OrdinalIgnoreCase))
-                {
-                    return 0d;
-                }
-                if (connection.Renown >= _rules.NotableThreshold)
-                    return connection.RelationState == "Close"
-                        ? _rules.NotableCloseBonus
-                        : _rules.NotableWarmBonus;
-                if (connection.Renown >= _rules.ProminentThreshold)
-                    return connection.RelationState == "Close"
-                        ? _rules.CloseBonus
-                        : _rules.WarmBonus;
-                return 0d;
-            });
-        return Math.Min(_rules.NetworkRenownBonusCap, total);
+                Id = seed.ConnectionId,
+                HouseholdId = seed.HouseholdId,
+                Name = seed.Name,
+                Sex = seed.Sex,
+                BirthYear = seed.BirthYear,
+                NationalityId = seed.NationalityId,
+                TownId = seed.TownId,
+                OccupationLabel = seed.OccupationLabel,
+                ArchetypeId = seed.ArchetypeId,
+                WealthBand = seed.WealthBand,
+                Renown = seed.Renown,
+                Reputation = seed.Reputation,
+                Familiarity = Math.Clamp(seed.StartingFamiliarity, 0, 100),
+                Sympathy = Math.Clamp(seed.StartingSympathy, -100, 100),
+                SpouseName = seed.SpouseName,
+                Children = seed.Children?.ToList() ?? [],
+                HasSpareHouse = false,
+                HasSpareFarmland = false,
+                OriginPolicyId = seed.OriginId,
+                IsActive = true
+            };
+            world.Connections.Add(connection);
+        }
+        else
+        {
+            // Repeated use of the same deterministic contact represents another
+            // meaningful interaction with the same family, never a duplicate.
+            connection.IsActive = true;
+            connection.DeathYear = null;
+            connection.Name = seed.Name;
+            connection.Sex = seed.Sex;
+            connection.BirthYear = seed.BirthYear;
+            connection.NationalityId = seed.NationalityId;
+            connection.TownId = seed.TownId;
+            connection.OccupationLabel = seed.OccupationLabel;
+            connection.ArchetypeId = seed.ArchetypeId;
+            connection.WealthBand = seed.WealthBand;
+            connection.Renown = seed.Renown;
+            connection.Reputation = seed.Reputation;
+            connection.Familiarity = Math.Max(
+                connection.Familiarity,
+                Math.Clamp(seed.StartingFamiliarity, 0, 100));
+            connection.Sympathy = Math.Max(
+                connection.Sympathy,
+                Math.Clamp(seed.StartingSympathy, -100, 100));
+            connection.SpouseName = seed.SpouseName;
+            connection.Children = seed.Children?.ToList() ?? [];
+            connection.OriginPolicyId = seed.OriginId;
+        }
+
+        MarkMeaningfulInteraction(connection);
+        return ToInfo(connection);
+    }
+
+    public HouseholdNetworkSnapshot GetNetworkSnapshot(Guid householdId) =>
+        BuildNetworkSnapshot(GetConnections(householdId));
+
+    public HouseholdNetworkSnapshot GetLocalNetworkSnapshot(
+        Guid householdId,
+        string townId) =>
+        CalculateLocalNetworkSnapshot(GetConnections(householdId), townId, _rules);
+
+    internal static HouseholdNetworkSnapshot CalculateLocalNetworkSnapshot(
+        IEnumerable<HouseholdConnectionInfo> source,
+        string townId,
+        CommunityConnectionRules rules)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(townId);
+        return CalculateNetworkSnapshot(
+            source.Where(connection => connection.TownId.Equals(
+                townId,
+                StringComparison.OrdinalIgnoreCase)),
+            rules);
+    }
+
+    public double GetNetworkRenownBonus(Guid householdId) =>
+        GetNetworkSnapshot(householdId).TotalRenownBonus;
+
+    private HouseholdNetworkSnapshot BuildNetworkSnapshot(
+        IEnumerable<HouseholdConnectionInfo> source) =>
+        CalculateNetworkSnapshot(source, _rules);
+
+    internal static HouseholdNetworkSnapshot CalculateNetworkSnapshot(
+        IEnumerable<HouseholdConnectionInfo> source,
+        CommunityConnectionRules rules)
+    {
+        var connections = source
+            .Where(connection => connection.IsActive && connection.DeathYear is null)
+            .ToArray();
+        var activeCount = connections.Length;
+        var warmCount = connections.Count(connection =>
+            connection.RelationState.Equals("Warm", StringComparison.OrdinalIgnoreCase));
+        var closeCount = connections.Count(connection =>
+            connection.RelationState.Equals("Close", StringComparison.OrdinalIgnoreCase));
+        var breadth = CalculateBreadthRenownBonus(activeCount, rules);
+        var quality = Math.Min(
+            rules.QualityRenownBonusCap,
+            connections.Sum(connection => CalculateQualityRenownBonus(connection, rules)));
+        var total = Math.Min(rules.NetworkRenownBonusCap, breadth + quality);
+        var civic = CalculateCivicCandidateWeightBonus(activeCount, rules);
+
+        return new HouseholdNetworkSnapshot(
+            activeCount,
+            warmCount,
+            closeCount,
+            breadth,
+            quality,
+            total,
+            civic);
+    }
+
+    internal static double CalculateBreadthRenownBonus(
+        int activeCount,
+        CommunityConnectionRules rules)
+    {
+        activeCount = Math.Max(0, activeCount);
+        var firstFive = Math.Min(activeCount, 5);
+        var sixToTen = Math.Min(Math.Max(activeCount - 5, 0), 5);
+        var beyondTen = Math.Max(activeCount - 10, 0);
+        var bonus =
+            firstFive * rules.BreadthFirstFiveBonus
+            + sixToTen * rules.BreadthSixToTenBonus
+            + beyondTen * rules.BreadthBeyondTenBonus;
+        return Math.Min(rules.BreadthRenownBonusCap, bonus);
+    }
+
+    internal static double CalculateCivicCandidateWeightBonus(
+        int activeCount,
+        CommunityConnectionRules rules) =>
+        Math.Min(Math.Max(0, activeCount), rules.CivicCandidateLocalActiveConnectionCap)
+        * rules.CivicCandidateWeightPerLocalActiveConnection;
+
+    private static double CalculateQualityRenownBonus(
+        HouseholdConnectionInfo connection,
+        CommunityConnectionRules rules)
+    {
+        var isWarm = connection.RelationState.Equals(
+            "Warm",
+            StringComparison.OrdinalIgnoreCase);
+        var isClose = connection.RelationState.Equals(
+            "Close",
+            StringComparison.OrdinalIgnoreCase);
+        if (!isWarm && !isClose)
+            return 0d;
+
+        if (connection.Renown >= rules.NotableThreshold)
+            return isClose ? rules.NotableCloseBonus : rules.NotableWarmBonus;
+        if (connection.Renown >= rules.ProminentThreshold)
+            return isClose ? rules.CloseBonus : rules.WarmBonus;
+        return 0d;
     }
 
     public decimal GetEstimatedMoneyRequestMaximum(

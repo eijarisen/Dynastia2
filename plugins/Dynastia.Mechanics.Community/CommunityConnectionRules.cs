@@ -49,7 +49,14 @@ internal sealed class CommunityConnectionRules
     public double NotableThreshold { get; init; }
     public double NotableWarmBonus { get; init; }
     public double NotableCloseBonus { get; init; }
+    public double BreadthFirstFiveBonus { get; init; }
+    public double BreadthSixToTenBonus { get; init; }
+    public double BreadthBeyondTenBonus { get; init; }
+    public double BreadthRenownBonusCap { get; init; }
+    public double QualityRenownBonusCap { get; init; }
     public double NetworkRenownBonusCap { get; init; }
+    public double CivicCandidateWeightPerLocalActiveConnection { get; init; }
+    public int CivicCandidateLocalActiveConnectionCap { get; init; }
     public double MarriageChance { get; init; }
     public double DivorceChance { get; init; }
     public double ChildChance { get; init; }
@@ -120,7 +127,14 @@ internal sealed class CommunityConnectionRules
             NotableThreshold = network.GetProperty("notableConnectionThreshold").GetDouble(),
             NotableWarmBonus = network.GetProperty("notableWarmBonus").GetDouble(),
             NotableCloseBonus = network.GetProperty("notableCloseBonus").GetDouble(),
+            BreadthFirstFiveBonus = network.GetProperty("breadthFirstFiveBonus").GetDouble(),
+            BreadthSixToTenBonus = network.GetProperty("breadthSixToTenBonus").GetDouble(),
+            BreadthBeyondTenBonus = network.GetProperty("breadthBeyondTenBonus").GetDouble(),
+            BreadthRenownBonusCap = network.GetProperty("breadthRenownBonusCap").GetDouble(),
+            QualityRenownBonusCap = network.GetProperty("qualityRenownBonusCap").GetDouble(),
             NetworkRenownBonusCap = network.GetProperty("householdRenownBonusCap").GetDouble(),
+            CivicCandidateWeightPerLocalActiveConnection = network.GetProperty("civicCandidateWeightPerLocalActiveConnection").GetDouble(),
+            CivicCandidateLocalActiveConnectionCap = network.GetProperty("civicCandidateLocalActiveConnectionCap").GetInt32(),
             MarriageChance = family.GetProperty("unmarriedAnnualMarriageChance").GetDouble(),
             DivorceChance = family.GetProperty("marriedAnnualDivorceChance").GetDouble(),
             ChildChance = family.GetProperty("annualChildChanceIfPlausible").GetDouble(),
@@ -154,6 +168,19 @@ internal sealed class CommunityConnectionRules
         {
             throw new InvalidDataException(
                 "Community request eligibility relation minima must be either 'Warm' or 'Close'.");
+        }
+
+        if (rules.BreadthFirstFiveBonus < 0
+            || rules.BreadthSixToTenBonus < 0
+            || rules.BreadthBeyondTenBonus < 0
+            || rules.BreadthRenownBonusCap < 0
+            || rules.QualityRenownBonusCap < 0
+            || rules.NetworkRenownBonusCap < 0
+            || rules.CivicCandidateWeightPerLocalActiveConnection < 0
+            || rules.CivicCandidateLocalActiveConnectionCap < 0)
+        {
+            throw new InvalidDataException(
+                "Community network Status and civic-weight values must be non-negative.");
         }
 
         return rules;

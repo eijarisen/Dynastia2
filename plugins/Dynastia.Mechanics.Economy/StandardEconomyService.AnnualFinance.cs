@@ -142,10 +142,15 @@ public sealed partial class StandardEconomyService
             GetLivingCostPerPerson(homeTown),
             HasExceptionalIntellect(owner));
 
+        var policyLivingCostMultiplier = _communityResolver?.Invoke()?
+            .GetModifiers(homeTown, _gameState.Year)
+            .LivingCostMultiplier ?? 1m;
+
         livingCosts = RoundCurrency(
             livingCosts
             * HouseholdLifestyleRules.GetLivingCostMultiplier(
-                household.Lifestyle));
+                household.Lifestyle)
+            * policyLivingCostMultiplier);
 
         if (livingCosts > 0m)
         {

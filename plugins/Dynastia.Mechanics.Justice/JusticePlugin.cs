@@ -79,7 +79,9 @@ public sealed partial class JusticePlugin : IGamePlugin
             family,
             career,
             courtRules,
-            () => context.GetService<IFamilyRelationService>());
+            () => context.GetService<IFamilyRelationService>(),
+            economy,
+            () => context.GetService<IHouseholdConnectionService>());
         var criminalOccupation = new CriminalOccupationService(
             context.GetService<IGameState>()!,
             family,
@@ -146,7 +148,8 @@ public sealed partial class JusticePlugin : IGamePlugin
             historicalCrimes,
             attemptRules,
             attemptContext,
-            crimeContext));
+            crimeContext,
+            () => context.GetService<ICommunityPolicyService>()));
         context.Log("Justice mechanics registered.");
     }
 

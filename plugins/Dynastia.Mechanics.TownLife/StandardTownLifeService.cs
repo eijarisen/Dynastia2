@@ -99,11 +99,6 @@ internal sealed class StandardTownLifeService : ITownLifeService
         MedicalQualityInfo medicalQuality)
     {
         return institutions.Institutions
-            .Where(institution =>
-                institution.Tier > 0
-                || institution.InstitutionId.Equals("medical", StringComparison.OrdinalIgnoreCase)
-                || institution.InstitutionId.Equals("school", StringComparison.OrdinalIgnoreCase)
-                || institution.InstitutionId.Equals("bank", StringComparison.OrdinalIgnoreCase))
             .OrderBy(institution => institution.InstitutionId.ToLowerInvariant() switch
             {
                 "administration" => 0,
@@ -158,8 +153,8 @@ internal sealed class StandardTownLifeService : ITownLifeService
                     institution.Summary,
                     serviceText,
                     careers.Count == 0
-                        ? "Careers: —"
-                        : $"Careers: {string.Join(", ", careers)}");
+                        ? "—"
+                        : string.Join(", ", careers));
             })
             .ToArray();
     }

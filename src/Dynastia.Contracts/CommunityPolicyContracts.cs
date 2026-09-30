@@ -16,6 +16,7 @@ public sealed record CommunityPolicyProposalInfo(
     string PolicyId,
     string DisplayName,
     string Description,
+    string EffectSummary,
     string Rarity,
     string ImpactTier,
     string Favorability,
@@ -31,6 +32,7 @@ public sealed record CommunityActivePolicyInfo(
     string PolicyId,
     string DisplayName,
     string Description,
+    string EffectSummary,
     int EnactedYear,
     int ExpiresAfterYear,
     string EffectKey,
@@ -60,7 +62,11 @@ public sealed record CommunityPolicyModifierSnapshot(
     decimal HistoricalHealthLossMultiplier = 1m,
     decimal FloodLossMultiplier = 1m,
     decimal ChurchWelfareMultiplier = 1m,
-    int ProsperityRecoveryBonus = 0);
+    int ProsperityRecoveryBonus = 0,
+    decimal LivingCostMultiplier = 1m,
+    decimal CareerIncomeMultiplier = 1m,
+    double AnnualHealthAdd = 0d,
+    double CrimeChanceMultiplier = 1d);
 
 public sealed record CommunityAffairsSnapshot(
     IReadOnlyList<CommunityPolicyProposalInfo> Proposals,

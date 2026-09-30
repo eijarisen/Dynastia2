@@ -10,6 +10,9 @@ internal sealed class CommunityPolicyService : ICommunityPolicyService
     private static readonly string[] WealthBands =
         ["Poor", "Modest", "Comfortable", "Wealthy", "Rich"];
 
+    private static readonly string[] ImpactBands =
+        ["Ceremonial", "Weak", "Medium", "Strong"];
+
     private readonly IGameState _gameState;
     private readonly ILocalCareerOpportunityService _opportunities;
     private readonly ITownInstitutionService _institutions;
@@ -67,36 +70,23 @@ internal sealed class CommunityPolicyService : ICommunityPolicyService
             return Array.Empty<CommunityPolicyProposalInfo>();
 
         var selected = new List<CommunityPolicyDefinition>(_rules.ProposalsPerTownYear);
-        if (_rules.PreferAtLeastOneFavorableSubstantive)
+        for (var slot = 0; slot < _rules.ProposalsPerTownYear; slot++)
         {
-            var favorable = eligible
-                .Where(policy => policy.IsFavorable && !policy.IsNoEffect)
-                .ToList();
-            if (favorable.Count > 0)
-            {
-                var first = PickWeighted(
-                    favorable,
-                    StableUnit(BuildKey(town.Id, year, 0, "favorable")));
-                selected.Add(first);
-                eligible.Remove(first);
-            }
-        }
+            var requestedBand = PickWeighted(
+                ImpactBands,
+                band => _rules.ImpactBandWeights.TryGetValue(band, out var weight) ? weight : 0,
+                StableUnit(BuildKey(town.Id, year, slot, "impact-band")));
 
-        for (var slot = selected.Count; slot < _rules.ProposalsPerTownYear; slot++)
-        {
-            var unfavorableCount = selected.Count(policy => policy.IsUnfavorable);
-            var noEffectCount = selected.Count(policy => policy.IsNoEffect);
-            var candidates = eligible
-                .Where(policy =>
-                    (!policy.IsUnfavorable || unfavorableCount < _rules.MaximumUnfavorablePerSet)
-                    && (!policy.IsNoEffect || noEffectCount < _rules.MaximumNoEffectPerSet))
-                .ToList();
-            if (candidates.Count == 0)
+            var chosen = SelectProposalForBand(
+                eligible,
+                selected,
+                requestedBand,
+                town.Id,
+                year,
+                slot);
+            if (chosen is null)
                 break;
 
-            var chosen = PickWeighted(
-                candidates,
-                StableUnit(BuildKey(town.Id, year, slot, "proposal")));
             selected.Add(chosen);
             eligible.Remove(chosen);
         }
@@ -104,6 +94,42 @@ internal sealed class CommunityPolicyService : ICommunityPolicyService
         return selected
             .Select((policy, slot) => ToProposal(policy, town, year, slot))
             .ToArray();
+    }
+
+    private CommunityPolicyDefinition? SelectProposalForBand(
+        IReadOnlyList<CommunityPolicyDefinition> eligible,
+        IReadOnlyList<CommunityPolicyDefinition> selected,
+        string requestedBand,
+        string townId,
+        int year,
+        int slot)
+    {
+        var bands = new[] { requestedBand }
+            .Concat(_rules.FallbackOrder.TryGetValue(requestedBand, out var fallback)
+                ? fallback
+                : Array.Empty<string>())
+            .Concat(ImpactBands)
+            .Distinct(StringComparer.OrdinalIgnoreCase);
+
+        var strongCount = selected.Count(policy => policy.IsStrong);
+        var unfavorableCount = selected.Count(policy => policy.IsUnfavorable);
+
+        foreach (var band in bands)
+        {
+            var candidates = eligible
+                .Where(policy => policy.ImpactTier.Equals(band, StringComparison.OrdinalIgnoreCase))
+                .Where(policy => !policy.IsStrong || strongCount < _rules.MaximumStrongPerSet)
+                .Where(policy => !policy.IsUnfavorable || unfavorableCount < _rules.MaximumUnfavorablePerSet)
+                .ToList();
+            if (candidates.Count == 0)
+                continue;
+
+            return PickWeighted(
+                candidates,
+                StableUnit(BuildKey(townId, year, slot, $"proposal:{band}")));
+        }
+
+        return null;
     }
 
     public IReadOnlyList<CommunityActivePolicyInfo> GetActivePolicies(
@@ -125,6 +151,7 @@ internal sealed class CommunityPolicyService : ICommunityPolicyService
                     definition.Id,
                     definition.DisplayName,
                     definition.Description,
+                    definition.EffectSummary,
                     policy.EnactedYear,
                     policy.ExpiresAfterYear,
                     definition.EffectKey,
@@ -161,12 +188,18 @@ internal sealed class CommunityPolicyService : ICommunityPolicyService
         var flood = 1m;
         var welfare = 1m;
         var recovery = 0;
+        var livingCost = 1m;
+        var careerIncome = 1m;
+        var annualHealth = 0.0;
+        var crimeChance = 1.0;
 
         foreach (var policy in active)
         {
             var magnitude = policy.Magnitude;
             switch (policy.EffectKey.ToLowerInvariant())
             {
+                case "none":
+                    break;
                 case "prosperity_flat":
                     prosperity += (int)Math.Round(magnitude, MidpointRounding.AwayFromZero);
                     break;
@@ -215,13 +248,65 @@ internal sealed class CommunityPolicyService : ICommunityPolicyService
                 case "bank_service_tier_add":
                     bankTier += (int)Math.Round(magnitude, MidpointRounding.AwayFromZero);
                     break;
+                case "living_cost_multiplier":
+                    livingCost *= (decimal)magnitude;
+                    break;
+                case "career_income_multiplier":
+                    careerIncome *= (decimal)magnitude;
+                    break;
+                case "annual_health_add":
+                    annualHealth += magnitude;
+                    break;
+                case "crime_chance_multiplier":
+                    crimeChance *= magnitude;
+                    break;
                 case "medical_bundle_medium":
                     medicalCost *= 0.95m;
                     medicalSuccess += 0.03;
                     break;
-                case "housing_bundle_medium":
+                case "housing_bundle_medium": // legacy active-policy compatibility
+                case "public_housing_bundle_medium":
                     housing *= 0.95m;
                     extraHousingOffers += 1;
+                    break;
+                case "public_housing_bundle_strong":
+                    housing *= 0.90m;
+                    extraHousingOffers += 1;
+                    break;
+                case "sanitation_bundle_medium":
+                    annualHealth += 0.5;
+                    historicalHealth *= 0.95m;
+                    break;
+                case "sanitation_bundle_strong":
+                    annualHealth += 1.0;
+                    historicalHealth *= 0.90m;
+                    break;
+                case "industrial_development_bundle_medium":
+                    prosperity += 2;
+                    careerIncome *= 1.03m;
+                    break;
+                case "technology_development_bundle_strong":
+                    prosperity += 2;
+                    jobApplication += 0.05;
+                    careerIncome *= 1.04m;
+                    break;
+                case "public_safety_bundle_medium":
+                    crimeChance *= 0.90;
+                    historicalWealth *= 0.95m;
+                    break;
+                case "emergency_preparedness_bundle_strong":
+                    historicalWealth *= 0.85m;
+                    historicalHealth *= 0.90m;
+                    recovery += 1;
+                    break;
+                case "industrial_growth_health_tradeoff":
+                    prosperity += 2;
+                    annualHealth -= 0.5;
+                    break;
+                case "austerity_bundle_medium":
+                    bank *= 1.05m;
+                    schoolTier -= 1;
+                    medicalTier -= 1;
                     break;
             }
         }
@@ -237,14 +322,18 @@ internal sealed class CommunityPolicyService : ICommunityPolicyService
             Math.Clamp(bank, _rules.BankQualityMultiplierMin, _rules.BankQualityMultiplierMax),
             Math.Clamp(housing, _rules.HousingPriceMultiplierMin, _rules.HousingPriceMultiplierMax),
             Math.Clamp(extraHousingOffers, 0, 1),
-            Math.Clamp(schoolTier, 0, _rules.ServiceTierBonusMax),
-            Math.Clamp(medicalTier, 0, _rules.ServiceTierBonusMax),
-            Math.Clamp(bankTier, 0, _rules.ServiceTierBonusMax),
+            Math.Clamp(schoolTier, -_rules.ServiceTierBonusMax, _rules.ServiceTierBonusMax),
+            Math.Clamp(medicalTier, -_rules.ServiceTierBonusMax, _rules.ServiceTierBonusMax),
+            Math.Clamp(bankTier, -_rules.ServiceTierBonusMax, _rules.ServiceTierBonusMax),
             Math.Clamp(historicalWealth, _rules.HistoricalLossMultiplierMin, 1m),
             Math.Clamp(historicalHealth, _rules.HistoricalLossMultiplierMin, 1m),
             Math.Clamp(flood, _rules.HistoricalLossMultiplierMin, 1m),
             Math.Clamp(welfare, 1m, 1.5m),
-            Math.Clamp(recovery, 0, 2));
+            Math.Clamp(recovery, 0, 2),
+            Math.Clamp(livingCost, _rules.LivingCostMultiplierMin, _rules.LivingCostMultiplierMax),
+            Math.Clamp(careerIncome, _rules.CareerIncomeMultiplierMin, _rules.CareerIncomeMultiplierMax),
+            Math.Clamp(annualHealth, _rules.AnnualHealthAddMin, _rules.AnnualHealthAddMax),
+            Math.Clamp(crimeChance, _rules.CrimeChanceMultiplierMin, _rules.CrimeChanceMultiplierMax));
     }
 
     public int GetParticipationCount(IPerson person) =>
@@ -466,7 +555,7 @@ internal sealed class CommunityPolicyService : ICommunityPolicyService
             && lobby.ProposalYear == proposalYear
             && lobby.TownId.Equals(townId, StringComparison.OrdinalIgnoreCase)) == true;
 
-    private bool IsEligible(
+    internal bool IsEligible(
         CommunityPolicyDefinition policy,
         TownInfo town,
         int year,
@@ -478,6 +567,7 @@ internal sealed class CommunityPolicyService : ICommunityPolicyService
         if (year < policy.StartYear
             || (policy.EndYear is int endYear && year > endYear)
             || town.SettlementClass < policy.MinimumSettlementClass
+            || town.SettlementClass > policy.MaximumSettlementClass
             || activeIds.Contains(policy.Id))
         {
             return false;
@@ -495,6 +585,9 @@ internal sealed class CommunityPolicyService : ICommunityPolicyService
         {
             return false;
         }
+
+        if (policy.RequiredProsperityMin is int minimum && prosperity < minimum)
+            return false;
 
         if (policy.RequiredProsperityMax is int maximum && prosperity > maximum)
             return false;
@@ -516,6 +609,7 @@ internal sealed class CommunityPolicyService : ICommunityPolicyService
             policy.Id,
             policy.DisplayName,
             policy.Description,
+            policy.EffectSummary,
             policy.Rarity,
             policy.ImpactTier,
             policy.Favorability,

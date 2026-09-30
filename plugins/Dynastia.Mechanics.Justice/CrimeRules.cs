@@ -8,7 +8,8 @@ public static class CrimeRules
         CrimeAttemptRules rules,
         double contextMultiplier,
         bool broke,
-        double stress)
+        double stress,
+        double crimeChanceMultiplier = 1.0)
     {
         ArgumentNullException.ThrowIfNull(rules);
         var stressMultiplier = Math.Min(
@@ -17,7 +18,8 @@ public static class CrimeRules
         var chance = rules.BaseAttemptChance
             * Math.Max(0, contextMultiplier)
             * (broke ? rules.PovertyMultiplier : 1.0)
-            * stressMultiplier;
+            * stressMultiplier
+            * Math.Max(0, crimeChanceMultiplier);
         return Math.Clamp(
             chance,
             rules.MinimumAttemptChance,

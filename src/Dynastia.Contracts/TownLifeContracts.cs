@@ -228,7 +228,7 @@ public sealed record TownLifeSnapshot(
             Church.Emoji,
             Church.Summary,
             "Worship, charity and emergency welfare",
-            "Careers: —");
+            "—");
 
     public IReadOnlyList<TownInstitutionAffairsInfo> InstitutionCards =>
         InstitutionAffairs
@@ -239,7 +239,7 @@ public sealed record TownLifeSnapshot(
                 institution.Emoji,
                 institution.Summary,
                 string.Empty,
-                "Careers: —"))
+                "—"))
             .ToArray();
 
     public string EducationCapacityText =>

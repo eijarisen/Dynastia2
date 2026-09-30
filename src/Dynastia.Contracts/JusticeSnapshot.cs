@@ -16,7 +16,9 @@ public sealed record CourtProtectionSnapshot(
     Guid? HelperPersonId = null,
     string? HelperName = null,
     string? HelperCareerName = null,
-    int HelperJobLevel = 0)
+    int HelperJobLevel = 0,
+    double RelativeScore = 0,
+    double AcquaintanceScore = 0)
 {
     public static CourtProtectionSnapshot None { get; } =
         new(
@@ -27,7 +29,6 @@ public sealed record CourtProtectionSnapshot(
             0.30);
 }
 
-
 public sealed record CourtProtectionRelativeInfo(
     Guid PersonId,
     string Name,
@@ -37,6 +38,14 @@ public sealed record CourtProtectionRelativeInfo(
     string FamiliarityState,
     string SympathyState,
     bool ProvidesProtection);
+
+public sealed record CourtProtectionAcquaintanceInfo(
+    Guid ConnectionId,
+    string Name,
+    string Occupation,
+    string RelationState,
+    double Renown,
+    double Contribution);
 
 public sealed record JusticeSnapshot(
     bool IsImprisoned,

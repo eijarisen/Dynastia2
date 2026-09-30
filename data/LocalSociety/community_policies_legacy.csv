@@ -1,0 +1,6 @@
+PolicyId,DisplayName,StartYear,EndYear,MinimumSettlementClass,MaximumSettlementClass,RequiredInstitutionId,RequiredOpportunityTag,RequiredProsperityMin,RequiredProsperityMax,RequiredRegionIds,Rarity,SelectionWeight,ImpactTier,BaseSupport,DurationYears,EffectKey,Magnitude,Favorability,ProposerArchetypes,Description,EffectSummary
+reconstruction_committee,Reconstruction Committee,1800,,SmallTown,,,,,99,,Common,100,Weak,0.12,3,prosperity_recovery_bonus,1,Favorable,builder;merchant;clerk,Speeds recovery from temporary prosperity shocks.,Prosperity recovers faster after temporary shocks.
+market_square,Beautify Market Square,1700,,SmallTown,,,,,,,Common,100,Weak,0.12,2,prosperity_flat,1,Favorable,merchant;craftsman;clerk,A small civic improvement.,Local prosperity +1 while active.
+new_fountain,New Public Fountain,1750,,SmallTown,,,,,,,Common,70,Weak,0.12,1,none,0,Neutral,clerk;merchant;artist,A visible civic project with little practical effect.,No direct effect.
+monument,Commemorative Monument,1800,,SmallTown,,,,,,,Common,65,Weak,0.12,1,none,0,Neutral,clerk;teacher;retired_officer,Prestige project with little direct economic effect.,No direct effect.
+anniversary,Official Anniversary Programme,1800,,SmallTown,,,,,,,Common,65,Weak,0.12,1,none,0,Neutral,clerk;teacher;merchant,Ceremonial local programme.,No direct effect.

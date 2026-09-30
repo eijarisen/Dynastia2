@@ -166,12 +166,14 @@ public sealed class LocalSocietyCourtJusticeBatch7Tests
         Assert.Contains("No local court. Criminal matters are handled by outside authorities.", model);
         Assert.Contains("GetCourtProtection(subject)", model);
         Assert.Contains("GetCourtProtectionRelatives(subject)", model);
+        Assert.Contains("GetCourtProtectionAcquaintances(subject)", model);
         Assert.Contains("1m - protection.SentenceMultiplier", model);
         Assert.DoesNotContain("GetBailCost(subject)", model);
         Assert.DoesNotContain("GetStolenHeirloomSaleDetectionChance(subject)", model);
         Assert.Contains("Header=\"Court\"", window);
         Assert.Contains("Known Criminal Record", window);
         Assert.Contains("Relatives in court / law enforcement", window);
+        Assert.Contains("Lawyer acquaintances", window);
         Assert.DoesNotContain("CourtModel.Actions", window);
         Assert.DoesNotContain("Not imprisoned.", window);
         Assert.DoesNotContain("Selling a stolen Heirloom", window);

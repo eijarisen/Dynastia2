@@ -24,6 +24,9 @@ public interface IJusticeService
     IReadOnlyList<CourtProtectionRelativeInfo> GetCourtProtectionRelatives(
         IPerson person) => Array.Empty<CourtProtectionRelativeInfo>();
 
+    IReadOnlyList<CourtProtectionAcquaintanceInfo> GetCourtProtectionAcquaintances(
+        IPerson person) => Array.Empty<CourtProtectionAcquaintanceInfo>();
+
     int ConvictKnownOffense(
         IPerson person,
         int originalSentence,

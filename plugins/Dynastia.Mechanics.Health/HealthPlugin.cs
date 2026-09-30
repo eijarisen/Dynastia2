@@ -86,7 +86,8 @@ public sealed class HealthPlugin : IGamePlugin
             healthContext,
             random,
             events,
-            modifiers));
+            modifiers,
+            () => context.GetService<ICommunityPolicyService>()));
         systems.Register(new MentalHealthYearSystem(
             health,
             family,

@@ -9,8 +9,18 @@ internal sealed class CommunityPolicyRules
 
     public int ProposalsPerTownYear { get; init; } = 3;
     public int MaximumUnfavorablePerSet { get; init; } = 1;
-    public int MaximumNoEffectPerSet { get; init; } = 1;
-    public bool PreferAtLeastOneFavorableSubstantive { get; init; } = true;
+    public int MaximumStrongPerSet { get; init; } = 1;
+    public IReadOnlyDictionary<string, double> ImpactBandWeights { get; init; } =
+        new Dictionary<string, double>(StringComparer.OrdinalIgnoreCase)
+        {
+            ["Ceremonial"] = 0.45,
+            ["Weak"] = 0.35,
+            ["Medium"] = 0.16,
+            ["Strong"] = 0.04
+        };
+    public IReadOnlyDictionary<string, IReadOnlyList<string>> FallbackOrder { get; init; } =
+        new Dictionary<string, IReadOnlyList<string>>(StringComparer.OrdinalIgnoreCase);
+
     public double OverallImplementationChanceCap { get; init; } = 0.65;
     public double LobbyRenownGain { get; init; } = 0.25;
     public double LobbyReputationGain { get; init; } = 0.1;
@@ -34,6 +44,14 @@ internal sealed class CommunityPolicyRules
     public decimal HousingPriceMultiplierMax { get; init; } = 1.1m;
     public int ServiceTierBonusMax { get; init; } = 1;
     public decimal HistoricalLossMultiplierMin { get; init; } = 0.8m;
+    public decimal LivingCostMultiplierMin { get; init; } = 0.94m;
+    public decimal LivingCostMultiplierMax { get; init; } = 1.06m;
+    public decimal CareerIncomeMultiplierMin { get; init; } = 0.95m;
+    public decimal CareerIncomeMultiplierMax { get; init; } = 1.06m;
+    public double AnnualHealthAddMin { get; init; } = -0.5;
+    public double AnnualHealthAddMax { get; init; } = 1.0;
+    public double CrimeChanceMultiplierMin { get; init; } = 0.8;
+    public double CrimeChanceMultiplierMax { get; init; } = 1.2;
 
     public static CommunityPolicyRules Load(IGameDataService data)
     {
@@ -47,21 +65,43 @@ internal sealed class CommunityPolicyRules
         var implementationExpression = resolution.GetProperty("overallImplementationChance").GetString() ?? "";
         var implementationCap = ParseMinCap(implementationExpression, 0.65);
 
+        var impactWeights = generation.GetProperty("impactBandWeights")
+            .EnumerateObject()
+            .ToDictionary(
+                property => property.Name,
+                property => property.Value.GetDouble(),
+                StringComparer.OrdinalIgnoreCase);
+        if (impactWeights.Count == 0 || impactWeights.Values.Sum() <= 0)
+            throw new InvalidDataException($"{Path}: generation.impactBandWeights must contain positive weights.");
+
+        var fallbackOrder = generation.GetProperty("fallbackOrder")
+            .EnumerateObject()
+            .ToDictionary(
+                property => property.Name,
+                property => (IReadOnlyList<string>)property.Value
+                    .EnumerateArray()
+                    .Select(item => item.GetString())
+                    .Where(item => !string.IsNullOrWhiteSpace(item))
+                    .Select(item => item!)
+                    .ToArray(),
+                StringComparer.OrdinalIgnoreCase);
+
         return new CommunityPolicyRules
         {
             ProposalsPerTownYear = root.GetProperty("proposalsPerTownYear").GetInt32(),
             MaximumUnfavorablePerSet = generation.GetProperty("maximumUnfavorablePerSet").GetInt32(),
-            MaximumNoEffectPerSet = generation.GetProperty("maximumNoEffectPerSet").GetInt32(),
-            PreferAtLeastOneFavorableSubstantive = generation.GetProperty("preferAtLeastOneFavorableSubstantive").GetBoolean(),
+            MaximumStrongPerSet = generation.GetProperty("maximumStrongPerSet").GetInt32(),
+            ImpactBandWeights = impactWeights,
+            FallbackOrder = fallbackOrder,
             OverallImplementationChanceCap = implementationCap,
             ParticipationCountGain = lobby.GetProperty("participationCountGain").GetInt32(),
             LobbyRenownGain = lobby.GetProperty("renownGain").GetDouble(),
             LobbyReputationGain = lobby.GetProperty("reputationGain").GetDouble(),
             EnactedExtraRenown = lobby.GetProperty("enactedExtraRenown").GetDouble(),
             EnactedExtraReputation = lobby.GetProperty("enactedExtraReputation").GetDouble(),
-            TownHeadOfficeBonus = lobby.GetProperty("townHeadOfficeBonus").GetDouble(),
-            OrdinaryLobbyCap = lobby.GetProperty("ordinaryCap").GetDouble(),
-            TownHeadLobbyCap = lobby.GetProperty("townHeadCap").GetDouble(),
+            TownHeadOfficeBonus = ReadOptionalDouble(lobby, "townHeadOfficeBonus", 0.1),
+            OrdinaryLobbyCap = ReadOptionalDouble(lobby, "ordinaryCap", 0.35),
+            TownHeadLobbyCap = ReadOptionalDouble(lobby, "townHeadCap", 0.45),
             ProsperityFlatCap = caps.GetProperty("prosperityFlatTotal").GetInt32(),
             EducationSuccessAddCap = caps.GetProperty("educationSuccessAddTotal").GetDouble(),
             JobApplicationAddCap = caps.GetProperty("jobApplicationAddTotal").GetDouble(),
@@ -74,7 +114,15 @@ internal sealed class CommunityPolicyRules
             HousingPriceMultiplierMin = caps.GetProperty("housingPriceMultiplierMin").GetDecimal(),
             HousingPriceMultiplierMax = caps.GetProperty("housingPriceMultiplierMax").GetDecimal(),
             ServiceTierBonusMax = caps.GetProperty("serviceTierBonusMax").GetInt32(),
-            HistoricalLossMultiplierMin = caps.GetProperty("historicalLossMultiplierMin").GetDecimal()
+            HistoricalLossMultiplierMin = caps.GetProperty("historicalLossMultiplierMin").GetDecimal(),
+            LivingCostMultiplierMin = caps.GetProperty("livingCostMultiplierMin").GetDecimal(),
+            LivingCostMultiplierMax = caps.GetProperty("livingCostMultiplierMax").GetDecimal(),
+            CareerIncomeMultiplierMin = caps.GetProperty("careerIncomeMultiplierMin").GetDecimal(),
+            CareerIncomeMultiplierMax = caps.GetProperty("careerIncomeMultiplierMax").GetDecimal(),
+            AnnualHealthAddMin = caps.GetProperty("annualHealthAddMin").GetDouble(),
+            AnnualHealthAddMax = caps.GetProperty("annualHealthAddMax").GetDouble(),
+            CrimeChanceMultiplierMin = caps.GetProperty("crimeChanceMultiplierMin").GetDouble(),
+            CrimeChanceMultiplierMax = caps.GetProperty("crimeChanceMultiplierMax").GetDouble()
         };
     }
 
@@ -94,6 +142,11 @@ internal sealed class CommunityPolicyRules
             + officeBonus;
         return Math.Clamp(raw, -0.05, cap);
     }
+
+    private static double ReadOptionalDouble(JsonElement element, string propertyName, double fallback) =>
+        element.TryGetProperty(propertyName, out var property)
+            ? property.GetDouble()
+            : fallback;
 
     private static double ParseMinCap(string expression, double fallback)
     {

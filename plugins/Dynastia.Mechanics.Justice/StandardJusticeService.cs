@@ -9,6 +9,8 @@ public sealed class StandardJusticeService : IJusticeService
     private readonly ICareerService? _career;
     private readonly CourtJusticeRules? _courtRules;
     private readonly Func<IFamilyRelationService?>? _relationsResolver;
+    private readonly IEconomyService? _economy;
+    private readonly Func<IHouseholdConnectionService?>? _connectionsResolver;
 
     public StandardJusticeService()
     {
@@ -19,13 +21,17 @@ public sealed class StandardJusticeService : IJusticeService
         IFamilyService family,
         ICareerService career,
         CourtJusticeRules courtRules,
-        Func<IFamilyRelationService?> relationsResolver)
+        Func<IFamilyRelationService?> relationsResolver,
+        IEconomyService? economy = null,
+        Func<IHouseholdConnectionService?>? connectionsResolver = null)
     {
         _gameState = gameState;
         _family = family;
         _career = career;
         _courtRules = courtRules;
         _relationsResolver = relationsResolver;
+        _economy = economy;
+        _connectionsResolver = connectionsResolver;
     }
 
     public CourtJusticeRules? CourtRules => _courtRules;
@@ -96,6 +102,27 @@ public sealed class StandardJusticeService : IJusticeService
 
     public CourtProtectionSnapshot GetCourtProtection(IPerson person)
     {
+        if (_courtRules is null)
+            return CourtProtectionSnapshot.None;
+
+        var (relativeScore, bestHelper, bestCareer) = GetBestRelativeProtection(person);
+        var acquaintanceScore = Math.Min(
+            _courtRules.Protection.LawyerAcquaintances.CombinedScoreCap,
+            GetCourtProtectionAcquaintances(person).Sum(item => item.Contribution));
+        var totalScore = relativeScore + acquaintanceScore;
+        var tier = _courtRules.ResolveProtection(totalScore);
+        return ToSnapshot(
+            tier,
+            totalScore,
+            bestHelper,
+            bestCareer,
+            relativeScore,
+            acquaintanceScore);
+    }
+
+    private (double Score, IPerson? Helper, CareerSnapshot? Career) GetBestRelativeProtection(
+        IPerson person)
+    {
         var relations = _relationsResolver?.Invoke();
         if (relations is null
             || _gameState is null
@@ -103,7 +130,7 @@ public sealed class StandardJusticeService : IJusticeService
             || _career is null
             || _courtRules is null)
         {
-            return CourtProtectionSnapshot.None;
+            return (0d, null, null);
         }
 
         IPerson? bestHelper = null;
@@ -148,8 +175,7 @@ public sealed class StandardJusticeService : IJusticeService
             bestCareer = career;
         }
 
-        var tier = _courtRules.ResolveProtection(bestScore);
-        return ToSnapshot(tier, bestScore, bestHelper, bestCareer);
+        return (bestScore, bestHelper, bestCareer);
     }
 
     public IReadOnlyList<CourtProtectionRelativeInfo> GetCourtProtectionRelatives(
@@ -200,6 +226,67 @@ public sealed class StandardJusticeService : IJusticeService
             .ThenByDescending(item => item.JobLevel)
             .ThenBy(item => item.Name, StringComparer.CurrentCultureIgnoreCase)
             .ToArray();
+    }
+
+    public IReadOnlyList<CourtProtectionAcquaintanceInfo> GetCourtProtectionAcquaintances(
+        IPerson person)
+    {
+        var connections = _connectionsResolver?.Invoke();
+        if (connections is null || _economy is null || _courtRules is null)
+            return Array.Empty<CourtProtectionAcquaintanceInfo>();
+
+        var householdId = _economy.GetHouseholdId(person);
+        if (householdId is null)
+            return Array.Empty<CourtProtectionAcquaintanceInfo>();
+
+        var townId = _economy.GetResidenceTown(person).Id;
+        var rules = _courtRules.Protection.LawyerAcquaintances;
+        return connections
+            .GetConnections(householdId.Value, activeOnly: true)
+            .Where(connection =>
+                connection.IsActive
+                && connection.DeathYear is null
+                && connection.TownId.Equals(townId, StringComparison.OrdinalIgnoreCase)
+                && connection.ArchetypeId.Equals(rules.ArchetypeId, StringComparison.OrdinalIgnoreCase)
+                && (connection.RelationState.Equals("Warm", StringComparison.OrdinalIgnoreCase)
+                    || connection.RelationState.Equals("Close", StringComparison.OrdinalIgnoreCase)))
+            .Select(connection => new CourtProtectionAcquaintanceInfo(
+                connection.Id,
+                connection.Name,
+                string.IsNullOrWhiteSpace(connection.OccupationLabel)
+                    ? "Lawyer"
+                    : connection.OccupationLabel,
+                connection.RelationState,
+                connection.Renown,
+                CalculateLawyerAcquaintanceContribution(
+                    connection.RelationState,
+                    connection.Renown,
+                    rules)))
+            .Where(item => item.Contribution > 0)
+            .OrderByDescending(item => item.Contribution)
+            .ThenBy(item => item.Name, StringComparer.CurrentCultureIgnoreCase)
+            .ToArray();
+    }
+
+    internal static double CalculateLawyerAcquaintanceContribution(
+        string relationState,
+        double renown,
+        LawyerAcquaintanceProtectionRules rules)
+    {
+        double baseScore;
+        if (relationState.Equals("Close", StringComparison.OrdinalIgnoreCase))
+            baseScore = rules.CloseBaseScore;
+        else if (relationState.Equals("Warm", StringComparison.OrdinalIgnoreCase))
+            baseScore = rules.WarmBaseScore;
+        else
+            return 0d;
+
+        var multiplier = renown >= rules.NotableRenownThreshold
+            ? rules.NotableRenownMultiplier
+            : renown >= rules.ProminentRenownThreshold
+                ? rules.ProminentRenownMultiplier
+                : 1d;
+        return baseScore * multiplier;
     }
 
     public int ConvictKnownOffense(
@@ -389,7 +476,9 @@ public sealed class StandardJusticeService : IJusticeService
         CourtProtectionTier tier,
         double score,
         IPerson? helper,
-        CareerSnapshot? helperCareer) =>
+        CareerSnapshot? helperCareer,
+        double relativeScore,
+        double acquaintanceScore) =>
         new(
             tier.Id,
             tier.Display,
@@ -399,7 +488,9 @@ public sealed class StandardJusticeService : IJusticeService
             helper?.Id,
             helper is null ? null : _family?.GetDisplayName(helper),
             helperCareer?.CareerName ?? helperCareer?.JobTitle,
-            helperCareer?.JobLevel ?? 0);
+            helperCareer?.JobLevel ?? 0,
+            relativeScore,
+            acquaintanceScore);
 
     private static JusticeComponent GetRequired(IPerson person) =>
         person.Components.Get<JusticeComponent>()

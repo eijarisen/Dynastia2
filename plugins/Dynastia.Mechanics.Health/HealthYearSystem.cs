@@ -13,6 +13,7 @@ public sealed class HealthYearSystem : IYearSystem
     private readonly IGameRandom _random;
     private readonly IGameEventBus _events;
     private readonly IAnnualHealthModifierRegistry _modifiers;
+    private readonly Func<ICommunityPolicyService?> _communityResolver;
 
     public HealthYearSystem(
         StandardHealthService health,
@@ -22,7 +23,8 @@ public sealed class HealthYearSystem : IYearSystem
         IContextWeightCatalog contextWeights,
         IGameRandom random,
         IGameEventBus events,
-        IAnnualHealthModifierRegistry modifiers)
+        IAnnualHealthModifierRegistry modifiers,
+        Func<ICommunityPolicyService?>? communityResolver = null)
     {
         _health = health;
         _stats = stats;
@@ -32,6 +34,7 @@ public sealed class HealthYearSystem : IYearSystem
         _random = random;
         _events = events;
         _modifiers = modifiers;
+        _communityResolver = communityResolver ?? (() => null);
     }
 
     public string Id => "health.annual";
@@ -68,9 +71,17 @@ public sealed class HealthYearSystem : IYearSystem
                 var longevity = GetStat(person, "longevity");
                 var immunity = GetStat(person, "immunity");
 
+                var location = _locations.GetExistingLocation(person);
+                var policyHealthAdd = location is null
+                    ? 0d
+                    : _communityResolver()?
+                        .GetModifiers(location.HomeTown, gameState.Year)
+                        .AnnualHealthAdd ?? 0d;
+
                 var change = longevity * 0.5
                     + HouseholdLifestyleRules.GetHealthRegenerationModifier(person)
                     + _modifiers.GetAnnualHealthChange(person)
+                    + policyHealthAdd
                     + _health.ApplyAnnualConditionEffects(person);
                 _health.ChangeHealth(person, change);
                 TryNaturalRecovery(gameState, person, immunity);

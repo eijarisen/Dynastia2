@@ -19,6 +19,7 @@ public sealed class CrimeYearSystem : IYearSystem
     private readonly CrimeAttemptRules _attemptRules;
     private readonly IContextWeightCatalog _attemptContext;
     private readonly IContextWeightCatalog _crimeContext;
+    private readonly Func<ICommunityPolicyService?> _communityResolver;
 
     public CrimeYearSystem(
         StandardJusticeService justice,
@@ -35,7 +36,8 @@ public sealed class CrimeYearSystem : IYearSystem
         CrimeHistoricalCatalog historical,
         CrimeAttemptRules attemptRules,
         IContextWeightCatalog attemptContext,
-        IContextWeightCatalog crimeContext)
+        IContextWeightCatalog crimeContext,
+        Func<ICommunityPolicyService?>? communityResolver = null)
     {
         _justice = justice;
         _family = family;
@@ -52,6 +54,7 @@ public sealed class CrimeYearSystem : IYearSystem
         _attemptRules = attemptRules;
         _attemptContext = attemptContext;
         _crimeContext = crimeContext;
+        _communityResolver = communityResolver ?? (() => null);
     }
 
     public string Id => "justice.crime";
@@ -77,11 +80,15 @@ public sealed class CrimeYearSystem : IYearSystem
             var location = _localOpportunities.GetOpportunitySnapshot(person);
             var stress = _stress?.GetStress(person).Total ?? 0;
             var context = BuildContext(person, gameState.Year, location.Town.SettlementClass);
+            var crimeChanceMultiplier = _communityResolver()?
+                .GetModifiers(location.Town, gameState.Year)
+                .CrimeChanceMultiplier ?? 1d;
             var attemptChance = CrimeRules.CalculateAttemptChance(
                 _attemptRules,
                 _attemptContext.GetMultiplier("global", context),
                 broke,
-                stress);
+                stress,
+                crimeChanceMultiplier);
 
             if (_random.NextDouble() >= attemptChance)
                 continue;
